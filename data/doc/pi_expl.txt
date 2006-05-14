@@ -1,0 +1,177 @@
+*pi_expl.txt*   For Vim version 6.4.  最近更新: 2006年2月
+
+
+		  VIM 参考手册    by M A Aziz Ahmed
+				更新: Mark Waggoner
+				译者: Willis
+				http://vimcdoc.sf.net
+
+
+						*file-explorer* *file-browser*
+探索 (或者 浏览) 目录和文件的插件
+
+1. 启动文件探索器			|expl-starting|
+
+这里提到的功能是一个|standard-plugin|。
+这个插件只用在 'compatible' 没有打开的时候才能用。
+你可以设置 "loaded_explorer" 变量来关闭这个插件: >
+	:let loaded_explorer = 1
+
+{Vi 没有任何这里的功能}
+
+==============================================================================
+1. 启动文件探索器					*expl-starting*
+
+这个插件使用来在 Vim 里探索目录用的。每当用户试图编辑一个目录时，这个插件 - 文
+件探索器就启动了。
+
+						*:Explore* *:Sexplore*
+要在当前文件所在的目录启动文件探索器: >
+	:Explore
+如果文件有过改动，一个分割的窗口会被打开。如果要求总是分割窗口: >
+	:Sexplore
+要在某一个特定的目录打开探索器: >
+	:Explore dirname
+	:Sexplore dirname
+
+在探索器里，可以移动光标到包含文件名或是目录名的行上。可以使用以下的命令键:
+
+  <enter> 会在探索器窗口打开文件。
+  'o' 会分割出一个新窗口，在这个新窗口上打开这个文件。
+  'O' 会在探索器启动前光标所在的窗口打开文件，如果探索器是唯一的窗口，那就分割
+      出一个新的窗口，用以打开这个文件。
+  'p' 打开 (或者使用) 显示文件的预览窗口
+  'x' 利用系统工具执行这个文件。只有系统支持才可以 (目前有 MS-Windows 和 KDE)。
+
+分割出新窗口时，你可以用若干变量控制新的窗口相对于探索器窗口的位置。这些变量包
+括: g:explVertical、g:explSplitBelow 和 g:explSplitRight。
+
+							*g:explVertical*
+							*g:explSplitBelow*
+							*g:explSplitRight*
+							*g:explStartBelow*
+							*g:explStartRight*
+要控制分割是水平的还是垂直的，可以用: >
+  let g:explVertical=1	" 垂直分割
+  let g:explVertical=0	" 水平分割 (缺省)
+
+要控制新窗口在水平分割时相对于探索器窗口的位置，可以用: >
+  let g:explSplitBelow=1    " 新窗口将位于探索器窗口之下
+  let g:explSplitBelow=0    " 新窗口将位于探索器窗口之上
+缺省的值是插件读入时的 splitbelow 值。
+
+要控制新窗口在垂直分割时相对于探索器窗口的位置，可以用: >
+  let g:explSplitRight=1    " 新窗口将位于探索器窗口之右
+  let g:explSplitRight=0    " 新窗口将位于探索器窗口之左
+缺省的值是插件读入时的 splitright 值。
+
+要指定打开探索器窗口的开始分割方法，可以用: >
+  let g:explStartRight=1    " 新探索器窗口将位于现有窗口之右
+  let g:explStartRight=0    " 新探索器窗口将位于现有窗口之左
+缺省的值是插件读入时的 g:explSplitRight 值。
+
+要指定打开探索器窗口的开始分割方法，可以用: >
+  let g:explStartBelow=1    " 新探索器窗口将位于现有窗口之下
+  let g:explStartBelow=0    " 新探索器窗口将位于现有窗口之上
+缺省的值是插件读入时的 g:explSplitBelow 值。
+
+开始分割使得探索器的位置类似于文件浏览器的风格，也就是，目录显示在左边，目录内
+容显示在右边。开始分割只对 Sexplore 命令有效。
+
+注意 这里的窗口分割和普通的窗口分割稍有不同。通常，在分割一个窗口的时候，当前
+窗口占据的空间会被分割给新窗口。探索器则试图从紧靠它自己窗口的那个窗口中分割空
+间，使得探索器自己的大小可以不变。如果在要分割的方向上没有紧邻窗口，探索器只好
+对自己进行分割。
+
+							*g:explWinSize*
+用 'o' 命令打开一个文件以后，你可能想调整一下探索器窗口的大小。可以用: >
+  let g:explWinSize=N
+N 是要设定的行数 (如果是水平分割) 或者是列数 (如果是垂直分割)。如果
+g:explWinSize 是一个空串 ("")，那么大小就不会自动调整。g:explWinSize 的缺省值
+是 15。
+
+							*g:explDetailedList*
+文件大小 (以字节计算) 和修改时间可以在文件探索器中显示。按 'i' 键，你可以在只
+显示名字和显示更多信息间切换。如果你要在缺省的时候显示大小和日期，可以用: >
+  let g:explDetailedList=1
+这么做可能会稍微减慢探索器的速度。这之间的差异决定于你的系统本身和你探索的目录
+是本地还是网络的，还有你目录的大小。
+
+							*g:explDateFormat*
+显示日期的格式串是可以用 g:explDateFormat 来定制的。探索器把这个变量传给
+strftime()，从而得到日期的信息。 |strftime()| 缺省值是 >
+  let g:explDateFormat="%d %b %Y %H:%M"
+
+注意 为了方便排序起见，日期的 'raw' 形式存在于每行的尾部。如果你用语法高亮来打
+开它，'raw' 的日期是不可见的。
+
+							*g:explHideFiles*
+你可以设置使用正规表达式的变量 g:explHidFiles 来隐藏某些文件。匹配这些正规表达
+式的文件名将不会显示。例如: >
+
+  let g:explHideFiles='^\.，\.gz$，\.exe$，\.zip$'
+
+将不会显示以 "." 开头和 .gz、.exe 或者 .zip 结尾的文件。不过，所有的目录名字总
+是显示的。如果在探索过程中，你还是想看看隐藏的文件，用 "a" 命令。探索器的头部
+会显示是不是存在文件名的过滤。
+
+							*g:explDetailedHelp*
+我们用以下选项可以把多行的详细帮助缩减 (只保留一行): >
+  let g:explDetailedHelp=0
+你可以在任何时候按 ? 键重新打开较详细的帮助显示。
+
+							*explorer-delete*
+探索器里按 'D' 键删除光标下的文件。你可以可视化地选择多个文件然后按 'D' 来删除
+这些文件。删除时会交互提示 y/n/a/q。我们不支持目录删除 (主要是因为 vim 没有可
+以删除目录的内建函数)。
+
+							*explorer-rename*
+探索器里按 'R' 键可以为光标下的文件更名。
+
+							*g:explSortBy*
+文件探索器的显示可以按照文件名、大小或者修改时间的升序或是降序排序。你可以如此
+设置缺省的排序字段和方向: >
+  let g:explSortBy='name'		" 文件名字母序
+  let g:explSortBy='reverse name'	" 文件名逆向字母序
+  let g:explSortBy='date'		" 修改日期最新的在前
+  let g:explSortBy='reverse date'	" 修改日期最老的在前
+  let g:explSortBy='size'		" 文件大小最大的在前
+  let g:explSortBy='reverse size'       " 文件大小最小的在前
+在探索器里，你可以按 's' 键轮替排序的字段，按 'r' 键切换排序的方向。如果文件大
+小和日期当前已经显示 (通过 'i' 或者 g:explDetailedList)，那么以非文件名字段的
+排序就会快一些。
+探索器的头部会显示当前的排序次序。
+
+							*g:explDirsFirst*
+你可以用此选项来控制目录和文件名的分离显示: >
+  let g:explDirsFirst=1     " 目录名显示在列表的开头 (缺省)
+  let g:explDirsFirst=0     " 目录名和文件名混合显示
+  let g:explDirsFirst=-1    " 目录名显示在列表的末尾
+
+							*g:explSuffixesLast*
+你还可以用此选项来控制匹配 'suffixes' 选项的文件名的分离显示: >
+  let g:explSuffixesLast=1     " 匹配 'suffixes' 的文件显示在列表的末尾 (缺省)
+  let g:explSuffixesLast=0     " 匹配 'suffixes' 的文件按正常方式排序
+  let g:explSuffixesLast=-1    " 匹配 'suffixes' 的文件显示在列表的开头
+探索器的头部会显示这类文件是否移到列表的尾部 (或者头部)。
+
+							*g:explUseSeparators*
+目录和匹配 'suffixes' 的文件会高亮显示。如果你把目录、文件和匹配 'suffixes' 的
+文件分离显示，你可能希望在它们之间显示一个分割线。可以这样设置它的显示: >
+  let g:explUseSeparators=1    " 使用分割线
+  let g:explUseSeparators=0    " 不使用分割线
+<
+							 *g:explFileHandler*
+如果你把 "g:explFileHandler" 变量设成一个函数名字，按 'x' 会调用这个函数。当前
+光标下的文件或者目录名会被作为一个参数传入这个函数里。假定你用 KDE，你可以用:
+>
+  function MyFileHandler(fn)
+    exec "silent! !kfmclient exec " . escape(a:fn，' \%#')
+  endfunction
+  let g:explFileHandler = 'MyFileHandler'
+
+在 Win32 上，这个变量的缺省值是调用执行功能。如果在 HTML 文件上按 'x'，就会启
+动 Microsoft Internet Explorer (或者你设定绑定 HTML 文件的任何应用程序)。
+
+==============================================================================
+ vim:tw=78:noet:ts=8:ft=help:norl:

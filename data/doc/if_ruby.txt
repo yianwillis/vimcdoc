@@ -1,0 +1,188 @@
+*if_ruby.txt*   For Vim version 6.4.  最近更新: 2006年2月
+
+
+		  VIM 参考手册    by Shugo Maeda
+				译者: Willis
+				http://vimcdoc.sf.net
+
+Vim 的 Ruby 接口					*ruby* *Ruby*
+
+
+1. 命令				|ruby-commands|
+2. VIM 模块			|ruby-vim|
+3. VIM::Buffer 对象		|ruby-buffer|
+4. VIM::Window 对象		|ruby-window|
+5. 全局变量			|ruby-globals|
+6. 动态调入			|ruby-dynamic|
+
+{Vi 没有这些功能}
+			*E266* *E267* *E268* *E269* *E270* *E271* *E272* *E273*
+
+Ruby 接口只在编译 Vim 时加入 |+ruby| 特性后才会有。
+
+ruby 的主页是 http://www.ruby-lang.org/。那里，你可以找到相关的下载 Ruby 的链
+接。
+
+==============================================================================
+1. 命令							*ruby-commands*
+
+							*:ruby* *:rub*
+:rub[y] {cmd}		执行 Ruby 命令 {cmd}。
+
+:rub[y] << {endpattern}
+{script}
+{endpattern}
+			执行 Ruby 脚本 {script}。
+			{endpattern} 不能有任何前导的空白。如果 {endpattern}
+			省略，缺省值是一个句号 '.'，就像 |:append| 和
+			|:insert| 命令那样。这个 |:ruby| 命令主要用于在 vim 脚
+			本里加入 ruby 代码。
+			注意: 如果 Ruby 特性没有在编译时加入，这个命令不会工
+			作。为了避免错误，参看 |script-here|。
+
+示例的 Vim 脚本: >
+
+	function! RedGem()
+	ruby << EOF
+	class Garnet
+		def initialize(s)
+			@buffer = VIM::Buffer.current
+			vimputs(s)
+		end
+		def vimputs(s)
+			@buffer.append(@buffer.count,s)
+		end
+	end
+	gem = Garnet.new("pretty")
+	EOF
+	endfunction
+<
+
+						*:rubydo* *:rubyd* *E265*
+:[range]rubyd[o] {cmd}	在 [range] 界定的每一行上执行 Ruby 命令 {cmd}，执行
+			时，$_ 被设为相应行的文本，不含结尾的 <EOL>。修改 $_
+			就会修改相应的行，不过要 注意: 不能用这个命令来增加或
+			者删除行。
+			缺省的 [range] 是整个文件: "1,$"。
+
+							*:rubyfile* *:rubyf*
+:rubyf[ile] {file}	执行 Ruby 脚本文件 {file}。这和 ":ruby load 'file'" 相
+			当，不过你可以用文件名自动补全功能。
+
+
+在 |sandbox| 里不能执行 Ruby 命令。
+
+==============================================================================
+2. VIM 模块						*ruby-vim*
+
+Ruby 代码通过 "VIM" 模块调用所有 vim 的功能。
+
+概述 >
+	print "Hello"			# 显示消息
+	VIM.command(cmd)		# 执行 ex 命令
+	num = VIM::Window.count		# 得到窗口行数
+	w = VIM::Window[n]		# 得到第 "n" 个窗口
+	cw = VIM::Window.current	# 得到当前窗口
+	num = VIM::Buffer.count		# 得到缓冲区的个数
+	b = VIM::Buffer[n]		# 得到第 "n" 个缓冲区
+	cb = VIM::Buffer.current	# 得到当前缓冲区
+	w.height = lines		# 设置窗口高度
+	w.cursor = [row, col]		# 设置窗口里的光标位置
+	pos = w.cursor			# 得到数组 [行, 列]
+	name = b.name			# 得到缓冲区的文件名
+	line = b[n]			# 得到缓冲区的某一行
+	num = b.count			# 得到总的行数
+	b[n] = str			# 设置缓冲区的某一行
+	b.delete(n)			# 删除某一行
+	b.append(n, str)		# 在第 n 行后增加一行
+<
+
+模块函数:
+
+							*ruby-message*
+VIM::message({msg})
+	显示消息 {msg}。
+
+							*ruby-set_option*
+VIM::set_option({arg})
+	设置 vim 选项。{arg} 可以是任何一个 ":set" 命令接受的命令。 注意 这意
+	味着参数里不能有空格！参见 |:set|。
+
+							*ruby-command*
+VIM::command({cmd})
+	执行 Ex 命令 {cmd}。
+
+							*ruby-evaluate*
+VIM::evaluate({expr})
+	用 vim 内部的表达式分析器执行 {expr} (参看 |expression|)。返回字符串
+	形式的执行结果。
+
+==============================================================================
+3. VIM::Buffer 对象					*ruby-buffer*
+
+VIM::Buffer 对象代表一个 Vim 缓冲区。
+
+类方法:
+
+current		返回当前缓冲区对象。
+count		返回缓冲区的总数。
+self[{n}]	返回第 {n} 个缓冲区。第一个缓冲区的序号是 0。
+
+方法:
+
+name		返回缓冲区的名字。
+number		返回缓冲区的序号。
+count		返回总行数。
+length		返回总行数。
+self[{n}]	从缓冲区中返回一行。{n} 是行号。
+self[{n}] = {str}
+		设置缓冲区的一行。{n} 是行号。
+delete({n})	删除缓冲区的一行。{n} 是行号。
+append({n}, {str})
+		在第 {n} 行后增加一行。
+
+==============================================================================
+4. VIM::Window 对象					*ruby-window*
+
+VIM::Window 对象代表 Vim 窗口。
+
+类方法:
+
+current		返回当前窗口对象。
+count		返回窗口的总数。
+self[{n}]	返回第 {n} 个窗口。第一个窗口的序号是 0。
+
+方法:
+
+buffer		返回显示的缓冲区对象。
+height		返回窗口的高度。
+height = {n}	设置窗口的高度为 {n}。
+cursor		返回光标位置数组: [行、列]。
+cursor = [{row}, {col}]
+		设置光标位置为行 {row} 和列 {col}。
+
+==============================================================================
+5. 全局变量						*ruby-globals*
+
+有两个全局变量。
+
+$curwin		当前窗口对象。
+$curbuf		当前缓冲区对象。
+
+==============================================================================
+6. 动态调入						*ruby-dynamic*
+
+MS-Windows 上，Ruby 库可以动态调入。|:version| 输出这时应包括 |+ruby/dyn|。
+
+这意味着 Vim 会在需要的时候寻找 Ruby DLL 文件。如果你不使用 Ruby 接口的时候，
+你就不需要该文件。这样，你可以在没有该 DLL 文件的时候使用 Vim。
+
+要使用 Ruby 接口，Ruby DLL 必须在你的搜索路径上。在控制台窗口里，输入 "path" 
+可以看到目前使用的目录。
+
+该 DLL 的名字必须匹配 Vim 编译时所使用的 Ruby 版本。目前，该名字为
+"ruby18.dll"。也就是 Ruby 1.8。要确信这一点，编辑 "gvim.exe" 文件并查找
+"ruby\d*.dll\c"。
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

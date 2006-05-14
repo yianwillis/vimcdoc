@@ -1,0 +1,22 @@
+TOPLEVELDIR = ..
+@VERSION    = TOPLEVELDIR + '/VERSION'
+:include $TOPLEVELDIR/common.aap
+
+@Files = expand2string(glob("*.txt"))
+
+:attr {commit = cvs://$CVS_ROOT } $Files
+
+:rule %.txt {virtual}:
+    :chmod 644 $target
+    :commit $target
+    :sys ./vim2html.pl tags $target
+    @html_file = sufreplace('.txt', '.html', target)
+    :sys scp $html_file $(CVS_USER)@$(SF_SHELL_DOMAIN):$SF_VIMCDOC_DIR/htdocs/doc
+    :sys sftp -b batch $(CVS_USER)@$(GRO_SHELL_DOMAIN)
+    :del $html_file 
+
+all {virtual}:
+    :print Use 'aap <file_name>' to check-in a file and update the webpage.
+
+clean {virtual}:
+    :del {r}{force} *.html *~ *.bak vim-stylesheet.css

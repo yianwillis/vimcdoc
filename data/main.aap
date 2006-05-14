@@ -1,0 +1,74 @@
+TOPLEVELDIR=.
+VERSION=$TOPLEVELDIR/VERSION
+:include $TOPLEVELDIR/common.aap
+
+@VERSION     = file2string( "./VERSION" )
+RELEASE_NAME = $(VCD)-$(VERSION)
+TARBALL      = $(RELEASE_NAME).tar
+TARGZ        = $(TARBALL).gz
+DOC_DIR      = $TOPLEVELDIR/doc
+RELEASE_DIR  = $TOPLEVELDIR/release
+MAKENSIS     = makensis
+NSISFILE     = vcd-setup.nsi
+NSISZIP      = /X"SetCompressor bzip2"
+NSISOUTPUT   = /V0
+@Vimcdoc_txt = TOPLEVELDIR + '/doc/*.txt'
+EXCLUDES     = ''
+EXTRA_FILES  = help_cn.vim
+#@Vimcdoc_txt = expand2string(glob( Vimcdoc_txt ))
+
+release {virtual}: $RELEASE_NAME
+	:print 'Making release files....'
+	#Buidling Linux release.
+	@for doc in glob('doc/*.txt'):
+		@target_name = os.path.splitext( doc )[0]
+		@if not target_name in ['doc/version5', 'doc/version6', 'doc/uganda.nsis']:
+			:copy $(target_name).txt $RELEASE_NAME/$(target_name).cnx
+	@for doc in ['help_cn.vim']:
+		:copy $(doc) $RELEASE_NAME/
+	:cd $RELEASE_NAME
+	:chmod 755 vimcdoc.sh
+	@gentag_cmd = "vim -e +'helptags ./doc|:q'"
+	:sys $gentag_cmd
+	:cd -
+	:sys tar cf $(TARBALL) $(RELEASE_NAME)
+	:sys {force} gzip -9f $(TARBALL) # in windows, gzip return IO error
+									 # but the zip file is good .
+									 # I don't know why.
+	:move $(TARGZ) $(RELEASE_DIR)
+	#replace with proper operation to generate a cntags file
+	#Buidling win32 binary
+	#@for doc in glob('doc/*.txt'):
+	#@target_name = os.path.basename( doc )
+	#:cat $doc
+	#| :eval re.sub( 'ft=help:norl:', 'ft=help:norl:enc=cp936:', stdin )
+	#>! $target_name
+	#:move $target_name $RELEASE_NAME/doc
+	:copy $NSISFILE $RELEASE_NAME
+	:cd $RELEASE_NAME
+	:sys $(MAKENSIS) $(NSISFILE)
+	:cd -
+	:move $RELEASE_NAME/$(VCD)_setup.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup.exe
+	os = $OSTYPE
+	@if os == "posix":
+		:sys 'pwd'
+	@elif os == "mswin":
+		:sys chdir
+	:del {r} $RELEASE_NAME
+$RELEASE_NAME: VERSION
+	:mkdir $RELEASE_NAME
+	:mkdir $RELEASE_NAME/doc
+	:copy $(MISC_FILES) $(RELEASE_NAME)
+
+all:
+	:print Use 'aap clean' to clean up.
+	:print Use 'aap release' to generate release packages.
+
+clean:
+	:del {r}{force} *~ *.bak
+	:del {r}{force} $RELEASE_NAME
+	:execute doc/main.aap clean
+	:execute release/main.aap clean
+	:execute www/htdocs/main.aap clean
+
+# vim:ts=4:noet:
