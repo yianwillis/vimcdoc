@@ -1,0 +1,508 @@
+*pi_netrw.txt*  For Vim version 6.4.  最近更新: 2006年2月
+
+
+		VIM 参考手册    by Charles E. Campbell, Jr.
+				译者: Willis
+				http://vimcdoc.sf.net
+
+*dav*		*http*		*network*	*rcp*		*scp*
+*fetch*		*netrw*		*Nread*		*rsync*		*sftp*
+*ftp*		*netrw.vim*	*Nwrite*	*netrw-file*
+
+==============================================================================
+0. 内容							*netrw-contents*
+
+1.  Netrw 参考手册......................................|netrw-ref|
+2.  基于网络的文件传输..................................|netrw-xfer|
+3.  激活................................................|netrw-activate|
+4.  透明文件传输........................................|netrw-transparent|
+5.  Ex 命令.............................................|netrw-ex|
+6.  变量和选项..........................................|netrw-var|
+7.  调试................................................|netrw-debug|
+8.  新内容..............................................|netrw-new|
+9.  鸣谢................................................|netrw-credits|
+
+这里提到的功能是用标准的 |standard-plugin| 技术完成的。只有如下设置才能使用这
+项插件。
+
+	set nocp		    " 不设置 'compatible' 
+	filetype plugin on	    " 允许使用该插件
+
+如果在 <.vimrc> 里设置了 "loaded_netrw" 变量，就不会调入该插件: >
+
+	:let loaded_netrw = 1
+
+{Vi 没有此项功能}
+
+==============================================================================
+1. Netrw 参考手册						*netrw-ref*
+
+    选 项
+	let g:netrw_ftp =0 使用 ftp (缺省)		     (uid password)
+			=1 使用替代的 ftp 方法		(user uid password)
+	  如果你使用 ftp 有问题，在你的 <.vimrc> 里改变这项值，来改换连接方法。
+
+	let g:netrw_ignorenetrc= 1
+	  如果你有 <.netrc> 文件，但是它不工作而你不想用它，就这么设置。它唯一
+	  的作用是使得 <.netrc> 被忽略。
+
+	控制外部程序
+
+	 协议      变量		       缺省值
+	 --------  ----------------    -------------
+	   dav:    g:netrw_dav_cmd   = "cadaver"
+	   fetch:  g:netrw_fetch_cmd = "fetch -o"
+	   ftp:    g:netrw_ftp_cmd   = "ftp"
+	   http:   g:netrw_http_cmd  = "fetch -o"      如果 fetch 可用
+	   http:   g:netrw_http_cmd  = "wget -q -O"    如果 wget 可用
+	   rcp:    g:netrw_rcp_cmd   = "rcp"
+	   rsync:  g:netrw_rsync_cmd = "rsync -a"
+	   scp:    g:netrw_scp_cmd   = "scp -q"
+	   sftp:   g:netrw_sftp_cmd  = "sftp"
+
+    读 取
+	:Nread ?					给出帮助
+	:Nread "machine:file"				使用 rcp
+	:Nread "machine file"				使用 ftp 并用 <.netrc>
+	:Nread "machine id password file"		使用 ftp
+	:Nread "dav://machine[:port]/file"		使用 cadaver
+	:Nread "fetch://[user@]machine/file"		使用 fetch
+	:Nread "ftp://[user@]machine[[:#]port]/file"	使用 ftp 自动检测
+							<.netrc>
+	:Nread "http://[user@]machine/file"		使用 http 用 wget 方法
+	:Nread "rcp://[user@]machine/file"		使用 rcp
+	:Nread "rsync://[user@]machine[:port]/file"	使用 rsync
+	:Nread "scp://[user@]machine[[:#]port]/file"	使用 scp
+	:Nread "sftp://[user@]machine/file"		使用 sftp
+
+    写 入
+	:Nwrite ?					给出帮助
+	:Nwrite "machine:file"				使用 rcp
+	:Nwrite "machine file"				使用 ftp 并用 <.netrc>
+	:Nwrite "machine id password file"		使用 ftp
+	:Nwrite "dav://machine[:port]/file"		使用 cadaver
+	:Nwrite "ftp://[user@]machine[[:#]port]/file"	使用 ftp 自动检测
+							<.netrc>
+	:Nwrite "rcp://[user@]machine/file"		使用 rcp
+	:Nwrite "rsync://[user@]machine[:port]/file"	使用 rsync
+	:Nwrite "scp://[user@]machine[[:#]port]/file"	使用 scp
+	:Nwrite "sftp://[user@]machine/file"		使用 sftp
+	不支持 http: 协议！
+
+    改 变 用 户 名 和 密 码
+	使用 ftp 的尝试会提示你输入用户名字和密码。它们被存在 g:netrw_uid 和
+	g:netrw_passwd 里。下一次使用 ftp 就会再次使用这些信息。如果你要使用别
+	的用户名和/或密码，先调用 NetUserPass()。
+
+	:NetUserPass [uid [password]]		-- 如果需要，提示
+	:call NetUserPass()			-- 提示 uid 和 password
+	:call NetUserPass("uid")		-- 提示 password
+	:call NetUserPass("uid","password")	-- 设置全局 uid 和 password
+
+    变 量
+	b:netrw_lastfile  最近一次通过网络读写的文件，该变量局部于缓冲区
+			  (用于支持无参数的 :Nw )
+	s:netrw_line	  在 Nw/NetWrite 中，保存当前的行号
+	s:netrw_col	  在 Nw/NetWrite 中，保存当前的列号
+			  s:netrw_line 和 s:netrw_col 用于保存写入时当前光标
+			  的位置
+	g:netrw_ftp	  如果不存在，用缺省的 ftp
+			  =0 使用缺省的 ftp		       (uid password)
+			  =1 使用替代的 ftp 方法	  (user uid password)
+	g:netrw_ftpmode   ="binary"				       (缺省)
+			  ="ascii"			       (或者你的选择)
+	g:netrw_uid	  (ftp) 用户名，     		     可用于同一会话中
+	g:netrw_passwd	  (ftp) 密码，     		     可用于同一会话中
+	g:netrw_win95ftp  =0 使用 unix 风格连接 ftp，即使是 win95/win98/winME
+			  =1 使用缺省的方法连接 ftp
+	g:netrw_cygwin	  =1 假设在 windows 上的 scp 是 cygwin 的版本
+							 (windows 的缺省值)
+			  =0 假设在 windows 上的 scp 接受 windows 风格的路径
+			    				 (其他情况的缺省值)
+	g:netrw_use_nt_rcp=0 不要使用 WinNT、Win2000 and WinXP 的 rcp (缺省)
+			  =1 使用 WinNT 的 rcp,... 使用二进制模式
+
+
+==============================================================================
+2. 基于网络的文件传输						*netrw-xfer*
+
+Vim 下基于网络的文件传输是用基于 Vim 脚本的插件技术实现的 (<netrw.vim>)。目
+前，它支持基于网络的读写，并支持 rcp、scp、ftp 或者 ftp+<.netrc>、scp、fetch、
+dav/cadaver、rsync、 或者 sftp。
+
+目前，http 只支持通过 wget 或者 fetch 读取。
+
+<netrw.vim> 是一个标准插件，它起到 Vim 和若干文件传输程序的粘结剂作用。它使用
+自动命令事件 (BufReadCmd、FileReadCmd、BufWriteCmd) 来拦截貌似 url 的文件名的
+读写。 >
+
+	例如 vim ftp://hostname/path/to/file
+<
+冒号前面的字符序列指定所使用的协议；在这个例子里，就是 ftp。
+<netrw.vim> 脚本然后构成一个或多个命令 (一般是 ftp)，然后用外部程序去执行
+(ftp，scp 等) 来完成实际的文件传输/协议。文件被先读写到一个临时文件里 (在
+Unix/Linux 上，/tmp/...)， <netrw.vim> 脚本会清理该文件。
+
+你可以通过修改变量修改任何实现协议的外部应用程序 (例如，scp 使用
+g:netrw_scp_cmd 变量，缺省是 "scp -q")。
+
+ftp，一个古老的协议，看来被很多实现所支持。不幸的是，很多实现都有问题 (例如，
+在文件尾部加入垃圾字符)。所以，如果有这样的问题，用户可以自己决定写一个
+NetReadFixup() 函数来在从 ftp 读文件后进行清理。有些 Unix 系统 (例如，
+FreeBSD) 提供了一个叫 "fetch" 的工具，它使用 ftp 协议，但是没有这样的问题，而
+且更方便 <netrw.vim> 的使用。所以，只要 "fetch" 可以执行，它就被用来实现
+ftp://... (和 http://...) 的读取。见 |netrw-var| 来了解详情。
+
+对于 rcp、scp、sftp 和 http 协议，你可能希望基于网络的文件传输尽可能透明；例如
+>
+	vim rcp://[user@]machine/path
+	vim scp://[user@]machine/path
+<
+如果你的 ftp 支持 <.netrc>，那么也可以透明的使用 ftp，因为需要的机器名字，用户
+名和密码都定义在这个文件里。你的 ftp 必须自己能理解并使用 <.netrc> 文件。可以
+这样，
+>
+	vim ftp://[user@]machine[[:#]portnumber]/path
+<
+不然，ftp 通常需要查询用户需要的用户名和密码。后者通常不会被显示出来；也就是，
+输入的密码显示的是星号。Netrw 会保留用户名和密码，以便以后从相同机器的读写不需
+要再提示输入。
+
+								*netrw-urls*
+  +=================================+============================+============+
+  |  读				    | 写			 |  使用      |
+  +=================================+============================+============+
+  | DAV:			    |				 |	      |
+  |  dav://host/path		    |				 | cadaver    |
+  |  :Nread dav://host/path	    | :Nwrite dav://host/path	 | cadaver    |
+  +---------------------------------+----------------------------+------------+
+  | FETCH:			    |				 |	      |
+  |  fetch://[user@]host/path	    |				 |	      |
+  |  fetch://[user@]host:http/path  |  不可用			 | fetch      |
+  |  :Nread fetch://[user@]host/path|				 |	      |
+  +---------------------------------+----------------------------+------------+
+  | FILE:			    |				 |	      |
+  |  file:///*			    | file:///*			 |	      |
+  |  file://localhost/*		    | file://localhost/*	 |      |
+  +---------------------------------+----------------------------+------------+
+  | FTP:	  (*3)		    |		   (*3)		 |	      |
+  |  ftp://[user@]host/path	    | ftp://[user@]host/path	 | ftp	(*2)  |
+  |  :Nread ftp://host/path	    | :Nwrite ftp://host/path	 | ftp+.netrc |
+  |  :Nread host path		    | :Nwrite host path		 | ftp+.netrc |
+  |  :Nread host uid pass path	    | :Nwrite host uid pass path | ftp	      |
+  +---------------------------------+----------------------------+------------+
+  | HTTP: wget is executable: (*4)  |				 |	      |
+  |  http://[user@]host/path	    |   不可用	 		 | wget       |
+  +---------------------------------+----------------------------+------------+
+  | HTTP: fetch is executable (*4)  |				 |	      |
+  |  http://[user@]host/path	    |	不可用			 | fetch      |
+  +---------------------------------+----------------------------+------------+
+  | RCP:			    |				 |	      |
+  |  rcp://[user@]host/path	    | rcp://[user@]host/path	 | rcp	      |
+  +---------------------------------+----------------------------+------------+
+  | RSYNC:			    |				 |	      |
+  |  rsync://[user@]host/path	    | rsync://[user@]host/path	 | rsync      |
+  |  :Nread rsync://host/path	    | :Nwrite rsync://host/path  | rsync      |
+  |  :Nread rcp://host/path	    | :Nwrite rcp://host/path	 | rcp	      |
+  +---------------------------------+----------------------------+------------+
+  | SCP:			    |				 |	      |
+  |  scp://[user@]host/path	    | scp://[user@]host/path	 | scp	      |
+  |  :Nread scp://host/path	    | :Nwrite scp://host/path	 | scp	(*1)  |
+  +---------------------------------+----------------------------+------------+
+  | SFTP:			    |				 |	      |
+  |  sftp://[user@]host/path	    | sftp://[user@]host/path	 | sftp       |
+  |  :Nread sftp://host/path	    | :Nwrite sftp://host/path	 | sftp  (*1) |
+  +=================================+============================+============+
+
+	(*1) 要指出绝对路径，用 scp://machine//path。
+
+	(*2) 如果 <.netrc> 存在，假设你的 ftp 客户端会使用之。不然，该脚本提示
+	输入用户名和密码。
+
+	(*3) 对于 ftp，"machine" 可以是 machine#port 或者 machine:port，如果需
+	要使用不同于标准 ftp 的端口的话。
+
+	(*4) 对于 http:...，如果 wget 可用，就使用之。不然，如果 fetch 可用，
+	就使用之。
+
+:Nread 和 :Nwrite 这几个 ex 命令都能接受多个文件名。
+
+
+NETRC							*netrw-netrc*
+
+<.netrc> 文件典型的语法如下显示。Unix 上的 ftp 通常支持 <.netrc>；而 Windows 
+上的 ftp 通常不支持。
+>
+	machine {full machine name} login {user-id} password "{password}"
+	default login {user-id} password "{password}"
+
+你的 ftp 客户端必须自己会使用 <.netrc>，如果 <.netrc> 文件存在，ftp 传输就不会
+询问用户名字和密码。
+
+	注意:
+	既然这个文件包含密码明码，要确保没人能够读到这个文件！许多程序拒绝使用
+	能给别人读取的 .netrc 文件。当然不要忘记，系统管理员总是可以读到这个文
+	件的！
+
+
+密 码							*netrw-passwd*
+
+就本试图用内建的 Vim 函数 |inputsecret()| 不回显地读取 ftp 的密码。参见
+|netrw-uidpass| 了解如何在设置以后修改密码。
+
+不幸的是，netrw 没有办法自动提供密码给 scp。所以每次通过 scp 传输文件都需要重
+新输入密码。
+
+
+==============================================================================
+3. 激活							*netrw-activate*
+
+基于网络的文件传输缺省在 |'nocompatible'| 模式打开时就可用。<netrw.vim> 文件在
+你系统的 vim-plugin 目录下，并且在启动 vim 时自动加载。
+
+
+==============================================================================
+4. 透明文件传输						*netrw-transparent*
+
+透明文件传输指通过普通的文件读写命令进行的传输 (通过 |:autocmd| 的
+|BufReadCmd| 或 |BufWriteCmd| 事件)。这样网络的文件就能和本地文件一样处理。 >
+
+	vim ftp://[user@]machine/path
+	...
+	:wq
+
+
+==============================================================================
+5. Ex 命令						*netrw-ex*
+
+支持普通的读写命令。此外，还有一些额外的命令。
+
+:[range]Nw	把特定的行写到当前由 b:netrw_lastfile 指定的文件里。
+
+:[range]Nw {netfile} [{netfile}]...
+		把特定的行写到 {netfile} 所指定的网络文件里。
+
+:Nread
+		从当前由 b:netrw_lastfile 指定的文件里读取特定的行到当前的缓冲
+		区。
+
+:Nread {netfile} {netfile}...
+		读取 {netfile} 到当前行之后。
+
+							*netrw-uidpass*
+:call NetUserPass()
+		如果 b:netrw_uid 和 b:netrw_passwd 不存在，该函数向用户查询。
+
+:call NetUserPass("userid")
+		该调用设置 b:netrw_uid 并且，如果密码不存在的话，向用户查询。
+
+:call NetUserPass("userid","passwd")
+		该调用设置 b:netrw_uid 和 b:netrw_passwd。用户名和密码则被 ftp
+		传输使用。要删除用户名和密码，只用使用 "" 字符串就可以了。
+
+
+==============================================================================
+6. 变量和选项					*netrw-options* *netrw-var*
+
+<netrw.vim> 脚本使用若干变量来控制 <netrw.vim> 的行为。这些变量通常在用户的
+<.vimrc> 里设置:
+
+	g:netrw_uid	  保存当前 ftp 的 user-id。
+	g:netrw_passwd	  保存当前 ftp 的 password。
+	b:netrw_lastfile  最近一次通过网络读写的方法/机器/路径。
+	s:netrw_line	  在 Nw/NetWrite 中，保存当前的行号
+	s:netrw_col	  在 Nw/NetWrite 中，保存当前的列号
+	g:netrw_ftp	  如果不存在，用缺省的 ftp
+			  =0 使用缺省的 ftp		       (uid password)
+			  =1 使用替代的 ftp 方法	  (user uid password)
+	g:netrw_ftpmode   ="binary"				       (缺省)
+			  ="ascii"			       (或者你的选择)
+	g:netrw_ignorenetrc= 1
+			  如果你有 <.netrc> 文件，但是你不想用它，就这么设置。
+			  它唯一的作用是使得 <.netrc> 被忽略。
+	g:netrw_win95ftp  =0 使用 unix 风格连接 ftp，即使是 win95/win98/winME
+			  =1 使用缺省的方法连接 ftp
+	g:netrw_cygwin	  =1 假设在 windows 上的 scp 是 cygwin 的版本
+							 (windows 的缺省值)
+			  =0 假设在 windows 上的 scp 接受 windows 风格的路径
+			    				 (其他情况的缺省值)
+	g:netrw_use_nt_rcp=0 不要使用 WinNT, Win2000 and WinXP 的 rcp (缺省)
+			  =1 使用 WinNT 的 rcp,... 使用二进制模式
+
+
+脚本里也可以使用以下的内部变量，尽管应该是暂时的。
+
+	g:netrw_method		指名 rcp/ftp+.netrc/ftp 等的索引
+	g:netrw_machine		保存输入分析结果的机器名
+	g:netrw_fname		保存访问的文件名
+
+								*netrw-protocol*
+>
+			   ------------------------
+			        协议控制选项
+			   ------------------------
+    选项	      类型	  设置	  	  意义
+    ---------	      --------	  --------------  ---------------------------
+    netrw_ftp	      变量	  =不存在	  userid 由 "user userid" 设置
+				  =0		  userid 由 "user userid" 设置
+				  =1		  userid 由 "userid" 设置
+    NetReadFixup      函数	  =不存在	  没有改变
+				  =存在		  允许用户通过 ftp 自动传输的
+						  文件通过 NetReadFixUp() 进行
+						  转换
+    g:netrw_dav_cmd   变量	  ="cadaver"
+    g:netrw_fetch_cmd 变量	  ="fetch -o"
+    g:netrw_ftp_cmd   变量	  ="ftp"
+    g:netrw_http_cmd  变量	  ="wget -O"  如果 wget 可以执行
+    g:netrw_http_cmd  变量	  ="fetch -o" 不然，如果 fetch 可以执行
+    g:netrw_rcp_cmd   变量	  ="rcp"
+    g:netrw_rsync_cmd 变量	  ="rsync -a"
+    g:netrw_scp_cmd   变量	  ="scp -q"
+    g:netrw_sftp_cmd  变量	  ="sftp"
+<
+前面两个选项帮助特定可能会引起问题的 ftp。为了更好的理解如何在 ftp 有问题的时
+候使用这些选项，以下是 netrw 如何进行 ftp 读取的一点讨论。
+
+g:netrw_..._cmd 变量指定如何处理特定的协议 (rcp、ftp 等) 的外部程序，外加需要
+的选项。
+
+Netrw 通常用以下几种格式之一构造命令行，并写到临时文件里:
+>
+  如果 g:netrw_ftp 不存在或者不是 1      如果 g:netrw_ftp 存在且为 1
+  ----------------------------------     ------------------------------
+       open machine [port]		      open machine [port]
+       user userid password		      userid password
+       [g:netrw_ftpmode]		      password
+       get filename tempfile		      [g:netrw_ftpmode]
+					      get filename tempfile
+<
+Netrw 然后通过过滤命令执行上述命令行:
+>
+	:%! {g:netrw_ftp_cmd} -i [-n]
+<
+
+其中
+	g:netrw_ftp_cmd 通常是 "ftp"，
+	-i 告诉 ftp 不要交互
+	-n 意味着不要用 netrc，它用于方法 #3 (ftp 不用 <.netrc>)
+
+如果 <.netrc> 存在，就不需要想用户查询用户名和密码。传输完毕后，保存文件到临时
+文件里。这时，从临时文件里读取的内容被读到被请求的主编辑会话窗口中，并删除临时
+文件。
+
+如果你的 ftp 不支持 "user" 命令，而是立即需要输入用户名，那么试试把
+"let netrw_ftp=1" 放到你的 <.vimrc> 里。
+
+								*netrw-fixup*
+如果你的 ftp 因某种原因产生不需要的行 (例如 AUTH 消息)，你需要写一个
+NetReadFixup(tmpfile) 函数:
+>
+    function! NetReadFixup(method,line1,line2)
+      " a:line1: 当前文件的第一行新行
+      " a:line2: 当前文件的最后一行新行
+      if     a:method == 1 "rcp
+      elseif a:method == 2 "ftp + <.netrc>
+      elseif a:method == 3 "ftp + machine,uid,password,filename
+      elseif a:method == 4 "scp
+      elseif a:method == 5 "http/wget
+      elseif a:method == 6 "dav/cadaver
+      elseif a:method == 7 "rsync
+      elseif a:method == 8 "fetch
+      elseif a:method == 9 "sftp
+      else		 " 报错
+      endif
+    endfunction
+>
+如果 NetReadFixup() 函数存在，它就会被调用，这样你就可以订制自己的读取进程。一
+个进一步的例子可以看看 <netrw.vim> 如何处理 Windows 95 ftp 的函数。不知何种原
+因，Windows 95 的 ftp 在传输结束以后加了四个空行，所以应该自动把它们删除。这里
+是 <netrw.vim> 自己的一些代码: >
+>
+    if has("win95") && g:netrw_win95ftp
+     fu! NetReadFixup(method, line1, line2)
+       if method == 3   " ftp (no <.netrc>)
+	let fourblanklines= line2 - 3
+	silent fourblanklines.",".line2."g/^\s*/d"
+       endif
+     endfunction
+    endif
+>
+
+==============================================================================
+7. 调试							*netrw-debug*
+
+通常可以这样得到 <netrw.vim> 脚本:
+
+	/usr/local/share/vim/vim6x/plugin/netrw.vim
+
+在启动时自动被加载 (假设 :set nocp)。
+
+	1. 先从这里取得 <Decho.vim> 脚本:
+
+		http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_scripts
+		标题是 "Decho, a vimL debugging aid"
+	   或者
+		http://vim.sourceforge.net/scripts/script.php?script_id=120
+
+	   然后把它放到你的本地的插件目录
+
+	2. 修改 <netrw.vim> 文件如下:
+
+		:DechoOn
+
+	   (要恢复正常，:DechoOff )
+
+	3. 然后启动 vim 进行文件传输。一系列消息应该出现，提示 <netrw.vim> 进
+	   行网络文件读写的一系列步骤。请把信息发送到 <netrw.vim> 的维护者。
+
+		drchipNOSPAM at campbellfamily.biz - NOSPAM
+
+==============================================================================
+8. 新内容 (英文)					*netrw-new* *netrw-newstuff*
+
+       v43: * moved "Explanation" comments to <pi_netrw.txt> help file
+	      as "Network Reference" (|netrw-ref|)
+	    * <netrw.vim> now uses Dfunc() Decho() and Dret() for debugging
+	    * removed superfluous NetRestorePosn() calls
+       v42: * now does BufReadPre and BufReadPost events on file:///*
+	      and file://localhost/*
+       v41: * installed file:///* and file://localhost/* handling
+       v40: * prevents redraw when a protocol error occurs so that the
+	      user may see it
+       v39: * sftp support
+       v38: * Now uses NetRestorePosn() calls with Nread/Nwrite commands
+	    * Temporary files now removed via bwipe! instead of bwipe
+	      (thanks to Dave Roberts)
+       v37: * Claar's modifications which test if ftp is successful, otherwise
+	      give an error message
+	    * After a read, the alternate file was pointing to the temp file.
+	      The temp file buffer is now wiped out.
+	    * removed silent from transfer methods so user can see what's
+	      happening
+
+
+==============================================================================
+9. 鸣谢							*netrw-credits*
+
+	Vim editor	by Bram Moolenaar (谢了，Bram!)
+	dav		提供支持: C Campbell
+	fetch		提供支持: Bram Moolenaar 和 C Campbell
+	ftp		提供支持: C Campbell <NdrOchip@ScampbellPfamily.AbizM> - NOSPAM
+	http		提供支持: Bram Moolenaar <bram@moolenaar.net>
+	rcp
+	rsync		提供支持: C Campbell (Erik Warendorph 提供建议)
+	scp		提供支持: raf <raf@comdyn.com.au>
+	sftp		提供支持: C Campbell
+
+	inputsecret()、BufReadCmd、BufWriteCmd 由 C Campbell 提供
+
+	Jérôme Augé		-- 也使用新的缓冲区方法操作 ftp+.netrc
+	Bram Moolenaar		-- 显然写了 vim 本身，还有 :e 和 v:cmdarg 的使
+				   用， fetch 等
+	Yasuhiro Matsumoto	-- 指出 undo+0r 的问题和解决方法
+	Erik Warendorph		-- 提供若干建议 (g:netrw_..._cmd 变量，rsync 
+				   等)
+	Doug Claar		-- 提供能成功通过 ftp 操作的测试的修改
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
