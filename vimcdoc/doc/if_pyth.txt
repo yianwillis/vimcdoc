@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 7.0c.  最近更新：2006年4月
+*if_pyth.txt*   For Vim version 6.4.  最近更新：2006年2月
 
 
 		  VIM REFERENCE MANUAL    by Paul Moore
@@ -86,62 +86,51 @@ Python 的代码所有对 Vim 的操作 (只有一个例外 － 看下面的 |py
 用它们之前你得先导入 (import) vim 模块。
 
 总揽 >
-	:py print "Hello"		# 显示信息
-	:py vim.command(cmd)		# 执行 ex 命令
-	:py w = vim.windows[n]		# 获取窗口 "n"
-	:py cw = vim.current.window	# 获取当前窗口
-	:py b = vim.buffers[n]		# 获取缓冲 "n"
-	:py cb = vim.current.buffer	# 获取当前缓冲
-	:py w.height = lines		# 设定窗口高度
-	:py w.cursor = (row, col)	# 设定光标位置
-	:py pos = w.cursor		# 获取 tuple (行, 列)
-	:py name = b.name		# 获取缓冲的文件名
-	:py line = b[n]			# 获取缓冲内的一行
-	:py lines = b[n:m]		# 获取数行
-	:py num = len(b)		# 获取统计的行数
-	:py b[n] = str			# 在缓冲里写入一行文本
-	:py b[n:m] = [str1, str2, str3]	# 一次性写入多行文本
-	:py del b[n]			# 删除一行
-	:py del b[n:m]			# 删除数行
+	print "Hello"			# 显示信息
+	vim.command(cmd)		# 执行 ex 命令
+	w = vim.windows[n]		# 获取窗口 "n"
+	cw = vim.current.window		# 获取当前窗口
+	b = vim.buffers[n]		# 获取缓冲 "n"
+	cb = vim.current.buffer		# 获取当前缓冲
+	w.height = lines		# 设定窗口高度
+	w.cursor = (row, col)		# 设定光标位置
+	pos = w.cursor			# 获取 tuple (行, 列)
+	name = b.name			# 获取缓冲的文件名
+	line = b[n]			# 获取缓冲内的一行
+	lines = b[n:m]			# 获取数行
+	num = len(b)			# 获取统计的行数
+	b[n] = str			# sets a line in the buffer
+	b[n:m] = [str1, str2, str3]	# sets a number of lines at once
+	del b[n]			# 删除一行
+	del b[n:m]			# 删除数行
 
 "vim" 模块中的方法
 
 vim.command(str)					*python-command*
 	执行 vim (ex-模式) 命令 str。无返回值。
 	例如: >
-		:py vim.command("set tw=72")
-		:py vim.command("%s/aaa/bbb/g")
+		vim.command("set tw=72")
+		vim.command("%s/aaa/bbb/g")
 <	下面的定义可以执行普通模式命令: >
 		def normal(str):
 			vim.command("normal "+str)
-		# 注意使用单引号标识出含有双引号的字符串
+		# Note the use of single quotes to delimit a string containing
+		# double quotes
 		normal('"a2dd"aP')
 <								*E659*
 	":python" 在 Python 2.2 及之前版本上不能嵌套使用。下面命令只对
 	Python 2.3 之后版本适用: >
-		:py vim.command("python print 'Hello again Python'")
+		:python vim.command("python print 'Hello again Python'")
 
 
 vim.eval(str)						*python-eval*
 	使用 vim 内部的表达式处理器来对表达式 str 求值。(参阅 |expression|)。
-	返回表达式的结果：
-	-如果 Vim 表达式计算结果是字符串或者数字，那么返回一个字符串。
-	-如果 Vim 表达式计算结果是 Vim 列表，那么返回一个列表
-	-如果 Vim 表达式计算结果是 Vim 字典，那么返回一个字典
+	返回结果的字符串。
 	例: >
-	    :py text_width = vim.eval("&tw")
-	    :py str = vim.eval("12+12")		# 注意：结果是个字符串！
-						# 使用 string.atoi()
-						# 把它转换成数字
-
-	    :py tagList = vim.eval('taglist("eval_expr")')
-<	后一个将返回一个 python 类型的字典列表，例如：
-	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name':
-	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}]
-
-
-
-
+		text_width = vim.eval("&tw")
+		str = vim.eval("12+12")		# NB result is a string! Use
+						# string.atoi() to convert to
+						# a number.
 
 "vim" 模块中的异常对象
 	vim.error					*python-error*
@@ -157,18 +146,18 @@ vim.eval(str)						*python-eval*
 	为你会丢失该 vim 对象本来代表的值。
 
 vim.buffers						*python-buffers*
-	A sequence 对象，用来提供对 vim 缓冲的操作。该对象支持以下操作: >
-	    :py b = vim.buffers[i]	# Indexing (read-only)
-	    :py b in vim.buffers	# 成员测试
-	    :py n = len(vim.buffers)	# 成员个数
-	    :py for b in vim.buffers:	# 顺序存取
+	一个序列对象，用来提供对 vim 缓冲的操作。该对象支持以下操作: >
+		b = vim.buffers[i]	# Indexing (read-only)
+		b in vim.buffers	# 成员测试
+		n = len(vim.buffers)	# 成员个数
+		for b in vim.buffers:	# 顺序存取
 <
 vim.windows						*python-windows*
-	A sequence 对象，用来提供对 vim 窗口的操作。该对象支持以下操作: >
-	    :py w = vim.windows[i]	# Indexing (read-only)
-	    :py w in vim.windows	# 成员测试
-	    :py n = len(vim.windows)	# 成员个数
-	    :py for w in vim.windows:	# 顺序存取
+	一个序列对象，用来提供对 vim 窗口的操作。该对象支持以下操作: >
+		w = vim.windows[i]	# Indexing (read-only)
+		w in vim.windows	# 成员测试
+		n = len(vim.windows)	# 成员个数
+		for w in vim.windows:	# 顺序存取
 <
 vim.current						*python-current*
 	一个用来提供对各种各样当前 "current" 对象进行操作的对象。它包括一些特
@@ -219,28 +208,25 @@ Python 的输出						*python-output*
 缓冲对象的方法有:
 	b.append(str)	对缓冲附加一行
 	b.append(list)	对缓冲附加一系列行
-			备注: append 方法可以带一个字符串序列作为参数，这和
+			备注 append 方法可以带一个字符串序列作为参数，这和
 			Python 中对应的方法是不同的。
 	b.mark(name)	返回一个 tuple (行,列) 用来代表该位置上的一个有名的
 			标记 (也可以用于 []"<> 等标记)
 	b.range(s,e)	返回一个范围对象 (参见 |python-range|) 用来代表指定
 			缓冲中行 s 与 行 e 之间的部分 (包含 s 和 e
 			|inclusive|).
-注意：当增加一行的时候，这一行里一定不要含有换行符 '\n'。行尾的 '\n' 可以，
-但会被忽略，所以下面的操作是可以的：
-	:py b.append(f.readlines())
 
 例如 (假定 b 是当前缓冲) >
-	:py print b.name		# 输出缓冲的名字
-	:py b[0] = "hello!!!"		# 替换最顶上的一行
-	:py b[:] = None			# 删除整个缓冲
-	:py del b[:]			# 删除整个缓冲
-	:py b[0:0] = [ "a line" ]	# 在第一行前添加一行
-	:py del b[2]			# 删除一行 (第三行)
-	:py b.append("bottom")		# 在缓冲结尾添加一行
-	:py n = len(b)			# 总行数
-	:py (row,col) = b.mark('a') 	# 命名标记
-	:py r = b.range(1,5)		# 缓冲内的一个范围
+	print b.name		# 输出缓冲的名字
+	b[0] = "hello!!!"	# 替换最顶上的一行
+	b[:] = None		# 删除整个缓冲
+	del b[:]		# 删除整个缓冲 (同上)
+	b[0:0] = [ "a line" ]	# 在第一行前添加一行
+	del b[2]		# 删除一行 (第三行)
+	b.append("bottom")	# 在缓冲结尾添加一行
+	n = len(b)		# 总行数
+	(row,col) = b.mark('a') # 命名标记
+	r = b.range(1,5)	# 缓冲内的一个范围
 
 ==============================================================================
 4. 范围对象						*python-range*
