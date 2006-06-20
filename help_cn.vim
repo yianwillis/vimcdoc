@@ -1,21 +1,21 @@
 " Vim syntax extention file for Chinese help
-scriptencoding euc-cn
+scriptencoding utf-8
 " Language:	Vim help file
 " Maintainer:	lang2 (http://vimcdoc.sf.net)
 " Last Change:	2005 March
 " Usage: copy this file to $VIMRUNTIME/syntax
 
+syn match helpHeadlineCn	"^\([^\u0000-\u00ff]\s\|[-A-Z .]\)\+[ \t]\+\*"me=e-1
+syn match helpVimCn		"VIM \(å‚è€ƒ\|ç”¨æˆ·\)æ‰‹å†Œ.*"
+syn keyword helpNoteCn		æ³¨æ„ å¤‡æ³¨
+syn match helpNoteCn		/æ³¨æ„\|å¤‡æ³¨/
+syn match helpYizheCn		/è¯‘è€…/
+syn region helpNotViCn		start="{æ²¡æœ‰" start="{ä»…" end="}" contains=helpLeadBlank,helpHyperTextJump
 
-syn match helpVimCn		"VIM ²Î¿¼ÊÖ²á.*"
-syn match helpVimCn		"VIM ÓÃ»§ÊÖ²á.*"
-syn keyword helpNoteCn		×¢Òâ ±¸×¢
-syn keyword helpYizheCn		ÒëÕß ÒëÕß£º
-"syn region helpNotVi		start="{Vi[: ]" start="{Ã»ÓĞ" start="{½ö" end="}" contains=helpLeadBlank,helpHyperTextJump
-
-
-hi link helpVimCn		Identifier
-hi link helpNoteCn		Todo
-hi link helpNotViCn		Special
+hi link helpHeadlineCn		helpHeadline
+hi link helpVimCn		helpVim
+hi link helpNoteCn		helpNote
+hi link helpNotViCn		helpNotVi
 hi link helpYizheCn		Identifier
 
 " vim: ts=8 sw=2
