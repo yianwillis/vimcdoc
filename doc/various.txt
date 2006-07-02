@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 6.4.  最近更新: 2006年2月
+*various.txt*   For Vim version 7.0.  最近更新: 2006年4月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -10,14 +10,13 @@
 
 1. 其他命令			|various-cmds|
 2. 线上帮助			|online-help|
-3. 打印				|printing|
-4. 用 Vim 代替 less 或 more	|less|
+3. 用 Vim 代替 less 或 more	|less|
 
 ==============================================================================
 1. 其他命令						*various-cmds*
 
 							*CTRL-L*
-CTRL-L			清屏并 (稍后) 重画屏幕。
+CTRL-L			清屏并重画屏幕。重画可能稍后发生，在处理完预读入之后。
 
 							*:redr* *:redraw*
 :redr[aw][!]		立即重画屏幕。如果有 !，先清屏。
@@ -46,46 +45,72 @@ ga			显示光标下字符的 ascii 值，分别以十进制、十六进制和�
 			(其中的 <p> 是某个特殊字符)
 			文件里的 <Nul> 字符内部以 <NL> 存储，但显示为:
 				<^@>  0,  Hex 00,  Octal 000 ~
+			如果字符有合成用字符，同时显示它们。'maxcombine' 的值
+			这时不起作用。
 			助记: 得到 (Get) Ascii 值。{Vi 无此功能}
 
 							*g8*
 g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
-			进制值。它会同时显示合成用字符。一个带三个合成用字符的
-			字符示例:
+			进制值。它会同时显示合成用字符。'maxcombine' 的值这时
+			不起作用。
+			一个带三个合成用字符的字符示例:
 				e0 b8 81 + e0 b8 b9 + e0 b9 89 ~
-			{Vi 无此功能}
+			{Vi 无此功能} {仅当编译时加入 |+multi_byte| 特性才有
+			效}
 
-							*:p* *:pr* *:print*
-:[range]p[rint]		显示 [range] 范围里的行 (缺省是当前行)。
-			注意: 如果你要打印你的文本文件，你需要一个外部程序。
-			GUI 上可以使用 File.Print 菜单项。(打印到纸张上可参见
-			|:hardcopy|)。
+							*8g8*
+8g8			寻找光标所在或之后的非法 UTF-8 字节序列。两种情形下这
+			可以工作:
+			1. 如果 'encoding' 是任何 8 位编码
+			2. 如果 'encoding' 是 "utf-8" 而 'fileencoding' 是任何
+			   8 位编码
+			所以它可以用来编辑本来应该是 UTF-8 但因为包含了非法字
+			节而读入时被当作 8 位编码的文件。
+			文件尾不回绕。
+			注意 如果光标在非法字节上或者光标在多字节字符的中间，
+			此命令不移动光标。
+			{Vi 无此功能} {仅当编译时加入 |+multi_byte| 特性才有
+			效}
 
-:[range]p[rint] {count}
+						*:p* *:pr* *:print* *E749*
+:[range]p[rint][flags]
+			显示 [range] 范围里的行 (缺省是当前行)。
+			注意: 如果你要打印你的文本到纸张上，见 |:hardcopy|。
+			GUI 上可以使用 File.Print 菜单项。
+			|ex-flags| 说明 [flags]。
+
+:[range]p[rint] {count} [flags]
 			显示 {count} 行，从 [range] 指定的范围开始 (缺省是当前
 			行 |cmdline-ranges|)。
+			|ex-flags| 说明 [flags]。
 
 							*:P* *:Print*
-:[range]P[rint] [count]
+:[range]P[rint] [count] [flags]
 			和 ":print" 相同。Vi 里加入这个功能，很明显地，是给那
 			些按 Shift 键太久的人用的 ...
+			|ex-flags| 说明 [flags]。
 
 							*:l* *:list*
-:[range]l[ist] [count]
-			和 :print 相同，但是不可显示字符用 '^' 代替。
+:[range]l[ist] [count] [flags]
+			和 :print 相同，但是不可显示字符用 '^' 代替，行尾加上
+			$。
+			|ex-flags| 说明 [flags]。
 
 							*:nu* *:number*
-:[range]nu[mber] [count]
+:[range]nu[mber] [count] [flags]
 			和 :print 相同，但每行之前显示行号 (也参见 'highlight'
-			选项)。
+			和 'numberwidth' 选项)。
+			|ex-flags| 说明 [flags]。
 
 							*:#*
-:[range]# [count]	和 :number 相同。
+:[range]# [count] [flags]	
+			和 :number 相同。
 
 							*:z* *E144*
 :{range}z[+-^.=]{count}	显示包围 {range} 指定行的若干行文本，如果没有 {range},
 			这显示当前行上下的文本。如果有 {count}，它指定你能看到
-			的行数。不然，使用当前的窗口大小。
+			的行数。否则，如果只有一个窗口，使用 'window' 选项。不
+			然，使用当前的窗口大小。
 
 			:z 可以单独使用，也可以后跟数个标点符号中的一个。他们
 			有如下的效果:
@@ -106,11 +131,13 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			{Vi 并非所有版本都有此功能和所有这些参数}
 
 							*:=*
-:=			显示末行的行号。
+:= [flags]		显示末行的行号。
+			|ex-flags| 说明 [flags]。
 	
-:{range}=		显示 {range} 范围内最后一行的行号。例如，打印当前行
+:{range}= [flags]	显示 {range} 范围内最后一行的行号。例如，打印当前行
 			号: >
 				:.=
+<			|ex-flags| 说明 [flags]。
 
 :norm[al][!] {commands}					*:norm* *:normal*
 			执行若干普通模式命令 {commands}。这使得在命令行上执行
@@ -118,9 +145,10 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			那样。撤销命令会撤销所有的命令。如果给出 [!]，不使用映
 			射。{commands} 必须是完整的命令。如果 {commands} 没有
 			完整给出一个命令，未完成的最后那个命令会被终止，如同
-			键入了<Esc> 或 <C-C> 一样。":normal" 还在工作的时候，
+			键入了 <Esc> 或 <C-C> 一样。":normal" 还在工作的时候，
 			显示不会被刷新。这意味着插入命令也必须完整 (要开始插入
-			模式，见 |:startinsert|)。":" 命令也必须完整。
+			模式，见 |:startinsert|)。":" 命令也必须完整。而且你不
+			能用 "Q" 或 "gQ" 启动 Ex 模式。
 			{commands} 不能以空格开始，如果要，前面加个 1 (一)。一
 			个空格就是空格。
 			{commands} 里忽略 'insertmode' 选项。
@@ -134,7 +162,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			例如: >
 				:exe "normal \<c-w>\<c-w>"
 <			{Vi 当然无此功能}
-			{only 只有当编译时加入 |+ex_extra| 特性才可用}
+			{仅当编译时加入 |+ex_extra| 特性才可用}
 
 :{range}norm[al][!] {commands}				*:normal-range*
 			在 {range} 指定的范围中的每行执行若干普通模式命令
@@ -142,7 +170,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			的第一列。除此以外，和没有给出范围的 ":normal" 命令并
 			无差别。
 			{Vi 无此功能}
-			{only 只有当编译时加入 |+ex_extra| 特性才可用}
+			{仅当编译时加入 |+ex_extra| 特性才可用}
 
 							*:sh* *:shell* *E371*
 :sh[ell]		该命令启动一个外壳。外壳退出后 (执行完 "exit" 命令)，
@@ -200,9 +228,11 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 
 							*+feature-list*
    *+ARP*		仅对 Amiga 有效: 支持 ARP
-B  *+arabic*		支持阿拉伯语 |Arabic| 
+B  *+arabic*		支持阿拉伯语 |Arabic|
 N  *+autocmd*		|:autocmd|，自动命令
-m  *+balloon_eval*	气泡表达式支持 |balloon-eval|
+m  *+balloon_eval*	气泡表达式支持 |balloon-eval|。如果编译时包含支持的
+			GUI (Motif、GTK、GUI) 同时还有 Netbeans/Sun Workshop
+			集成或者 |+eval| 特性之一就包含此特性。
 N  *+browse*		|:browse| 命令
 N  *+builtin_terms*	一些内建终端项 |builtin-terms|
 B  *++builtin_terms*	最大内建终端项支持 |builtin-terms|
@@ -217,6 +247,8 @@ N  *+cmdline_info*	|'showcmd'| 和 |'ruler'|
 N  *+comments*		支持 |'comments'|
 N  *+cryptv*		加密支持 |encryption|
 B  *+cscope*		支持 |cscope|
+m  *+cursorshape*	|termcap-cursor-shape| 支持
+m  *+debug*		带调试的编译。
 N  *+dialog_gui*	支持 |:confirm| 显示 GUI 对话框。
 N  *+dialog_con*	支持 |:confirm| 显示控制台对话框。
 N  *+dialog_con_gui*	支持 |:confirm| 显示 GUI 或控制台对话框。
@@ -238,12 +270,12 @@ N  *+folding*		折叠 |folding|
 N  *+gettext*		消息翻译 |multi-lang|
    *+GUI_Athena*	只对 Unix 有效: Athena |GUI|
    *+GUI_neXtaw*	只对 Unix 有效: neXtaw |GUI|
-   *+GUI_BeOS*		只对 BeOS 有效: BeOS |GUI|
    *+GUI_GTK*		只对 Unix 有效: GTK+ |GUI|
    *+GUI_Motif*		只对 Unix 有效: Motif |GUI|
    *+GUI_Photon*	只对 QNX 有效:  Photon |GUI|
 m  *+hangul_input*	韩语 (Hangul) 输入支持 |hangul|
-   *+iconv*		编译时有 |iconv()| 函数，或有 |/dyn|
+   *+iconv*		编译时有 |iconv()| 函数
+   *+iconv/dyn*		类似 |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| 插入模式补全
 N  *+jumplist*		跳转表 |jumplist|
 B  *+keymap*		键盘映射表 |'keymap'|
@@ -267,6 +299,8 @@ N  *+mouse_xterm*	只对 Unix 有效: xterm 终端鼠标处理 |xterm-mouse|
 B  *+multi_byte*	韩国语和其他多字节语言 |multibyte|
    *+multi_byte_ime*	Win32 多字节字符的输入法 |multibyte-ime|
 N  *+multi_lang*	非英语语言支持 |multi-lang|
+m  *+mzscheme*		Mzscheme 接口 |mzscheme|
+m  *+mzscheme/dyn*	Mzscheme 接口 |mzscheme-dynamic| |/dyn|
 m  *+netbeans_intg*	|netbeans|
 m  *+ole*		只对 Win32 GUI 有效: |ole-interface|
    *+osfiletype*	支持 'osfiletype' 选项和自动命令的文件类型检查。
@@ -276,16 +310,18 @@ m  *+perl*		Perl 接口 |perl|
 m  *+perl/dyn*		Perl 接口 |perl-dynamic| |/dyn|
    *+postscript*	|:hardcopy| 可以写 PostScript 文件
 N  *+printer*		|:hardcopy| 命令
+H  *+profile*		|:profile| 命令
 m  *+python*		Python 接口 |python|
 m  *+python/dyn*	Python 接口 |python-dynamic| |/dyn|
 N  *+quickfix*		|:make| 和 |quickfix| 命令
+N  *+reltime*		|reltime()| 函数
 B  *+rightleft*		从右到左输入 |'rightleft'|
 m  *+ruby*		Ruby 接口 |ruby|
 m  *+ruby/dyn*		Ruby 接口 |ruby-dynamic| |/dyn|
 N  *+scrollbind*	滚动绑定|'scrollbind'|
 B  *+signs*		标号 |:sign|
 N  *+smartindent*	|'smartindent'|
-m  *+sniff*		SNiFF 接口 |sniff|
+m  *+sniff*		SniFF 接口 |sniff|
 N  *+statusline*	'statusline'、'rulerformat' 选项和 'titlestring' 和
 			'iconstring' 的特殊格式
 m  *+sun_workshop*	|workshop|
@@ -338,17 +374,33 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 			重定向到新的目标之前，任何已激活的重定向都会被关闭。
 			如果不想在屏幕上显示消息或者命令的回显，在函数里调用命
 			令，以 ":silent call Function()" 方式调用该函数。
+			一个替代方案是使用 'verbosefile' 选项，它也可以和
+			":redir" 组合使用。
 			{Vi 无此功能}
 
 :redi[r] >> {file}	重定向消息到文件 {file}，如果文件 {file} 已存在，附加
 			在其后。{Vi 无此功能}
 
-:redi[r] @{a-zA-Z}	重定向消息到寄存器 {a-z}。如果给出的名字是大写 {A-Z}，
-			附加到已有内容之后。{Vi 无此功能}
+:redi[r] @{a-zA-Z}>	重定向消息到寄存器 {a-z}。如果给出的名字是大写 {A-Z}，
+			附加到已有内容之后。为了后向兼容，寄存器名后的 '>' 可
+			以省略。{Vi 无此功能}
+:redi[r] @{a-z}>>	附加消息到寄存器 {a-z}。{Vi 无此功能}
 
-:redi[r] @*		重定向消息到剪贴板。{Vi 无此功能}
+:redi[r] @*>		重定向消息到剪贴板。为了后向兼容，寄存器名后的 '>' 可
+			以省略。{Vi 无此功能}
+:redi[r] @*>>		附加消息到剪贴板。{Vi 无此功能}
 
-:redi[r] @"		重定向消息到无名寄存器。{Vi 无此功能}
+:redi[r] @">		重定向消息到无名寄存器。为了后向兼容，寄存器名后的 '>'
+			可以省略。{Vi 无此功能}
+:redi[r] @">>		附加消息到无名寄存器。{Vi 无此功能}
+
+:redi[r] => {var}	重定向消息到变量。如果变量不存在，建立之。如果变量已经
+			存在，它被初始化为空字符串。只能使用字符串变量。重定向
+			开始后，如果变量被删除或加锁或类型被改变，那么将来的命
+			令输出消息会报错。{Vi 无此功能}
+
+:redi[r] =>> {var}	附加消息到已有的寄存器。只能使用字符串变量。
+			{Vi 无此功能}
 
 :redi[r] END		结束消息的重定向。{Vi 无此功能}
 
@@ -375,7 +427,7 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 			    :if v:errmsg != ""
 			    : ... 模式没找到
 <			":silent" 还可以避免敲入回车 (hit-enter) 的提示。执行
-			外部命令时，这可能会使屏幕显示混乱。这时，用 |CTRL-L| 
+			外部命令时，这可能会使屏幕显示混乱。这时，用 |CTRL-L|
 			可以清理。
 			":silent menu ..." 定义一个不会回显命令行命令的菜单。
 			但该命令仍然产生消息。如果连这也不要，在命令本身前用
@@ -384,7 +436,9 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 						*:verb* *:verbose*
 :[count]verb[ose] {command}
 			执行命令 {command}，执行期间 'verbose' 设为 [count]。
-			如果忽略 [count]，缺省为 1。
+			如果忽略 [count]，缺省为 1。":0verbose" 可以用来设置
+			'verbose' 为零。
+
 			在此基础之上再应用 ":silent"，可以产生相应详细度的消息
 			但不显示。":silent" 和 ":verbose" 的组合因而可以只在内
 			部产生消息，然后用 |v:statusmsg| 或相关命令进行检查。
@@ -398,6 +452,13 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 				:4verbose set verbose | set verbose
 <				  verbose=4 ~
 				  verbose=0 ~
+			要记录 verbose 消息到文件，用 'verbosefile' 选项。
+
+							*:verbose-cmd*
+如果 'verbose' 非零，列出 Vim 选项、键映射、缩写、用户定义的函数或命令、高亮组
+或者自动命令的值会同时显示它最近被定义的位置。如果手动定义，不会有这个 "Last
+set" 消息。如果在执行函数、用户命令或者自动命令时定义，报告它定义所在的脚本。
+{仅当编译时加入 +eval 特性才有效}
 
 							*K*
 K			运行程序，查找光标下的关键字。该程序的名字由
@@ -431,8 +492,9 @@ K			运行程序，查找光标下的关键字。该程序的名字由
 			     :sleep 100m     "睡眠一百毫秒
 			     10gs	     "睡眠十秒
 <			可以被 CTRL-C (MS-DOS 上的 CTRL-Break) 中断。
-			"gs" 代表 "goto sleep"。睡眠时光标位于文本处 (如果可见
-			的话)。{Vi 无此功能}
+			"gs" 代表 "goto sleep"。
+			睡眠时如果在可见位置的话，光标定位于文本处。
+			{Vi 无此功能}
 
 							*g_CTRL-A*
 g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
@@ -494,22 +556,40 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 			文件相同语言的标签的文件。参见 |help-translated|。
 
 							*:helpg* *:helpgrep*
-:helpg[rep] {pattern}
+:helpg[rep] {pattern}[@xx]
 			搜索所有的帮助文本并给出一个匹配 {pattern} 行的列表。
-			跳转到第一个匹配。你可以用 |quickfix| 命令来浏览其它的
-			匹配。例如，|:cnext| 会跳到下一个。在 quickfix 窗口
-			里，也可以用 |:cwindow| 得到所有的匹配的列表。
+			跳转到第一个匹配。
+			可选的 [@xx] 指定只寻找 "xx" 语言里的匹配。
+			你可以用 |quickfix| 命令来浏览其它的匹配。例如，
+			|:cnext| 会跳到下一个。在 quickfix 窗口里，也可以用
+			|:cwindow| 得到所有的匹配的列表。
 			{pattern} 视为 Vim 的正规表达式 |pattern|。
 			不使用 'ignorecase'，你可以加上 "\c" 来忽略大小写。
 			大小写敏感的搜索示例: >
 				:helpgrep Uganda
 <			大小写不敏感的搜索示例: >
 				:helpgrep uganda\c
+<			寻找中文帮助的搜索: >
+				:helpgrep backspace@cn
 <			后面不能跟其他的命令。其余部分都被当作模式的一部分。如
 			果需要，可以用 |:execute|。
 			不会在压缩的帮助文件里搜索 (Debian 压缩帮助文件)。
 			{Vi 无此功能}
 
+							*:lh* *:lhelpgrep*
+:lh[elpgrep] {pattern}[@xx]
+			类似于 ":helpgrep"，除了使用位置列表代替 quickfix 列表
+			之外。如果帮助窗口已经打开，使用该窗口的位置列表。不
+			然，打开新帮助窗口，并设置该窗口的位置列表。当前窗口的
+			位置列表不改变。
+
+							*:exu* *:exusage*
+:exu[sage]		显示 Ex 命令的帮助。目的是为了模拟对应的 Nvi 命令。
+			{Vi 无此功能}
+
+							*:viu* *:viusage*
+:viu[sage]		显示普通命令的帮助。目的是为了模拟对应的 Nvi 命令。
+			{Vi 无此功能}
 
 如果不给出参数，|:help| 会打开 'helpfile' 选项指定的文件。否则，就会在
 'runtimepath' 选项指定的多个路径中所有的 "doc/tags" 文件里查找所要求的标签。
@@ -551,7 +631,7 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 :helpf[ind]		和 |:help| 类似，但用一个对话框来提示输入参数。
 			这只是为了向后兼容的需要。它现在执行 ToolBar.FindHelp
 			菜单项而不是内建的对话框。
-			{only 只有在编译时加入 |+GUI_GTK| 特性才有效}
+			{仅当编译时加入 |+GUI_GTK| 特性才有效}
 			{Vi 无此功能}
 
 					*:helpt* *:helptags*
@@ -573,6 +653,14 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 除了原始的英语帮助文件外，我们可以添加其他语言的翻译版本。Vim 会在所有
 'runtimepath' 的目录的 "doc" 子目录里查找帮助文件。这只有在编译时加入
 |+multi_lang| 特性才会有效。
+
+目前，有以下的翻译可用:
+	中文     - 多位作者
+	法语     - David Blanchet 翻译
+	意大利语 - Antonio Colombo 翻译
+	波兰语   - Mikolaj Machowski 翻译
+	俄罗斯语 - Vassily Ragosin 翻译
+在 Vim 网页上可以找到这些翻译: http://www.vim.org/translations.php
 
 帮助文件的翻译版本包含如下文件:
 
@@ -614,318 +702,13 @@ Help 文件一定要使用 latin1 或 utf-8 编码。Vim 如果发现首行有�
 - 不要翻译标签本身。这样才能用 'helplang' 来指定语言偏好。你可以在自己的语言里
   加入新的标签。
 - 如果不想翻译文件的部分内容，用 "tag@en" 的形式标记英语版本的标签。
-- 生成一个包，包含所有的帮助和和标签文件，以便下载。用户把它解开到某个 "doc" 
+- 生成一个包，包含所有的帮助和和标签文件，以便下载。用户把它解开到某个 "doc"
   目录下就可以开始使用了。请告知 Bram，他可以在 www.vim.org 上给加一个链接。
 - 用 |:helptags| 命令生成标签文件 tags。该命令会在指定目录下找到所有语言的版
   本。
 
 ==============================================================================
-3. 打印							*printing*
-
-在 MS-Windows 上 Vim 可以在任何打印机上打印你的文本。在别的系统上，它产生一个
-PostScript 文件。该文件能直接发送到 PostScript 打印机上，也能通过类似
-ghostscript 的程序用在别的打印机上。
-
-3.1 PostScript 打印			|postscript-printing|
-3.2 PostScript 打印编码			|postscript-print-encoding|
-3.3 PostScript 打印疑难解答		|postscript-print-trouble|
-3.4 PostScript 工具			|postscript-print-util|
-3.5 换页字符				|printing-formfeed|
-
-{Vi 无此功能}
-{only 只有在编译时加入 |+printer| 特性才有效}
-
-					*:ha* *:hardcopy* *E237* *E238* *E324*
-:[range]ha[rdcopy][!] [arguments]
-			打印 [range] 指定的行 (缺省是整个文件)。
-
-			在 MS-Windows 上，会显示打印对话框，用来选择打印机和
-			纸张尺寸等。[!] 版本跳过对话框。这里，打印机由
-			'printdevice' 指定。如果 'printdevice' 为空，就使用
-			系统缺省打印机。
-
-			对于非 MS-Windows 的系统，先在一个临时文件写入
-			Postscript，然后用 'printexpr' 打印它。这时，
-			[arguments] 可以在 'printexpr' 里通过 |v:cmdarg| 得到。
-			否则的话，[arguments] 被忽略。'printoptions' 可以用来
-			指定纸张尺寸，是否双面打印，等等。
-
-:[range]ha[rdcopy][!] >{filename}
-			同上，但把 Postscript 打印到文件 {filename}。
-			其中，"%" 等结构通过 |cmdline-special| 得到扩展。
-			需要小心的是，现存的同名文件将被不加提示的覆盖。
-			{only 必须编译时加入 |+postscript| 特性才能有此功能}
-			在 MS-Windows 上应使用打印机驱动程序的 "输出到文件"
-			功能。
-
-打印过程中显示完成的页号和百分比。要中断打印，按中断键 (CTRL-C 或者在 MS-系统
-里。CTRL-Break)。
-
-'printfont' 和 'printoptions' 选项控制打印输出。'printheader' 指定页眉的格式。
-
-打印文件根据指定的边界 (margin) 排版，这不受当前窗口的 'wrap' 或 'linebreak'
-设置影响。'printoptions' 里的 "wrap" 项可以用来关闭回绕。
-
-打印的文本使用当前的高亮色彩，但有以下考虑:
-1) 正常的背景色总是白色 (白纸的颜色)。
-2) 白色文本和缺省前景总是黑色，这样你才能看得出来！
-3) 如果 'background' 是 "dark"，则颜色会加深，否则在白纸上它们因太亮而无法清晰
-   辨别。
-
-
-3.1 PostScript 打印					*postscript-printing*
-						*E455* *E456* *E457* *E624*
-只要你有足够的磁盘空间，产生一个 PostScript 文件当无问题。你需要正确安装运行时
-文件 (如果你能找到帮助文件，它们大概都已经安装好了)。
-
-PostScript 打印有若干限制:
-
-- 'printfont' - 字体名被忽略 (总是用 Courier 家族字体 - 它应在所有 PostScript
-  打印机上可用) 但还能指定字体大小。
-
-- 'printoptions' - 产生 PostScript 输出时使用了双面打印设置，但是否如此打印决
-  定于打印机本身。如果打印机不支持双面打印，则该设置应简单给予忽略。但是有些打
-  印机彻底不能打印。
-
-- 8 位支持 - 尽管很多 8 位打印字符编码得到支持，还是有可能部分字符无法打印。这
-  决定于打印机所带的字体是否能识别该字符。丢失的字符会以一个倒转的问号代替，或
-  者如果该字体不能识别该字符的话，则留一个空格。安装新版的 Courier 字体家族可
-  能会使某一个编码里的字符完全得到支持。
-
-- 多字节支持 - 目前，VIM 会试图把多字节字符转换为 'printencoding'  (如果为空，
-  latin1) 所指定的 8 位编码。不能成功转换的字符会显示为未知字符。如果 Vim 不
-  能完成该转换，打印将会失败。
-
-
-3.2 自定义 8 位打印字符编码			*postscript-print-encoding*
-								*E618* *E619*
-打印 8 位字符数据，如果要使用你自己的打印字符编码，你需要定义自己的 PostScript
-字体编码。关于如果定义字体编码向量的细节超出了本帮助文件的范围。为此，你可查阅
-Addison-Wesley 出版的 PostScript 语言参考手册第三版，或从 http://www.adobe.com
-得到 PDF 版本。以下，说明一下如果使 Vim 找到并使用你自己的打印字符编码。
-
-i.   为你的编码向量定义一个唯一的名字，以不与 VIM 使用的已识别的或标准的编码名
-     字冲突为原则 (这些编码可以参见 |encoding-names|)。最好是一个别人也不太可能
-     使用的名字。
-ii.  把 $VIMRUNTIME/print/latin1.ps 复制到你的 'runtimepath' 里的 print 子目录
-     并换成你选好的唯一的名字。
-iii. 编辑你换名了的 latin1.ps。把所有出现的 latin1 替代成你的编码名 (不要忘了
-     %%Title: 开头的那行)。同时，把字型名字 (glyph names) 数组改成你新定义的
-     编码向量。该数组必须恰好有 256 项，不然你无法打印！
-iv.  在 VIM 里，设置 'printencoding' 为你的唯一的编码名，然后打印你的文件。
-     VIM 会使用你自定义的打印字符编码。
-
-如果除了 %%Title: 开头一行里的编码名字和 %%Version:: 开头的一行里的版本以外，
-你修改了前三行的顺序或者任何别的内容，Vim 会报告此资源文件有错误。
-
-[对通晓 PostScript 者的技术解释 - VIM 打印时，查找并使用和编码同名的文件。该文
-件定义一个新的名为 /VIM-name 的 PostScript Encoding 资源，其中 name 即 VIM 会使
-用的打印字符编码。]
-
-
-3.3 PostScript 打印疑难解答			*postscript-print-trouble*
-									*E621*
-通常唯一说明打印 PostScript 出现问题的症状是你的打印结果没有出现。如果你运气
-好，你也许会得到一页打印说明，告诉你哪个 PostScript 操作符产生了使打印无法继续
-下去的错误。
-
-有若干使打印失败的可能的原因:
-
-- prolog 资源文件版本错误。prolog 资源文件包含一些 VIM 用来打印的必需的
-  PostScript。每个 VIM 版本需要它一个不同的版本。确信你安装了正确的运行时的文
-  件，而且没有在你的 'runtimepath' 里的 print 目录里保留了一个旧版本的 prolog
-  文件。
-
-- 纸张大小。有些 PostScript 打印机会因为不支持请求的纸张大小而中止打印。缺省，
-  VIM 用 A4 纸。用 'printoptions' 找到和设置你打印机合用的纸张大小。如果你找不
-  到所用纸张的名字，度量打印纸的尺寸，然后和 'printoptions' 里支持的纸张大小列
-  表逐一比较，然后用宽_和_高都最接近的纸张。 注意: 实际的纸张尺寸和列出的大小
-  可能稍有差异。如果没有相近的纸张被列出，那你可以试试以下讨论的 PSUtils 里的
-  psresize 工具。
-
-- 双面打印 (duplex)。通常，不支持双面打印的 PostScript 打印机只是忽略该请求。
-  但有的打印机就彻底放弃该打印任务。试试关掉 duplex 再打印。注意: 用 PSUtils
-  里的工具可以手动设置双面打印 - 见下。
-
-- 逐份打印 (collated)。和双面打印一样，大多数不支持逐份打印的打印机只是忽略该
-  请求。有的或许不是这样。试试关掉逐份打印的选项。
-
-- 语法高亮。有些打印管理代码不让含有语法高亮的 PostScript 文件在黑白打印机上打
-  印，即使唯一用到的颜色是黑色。试试关掉语法高亮。
-
-一个安全的 printoptions 设置是: >
-
-	:set printoptions=paper:A4,duplex:off,collate:n,syntax:n
-
-把 "A4" 换成你的打印机纸最适合的纸张大小。
-
-
-3.4 PostScript 工具				*postscript-print-util*
-
-3.4.1 Ghostscript
-
-Ghostscript 是一个 PostScript 和 PDF 的解释器，从而可以显示和在非 PostScript
-的打印机上打印 PostScript 和 PDF 文件。它还可以把 PostScript 文件转换成 PDF 文
-件。
-
-Ghostscript 可在多种平台上运行。
-
-有三个可用的版本:
-
-- AFPL Ghostscript (以前的 Aladdin Ghostscript) 是对非商业用途免费的。它可如下
-  得到:
-
-    http://www.cs.wisc.edu/~ghost/
-
-- GNU Ghostscript 可在 GNU General Public License 下，从以下地址得到:
-
-    ftp://mirror.cs.wisc.edu/pub/mirrors/ghost/gnu/
-
-- 用于商业产品的一个商业版本。
-
-更多关于 Ghostscript 的信息可以在这里找到: 
-
-  http://www.ghostscript.com/
-
-该发布包含对许多非 PostScript 打印机的标准支持。如果你没找到对你的打印机的支
-持，查一下 Ghostscript 网站了解如何支持其他缺省没有支持的打印机。
-
-
-3.4.2 Ghostscript 预览器
-
-Ghostscript 界面十分原始，所以有不少图形化的前端程序。它们提供了方便的
-PostScript 文件选择，不同放大倍数的预览，还有打印。具体细节可查看它们提供的文
-档。
-
-X11
-
-- Ghostview。可如下取得:
-
-    http://www.cs.wisc.edu/~ghost/gv/
-
-- gv。基于 Ghostview。可如下取得:
-
-    http://wwwthep.physik.uni-mainz.de/~plass/gv/
-
-  这里也能找到 (也许不是最新的):
-
-    http://www.cs.wisc.edu/~ghost/gv/
-
-OpenVMS
-
-- 看起来，在主代码已经支持 (未经测试)。见:
-
-    http://wwwthep.physik.uni-mainz.de/~plass/gv/
-
-Windows 和 OS/2
-
-- GSview。可如下取得:
-
-    http://www.cs.wisc.edu/~ghost/gsview/
-
-DOS
-
-- ps_view。可如下取得:
-
-    ftp://ftp.pg.gda.pl/pub/TeX/support/ps_view/
-    ftp://ftp.dante.de/tex-archive/support/ps_view/
-
-Linux
-
-- GSview。流行的 Windows 和 OS/2 预览器的 Linux 版本。可如下取得:
-
-    http://www.cs.wisc.edu/~ghost/gsview/
-
-- BMV。和 Ghostview 与 gv 不同，它不使用 X 而使用 svgalib。可如下取得:
-
-    ftp://sunsite.unc.edu/pub/Linux/apps/graphics/viewers/svga/bmv-1.2.tgz
-
-
-3.4.3 PSUtils
-
-PSUtils 是一组操作 Postscript 文档的工具程序。可以得到许多平台上的二进制发布和
-完全的源代码。PSUtils 可如下得到:
-
-  http://knackered.org/angus/psutils
-
-我们感兴趣的工具包括:
-
-- psnup.     把 PS 文件转化为 N-路打印版本。
-- psselect.  选择页范围和打印顺序。
-- psresize.  改变页面大小。
-- psbook.    重新排列顺序和页面排版，从而打印成册。
-
-一个程序的输出可以作为另一个的输入，从而可以创建复杂的打印文档。
-
-
-N-路 打 印
-
-psnup 工具把一个 VIM 生成的 PostScript 文件转化为一个 n-路版本 (即在一物理页上
-打印 n 个逻辑页)。最简单的生成 2-路输出的方法是先如下一个创建 PostScript 文
-件: >
-
-	:hardcopy > test.ps
-
-然后在你的命令行上执行: >
-
-	psnup -n 2 test.ps final.ps
-<
-注意: 有些 Ghostscript 预览器可能会对 psnup 产生的文件给出警告 - 可以安全地忽
-略。
-
-最后，用你平台上的打印命令把 final.ps 输出到 PostScript 打印机上。(这以后，你
-需要自己删除中间文件: 两个 PostScript 文件)。可以修改 'printexpr' 来执行这项打
-印前的额外转换。
-
-
-双 面 打 印 的 替 代 方 法
-
-用 PS 工具 psselect 可以完成一个原始的双面打印任务。该工具有 -e 和 -o 选项，
-可以分别打印一个 PS 文件的偶数页和奇数页。
-
-先用 'hardcopy' 命令生成 PS 文件，然后如下生成只包含奇数和偶数页的新文件: >
-
-	psselect -o test.ps odd.ps
-	psselect -e test.ps even.ps
-
-然后用你平台上普通的打印命令打印 odd.ps。然后取出打印输出，翻过来，重新放到取
-纸器里。然后用你平台上的打印命令打印 even.ps。现在，所有的偶数页面应该出现在奇
-数页的反面。
-
-要记住以下几点:
-
-1. 第一页的位置。如果打印奇数页时第一页出现在最上方，那你需要倒转奇数页打印的
-   顺序。这可以通过 psselect 的 -r 选项完成。这样可以保证第 2 页打印在第 1 页
-   的反面。
-   注意: 倒转奇数页的打印顺序比倒转偶数页更合适。因为原始的 PS 文件里可能有奇
-   数页。
-
-2. 纸张方位。取出奇数页的打印输出时，你或者需要横向翻转 (沿着长边)，或者需要纵
-   向翻转 (沿着短边)，甚至有可能要旋转 180 度。这决定于打印机 - 桌上型的喷墨打
-   印机可能比看不见纸张打印的路径的办公室激光打印机更明显一点。
-
-
-3.5 换页字符						*printing-formfeed*
-
-缺省，VIM 不对换页 |formfeed| 控制字符作任何特殊处理。设置 'printoptions' 的
-formfeed 项，使得 VIM 可以识别换页字符，从而在新的一页里打出当前行。换页字符
-提供了较为原始的打印控制。不过，还是有若干事情需要注意。
-
-VIM 总是从包含换页字符的那行开始打印 (如果有相应设置，还包括行号)，即使它是这
-一行的第一个字符。这意味着，如果以换页字符开头的一行刚好在一页的第一行，VIM 就
-会打印完全空白的一页。
-
-因为行号在包含换页字符的一行的开始打印，在新页打印的该行的其余部分就不会有行号
-(和 'printoptions' 里置位了 wrap 项时长行的回绕行的打印结果相同)。
-
-如果换页字符是一行的最后一个字符，那么打印会从新页的第二行而不是第一行开始。这
-是因为 VIM 在换页字符后处理行尾，从而在继续打印之前先往下移动了一行。
-
-根据以上几点，我们推荐如果使用换页字符处理，关闭行号的打印，而且不要在行尾用换
-页字符。即使如此，你还是需要调整换页符之前的行的数目，以防止偶尔出现的空白页。
-
-==============================================================================
-4. 用 Vim 代替 less 或 more					*less*
+3. 用 Vim 代替 less 或 more					*less*
 
 如果你用 less 或 more 程序来查阅文件，你不会有语法高亮。所以，你也许会更喜欢
 用 Vim。你可以用外壳脚本 "$VIMRUNTIME/macros/less.sh" 来做到这一点。
