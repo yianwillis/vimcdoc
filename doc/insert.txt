@@ -1,9 +1,8 @@
-*insert.txt*    For Vim version 6.4.  最近更新: 2006年2月
+*insert.txt*    For Vim version 7.0.  最近更新: 2006年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
-				译者: Willis
-				更新：tocer
+				译者: Willis, tocer
 				http://vimcdoc.sf.net
 
 
@@ -105,7 +104,7 @@ CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 			'-'	最近的行内 (少于一行) 删除
 			'='	表达式寄存器；你会被提示输入一个表达式 (见
 				|expression|)
-				注意：0x80(十进制128)用于特殊键，例如，你可以
+				Note 0x80(十进制128)用于特殊键，例如，你可以
 				使用下面的命令向上移动光标
 					CTRL-R ="\<Up>"
 				使用 CTRL-R CTRL-R逐字插入文本.当结果是一个
@@ -232,7 +231,7 @@ start	    允许退格删除插入开始之前的位置；CTRL-W 和 CTRL-U 在�
 使用 CTRL-V，字符的十、八、十六进制值可以直接输入。这样你可以输入任何字符，除
 了换行符 (<NL>，其值为 10)。有五个方法可以输入字符值:
 
-第一个字符	模式	       最大字符数   最大值 ~
+第一个字符	模式	       最大字符数     最大值 ~
 (无)		十进制		   3		255
 o 或 O		八进制		   3		377 	 (255)
  x 或 X		十六进制	   2		ff	 (255)
@@ -256,9 +255,11 @@ CTRL-X 进入一个子模式，那里可以使用若干命令。绝大多数命�
 
 						*i_CTRL-X_CTRL-E*
 CTRL-X CTRL-E		窗口滚动上移一行。
+			补全时见这里：|complete_CTRL-E|
 
 						*i_CTRL-X_CTRL-Y*
 CTRL-X CTRL-Y		窗口滚动下移一行。
+			补全时见这里：|complete_CTRL-Y|
 
 按了 CTRL-X 以后，每个 CTRL-E (CTRL-Y) 滚动窗口上 (下) 移一行，除非这使得光标
 不得不离开当前文件中所在的位置。一旦按了另外一个键，CTRL-X 模式就会退出，而回
@@ -307,11 +308,11 @@ CTRL-G CTRL-J	光标下移一行，到插入开始时所在的列	     *i_CTRL-G
 <S-MouseUp>	向上滚动一个整页 			     *i_<S-MouseUp>*
 CTRL-O		执行命令，然后返回到插入模式		     *i_CTRL-O*
 CTRL-\ CTRL-O	类似于 CTRL-O 但是不移动光标 		     *i_CTRL-\_CTRL-O*
-CTRL-L		如果设置为插入模式，切换到普通模式	     *i_CTRL-L*
+CTRL-L		若 'insertmode' 被设置: 切换到普通模式       *i_CTRL-L*
 CTRL-G u	打断撤销序列，开始新的改变		     *i_CTRL-G_u*
 -----------------------------------------------------------------------
 
-注意: 如果光标键把你带出插入模式，查查 'noesckeys' 选项。
+Note: 如果光标键把你带出插入模式，查查 'noesckeys' 选项。
 
 CTRL-O 命令有时有副作用: 如果光标在行尾之后，它会先被移动该行最后一个字符上。
 在映射里，通常更好的方法是使用 <Esc>  (先在文本中放一个 "x"，<Esc> 这时总会把
@@ -339,7 +340,7 @@ Shift + 光标键不是在所有的终端上都能用的。
 CTRL-G j 和 CTRL-G k 命令可以用来在某一列前插入文本。例如: >
    int i;
    int j;
-把光标定位在第一个 "int" 上，输入 "istatic<C-G>j       "。结果是: >
+把光标定位在第一个 "int" 上，输入 "istatic <C-G>j       "。结果是: >
    static int i;
 	  int j;
 要把相同的文本插入在每行的某列之前，使用可视列块命令 "I" |v_b_I|。
@@ -483,17 +484,31 @@ CTRL-G j 和 CTRL-G k 命令可以用来在某一列前插入文本。例如: >
 12. 拼写建议 						|i_CTRL-X_s|
 13. 'complete' 的关键字					|i_CTRL-N|
 
-所有这些 (除了 10 以外) 都通过 CTRL-X 模式完成。这是插入和替换模式的一个子模
-式。你可以输入 CTRL-X 和一个 CTRL-X 命令进入 CTRL-X 模式。要退出，输入不合法的
+所有这些 (除了 2 以外) 都通过 CTRL-X 模式完成。这是插入和替换模式的一个子模
+式。你可以键入 CTRL-X 和一个 CTRL-X 命令进入 CTRL-X 模式。要退出，输入不合法的
 CTRL-X 模式的命令。合法的键包括 CTRL-X 命令本身，CTRL-N (下一个) 和 CTRL-P (前
 一个)。
 
-如果你想调整匹配的大小，另见 'infercase' 选项。
+如果你想调整匹配的大小写，参见 'infercase' 选项。
 
-注意: CTRL-X 模式下合法的键不经过映射。这使得 ":map ^F ^X^F" 能够工作 (其中 ^F
+							*complete_CTRL-E*
+如果补全被激活，你可以使用 CTRL-E 停止补全并回到原先录入的文字。CTRL-E 本身不
+会被插入。
+
+							*complete_CTRL-Y*
+如果已经弹出菜单，可以使用 CTRL-Y 停止补全并接受当前的选择项。CTRL-Y 本
+身不会被插入。键入空格、回车或者其他非打印字符将离开补全模式并插入键入的字符。
+
+如果已经弹出菜单，有一些特别的功能键，见|popupmenu-keys|。
+
+注意: CTRL-X 模式下合法的键不要映射。这使得 ":map ^F ^X^F" 能够工作 (其中 ^F
 是 CTRL-F 而 ^X 是 CTRL-X)。能够退出的 CTRL-X 模式的键 (任何不合法 CTRL-X 模式
-命令的键) 则经过映射。
+命令的键) 则可以映射。
 另外，通过 'complete' 的补全也使用映射。
+
+注意：当补全激活时，插入模式不能被递归使用。以某种方式调用 ":normal i.." 的映
+射将产生 E523 错误。
+
 
 建议使用以下映射来使得输入补全命令简单一点 (不过它们可能屏蔽其它的命令): >
     :inoremap ^] ^X^]
@@ -525,7 +540,7 @@ CTRL-X 模式的命令。合法的键包括 CTRL-X 命令本身，CTRL-N (下一
 CTRL-X CTRL-L		反向搜索和当前行光标前字符序列完全相同的行。忽略缩进。
 			找到的行插入在光标的前面。
 			'complete' 选项用来决定匹配在哪个缓冲区里搜索。已载入
-			或者未载入的缓冲区都可以。
+			或者未载入的缓冲区都被使用。
 	CTRL-L	或
 	CTRL-P		反向搜索前一个匹配行。替换上一次匹配的行。
 
@@ -566,7 +581,7 @@ CTRL-X CTRL-P		反向搜索以光标前面的关键字开始的单词。找到�
 	只需输入:
 	    printf("(%g, %g, %g)", vector[0], ^P[1], ^P[2]);
 
-搜索会在文件末尾回绕，'wrapscan' 的值不是用在这里的。 
+搜索会在文件末尾回绕，这里不使用'wrapscan' 的值。 
 
 相同的补全内容多次重复会被跳过；这样每次 CTRL-N 和 CTRL-P 都会插入不同的匹配
 (除非只有一个匹配的关键字)。
@@ -614,7 +629,7 @@ CTRL-X CTRL-K		根据 'dictionary' 选项给出的文件搜索光标前关键字
 	CTRL-P		反向搜索前一个匹配的关键字。替换上一次匹配的关键字。
 
 							*i_CTRL-X_CTRL-T*
-CTRL-X CTRL-T		和 CTRL-X CTRL-K，类似，但稍有不同。它使用 'thesaurus'
+CTRL-X CTRL-T		和 CTRL-X CTRL-K 类似，但稍有不同。它使用 'thesaurus'
 			选项，而不是 'dictionary'。如果匹配在同义词字典里找
 			到，同一行里其余单词也在匹配里列出，即使它们并不真的匹
 			配。这样一个单词可以被完全替换。
@@ -711,11 +726,11 @@ CTRL-X CTRL-V		猜测光标前的项目的条目，并找到第一个匹配。
 				:imap <Tab> <C-X><C-V>
 用户自定义补全 						*compl-function*
 
-命令补全可以由用户自定义一个函数来完成，该函数带 'completefunc' 项。参看下面
-如何调用函数说明和例子 |complete-functions|。
+命令补全可以由用户通过 'completefunc' 选项自定义一个函数来完成。参看下面如何
+调用函数及例子|complete-functions|。
 
 							*i_CTRL-X_CTRL-U*
-CTRL-X CTRL-U		猜测光标前的项目的条目，并找到第一个匹配。
+CTRL-X CTRL-U		猜测光标前的项目类型，并找到第一个匹配。
 	CTRL-U	or
 	CTRL-N		使用下一个匹配。替换上一次匹配。
 
@@ -724,14 +739,14 @@ CTRL-X CTRL-U		猜测光标前的项目的条目，并找到第一个匹配。
 
 Omni 补全						*compl-omni*
 
-命令补全可以由用户自定义一个函数来完成，该函数带 'omnifunc' 项。用于特定文件
+命令补全可以由用户通过 'omnifunc' 选项自定义一个函数来完成。这通常用于特定文件
 类型的补全。
 
-参看下面如何调用函数的说明和例子 |complete-functions|。对于特定文件类型的说明
+参看下面如何调用函数及例子 |complete-functions|。对于特定文件类型的说明
 请参看 |compl-omni-filetypes|。
 
 							*i_CTRL-X_CTRL-O*
-CTRL-X CTRL-O		猜测光标前的项目的条目，并找到第一个匹配
+CTRL-X CTRL-O		猜测光标前的项目类型，并找到第一个匹配
 	CTRL-O	or                                      
 	CTRL-N		使用下一个匹配。替换上一次匹配。
                                                         
@@ -741,8 +756,8 @@ CTRL-X CTRL-O		猜测光标前的项目的条目，并找到第一个匹配
 拼写建议 						*compl-spelling*
 
 搜索光标前或者光标上的单词，给出正确的拼写建议以替换它。如果光标前或者光标上的
-单词出现严重拼写，光标移动到单词之后。否则，只是光标前的单词给出拼写建议，即使
-它没有拼写错误。
+单词出现严重拼写错误，光标移动到单词之后。否则，只是光标前的单词给出拼写建议，
+即使它没有拼写错误。
 
 注意: 在很多 unix 终端里，CTRL-S 的功能是暂停显示。使用 's' 代替.  键入 CTRL-Q
 恢复显示。
@@ -777,107 +792,65 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
 			两个 CTRL-X 为止。
 
 
-查找补全的函数 					*complete-functions*
+查 找 补 全 的 函 数 					*complete-functions*
 
-这个函数涉及到 'completefunc' 和 'omnifunc'。
+这涉及到 'completefunc' 和 'omnifunc'。
 
 有两种方式调用这个函数：
-The function is called in two different ways:
-- 第一种调用方式是查找文字的开头部分并补全。
-- First the function is called to find the start of the text to be completed.
-- 第二种调用方式是实际查找匹配部分
-- Later the function is called to actually find the matches.
+- 第一种方式是函数被用于查找文字的开头部分并补全。
+- 第二种方式是函数被用于查找匹配部分
 
-第一种调用的参数是：
-On the first invocation the arguments are:
+第一种调用方式的参数是：
    a:findstart  1
    a:base	empty
 
 函数必须返回补全起始位置的列数。这个数字必须在零到光标所在列 "col('.')"之间。
 函数仅仅考虑光标前的字符，使之成为补全项的一部分。从起始列到光标所在列之间的
-文本将被匹配结果替换。如果没有补全发生，则函数返回 -1。
+文本将被匹配结果替换。如果没有匹配项，则函数返回 -1。
 
-The function must return the column where the completion starts.  It must be a
-number between zero and the cursor column "col('.')".  This involves looking
-at the characters just before the cursor and including those characters that
-could be part of the completed item.  The text between this column and the
-cursor column will be replaced with the matches.  Return -1 if no completion
-can be done.
 
 第二种调用的参数是：
-On the second invocation the arguments are:
    a:findstart  0
-   a:base	the text with which matches should match; the text that was
-		located in the first call (can be empty)
+   a:base	含有匹配项的文本；该文本在第一次调用时被查找（可以为空）
 
-函数必须返回匹配项列表。匹配通常包括 "a:base" 文本。如果没有找到
-匹配，则返回一个空列表。
-The function must return a List with the matching words.  These matches
-usually include the "a:base" text.  When there are no matches return an empty
-List.
+函数必须返回匹配项列表。匹配通常包括 "a:base" 文本。如果没有找到匹配，则返回
+一个空列表。
 						*complete-items*
 每个列表项既可以是字符串，也可以是字典。如果是字符串，就作为补全使用。如果是
-字典，可以包含下面各项：
-	word		补全，必须有
-	abbr		补全的缩写，用于菜单
-	menu		用于弹出菜单的补充文本
-	info		关于补全项的更多信息
-	kind		补全的类型标志
-	icase		如果不等于零，忽略大小写；如果不设置，使用 'ignorecase'
-			选项
-Each list item can either be a string or a Dictionary.  When it is a string it
-is used as the completion.  When it is a Dictionary it can contain these
-items:
-	word		the completion, mandatory
-	abbr		abbreviation of "word", to be used in the menu
-	menu		extra text for the popup menu
-	info		more information about the item
-	kind		single letter indicating the type of completion
-	icase		when non-zero case is to be ignored; when omitted
-			the 'ignorecase' option is used
+字典，可以包含以下各项：
+	word		将被插入的文本，必须有
+	abbr		"word" 的缩写，当它不为空时，它代替 "word" 用于菜单
+	menu		用于弹出菜单的补充文本，在 "word" 或者 "abbr" 之后显示
+	info		关于补全项的更多信息，能够在预览窗口显示
+	kind		单一字母，表示补全类型
+	icase		如果不等于零，在比较匹配项是否一样时，忽略大小写；如果
+			忽略该选项，则该选项等于零．因此仅大小写不同的匹配项也
+			会被加进来
+	dup		如果不等于零，那么即使相同的匹配项也会加进来
 
 除了 'icase'，其他各项都必须是字符串。如果有一项不满足这个要求，将给出错误信息，
-其他项也被忽略。你能够在返回列表中混用字符串和字典。
-All of these except 'icase' must be a string.  If an item does not meet these
-requirements then an error message is given and further items in the list are
-not used.  You can mix string and Dictionary items in the returned list.
+其他项也被忽略。你可以在返回列表中混用字符串和字典。
 
 "menu" 项在弹出菜单中使用，可能会被截断，所以它应该相对短些。"info" 项可以长一
 些，如果在 'completeopt' 中包含 "preview"，那么这一项会显示在预览窗口。在关闭
 弹出菜单后，"info" 项将保留显示。这对于录入函数参数很有用。
-The "menu" item is used in the popup menu and may be truncated, thus it should
-be relatively short.  The "info" item can be longer, it will  be displayed in
-the preview window when "preview" appears in 'completeopt'.  The "info" item
-will also remain displayed after the popup menu has been removed.  This is
-useful for function arguments.
 
-"kind" 项使用一个字母标志补全类型。可以用于分别显示不同的补全内容（不同的颜色
+"kind" 项使用单一字母表示补全类型。可以用于分别显示不同的补全内容（不同的颜色
 或者符号）。
-The "kind" item uses a single letter to indicate the kind of completion.  This
-may be used to show the completion differently (different color or icon).
-Currently these types can be used:
 	v	变量
 	f	函数或者类
 	m	struct 或者类的成员
 	t	typedef
 	d	#define or macro
 
-如果搜索匹配耗时较长，可以调用 |complete_add()| 向总列表中增加每个匹配。但这些
-匹配项将不在返回列表中显示！当正在搜索匹配时，可以调用 |complete_check()| 允
+如果搜索匹配耗时较长，可以调用|complete_add()|向总列表中增加每个匹配。但这些
+匹配项将不在返回列表中显示！当正在搜索匹配时，可以调用|complete_check()|允
 许用户输入。当返回非零结果时，搜索停止。
-When searching for matches takes some time call |complete_add()| to add each
-match to the total list.  These matches should then not appear in the returned
-list!  Call |complete_check()| now and then to allow the user to press a key
-while still searching for matches.  Stop searching when it returns non-zero.
 
-允许函数移动光标，然后恢复回来。由于安全原因，这个选项不能够从 |modeline| 或者
+允许函数移动光标，然后恢复回来。由于安全原因，这个选项不能够从|modeline|或者
  |sandbox| 中设置。
-The function is allowed to move the cursor, it is restored afterwards.  This
-option cannot be set from a |modeline| or in the |sandbox|, for security
-reasons.
 
-一个补全月份名称的例子：
-An example that completes the names of the months: >
+一个补全月份名称的例子： >
 	fun! CompleteMonths(findstart, base)
 	  if a:findstart
 	    " locate the start of the word
@@ -900,8 +873,7 @@ An example that completes the names of the months: >
 	endfun
 	set completefunc=CompleteMonths
 <
-功能同上，但是现在假设搜索比较耗时：
-The same, but now pretending searching for matches is slow: >
+功能同上，但是现在假设搜索比较慢： >
 	fun! CompleteMonths(findstart, base)
 	  if a:findstart
 	    " locate the start of the word
@@ -928,108 +900,80 @@ The same, but now pretending searching for matches is slow: >
 	set completefunc=CompleteMonths
 <
 
-插入补全弹出菜单					*ins-completion-menu*
+插 入 补 全 弹 出 菜 单					*ins-completion-menu*
 							*popupmenu-completion*
 Vim 能够在简单的弹出菜单上显示匹配项。
-Vim can display the matches in a simplistic popup menu.
 
 当下面条件符合时使用弹出菜单
-The menu is used when:
 - 选项 'completeopt' 含有 "menu" or "menuone"。
-- The 'completeopt' option contains "menu" or "menuone".
 - 显示终端至少支持8种颜色。
-- The terminal supports at least 8 colors.
-- 至少有两条匹配项。
-- There are at least two matches.
+- 至少有两条匹配项。如果"menuone"被使用，一条匹配也可以．
 
- 'pumheight' 用于设置最大高度。默认值是使用用户全部有效空间。
-The 'pumheight' option can be used to set a maximum height.  The default is to
-use all space available.
+选项 'pumheight' 用于设置最大高度。默认值是使用全部有效空间。
 
-有两种情况：
-There are two states:
-1. 整个匹配被插入。
-1. A complete match has been inserted.
-2. 部分匹配被插入。
-2. Only part of a match has been inserted.
+有三种情况：
+1. 整个匹配被插入，例如，在使用 CTRL-N 或者 CTRL-P 之后。
+2. 使用光标键选择其他匹配项。匹配项并不插入，只是在弹出菜单中高亮选中的条目。
+2. 只有部分匹配被插入，并且已经键入字符或者使用了退格键。匹配项列表根据光标前
+的单词进行调整。
 
-通常开始于第一种情况，插入第一条匹配项。如果选项 'completeopt' 含有
-"longest" 而且有多条匹配项，那么开始于第二种情况。
-You normally start in the first state, with the first match being inserted.
-When "longest" is in 'completeopt' and there is more than one match you start
-in the second state.
+随着插入第一条匹配项，通常开始于第一种情况。如果选项 'completeopt' 含有
+"longest" 而且有多条匹配项，那么开始于第三种情况。
 
-如果选择下一条匹配，例如键入  CTRL-N 或者 CTRL-P，就从第一种情况转到第二种
-情况。这不会改变匹配项列表。
-If you select another match, e.g., with CTRL-N or CTRL-P, you go from the
-second to the first state.  This doesn't change the list of matches.
+如果选择其他匹配项，例如键入  CTRL-N 或者 CTRL-P，就进入第一种情况。这不会改变
+匹配项列表。
 
-如果退回到原文，就会在第二种情况中。为尽快达到目的，你可以使用快捷键映射 CTRL-P 
-然后在开始补全后立刻使用。
-When you are back at the original text then you are in the second state.  To
-get there right away you can use a mapping that uses CTRL-P right after
-starting the completion: >
+如果退回到原文，就会在第三种情况中。为尽快达到完成，你可以使用快捷键映射 CTRL-P 
+然后在开始补全后立刻使用。 >
 	:imap <F7> <C-N><C-P>
 <
 						*popupmenu-keys*
 在第一种情况中，这些键有特别的含义：
-In the first state these keys have a special meaning:
-<BS> and CTRL-H   删除一个字符，查找光标前单词的匹配项。这会减少列表中匹配项
+<BS> 和 CTRL-H    删除一个字符，并查找光标前单词的匹配项。这会减少列表中匹配项
 		  的数目，经常减少到一条记录，然后转换到第二种情况。
-<BS> and CTRL-H   Delete one character, find the matches for the word before
-		  the cursor.  This reduces the list of matches, often to one
-		  entry, and switches to the second state.
+其他非特殊字符
+		  停止补全，不改变匹配并且插入键入的字符
 
-在第二种情况中，这些键有特别的含义：
-In the second state these keys have a special meaning:
-<BS> and CTRL-H   删除一个字符，查找光标前较短单词的匹配项。这会发现更多的匹配
-		  项。
-<BS> and CTRL-H   Delete one character, find the matches for the shorter word
-		  before the cursor.  This may find more matches.
-CTRL-L		  从当前匹配中增加一个字母，可能减少匹配项的数量。
-CTRL-L		  Add one character from the current match, may reduce the
-		  number of matches.
-任何可打印的，非白色字符：
-any printable, non-white character:
+
+在第二种和第三种情况中，这些键有特别的含义：
+<BS> 和 CTRL-H    删除一个字符，并查找光标前变短的单词的匹配项。这可能会发现更多
+		  的匹配项。
+CTRL-L		  从当前匹配项中增加一个字符，可能会减少匹配项的数量。
+
+其他任何可打印的非空白字符：
 		  增加这个字符，并且减少匹配项的数量。
-		  Add this character and reduce the number of matches.
 
-在两种情况中，可以使用这些功能键：
-In both states these can be used:
-<CR> and <Enter>  接受当前选择的匹配项并停止补全操作。Accept the currently selected match and stop completion.
-<PageUp>	  向后若干项选择一个匹配，但不插入。Select a match several entries back, but don't insert it.
-<PageDown>	  向前若干项选择一个匹配，但不插入。Select a match several entries further, but don't insert it.
-<Up>		  选择前个匹配，就象使用 CTRL-P一样，但不插入。 Select the previous match, as if CTRL-P was used, but don't
-		  insert it.
-<Down>		  选择后个匹配，就象使用 CTRL-N一样，但不插入。Select the next match, as if CTRL-N was used, but don't
-		  insert it.
-其它任何字符：
-Any other character:
-		  停止补全，但不改变匹配，也不插入键入的字符。Note 键入空格或
-者 <Tab> 键在两种情况下使用。
-		  Stop completion without changing the match and insert the
-		  typed character.  Note that typing a space or <Tab> will
-		  work in both states.
+在全部三种情况中，可以使用这些功能键：
+CTRL-Y		  Yes: 接受当前选择的匹配项并停止补全。
+CTRL-E		  结束补全，回退到所键入的内容。
+<PageUp>	  向后若干项选择一个匹配项，但不插入。
+<PageDown>	  向前若干项选择一个匹配项，但不插入。
+<Up>		  选择前个匹配，就象使用 CTRL-P一样，但不插入。 
+<Down>		  选择后个匹配，就象使用 CTRL-N一样，但不插入。
+空格或者 <Tab>
+		  停止补全，不改变匹配，也不插入键入的字符。
 
+
+回车键的行为依赖于你现在所处的情况：
+第一种情况：      使用其本意，插入换行符。
+第二种情况：      插入当前选择项
+第三种情况：      使用其本意，插入换行符。
+
+换句话说：如果你使用光标键在匹配项列表中选择其他条目，按回车键将插入匹配。如果
+你键入其他字符，按回车键将插入换行符。
 
 这些高亮组能够改变菜单颜色：
-The colors of the menu can be changed with these highlight groups:
-Pmenu		普通项 normal item  |hl-Pmenu|
-PmenuSel	被选择项 selected item  |hl-PmenuSel|
-PmenuSbar	滚动条 scrollbar  |hl-PmenuSbar|
-PmenuThumb	thumb of the scrollbar  |hl-PmenuThumb|
+Pmenu		普通项 |hl-Pmenu|
+PmenuSel	被选择项 |hl-PmenuSel|
+PmenuSbar	滚动条 |hl-PmenuSbar|
+PmenuThumb	滚动条按钮  |hl-PmenuThumb|
 
-没有专门的映射用于弹出窗口。但是你可以使用插入模式下的映射，这个映射检查
-|pumvisible()|函数的返回值。例如：
-There are no special mappings for when the popup menu is visible.  However,
-you can use an Insert mode mapping that checks the |pumvisible()| function to
-do something different.  Example: >
+当显示弹出窗口时，没有专门的映射键。但是你可以使用插入模式下的映射，这个映射检查
+|pumvisible()|函数的返回值。例如： >
 	:inoremap <Down> <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>Down>"<CR>
 
-你可以在映射中使用 <expr> ，当键入某个字符且某些条件满足的情况下，使弹出菜单显
-示出来。例如，键入“.”:
-You can use of <expr> in mapping to have the popup menu used when typing a
-character and some condition is met.  For example, for typing a dot: >
+你可以在映射中使用表达式 <expr> ，在键入某个字符且某些条件满足的情况下，使弹出菜
+单显示出来。例如，键入“.”: >
 	inoremap <expr> . MayComplete()
 	func MayComplete()
 	    if (can complete)
@@ -1037,8 +981,9 @@ character and some condition is met.  For example, for typing a dot: >
 	    endif
 	    return '.'
 	endfunc
+
 参见 |:map-<expr>|得到更多的信息。
-See |:map-<expr>| for more info.
+
 
 对 于 特 定 文 件 类 型 的 OMNI 补 全 说 明	    *compl-omni-filetypes*
 
@@ -1078,93 +1023,70 @@ Vim 没有包含 C 编译器，只是能够识别绝大部分格式化的声明�
 
 CSS							*ft-css-omni*
 
-补全属性和相应的值遵循 CSS 2.1 标准
-Complete properties and their appropriate values according to CSS 2.1
-specification. 
+遵循 CSS 2.1 标准来补全属性和相应的值。
 
 
-HTML and XHTML						*ft-html-omni*
-							*ft-xhtml-omni*
+HTML 							*ft-html-omni*
+XHTML							*ft-xhtml-omni*
 
 CTRL-X CTRL-O 能够补全 (X)HTML 文件的各种元素。它不仅可以用来书写 XHTML 1.0 文
 件，而且书写其它的 HTML 文件。特性：
-CTRL-X CTRL-O provides completion of various elements of (X)HTML files.  It is
-designed to support writing of XHTML 1.0 Strict files but will also works for
-other versions of HTML. Features:
 
-- 在 "<" 之后，补全标记名依赖于上下文(no div suggestion inside of an a tag)；
-  '/>' 表明标记结束
-- after "<" complete tag name depending on context (no div suggestion inside
-  of an a tag); '/>' indicates empty tags
-- 在标记中，补全正确的属性（对于标记没有宽度属性）；同时显示属性类型；'*' 表明
+- 在 "<" 之后，补全标签名依赖于上下文(在标签里没有 div 建议)；'/>' 表明标签结束
+- 在标签中，补全正确的属性（对于标签没有宽度属性）；同时显示属性类型；'*' 表明
   需要属性
-- inside of tag complete proper attributes (no width attribute for an a tag);
-  show also type of attribute; '*' indicates required attributes
-- 如果属性只有有限的几个可能值，帮助补全他们
-- when attribute has limited number of possible values help to complete them
+- 如果属性只有有限的几个可能值，就补全它们
 - 补全实体名
-- complete names of entities
-- 补全 "class" 和 "id" 属性的值，这些值取自 <style> 标记和 CSS 文件中
-- complete values of "class" and "id" attributes with data obtained from
-  <style> tag and included CSS files
-- 如果为 "style" 的属性值或者标记补全，那么切换到 |ft-css-omni| 进行补全
-- when completing value of "style" attribute or working inside of "style" tag
-  switch to |ft-css-omni| completion
-- 如果为 "style" 的事件的属性值或者 "脚本" 补全，那么切换到
+- 补全 "class" 和 "id" 属性的值，这些值取自 <style> 标签和 CSS 文件中
+- 如果为 "style" 的属性值或者里面的标签补全，那么切换到 |ft-css-omni| 进行补全
+- 如果为 "style" 的事件的属性值或者里面的 "脚本" 补全，那么切换到
    |ft-javascript-omni| 进行补全
-- when completing values of events attributes or working inside of "script"
-  tag switch to |ft-javascript-omni| completion
-- 如果在 "</" 之后使用 CTRL-X CTRL-O 那么将关闭最近打开的标记
-- when used after "</" CTRL-X CTRL-O will close the last opened tag
+- 如果在 "</" 之后使用 CTRL-X CTRL-O 那么将关闭最近打开的标签
 
-Note: 如果是第一次使用，补全菜单将延迟一点时间显示--这点时间用于数据文件载入。
-Note: When used first time completion menu will be shown with little delay
-- this is time needed for loading of data file.
-Note: 补全可能会在格式糟糕的文档中失效。在这种情况下，请尝试运行 |:maie| 命令
+注意: 如果是第一次使用，补全菜单将延迟一点时间显示--这点时间用于数据文件载入。
+注意: 补全可能会在错误格式的文档中失效。在这种情况下，请尝试运行 |:make| 命令
 检查格式问题。
-Note: Completion may fail in badly formatted documents. In such case try to
-run |:make| command to detect formatting problems.
+
+
+HTML flavor						*html-flavor*
+
+默认的 HTML 补全依赖于文件类型。对于 HTML 文件，它是 HTML 4.01 标准('filetype'
+是 "html")，对于 XHTML，它是 XHTML 1.0 规格('filetype' 是 "xhtml")。
+
+如果在其他任何标签外部进行补全，你可能选择 DOCTYPE 和合适的数据文件，这些文件
+被载入并用于后面所有的补全操作。
+
+关于数据文件格式更多的信息在|xml-omni-datafile|。一些数据文件可以在 Vim 网站
+(|www|)上找到。
+
+注意：b:html_omni_flavor 可以指向一个包含任意 XML 数据的文件。这就使混合 PHP
+(|ft-php-omni|) 和 XML 语言的补全成为可能(假设你有专为它们的数据文件)。如果此
+变量没有被设置，那么会使用 XHTML 1.0 规格
 
 
 JAVASCRIPT                                             *ft-javascript-omni*
 
 补全绝大部分 JavaScript 语言和 DOM 元素。
-Completion of most elements of JavaScript language and DOM elements.
 
 补全：
-Complete:
 
 - 变量
-- variables
-- 函数名称；现时函数参数
-- function name; show function arguments
+- 函数名称；显示函数参数
 - 函数参数
-- function arguments
-- 变量属性
-- properties of variables trying to detect type of variable
+- 变量属性，尽量检测变量类型
 - 根据上下文补全 DOM 对象和属性
-- complete DOM objects and properties depending on context
-- JavaScript 关键字
-- keywords of language
+- 语言中的关键字
 
-在单独的 JavaScript 文件中(&ft==javascript)，在 (X)HTML 的 <script> 标记中，
-在事件的属性值(包括找到的外部文件)中，完成补全
-Completion works in separate JavaScript files (&ft==javascript), inside of
-<script> tag of (X)HTML and in values of event attributes (including scanning
-of external files.
+在单独的 JavaScript 文件中(&ft==javascript)，在 (X)HTML 的 <script> 标签中，
+在事件的属性值(包括找到的外部文件)中，完成补全。
 
 DOM 兼容性
-DOM compatibility
 
-现在(开始于2006年)，主要有两个浏览器 -- MS Internet Explorer 和 Mozilla
+目前(开始于2006年)，主要有两个浏览器 -- MS Internet Explorer 和 Mozilla
 Firefox。这两个软件市场占有率达到 90% 以上。理论标准则由 W3C 组织建立
 (http://www.w3c.org)，但是这些标准并没有完全遵守和实现。
-At the moment (beginning of 2006) there are two main browsers - MS Internet
-Explorer and Mozilla Firefox. These two applications are covering over 90% of
-market. Theoretically standards are created by W3C organisation
-(http://www.w3c.org) but they are not always followed/implemented.
 
-		IE 	FF 	W3C  Omni completion ~
+		IE 	FF 	W3C  Omni 补全 ~
 		+/-     +/-     +    +               ~
                 +       +       -    +               ~
                 +       -       -    -               ~
@@ -1173,69 +1095,86 @@ market. Theoretically standards are created by W3C organisation
 不管标准在浏览器中实现的如何，如果元素在标准中定义，补全插件就会放置该元素到建
 议列表中。如果两个主要的浏览器都实现了某元素，即使没有在标准中定义，它也会被加
 到建议列表中去。其它的元素则不会放进去。
-Regardless from state of implementation in browsers but if element is defined
-in standards, completion plugin will place element in suggestion list. When
-both major engines implemented element, even if this is not in standards it
-will be suggested. All other elements are not placed in suggestion list.
 
 
 PHP                                                     *ft-php-omni*
 
-PHP 代码补全需要标记文件，从外部的标记文件中补全数据。应该使用 Exuberant ctags
+PHP 代码补全需要标签文件，从外部的标签文件中补全数据。应该使用 Exuberant ctags
 软件，版本是 5.5.4 或者更新。你可以在这里找到它: http://ctags.sourceforge.net/
-Completion of PHP code requires tags file for completion of data from external
-files. You should use Exuberant ctags version 5.5.4 or newer. You can find it
-here: http://ctags.sourceforge.net/
 
 脚本补全：
-Script completes:
 
 - 在 $ 之后的变量名
-- after $ variables name
-  - 如果变量被声明为对象，那么增加 "->"，如果标记文件有效，那么显示类名
-  - if variable was declared as object add "->", if tags file is available show
-    name of class
+  - 如果变量被声明为对象，那么增加 "->"，如果标签文件有效，那么显示类名
+  - 在 "->" 之后，只补全给定类的函数名和变量名。为查找类的位置和内容，需要标签
+    文件。因为 PHP 不是强类型语言，用户可以使用 @var 标签去声明类： >
+
+	/* @var $myVar myClass */
+	$myVar->
+<
+    同样，为查找 myClass 的内容，需要标签文件。
 
 - 含有附加信息的函数名：
-- function names with additonal info:
   - in case of built-in functions list of possible arguments and after | type
     data returned by function
   - in case of user function arguments and name of file were function was
     defined (if it is not current file)
 
 - 常量
-- constants names
 - 在 "new" 声明之后的类名
-- class names after "new" declaration
 
 
-note: 如果第一次调用补全功能，Vim 将把所有必要的数据调入内存。这回花些时间。
+注意: 如果第一次调用补全功能，Vim 将把所有需要的数据调入内存。这会花些时间。
 下次补全时，就几乎没有延迟了。
-Note: when doing completion first time Vim will load all necessary data into
-memory. It may take several seconds. After next use of completion delay
-should not be noticeable.
 
-脚本检测光标是否在 <?php ?> 标记内。如果不在里面，会自动切换到
-HTML/CSS/JavaScript 补全。Note:
-Script detects if cursor is inside <?php ?> tags. If it is outside it will
-automatically switch to HTML/CSS/JavaScript completion. Note: contrary to
-original HTML files completion of tags (and only tags) isn't context aware.
+脚本检测光标是否在 <?php ?> 标签内。如果不在里面，会自动切换到
+HTML/CSS/JavaScript 补全。注意：与此相反，对于原始 HTML 文件的标签补全(仅仅对
+于标签补全而言),与上下文无关。
+
+
+RUBY							*ft-ruby-omni*
+
+Ruby 代码补全需要 Vim 带 +ruby 选项编译。
+
+Ruby 补全需要解析缓存，以产生补全列表。这些补全将从模块中读取，这些模块被
+'require' 载入或在当前缓存中定义。
+
+由 CTRL-X CTRL-O 提供的补全是上下文相关的。
+
+	  内  容			   提 供 的 补 全 ~
+
+ 1. 不在类定义中			类名，常量，全局变量
+
+ 2. 在类定义中	     			在类中定义的方法或者常量
+
+ 3. 在 '.', '::' 或者 ':' 之后		被解除参照的对象所适用的方法
+
+ 4. 在 ':' 或者 ':foo' 之后	     	符号名 (以 'foo' 起始)
+
+注意:
+ - Vim 将载入/求值程序代码，以便提供补全。这可能会导致部分代码被执行。这一点很
+   重要。
+ - 在第 1 点中，Vim 可以解析整个缓存，并把类的列表增加到补全结果中。这个特性默
+   认是关闭的，要使其生效，可以把这句话： >
+     let g:rubycomplete_classes_in_global = 1
+<  加到 vimrc 中
+ - 在第 2 点中，不支持匿名类。
+ - 在第 3 点中，Vim 将试着判断对象所支持的方法。
+ - 对于在 rails 项目中的文件，Vim 可以检查并载入 Rails 环境。这个特性默认是关
+   闭的，要使其生效，把这句话： >
+     let g:rubycomplete_rails = 1
+<  加到 vimrc 中
 
 
 SYNTAX							*ft-syntax-omni*
 
 使用语法高亮进行补全操作。它可以用于任何文件类型，能够提供最小化的相关语言的补
 全操作。
-This uses the current syntax highlighting for completion.  It can be used for
-any filetype and provides a minimal language-sensitive completion.
 
-为使语法代码补全生效，你可以运行：
-To enable syntax code completion you can run: >
+为使语法代码补全生效，你可以运行： >
 	setlocal omnifunc=syntaxcomplete#Complete 
 
-你可以把下列语句放到 vimrc 中（要在任何 ":filetype" 命令之后）
-You can automate this by placing the following in your vimrc (after any
-":filetype" command): >
+你可以把下列语句放到 vimrc 中（要在任何 ":filetype" 命令之后），使其自动生效 >
     if has("autocmd") && exists("+omnifunc")
         autocmd Filetype *
                     \	if &omnifunc == "" |
@@ -1244,165 +1183,139 @@ You can automate this by placing the following in your vimrc (after any
     endif
 
 只有在针对特定文件类型的插件不存在的情况下，上述语句才对脚本设置补全操作。
-The above will set completion to this script only if a specific plugin does
-not already exist for that filetype.
 
-每种文件类型都有广泛的语法项目。这个脚本允许你定制那些语法组被包含在列表中或者
+每种文件类型都有大量的语法项。这个脚本允许你定制哪些语法组被包含在列表中或者
 排除在列表外。让我们看看 PHP 文件类型如何处理。
-Each filetype can have a wide range of syntax items.  The plugin allows you to
-customize which syntax groups to include or exclude from the list.  Let's have
-a look at the PHP filetype to see how this works.
 
-如果你编辑一个 index.php 的文件，请运行下面的命令：
-If you edit a file called, index.php, run the following command: >
+如果你编辑一个 index.php 的文件，请运行下面的命令： >
 	:syntax list
 
-首先你将看到有许多不同的语法组。PHP语言可以含有来自不同语言的元素，比如 HTML、
-JavaScript还有其他的语言。在本例中，语法插件只包含以语法类型 "php" 开头的语法
+首先你将看到有许多不同的语法组。PHP语言可以包含来自不同语言的元素，比如 HTML、
+JavaScript 还有其他的语言。在本例中，语法插件只包含以语法类型 "php" 开头的语法
 组。例如，这些语法组都是以 PHP 起始：phpEnvVar, phpIntVar, phpFunctions.
-First thing you will notice is there are many different syntax groups.  The
-PHP language can include elements from different languages like HTML,
-JavaScript and many more.  The syntax plugin will only include syntax groups
-that begin with the filetype, "php", in this case.  For example these syntax
-groups are included by default with the PHP: phpEnvVar, phpIntVar,
-phpFunctions.
 
-PHP 语言有庞大的语法项，这些语法项知道如何高亮语法。这意味着这些语法项会在
-omni 补全列表中全部显示出来。有些人可能发现这个列表不实用或者只对某些项感兴趣。
-The PHP language has an enormous number of items which it knows how to syntax
-highlight.  This means these items will be available within the omni
-completion list.  Some people may find this list unwieldy or are only
-interested in certain items.
+PHP 语言有大量的语法项，这些语法项知道如何高亮语法。这意味着这些语法项会在
+omni 补全列表中全部显示出来。也许有些人会发现这个列表不实用或者只对某些项感兴趣。
 
 有两种办法可以裁剪这个列表（如果必要的话）。如果你希望有些语法组不显示，你可以
-在 vimrc 中增加下列语句：
-There are two ways to prune this list (if necessary).  If you find certain
-syntax groups you do not wish displayed you can add the following to your
-vimrc: >
+在 vimrc 中增加下列语句： >
 	let g:omni_syntax_group_exclude_php = 'phpCoreConstant,phpConstant'
 
-可以增加多个语法项到列表中并以逗号分割。这个变量的基本形式是：
-Add as many syntax groups to this list by comma separating them.  The basic
-form of this variable is: >
+可以增加多个语法项到列表中并以逗号分割。这个变量的基本形式是：  >
 	let g:omni_syntax_group_exclude_{filetype} = 'comma,separated,list'
 
 与此相反也能够办到。在 vimrc 中建立下面的变量，只包含 phpFunctions 和
-phpMethods 语法组。
-For completeness the opposite is also true.  Creating this variable in your
-vimrc will only include the items in the phpFunctions and phpMethods syntax
-groups: >
+phpMethods 语法组。 >
 	let g:omni_syntax_group_include_php = 'phpFunctions,phpMethods'
 
 你可以建立很多这样你所需要的变量，所不同的只是变量名称末尾的文件类型。
-You can create as many of these variables as you need, varying only the
-filetype at the end of the variable name.
+
+
+SQL							*ft-sql-omni*
+
+SQL 语言的补全包括语句、函数、关键字。它也可以动态补全表、过程、视图和带数据的
+列列表，这些数据直接取自数据库。教程和更详细的介绍见 |omni-sql-completion|。
+
+SQL 补全插件可以和其他补全插件一起使用。例如，PHP 文件类型有它自己的插件。由于
+PHP 经常用于生成访问数据库的动态网站，SQL 补全插件也要使用。这就允许你同时补全
+PHP 代码和 SQL 代码。
 
 
 XML							*ft-xml-omni*
 
-Vim 7 为 XML 文件提供上下文敏感的补全操作。它依赖于专门 |xml-omni-datafile| 和
-两个命令： |:XMLns| and |:XMLent|。
-Vim 7 provides mechanism to context aware completion of XML files.  It depends
-on special |xml-omni-datafile| and two commands: |:XMLns| and |:XMLent|.
-特性：
-Features are:
+Vim 7 为 XML 文件提供上下文相关的补全操作。它依赖于专门的 |xml-omni-datafile|
+和两个命令： |:XMLns| 和 |:XMLent|。特性如下：
 
-- 在 "<" 之后，完成标记名称，这取决于上下文。(no div suggest inside of an a tag)
-- after "<" complete tag name depending on context (no div suggest
-  inside of an a tag)
-- 在标记内，补全合适的属性（对于标记，没有宽度属性）
-- inside of tag complete proper attributes (no width attribute for an
-  a tag)
+- 在 "<" 之后，补全标签名，这取决于上下文。
+- 在标签内，补全合适的属性
 - 如果属性值的数量有限，就帮助补全它们
-- when attribute has limited number of possible values help to complete
-  them
-- 补全属性名（在 |xml-omni-datafile|中定义，在当前文件中以 "<!ENTITY" 来声明
-- complete names of entities (defined in |xml-omni-datafile| and in current file
-  with "<!ENTITY" declarations
-- 如果在 "</" 之后使用 CTRL-X CTRL-O，将关闭最后打开的标记
-- when used after "</" CTRL-X CTRL-O will close the last opened tag
+- 补全实体名(在 |xml-omni-datafile|中定义，在当前文件中以 "<!ENTITY" 来声明)
+- 如果在 "</" 之后使用 CTRL-X CTRL-O，将关闭最后打开的标签
 
 XML 数据文件格式					*xml-omni-datafile*
-Format of XML data file					*xml-omni-datafile*
 
-Vim 套件提供两个数据文件作为例子(xhtml10s.vim, xsl.vim)
-Vim distribution provides two data files as examples (xhtml10s.vim, xsl.vim)
+XML 数据文件存放在 'runtimepath' 下的 "autoload/xml" 目录中。Vim 套件提供
+"$VIMRUNTIME/autoload/xml" 目录下的两个样本数据文件。文件名有特别含义，将在命
+令行中使用。文件名应该是唯一的，才不会在以后引起冲突。例如文件名 xhtml10s.vim
+表示它是 XHTML 1.0 规格的数据文件。
 
-XML 数据文件存放在 'runtimepath' 下的 "autoload/xml" 目录中。文件名是有含义的
-，将用于命令行。文件名应该是唯一的，才不会在以后引起冲突。例如文件名
-xhtml10s.vim 表示它是 XHTML 1.0 规格的数据文件。
-XML data files are stored in "autoload/xml" directory in 'runtimepath'.  They
-have meaningful name which will be used in commands. It should be unique name
-which will not create conflicts in future. For example name xhtml10s.vim means
-it is data file for XHTML 1.0 Strict.
+每个文件都含有一个固定名称的变量 g:xmldata_xhtml10s 。它由两部分构成：
 
-文件含有一个固定名称的变量 g:xmldata_xhtml10s 。它由两部分构成：
-File contains one variable with fixed name: g:xmldata_xhtml10s . It is
-compound from two parts: 
-
-1. "g:xmldata_"  general prefix 
-2. "xhtml10s"    name of file and name of described XML dialect
+1. "g:xmldata_"  前缀，对所有的数据文件都不变
+2. "xhtml10s"    文件名和被描述的 XML 语言名；它将作为参数用于 |:XMLns|命令中
 
 第二部分必须和文件名完全一样。
-Part two must be exactly the same as name of file.
 
-变量有 |Dictionary|形式的数据结构。关键字是标记名，值是含有两个元素的 |List|。
-列表中第一个元素也是列表，含有可能的子元素名称，第二个元素是字典，属性名作为关
-键字，属性值作为可能的值。例如：
-Variable is data structure in form of |Dictionary|. Keys are tag names and
-values are two element |List|. First element of List is also List with names
-of possible children, second element is |Dictionary| with names of attributes
-as keys and possible values of attributes as values. Example: >
+该变量是字典|Dictionary|。关键字是标签名，值是含有两个列表|List|元素 。列表中
+第一个元素也是列表，含有可能的子元素名称，第二个元素是字典，属性名作为关
+键字，属性值作为可能的值。例如： >
 
-    let g:xmldata_crippledhtml = {
-    \ "html": 
-    \ [ ["body", "head"], {"id": [], "xmlns": ["http://www.w3.org/1999/xhtml"], 
-    \ "lang": [], "xml:lang": [], "dir": ["ltr", "rtl"]}], 
-    \ "script": 
-    \ [ [], {"id": [], "charset": [], "type": ["text/javascript"], "src": [], 
-    \ "defer": ["BOOL"], "xml:space": ["preserve"]}],
-    \ "meta": 
-    \ [ [], {"id": [], "http-equiv": [], "name": [], "content": [], "scheme": 
-    \ [], "lang": [], "xml:lang": [], "dir": ["ltr", "rtl"]}]
-    \ "vimxmlentities": ["amp", "lt", "gt", "apos", "quot"]},
+    let g:xmldata_crippled = {
+    \ "vimxmlentities": ["amp", "lt", "gt", "apos", "quot"],
+    \ 'vimxmlroot': ['tag1'],
+    \ 'tag1':
+    \ [ ['childoftag1a', 'childoftag1b'], {'attroftag1a': [],
+    \ 'attroftag1b': ['valueofattr1', 'valueofattr2']}],
+    \ 'childoftag1a':
+    \ [ [], {'attrofchild': ['attrofchild']}],
+    \ 'childoftag1b':
+    \ [ ['childoftag1a'], {'attrofchild': []}],
     \ "vimxmltaginfo": {
-    \ 'meta': ['/>', '']},
-    \ "vimxmlattrinfo": {
-    \ 'http-equiv': ['ContentType', '']}
+    \ 'tag1': ['Menu info', 'Long information visible in preview window']},
+    \ 'vimxmlattrinfo': {
+    \ 'attrofchild': ['Menu info', 'Long information visible in preview window']}}
 
-这个例子将被放到 "autoload/xml/crippledhtml.vim" 文件中
-This example should be put in "autoload/xml/crippledhtml.vim" file.
+这个例子将被放到 "autoload/xml/crippled.vim" 文件中，帮助编写该文件： >
 
-在例子中有四个特别的元素:
-In example are visible four special elements:
-
-1. "vimxmlentities" - 
-1. "vimxmlentities" - special key with List containing entities of this XML
-   dialect.
-2. "BOOL" - value of attribute key showing if attribute should be inserted
-   bare ("defer" vs. 'defer="'). It can be the only element of List of
-   attribute values.
-3. "vimxmltaginfo" - special key with dictionary containing as key tag names,
-   as value two element List for additional menu info and long description.
-4. "vimxmlattrinfo" - special key with dictionary containing as key attribute
-   names, as value two element List for additional menu info and long
-   description.
-
-Note: 数据文件中的标记名不能包含命名空间描述。请查看 xsl.vim 中的例子。
-Note: Tag names in data file MUST not contain namespace description. Check
-xsl.vim for example.
+    <tag1 attroftag1b="valueofattr1">
+        <childoftag1a attrofchild>
+                &amp; &lt;
+        </childoftag1a>
+        <childoftag1b attrofchild="5">
+            <childoftag1a>
+                &gt; &apos; &quot;
+            </childoftag1a>
+        </childoftag1b>
+    </tag1>
 
 
-Commands
+在例子中能看见四个特殊的元素:
+
+1. "vimxmlentities" - 一个带有列表的特殊关键字，它包含这个 XML 语言实体。
+2. 如果这个包含了可能的属性值的列表含有一个元素，并且该元素和属性名一样，那么
+   这个属性将被处理为逻辑值，并且如果设置了 'attrname'，那么就把它插入文本，否
+   则 'attrname="'时，不插入
+3. "vimxmltaginfo" - 一个带有字典的特殊关键字，它以标签名为关键字，两个元素的
+   列表作为值，用于额外的菜单信息和较长的描述。
+4. "vimxmlattrinfo" - 一个带有字典的特殊关键字，它以属性名为关键字，两个元素的
+   列表作为值，用于额外的菜单信息和较长的描述。
+
+注意: 数据文件中的标签名不能包含命名空间描述。请查看 xsl.vim 样本。
+注意: 所有的数据和函数作为全局变量和函数是公开的，可以用于个人编写的函数。
+
+
+DTD -> Vim							*dtd2vim*
+
+在|www| 上有个脚本|dtd2vim| ，能够解析 DTD 并为 Vim omni 补全建立 XML 数据文件 
+
+    dtd2vim: http://www.vim.org/scripts/script.php?script_id=1462
+
+查看文件开始部分的详细用例
+该脚本需要 perl 和：
+
+    perlSGML: http://savannah.nongnu.org/projects/perlsgml
+
+
+
+
+命 令
 
 :XMLns {name} [{namespace}]					*:XMLns*
 
-Vim has to know which data file should be used and with which namespace. For
-loading of data file and connecting data with prope namespace use |:XMLns|
-command. First (obligatory) argument is name of data (xhtml10s, xsl). Second
-argument is code of namespace (h, xsl). When used without second argument
-dialect will be used as default - without namespace declaration. For example
-to use XML completion in .xsl files: >
+Vim 必须知道要使用的数据文件和命名空间。为了载入数据文件并使用合适的命名空间连
+接数据，使用命令|:XMLns|。第一个(也是必须要有的)参数是数据名(xhtml10s, xsl)。
+第二个参数是命名空间代码(h, xsl)。如果不使用第二个参数，那么将使用默认值--不声
+明命名空间。例如在 .xsl 文件中使用 XML 补全。 >
 
 	:XMLns xhtml10s
 	:XMLns xsl xsl
@@ -1410,34 +1323,31 @@ to use XML completion in .xsl files: >
 
 :XMLent {name}							*:XMLent*
 
-By default entities will be completed from data file of default
-namespace. XMLent command should be used in case when there is no
-default namespace: >
+默认情况下，从默认命名空间的数据文件中补全实体。XMLent 命令将用于没有默认命名
+空间的情况中。
+By default entities will be completed from the data file of the default
+namespace.  The XMLent command should be used in case when there is no default
+namespace: >
 
 	:XMLent xhtml10s
 
 用法
-Usage
 
-
-While used in situation (after declarations from previous part, | is
-cursor position): >
+当在这种情况下使用时(在前一部分的声明之后，| 是光标位置)： >
 
 	<|
 
-Will complete to appropriate XHTML tag, and in this situation: >
+将补全适当的 XHTML 标签，而在这种情况下： >
 
 	<xsl:|
 
-Will complete to appropriate XSL tag.
+将补全适当的 XSL 标签。
 
-File xmlcomplete.vim provides through |autoload| mechanism
-GetLastOpenTag function which can be used in XML files to get name of
-last open tag with (b:unaryTagsStack has to be defined): >
+
+由 |autoload|机制提供的脚本 xmlcomplete.vim 含有函数 xmlcomplete#GetLastOpenTag()，
+在 XML 文件中，这个函数用于取得最后打开的标签名(b:unaryTagsStack 必须被定义) >
 
 	:echo xmlcomplete#GetLastOpenTag("b:unaryTagsStack")
-
-
 
 
 
@@ -1460,6 +1370,8 @@ i			在光标前插入文本 [count] 次。在插入模式里使用 CTRL-O
 
 							*I*
 I			在本行第一个非空白字符之前插入文本 [count] 次。
+			如果 'cpoptions' 含有 'H' 标志并且本行只包含空格，那么
+			最后一个空格前插入。
 
 							*gI*
 gI			在第一列插入文本 [count] 次。{Vi 无此功能}
@@ -1476,10 +1388,12 @@ gi			在当前缓冲区最近一次插入模式停止的位置继续插入文本
 							*o*
 o			在光标下方开启新行，并插入文本，重复 [count] 次。{Vi:
 			清空 [count] 个屏幕行}
+			如果 'cpoptions' 中含有 '#' 标志，那么忽略 count
 
 							*O*
 O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 			清空 [count] 个屏幕行}
+			如果 'cpoptions' 中含有 '#' 标志，那么忽略 count
 
 这些命令用以开始插入文本。你可以用 <Esc> 退出插入模式。关于插入模式里的其它特
 殊字符，见 |mode-ins-repl|。[count] 的效果只有在退出插入模式以后才会发生。
@@ -1495,16 +1409,26 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 9. Ex 插入命令						*inserting-ex*
 
 							*:a* *:append*
-:{range}a[ppend]	在指定行下方添加若干行。如果没有给出 {range}，文本会在
+:{range}a[ppend][!]	在指定行下方添加若干行。如果没有给出 {range}，文本会在
 			当前行之后插入。
+			增加 [!]，强迫执行命令时使用 'autoindent'。
 
 							*:i* *:in* *:insert*
-:{range}i[nsert]	在指定行上方添加若干行。如果没有给出 {range}，文本会在
+:{range}i[nsert][!]	在指定行上方添加若干行。如果没有给出 {range}，文本会在
 			当前行之前插入。
+			增加 [!]，强迫执行命令时使用 'autoindent'。
 
 这两个命令会继续要求行，直到你输入了只包含 "." 的一行。小心反斜杠开始的行，见
 |line-continuation|。
-注意: ":append" 和 ":insert" 在 ":if" 和 ":endif" 之间不能很好的工作。
+当这些命令和|:global|或者|:vglobal|一起使用时，通过下面的命令可以实现多行文本。
+使用反斜杠分割多行文本。 >
+	:global/abc/insert\
+	one line\
+	another line
+不再需要最后的 "." 。
+The final "." is not needed then.
+注意: ":append" 和 ":insert" 在 ":if" 和 ":endif" ，":for" 和 ":endfor" ":while"
+和 ":endwhile" 之间不能很好的工作。
 
 							*:start* *:startinsert*
 :star[tinsert][!]	在执行完本命令后，启动插入模式。和普通模式下输入 "i" 
@@ -1512,6 +1436,7 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 			光标当前位置开始插入。
 			注意 在函数或者脚本里使用本命令时，插入只会在函数和脚
 			本结束的时候才会开始。
+			这个命令不能和 |normal|一起使用。
 			{Vi 无此功能}
 			{only 只有在编译时带 +ex_extra 特性时才可用}
 
@@ -1519,14 +1444,33 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 :stopi[nsert]		尽快停止插入模式。和在插入模式时输入 <Esc> 类似。可以
 			用在自动命令里。示例: >
 				:au BufEnter scratch stopinsert
+<
+					*replacing-ex* *:startreplace*
+:startr[eplace][!]	在执行完本命令后，启动替换模式。和普通模式下输入 "R"
+			类似。如果包含 !，和 "$R" 类似(例如,在行尾开始替换模式)。
+			否则，就从光标当前位置开始替换。
+			注意 在函数或者脚本里使用本命令时，替换只会在函数和脚
+			本结束的时候才会开始。
+			{Vi 无此功能}
+			{only 只有在编译时带 +ex_extra 特性时才可用}
+
+							*:startgreplace*
+:startg[replace][!]	和|:startreplace|类似，但是使用虚拟替换模式，和使用
+			|gR|类似。
+			{Vi 无此功能}
+			{only 只有在编译时带 +ex_extra 特性时才可用}
 
 ==============================================================================
 10. 插入文件						*inserting-file*
 
 							*:r* *:re* *:read*
-:r[ead] [name]		在光标下方插入文件 [name] (缺省: 当前文件)。
+:r[ead] [++opt] [name]
+			在光标下方插入文件 [name] (缺省: 当前文件)。
+			对于 [++opt] 的可能值见 |++opt||。
 
-:{range}r[ead] [name]	在指定行下方插入文件 [name] (缺省: 当前文件)。
+:{range}r[ead] [++opt] [name]
+			在指定行下方插入文件 [name] (缺省: 当前文件)。
+			对于 [++opt] 的可能值见 |++opt||。
 
 							*:r!* *:read!*
 :r[ead] !{cmd}		执行 {cmd} 并把它的标准输出插入到光标下方。临时文件会
@@ -1544,6 +1488,12 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 
 如果文件名字通过 ":r" 给出，它成为轮换文件。这可以用来，比如说，你想编辑那个文
 件的时候: ":e! #"。该特性可以通过删除 'cpoptions' 选项里的 'a' 标志位来关闭。
+
+用于 ":read" 命令的一个 [++opt] 参数是 ++edit 。当 "read" 命令就像编辑文件那样
+把文件读入到缓存时，这个参数很有用。在一个空缓存中使用如下命令： >
+	:read ++edit filename
+影响是设置 'fileformat', 'fileencoding', 'bomb' 等选项，以便对该文件进行检测。
+注意 会留下一行空行，你也许想把它删掉。
 
 							*file-read*
 'fileformat' 选项设置文件的 <EOL> 风格:
