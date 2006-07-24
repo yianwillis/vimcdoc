@@ -1,4 +1,4 @@
-*netbeans.txt*  For Vim version 6.4.  最近更新: 2006年2月
+*netbeans.txt*  For Vim version 7.0.  最近更新: 2006年4月
 
 
 		  VIM 参考手册    by Gordon Prieur
@@ -18,10 +18,11 @@ NetBeans ExternalEditor 集成特性			*netbeans*
 8.  消息					|netbeans-messages|
 9.  从 NetBeans 里运行 Vim			|netbeans-run|
 10. NetBeans 协议				|netbeans-protocol|
-11. 已知问题					|netbeans-problems|
+11. NetBeans 命令				|netbeans-commands|
+12. 已知问题					|netbeans-problems|
 
 {Vi 没有这些功能}
-{only 只有编译时加入 |+netbeans_intg| 特性才有效}
+{仅当编译时加入 |+netbeans_intg| 特性才有效}
 
 ==============================================================================
 1. 简介							*netbeans-intro*
@@ -158,6 +159,7 @@ http://externaleditor.netbeans.org 和 http://www.netbeans.org。不幸的是，
 							*E463*
 Region is guarded, cannot modify
 		NetBeans 定义了文本的保护区域，你不能编辑这个区域。
+		如果需要，设置当前缓冲区。
 
 							*E656*
 NetBeans dissallows writes of unmodified buffers
@@ -173,6 +175,11 @@ NetBeans connection lost for this buffer
 		NetBeans 关闭了这个文件的连接。Vim 自己要负责修改和保存文件的
 		改变，而 NetBeans 将不会知道这些改变。
 
+							*E744*
+NetBeans does not allow changes in read-only files
+		Vim 通常允许修改只读文件，只有在写文件的时候坚持执行只读规则。
+		不过，NetBeans 部允许你修改只读的文件，如果 vim 这么做，会引起
+		混淆。为此，vim 不允许执行 NetBeans 时修改文件。
 ==============================================================================
 9. 从 NetBeans 里运行 Vim				*netbeans-run*
 
@@ -217,8 +224,15 @@ Agide 用户)。不过，一个修正的漏洞可能会引起混淆: netbeans_sa
 起了若干问题，而 2.2 已修正了这个错误。为了减少这个混淆再次发生的可能性，
 netbeans_saved() 已经被改名为 netbeans_save_buffer()。
 
+我们现在已经使用 2.3 版本。2.2 和 2.3 版本间的差异可以在下面搜索 "2.3"。
+
 目前，消息通过套接字传送。因为消息是简单的 UTF-8 文本，该协议也许可以用其它通
 信机制完成。
+
+示例实现可见 Agide 里的 gvim 工具。现在这里可以找到:
+	http://cvs.sf.net/viewcvs.py/a-a-p/Agide/Tools/GvimTool.py?view=markup
+
+
 
 10.1 消息类型			|nb-messages|
 10.2 术语			|nb-terms|
@@ -231,6 +245,7 @@ netbeans_saved() 已经被改名为 netbeans_save_buffer()。
 *E637* *E638* *E639* *E640* *E641* *E642* *E643* *E644* *E645* *E646*
 *E647* *E648* *E649* *E650* *E651* *E652* *E653* *E654*
 这些错误发生意味着某个消息违反了协议。
+
 
 10.1 消息类型						*nb-messages*
 
@@ -301,7 +316,7 @@ addAnno serNum typeNum off len
 		在缓冲区里加上评注 (annotation)。
 		参数:
 		   serNum	number	该评注的序列号，删除该评注时可以用到
-		   typeNum	number	用 defineAnnoType 定义的该缓冲区的评 
+		   typeNum	number	用 defineAnnoType 定义的该缓冲区的评
 					注类型序列号
 		   off		number	评注所加的位置
 		   len		number	没有用到
@@ -363,6 +378,11 @@ guard off len
 initDone	标识这个缓冲区可用。这也隐含地意味着它成为当前缓冲区。激活
 		BufReadPost 自动事件。
 
+insertDone
+		NetBeans 发送，告知 vim 完成了初始的文件插入。这使得读入信息被
+		显示。2.3 版本之前，打开文件之后不会显示读入消息。
+		2.3 版本新出现。
+
 moveAnnoToFront serNum
 		没有实现。
 
@@ -393,6 +413,11 @@ save		如果缓冲区已修改，就保存之。接口的另一侧应该写入�
 		- 'buftype' 不允许写入
 		2.2 版本新出现。
 
+saveDone
+		NetBeans 发送，告知 vim 保存已经完成。这使得保存消息被显示。
+		2.3 版本之前，保存后不显示保存消息。
+		2.3 版本新出现。
+
 setAsUser	没有实现。
 
 setBufferNumber pathname
@@ -405,8 +430,9 @@ setBufferNumber pathname
 setContentType
 		没有实现。
 
-setDot off	使得缓冲区成为当前缓冲区，并设置光标到相应的位置。折叠会相应打
-		开，使得光标行可见。
+setDot off	使得缓冲区成为当前缓冲区，并设置光标到相应的位置。如果缓冲区在
+		别的窗口里打开，使得该窗口成为当前窗口。
+		折叠会相应打开，使得光标行可见。
 		2.1 版本里 "lnum/col" 可以用来替代 "off"。
 
 setExitDelay seconds
@@ -414,6 +440,7 @@ setExitDelay seconds
 		该延迟用于给 IDE 在真正退出之前处理某些事情的时间。缺省的延迟
 		是 2 秒。
 		2.1 版本新出现。
+		2.3 版本已废弃。
 
 setFullName pathname
 		为缓冲区的文件名设为字符串参数 "pathname"。
@@ -429,7 +456,13 @@ setModified modified
 		如果布尔参数 "modified" 为 "T"，把缓冲区标为已修改，如果为
 		"F"，则标为未修改。
 
-setReadOnly	没有实现。
+setModtime time
+		NetBeans 保存文件后，更新缓冲区的修改时间。
+		2.3 版本新出现。
+
+setReadOnly
+		NetBeans 传递，告知 vim 文件只读。
+		2.3 版本已经实现。
 
 setStyle	没有实现。
 
@@ -446,7 +479,10 @@ showBalloon text
 		符串表达式。气泡在鼠标移动若干像素点后自动消失。
 		2.1 版本新出现。
 
-specialKeys	没有实现。
+specialKeys
+		映射一组键 (最常见的是功能键)，使之可以被传递回 NetBeans 进行
+		处理。这使得 NetBeans 的热键可以从 vim 处调用。
+		2.3 版本已经实现。
 
 startAtomic	开始一个原子操作。屏幕不更新，直到遇到 "endAtomic" 为止。
 
@@ -464,9 +500,12 @@ stopCaretListen
 stopDocumentListen
 		标识缓冲区，使之停止向 IDE 报告改变。
 		和 startDocumentListen 相反。
+		注意: 如果用过 "netbeansBuffer" 把本缓冲区标注为 NetBeans 缓冲
+		区，那么 Vim 就删除该缓冲区。这是为了和 Sun Stdio 10 兼容。
 
 unguard off len
 		和 "guard" 相反，撤销文本区域的保护。
+		如有必要，同时设置当前缓冲区。
 
 version		没有实现。
 
@@ -505,10 +544,20 @@ getText		返回缓冲区的内容，以字符串形式表示。
 insert off text
 		在位置 "off" 之前插入文本 "text"。"text" 是字符串参数，"off"
 		是个数值。
+		"off" 的计算必须在每行结尾处包括 "\n" (新行)，或 'fileformat'
+		为 "dos" 时 "\r\n"。如果在空缓冲区上使用 "insert"，Vim 会自动
+		相应地设置 'fileformat'。
+		如果 "off" 指向行首，文本插在此行之上。这样，如果 "off" 为零，
+		文本行被插到第一行之前。
+		如果 "off" 指向行的开始位置之后，包括行尾的 NUL 处，那么文本的
+		第一行附加于此行之后。其余的行出现于其后。
 		可能的应答:
 			123		没有问题
 			123 !message	失败
 		注意 回答里的消息不用引号括起。
+		如有必要，同时设置当前缓冲区。
+		不把光标移动到修改过的文本上。
+		复位撤销相关信息。
 
 remove off length
 		从位置 "off" 开始删除 "length" 长度字节的文本。两个参数都是数
@@ -517,9 +566,10 @@ remove off length
 			123		没有问题
 			123 !message	失败
 		注意 回答里的消息不用引号括起。
+		如有必要，同时设置当前缓冲区。
 
 saveAndExit	完成关闭 Vim 等价的操作:  ":confirm qall"。如果文件内容没有改
-		动，或者用户没有取消 Vim 退出的操作，不返回没有任何结果。IDE 
+		动，或者用户没有取消 Vim 退出的操作，不返回没有任何结果。IDE
 		认为成功的连接关闭代表成功的结果。如果用户取消该操作，尚存的修
 		改过的缓冲区被作为结果返回，Vim 也不会退出。
 		2.1 版本新出现。
@@ -546,6 +596,10 @@ buttonRelease button lnum col
 		被发送。如果 col 小于 1，鼠标键释放的位置在前导的标号栏。
 		2.2 版本新出现。
 
+disconnect
+		报告 NetBeans vim 在退出，不会尝试读写更多的命令。
+		2.3 版本新出现。
+
 fileClosed	没有实现。
 
 fileModified	没有实现。
@@ -564,7 +618,7 @@ geometry cols rows x y
 		   rows		数值	文本行数
 		   x		数值	光标像素点横坐标
 		   y		数值	光标像素点纵坐标
-		Only works for Motif.
+		只适用于 Motif。
 
 insert off text
 		Vim 里在 "off" 位置插入了文本 "text"。只有在允许的时候才发送。
@@ -589,7 +643,7 @@ keyCommand keyName
 
 		键名前面可能有 "C"、"S" 和/或 "M"，分别代表 Control, Shift 和
 		Meta (Alt) 修饰符。如果有的话，修饰符和键名以连字符分隔。例如:
-		"C-F2".
+		"C-F2"。
 		ASCII 字符是 2.1 版本新出现的。
 
 keyAtPos keyName lnum/col
@@ -640,7 +694,17 @@ DETACH		IDE -> 编辑器: 终止连接，不退出编辑器。用于当 IDE 终�
 REJECT		不用。
 
 ==============================================================================
-11. 已知问题						*netbeans-problems*
+11. NetBeans 命令					*netbeans-commands*
+
+							*:nbkey*
+:nbkey key			把键传递给 NetBeans 进行处理
+
+把键传递给 NetBeans 进行热键处理。你不需要直接调用此命令。不过，NetBeans 在启
+动时会把热键的列表传递给 Vim，如果其中一个键被按下，生成本命令以把该键发送回
+NetBeans。
+
+==============================================================================
+12. 已知问题						*netbeans-problems*
 
 不可能有 NUL 字节。编辑器到 IDE 的转换使得它们成为 NL 字符。反之，IDE -> 编辑
 器却不能插入它们。
