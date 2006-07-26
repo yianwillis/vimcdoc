@@ -1,8 +1,8 @@
-*tips.txt*	For Vim version 6.4.  最近更新: 2006年2月
+*tips.txt*	For Vim version 7.0.  最近更新: 2006年7月
 
 
 		     Vim 参考手册    作者：Bram Moolenaar
-	   译者: iCrazy <icrazy@ustc.edu>  http://vimcdoc.sf.net
+	   译者: iCrazy <icrazy@ustc.edu>, tocer http://vimcdoc.sf.net
 
 
 使用 Vim 的技巧						*tips*
@@ -24,6 +24,7 @@
 十六进制编辑					|hex-editing|
 在一个窗口中执行 shell 命令			|shell-window|
 在自动命令中使用符号 <>				|autocmd-<>|
+高亮匹配括号					|match-parens|
 
 ==============================================================================
 编辑 C 程序						*C-editing*
@@ -184,20 +185,21 @@ CTRL-E 和 CTRL-X CTRL-Y 来滚屏。
 ==============================================================================
 统计单词，行数等					*count-items*
 
-如果需要统计缓冲中一个模式（pattern）出现的频率，需要把 'report' 置为0，然后
-用替换命令把模式替换成它自己。Vim 报告的已替换的数目就是模式出现的次数。例： >
+如果需要统计当前缓冲中一个模式（pattern）出现的频率，用替换命令并加入标志 'n' 
+以避免发生替换。Vim 报告的已替换的数目就是模式出现的次数。例： >
 
-	:set report=0
-	:%s/./&/g		characters
-	:%s/\i\+/&/g		words
-	:%s/^			lines
-	:%s/the/&/g		"the" anywhere
-	:%s/\<the\>/&/g		"the" as a word
+	:%s/./&/gn		字符
+	:%s/\i\+/&/gn		单词
+	:%s/^//n		行
+	:%s/the/&/gn		"the" 任意匹配
+	:%s/\<the\>/&/gn	"the" 全字匹配
 
 你可能希望复位 'hlsearch' 或者使用 ":nohlsearch"。
+如果你希望没有匹配的时候不显示错误，那么增加标志 'e'。
 
-如果 'modifiable' 选项是关的，这些就失效了。另一种办法就是在 Visual 模式下使用
-|v_g_CTRL-G|。
+另一种办法就是在可视模式下使用|v_g_CTRL-G|。
+
+如果你想在多个文件中查找匹配，可以使用|:vimgrep|。
 
 							*count-bytes*
 如果你想数字节数，你可以这样做：
@@ -408,5 +410,65 @@ CTRL-W。 如果 '<' 标志不在 'cpoptions' 选项中，你可以把这些拷�
 
 为了建立一个真实的缓冲菜单，需要用到用户函数（参见 |:function|），不过那里不
 使用符号 <> , 所以失去了在这里举例的意义。
+
+==============================================================================
+高亮匹配括号							*match-parens*
+
+这个例子显示了一些高级技巧的用法：
+- 使用 |CursorMoved| 自动命令事件
+- 使用 |searchpairpos()| 查找匹配括号
+- 使用 |synID()| 检测光标是否位于字符串或者注释中
+- 使用 |:match| 高亮某些东西
+- 使用一个 |pattern| 匹配文件中特定的位置
+
+因为使用脚本级别的局部变量，这些将被放进 Vim 脚本中。它会跳过字符串或者注释中
+的匹配，除非光标起始于字符串或者注释。这需要语法高亮。
+
+在|matchparen|插件中，使用了更高级的版本。
+>
+	let s:paren_hl_on = 0
+	function s:Highlight_Matching_Paren()
+	  if s:paren_hl_on
+	    match none
+	    let s:paren_hl_on = 0
+	  endif
+
+	  let c_lnum = line('.')
+	  let c_col = col('.')
+
+	  let c = getline(c_lnum)[c_col - 1]
+	  let plist = split(&matchpairs, ':\|,')
+	  let i = index(plist, c)
+	  if i < 0
+	    return
+	  endif
+	  if i % 2 == 0
+	    let s_flags = 'nW'
+	    let c2 = plist[i + 1]
+	  else
+	    let s_flags = 'nbW'
+	    let c2 = c
+	    let c = plist[i - 1]
+	  endif
+	  if c == '['
+	    let c = '\['
+	    let c2 = '\]'
+	  endif
+	  let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' .
+		\ '=~?	"string\\|comment"'
+	  execute 'if' s_skip '| let s_skip = 0 | endif'
+
+	  let [m_lnum, m_col] = searchpairpos(c, '', c2, s_flags, s_skip)
+
+	  if m_lnum > 0 && m_lnum >= line('w0') && m_lnum <= line('w$')
+	    exe 'match Search /\(\%' . c_lnum . 'l\%' . c_col .
+		  \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+	    let s:paren_hl_on = 1
+	  endif
+	endfunction
+
+	autocmd CursorMoved,CursorMovedI * call s:Highlight_Matching_Paren()
+	autocmd InsertEnter * match none
+<
 
  vim:tw=78:ts=8:ft=help:norl:
