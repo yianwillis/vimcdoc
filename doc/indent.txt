@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 6.4.    最近更新: 2005年3月
+*indent.txt*    For Vim version 7.0.    最近更新: 2006年7月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -31,7 +31,7 @@ Vim 有很多自动缩进 C 程序的选项。这些选项只对缩进有影响�
 本节下面的内容介绍 'cindent' 选项。
 
 注意'cindent' 缩进不一定对所有的代码都起作用。Vim 不是 C 编译器: 它不能识别
-出所有的语法。
+出所有的语法。至少需要顶层函数在第一列中含有一个 '{'。否则它们容易与声明混淆。
 
 这四个选项控制 C 程序缩进:
 'cindent'	使 Vim 对 C 程序自动缩进。
@@ -61,7 +61,7 @@ Vim 有很多自动缩进 C 程序的选项。这些选项只对缩进有影响�
 	"O"	如果使用 "O" 命令
 	"e"	如果输入处于行首的 "else" 的第二个 'e'
 
-可以加在键值前面的字符: 
+可以加在键值前面的字符: 					*i_CTRL-F*
 !	当 '!' 在一个键值前面，Vim 将不会插入那个键而是将当前行再次缩进。
 	这可以用来定义一个再次缩进当前行的键。CTRL-F 是省缺的键。将 CTRL-I
 	设定为这个键时要小心，因为 CTRL-I 用来表示 <Tab> 的 ASCII 码。
@@ -361,6 +361,14 @@ emacs 风格的缩进模式并不是每次输入 <Enter> 都缩进，而是只�
 		     )			    )
 		      foo;			foo;
 <
+	MN    如果 N 非零，则将 ')' 开始的行和与前一行的第一个字符对齐。
+	      (省缺为 0)。
+
+		cino=			  cino=M1 >
+		  if (cond1 &&		    if (cond1 &&
+			 cond2			   cond2
+		     )				   )
+<
 					*java-cinoptions* *java-indenting*
 	jN    正确地缩进 java 匿名类。目前，'N' 的值并没有用到但其不能为 0
 	      (比如 'j1'). 'j1' 将对下面的代码断这样正确的缩进: >
@@ -379,8 +387,8 @@ emacs 风格的缩进模式并不是每次输入 <Enter> 都缩进，而是只�
 
 
 全部的省缺值是: 
-	cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,l0,gs,hs,ps,ts,+s,c3,C0,(2s,us,
-		   \U0,w0,m0,j0,)20,*30
+	cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,l0,b0,gs,hs,ps,ts,is,+s,c3,C0,
+		   /0,(2s,us,U0,w0,W0,m0,j0,)20,*30
 
 Vim 将一行从第一列开始，如果:
 - 它以 '#' 开头，并且 'cinkeys' 包含 '#'.
@@ -399,12 +407,12 @@ Vim 将一行从第一列开始，如果:
 REMARKS ABOUT SPECIFIC INDENT FILES ~
 
 
-FORTRAN							*fortran-indent*
+FORTRAN							*ft-fortran-indent*
 
 if, select case, 和 where 代码块被缩进。如果 Fortran 在自由格式下，注释，标号
 语句和续行被缩进; 如果在固定格式下，这些就不会被缩进，因为左边要求留出空白。
 因此，在固定格式下，需要手动对标号语句和续行缩进。关于检测源码格式的更深入
-讨论，参见 |fortran-syntax|.
+讨论，参见 |ft-fortran-syntax|.
 
 Do loops ~
 缺省情况下，所有的 do 循环保持原样，不缩进。在 Fortran 里，循环甚至是多重循环
@@ -424,6 +432,19 @@ do/continue 循环也保持不缩进，因为 continue 除作为 do 循环结束
   au! BufRead,BufNewFile *.f90 let b:fortran_do_enddo=1
 
 使 .f90 文件里的 do 循环被缩进而在其它文件比如 .for 文件中不被缩进。
+
+
+PYTHON							*ft-python-indent*
+
+对于以下情况，可以设置缩进数。所举例子被设为缺省值。注意：因为变量被赋值为表达
+式，所以你稍后可以改变 'shiftwidth' 的值来改变此变量。
+
+在 "(" 后缩进： 
+	let g:pyindent_open_paren = '&sw * 2'
+在嵌套的括号后缩进：
+	let g:pyindent_nested_paren = '&sw'
+续行的缩进：
+	let g:pyindent_continue = '&sw * 2'
 
 
 VERILOG							*verilog-indent*
@@ -455,5 +476,15 @@ VERILOG							*verilog-indent*
   let b:verilog_indent_verbose = 1
 
 不要忘了要先设定 ":set cmdheight=2" 才能显示信息。
+
+
+VIM							*ft-vim-indent*
+
+对于缩进 Vim 脚本，用个变量用于指定续行的缩进数，续行就是以反斜杠开始的行：
+>
+	:let g:vim_indent_cont = &sw * 3
+
+缺省值是3倍 shiftwidth 值。
+
 
  vim:tw=78:ts=8:ft=help:norl:
