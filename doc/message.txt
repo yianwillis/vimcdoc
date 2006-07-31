@@ -1,8 +1,8 @@
-*message.txt*   For Vim version 6.4.  最近更新: 2006年2月
+*message.txt*   For Vim version 7.0.  最近更新: 2006年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
-				译者: Willis
+				译者: Willis, tocer
 				http://vimcdoc.sf.net
 
 
@@ -19,7 +19,13 @@
 :messages" 命令可以查看以前给出的消息。根据 'shortmess' 选项的设置，消息可能被
 覆盖或者截断。这时该命令尤其有用。 
 
-记住的消息数目固定是 20。
+对于 tiny 版本，记住的消息数目固定是 20，其他版本是 100。
+
+								*g<*
+这个命令用于查看前一个命令输出的最后一页。如果在提示按回车的时候不小心按了空格
+<Space> 键，那么该命令尤其有用。
+注意：如果在提示显示更多信息时使用 "q" 停止输出，那么只显示已输出的那部分显示。
+当另一个命令输出结果时，会清空前一个命令的输出。
 
 如果使用翻译的消息，显示的第一行会告诉你谁维护这个消息翻译。如果你发现问题，可
 以联系该维护者。
@@ -53,7 +59,7 @@
 消 息 列 表
 			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
-			*E323* *E341* *E473* *E570*  >
+			*E323* *E341* *E473* *E570* *E685* >
   Add to read buffer
   makemap: Illegal mode
   Cannot create BalloonEval with both message and callback
@@ -72,6 +78,7 @@
   line number out of range: {N} past the end
   line count wrong in block {N}
   Internal error
+  Internal error: {function}
   fatal error in cs_manage_matches
 
 这是一个内部错误。如果你能够使之重现，请发送漏洞报告。|bugs|
@@ -252,7 +259,18 @@ Vim 在需要输入却不能读入输入的字符时，就会报错。Vim 没法
 	:w /tmp/test
 改成: >
 	:w! /tmp/test
-<
+
+							*E768*  >
+  Swap file exists: {filename} (:silent! overrides)
+
+系统能够保护你不去覆盖一个正在被 Vim 编辑的文件。在使用 ":w! filename" 
+并且发现一个交换文件时会出现这种情况。
+- 如果交换文件是由以前某个崩溃的编辑对话留下的，也许你希望删除这个交换文件。编
+  辑 {filename} 来找出交换文件的信息。
+- 如果你希望强行保存，那么在命令前加 ":silent!"。例如： >
+	:silent! w! /tmp/test
+< 由于已经增加 ! 来覆盖一个已经存在的文件，所以需要这个特别的命令。
+
 							*E139*  >
   File is loaded in another buffer
 
@@ -326,7 +344,8 @@ Vim 在需要输入却不能读入输入的字符时，就会报错。Vim 没法
   No previous substitute regular expression
 
 在 ":substitute" 命令里，模式里使用的 '~' 字符会被替换成上次用到的模式。如果这
-个命令还没用过，就会失败。见 |/~|。
+个命令还没用过，就会失败。见 |/~|。如果使用 ":s/pat/%/"，也会发生这个问题，"%"
+表示上次的替换文本。
 
 							*E35*  >
   No previous regular expression
@@ -349,7 +368,10 @@ Vim 在需要输入却不能读入输入的字符时，就会报错。Vim 没法
   No such mapping
 
 你使用了 ":unmap" 命令，但是所带的参数不是已有的映射。这个命令的各种变形都会给
-出相同的消息 ":cunmap"、":unmap!"，等等。检查一下尾部的空白。
+出相同的消息 ":cunmap"、":unmap!"，等等。一些提示：
+- 检查一下尾部的空白。
+- 如果是局部缓冲区的映射，需要使用 ":unmap <buffer>"。
+  |:map-<buffer>|
 
 							*E37* *E89*  >
   No write since last change (use ! to override)
@@ -368,6 +390,13 @@ Vim 在需要输入却不能读入输入的字符时，就会报错。Vim 没法
 如果你退出 Vim 时有的缓冲区已经被改变了就会发生这个错误。你或者可以写入改动过
 的缓冲区 (用 |:w|)，或者可以用一个强迫放弃缓冲区的命令，比如，":qa!"。要小心，
 不要丢掉你想保留的改变。你可能忘记某个缓冲区，尤其是置位了 'hidden' 的时候。
+
+>
+  [No write since last change]
+
+如果你执行 Shell 命令时至少一个缓冲区被改变了，就会发生这个错误。要不想显示这
+个信息，可以重设 'warn' 选项。
+
 
 							*E38*  >
   Null argument
@@ -496,6 +525,7 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 
 文件是只读的，而你还要修改它。你可以用 |FileChangedRO| 自动命令事件来避免这个
 消息 (自动命令必须复位 'readonly' 选项)。'modifiable' 可以完全禁止修改文件。
+只有在 'readonly' 被设置后的第一次改变时，才显示这条信息。
 
 							*W13*  >
   Warning: File "{filename}" has been created after editing started
@@ -564,7 +594,7 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 
 命令行以反斜杠开始，或者命令的范围包含了在错误位置出现的反斜杠。通常，这是因为
 命令行的行继续功能被关闭了。从 'cpoptions' 选项里去掉 'C' 标志位就可以打开这一
-功能。
+功能。或者使用 ":set nocp".
 
 							*E471*  >
   Argument required
@@ -624,9 +654,10 @@ Vim 不能读临时文件。
 
 这是一个 (不完全) Vim 给出的各种消息的总览:
 
-		*hit-enter* *press-enter* *hit-return* *press-return*  >
+			*hit-enter* *press-enter* *hit-return*
+			*press-return* *hit-enter-prompt*
 
-  Hit ENTER or type command to continue
+  Press ENTER or type command to continue
 
 如果屏幕上有东西要你阅读，而屏幕即将刷新的时候，就会给出该消息:
 - 执行完外部命令以后 (例如，":!ls" 和 "=")。
@@ -635,6 +666,10 @@ Vim 不能读临时文件。
 
 -> 按 <Enter> 或者 <Space> 可以重画屏幕并继续，除此以外就像该键没按过一样。
 -> 按 ":" 或者其它普通模式的命令字符开始执行该命令。
+-> 按 'k', <Up>, 'u', 'b' or 'g' 可以使消息回滚。这和在 |more-prompt| 中一样。
+   只有关闭 'compatible' 并打开 'more' 时有效。
+-> 忽略按 'j', 'd' or <Down> ，当信息滚到头且关闭 'compatible' 并打开 'more' 
+   的时候，以避免按太多的 'j' 导致信息消失。
 -> 按 <C-Y> 复制 (抽出) 一个无模式的选择到剪贴板寄存器中。
 -> 使用菜单。应用命令行模式定义的字符。
 -> 如果 'mouse' 包含 'r' 标志位，按鼠标左键和按 <Space> 效果相同。不过这使得选
@@ -642,29 +677,38 @@ Vim 不能读临时文件。
 -> GUI 模式上，在末行按鼠标左键和按 <Space> 效果相同。
 {Vi: 只有 ":" 命令得到处理}
 
+如果你不小心按了 <Enter> 或者 <Space>，而你还想看显示的信息，可以使用 |g<|。这
+个命令只有 'more' 被设置时有效。
+
 要减少 hit-enter 提示的次数:
 - 把 'cmdheight' 设为 2 或者更高。
 - 在 'shortmess' 里增加标志位。
 - 复位 'showcmd' 和/或 'ruler'。
+
+如果你的脚本导致出现按回车的提示，你不明所以，也许会发现 |v:scrollstart| 变量
+很有用。
 
 另见 'mouse'。hit-enter 消息使用 |hl-Question| 高亮组。
 
 
 						*more-prompt* *pager*  >
   -- More --
-  -- More -- (RET: line, SPACE: page, d: half page, q: quit)
-  -- More -- (RET/BS: line, SPACE/b: page, d/u: half page, q: quit)
+  -- More -- SPACE/d/j: screen/page/line down, b/u/k: up, q: quit
 
 如果屏幕被消息全部占据，本消息就可能出现。只有在 'more' 选项打开的时候它才会出
 现。它的显示使用 |hk-MoreMsg| 高亮组。
 
 输入					效果 ~
      <CR> 或 <NL> 或 j 或 <Down>	下一行
+     d					下一页(半屏)
+     <Space> or <PageDown>		下一页
+     G					一直向下，直到出现按回车的提示
+
      <BS> 或 k 或 <Up>			往回一行 (*)
-     <Space> 或 <PageDown>		下页
-     b 或 <PageUp>			上页 (*)
-     d					往下半页
      u					往上半页 (*)
+     b 或 <PageUp>			上页 (*)
+     g					回到开始 (*)
+
      q、<Esc> 或 CTRL-C			终止列表
      :					终止列表并进入命令行
     <C-Y>				抽出 (复制) 无模式的选择
@@ -675,13 +719,15 @@ Vim 不能读临时文件。
 
 任何其它的键使得它们的含义被显示出来。
 
-(*) 反向滚动只有在以下的命令里才支持: >
-    :clist
+(*) 反向滚动 {Vi: 无此功能}。只回滚到信息开始滚动时的位置。 >
 (**) 鼠标左键的点击只有在以下情况下才生效:
      - GUI: 屏幕的最后一行。
      - 'mouse' 里定义了 'r' (不过这时文本选择不会工作)。
 
 
 注意: 键的输入是直接从终端取得的。它不通过映射，预输入也被忽略。
+
+这个命令用于查看前一个命令输出的最后一页。如果在提示按回车的时候不小心按了空格
+<Space> 键，那么该命令尤其有用。
 
  vim:tw=78:ts=8:ft=help:norl:
