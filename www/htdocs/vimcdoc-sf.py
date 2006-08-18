@@ -112,6 +112,7 @@ def PrintSidebar():
     print '<p><a href="http://sourceforge.net/project/showfiles.php?group_id=56777" onmouseover="status=\'Download\'; return true" onmouseout="status=''; return true">Download</a></p>'
     print '<p><a href="http://vimcdoc.sf.net/doc/help.html" onmouseover="status=\'Read online\'; return true" onmouseout="status=''; return true">Read Online</a></p>'
     print '<p><a href="http://vimcdoc.sf.net/ChangeLog" onmouseover="status=\'Changelog\'; return true" onmouseout="status=''; return true">Changelog</a></p>'
+    print '<p><a href="http://sourceforge.net/svn/?group_id=56777" onmouseover="status=\'Subversion\'; return true" onmouseout="status=''; return true">Subversion</a></p>'
     print '<p> <a href="http://sourceforge.net/export/rss2_projnews.php?group_id=56777" \
             onmouseover="status=\'Project News RSS Feed\'; return true" onmouseout="status=''; \
             return true">News RSS</a></p>'
@@ -225,20 +226,6 @@ def PrintGetVimcdoc():
     print '<a href="http://gro.clinux.org">gro</a> has a '
     print '<a href="http://vcd.gro.clinux.org">mirror</a>, where you can get the latest for'
     print 'Linux and windows platform.'
-    print '<br><br>'
-    print '</p>'
-    print '<p class="LEFT">'
-    print 'You could also get the latest vimcdoc via CVS. Here is how:'
-    print '<dl>'
-    print '<dt class="NEWS">'
-    print 'As developer:'
-    print '<dd class="NEW">'
-    print 'cvs -z3 -d:ext:developername@cvs.sourceforge.net:/cvsroot/vimcdoc co doc'
-    print '<dt class="NEWS">'
-    print 'As user:'
-    print '<dd class="NEW">'
-    print ' cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/vimcdoc co doc'
-    print '</dl>'
     print '<br><br>'
     print '</p>'
 
