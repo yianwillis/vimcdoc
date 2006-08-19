@@ -1,0 +1,28 @@
+TOPLEVELDIR=../..
+@VERSION    = TOPLEVELDIR + '/VERSION'
+:include $TOPLEVELDIR/common.aap
+@Vimcdoc_txt = TOPLEVELDIR + '/doc/*.txt'
+@Vimcdoc_txt = expand2string(glob( Vimcdoc_txt ))
+
+Files =    index.html
+	   `glob('images/*.png')`
+   	   `glob('images/*.jpg')`
+   	   ChangeLog
+
+:attr {publish = scp://$SF_URL/htdocs/%file%} $Files
+
+all: index.html ChangeLog
+    :print Use 'aap publish' to publish the latest index.html, ChangeLog and screenshots.
+
+publish: $Files
+	:publishall
+
+index.html: $TOPLEVELDIR/NEWS $TOPLEVELDIR/AUTHORS vimcdoc-sf.py
+        :sys touch index.html
+	:sys ./vimcdoc-sf.py -ci
+
+ChangeLog: $Vimcdoc_txt 
+	:sys svn2cl.sh ../../doc
+
+clean:
+    :del {r}{force} *~ *.bak
