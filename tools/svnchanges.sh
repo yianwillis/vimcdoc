@@ -22,7 +22,8 @@ echo '>>>> UPDATED FILES SINCE LAST RELEASE <<<'
 for i in *.txt
 do
     svn log -r $last_rev:HEAD  $i > $change
-    if [ -s $change ]; then
+    len=`cat $change | wc -l`
+    if [ $len -gt 1 ]; then
 	    echo -e "~~~~\t$i\t~~~~"
 	    cat $change
 	    echo -e '\n'
