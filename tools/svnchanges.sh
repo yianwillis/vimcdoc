@@ -25,7 +25,7 @@ do
     len=`cat $change | wc -l`
     if [ $len -gt 1 ]; then
 	    echo -e "~~~~\t$i\t~~~~"
-	    cat $change
+	    cat $change | sed -e '/^-----/d' -e '/^r[0-9]\+/d' -e '/^\s*$/d'
 	    echo -e '\n'
     fi
 done
