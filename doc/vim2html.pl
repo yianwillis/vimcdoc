@@ -161,7 +161,7 @@ EOF
 		}
 
 		$_ = myexpand($_);
-		if ( /^\s*=+\s*$/ ) {
+		if ( /^=+\s*$/ ) {
 			print OUT "</pre><hr class=\"doubleline\" /><pre>\n";
 			$inheader = 1;
 			next;
