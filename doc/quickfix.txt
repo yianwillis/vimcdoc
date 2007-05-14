@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.0.  最近更新：2006年4月
+*quickfix.txt*  For Vim version 7.1.  最近更新：2007年5月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -159,12 +159,13 @@ quickfix 列表相互独立。
 			quickfix 列表。
 
 						*:cb* *:cbuffer* *E681*
-:cb[uffer] [bufnr]	从当前缓冲区读入错误列表。如果给出 {bufnr}，它必须是已
+:cb[uffer][!] [bufnr]	从当前缓冲区读入错误列表。如果给出 {bufnr}，它必须是已
 			经载入的缓冲区号。这时使用该缓冲区，而不是当前缓冲区。
 			可以指定使用的行范围。否则使用缓冲区的所有行。
+			[!] 部分见 |:cc|。
 
 						*:lb* *:lbuffer*
-:lb[uffer] [bufnr]	和 ":cbuffer" 类似，但使用当前窗口的位置列表而不是
+:lb[uffer][!] [bufnr]	和 ":cbuffer" 类似，但使用当前窗口的位置列表而不是
 			quickfix 列表。
 
 						*:cgetb* *:cgetbuffer*
@@ -363,10 +364,10 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 			   [arguments] 为其参数。其输出被储存到错误文件名 (如
 			   是 Unix，也会在屏幕上显示)。
 			5. 错误文件以 'errorformat' 格式读入。
-			6. 如果没指定 [!]，则跳转到首个错误。
-			7. 错误文件被删除。
-			8. 如果 Vim 编译时带 |+autocmd|，执行所有相关的
+			6. 如果 Vim 编译时带 |+autocmd|，执行所有相关的
 			   |QuickFixCmdPost| 自动命令。
+			7. 如果没指定 [!]，则跳转到首个错误。
+			8. 错误文件被删除。
 			9. 你现在可以用 |:cnext|，|:cprevious| 等命令在错误间
 			   移动。见上。
 			本命令不接受注释，所有的 " 将被视为参数的一部分。
@@ -609,6 +610,15 @@ c)	你想自动传递某些参数 (比如，忽略大小写)。
 
 
 如要编写编译器插件，请参考 |write-compiler-plugin|。
+
+
+GCC					*quickfix-gcc*	*compiler-gcc*
+
+GCC 编译器有一个变量可以设置:
+
+g:compiler_gcc_ignore_unmatched_lines
+				忽略不匹配 GCC 定义的任何模式的行。如果 make
+				运行的命令的输出产生误判 (false positive)。
 
 
 MANX AZTEC C				*quickfix-manx* *compiler-manx*
@@ -1049,14 +1059,28 @@ Jikes(TM) 是 IBM Research 发布的一个源码到字节码的 Java 编译器�
 <
 以 "+E" 选项启动时，Jikes(TM) 产生一个单行信息。对此，可以这样匹配： >
 
-  :set efm=%f:%l:%v:%*\\d:%*\\d:%*\\s%m
+  :setl efm=%f:%l:%v:%*\\d:%*\\d:%*\\s%m
 <
 						*errorformat-javac*
 'errorformat' 可以很好的和 javac 工作，javac 的输出中用 "^" 表示错误所在列: >
-  :set efm=%A%f:%l:\ %m,%-Z%p^,%-C%.%#
+  :setl efm=%A%f:%l:\ %m,%-Z%p^,%-C%.%#
 或者: >
-  :set efm=%A%f:%l:\ %m,%+Z%p^,%+C%.%#,%-G%.%#
+  :setl efm=%A%f:%l:\ %m,%+Z%p^,%+C%.%#,%-G%.%#
 <
+这里还有一个用于 Unix 的替代方法，由 Michael F. Lamb 提供。首先过滤错误: >
+  :setl errorformat=%Z%f:%l:\ %m,%A%p^,%-G%*[^sl]%.%#
+  :setl makeprg=javac\ %\ 2>&1\ \\\|\ vim-javac-filter
+
+然后，你需要在路径的某处 (如 ~/bin) 加入 "vim-javac-filter" 并使之可执行。它包
+含如下内容: >
+   #!/bin/sed -f
+   /\^$/s/\t/\ /g;/:[0-9]\+:/{h;d};/^[ \t]*\^/G;
+
+用中文来说，该 sed 脚本:
+- 把单个制表符换成单个空格；并
+- 把包含文件名、行号及错误信息的行移到指针行下方。这样，两者之间无用的错误文本
+  就不会打破 vim "多行消息" 的概念，我们也不用硬要把它当作 "多行信息的继续"。
+
 						*errorformat-ant*
 ant (http://jakarta.apache.org/) 输出的每个行首都为 [javac]，这样我们可将上面
 的格式修改如下: >

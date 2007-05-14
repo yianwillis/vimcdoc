@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.0.  最近更新: 2006年7月
+*filetype.txt*  For Vim version 7.1.  最近更新: 2007年5月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -42,6 +42,8 @@ Vim 可以检测要编辑的文件类型。这是通过检查文件名完成的�
 	该文件是一个 Vim 脚本，其中定义了 BufNewFile 和 BufRead 事件的自动命
 	令。如果根据文件名不能检测到文件类型，则使用 $VIMRUNTIME/scripts.vim
 	来根据文件内容检测之。
+	正在或即将启动 GUI 时，同时也会执行 menu.vim 脚本。如果不想要，参见
+	|'go-M'|。
 
 要加入你自己的文件类型，见下面的 |new-filetype|。要查找一种文件类型的帮助，加
 上 "ft-" 前缀和可选的 "-syntax"、"-indent" 或者 "-plugin" 后缀。例如: >
@@ -270,23 +272,27 @@ filetype.vim 和 scripts.vim 写到一个大家都能用的运行时目录里。
 
 	set runtimepath
 
-产生这样的输出: >
+产生这样的输出:
 
-	runtimepath=/etc/vim,~/.vim,/usr/local/share/vim/vim60
+	runtimepath=/etc/vim,~/.vim,/usr/local/share/vim/vim60 ~
 
-那么 Vim 会调入以下目录的所有插件: >
+那么 Vim 会调入以下目录及其下的所有插件:
 
-	/etc/vim/plugin/
-	~/.vim/plugin/
-	/usr/local/share/vim/vim60/plugin/
+	/etc/vim/plugin/ ~
+	~/.vim/plugin/ ~
+	/usr/local/share/vim/vim60/plugin/ ~
 
 注意 最后一项是 $VIMRUNTIME 被扩展的值。
 
 有没有可能你的插件好像没有被调入呢？通过 |-V| 参数，你可以看看 Vim 启动的时候
 发生了什么: >
-	vim -V1
-你会看到很多信息。其中有关于调入插件的一行注释。它这样开始: >
-	Searching for "plugin/*.vim" in
+
+	vim -V2
+
+你会看到很多信息。其中有关于调入插件的一行注释。它这样开始:
+
+	Searching for "plugin/**/*.vim" in ~
+
 这样，你就能看到 Vim 在哪里查找你的插件脚本了。
 
 ==============================================================================
@@ -367,7 +373,8 @@ NewChangelogEntry	智能地增加新的 Changelog 段 (见下)。
 			<Leader>o 的功能。
 
 变量:
-g:changelog_timeformat	Changelog 段使用的日期 (和时间) 格式。该格式和
+g:changelog_timeformat	已废弃；请用 g:changelog_dateformat 代替。
+g:changelog_dateformat	Changelog 段使用的日期 (和时间) 格式。该格式和
 			|strftime()| 函数使用的语法相同。
 			缺省值是 "%Y-%m-%d"，这是许多 ChangeLog 排版所使用的标
 			准格式。
@@ -405,6 +412,12 @@ g:changelog_date_entry_search
 			缺省值是 '^\s*%d\_s*%u'，它能找到匹配如下形式的行 >
 				|2003-01-14  Full Name  <user@host>
 <			和一些类似的格式。
+
+g:changelog_date_end_entry_search
+			搜索日期项结尾所用的搜索模式。
+			g:changelog_new_date_format 所使用的特殊记号这里也可以
+			使用。
+			缺省值是 '^\s*$'，它匹配只包含空白或全空的行。
 
 Changelog 段插入时，只需要输入最少量的文本。在确定当前日期和用户后，在该文件里
 会搜索以当前日期和用户开头的一段，如果找到了，则在其后添加一个新项。如果没有，

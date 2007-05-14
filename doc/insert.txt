@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.0.  最近更新: 2006年7月
+*insert.txt*    For Vim version 7.1.  最近更新: 2007年5月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -160,7 +160,7 @@ CTRL-V		如果下一个是非数字，按本义插入。对特殊键而言，插
 		使用 CTRL-Q 来代替。|i_CTRL-Q|。
 
 						*i_CTRL-Q*
-CTRL-Q		Same as CTRL-V。
+CTRL-Q		等同于 CTRL-V。
 		注意: 有的终端连接会吃掉 CTRL-Q，导致该快捷键无效。在 GUI 版本
 		里就不会出现这样的问题。
 
@@ -186,7 +186,8 @@ CTRL-_		切换语言，如下:
 		该命令只有在 'allowrevins' 选项置位的时候才有效。
 		请参考 |rileft.txt|，那里可以了解到更多有关从右到左模式的信
 		息。{Vi 无此功能}
-		只有在编译时加入 |+rightleft| 特性才有效 (这不是缺省)。
+		只有在编译时加入 |+rightleft| 特性才有效。
+
 						*i_CTRL-^*
 CTRL-^		切换语言字符输入的使用方式。
 		如果定义了语言映射 |:lmap|:
@@ -947,20 +948,21 @@ CTRL-L		  从当前匹配项中增加一个字符，可能会减少匹配项的�
 
 全部三个状态中，可以使用这些键:
 CTRL-Y		  是 (Yes): 接受当前选择的匹配项并停止补全。
-CTRL-E		  结束 (End) 补全，回退到原来输入的内容。
+CTRL-E		  结束 (End) 补全，回退到选择匹配前原有的内容 (原先输入的或者
+		  最长的公共字符串)。
 <PageUp>	  反向若干项选择一个匹配项，但不插入。
 <PageDown>	  正向若干项选择一个匹配项，但不插入。
 <Up>		  选择前一个匹配，同 CTRL-P，但不插入。
 <Down>		  选择下一个匹配，同 CTRL-N，但不插入。
-空格 或 <Tab>	  停止补全，不改变匹配，插入键入的该字符
+<Space> 或 <Tab>  停止补全，不改变匹配，插入键入的该字符
 
-回车键的行为取决于你现在所处的状态:
+<Enter> 键的行为取决于你现在所处的状态:
 状态一:		  使用现有的文本，然后插入换行符。
 状态二:		  插入当前选择项。
 状态三:		  使用现有的文本，然后插入换行符。
 
-换句话说: 如果你只使用光标键在匹配项列表中选择其它条目，按回车键将插入该匹配。
-如果键入其它字符，按回车键将插入换行符。
+换句话说: 如果你只使用光标键在匹配项列表中选择其它条目，按 <Enter> 键将插入该
+匹配。如果键入其它字符，按 <Enter> 键将插入换行符。
 
 
 下面的高亮组能够改变菜单颜色:
@@ -994,7 +996,9 @@ PmenuThumb	滚动条拇指 (thumb) |hl-PmenuThumb|
 C							*ft-c-omni*
 
 C 代码补全需要标签文件。你应该使用 Exuberant ctags 软件，因为它会加入补全所需
-要的额外信息。你可以在这里找到它： http://ctags.sourceforge.net/
+要的额外信息。你可以在这里找到它： http://ctags.sourceforge.net/ 推荐使用 5.6
+或以后版本。
+
 对于 5.5.4 版本，你应该打上增加 "typename:" 字段的补丁:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 可以在这里找到 MS-Windows 上已经编译好的可执行版本:
@@ -1096,7 +1100,7 @@ DOM 兼容性
 
 PHP							*ft-php-omni*
 
-PHP 代码的补全需要标签文件才能对外部文件的数据进行补全。应该使用 Exuberant
+PHP 代码的补全需要标签文件才能对外部文件的数据和类进行补全。应该使用 Exuberant
 ctags 5.5.4 版本或更新的版本。在这里可以找到它: http://ctags.sourceforge.net/
 
 脚本对以下项目进行补全:
@@ -1147,8 +1151,9 @@ CTRL-X CTRL-O 提供的补全是上下文相关的:
 
 备注:
  - Vim 会载入/执行程序代码，以便提供补全。这可能会导致部分代码被执行。这一点也
-   许值得关注。
- - 在第 1 点中，Vim 可以解析整个缓冲区以获得用作补全结果的类名列表。默认关闭此
+   许值得关注。缺省行为不再打开这一功能。如果需要此特性，加上 >
+     let g:rubycomplete_buffer_loading = 1
+<- 在第 1 点中，Vim 可以解析整个缓冲区以获得用作补全结果的类名列表。默认关闭此
    功能。要使其生效，在 vimrc 里加入 >
      let g:rubycomplete_classes_in_global = 1
 <- 在第 2 点中，不支持匿名类。
@@ -1160,8 +1165,10 @@ CTRL-X CTRL-O 提供的补全是上下文相关的:
 
 SYNTAX							*ft-syntax-omni*
 
-使用当前的语法高亮进行补全。它适用于任何文件类型，并可以提供最小化但和语言相关
-的补全机制。
+Vim 能够对将近 500 种语言进行语法高亮。高亮支持的一部分是需要知道构成语言的关
+键字。许多文件类型已经有专门的补全脚本，而对其它的文件类型而言，syntaxcomplete
+脚本可以提供基本的补全。实现的方法是用 Vim 知道如何色彩高亮的那些文本来构造全
+能补全列表。它适用于任何文件类型，并可以提供基本但和语言相关的补全机制。
 
 要打开语法打开补全: >
 	setlocal omnifunc=syntaxcomplete#Complete
@@ -1202,6 +1209,12 @@ PHP 语言可以进行语法高亮的项目非常多，而这些项目在全能�
 	let g:omni_syntax_group_include_php = 'phpFunctions,phpMethods'
 
 可以建立任意多个这些变量，只要变量名尾部的文件类型不同就行了。
+
+此插件使用 isKeyword 选项来决定用于语法项目的单词边界。例如，Scheme 语言的补全
+应该包含 "-"，call-with-output-file。取决于你的文件类型，此方法未必能提供你期
+待的单词。设置 g:omni_syntax_use_iskeyword 选项为 0 会强制语法插件在单词字符上
+断开。在 vimrc 可以加如下行进行控制: >
+    let g:omni_syntax_use_iskeyword = 0
 
 
 SQL							*ft-sql-omni*
@@ -1464,7 +1477,7 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 			|++opt| 说明 [++opt] 可能的取值。
 
 							*:r!* *:read!*
-:r[ead] !{cmd}		执行 {cmd} 并把它的标准输出插入到光标下方。临时文件会
+:[range]r[ead] !{cmd}	执行 {cmd} 并把它的标准输出插入到光标下方。临时文件会
 			建立来保存命令输出的结果，并被读到缓冲区里。
 			'shellredir' 用来保存命令的输出结果，它可以设置是否包
 			含标准错误的输出。{cmd} 的执行和 ":!{cmd}" 类似，任何

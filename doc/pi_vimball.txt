@@ -1,4 +1,4 @@
-*pi_vimball.txt*	For Vim version 7.0.  最近更新: 2006年4月
+*pi_vimball.txt*	For Vim version 7.1.  最近更新: 2007年5月
 
 			      --------------------
 			      Vimball 归档处理程序
@@ -15,10 +15,13 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	   Use At-Your-Own-Risk!
 
 ==============================================================================
-1. 内容						*vimball* *vimball-contents*
+1. 内容					*vba* *vimball* *vimball-contents*
 
 	1. 内容..........................................: |vimball-contents|
 	2. Vimball 手册..................................: |vimball-manual|
+	   MkVimball.....................................: |:MkVimball|
+	   UseVimball....................................: |:UseVimball|
+	   RmVimball.....................................: |:RmVimball|
 	3. Vimball 历史..................................: |vimball-history|
 
 
@@ -26,16 +29,21 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 2. Vimball 手册						*vimball-manual*
 
 							*:MkVimball*
-		:[range]MkVimball[!] filename
+		:[range]MkVimball[!] filename [path]
 
-	本命令给出的行范围内应该指定要保存在 vimball 里的文件的路径；例如: >
+	行范围内指定要保存在 vimball 里的文件的路径；例如: >
 		plugin/something.vim
 		doc/something.txt
-<	使用此范围内的信息，MkVimball 建立文件 "filename.vba"，Vimball.vim 随
-	后可以用来重新恢复文件。如果文件 "filename.vba" 已经存在，MKVimball 会
-	给出警告而不建立文件。注意 这些路径都相对于你的 .vim (vimfiles) 目录，
-	而所有文件都应该在该目录下。vimball 插件使用 'runtimepath' 里第一个存
-	在的目录作为前缀；它不使用绝对路径。
+<	在此范围的行上使用 >
+		:[range]MkVimball filename
+<
+	建立文件 "filename.vba"，Vimball.vim 随后可以用来重新建立文件。如果文
+	件 "filename.vba" 已经存在，MKVimball 会给出警告而不建立文件。注意 这
+	些路径都相对于你的 .vim (vimfiles) 目录，而所有文件都应该在该目录下。
+	vimball 插件通常使用 'runtimepath' 里第一个存在的目录作为前缀；它不使
+	用绝对路径，除非用户指定的就是如此。
+							*g:vimball_home*
+	通过指定变量 g:vimball_home，你可以覆盖 |'runtimepath'| 的使用。
 
 	如果使用感叹号 (!)，MkVimball 总是建立 "filename.vba" 文件。如果已经存
 	在则覆盖之。此行为和 |:w| 类似。
@@ -49,20 +57,55 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	只有首行是 "Vimball Archiver by Charles E. Campbell, Jr., Ph.D." 的文
 	件才会被认为是 vimball 文件，从而才会继续提取操作。
 
-		:VimballList				*vimball-vimballlist*
+		:VimballList				*:VimballList*
 
 	本命令告诉 Vim 列出归档里的所有文件，包括每个文件的行数。
+
+		:UseVimball [path]			*:UseVimball*
+
+	vimball 文件本身包含了该命令；它调用 vimball#Vimball() 例程，后者负责
+	对 vimball 解包。用户可以手动执行该命令，而不是执行 vimball；用户还可
+	以指定安装的路径，从而覆盖自动的选择，即 |'runtimepath'| 里的第一个存
+	在的目录。
+
+		:RmVimball vimballfile [path]		*:RmVimball*
+
+	本命令删除制定 vimball 产生的所有文件 (但不包括它可能建立的任何目录)。
+	用户也选择卸载文件的路径 (见 |'runtimepath'|)；否则，缺省是
+	'runtimepath' 里的第一个存在的目录。
+	为了实现这一点，该目录下包含一个文件 (.VimballRecord)，它包含了目前为
+	止所有使用过的 vimball 中要删除的文件的记录。
 
 
 ==============================================================================
 3. Vimball 历史 (英文)					*vimball-history* {{{1
 
+	22 : Mar 21, 2007 * uses setlocal instead of set during BufEnter
+	21 : Nov 27, 2006 * (tnx to Bill McCarthy) vimball had a header
+	                    handling problem and it now changes \s to /s
+	20 : Nov 20, 2006 * substitute() calls have all had the 'e' flag
+	                    removed.
+	18 : Aug 01, 2006 * vimballs now use folding to easily display their
+	                    contents.
+			  * if a user has AsNeeded/somefile, then vimball
+			    will extract plugin/somefile to the AsNeeded/
+			    directory
+	17 : Jun 28, 2006 * changes all \s to /s internally for Windows
+	16 : Jun 15, 2006 * A. Mechelynck's idea to allow users to specify
+			    installation root paths implemented for
+			    UseVimball, MkVimball, and RmVimball.
+			  * RmVimball implemented
+	15 : Jun 13, 2006 * bugfix
+	14 : May 26, 2006 * bugfixes
+	13 : May 01, 2006 * exists("&acd") used to determine if the acd
+			    option exists
+	12 : May 01, 2006 * bugfix - the |'acd'| option is not always defined
 	11 : Apr 27, 2006 * VimballList would create missing subdirectories that
-			    the vimball specified were needed.	Fixed.
+			    the vimball specified were needed.  Fixed.
 	10 : Apr 27, 2006 * moved all setting saving/restoration to a pair of
-			    functions.	Included some more settings in them
+			    functions.  Included some more settings in them
 			    which frequently cause trouble.
-	9  : Apr 26, 2006 * various changes to support Windows prediliction
+	9  : Apr 26, 2006 * various changes to support Windows prediction
 			    for backslashes and spaces in file and directory
 			    names.
 	7  : Apr 25, 2006 * bypasses foldenable
