@@ -266,45 +266,6 @@ EOF
 
 
 
-sub writeCSS
-{
-	open( CSS, ">vim-stylesheet.css"  ) || die "Couldn't write stylesheet: $!\n";
-	print CSS<<EOF;
-body { background-color: white; color: black;}
-:link { color: rgb(0,137,139); }
-:visited { color: rgb(0,100,100);
-           background-color: white; /* should be inherit */ }
-:active { color: rgb(0,200,200);
-          background-color: white; /* should be inherit */ }
-
-B.vimtag { color : rgb(250,0,250); }
-
-h1, h2 { color: rgb(82,80,82); text-align: center; }
-h3, h4, h5, h6 { color: rgb(82,80,82); margin: 0px; }
-.doubleline {
-	border: none 0; border-top: 3px double #c00;
-	width: 44em; height: 3px;
-	margin: 10px auto 0 0; text-align: left;
-}
-.singleline {
-	width: 40em; margin: 0px auto 0 0; text-align: left;
-}
-.headline { color: rgb(0,137,139); }
-.header { color: rgb(164, 32, 246); }
-.section { color: rgb(164, 32, 246); }
-.keystroke { color: rgb(106, 89, 205); }
-.vim { color: rgb(0, 136, 136); }
-.example { color: rgb(0, 0, 255); }
-.option { }
-.notvi { }
-.special { color: rgb(106, 89, 205); }
-.note { color: blue; background-color: yellow; }
-.sub {}
-.badlink { color: rgb(0,37,39); }
-EOF
-	close ( CSS );
-}
-
 # main
 #usage() if $#ARGV < 2;
 usage() if !defined $ARGV[1];
@@ -317,6 +278,4 @@ foreach my $file ( 1..$#ARGV ) {
 	print "Processing ".$ARGV[ $file ]."...\n";
 	vim2html( $ARGV[ $file ] );
 }
-print "Writing stylesheet...\n";
-writeCSS();
 print "done.\n"
