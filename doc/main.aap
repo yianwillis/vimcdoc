@@ -10,15 +10,24 @@ TOPLEVELDIR = ..
     :sys ./vim2html.pl tags $target
     @html_file = sufreplace('.txt', '.html', target)
     :sys scp $html_file $(SF_USER)@$(SF_SHELL_DOMAIN):$SF_VIMCDOC_DIR/htdocs/doc
-    :sys sftp -b batch $GRO_URL
     :del $html_file 
 
 css {virtual}: vim-stylesheet.css
-    :sys scp $source $(SF_USER)@$(SF_SHELL_DOMAIN):$SF_VIMCDOC_DIR/htdocs/doc
+    :sys scp vim-stylesheet.css $(SF_USER)@$(SF_SHELL_DOMAIN):$SF_VIMCDOC_DIR/htdocs/doc
+
+allhtml {virtual}:
+    :sys ./vim2html.pl tags *.txt
+
+publish: allhtml css
+    :sys scp *.html $(SF_USER)@$(SF_SHELL_DOMAIN):$SF_VIMCDOC_DIR/htdocs/doc
+
+gro {virtual}: allhtml vim-stylesheet.css
     :sys sftp -b batch $GRO_URL
 
 all {virtual}:
-    :print Use 'aap <file_name>' to check-in a file and update the webpage.
+    :print Use 'aap <file_name>' to check-in a file and update the webpage on sf.net.
+    :print Use 'aap publish' to update all html and css files on sf.net
+    :print Use 'aap gro' to update all html and css files on the gro mirror
 
 clean {virtual}:
-    :del {r}{force} *.html *~ *.bak vim-stylesheet.css
+    :del {r}{force} *.html *~ *.bak
