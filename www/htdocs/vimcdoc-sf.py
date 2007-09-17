@@ -130,7 +130,7 @@ def PrintSidebar():
     print 'onmouseover="status=\'VimDoc\'; return true"'
     print 'onmouseout="status=\'\'; return true">VimDoc</a></p>'
     print '<hr noshade="noshade" size="1">'
-    print '<p><a href="mailto:lang2@users.sourceforge.net" onmouseover="status=\'Contact\'; return true" onmouseout="status=''; return true">Contact</a></p>'
+    print '<p><a href="mailto:yianwillis@users.sourceforge.net" onmouseover="status=\'Contact\'; return true" onmouseout="status=''; return true">Contact</a></p>'
     print '<!-- NavBar --> '
     print '</td>'
     print '</tr>'
