@@ -1,6 +1,6 @@
 .phony: clean html
 
-VIM2HTML = vim2html.pl
+VIM2HTML = ../../../doc/vim2html.pl
 VIMDOCDIR = ../../../doc
 
 html:

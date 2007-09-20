@@ -228,7 +228,8 @@ EOF
 		$_ = join( "", @out );
 
 		# parameter {...}
-		s/\{([^}]*)\}/<code class="special">{$1}<\/code>/g;
+		s/\{([^{}'"|]*)\}/<code class="special">{$1}<\/code>/g;
+		s/\{((?:Vi|仅)[^}]*)\}/<code class="special">{$1}<\/code>/g;
 
 		if( $inexample == 2 ) {
 			print OUT "<code class=\"example\">$_</code>\n";
