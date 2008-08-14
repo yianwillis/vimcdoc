@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.1.  最近更新: 2007年5月
+*autocmd.txt*   For Vim version 7.2.  最近更新: 2008年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -307,7 +307,7 @@ BufDelete			缓冲区列表删除缓冲区前。可能先调用 BufUnload
 				事件 (如果该缓冲区已经载入的话)。
 				也在缓冲区列表的某个缓冲区换名之前发生。
 				注意: 执行此自动命令时，当前缓冲区 "%" 可能会
-				和被删除的缓冲区 "<afile>" 不同。
+				和被删除的缓冲区 "<afile>" 及 "<afile>" 不同。
 							*BufEnter*
 BufEnter			进入缓冲区后。可用来设定有关文件类型的选项。也
 				在开始编辑缓冲区时执行，它发生在 BufReadPost
@@ -354,8 +354,13 @@ BufUnload			缓冲区卸载前。此时，缓冲区里的文本将要被释放�
 				和被卸载的缓冲区 "<afile>" 不同。
 							*BufWinEnter*
 BufWinEnter			窗口显示缓冲区后。可以是新缓冲区载入 (处理完模
-				式行之后)、隐藏缓冲区在窗口开始显示 (从而不再
-				隐藏) 或者已经可见的缓冲区在别的窗口显示。
+				式行之后) 或者隐藏缓冲区在窗口开始显示 (从而不
+				再隐藏)。
+				不带参数的 |:split| 不激活此事件，因为你继续编
+				辑的是同一个缓冲区，":split" 已在某窗口打开的
+				文件也是如此，同样因为它重用已有的缓冲区。但用
+				当前缓冲区名来 ":split" 却会激活本事件，因为此
+				时该缓冲区被重新载入。
 							*BufWinLeave*
 BufWinLeave			窗口删除缓冲区前。除非它在别的窗口仍然可见。
 				系统退出时也会激活。在 BufUnload 或 BufHidden
@@ -565,6 +570,7 @@ QuickFixCmdPre			开始执行 quickfix 命令前 (|:make|、 |:lmake|、
 							*QuickFixCmdPost*
 QuickFixCmdPost			类似于 QuickFixCmdPre，但在执行 quickfix 命令
 				后，跳转到第一个位置之前。
+				见 |QuickFixCmdPost-example|。
 							*RemoteReply*
 RemoteReply			Vim 作为服务器时收到应答时 |server2client()|。
 				模式匹配的是 {serverid}。 <amatch> 是发出应答
@@ -768,7 +774,7 @@ WinLeave			离开某窗口前。如果将要进入的窗口要显示的是别的
 替代模式就行了。例如: >
     :au! * <buffer>		     " 删除当前缓冲区的局部于缓冲区的自动命令
     :au! * <buffer=33>		     " 删除缓冲区 #33 的局部于缓冲区的自动命令
-    :dobuf :au! CursorHold <buffer>  " 删除所有缓冲区里给定事件的自动命令
+    :bufdo :au! CursorHold <buffer>  " 删除所有缓冲区里给定事件的自动命令
     :au * <buffer>		     " 列出当前缓冲区的局部于缓冲区的自动命令
 <
 注意 如果为当前缓冲区定义自动命令，保存时记住的是它的缓冲区号。这里用的形式是
@@ -843,15 +849,14 @@ Vim 也可以非自动地执行自动命令。如果你修改了自动命令或�
 			命令来应用于另一个扩展名。例如: >
 				:au Bufenter *.cpp so ~/.vimrc_cpp
 				:au Bufenter *.cpp doau BufEnter x.c
-<			要小心避免无限循环，参见 |autocmd-nested|。
+<			要小心避免死循环，参见 |autocmd-nested|。
 
 			如果没有给出 [group] 参数，Vim 执行所有组里的自动命
-			令。如果 [group] 参数给出，Vim 只执行该组里匹配的自动
-			命令。注意: 如果你使用未定义的组名，Vim 会给出错误消
-			息。
+			令。如果给出 [group] 参数，Vim 只执行该组里匹配的自动
+			命令。注意: 如果你使用未定义的组名，Vim 会报错。
 
-			应用完自动命令后，再处理模式行。从而它们可以否决自动命
-			令里的设置，就像编辑文件时那样。
+			应用完自动命令后，会执行模式行。这样那里的设置就有机会
+			否决自动命令里的设置，一如编辑文件时那样。
 
 						*:doautoa* *:doautoall*
 :doautoa[ll] [group] {event} [fname]
