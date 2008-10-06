@@ -47,6 +47,7 @@ sub readTagFile
 
 		$url{ $tag } = "<a href=\"$file#".escurl($tag)."\">".esctext($label)."</a>";
 	}
+	$url{ "help-tags" } = "<a href=\"tags.html"."\">".esctext("help-tags")."</a>";
 	close( TAGS );
 }
 
