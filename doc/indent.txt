@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.1.    最近更新: 2007年5月
+*indent.txt*    For Vim version 7.2.    最近更新: 2008年7月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -7,21 +7,24 @@
 
 本文讨论 C 程序以及其它文件类型的缩进。
 
-1. 缩进 C 程序			|C-indenting|
+1. 缩进 C 风格的程序		|C-indenting|
 2. 按表达式缩进			|indent-expression|
 
 ==============================================================================
-1. 缩进 C 程序						*C-indenting*
+1. 缩进 C 风格的程序					*C-indenting*
 
-有关 C 缩进的基本操作请参用户手册的 |30.2|。
+有关 C 风格的缩进的基本操作请参用户手册的 |30.2|。
 
-Vim 有很多自动缩进 C 程序的选项。这些选项只对缩进有影响而不处理其他形式的排
-版。若要排版注释，请参考 |format-comments|。
+Vim 有很多自动缩进 C 风格程序的选项。不少编程语言，如 Java 和 C++，都和 C 的排
+版习惯非常相近。这些选项只对缩进有影响而不处理其他形式的排版。另有一些选项影响
+其它类型的排版和缩进，大体可参阅 |format-comments|、|fo-table|、|gq| 和
+|formatting|。
 
 备注 如果编译时没有指定 |+smartindent| 或者 |+cindent| 特性，这些选项将不起作
 用。
 
-实际上有四种可用缩进的方式:
+实际上主要有四种可用缩进的方式，如果同时指定或对 'indentexpr' 而言非空，列于后
+者优先于列于前者:
 'autoindent'	沿用上一行的缩进。
 'smartindent'	类似 'autoindent'，但是可以识别一些 C 语法以能在合适的地方
 		增加 / 减少缩进。
@@ -440,6 +443,75 @@ do 循环 ~
 使 .f90 文件里的 do 循环被缩进而在其它扩展名里，比如 .for 文件中不被缩进。
 
 
+PHP				*ft-php-indent* *php-indent* *php-indenting*
+
+注意:	只有激活 PHP 语法 |syntax| 才能正确缩进 PHP 文件。
+
+如果在 Unix 'fileformat' 下编辑文件而换行符之前有 '\r' 字符，缩进的处理会不正
+确。需要先去除这些没有的字符。例如可用: >
+
+    :%s /\r$//g
+
+或者，你可以简单地 |:let| 变量 PHP_removeCRwhenUnix 为 1，脚本会在 Vim 载入
+PHP 文件 (每次 |BufRead|) 时安静地删除它们。
+
+选项: ~
+
+PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
+
+								*php-comment*
+要缺省不打开注释的自动排版 (如果要使用自己的 'formatoptions' 的话): >
+    :let g:PHP_autoformatcomment = 0
+
+否则，'t' 会从 'formatoptions' 字符串中去除，并加上 "qrowcb"，详见
+|fo-table|。
+-------------
+
+要给所有 PHP 行增加额外的缩进 N 个 'shiftwidth': >
+    :let g:PHP_default_indenting = N
+
+例如，如果 N = 1:
+>
+    <?php
+	if (!isset($History_lst_sel))
+	    if (!isset($History_lst_sel))
+		if (!isset($History_lst_sel)) {
+		    $History_lst_sel=0;
+		} else
+		    $foo="bar";
+
+	$command_hist = TRUE;
+    ?>
+(注意 PHP 标识符和它包含的代码之间额外的缩进)
+-------------
+
+要在 'fileformat' 设为 Unix 时自动删除 '\r' 字符: >
+    :let g:PHP_removeCRwhenUnix = 1
+-------------
+
+要使花括号的缩进和其包含的代码相同: >
+    :let g:PHP_BracesAtCodeLevel = 1
+    
+给出的结果会变成: >
+    if ($foo)
+	{
+	foo();
+	}
+而不是: >
+    if ($foo)
+    {
+	foo();
+    }
+
+注意:	如果使用此选项，缩进可能会稍慢一些，因为无法使用若干优化。
+-------------
+
+要缩进 switch() 块的 'case:' 和 'default:' 语句: >
+    :let g:PHP_vintage_case_default_indent = 1
+
+(缺省，它们和 'switch()' 的使用相同层次的缩进，以避免不必要的缩进)
+
+
 PYTHON							*ft-python-indent*
 
 可以为以下情形设置不同的缩进值。下面所举的例子给出其缺省值。注意 这些变量用表
@@ -503,6 +575,110 @@ VERILOG							*ft-verilog-indent*
   let b:verilog_indent_verbose = 1
 
 不要忘了要先设定 ":set cmdheight=2" 才能显示信息。
+
+
+VHDL							*ft-vhdl-indent*
+
+缺省执行 类属 (generic) /端口 (port) 映射语句的对齐。下例说明这种对齐的应用: >
+
+  ENTITY sync IS
+  PORT (
+         clk        : IN  STD_LOGIC;
+         reset_n    : IN  STD_LOGIC;
+         data_input : IN  STD_LOGIC;
+         data_out   : OUT STD_LOGIC
+       );
+  END ENTITY sync;
+
+要关闭之，在 .vimrc 文件中加上 >
+
+  let g:vhdl_indent_genportmap = 0
+
+而上例也随之改变了对齐: >
+
+  ENTITY sync IS
+  PORT (
+    clk        : IN  STD_LOGIC;
+    reset_n    : IN  STD_LOGIC;
+    data_input : IN  STD_LOGIC;
+    data_out   : OUT STD_LOGIC
+  );
+  END ENTITY sync;
+
+----------------------------------------
+
+缺省执行右手边赋值 "<=" 语句的对齐。下例说明这种对齐的应用: >
+
+  sig_out <= (bus_a(1) AND
+             (sig_b OR sig_c)) OR
+             (bus_a(0) AND sig_d);
+
+要关闭之，在 .vimrc 文件中加上 >
+
+  let g:vhdl_indent_rhsassign = 0
+
+而上例也随之改变了对齐: >
+
+  sig_out <= (bus_a(1) AND
+    (sig_b OR sig_c)) OR
+    (bus_a(0) AND sig_d);
+
+----------------------------------------
+
+整行注释 ("--" 打头的行) 的缩进和上一行注释对齐，_如果_ “--” 之后有一个空格的
+话。
+
+示例: >
+
+  sig_a <= sig_b; -- 开始注释
+                  -- 注释继续
+                  -- 同一注释的更多内容
+
+在插入模式下，输入 "-- " 后 (注意空格 " ")，按 CTRL-F 会使当前的 "-- " 和上一
+行的 "--" 对齐。
+
+如果紧邻的上一行不包含 "--"，_那么_整行注释会和下一个非空白且_不是_整行注释的
+行的起始位置对齐。
+
+下列代码的缩进: >
+
+  sig_c <= sig_d; -- 注释 0
+         -- 注释 1
+               -- 注释 2
+    --debug_code:
+    --PROCESS(debug_in)
+         --BEGIN
+            --  FOR i IN 15 DOWNTO 0 LOOP
+             --    debug_out(8*i+7 DOWNTO 8*i) <= debug_in(15-i);
+            --  END LOOP;
+     --END PROCESS debug_code;
+
+      -- 注释 3
+  sig_e <= sig_f; -- 注释 4
+           -- 注释 5
+
+结果是: >
+
+  sig_c <= sig_d; -- 注释 0
+                  -- 注释 1
+                  -- 注释 2
+  --debug_code:
+  --PROCESS(debug_in)
+  --BEGIN
+  --  FOR i IN 15 DOWNTO 0 LOOP
+  --    debug_out(8*i+7 DOWNTO 8*i) <= debug_in(15-i);
+  --  END LOOP;
+  --END PROCESS debug_code;
+
+  -- 注释 3
+  sig_e <= sig_f; -- 注释 4
+                  -- 注释 5
+
+注意到 "--debug_code:" 不和 "-- comment 2" 对齐，因为 "--debug_code:" 的 "--"
+之后没有空白。
+
+基于注释缩进的动态性，缩进应该执行_两次_。第一遍缩进代码，第二遍依据已正确缩进
+的代码来缩进整行注释。
 
 
 VIM							*ft-vim-indent*
