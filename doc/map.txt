@@ -1,4 +1,4 @@
-*map.txt*	For Vim version 7.1.  最后更新: 2007年5月
+*map.txt*	For Vim version 7.2.  最后更新: 2008年6月
 
 
 		  VIM 参考手册    作者: Bram Moolenaar
@@ -234,12 +234,13 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 
 
 1.3 映 射 与 运 行 模 式				*:map-modes*
+			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o*
 
 有五种映射存在
 - 用于普通模式: 输入命令时。
 - 用于可视模式: 可视区域高亮并输入命令时。
 - 用于操作符等待模式: 操作符等待中 ("d"，"y"，"c" 等等之后)。
-  例如: ":omap { w" 会使 "y{" 等同于 "yw"，"d{" 也等同于 "dw"。
+  见下: |omap-info|。
 - 用于插入模式: 也用于替换模式。
 - 用于命令行模式: 输入 ":" 或 "/" 命令时。
 
@@ -249,7 +250,6 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 						*map-overview* *map-modes*
 关于每个映射命令对应的工作模式的概况:
 
-			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o*
     命令:					模式: ~
 					普通	可视+选择	操作符等待 ~
 :map   :noremap   :unmap   :mapclear	是	是		是
@@ -282,6 +282,16 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 此 ":map" 和 ":map!" 命令为多个模式定义和回显映射。在 Vim 中你可以使用
 ":nmap"、":vmap"、:omap"、":cmap" 和 ":imap" 命令来对每个不同的模式分别定义映
 射。
+
+							*omap-info*
+操作符等待映射可以用来定义和任何操作符一起使用的移动命令。简单例子:
+":omap { w" 会使 "y{" 等同于 "yw"，"d{" 也等同于 "dw"。
+
+要忽略光标原来所在的位置并选择另外的文本，你可以使 omap 进入可视模式来选择要操
+作的文本。例如，要在位于当前行的函数名上操作: >
+	onoremap <silent> F :<C-U>normal! 0f(hviw<CR>
+CTRL-U (<C-U>) 用于删除命令行上 Vim 可能插入的范围。普通模式命令寻找第一个 '('
+字符并选择之前的第一个单词。通常那就是函数名了。
 
 要为普通和可视模式但不包括操作符等待模式输入一个映射，首先在所有的三个模式中定
 义该映射，然后在操作符等待模式中取消该映射: >
@@ -414,7 +424,7 @@ CTRL-V)。
 	:imap <M-C> foo
 	:set encoding=utf-8
 <M-C> 的映射是在 latin1 编码中被定义的，结果是一个 0xc3 字节。如果你在 UTF-8 
-解码中输入 á (0xea <M-a>) 它是双字节 0xc3 0xa1。这个时候你不希望 0xc3 字节被映
+解码中输入 á (0xe1 <M-a>) 它是双字节 0xc3 0xa1。这个时候你不希望 0xc3 字节被映
 射，否则的话将不能输入 á 字符了。
 
 					*<Leader>* *mapleader*
@@ -433,8 +443,8 @@ CTRL-V)。
 义的映射。
 
 					*<LocalLeader>* *maplocalleader*
-和 <Leader> 类似，除了它使用 "maplocalleader" 而非 "mapleader"。 <LocalLeader>
-用于局部于缓冲区的映射，例如: >
+<LocalLeader> 和 <Leader> 类似，除了它使用 "maplocalleader" 而非 "mapleader"
+以外。<LocalLeader> 用于局部于缓冲区的映射，例如: >
       :map <LocalLeader>q  \DoItNow
 <
 在一个全局插件里应该使用 <Leader> 而在一个文件类型插件里应该用 <LocalLeader>。
@@ -1028,7 +1038,7 @@ Vim 和任何其它 ex 命令一样对待用户自定义命令。它能有参数
 					*:command-completion-customlist*
 					*E467* *E468*
 通过 "custom,{func}" 或 "customlist,{func}" 自动补全参数可以定义定制的自动补全
-方案。其中 {func} 是有如下原型的函数:
+方案。其中 {func} 是有如下声明的函数:
 
 	:function {func}(ArgLead，CmdLine，CursorPos)
 
