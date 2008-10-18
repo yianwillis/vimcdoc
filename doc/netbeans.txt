@@ -1,25 +1,30 @@
-*netbeans.txt*  For Vim version 7.1.  最近更新: 2006年12月
+*netbeans.txt*  For Vim version 7.2.  最近更新: 2008年6月
 
 
-		  VIM 参考手册    by Gordon Prieur
+		  VIM 参考手册    by Gordon Prieur et al.
 				译者: Willis
 				http://vimcdoc.sf.net
 
 
-NetBeans ExternalEditor 集成特性			*netbeans*
-							*netbeans-support*
+			*socket-interface* *netbeans* *netbeans-support*
+
+Vim NetBeans 协议: 把 Vim 集成到 IDE 中的套接字接口。
+
 1.  简介					|netbeans-intro|
-2.  NetBeans 键盘映射				|netbeans-keybindings|
+2.  集成特性					|netbeans-integration|
 3.  支持 NetBeans 的 Vim 配置			|netbeans-configure|
-4.  下载 NetBeans				|netbeans-download|
-5.  为 Vim 准备 NetBeans			|netbeans-preparation|
-6.  取得外部编辑器模块				|obtaining-exted|
-7.  设置 NetBeans 以运行 Vim			|netbeans-setup|
-8.  消息					|netbeans-messages|
-9.  从 NetBeans 里运行 Vim			|netbeans-run|
-10. NetBeans 协议				|netbeans-protocol|
-11. NetBeans 命令				|netbeans-commands|
-12. 已知问题					|netbeans-problems|
+4.  错误消息					|netbeans-messages|
+5.  从 NetBeans 模式里运行 Vim			|netbeans-run|
+6.  NetBeans 协议				|netbeans-protocol|
+7.  NetBeans 热键				|netbeans-key|
+8.  已知问题					|netbeans-problems|
+9.  调试 NetBeans 协议				|netbeans-debugging|
+10. NetBeans 外部编辑器
+    10.1. 下载 NetBeans				|netbeans-download|
+    10.2. NetBeans 键盘映射			|netbeans-keybindings|
+    10.3. 为 Vim 准备 NetBeans			|netbeans-preparation|
+    10.4. 取得外部编辑器模块			|obtaining-exted|
+    10.5. 设置 NetBeans 以运行 Vim		|netbeans-setup|
 
 {Vi 没有这些功能}
 {仅当编译时加入 |+netbeans_intg| 特性才有效}
@@ -27,12 +32,43 @@ NetBeans ExternalEditor 集成特性			*netbeans*
 ==============================================================================
 1. 简介							*netbeans-intro*
 
+NetBeans 接口原本是为了集成 Vim 到 NetBeans Java IDE 里而使用外部编辑器插件开
+发的。现在已经没有支持 NetBeans 最近版本的该 NetBeans 插件，但该协议的开发方式
+使得任何 IDE 都可以用它来集成 Vim。
+
+Vim 的 NetBeans 协议是一个建立在传统的 TCP 套接字接口之上的基于文本的通信协
+议。它不依赖于 Java 或 NetBeans。任何语言或环境只要提供了套接字接口，就可以使
+用该协议控制 Vim。该协议已经有 C、C++、Python 和 Java 的实现。今天我们之所以还
+保持 NetBeans 这个名字，只是基于历史上的渊源。
+
+目前使用 Vim 的 NetBeans 协议的项目有:
+- VimIntegration，有关于若干 Vim 集成项目的描述:
+	http://www.freehackers.org/VimIntegration
+- Agide，Python 编写的用于 AAP 项目的 IDE:
+	http://www.a-a-p.org
+- Clewn，C 编写的 Vim 上的 gdb 集成:
+	http://clewn.sourceforge.net/
+- VimPlugin，Eclipse 上的 Vim 集成:
+	http://vimplugin.sourceforge.net/wiki/pmwiki.php
+- PIDA，Python 编写的集成 Vim 的 IDE:
+	http://pida.co.uk/
+- VimWrapper，方便把 Vim 集成到 IDE 的库:
+	http://www.freehackers.org/VimWrapper
+
+查阅具体的项目页面来了解如何在这些项目中使用 Vim。
+
+本帮助页面的其余部分使用术语 "Vim 控制器" 来描述通过 NetBeans 套接字接口来控制
+Vim 的程序。
+
+
+关于 NetBeans IDE ~
+
 NetBeans 是一个开源的集成开发环境，由 Sun Microsystems, Inc 和 netbeans.org 开
 发团体共同开发。刚开始只是一个 Java IDE，在最近的发行版本中， NetBeans 已经有
 C、C++、和 Fortran 的支持。
 
-要知道更多的信息，访问 NetBeans 的主网站 http://www.netbeans.org，或者
-NetBeans 外部编辑器站点 http://externaleditor.netbeans.org。
+要知道更多的信息，访问 NetBeans 的主网站 http://www.netbeans.org。
+不幸地，外部编辑器现已宣布被废弃了。见 http://externaleditor.netbeans.org。
 
 Sun Microsystems, Inc. 也以 Sun ONE Studio 的名字发行 NetBeans。访问
 http://www.sun.com 可以了解更多关于 Sun ONE Studio 产品线的信息。
@@ -40,34 +76,29 @@ http://www.sun.com 可以了解更多关于 Sun ONE Studio 产品线的信息。
 目前的 NetBeans 发行版本提供 Java 的完全支持和 C、C++ 以及 Fortran 的有限支
 持。目前的 Sun ONE Studio 发行版本提供 Java、C、C++ 和 Fortran 的完全支持。
 
-NetBeans 的接口也被 Agide, A-A-P 的 GUI IDE 所支持。
-Agide 和 NetBeans 非常不同:
-- 基于 Python 而不是 Java，更小的内存需求，更快的启动。
-- Agide 是一个支持多种工具协同工作的框架环境。
-参见 A-A-P 的网站了解了解相关信息: http://www.A-A-P.org。
-
 ==============================================================================
-2. NetBeans 键盘映射					*netbeans-keybindings*
+2. 集成特性						*netbeans-integration*
 
-Vim 理解执行 NetBeans 命令的键盘映射。它们通常是功能键的组合。要执行某个
-NetBeans 命令，用户必须按 Pause 键，再按 NetBeans 的键盘映射。比如，要编译
-Java 文件，NetBeans 的键盘映射是 "F9"。所以，在 vim 里，按 "Pause F9" 起到编译
-java 文件的功能。要切换当前行的断点状态，按 "Pause Shift F8"。
+Vim 的 NetBeans 套接字接口可以从 Vim 那里得到信息或者告诉 Vim 执行特定任务:
+- 得到缓冲区的信息: 缓冲区名、光标位置、缓冲区内容，等等
+- 缓冲区被打开或关闭时被告知  
+- 缓冲区内容修改时被告知
+- 读入或保存文件
+- 修改缓冲区内容
+- 安装特别的键绑定
+- 抬起 (raise) 窗口，控制窗口的尺寸
+ 
+要发送键击到 Vim 以执行 Vim 的功能，必须使用 |clientserver| 接口。
 
-Pause 键是功能键 21。如果你没有可用的 Pause 键，而想用 F8 代替，用: >
-
-	:map <F8> <F21>
-
-外部编辑器模块动态地读取 NetBeans 的键盘映射，所以 vim 应该总能得到最新的键盘
-映射，即使在 NetBeans 改变它们以后。
 
 ==============================================================================
 3. 支持 NetBeans 的 Vim 配置				*netbeans-configure*
 
-要得到安装 vim 的更多帮助，请阅读 Vim 用户手册的 |usr_90.txt|。
+要得到安装 Vim 的更多帮助，请阅读 Vim 用户手册的 |usr_90.txt|。
 
 
-在 Unix 上
+在 Unix 上:
+-----------
 
 不带参数的 configure 应该已经包含 NetBeans 接口，如果 configure 检查你的系统支
 持所需的功能的话。
@@ -75,14 +106,15 @@ Pause 键是功能键 21。如果你没有可用的 Pause 键，而想用 F8 代
 如果你不想要 NetBeans 接口，你可以在 Makefile 里去掉包含 "--disable-netbeans"
 的一行的注释。
 
-目前，只有 gvim 支持这种集成，因为 NetBeans 没有办法提供 vim 命令的终端模拟。
+目前，只有 GVim 支持这种集成，因为 NetBeans 没有办法提供 Vim 命令的终端模拟。
 另外，支持的 GUI 只有 GTK、GNOME 和 Motif。
 
 如果需要 Motif 支持，用户应该提供 XPM 库。参见 |workshop-xpm| 了解如何得到最新
 版本的 XPM 的详情。
 
 
-在 MS-Windows 上
+在 MS-Windows 上:
+-----------------
 
 Win32 的支持现在还处于实验阶段。
 
@@ -90,101 +122,47 @@ Win32 的支持现在还处于实验阶段。
 用预编译的库: http://iamphet.nm.ru/misc/ (MS Visual C++ 版本) 或
 http://gnuwin32.sourceforge.net (MinGW 版本)。
 
-==============================================================================
-4. 下载 NetBeans					*netbeans-download*
+允许调试:
+---------
 
-NetBeans IDE 可以从 netbeans.org 下载。你可以下载发行版，源代码，或者用 CVS 得
-到当前的源代码树。如果你选择下载源代码，遵照 netbeans.org 的指示来编译
-NetBeans。
-
-视乎你下载的 NetBeans 版本，你可能需要更多的工作: 下载所需的外部编辑器模块。这
-是使 NetBeans 支持 gvim (或者 xemacs :-)) 的模块。如果你的 NetBeans 不带之，参
-见 http://externaleditor.netbeans.org 了解如何下载该模块的详情。
-
-关于 C、C++ 和 Fortran 的支持，你需要得到 cpp 模块。关于这个模块的信息，参见
-http://cpp.netbeans.org。
-
-你已可以从 Sun Microsystems, Inc 下载 30 天免费测试的 Sun ONE Studio。详情见
-http://www.sun.com。
+要允许调试 Vim 和 NetBeans 协议，需要定义 "NBDEBUG" 宏。在相应平台的 Makefile 
+里查找 "NBDEBUG" 就可以知道需要去掉哪些行的注释。基本上就是给编译的命令加上
+"-DNBDEBUG"。另见 |netbeans-debugging|
 
 ==============================================================================
-5. 为 Vim 准备 NetBeans					*netbeans-preparation*
+4. 错误消息						*netbeans-messages*
 
-要使得 NetBeans 支持 vim，NetBeans 外部编辑器模块必须已经调入并且能使用。如果
-你使用 Sun ONE Studio Enterprise Edition，那么这一模块应该已经能用了。如果你用
-的是 NetBeans 发行版，你需要自己去找这个开源的模块。
-
-你可以检查该模块是不是已经存在。打开 Tools->Options 对话框，找到 "Modules" 列
-表 (IDE Configuration->System->Modules)。如果该列表包含 "External Editor"，检
-查一下它是不是被许可使用了 ("Enabled" 属性应该为 "True")。如果你的列表里没有这
-一项，见下一节 |obtaining-exted|。
-
-==============================================================================
-6. 取得外部编辑器模块					    *obtaining-exted*
-
-有两个方法可以取得外部编辑器模块。最简单的方式是使用 NetBeans 更新中心，下载并
-安装该模块。不幸的是，有的版本的更新中心找不到这个模块。如果这样不行，你需要自
-己下载源代码并编译该模块。我会试图使这个模块出现在 NetBeans 更新中心的，这样自
-己编译就不需要了。也可查看 http://externaleditor.netbeans.org，看看有无取得的
-方法。
-
-要通过 CVS 下载外部编辑器的源码并自己编译，见
-http://externaleditor.netbeans.org 和 http://www.netbeans.org。不幸的是，这个
-方法并不是很简单。
-
-==============================================================================
-7. 设置 NetBeans 以运行 Vim				    *netbeans-setup*
-
-假设你已经根据 |netbeans-preparation| 调入和允许使用 NetBeans 外部编辑器模块，
-你只需要检查一下 gvim 命令行已经为你的环境正确配置好了。
-
-打开 Tools->Options 对话框，打开 Editing 种类，选择 External Editor。右边的窗
-格应该包含 Properties 和 Expert 页。在 Properties 页里，确保 "Editor Type" 设
-为 "Vim"。在 Expert 页里确保 "Vim Command" 是正确的。
-
-如果你要改变 "Vim Command"，要小心。必须提供有些命令选项，以便正确的建立连接。
-你可以改变命令名字本身，但也就那么多了。如果你的 gvim 可以在 $PATH 里找到，那
-么 VIM Command 就可以用 "gvim" 开始。如果你不想从 $PATH 里搜索 gvim，那么就提
-供完整的路径名。这样，你就可以对 NetBeans 打开的任何源代码使用 gvim 编辑了。
-
-如果有些文件在 gvim 里打开，有些 (有着不同后缀) 则使用缺省的 NetBeans 编辑器，
-那你就需要检查 Expert 页的 MIME Type 属性。NetBeans 面向 MIME 类型，而外部编辑
-器只会使用这个属性所指定的 MIME 类型。
-
-==============================================================================
-8. 消息							*netbeans-messages*
-
-以下这些消息是 NetBeans 特有的:
+以下这些错误消息是 NetBeans 套接字协议特有的:
 
 							*E463*
 Region is guarded, cannot modify
-		NetBeans 定义了文本的保护区域，你不能编辑这个区域。
+		Vim 控制器定义了文本的保护区域，你不能编辑这个区域。
 		如果需要，设置当前缓冲区。
 
 							*E656*
-NetBeans dissallows writes of unmodified buffers
-		NetBeans 不支持写入 NetBeans 打开的未修改的缓冲区。
+Writes of unmodified buffers forbidden
+		不能写入 Vim 控制器打开的未修改的缓冲区。
 
 							*E657*
-Partial writes disallowed for NetBeans buffers
-		NetBeans 不支持部分写入 NetBeans 打开的缓冲区。
+Partial writes disallowed
+		不允许部分写入 Vim 控制器打开的缓冲区。
 
 							*E658*
-NetBeans connection lost for this buffer
-		NetBeans 不清楚这个文件的目前状态。与其冒着破坏文件的风险，
+Connection lost for this buffer
+		Vim 控制器不清楚这个文件的目前状态。与其冒着破坏文件的风险，
 		NetBeans 关闭了这个文件的连接。Vim 自己要负责修改和保存文件的
-		改变，而 NetBeans 将不会知道这些改变。
+		改变，而 Vim 控制器将不会知道这些改变。
 
 							*E744*
-NetBeans does not allow changes in read-only files
+Read-only file
 		Vim 通常允许修改只读文件，只有在写文件的时候坚持执行只读规则。
-		不过，NetBeans 部允许你修改只读的文件，如果 vim 这么做，会引起
-		混淆。为此，vim 不允许执行 NetBeans 时修改文件。
-==============================================================================
-9. 从 NetBeans 里运行 Vim				*netbeans-run*
+		不过，NetBeans 不允许你修改只读的文件，如果 Vim 这么做，会引起
+		混淆。为此，Vim 不允许执行 NetBeans 模式时修改文件。
 
-NetBeans 启动 Vim 时使用 |-nb| 参数。用三种形式可以使用，取决于如何指定连接所
-需的信息。
+==============================================================================
+5. 从 NetBeans 模式里运行 Vim				*netbeans-run*
+
+Vim 必须用 |-nb| 参数启动。有三种形式可以使用，取决于如何指定连接所需的信息。
 
 	-nb={fname}				从文件读取
 	-nb:{hostname}:{addr}:{password}	直接
@@ -201,21 +179,25 @@ NetBeans 启动 Vim 时使用 |-nb| 参数。用三种形式可以使用，取�
 
 其他的行被忽略。Vim 的调用者须自己负责在不用的时候删除这个文件。
 
-{hostname} 指定 NetBeans 运行的机器名。如果不提供，则取环境变量
+{hostname} 指定 Vim 控制器运行的机器名。如果不提供，则取环境变量
 "__NETBEANS_HOST" 的值，如果还没有，缺省值是 "localhost"。
 
-{addr} 指定 NetBeans 所用的端口号。如果不提供，则取环境变量
+{addr} 指定 NetBeans 协议所用的端口号。如果不提供，则取环境变量
 "__NETBEANS_SOCKET" 的值，如果还没有，缺省值是 3219。
 
 {password} 指定连接到 NetBeans 所用的密码。如果不提供，则取环境变量
 "__NETBEANS_VIM_PASSWORD" 的值，如果还没有，缺省值是 "changeme"。
 
-==============================================================================
-10. NetBeans 协议					*netbeans-protocol*
+启动时，Vim 会建立套接字连接 (客户端) 到指定的终端和端口。密码会在连接建立后使
+用 AUTH 事件发送。
 
-NetBeans 和 Vim 的通信使用简单文本消息。该协议原先是为 NetBeans 的外部编辑器所
-设计的 (见 http://externaleditor.netbeans.org)。后来它被扩展，使得 Agide
-(A-A-P 的 GUI IDE，见 http://www.a-a-p.org) 也能使用。该扩展被标为 "2.1 版本"。
+
+==============================================================================
+6. NetBeans 协议					*netbeans-protocol*
+
+Vim 控制器和 Vim 的通信使用简单文本消息。该协议原先是为 NetBeans 的外部编辑器所
+设计的。后来它被扩展，使得 Agide (A-A-P 的 GUI IDE，见 http://www.a-a-p.org)
+也能使用，然后又扩展到其它 IDE。该扩展被标为 "2.1 版本"。
 
 该协议的 2.2 版本有若干小的改动，这些改动应该只影响 NetBeans 用户 (而不是
 Agide 用户)。不过，一个修正的漏洞可能会引起混淆: netbeans_saved() 函数以前发送
@@ -229,25 +211,16 @@ netbeans_saved() 已经被改名为 netbeans_save_buffer()。
 目前，消息通过套接字传送。因为消息是简单的 UTF-8 文本，该协议也许可以用其它通
 信机制完成。
 
-示例实现可见 Agide 里的 gvim 工具。现在这里可以找到:
-	http://cvs.sf.net/viewcvs.py/a-a-p/Agide/Tools/GvimTool.py?view=markup
+6.1 消息类型			|nb-messages|
+6.2 术语			|nb-terms|
+6.3 命令			|nb-commands|
+6.4 函数和应答			|nb-functions|
+6.5 事件			|nb-events|
+6.6 特殊消息			|nb-special|
+6.7 协议错误信息		|nb-protocol_errors|
 
 
-
-10.1 消息类型			|nb-messages|
-10.2 术语			|nb-terms|
-10.3 命令			|nb-commands|
-10.4 函数和应答			|nb-functions|
-10.5 事件			|nb-events|
-10.6 特殊消息			|nb-special|
-
-*E627* *E628* *E629* *E630* *E631* *E632* *E633* *E634* *E635* *E636*
-*E637* *E638* *E639* *E640* *E641* *E642* *E643* *E644* *E645* *E646*
-*E647* *E648* *E649* *E650* *E651* *E652* *E653* *E654*
-这些错误发生意味着某个消息违反了协议。
-
-
-10.1 消息类型						*nb-messages*
+6.1 消息类型						*nb-messages*
 
 有四类消息:
 
@@ -264,10 +237,10 @@ netbeans_saved() 已经被改名为 netbeans_save_buffer()。
 命令		bufID:name!seqno	11:showBalloon!123 "text"
 函数		bufID:name/seqno	11:getLength/123
 应答		seqno			123 5000
-事件		bufID:name=123		11:keyCommand=123 "S-F2"
+事件		bufID:name=seqno	11:keyCommand=123 "S-F2"
 
 
-10.2 术语						*nb-terms*
+6.2 术语						*nb-terms*
 
 bufID		缓冲区号。每条消息可以指定一个特定的缓冲区，也可以不指定任何缓
 		冲区 (泛指)。泛指的消息使用为零的 bufID。注意: 缓冲区号是 IDE
@@ -305,7 +278,7 @@ lnum/col	参数，表示行号和列号。行号从一开始，列号以字节�
 pathname	字符串参数: 带完整路径的文件名。
 
 
-10.3 命令						*nb-commands*
+6.3 命令						*nb-commands*
 
 actionMenuItem	没有实现。
 
@@ -329,7 +302,7 @@ close		关闭缓冲区。这会使得我们失去当前的缓冲区。使用时�
 
 create		建立一个没有名字的缓冲区。替换当前的缓冲区 (改变的时候，它是隐
 		藏的)。
-		这是 NetBeans 打开文件时使用的第一个命令。命令序列应该是:
+		这是 Vim 控制器打开文件时使用的第一个命令。命令序列应该是:
 			create
 			setCaretListener	(忽略)
 			setModified		(没有影响)
@@ -358,8 +331,12 @@ defineAnnoType typeNum typeName tooltip glyphFile fg bg
 editFile pathname
 		设置缓冲区的名字为字符串参数 pathname，并编辑该参数指定的文
 		件。
-		这是通常 IDE 告诉编辑器编辑一个文件的方法。如果 IDE 要把文件内
-		容直接传递给编辑器，那么应该用这些命令:
+		这是通常 IDE 告诉编辑器编辑一个文件的方法。
+	
+		使用该命令，你必须设置 bufId 为非零以把该 bufId 赋给缓冲区。它
+		会触发 bufId 为零的 fileOpened 事件，但缓冲区已经分配好了。
+
+		如果 IDE 要把文件内容直接传递给编辑器，那么应该用这些命令:
 			setFullName
 			insert
 			initDone
@@ -379,8 +356,8 @@ initDone	标识这个缓冲区可用。这也隐含地意味着它成为当前�
 		BufReadPost 自动事件。
 
 insertDone
-		NetBeans 发送，告知 vim 完成了初始的文件插入。这使得读入信息被
-		显示。2.3 版本之前，打开文件之后不会显示读入消息。
+		Vim 控制器发送，告知 Vim 完成了初始的文件插入。这使得读入信息
+		被显示。2.3 版本之前，打开文件之后不会显示读入消息。
 		2.3 版本新出现。
 
 moveAnnoToFront serNum
@@ -414,7 +391,7 @@ save		如果缓冲区已修改，就保存之。接口的另一侧应该写入�
 		2.2 版本新出现。
 
 saveDone
-		NetBeans 发送，告知 vim 保存已经完成。这使得保存消息被显示。
+		Vim 控制器发送，告知 Vim 保存已经完成。这使得保存消息被显示。
 		2.3 版本之前，保存后不显示保存消息。
 		2.3 版本新出现。
 
@@ -457,18 +434,18 @@ setModified modified
 		"F"，则标为未修改。
 
 setModtime time
-		NetBeans 保存文件后，更新缓冲区的修改时间。
+		在 Vim 控制器自己保存文件后，更新缓冲区的修改时间。
 		2.3 版本新出现。
 
 setReadOnly
-		NetBeans 传递，告知 vim 文件只读。
+		设置文件为只读
 		2.3 版本已经实现。
 
 setStyle	没有实现。
 
 setTitle name
-		把缓冲区的标题改为字符串参数 "name"。标题用于 NetBeans，而不是
-		Vim。
+		把缓冲区的标题改为字符串参数 "name"。标题用于 Vim 控制器，而不
+		是 Vim。
 
 setVisible visible
 		如果布尔参数 "visible" 为 "T"，转到这个缓冲区。
@@ -480,8 +457,8 @@ showBalloon text
 		2.1 版本新出现。
 
 specialKeys
-		映射一组键 (最常见的是功能键)，使之可以被传递回 NetBeans 进行
-		处理。这使得 NetBeans 的热键可以从 vim 处调用。
+		映射一组键 (最常见的是功能键)，使之可以被传递回 Vim 控制器进行
+		处理。这使得 IDE 常规的热键可以从 Vim 处调用。
 		2.3 版本已经实现。
 
 startAtomic	开始一个原子操作。屏幕不更新，直到遇到 "endAtomic" 为止。
@@ -510,7 +487,7 @@ unguard off len
 version		没有实现。
 
 
-10.4 函数和应答						*nb-functions*
+6.4 函数和应答						*nb-functions*
 
 getDot		没有实现。
 
@@ -553,9 +530,9 @@ getText		返回缓冲区的内容，以字符串形式表示。
 insert off text
 		在位置 "off" 之前插入文本 "text"。"text" 是字符串参数，"off"
 		是个数值。
-		"off" 的计算必须在每行结尾处包括 "\n" (新行)，或 'fileformat'
-		为 "dos" 时 "\r\n"。如果在空缓冲区上使用 "insert"，Vim 会自动
-		相应地设置 'fileformat'。
+		"text" 必须在每行结尾处包括 "\n" (新行)，或 'fileformat' 为
+		"dos" 时 "\r\n"。如果在空缓冲区上使用 "insert"，Vim 会自动相应
+		地设置 'fileformat'。
 		如果 "off" 指向行首，文本插在此行之上。这样，如果 "off" 为零，
 		文本行被插到第一行之前。
 		如果 "off" 指向行的开始位置之后，包括行尾的 NUL 处，那么文本的
@@ -584,7 +561,7 @@ saveAndExit	完成关闭 Vim 等价的操作:  ":confirm qall"。如果文件内
 		2.1 版本新出现。
 
 
-10.5 事件						*nb-events*
+6.5 事件						*nb-events*
 
 balloonEval off len type
 		鼠标在文本上短暂停留。如果 "len" 为零，没有选择区域，光标在
@@ -600,13 +577,13 @@ balloonText text
 		2.1 版本新出现。
 
 buttonRelease button lnum col
-		报告按了那个鼠标键，和释放时光标的位置。只有对 NetBeans 拥有的
-		缓冲区有效。如果鼠标键在释放时在状态行或者分隔行时，该事件不会
-		被发送。如果 col 小于 1，鼠标键释放的位置在前导的标号栏。
+		报告按了那个鼠标键，和释放时光标的位置。只有对 Vim 控制器拥有
+		的缓冲区有效。如果鼠标键在释放时在状态行或者分隔行时，该事件不
+		会被发送。如果 col 小于 1，鼠标键释放的位置在前导的标号栏。
 		2.2 版本新出现。
 
 disconnect
-		报告 NetBeans vim 在退出，不会尝试读写更多的命令。
+		报告 Vim 控制器 Vim 在退出，不会尝试读写更多的命令。
 		2.3 版本新出现。
 
 fileClosed	没有实现。
@@ -682,10 +659,10 @@ startupDone	编辑器完成启动工作，可以开始编辑文件。
 unmodified	缓冲区现在处于未修改状态。只有在允许的时候才发送。见
 		"startDocumentListen"。
 
-version vers	报告接口实现的版本号。Vim 报告 "2.2" (包括引号)。
+version vers	报告接口实现的版本号。Vim 报告 "2.4" (包括引号)。
 
 
-10.6 特殊消息						*nb-special*
+6.6 特殊消息						*nb-special*
 
 这些消息不遵循以上说明的消息格式。它们仍由换行符终止。
 
@@ -702,21 +679,143 @@ DETACH		IDE -> 编辑器: 终止连接，不退出编辑器。用于当 IDE 终�
 
 REJECT		不用。
 
+
+6.7  协议错误信息					*nb-protocol_errors*
+
+这些错误发生意味着某个消息违反了协议。
+*E627* *E628* *E629* *E630* *E631* *E632* *E633* *E634* *E635* *E636*
+*E637* *E638* *E639* *E640* *E641* *E642* *E643* *E644* *E645* *E646*
+*E647* *E648* *E649* *E650* *E651* *E652* *E653* *E654*
+
+
 ==============================================================================
-11. NetBeans 命令					*netbeans-commands*
+7. NetBeans 热键					*netbeans-key*
 
 							*:nbkey*
-:nbkey key			把键传递给 NetBeans 进行处理
+:nbkey key			把键传递给 Vim 控制器进行处理
 
-把键传递给 NetBeans 进行热键处理。你不需要直接调用此命令。不过，NetBeans 在启
-动时会把热键的列表传递给 Vim，如果其中一个键被按下，生成本命令以把该键发送回
-NetBeans。
+用 specialKeys 命令安装了热键后，此命令用来生成热键的相应信息发给 Vim 控制器。
+生成的依次是 newDotAndMark、keyCommand 和 keyAtPos 事件。
+
 
 ==============================================================================
-12. 已知问题						*netbeans-problems*
+8. 已知问题						*netbeans-problems*
 
 不可能有 NUL 字节。编辑器到 IDE 的转换使得它们成为 NL 字符。反之，IDE -> 编辑
 器却不能插入它们。
+
+==============================================================================
+9. 调试 NetBeans 协议					*netbeans-debugging*
+
+要调试 Vim 协议，必须在编译 Vim 时加入调试支持和 NetBeans 调试支持。关于 Vim 
+编译和如果打开调试支持的操作，请见 |netbeans-configure|。
+
+运行 Vim 时，设置以下环境变量:
+
+    export SPRO_GVIM_DEBUG=netbeans.log
+    export SPRO_GVIM_DLEVEL=0xffffffff
+
+Vim 就会把所有收到和发送的 NetBeans 协议信息记录到 netbeans.log 文件中。
+
+一个会话后，netbeans.log 的内容大致如下:
+Tue May 20 17:19:27 2008
+EVT: 0:startupDone=0
+CMD 1: (1) create
+CMD 2: (1) setTitle "testfile1.txt"
+CMD 3: (1) setFullName "testfile1.txt"
+EVT(suppressed): 1:remove=3 0 -1
+EVT: 1:fileOpened=0 "d:\\work\\vimWrapper\\vimWrapper2\\pyvimwrapper\\tests\\testfile1.txt" T F
+CMD 4: (1) initDone
+FUN 5: (0) getCursor
+REP 5: 1 1 0 0
+CMD 6: (2) create
+CMD 7: (2) setTitle "testfile2.txt"
+CMD 8: (2) setFullName "testfile2.txt"
+EVT(suppressed): 2:remove=8 0 -1
+EVT: 2:fileOpened=0 "d:\\work\\vimWrapper\\vimWrapper2\\pyvimwrapper\\tests\\testfile2.txt" T F
+CMD 9: (2) initDone
+
+
+==============================================================================
+10. NetBeans 外部编辑器
+
+注 意: 以下信息已经过时！只对还在使用旧版的 NetBeans 的人有用。
+
+
+10.1. 下载 NetBeans				*netbeans-download*
+
+NetBeans IDE 可以从 netbeans.org 下载。你可以下载发行版，源代码，或者用 CVS 得
+到当前的源代码树。如果你选择下载源代码，遵照 netbeans.org 的指示来编译
+NetBeans。
+
+视乎你下载的 NetBeans 版本，你可能需要更多的工作: 下载所需的外部编辑器模块。这
+是使 NetBeans 支持 gvim (或者 xemacs :-)) 的模块。如果你的 NetBeans 不带之，参
+见 http://externaleditor.netbeans.org 了解如何下载该模块的详情。
+
+关于 C、C++ 和 Fortran 的支持，你需要得到 cpp 模块。关于这个模块的信息，参见
+http://cpp.netbeans.org。
+
+你已可以从 Sun Microsystems, Inc 下载 30 天免费测试的 Sun ONE Studio。详情见
+http://www.sun.com。
+
+
+10.2. NetBeans 键盘映射				*netbeans-keybindings*
+
+Vim 理解执行 NetBeans 命令的键盘映射。它们通常是功能键的组合。要执行某个
+NetBeans 命令，用户必须按 Pause 键，再按 NetBeans 的键盘映射。比如，要编译
+Java 文件，NetBeans 的键盘映射是 "F9"。所以，在 vim 里，按 "Pause F9" 起到编译
+java 文件的功能。要切换当前行的断点状态，按 "Pause Shift F8"。
+
+Pause 键是功能键 21。如果你没有可用的 Pause 键，而想用 F8 代替，用: >
+
+	:map <F8> <F21>
+
+外部编辑器模块动态地读取 NetBeans 的键盘映射，所以 vim 应该总能得到最新的键盘
+映射，即使在 NetBeans 改变它们以后。
+
+
+10.3. 为 Vim 准备 NetBeans			*netbeans-preparation*
+
+要使得 NetBeans 支持 vim，NetBeans 外部编辑器模块必须已经调入并且能使用。如果
+你使用 Sun ONE Studio Enterprise Edition，那么这一模块应该已经能用了。如果你用
+的是 NetBeans 发行版，你需要自己去找这个开源的模块。
+
+你可以检查该模块是不是已经存在。打开 Tools->Options 对话框，找到 "Modules" 列
+表 (IDE Configuration->System->Modules)。如果该列表包含 "External Editor"，检
+查一下它是不是被许可使用了 ("Enabled" 属性应该为 "True")。如果你的列表里没有这
+一项，见下一节 |obtaining-exted|。
+
+
+10.4. 取得外部编辑器模块			*obtaining-exted*
+
+有两个方法可以取得外部编辑器模块。最简单的方式是使用 NetBeans 更新中心，下载并
+安装该模块。不幸的是，有的版本的更新中心找不到这个模块。如果这样不行，你需要自
+己下载源代码并编译该模块。我会试图使这个模块出现在 NetBeans 更新中心的，这样自
+己编译就不需要了。也可查看 http://externaleditor.netbeans.org，看看有无取得的
+方法。
+
+要通过 CVS 下载外部编辑器的源码并自己编译，见
+http://externaleditor.netbeans.org 和 http://www.netbeans.org。不幸的是，这个
+方法并不是很简单。
+
+
+10.5. 设置 NetBeans 以运行 Vim			*netbeans-setup*
+
+假设你已经根据 |netbeans-preparation| 调入和允许使用 NetBeans 外部编辑器模块，
+你只需要检查一下 gvim 命令行已经为你的环境正确配置好了。
+
+打开 Tools->Options 对话框，打开 Editing 种类，选择 External Editor。右边的窗
+格应该包含 Properties 和 Expert 页。在 Properties 页里，确保 "Editor Type" 设
+为 "Vim"。在 Expert 页里确保 "Vim Command" 是正确的。
+
+如果你要改变 "Vim Command"，要小心。必须提供有些命令选项，以便正确的建立连接。
+你可以改变命令名字本身，但也就那么多了。如果你的 gvim 可以在 $PATH 里找到，那
+么 VIM Command 就可以用 "gvim" 开始。如果你不想从 $PATH 里搜索 gvim，那么就提
+供完整的路径名。这样，你就可以对 NetBeans 打开的任何源代码使用 gvim 编辑了。
+
+如果有些文件在 gvim 里打开，有些 (有着不同后缀) 则使用缺省的 NetBeans 编辑器，
+那你就需要检查 Expert 页的 MIME Type 属性。NetBeans 面向 MIME 类型，而外部编辑
+器只会使用这个属性所指定的 MIME 类型。
 
 
  vim:tw=78:ts=8:ft=help:norl:
