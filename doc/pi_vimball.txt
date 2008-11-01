@@ -1,4 +1,4 @@
-*pi_vimball.txt*	For Vim version 7.1.  最近更新: 2007年5月
+*pi_vimball.txt*	For Vim version 7.2.  最近更新: 2008年6月
 
 			      --------------------
 			      Vimball 归档处理程序
@@ -8,7 +8,7 @@
 
 Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
+Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	   The VIM LICENSE applies to Vimball.vim, and Vimball.txt
 	   (see |copyright|) except use "Vimball" instead of "Vim".
 	   No warranty, express or implied.
@@ -18,20 +18,47 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 1. 内容					*vba* *vimball* *vimball-contents*
 
 	1. 内容..........................................: |vimball-contents|
-	2. Vimball 手册..................................: |vimball-manual|
+	2. Vimball 简介..................................: |vimball-intro|
+	3. Vimball 手册..................................: |vimball-manual|
 	   MkVimball.....................................: |:MkVimball|
 	   UseVimball....................................: |:UseVimball|
 	   RmVimball.....................................: |:RmVimball|
-	3. Vimball 历史..................................: |vimball-history|
+	4. Vimball 历史..................................: |vimball-history|
 
 
 ==============================================================================
-2. Vimball 手册						*vimball-manual*
+2. Vimball 简介							*vimball-intro*
+
+	Vimball 的目标就是使插件用户的使用更方便。有了 vimball 以后，用户只需
+	要: >
+		vim someplugin.vba
+		:so %
+		:q
+<	然后插件和它的所有部件都会被安装在合适的目录里。注意 用户无须刻意进到
+	某个特定的目录来执行此命令。另外，插件的帮助也会被自动安装。
+
+	如果用户决定使用 AsNeeded 插件，vimball 会聪明地把本来要放到
+	.vim/plugin/ 中的脚本放到 .vim/AsNeeded/ 里去。
+
+	删除 vimball 安装的插件很容易: >
+		vim
+		:RmVimball someplugin
+<	举例说吧，zip 和 tarball 对应的操作就不是那么简单了。
+
+	Vimball 检视用户的 |'runtimepath'| 来确定把脚本放在哪里。如果可能，通
+	常使用 runtimepath 提到的第一个目录。用 >
+		:echo &rtp
+<	来查看该目录。
+
+
+==============================================================================
+3. Vimball 手册						*vimball-manual*
 
 							*:MkVimball*
 		:[range]MkVimball[!] filename [path]
 
-	行范围内指定要保存在 vimball 里的文件的路径；例如: >
+	行范围内指定要保存在 vimball 里的文件的路径，但不包含通常在
+	runtimepath (|'rtp'|) 指定的那部分。例如: >
 		plugin/something.vim
 		doc/something.txt
 <	在此范围的行上使用 >
@@ -42,11 +69,30 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	这些路径都相对于你的 .vim (vimfiles) 目录，而所有文件都应该在该目录
 	下。更准确地说，vimball 插件通常使用 'runtimepath' 里第一个存在的目录
 	作为前缀；它不使用绝对路径，除非用户指定的就是如此。
-							*g:vimball_home*
-	通过指定变量 g:vimball_home，你可以覆盖 |'runtimepath'| 的使用。
 
 	如果使用感叹号 (!)，MkVimball 总是建立 "filename.vba" 文件。如果已经存
 	在则覆盖之。此行为和 |:w| 类似。
+
+							*g:vimball_mkdir*
+	首先尝试 |mkdir()| 命令 (并非所有系统都支持)。
+
+	如果该命令不存在，那么 g:vimball_mkdir 也不存在 (译者注: 原文如此)。此
+	时，它设为:
+	  |g:netrw_local_mkdir|，如果存在的话
+	   "mkdir"，如果可执行的话
+	   "makedir"，如果可执行的话
+	   否则，未定义
+	用户可以自定义 g:vimball_mkdir 来直接指定建立目录的命令。vimball 如有
+	需要，会通过该命令来建立目录。
+
+							*g:vimball_home*
+	通过指定变量 g:vimball_home，你可以覆盖 |'runtimepath'| 的使用。
+
+	路径预处理					*g:vimball_path_escape*
+
+	vimball 使用的路径通过 s:Path() 预处理；此外，若干字符经过转义 (在前面
+	加上反斜杠)。这些字符定义在 g:vimball_path_escape 里，用户可以在
+	.vimrc 初始化脚本中覆盖其定义。
 
 							*vimball-extract*
 		vim filename.vba
@@ -78,8 +124,21 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 
 
 ==============================================================================
-3. Vimball 历史 (英文)					*vimball-history* {{{1
+4. Vimball 历史 (英文)					*vimball-history* {{{1
 
+	26 : May 27, 2008 * g:vimball_mkdir usage installed.  Makes the
+	                    $HOME/.vim (or $HOME\vimfiles) directory if
+			    necessary.
+	     May 30, 2008 * (tnx to Bill McCarthy) found and fixed a bug:
+			    vimball wasn't updating plugins to AsNeeded/
+			    when it should
+	25 : Mar 24, 2008 * changed vimball#Vimball() to recognize doc/*.??x
+			    files as help files, too.
+	     Apr 18, 2008 * RmVimball command is now protected by saving and
+	                    restoring settings -- in particular, acd was
+			    causing problems as reported by Zhang Shuhan
+	24 : Nov 15, 2007 * |g:vimball_path_escape| used by s:Path() to
+	                    prevent certain characters from causing trouble
 	22 : Mar 21, 2007 * uses setlocal instead of set during BufEnter
 	21 : Nov 27, 2006 * (tnx to Bill McCarthy) vimball had a header
 	                    handling problem and it now changes \s to /s
@@ -105,7 +164,7 @@ Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	10 : Apr 27, 2006 * moved all setting saving/restoration to a pair of
 			    functions.  Included some more settings in them
 			    which frequently cause trouble.
-	9  : Apr 26, 2006 * various changes to support Windows prediction
+	9  : Apr 26, 2006 * various changes to support Windows' prediction
 			    for backslashes and spaces in file and directory
 			    names.
 	7  : Apr 25, 2006 * bypasses foldenable
