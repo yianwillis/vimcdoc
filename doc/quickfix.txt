@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.1.  最近更新：2007年5月
+*quickfix.txt*  For Vim version 7.2.  最近更新：2008年4月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -128,7 +128,9 @@ quickfix 列表相互独立。
 			quickfix 列表。
 
 							*:cq* *:cquit*
-:cq[uit]		以错误码退出 Vim。这样编译器就不会再次编译相同文件。
+:cq[uit][!]		以错误码退出 Vim。这样编译器就不会再次编译相同文件。
+			_警告_: 对文件的所有改动都会丢失！即使没有 [!] 也是如
+			此。类似于 ":qall!" |:qall|，但 Vim 返回非零退出码。
 
 							*:cf* *:cfile*
 :cf[ile][!] [errorfile]	读入错误文件并跳转到首个错误。以 -q 选项启动 Vim 时会
@@ -142,11 +144,11 @@ quickfix 列表相互独立。
 			你不能用 -q 命令行选项设置位置列表。
 
 
-:cg[etfile][!] [errorfile]				*:cg* *:cgetfile*
+:cg[etfile] [errorfile]					*:cg* *:cgetfile*
 			读入错误文件。和 ":cfile" 类似，只是不跳转到首个错误。
 
 			
-:lg[etfile][!] [errorfile]				*:lg* *:lgetfile*
+:lg[etfile] [errorfile]					*:lg* *:lgetfile*
 			和 ":cgetfile" 类似，但使用当前窗口的位置列表而不是
 			quickfix 列表。
 
@@ -201,22 +203,22 @@ quickfix 列表相互独立。
 			quickfix 列表。
 
 							*:cgete* *:cgetexpr*
-:cgete[xpr][!] {expr}	用 {expr} 的计算结果建立 quickfix 列表。和 ":cexpr" 类
+:cgete[xpr] {expr}	用 {expr} 的计算结果建立 quickfix 列表。和 ":cexpr" 类
 			似，只是不跳转到首个错误。
 
 							*:lgete* *:lgetexpr*
-:lgete[xpr][!] {expr}	和 ":cgetexpr" 类似，但使用当前窗口的位置列表而不是
+:lgete[xpr] {expr}	和 ":cgetexpr" 类似，但使用当前窗口的位置列表而不是
 			quickfix 列表。
 
 							*:cad* *:caddexpr*
-:cad[dexpr][!] {expr}	把 {expr} 的计算结果行加到当前 quickfix 列表中。如果
+:cad[dexpr] {expr}	把 {expr} 的计算结果行加到当前 quickfix 列表中。如果
 			quickfix 列表不存在，建立新的列表。不改变当前的光标位
 			置。详情见 |:cexpr|。
 			示例: >
     :g/mypattern/caddexpr expand("%") . ":" . line(".") .  ":" . getline(".")
 <
 							*:lad* *:laddexpr*
-:lad[dexpr][!] {expr}	和 ":caddexpr" 类似，但使用当前窗口的位置列表而不是
+:lad[dexpr] {expr}	和 ":caddexpr" 类似，但使用当前窗口的位置列表而不是
 			quickfix 列表。
 
 							*:cl* *:clist*
@@ -244,6 +246,20 @@ quickfix 列表相互独立。
 
 如果 vim 内建 |+autocmd| 支持，可以在 quickfix 命令 (':make'、':grep' 等) 执行
 前后使用两个自动命令。详见 |QuickFixCmdPre| 和 |QuickFixCmdPost|。
+
+						*QuickFixCmdPost-example*
+如果 'encoding' 不同于 locale，错误信息可能和 Vim 使用的编码不同。以下代码可以
+进行消息的转换: >
+	function QfMakeConv()
+	   let qflist = getqflist()
+	   for i in qflist
+	      let i.text = iconv(i.text, "cp936", "utf-8")
+	   endfor
+	   call setqflist(qflist)
+	endfunction
+
+	au QuickfixCmdPost make call QfMakeConv()
+
 
 =============================================================================
 2. 出错窗口					*quickfix-window*
@@ -366,6 +382,7 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 			5. 错误文件以 'errorformat' 格式读入。
 			6. 如果 Vim 编译时带 |+autocmd|，执行所有相关的
 			   |QuickFixCmdPost| 自动命令。
+			   见下例。
 			7. 如果没指定 [!]，则跳转到首个错误。
 			8. 错误文件被删除。
 			9. 你现在可以用 |:cnext|，|:cprevious| 等命令在错误间
@@ -406,6 +423,24 @@ shell 完成。基本就像输入下面的命令一样：
 
 如果 'shellpipe' 为空，{errorfile} 将被忽略。这对那些自身将输出写入文件的编译
 器很有用 (比如，Manx 的 Aztec C)。
+
+
+用 QuickFixCmdPost 来修正编码 ~
+
+'encoding' 可能不同于编译程序产生的信息的编码，下例说明 Vim 读入错误信息后如何
+修正之: >
+
+	function QfMakeConv()
+	   let qflist = getqflist()
+	   for i in qflist
+	      let i.text = iconv(i.text, "cp936", "utf-8")
+	   endfor
+	   call setqflist(qflist)
+	endfunction
+
+	au QuickfixCmdPost make call QfMakeConv()
+
+(Faque Cheng 提供示例)
 
 ==============================================================================
 5. 使用 :vimgrep 和 :grep				*grep* *lid*
@@ -638,6 +673,16 @@ MANX AZTEC C				*quickfix-manx* *compiler-manx*
 
 如果 Vim 是在编译器中启动的，:sh 和一些 :! 命令不能工作，因为 Vim 是和编译器在
 同一个进程中运行而 stdin (标准输入) 此时不在交互状态。
+
+
+PERL					*quickfix-perl* *compiler-perl*
+
+Perl 编译器插件并不实际编译，而是调用 Perl 的内部语法检查功能并分析结果来得到
+可能的错误，以便你能在 quick-fix 模式中修正。
+
+不管检查的文件里是否有 "no warnings" 或 "$^W = 0"，警告还会产生。要关闭之，设
+置 g:perl_compiler_force_warnings 为零值。例如: >
+	let g:perl_compiler_force_warnings = 0
 
 
 PYUNIT 编 译 器						*compiler-pyunit*
@@ -1168,7 +1213,8 @@ ant (http://jakarta.apache.org/) 输出的每个行首都为 [javac]，这样我
 
 						*errorformat-Perl*
 在 $VIMRUNTIME/tools 中，你可以找到 efm_perl.pl 脚本。它将 Perl 出错信息过滤为
-quickfix 模式可以理解的格式。使用方法可以查看该文件的开头部分。
+quickfix 模式可以理解的格式。使用方法可以查看该文件的开头部分。(此脚本已过时，
+见 |compiler-perl|。)
 
 
 
