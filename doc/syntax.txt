@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.1.  最近更新: 2007年5月
+*syntax.txt*	For Vim version 7.2.  最近更新: 2008年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -96,7 +96,7 @@ GUI 窗口打开时才会设置。这发生在 |gvimrc| 的读入之后，从而
 	\ endif <CR>
 [使用 |<>| 记法，按本义输入]
 
-细节
+细节:
 ":syntax" 命令是用执行文件脚本实现的。要了解它到底干了什么，察看以下文件:
     命令		文件 ~
     :syntax enable	$VIMRUNTIME/syntax/syntax.vim
@@ -484,11 +484,11 @@ ASSEMBLY	*ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
 把 "nasm" 换成实际的汇编语法的名字。该行必须是文件头五行中的一行。
 
 语法类型可以为某个缓冲区定制。方法是设置 b:asmsyntax 变量: >
-	:let b:asmsyntax=nasm
+	:let b:asmsyntax = "nasm"
 
 如果没有设置 b:asmsyntax，不管是自动还是手动，就会使用全局变量 asmsyntax 的
 值。它可以看作是缺省的汇编语言: >
-	:let asmsyntax=nasm
+	:let asmsyntax = "nasm"
 
 如果什么都没有定义，最后就假定是 "asm" 语法。
 
@@ -557,7 +557,7 @@ Visual Basic 和 "普通的" Basic 都使用扩展名 ".bas"。要检测使用�
 C							*c.vim* *ft-c-syntax*
 
 C 高亮的一些设置是可选的。要打开，给相应的变量赋任何值。例如: >
-	:let c_comment_strings=1
+	:let c_comment_strings = 1
 可用 ":unlet" 关闭。例如: >
 	:unlet c_comment_strings
 
@@ -570,6 +570,7 @@ c_no_tab_space_error	 ... 不包括 <Tab> 之前的空格
 c_no_bracket_error	不高亮 {}；如果在 [] 里面视为错误
 c_no_curly_error	不高亮 {}；如果在 [] 和 () 里面视为错误；
 				除了出现在首列的 { 和 } 以外
+c_curly_error		高亮丢失的 }；强制从文件首开始同步，因而可能会较慢
 c_no_ansi		不使用 ANSI 标准类型和常数
 c_ansi_typedefs		 ... 但使用 ANSI 标准类型
 c_ansi_constants	 ... 但使用 ANSI 标准常数
@@ -613,7 +614,6 @@ cErrInBracket 的高亮。
 
 如果想在你的 C 文件里使用折叠，可以在 'runtimpath' 的 "after" 目录下的一个文件
 里加上这些行。Unix 上，这会是 ~/.vim/after/syntax/c.vim. >
-    syn region myFold start="{" end="}" transparent fold
     syn sync fromstart
     set foldmethod=syntax
 
@@ -769,8 +769,8 @@ DOS 批处理文件的高亮有一个选项。它和 Windows 2000 的命令解�
 
 DOXYGEN						*doxygen.vim* *doxygen-syntax*
 
-Doxygen 使用特殊的文档格式生成代码文档 (和 Javadoc 类似)。本语法脚本为 c、cpp
-和 idl 文件加入 Doxygen 的高亮，Java 应该也能用。
+Doxygen 使用特殊的文档格式生成代码文档 (和 Javadoc 类似)。本语法脚本为 c、
+cpp、idl 和 php 文件加入 Doxygen 的高亮，Java 应该也能用。
 
 有几个办法可以打开 Doxygen 格式。首先，在文件的模式行上可以给 syntax 加入
 ".doxygen"，进行显式设置。示例: >
@@ -1282,9 +1282,9 @@ Java 1.1 里，只应该用函数 System.out.println() 和 System.err.println() 
 它们分别用来高亮语句本身，调试字符串里的特殊字符、字符串、布尔常量和类型
 (this，super)。我本人喜欢给语句设置别的背景。
 
-为了帮助你编写在 Java 和 C++ 之间容易移植的代码，Java 程序里的所有的 C++ 关键
-字被标为错误。不过，如果你经常使用，可以在 .vimrc 文件里定义如下变量: >
-	:let java_allow_cpp_keywords=1
+为了帮助你编写在 Java 和 C++ 之间容易移植的代码，可以在 Java 程序里把所有的
+C++ 关键字标为错误。为此，在 .vimrc 文件里定义如下变量: >
+	:let java_allow_cpp_keywords = 0
 
 Javadoc 是一个程序，它接受特殊的 Java 程序文件里的注释，并创建 HTML 页面。标准
 的配置会以类似于 HTML 文件 (见 |html.vim|) 方式高亮该 HTML 代码，你甚至可以在
@@ -2126,10 +2126,17 @@ syntax/sh.vim 假定使用 Bourne shell 语法。请不要在错误报告里引�
 占有率的统计数据 (译者注: 此处大概指希望使用其它缺省值的用户) -- 在 <.vimrc>
 文件里自己选择系统使用的缺省 sh 版本就可以了。
 
-如果你在 <.vimrc> 里设定 >
-	let g:sh_fold_enabled= 1
+syntax/sh.vim 文件提供若干级别的基于语法的折叠: >
+
+	let g:sh_fold_enabled= 0     (缺省，无语法高亮)
+	let g:sh_fold_enabled= 1     (打开函数折叠)
+	let g:sh_fold_enabled= 2     (打开 here 文档折叠)
+	let g:sh_fold_enabled= 4     (打开 if/do/for 折叠)
 >
-那么若干语法项目 (Here 文档和函数体) 就可以进行语法折叠 (见 |:syn-fold|)。
+那么若干语法项目 (Here 文档和函数体) 就可以进行语法折叠 (见 |:syn-fold|)。把这
+些值加在一起可以得到多种项目的折叠: >
+
+	let g:sh_fold_enabled= 3     (打开函数和 here 文档的折叠)
 
 如果你注意到往回滚动时，高亮出现问题，但 CTRL-L 重画又可以修正的话，尝试设置
 "sh_minlines" 内部变量为较大的值: >
@@ -2182,7 +2189,7 @@ Vim 目前通过不同语法脚本提供不同供应商的 SQL 支持。你可�
 Oracle 改为任何目前支持的 SQL 类型。你也可以方便地为每个缓冲区设置不同的 SQL
 方言。
 
-详细的操作可见 |sql.txt|。
+详细的操作可见 |ft_sql.txt|。
 
 
 TCSH						*tcsh.vim* *ft-tcsh-syntax*
@@ -2204,8 +2211,8 @@ VIM 认定不应该存在反斜杠 + 引号的构造，在 .vimrc 里加入这�
 
 TEX						*tex.vim* *ft-tex-syntax*
 
-*tex-folding*
-要语法折叠么？
+								*tex-folding*
+要语法折叠么？ ~
 
 <syntax/tex.vim> 的版本 28 支持基于语法的 part、chapter、section、subsection
 等等的折叠。把 >
@@ -2213,8 +2220,15 @@ TEX						*tex.vim* *ft-tex-syntax*
 放到你的 <.vimrc> 里，并 :set fdm=syntax。我建议把后者放到你的 LaTeX 文件末尾
 的模式行里来执行: >
 	% vim: fdm=syntax
+<
+								*tex-nospell*
+不想检查注释里的拼写？ ~
 
-*tex-runon*
+有些家伙喜欢在注释里写源代码，所以希望在 LaTeX 文件的注释里关闭拼写检查。为
+此，在 <.vimrc> 里放上: >
+      let g:tex_comment_nospell= 1
+<
+								*tex-runon*
 在注释还是数学模式里？~
 
 <syntax/tex.vim> 高亮支持 TeX、LaTeX 和部分的 AmsTeX。高亮支持包括三个主要的区
@@ -2224,7 +2238,7 @@ TEX						*tex.vim* *ft-tex-syntax*
 	%stopzone
 它会使得 texZone 或 texMathZone 强迫终止。
 
-*tex-slow*
+								*tex-slow*
 语法高亮很慢？~
 
 如果你使用机器速度很慢，可能会想减小这些变量的值 >
@@ -2233,15 +2247,15 @@ TEX						*tex.vim* *ft-tex-syntax*
 (特别是后者)。如果你的机器很快，可以考虑增大它们的值。它们主要影响同步 (确切地
 说也就是: 如果有的话，哪个语法组包含屏幕顶部的文本？)。
 
-*tex-morecommands* *tex-package*
-想高亮更多的命令？
+					    *tex-morecommands* *tex-package*
+想高亮更多的命令？ ~
 
 LaTeX 是可编程的语言，因而有数以千计的包，包含各种专门的 LaTeX 命令、语法和字
 体。如果你用了某个包，当然希望发布的 syntax/tex.vim 能支持它。但这显然是不实际
 的。请考虑使用 |mysyntaxfile-add| 介绍的技术来扩展或者修改 syntax/tex.vim 提供
 的高亮处理。
 
-*tex-error*
+								*tex-error*
 过多的 Error 高亮？~
 
 <tex.vim> 支持各种的词法检查。尽管错误检查经常很有用，它指示的地方实际上可能没
@@ -2249,7 +2263,7 @@ LaTeX 是可编程的语言，因而有数以千计的包，包含各种专门�
 	let tex_no_error=1
 从而 <tex.vim> 提供的所有错误检查都会被抑制。
 
-*tex-math*
+								*tex-math*
 需要新的数学模式的组？~
 
 如果你需要在 LaTeX 里包含新的数学组，下面的代码给出一个告诉你可以如何操作的例
@@ -2261,7 +2275,7 @@ LaTeX 是可编程的语言，因而有数以千计的包，包含各种专门�
 需要把 "mathzone" 换成新数学组的组名，然后在 .vim/after/syntax/tex.vim 里调
 用。如果 "starform" 变量为真，意味着新数学组有星号的形式 (比如， eqnarray*)。
 
-*tex-style*
+								*tex-style*
 开始新的风格？~
 
 你可以在 *.tex 文件里使用 "\makeatletter"，从而在命令里可用 "@"。不过，因为
@@ -2285,27 +2299,50 @@ tf 语法高亮有一个选项。
 	:let tf_minlines = 你的选择
 
 
-VIM						*vim.vim* *ft-vim-syntax*
+VIM			*vim.vim* 		*ft-vim-syntax*
+			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
 
 准确的语法高亮和屏幕刷新速度需要一定的折衷。要提高准确性，你可能想增加
-g:vim_minlines 变量的值。而 g:vim_maxlines 变量可以用来增加屏幕的刷新速度 (详
-情可见 |:syn-sync|)。
+g:vimsyn_minlines 变量的值。而 g:vimsyn_maxlines 变量可以用来增加屏幕的刷新速
+度 (详情可见 |:syn-sync|)。
 
-	g:vim_minlines : 用于设置同步的 minlines
-	g:vim_maxlines : 用于设置同步的 maxlines
+	g:vimsyn_minlines : 用于设置同步的 minlines
+	g:vimsyn_maxlines : 用于设置同步的 maxlines
 
-g:vimembedscript 选项稍稍加快 vim 脚本的语法高亮载入，代价是外部脚本语言不支持
-语法高亮 (目前有 perl、python、ruby 和 tcl)。
+	(g:vim_minlines 和 g:vim_maxlines 是这些选项过时的名字)
 
-	g:vimembedscript == 1 (缺省)     <vim.vim> 打开支持的内嵌的脚本语言的
-	g:vimembedscript 不存在		 高亮: perl、python、ruby 和 tcl。
+						*g:vimsyn_embed*
+g:vimsyn_embed 选项允许用户选择是否使用及使用何种类型的嵌入脚本高亮。 >
 
-	g:vimembedscript == 0		 不载入内嵌的脚本语言的语法高亮。
+   g:vimsyn_embed == 0   : 不内嵌任何脚本
+   g:vimsyn_embed =~ 'm' : 内嵌 mzscheme (仅当 vim 支持)
+   g:vimsyn_embed =~ 'p' : 内嵌 perl     (仅当 vim 支持)
+   g:vimsyn_embed =~ 'P' : 内嵌 python   (仅当 vim 支持)
+   g:vimsyn_embed =~ 'r' : 内嵌 ruby     (仅当 vim 支持)
+   g:vimsyn_embed =~ 't' : 内嵌 tcl      (仅当 vim 支持)
+<
+缺省，g:vimsyn_embed 是 "mpPr"；也就是说，syntax/vim.vim 缺省会支持 mzscehme、
+perl、python 和 ruby 的高亮。Vim 的 has("tcl") 测试看来在 tcl 不存在的时候会挂
+起。所以，缺省不支持嵌入 tcl (但如果你希望 vim 语法高亮包含 tcl 的内嵌的话，只
+要简单地在 g:vimembedscript 选项中加入便可)。
+						*g:vimsyn_folding*
 
+syntax/vim.vim 现在支持一些折叠: >
+
+   g:vimsyn_folding == 0 或不存在: 没有基于语法的折叠
+   g:vimsyn_folding =~ 'a' : 自动命令组
+   g:vimsyn_folding =~ 'f' : 折叠函数
+   g:vimsyn_folding =~ 'm' : 折叠 mzscheme 脚本
+   g:vimsyn_folding =~ 'p' : 折叠 perl     脚本
+   g:vimsyn_folding =~ 'P' : 折叠 python   脚本
+   g:vimsyn_folding =~ 'r' : 折叠 ruby     脚本
+   g:vimsyn_folding =~ 't' : 折叠 tcl      脚本
+
+							*g:vimsyn_noerror*
 syntax/vim.vim 给出的错误高亮未必都正确；VimL 是一个要正确高亮难度很高的语言。
 如果不想出现错误高亮，在你的 |vimrc| 里放上: >
 
-	let g:vimsyntax_noerror = 1
+	let g:vimsyn_noerror = 1
 
 
 XF86CONFIG				*xf86conf.vim* *ft-xf86conf-syntax*
@@ -2915,6 +2952,7 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
 - 高亮区域永远不会超出匹配文本的范围。
 - 结束模式上的负偏移不一定总能用，因为结束模式可能在高亮本应结束的地方才检测
   到。
+- Vim 7.2 之前，位移用字节数而不是字符数计算。这对多字节字符不适用。
 - 匹配不能从实际匹配的模式所在的行之外开始。这样不行: "a\nb"ms=e。高亮可以从另
   一个行开始，这样没有问题: "a\nb"hs=e。
 
@@ -3017,9 +3055,9 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
 	remove={group-name}..
 		将指定的组从本簇里删除。
 
-用这种方式定义的簇可以在 contains=..、nextgroup=..、add=.. 或者 remove=.. 的列
-表里使用，只要加上 "@" 前缀即可。用这种表示方式，你可以隐含地在指定一个簇的内
-容之前先声明之。
+用这种方式定义的簇可以在 contains=..、containedin=..、nextgroup=..、add=.. 或
+者 remove=.. 的列表里使用，只要加上 "@" 前缀即可。用这种表示方式，你可以隐含地
+在指定一个簇的内容之前先声明之。
 
 示例: >
    :syntax match Thing "# [^#]\+ #" contains=@ThingMembers
@@ -3598,8 +3636,8 @@ WildMenu	'wildmenu' 补全的当前匹配
 'statusline' 语法允许在状态行和标尺 (通过 'rulerformat') 上使用 9 种不同的高
 亮。这些高亮组的名字是 User1 到 User9。
 
-GUI 里，你可以使用这些组来设置菜单、滚动条和工具提示的色彩。它们没有缺省值。
-这不适用于 Win32 GUI。这里，只有三种高亮参数有效: font、guibg 和 guifg。
+GUI 里，你可以使用以下这些组来设置菜单、滚动条和工具提示的色彩。它们没有缺省
+值。这不适用于 Win32 GUI。这里，只有三种高亮参数有效: font、guibg 和 guifg。
 
 							*hl-Menu*
 Menu		当前菜单的字体、背景色和前景色。也包括工具栏。
