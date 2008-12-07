@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.1.  最近更新：2007年5月
+*usr_41.txt*	For Vim version 7.2.  最近更新：2008年6月
 
 		     VIM USER MANUAL - by Bram Moolenaar
 		     译者：lang2、Willis http://vimcdoc.sf.net
@@ -519,8 +519,11 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	nr2char()		通过 ASCII 码值取得一个字符
 	char2nr()		取得字符的 ASCII 码值
 	str2nr()		把字符串转换为数值
+	str2float()		把字符串转换为浮点数
 	printf()		根据 % 项目格式化字符串
 	escape()		将字符串通过 '\' 转义
+	shellescape()		转义字符串用于外壳命令
+	fnameescape()		转义 Vim 命令使用的文件名
 	tr()			把一组字符翻译成另一组
 	strtrans()		将一个字符串变成可显示的格式
 	tolower()		将一个字符串转换为小写
@@ -584,6 +587,20 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	max()			字典项目的最大值
 	min()			字典项目的最小值
 	count()			计算字典里某值的出现次数
+
+浮点数计算:
+	float2nr()		把浮点数转换为数值
+	abs()			绝对值 (也适用于数值)
+	round()			四舍五入
+	ceil()			向上取整
+	floor()			乡下取整
+	trunc()			删除小数点后的值
+	log10()			以 10 为底的对数
+	pow()			x 的 y 次方
+	sqrt()			平方根
+	sin()			正弦
+	cos()			余弦
+	atan()			反正切
 
 变量:
 	type()			变量的类型
@@ -702,13 +719,20 @@ quickfix 和位置列表:
 	foldtextresult()	得到关闭折叠显示的文本
 
 语法和高亮:
+	clearmatches()		清除 |matchadd()| 和 |:match| 诸命令定义的所有
+				匹配
+	getmatches()		得到 |matchadd()| 和 |:match| 诸命令定义的所有
+				匹配
 	hlexists()		检查高亮组是否存在
 	hlID()			取得高亮组标示
 	synID()			取得某位置的语法标示
 	synIDattr()		取得某语法标示的特定属性
 	synIDtrans()		取得翻译后的语法标示
 	diff_hlID()		得到 diff 模式某个位置的高亮标示
+	matchadd()		定义要高亮的模式 (一个 "匹配")
 	matcharg()		得到 |:match| 参数的相关信息
+	matchdelete()		删除 |matchadd()| 或 |:match| 诸命令定义的匹配
+	setmatches()		恢复 |getmatches()| 保存的匹配列表
 
 拼写:
 	spellbadword()		定位光标所在或之后的错误拼写的单词
@@ -727,6 +751,7 @@ quickfix 和位置列表:
 	confirm()		让用户作出选择
 	getchar()		从用户那里取得一个字符输入
 	getcharmod()		取得最近键入字符的修饰符
+	feedkeys()		把字符放到预输入队列中
 	input()			从用户那里取得一行输入
 	inputlist()		让用户从列表里选择一个项目
 	inputsecret()		从用户那里取得一行输入，不回显
@@ -768,6 +793,7 @@ Vim 服务器:
 	cscope_connection()	检查有无与 cscope 的连接
 	did_filetype()		检查某文件类型自动命令是否已经使用
 	eventhandler()		检查是否在一个事件处理程序内
+	getpid()		得到 Vim 的进程号
 	
 	libcall()		调用一个外部库函数
 	libcallnr()		同上，但返回一个数值
@@ -814,7 +840,7 @@ Vim 允许你定义自己的函数。基本的函数声明如下: >
 
 	备注:
 	为了从一个函数内部访问一个全局变量你必须在前面加上 "g:"。因此在一个函
-	数内 "g:count" 表示全局变量 "count"，而 "count" 是另外一个仅用于该函数
+	数内 "g:today" 表示全局变量 "today"，而 "today" 是另外一个仅用于该函数
 	内的局部变量。
 
 现在你可以使用 ":return" 语句来把最小的数值返回给调用者了。最后，你需要结束这
@@ -866,12 +892,13 @@ Min 函数可以这样来使用: >
 来表示该范围所包括的第一行和最后一行。例如: >
 
 	:function Count_words() range
-	:  let n = a:firstline
-	:  let count = 0
-	:  while n <= a:lastline
-	:    let count = count + Wordcount(getline(n))
+	:  let lnum = a:firstline
+	:  let n = 0
+	:  while lnum <= a:lastline
+	:    let n = n + len(split(getline(lnum)))
+	:    let lnum = lnum + 1
 	:  endwhile
-	:  echo "found " . count . " words"
+	:  echo "found " . n . " words"
 	:endfunction
 
 你可以这样调用上面的函数: >
@@ -2027,8 +2054,8 @@ exists("*s:Func")	查看是否已经定义了某个函数。
 ==============================================================================
 *41.14*	编写快速载入的插件			*write-plugin-quickload*
 
-插件会不断增长而使代码越来越长。启动时的延迟因而会非常显著，你因而可能不想每次
-都载入这个插件。是时候让我们来编写可以快速载入的插件了。
+插件会不断变大而使代码越来越长。启动时的延迟因而会非常显著，而你可能几乎不用这
+个插件。这时，就是时候让我们来编写可以快速载入的插件了。
 
 基本的方法是调用插件两次。第一次定义用户命令和映射，提供需要的功能。第二次定义
 实现这些功能的函数。
