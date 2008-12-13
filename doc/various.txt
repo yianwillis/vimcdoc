@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.1.  最近更新: 2007年3月
+*various.txt*   For Vim version 7.2.  最近更新: 2008年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -108,7 +108,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 
 							*:#!*
 :#!{anything}		忽略，从而你可以用下面的方式开始 Vim 脚本: >
-				#!/usr/bin/env vim -S
+				#!vim -S
 				echo "this is a Vim script"
 				quit
 <
@@ -196,7 +196,8 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			如: "!ls" 之后的 "!echo ! \! \\!" 实际执行
 			"echo ls ! \!"。
 			命令执行之后，检查当前文件的修改时间 |timestamp|。
-			{cmd} 里不能有 '|'，见 |:bar|。
+			{cmd} 里的 '|' 会传给外壳，你不能用来附加 Vim 命令。
+			见 |:bar|。
 			{cmd} 以换行符结尾，其后的内容被理解为另外一个 ":" 命
 			令。不过，如果换行之前有反斜杠，该反斜杠被去掉，{cmd}
 			继续接受参数。无论之前有多少个反斜杠都是如此。只有一个
@@ -275,6 +276,7 @@ N  *+find_in_path*	包含文件搜索: |[I|、|:isearch|、|CTRL-W_CTRL-I|、
 N  *+folding*		折叠 |folding|
    *+footer*		信息页脚 |gui-footer|
    *+fork*		只对 Unix 有效: |fork| 外壳命令
+   *+float*		浮点数支持
 N  *+gettext*		消息翻译 |multi-lang|
    *+GUI_Athena*	只对 Unix 有效: Athena |GUI|
    *+GUI_neXtaw*	只对 Unix 有效: neXtaw |GUI|
@@ -303,6 +305,7 @@ B  *+mouse_dec*		只对 Unix 有效: Dec 终端鼠标处理 |dec-mouse|
 N  *+mouse_gpm*		只对 Unix 有效: Linux 终端鼠标处理 |gpm-mouse|
 B  *+mouse_netterm*	只对 Unix 有效: netterm 终端鼠标处理 |netterm-mouse|
 N  *+mouse_pterm*	只对 QNX 有效: pterm 终端鼠标处理 |qnx-terminal|
+N  *+mouse_sysmouse*	只对 Unix 有效: *BSD 控制台鼠标处理 |sysmouse|
 N  *+mouse_xterm*	只对 Unix 有效: xterm 终端鼠标处理 |xterm-mouse|
 B  *+multi_byte*	韩国语和其他多字节语言 |multibyte|
    *+multi_byte_ime*	Win32 多字节字符的输入法 |multibyte-ime|
@@ -322,7 +325,8 @@ H  *+profile*		|:profile| 命令
 m  *+python*		Python 接口 |python|
 m  *+python/dyn*	Python 接口 |python-dynamic| |/dyn|
 N  *+quickfix*		|:make| 和 |quickfix| 命令
-N  *+reltime*		|reltime()| 函数
+N  *+reltime*		|reltime()| 函数，'hlsearch'/'incsearch' 超时，
+			'redrawtime' 选项
 B  *+rightleft*		从右到左输入 |'rightleft'|
 m  *+ruby*		Ruby 接口 |ruby|
 m  *+ruby/dyn*		Ruby 接口 |ruby-dynamic| |/dyn|
@@ -389,9 +393,10 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 :redi[r] >> {file}	重定向消息到文件 {file}，如果文件 {file} 已存在，附加
 			在其后。{Vi 无此功能}
 
+:redi[r] @{a-zA-Z}
 :redi[r] @{a-zA-Z}>	重定向消息到寄存器 {a-z}。如果给出的名字是大写 {A-Z}，
-			附加到已有内容之后。为了后向兼容，寄存器名后的 '>' 可
-			以省略。{Vi 无此功能}
+			附加到已有内容之后。寄存器名后的 '>' 可选。
+			{Vi 无此功能}
 :redi[r] @{a-z}>>	附加消息到寄存器 {a-z}。{Vi 无此功能}
 
 :redi[r] @*>		
@@ -554,7 +559,11 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 			用 ":tag {pattern}"。这时，":tnext" 命令可以跳转到后一
 			个匹配，"tselect" 列出所有的匹配并让你选择一个。 >
 				:help index| :tse z.
-<			该命令可以后面跟一个 '|' 并紧跟另外一个命令。不过，你
+<			如果没有参数，你会看到 "help" 的匹配而不是列出所有可能
+			的匹配 (那会非常慢)。
+			显示的匹配个数限于 300 个。
+
+			该命令可以后面跟一个 '|' 并紧跟另外一个命令。不过，你
 			不需要在 help 命令里转义 '|'。所以下面这些都没问题: >
 				:help |
 				:help k| only
@@ -583,9 +592,11 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 				:helpgrep uganda\c
 <			寻找中文帮助的搜索: >
 				:helpgrep backspace@cn
-<			后面不能跟其他的命令。其余部分都被当作模式的一部分。如
+<			模式不支持换行符，必须在一行内匹配。为此，可用 |:grep|
+			代替，但要得到帮助文件的列表就比较复杂了。
+			后面不能跟其他的命令。其余部分都被当作模式的一部分。如
 			果需要，可以用 |:execute|。
-			不会在压缩的帮助文件里搜索 (Debian 压缩帮助文件)。
+			不会在压缩的帮助文件里搜索 (Fedora 压缩帮助文件)。
 			{Vi 无此功能}
 
 							*:lh* *:lhelpgrep*
@@ -648,13 +659,16 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 
 					*:helpt* *:helptags*
 				*E154* *E150* *E151* *E152* *E153* *E670*
-:helpt[ags] {dir}	为目录 {dir} 生成帮助标签文件 tags。它扫描该目录中所有
+:helpt[ags] [++t] {dir}
+			为目录 {dir} 生成帮助标签文件 tags。它扫描该目录中所有
 			的 "*.txt" 和 "*.??x" 文件中帮助标签定义。标签定义出现
 			在星号之间。"*.??x" 文件是经过翻译的文件。它们相应产生
 			"tags-??" 文件，参见 |help-translated|。所生成的标签文
 			件经过排序。
 			如果其中有重复项，会给出错误信息。
 			直接覆盖已有的标签文件，不会有提示。
+			可选的 "++t" 参数强制加入 "help-tags" 标签。如果 {dir}
+			等于 $VIMRUNTIME/doc，也会这样做。
 			例如，要重建运行时目录的帮助标签 (需要有相应写权限): >
 				:helptags $VIMRUNTIME/doc
 <			{Vi 无此功能}
