@@ -108,7 +108,7 @@ def PrintSidebar():
     print '<hr noshade="noshade" size="1">'
     print '<!-- NavBar -->'
     print '<p><a href="http://sourceforge.net/projects/vimcdoc/">Project Page</a></p>'
-    print '<p><a href="images">Screenshot</a></p>'
+    print '<p><a href="images/screenshot.jpg">Screenshot</a></p>'
     print '<p><a href="http://sourceforge.net/project/showfiles.php?group_id=56777">Download</a></p>'
     print '<p><a href="http://vimcdoc.sf.net/INSTALL">HOWTO</a></p>'
     print '<p><a href="http://vimcdoc.sf.net/doc/help.html">Read Online</a></p>'
@@ -189,21 +189,22 @@ def PrintGetVimcdoc():
     print '<p class="LEFT">'
     print 'The latest version is <font color="red">' + vimcdoc_ver + '!</font><br>'
     print 'Vimcdoc is hosted by sourceforge. So you should be able to'
-    print 'get it from any sourceforge mirror. See the links below:'
+    print 'get it from any sourceforge mirror. See the links below '
+    print '(some external links may be out of date):'
     print '<br><br>'
     print '</p>'
     print '<ul class="LEFT">'
     exe_address = 'http://prdownloads.sourceforge.net/vimcdoc/vimcdoc-' + vimcdoc_ver
-    exe_address = exe_address + '-setup.exe?download'
+    exe_ansi_address = exe_address + '-setup.exe?download'
     exe_unicode_address = exe_address + '-setup-unicode.exe?download'
     tarball_address = 'http://prdownloads.sourceforge.net/vimcdoc/vimcdoc-' + vimcdoc_ver
     tarball_address = tarball_address + '.tar.gz?download'
 
-    print '<li> Latest <a href=' + exe_address + '>win32 installation program</a>'
+    print '<li> Latest <a href=' + exe_ansi_address + '>win32 installation program</a>'
     print '</li>'
     print '<li> Latest <a href=' + exe_unicode_address + '>win32 (Unicode) installation program</a>'
     print '</li>'
-    print '<li> Latest platform independant <a href=' + tarball_address + '> tarball</a>, including an Linux/BSD installation script'
+    print '<li> Latest platform independent <a href=' + tarball_address + '> tarball</a>, including an Linux/BSD installation script'
     print '</li>'
     print '<li> If you are a BSD user, you might want to check out this\
             <a href="http://www.freshports.org/chinese/vim-scdoc">port</a>.\
