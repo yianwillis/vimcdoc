@@ -8,13 +8,18 @@ TARBALL      = $(RELEASE_NAME).tar
 TARGZ        = $(TARBALL).gz
 DOC_DIR      = $TOPLEVELDIR/doc
 RELEASE_DIR  = $TOPLEVELDIR/release
+# ANSI NSIS, available from nsis.sourceforge.net/.
 MAKENSIS     = makensis
 NSISFILE     = vcd-setup.nsi
+# Unicode NSIS and utilities, available for www.scratchpaper.com/.
+A2U			 = a2u
+MAKENSIS_UNI = makensisu
+NSISFILE_UNI = vcd-setup-unicode.nsi
 NSISZIP      = /X"SetCompressor bzip2"
 NSISOUTPUT   = /V0
 @Vimcdoc_txt = TOPLEVELDIR + '/doc/*.txt'
 EXCLUDES     = ''
-EXTRA_FILES  = help_cn.vim
+EXTRA_FILES  = help_cn.vim vimcdoc.vim
 #@Vimcdoc_txt = expand2string(glob( Vimcdoc_txt ))
 
 release {virtual}: $RELEASE_NAME
@@ -24,11 +29,12 @@ release {virtual}: $RELEASE_NAME
 		@target_name = os.path.splitext( doc )[0]
 		@if not target_name in ['doc/uganda.nsis']:
 			:copy $(target_name).txt $RELEASE_NAME/$(target_name).cnx
-	@for doc in ['help_cn.vim']:
+	extra_files = $EXTRA_FILES
+	@for doc in var2list( extra_files ):
 		:copy $(doc) $RELEASE_NAME/
 	:cd $RELEASE_NAME
 	:chmod 755 vimcdoc.sh
-	@gentag_cmd = "vim -e -s +'helptags ./doc' +q"
+	@gentag_cmd = "vim -e -s +'helptags ++t ./doc' +q"
 	:sys {force} $gentag_cmd
 	:cd -
 	:sys tar cf $(TARBALL) $(RELEASE_NAME)
@@ -44,11 +50,14 @@ release {virtual}: $RELEASE_NAME
 	#| :eval re.sub( 'ft=help:norl:', 'ft=help:norl:enc=cp936:', stdin )
 	#>! $target_name
 	#:move $target_name $RELEASE_NAME/doc
-	:copy $NSISFILE $RELEASE_NAME
+	:copy $NSISFILE $NSISFILE_UNI $RELEASE_NAME
 	:cd $RELEASE_NAME
 	:sys $(MAKENSIS) $(NSISFILE)
+	:sys $(A2U) ENGLISH LICENSE # unicode nsis requires unicode version
+	:sys $(MAKENSIS_UNI) $(NSISFILE_UNI)
 	:cd -
-	:move $RELEASE_NAME/$(VCD)_setup.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup.exe
+	:move $RELEASE_NAME/$(VCD)-setup.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup.exe
+	:move $RELEASE_NAME/$(VCD)-setup-unicode.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup-unicode.exe
 	os = $OSTYPE
 	@if os == "posix":
 		:sys 'pwd'

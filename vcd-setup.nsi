@@ -3,7 +3,7 @@
 # Compile this file with NSIS2!! available at http://nsis.sf.net
 # Author: lang2 (lang2_at_users.sf.net)
 
-OutFile "vimcdoc_setup.exe"
+OutFile "vimcdoc-setup.exe"
 
 SetCompressor bzip2
 
@@ -49,6 +49,9 @@ LangString DocsectName ${LANG_SIMPCHINESE} "Vim 中文文档"
 LangString StartVim ${LANG_SIMPCHINESE} "安装完毕后察看中文帮助"
 LangString StartVim ${LANG_ENGLISH} "View the Chinese help after installation"
 
+LangString SetupVim ${LANG_SIMPCHINESE} "设置中文为缺省帮助语言"
+LangString SetupVim ${LANG_ENGLISH} "Set Chinese as the default help language"
+
 LangString BrandingText ${LANG_SIMPCHINESE} "http://vcd.gro.clinux.org"
 LangString BrandingText ${LANG_ENGLISH} "http://vimcdoc.sf.net"
 BrandingText $(BrandingText)
@@ -93,8 +96,8 @@ Section  !$(DocsectName)
   SectionIn RO ;This section has to be run
 
   ; Set the other two options to be off 
-  StrCpy $R0 'no'
-  StrCpy $R0 'no'
+  StrCpy $R1 'no'
+  StrCpy $R2 'no'
 
 SectionEnd
 
@@ -102,6 +105,10 @@ SectionEnd
  #StrCpy $R0 'yes'
  #AddSize 3500
 #SectionEnd
+
+Section $(SetupVim)
+ StrCpy $R2 'yes'
+SectionEnd
 
 Section $(StartVim)
  StrCpy $R1 'yes'
@@ -113,6 +120,9 @@ Section - DoStuff
   File "doc\tags-cn"
   SetOutPath $INSTDIR\..\vimfiles\syntax
   File "help_cn.vim"
+  StrCmp $R2 'yes' 0 +3
+    SetOutPath $INSTDIR\..\vimfiles\plugin
+    File "vimcdoc.vim"
   SetOutPath $PROGRAMFILES\vimcdoc
   File "README"
   File "INSTALL"
@@ -125,6 +135,7 @@ Section "Uninstall"
   Delete $INSTDIR\*.cnx
   Delete $INSTDIR\tags-cn
   Delete $INSTDIR\..\syntax\help_cn.vim
+  Delete $INSTDIR\..\plugin\vimcdoc.vim
   Delete $INSTDIR\vimcdoc-uninst.exe
   Rmdir /r $PROGRAMFILES\vimcdoc
 SectionEnd

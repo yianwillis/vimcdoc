@@ -3,14 +3,15 @@
 # vimcdoc.sh:	vimcdoc Linux install/uninstall script
 #
 # Usage: 		(run it as root)
-#				'./vimcdoc.sh -i' to install vimcdoc
+#				'./vimcdoc.sh -i' to install vimcdoc and set helplang
+#				'./vimcdoc.sh -I' to install vimcdoc only
 #				'./vimcdoc.sh -u' to uninstall vimcdoc
 #
 # Author:		wandys	(wandys@users.sf.net)
 #				lang2	(lang2@users.sf.net)
 
 if [ $# -ne 1 ]; then
-	echo "Usage: $0 {-i|-u}"
+	echo "Usage: $0 {-i|-I|-u}"
 	exit 1
 fi
 
@@ -44,7 +45,7 @@ else
 fi
 
 case $1 in
-	-i)
+	-[iI])
 	if [ $install_dist_files -eq 1 ]; then
 		for i in $DIST_FILES; do
 			if [ ! -d $VIMCDOC_PATH ]; then
@@ -74,7 +75,16 @@ case $1 in
 		rm -f $VIM_PATH/syntax
 		mkdir -p $VIM_PATH/syntax
     fi
+    echo "install -m 644 help_cn.vim $VIM_PATH/syntax/help_cn.vim"
     install -m 644 help_cn.vim $VIM_PATH/syntax/help_cn.vim
+    if [ $1 = "-i" ]; then
+        if [ ! -d $VIM_PATH/plugin ]; then
+            rm -f $VIM_PATH/plugin
+            mkdir -p $VIM_PATH/plugin
+        fi
+        echo "install -m 644 vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim"
+        install -m 644 vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim
+    fi
 	echo 'Done.'
 	;;
 
@@ -87,6 +97,7 @@ case $1 in
 		rm -f *.cnx $CNTAGS
 	fi
 	rm -f $VIM_PATH/syntax/help_cn.vim
+	rm -f $VIM_PATH/plugin/vimcdoc.vim
 	echo 'Done.'
 	;;
 
