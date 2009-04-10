@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.2.  最近更新: 2008年8月
+*pi_netrw.txt*  For Vim version 7.2.  最近更新: 2009年4月
 
 
 	    -----------------------------------------------------
@@ -46,6 +46,7 @@
       切换到较早访问的目录...............................|netrw-u|
       切换到较迟访问的目录...............................|netrw-U|
       通过用户函数定制浏览...............................|netrw-x|
+      删除书签...........................................|netrw-mB|
       删除文件或目录.....................................|netrw-D|
       目录探索命令.......................................|netrw-explore|
       使用星号和模式进行探索.............................|netrw-star|
@@ -83,6 +84,7 @@
       给文件或目录换名...................................|netrw-move|
       反转排序顺序.......................................|netrw-r|
       选择排序风格.......................................|netrw-s|
+      选择编辑窗口.......................................|netrw-C|
 10. 问题和修正...........................................|netrw-problems|
 11. 调试 netrw 自身......................................|netrw-debug|
 12. 历史。...............................................|netrw-history|
@@ -155,16 +157,32 @@ netrw 支持用 url "透明" 地编辑其它机器上的文件 (见 |netrw-trans
 
 	  协议      变量	       缺省值
 	--------  ----------------  -------------
-	   dav:    *g:netrw_dav_cmd*  = "cadaver"
-	 fetch:  *g:netrw_fetch_cmd*  = "fetch -o"     如果 fetch 可用
-	   ftp:    *g:netrw_ftp_cmd*  = "ftp"
-	  http:   *g:netrw_http_cmd*  = "curl -o"      如果       curl  可用
-	  http:    g:netrw_http_cmd   = "wget -q -O"   否则，如果 wget  可用
-	  http:    g:netrw_http_cmd   = "fetch -o"     否则，如果 fetch 可用
-	   rcp:    *g:netrw_rcp_cmd*  = "rcp"
-	 rsync:  *g:netrw_rsync_cmd*  = "rsync -a"
-	   scp:    *g:netrw_scp_cmd*  = "scp -q"
-	  sftp:   *g:netrw_sftp_cmd*  = "sftp"
+	   dav:  *g:netrw_dav_cmd*   = "cadaver"      如果    cadaver 可执行
+	   dav:   g:netrw_dav_cmd    = "curl -o"      否则，如果 curl 可执行
+	 fetch:  *g:netrw_fetch_cmd* = "fetch -o"     如果 fetch 可用
+	   ftp:  *g:netrw_ftp_cmd*   = "ftp"
+	  http:  *g:netrw_http_cmd*  = "elinks"       如果       elinks 可用
+	  http:   g:netrw_http_cmd   = "links"        否则，如果  links 可用
+	  http:   g:netrw_http_cmd   = "curl"         否则，如果  curl  可用
+	  http:   g:netrw_http_cmd   = "wget"         否则，如果  wget  可用
+	  http:   g:netrw_http_cmd   = "fetch"        否则，如果  fetch 可用
+	   rcp:  *g:netrw_rcp_cmd*   = "rcp"
+	 rsync:  *g:netrw_rsync_cmd* = "rsync -a"
+	   scp:  *g:netrw_scp_cmd*   = "scp -q"
+	  sftp:  *g:netrw_sftp_cmd*  = "sftp"
+
+	*g:netrw_http_xcmd* : http://... 协议的选项字符串由此字符串指定，而且
+	可以独立修改。
+
+		    elinks : "-dump >"
+		    links  : "-dump >"
+		    curl   : "-o"
+		    wget   : "-q -O"
+		    fetch  : "-o"
+
+	例如，如果你的系统有 elinks 而你想看详细的 html 源代码而不是页面，可以
+	在 .vimrc 里加上 let g:netrw_http_xcmd= "-source >"。
+
 
 读 取						*netrw-read* *netrw-nread* {{{2
 
@@ -265,6 +283,13 @@ netrw 提供很多变量，方便你根据自己的喜好定制 netrw。一个�
  *b:netrw_lastfile*	最近一次通过网络读写的文件，该变量局部于缓冲区
 			(用于支持无参数的 :Nw )
 
+ *g:netrw_chgwin*	指定文件编辑使用的窗口号 (另见 |netrw-C|)
+			(缺省) 无
+
+ *g:Netrw_funcref*	指定 netrw 编辑文件时调用的函数。先编辑文件，然后调用
+			此函数引用 (|Funcref|)。
+			(缺省) 无
+
  *g:netrw_ftp*		如果不存在，用缺省的 ftp
 			=0 使用缺省的 ftp		       (uid password)
 			=1 使用替代的 ftp 方法		  (user uid password)
@@ -297,6 +322,12 @@ netrw 提供很多变量，方便你根据自己的喜好定制 netrw。一个�
 
  *g:netrw_scpport*      = "-P" : 设置 scp 端口的选项
  *g:netrw_sshport*      = "-p" : 设置 ssh 端口的选项
+
+ *g:netrw_sepchr*	=\0xff
+			=\0x01 如果 enc == euc-jp (也许也适用于其它编码，请让我
+			                           知道)
+			内部用来分隔文件名和优先码。
+			见 |netrw-p12|。
 
   *g:netrw_silent*	=0 : 正常方式完成传输
 			=1 : 安静方式完成传输
@@ -621,7 +652,8 @@ netrw 支持若干协议。调用这些协议时使用下面的列出的变量�
                                   =存在           允许用户通过 ftp 自动传输的
                                                   文件通过 NetReadFixUp() 进行
                                                   转换
-    g:netrw_dav_cmd   变量        ="cadaver"
+    g:netrw_dav_cmd   变量        ="cadaver"      如果 cadaver 可执行
+    g:netrw_dav_cmd   变量        ="curl -o"      否则如果 curl 可执行
     g:netrw_fetch_cmd 变量        ="fetch -o"     如果 fetch 可以执行
     g:netrw_ftp_cmd   变量        ="ftp"
     g:netrw_http_cmd  变量        ="fetch -o"     如果       fetch 可以执行
@@ -767,6 +799,17 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 
 要知道 netrw 可以做的一切事情，见 |netrw-browse-cmds|！
 
+			*netrw-getftype* *netrw-filigree* *netrw-ftype*
+在列出本地文件时，|getftype()| 函数被用来加上一个附綴，来表示文件类型:
+
+	directory  : /
+	executable : *
+	fifo       : |
+	links      : @
+	sockets    : =
+
+附綴也影响 |g:netrw_sort_sequence|。
+
 
 快 速 帮 助						*netrw-quickhelp* {{{2
                        (按 ctrl-] 可选择主题)~
@@ -805,6 +848,7 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 		隐藏方式 (不显示匹配 g:netrw_list_hide 的文件) 和
 		显示方式 (只显示匹配 g:netrw_list_hide 的文件)
 	   c	使浏览中的目录成为当前目录                           |netrw-c|
+	   C	设置编辑窗口                                         |netrw-C|
 	   d	建立新目录                                           |netrw-d|
 	   D	试图删除文件/目录                                    |netrw-D|
 	   gb	切换到收入书签的目录                                 |netrw-gb|
@@ -853,7 +897,8 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 		         * |g:netrw_retmap| == 1  _且_
 			 * 用户没有在 netrw 自动载入之前已经定义 <2-leftmouse>
 			   映射，
-			那么双击鼠标左键返回到 netrw 浏览器窗口。
+			那么双击鼠标左键返回到 netrw 浏览器窗口。见
+			|g:netrw_retmap|。
 	<s-leftmouse>	(仅限于 gvim) 等价于 mf，标记文件
 
 				*netrw-quickcom* *netrw-quickcoms*
@@ -874,11 +919,14 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 把 目 录 加 入 书 签	*netrw-mb* *netrw-bookmark* *netrw-bookmarks* {{{2
 用下面的命令可以很方便地把目录加入 "书签" >
 
-	{cnt}mb
+	mb
 <
-可以使用任何计数。用 viminfo 的 "!" 选项 (|'viminfo'|)，可以在不同的 vim 会话
-间保存书签。|netrw-gb| 说明如何回到书签里的某个目录，而 |netrw-qb| 说明如何列
-出这些目录。
+书签可以跨会话使用，因为它们被保存在 $HOME/.netrwbook 文件里，并经排序。
+
+相关主题:
+	|netrw-gb| 如果回到 (go) 书签
+	|netrw-mB| 如何删除书签
+	|netrw-qb| 如何列出书签
 
 
 浏 览							*netrw-cr* {{{2
@@ -988,8 +1036,12 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 
 	{cnt}gb
 
-可以使用计数来引用任何书签项目。|netrw-mb| 说明如何加入书签，而 |netrw-qb| 说
-明如何列出书签。
+可以使用计数来引用任何书签项目。
+
+相关主题:
+	|netrw-mB| 如何删除书签
+	|netrw-mb| 如何回到书签 (译者注: 应为如何建立书签)
+	|netrw-qb| 如何列出书签
 
 
 切 换 到 较 早 访 问 的 目 录		*netrw-u* *netrw-updir* {{{2
@@ -1063,15 +1115,15 @@ OpenOffice (*.sfx)、可视文件 (*.jpg、*.gif 等) 和 PostScript (*.ps、 *.
 	..对文件名进行特殊处理..
 	endfun
 <
-这些函数需要在你的 .vim/plugin (vimfiles\plugin) 目录下的某个文件里定义。Vim 
+这些函数需要在你的 .vim/plugin (vimfiles\plugin) 目录下的某个文件里定义。Vim
 的函数名不能包含标点符号 (除了下划线以外)。要支持包含这类字符的后缀，netrw 会
 先按照下表对后缀进行转换: >
 
-    @ -> AT       ! -> EXCLAMATION    % -> PERCENT  
-    : -> COLON    = -> EQUAL          ? -> QUESTION 
+    @ -> AT       ! -> EXCLAMATION    % -> PERCENT
+    : -> COLON    = -> EQUAL          ? -> QUESTION
     , -> COMMA    - -> MINUS          ; -> SEMICOLON
-    $ -> DOLLAR   + -> PLUS           ~ -> TILDE    
-<    
+    $ -> DOLLAR   + -> PLUS           ~ -> TILDE
+<
 因而，对于下例: >
 
 	file.rcs,v  ->  NFH_rcsCOMMAv()
@@ -1081,6 +1133,17 @@ OpenOffice (*.sfx)、可视文件 (*.jpg、*.gif 等) 和 PostScript (*.ps、 *.
 提出要求。
 
 相关设置变量: |g:netrw_browsex_viewer|
+
+删 除 书 签						*netrw-mB* {{{2
+
+要删除书签，用 >
+
+	{cnt}mB
+<
+相关主题:
+	|netrw-gb| 如何回到 (go) 书签
+	|netrw-mb| 如何建立书签
+	|netrw-qb| 如何列出书签
 
 删 除 文 件 或 目 录		*netrw-delete* *netrw-D* *netrw-del* {{{2
 
@@ -1118,12 +1181,12 @@ OpenOffice (*.sfx)、可视文件 (*.jpg、*.gif 等) 和 PostScript (*.ps、 *.
 *netrw-rexplore* *netrw-sexplore* *netrw-texplore* *netrw-vexplore*
 目 录 探 索 命 令  {{{2
 
-     :Explore[!]   [dir]... 探索当前文件所在的目录		    *:Explore*
-     :Hexplore[!]  [dir]... 水平分割    并探索                      *:Hexplore*
-     :Rexplore          ... 返回到浏览器                            *:Rexplore*
-     :Sexplore[!]  [dir]... 分割并探索当前文件所在的目录	    *:Sexplore*
-     :Texplore     [dir]... 建立新标签页并探索                      *:Texplore*
-     :Vexplore[!]  [dir]... 垂直分割    并探索                      *:Vexplore*
+     :[N]Explore[!]   [dir]... 探索当前文件所在的目录		    *:Explore*
+     :[N]Hexplore[!]  [dir]... 水平分割    并探索                   *:Hexplore*
+     :Rexplore             ... 返回到浏览器                         *:Rexplore*
+     :[N]Sexplore[!]  [dir]... 分割并探索当前文件所在的目录	    *:Sexplore*
+     :Texplore        [dir]... 建立新标签页并探索                   *:Texplore*
+     :[N]Vexplore[!]  [dir]... 垂直分割    并探索                   *:Vexplore*
 
      用于 :Explore **/模式 : (另见 |netrw-starstar|)
      :Nexplore............. 转到下一个匹配的文件                    *:Nexplore*
@@ -1143,8 +1206,10 @@ OpenOffice (*.sfx)、可视文件 (*.jpg、*.gif 等) 和 PostScript (*.ps、 *.
 
 缺省这些命令使用当前文件的目录。不过你可以显式提供使用的目录 (路径)。
 
-|g:netrw_winsize| 变量如果被用户指定，也用来设置 Hexplore 和 Vexplore 窗口的大
-小。
+[N] 会代替 |g:netrw_winsize| 来指定新浏览器窗口应有的行数和列数。
+
+否则，如果用户指定 |g:netrw_winsize| 变量，用来设置新浏览器窗口应有的行数和列
+数。
 
 :Rexplore  此命令和其它的有所不同。当用在 netrw 浏览器窗口的文件上按 <cr> 等方
 	   式编辑文件时，:Rexplore 会重新显示上次的 netrw 浏览器窗口。它是
@@ -1217,6 +1282,11 @@ shift-下箭头 和 shift-上箭头 更方便。netrw 提供它们的映射:
 排序序列里，通常按后缀名安排名字列表的优先级，但其实任何模式都可以用。用逗号定
 界模式。缺省的排序序列是 (在一行上):
 >
+Unix 上: >
+	'[\/]$,\<core\%(\.\d\+\)\=,\.[a-np-z]$,\.h$,\.c$,\.cpp$,*,\.o$,\.obj$,
+	\.info$,\.swp$,\.bak$,\~$'
+<
+其它: >
 	'[\/]$,\.[a-np-z]$,\.h$,\.c$,\.cpp$,*,\.o$,\.obj$,\.info$,
 	\.swp$,\.bak$,\~$'
 <
@@ -1292,7 +1362,7 @@ industrial strength tips & tools" (O'Reilly, ISBN 0-596-00461-3) 一书给出如
 	1. 在本地机器 (ssh 客户端) 上生成 公钥/私钥 对: >
 		ssh-keygen -t rsa
 		(按照提示，把该文件存到 ~/.ssh/id_rsa)
-<	   
+<
 	2. 如果不要 passphrase，提示 passphrase 时只要按 <CR> 即可 (两次)。如
 	   果需要 passphrase，你要使用 ssh-agent，从而每个会话期间只需输入一次
 	   passphrase。如果不用 passphrase，只要简单地登录到你的本地机器上或者
@@ -1351,7 +1421,12 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 
 按 "qb" (query bookmarks，查询书签) 会列出书签里记录的目录和目录遍历的历史。
 
-(见 |netrw-mb|、 |netrw-gb|、|netrw-u| 和 |netrw-U|)
+相关主题:
+	|netrw-gb| 如何回到 (go) 书签
+	|netrw-mb| 如何建立书签
+	|netrw-mB| 如何删除书签
+	|netrw-u|  如何切换到历史堆栈里先前的目录
+	|netrw-U|  如何切换到历史堆栈里后来的目录
 
 
 建 立 新 目 录						*netrw-d* {{{2
@@ -1405,7 +1480,7 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 |netrw-mu|)。
 
 *markfilelist* *global_markfilelist* *local_markfilelist*
-所有的标记文件都进入全局标记文件列表；只有唯一的这样的列表。此外，每个 netrw 
+所有的标记文件都进入全局标记文件列表；只有唯一的这样的列表。此外，每个 netrw
 缓冲区都有自己局部的标记文件列表；因为 netrw 缓冲区和特定的目录相关联，这意味
 着每个目录都有自己的局部标记文件列表。操作标记文件的命令分别使用两个标记文件列
 表中的一个。
@@ -1592,6 +1667,16 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
   *g:netrw_ctags*		="ctags"
 				建立标签使用的缺省外部程序
 
+  *g:netrw_cursorline*		= 1 (缺省)
+				使用局部的 |'cursorline'| 设置，如果
+				|g:netrw_liststyle| ==0 (瘦列表) 或
+				|g:netrw_liststyle| ==1 (长列表) 或
+				|g:netrw_liststyle| ==3 (树形列表)
+				=0: 关闭
+				=2: 同 ==1, 但宽列表同时使用局部的
+				|'cursorline'| 和|'cursorcolumn'|。
+				(也即，不影响宽列表的显示)
+
   *g:netrw_decompress*		= { ".gz" : "gunzip" ,
 				    ".bz2" : "bunzip2" ,
 				    ".zip" : "unzip" ,
@@ -1650,6 +1735,10 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
   *g:netrw_hide*		如果为真，使用隐藏列表
 				 缺省: =0
 
+  *g:netrw_home*		书签和历史保存的主目录 (分别存为 .netrwbook 和
+				.netrwhist)。
+				 缺省: |'runtimepath'| 的第一个目录
+
   *g:netrw_keepdir*		=1 (缺省) 浏览目录时不影响当前目录。
 				=0 浏览目录时设置当前目录为该目录。
 				当前的浏览目录保存在 b:netrw_curdir 里 (另见
@@ -1693,9 +1782,21 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
   *g:netrw_mkdir_cmd*		建立远程目录的命令
 				 缺省: "ssh USEPORT HOSTNAME mkdir"
 
-  *g:netrw_retmap*		如果存在且为一，那么 <2-leftmouse> 会被映射以
-				方便地回到 netrw 浏览器窗口。
-				(示例: 点击一次，选择并打开文件，双击返回)
+  *g:netrw_retmap*		如果存在且为一，那么:
+  				 * 如果在 netrw 选择的文件中，_且_
+				 * 没有定义过普通模式的 <2-leftmouse> 映射，
+				那么 <2-leftmouse> 会被映射以方便地回到 netrw
+				浏览器窗口。
+				 示例: 点击一次，选择并打开文件，双击返回
+
+				备注: 你也可以选择这么做:
+				 * let g:netrw_retmap= 1 (译者注: 0？)，_且_
+				 * nmap <silent> 你的选择 <Plug>NetrwReturn
+				来让其它的映射，而不是 <2-leftmouse> 执行返回
+				的任务。
+
+				也可以用 |:Rexplore| 命令完成同样的功能。
+
 				  缺省: =0
 
   *g:netrw_rm_cmd*		删除文件的命令
@@ -1720,7 +1821,8 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 					let g:netrw_sort_options="i"
 <				 缺省: ""
 
-  *g:netrw_sort_sequence*	按名字排序时，先按逗号分隔的此模式序列排序
+  *g:netrw_sort_sequence*	按名字排序时，先按逗号分隔的此模式序列排序。
+				注意 模式也要考虑表示文件类型的附綴。
 				 缺省: '[\/]$,*,\.bak$,\.o$,\.h$,
                                         \.info$,\.swp$,\.obj$'
 
@@ -1784,7 +1886,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				    circumflex 是一个占空间的代码点；硬制表符
 				    是一个；宽和窄的 CJK 都是一个；等等)
 				=3: 虚拟长度 (制表符在 1 到 |'tabstop'| 之间，
-				    宽 CJK 是 2 而不是 1，阿拉伯 alif 在 lam 
+				    宽 CJK 是 2 而不是 1，阿拉伯 alif 在 lam
 				    之前是零，否则为 1，等等)
 
   *g:NetrwTopLvlMenu*		指定顶层子菜单名；缺省为 "Netrw."。
@@ -1903,6 +2005,15 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 
 相关主题:     |netrw-r| |netrw-S|
 相关设置变量: |g:netrw_sort_by| |g:netrw_sort_sequence|
+
+
+设 置 编 辑 窗 口					*netrw-C* {{{2
+
+用 "C" 映射选择一个 netrw 窗口用以编辑，也可以设置 g:netrw_chgwin 到要选择的窗
+口号。此后，选择文件以进行编辑 (|netrw-cr|) 时都用该窗口。
+
+相关主题:     |netrw-cr|
+相关设置变量: |g:netrw_chgwin|
 
 
 ==============================================================================
@@ -2029,7 +2140,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 			  有文件)，或任何你期望的类型 (cec: 把 {asterisk} 换成
 			  * ；我这么写是因为不然的话，helptags 系统认为它是一
 			  个标签)
-			- 确认它在列表框的顶端 (如若不然，点击它再点击 ”Up")
+			- 确认它在列表框的顶端 (如若不然，点击它再点击 "Up")
 		如果使用 Norton Commander 风格，你只要按 <F4> 来使用本地的
 		gvim 来编辑文件。
 
@@ -2039,7 +2150,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 <
 		'pscp' 如何使用私钥: >
 			http://www.tartarus.org/~simon/puttydoc/Chapter5.html
-			5.2.4 Using public key authentication with PSCP 
+			5.2.4 Using public key authentication with PSCP
 <
 		(Ben Schmidt) 我发现 cwRsync 所带的 ssh 太好了，现在我在自己用
 		的大多数 Windows 系统上都安装了 cwRsync 或 cwRsyncServer。对只
@@ -2066,7 +2177,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 			let g:netrw_use_noswf= 0
 <
 								*netrw-p10*
-	P10. "[something] is a directory" 和 
+	P10. "[something] is a directory" 和
 	     "Press ENTER or type command to continue" 这些提示烦死我了...
 
 		"[something] is a directory" 提示是 Vim 发出的，不是 netrw，看
@@ -2087,6 +2198,14 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 		* 想编辑新文件时，用 ctrl-w h 回到 netrw 浏览器，选择文件，然
 		  后按 P (见 |CTRL-W_h| 和 |netrw-P|)。如果使用 gvim，在浏览器
 		  窗口按 <leftmouse> 然后用 <middlemouse> 来选择文件。
+
+								*netrw-p12*
+	P12. 我的目录排序不对，或者有不想要的字符出现在列出的文件名里，或者宽
+	     列表中名字的对齐有问题...
+
+	     这可能是编码的问题，我自己通常使用 utf-8，但其实只用 ascii (也就
+	     是 32-126 的字符)。多字节编码每个字符使用两个 (或更多) 字节。你可
+	     能需要改变 |g:netrw_sepchr| 和/或 |g:netrw_xstrlen|。
 
 ==============================================================================
 11. 调试 netrw 自身					*netrw-debug* {{{1
@@ -2128,7 +2247,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 
 	3. 然后启动 vim 进行文件传输或者进行浏览以重现错误。一系列消息应该在一
 	   个单独的标签页出现，提示 <netrw.vim> 进行网络文件读写的一系列步骤。
-           
+
            要保存文件，用 >
 		:wincmd j
 		:set bt=
@@ -2139,6 +2258,69 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 ==============================================================================
 12. 历史 (英文)						*netrw-history* {{{1
 
+	v136: Jan 14, 2009 * extended |g:Netrw_funcref| to also handle lists
+			     of function references
+	      Jan 14, 2009 * (reported by Marvin Renich) with spell check
+			     enabled, some filenamess will still being
+			     displayed as spelling errors.
+	v135: Oct 29, 2008 * using |simplify()| on directory names
+			     (supporting handling ".."s in directory names)
+	      Oct 31, 2008 * added special file highlighting for core dumps
+			     under Unix/Linux.  The default sorting sequence
+			     now also gives core dumps priority.
+	      Nov 10, 2008 * uses a call to netrw#Nread() instead of Nread
+			     to avoid having to use fnameescape()
+			   * fixed a tree redrawing problem (open directory,
+			     open subdir, close subdir, close dir)
+	      Nov 19, 2008 * sprinked some histdel("/",-1)s through the code
+			     in an attempt to prevent netrw from changing
+			     the search history.
+	      Jan 02, 2009 * |g:Netrw_funcref| included
+	      Jan 05, 2009 * Explore */ **/ *// **// all clear explorer
+			     variables
+	      Jan 05, 2009 * (Panagiotis Louridas) extended s:WinPath()
+			     to remove cygdrive from non-cygwin Windows
+			     paths.  Improved the determination as to
+			     whether or not to do so.
+	      Jan 13, 2009 * included contains=@NoSpell in every syntax
+			     group for syntax/netrw.vim .
+	v134: Sep 30, 2008 * (Sander Marechal) provided a bugfix involving
+			     the use of the |netrw-t| command with a remote
+			     directory.
+	      Sep 30, 2008 * using "x" on a remote jpg was failing; fixed.
+	      Oct 03, 2008 * bookmarks now go on a list and are stored to
+			     the first directory on the |'runtimepath'| in
+			     the hopes of making their retention reliable.
+			     History now also goes to that directory.
+	      Oct 07, 2008 * Included check that vim 7.0 or later is in use.
+	      Oct 07, 2008 * Improved |g:netrw_retmap| handling.
+	      Oct 12, 2008 * Based upon Sébastien Migniot's suggestion, if
+			     cadaver isn't available then netrw will try to
+			     use curl for the dav://... protocol.
+	      Oct 13, 2008 * added @*/ to netrw buffers' |'iskeyword'|setting
+			     This lets mf (|netrw-mf|) mark directories, links
+			     and executables.
+	      Oct 13, 2008 * avoids a second NetrwBrowse() refresh when
+			     g:netrw_fastbrowse is <= 1 (slow, medium speed)
+	      Oct 22, 2008 * |g:netrw_http_xcmd| may now be overridden
+			     independently of |g:netrw_http_cmd|.
+	      Oct 23, 2008 * [N] added to the various Explore commands to
+			     let users specify the width/height of new
+			     explorer windows, overriding |g:netrw_winsize|.
+	v133: Aug 10, 2008 * NetReadFixup() for win95 was missing some "a:"s
+	      Aug 12, 2008 * (Jan Minář) an error condition in NetrwMethod()
+			     wasn't being used, resulting in "b:netrw_fname
+			     undefined" errors
+	      Aug 12, 2008 * (François Ingeirest) asked that "hi link" be
+			     changed to hi default link in the netrw syntax
+			     files.
+	      Aug 12, 2008 * using s:NetrwUnmarkList() more often.  Filenames
+			     were being left on the global list when removed
+			     from the buffer-local lists.
+	      Aug 14, 2008 * (Joshua Clayton) an errant extra ")" was left in
+			     the rcp-handling portion of NetRead().
+	      Sep 03, 2008 * added |'cursorline'| highlighting to thin, long,
+			     and tree displays.
 	v132: Aug 06, 2008 * Fixed marked file-based obtain
 	      Aug 08, 2008 * sourcing a file via ftp from a netrw-generated
 	                     buffer (or any buffer with |'nobl'|) left an
@@ -2378,7 +2560,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 			     decipher the name.
 	      May 07, 2007 * g:netrw_use_errorwindow now allows one to
 			     have error messages go to a reliable window
-			     or to use a less reliable but recallable 
+			     or to use a less reliable but recallable
 			     echoerr method
 	      May 07, 2007 * g:netrw_scpport and g:netrw_sshport support
 			     use of -P and -p, respectively, to set port

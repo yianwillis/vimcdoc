@@ -1,4 +1,4 @@
-*os_vms.txt*    For Vim version 7.2.  最近更新: 2006年4月
+*os_vms.txt*    For Vim version 7.2.  最近更新: 2009年4月
 
 
 		  VIM 参考手册
@@ -131,7 +131,7 @@ Vim 使用一个特定的目录结构来保存文档和运行时文件:
 	define/nolog TMP	device:[path.tmp]
 
 可以使 vim.exe 找到它的文档，文件类型，语法文件，并指定哪里可以存放临时文件。
-把 vim 发布版本的 "runtime" 子目录复制到 vimruntime 目录里。
+把 Vim 发布版本的 "runtime" 子目录复制到 vimruntime 目录里。
 
 逻辑名 $VIMRUNTIME 和 $TMP 是可选的。
 
@@ -300,6 +300,8 @@ GTK 运行环境 (LIBGTK 可在  http://www.polarhome.com/vim/ 下载)。
 8.12 diff-模式
 8.13 允许 C 关键字里出现 '$'
 8.14 为初学者提供的 VIMTUTOR　(VIM 教程)
+8.15 控制台模式启动太慢的问题
+8.16 公用 VIM 目录 - 不同的体系结构
 
 8.1 退格/删除键
 
@@ -525,12 +527,12 @@ patch、make 等等，都会有相同的问题。www.polarhome.com 提供了 Alp
 
 8.12 diff-模式
 
-Vim 6.0 或更高版本提供 vim 的 diff-模式 (见 |new-diff-mode|、|diff-mode| 和
+Vim 6.0 或更高版本提供 Vim 的 diff-模式 (见 |new-diff-mode|、|diff-mode| 和
 |08.7|)。它们使用外部程序 'diff' 并希望看到 Unix 兼容的 diff 输出结果。不过，
-标准的 VMS diff 程序输出的格式与之不兼容。要在 VMS 上使用 vim 的 diff-模式，你
+标准的 VMS diff 程序输出的格式与之不兼容。要在 VMS 上使用 Vim 的 diff-模式，你
 需要:
     1 安装 Unix 兼容的 diff 程序，例如 GNU diff
-    2 告诉 vim 在 diff-模式下使用 Unix 兼容的 diff。
+    2 告诉 Vim 在 diff-模式下使用 Unix 兼容的 diff。
 
 你可以从 VIM-VMS 网站下载 GNU diff，它是 GNU 工具的一部分。链接是:
 http://www.polarhome.com/vim/files/gnu_tools.zip。我建议把它解压到一个单独的
@@ -542,7 +544,7 @@ http://www.polarhome.com/vim/files/gnu_tools.zip。我建议把它解压到一�
 
    GDIFF :==     $GNU:DIFF.EXE
 
-现在你可以告诉 vim 使用新的 diff 程序了。以下程序取自 |diff-diffexpr|，但把外
+现在你可以告诉 Vim 使用新的 diff 程序了。以下程序取自 |diff-diffexpr|，但把外
 部 diff 程序的调用指向新的 VMS 上的 diff。把它加到你的 .vimrc 文件里: >
 
      " Set up vimdiff options
@@ -562,7 +564,7 @@ http://www.polarhome.com/vim/files/gnu_tools.zip。我建议把它解压到一�
 	endfunction
       endif
 
-你现在可以使用 vim 的 diff-模式，比如，只读方式下比较两个文件: >
+你现在可以使用 Vim 的 diff-模式，比如，只读方式下比较两个文件: >
 
     $ VIM -D/R <FILE1> <FILE2>
 
@@ -583,7 +585,7 @@ http://www.polarhome.com/vim/files/gnu_tools.zip。我建议把它解压到一�
 
 8.13 允许 C 关键字里出现 '$'
 
-DEC C 使用很多带有 '$' 的标识符。ANSI C 则不允许如此，而 vim 因而把 '$' 当作标
+DEC C 使用很多带有 '$' 的标识符。ANSI C 则不允许如此，而 Vim 因而把 '$' 当作标
 识符结束的标记。通过 |iskeyword| 命令，你可以改变这一行为。
 在你的 .vimrc 文件里加入如下的命令: >
 
@@ -608,12 +610,127 @@ VIMTUTOR.COM DCL 脚本可以帮助 Vim 初学者学习/掌握在 OpenVMS 上运
 
 (Thomas.R.Wyant III，Vim 6.1 版本)
 
+8.15 控制台模式启动太慢的问题
+
+因为 GUI/GTK Vim 在控制台模式中也能很好的工作，很多管理员为整个系统安装了这些
+版本的可执行程序。
+不幸的是，在远端慢速连接上，GUI/GTK 版本对只想使用控制台的用户会相当慢，这是因
+为该版本检测 X 环境的超时关系。
+
+幸运的是，有个简单的方法。管理员只需要同时安装 GUI/GTK 版本和纯控制台版本，如
+下: >
+
+    |- vim72
+    |----- doc
+    |----- syntax        
+       vimrc    (系统 rc 文件)
+       gvimrc
+       gvim.exe (GUI 或 GTK 版本的 vim.exe)      
+       vim.exe  (纯控制台版本) 
+
+在 LOGIN.COM 或 SYSLOGIN.COM 为 ex 定义系统符号: >
+
+	$ define/nolog VIM RF10:[UTIL.VIM72] ! VIM 所在的目录
+	$ vi*m  :== mcr VIM:VIM.EXE
+	$ gvi*m :== mcr VIM:GVIM.EXE
+	$ ! 或者用以下方式启动
+	$ gv*im :== spawn/nowait/input=NLA0 mcr VIM:GVIM.EXE -g -GEOMETRY 80x40
+
+
+像这样，没有 X 环境而只想用纯控制台模式的用户就可以避免效率太低的问题了。
+
+(Zoltan Arpadffy，Vim 7.2)
+
+8.16 公用 VIM 目录 - 不同的体系结构
+
+在一个下面这样包含不同体系结构结点的簇里:
+
+$show cluster
+View of Cluster from system ID 11655  node: TOR                                                                     18-AUG-2008 11:58:31
++---------------------------------+
+¦        SYSTEMS        ¦ MEMBERS ¦
++-----------------------+---------¦
+¦  NODE  ¦   SOFTWARE   ¦  STATUS ¦
++--------+--------------+---------¦
+¦ TOR    ¦ VMS V7.3-2   ¦ MEMBER  ¦
+¦ TITAN2 ¦ VMS V8.3     ¦ MEMBER  ¦
+¦ ODIN   ¦ VMS V7.3-2   ¦ MEMBER  ¦
++---------------------------------+
+
+如果能够有一个公共的 VIM 目录，但分别执行不同的可执行程序，会很方便。
+有若干实现方案:
+
+方法 1。所有可执行程序在相同目录，但使用不同的名字。
+在 login.com 或 sylogin.com 里使用以下的脚本可以很容易做到: >
+
+	$ if f$getsyi("NODE_HWTYPE") .eqs. "VAX"
+	$ then
+	$       say "VAX platform"
+	$       vi*m:== mcr vim:VIM.EXE_VAX
+	$ endif
+	$ if f$getsyi("NODE_HWTYPE") .eqs. "ALPH"
+	$ then
+	$       say "ALPHA platform"
+	$       vi*m :== mcr vim:VIM.EXE_AXP
+	$ endif
+	$ if f$getsyi("ARCH_NAME") .eqs. "IA64"
+	$ then
+	$      say "IA64 platform"
+	$      vi*m :== mcr vim:VIM.EXE_IA64
+	$ endif
+
+方法 2.  不同目录: >
+
+	$ if f$getsyi("NODE_HWTYPE") .eqs. "VAX"
+	$ then
+	$       say "VAX platform"
+	$       define/nolog VIM RF10:[UTIL.VAX_EXE] ! VAX executables
+	$ endif
+	$ if f$getsyi("NODE_HWTYPE") .eqs. "ALPH"
+	$ then
+	$       say "ALPHA platform"
+	$       define/nolog VIM RF10:[UTIL.AXP_EXE] ! AXP executables
+	$ endif
+	$ if f$getsyi("ARCH_NAME") .eqs. "IA64"
+	$ then
+	$      say "IA64 platform"
+	$      define/nolog VIM RF10:[UTIL.IA64_EXE] ! IA64 executables
+	$ endif
+        $! VIMRUNTIME must be defined in order to find runtime files
+	$ define/nolog VIMRUNTIME RF10:[UTIL.VIM72]
+
+使用这种方法一个好的示例可见来自 GNU_TOOLS.ZIP 包的 [GNU]gnu_tools.com 脚本。
+可以从这里下载 http://www.polarhome.com/vim/
+
+(Zoltan Arpadffy，Vim 7.2)
+
 ==============================================================================
 
 9. VMS 相关修改记录 (英文)				*vms-changes*
 
+Recent changes
+- The following plugins are included into VMS runtime: 
+  genutils 2.4, multiselect 2.2, multvals 3.1, selectbuf 4.3,
+  bufexplorer 7.1.7, taglist 4.5
+- minor changes in vimrc (just in VMS runtime) 
+- make_vms.mms - HUGE model is the default
+- [TESTDIR]make_vms.mms include as many tests possible
+- modify test30 and test54 for VMS
+- enable FLOAT feature in VMS port
+- os_vms.txt updated  
+
+Version 7.2 (2008 Aug 9)
+- VCF files write corrected
+- CTAGS 5.7 included
+- corrected make_vms.mms (on VAX gave syntax error) 
+
+Version 7.1 (2007 Jun 15)
+- create TAGS file from menu 
+
 Version 7
 - Improved low level char input (affects just console mode)
+- Fixed plugin bug
+- CTAGS 5.6 included
 
 Version 6.4 (2005 Oct 15)
 - GTKLIB and Vim build on IA64
@@ -751,6 +868,7 @@ Version 4.5 (1996 Dec 16)
 
 OpenVMS 文档和执行文件的维护者是:
 Zoltan Arpadffy <arpadffy@polarhome.com>
+OpenVMS Vim page: http://www.polarhome.com/vim/
 
 本文档采用了较早 OS_VMS.TXT 版本的作者和贡献者提供的部分内容和备注。他们是:
 	Charles E. Campbell, Jr. <cec@gryphon.gsfc.nasa.gov>

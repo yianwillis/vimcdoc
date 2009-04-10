@@ -1,4 +1,4 @@
-*spell.txt*	For Vim version 7.2.  最近更新: 2008年4月
+*spell.txt*	For Vim version 7.2.  最近更新: 2009年4月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -694,7 +694,10 @@ Vim 支持不少附加成分。下面给出描述 |spell-affix-vim|。已经作�
 
 	# 注释行 ~
 
-注释可以出现在有些项目之后，但这并不是通用的情况。
+带有固定数目参数的项目之后可以有注释，但不能有包含空白的参数。注释必须以 "#" 
+字符开始。例如:
+
+	KEEPCASE =  # fix case for words with this flag ~
 
 
 编 码								*spell-SET*
@@ -804,6 +807,7 @@ they're，但既然 "they" 和 "are" 本身都是单词，不这么做就发现�
 
 注意: 如果使用 utf-8，标志位只能使用不超过 65000 的字符值。
 
+注意: 即使使用 "num" 或 "long"，复合词和前缀的标志位限定在大约 250 个。
 
 后 缀
 					    *spell-PFX* *spell-SFX*
@@ -987,6 +991,9 @@ Myspell 不支持此标志位。此标志位的出现意味着大小写相关。
 
 此标志位也可用于带字缀的单词，因而可以用来标注一系列相关的词为坏词。
 
+							*spell-FORBIDDENWORD*
+FORBIDDENWORD 等同于 BAD。为了保持和 Hunspell 的兼容而设。
+
 							*spell-NEEDAFFIX*
 NEEDAFFIX 标志位用来指定单词必须使用字缀。该单词本身不被认为是好词 (除非有空字
 缀)。例如:
@@ -1068,6 +1075,9 @@ NEEDCOMPOUND 标志位要求单词必须用作复合词的一部分。该单词�
 
 	NEEDCOMPOUND & ~
 
+							*spell-ONLYINCOMPOUND*
+ONLYINCOMPOUND 等同于 NEEDCOMPOUND。为保持和 Hunspell 兼容性而设.
+
 							*spell-COMPOUNDMIN*
 用于复合词的最短字符长度用 COMPOUNDMIN 指定。例如:
 	COMPOUNDMIN 5 ~
@@ -1119,6 +1129,17 @@ COMPOUNDPERMITFLAG 指定可用于字缀的标志位。它意味着加上字缀�
 						    *spell-COMPOUNDROOT*
 COMPOUNDROOT 标志位用来指定字典里已经是复合词的单词。检查复合词规则时，它可以
 被计算为两个单词。也可用于字缀，使得该字缀成为一个复合词。
+
+						*spell-CHECKCOMPOUNDPATTERN*
+CHECKCOMPOUNDPATTERN 用于定义这样的模式，在两个词复合的位置匹配时禁止该复合词。
+示例:
+	CHECKCOMPOUNDPATTERN o e ~
+
+如果第一个词以 "o" 结尾而第二个词以 "e" 开始，禁止它们的复合。
+
+虽然名字叫模式，参数必须是普通的文本而不是什么模式。总是忽略大小写。
+
+不支持 Hunspell 带三个参数和标志位的功能。
 
 							*spell-SYLLABLE*
 SYLLABLE 项目定义用于计算单词音节数的字符或字符序列。例如:
@@ -1266,6 +1287,10 @@ SAL 机制复杂又费时。一个稍简单的机制是把所有的字符映射�
 ACCENT		(Hunspell)				*spell-ACCENT*
 		用 MAP 代替。|spell-MAP|
 
+BREAK		(Hunspell)				*spell-BREAK*
+		定义分切点。还不清楚这是怎么工作的。
+		不支持。
+
 CHECKCOMPOUNDCASE  (Hunspell)			*spell-CHECKCOMPOUNDCASE*
 		不允许复合词边界上有大写字母。不支持。
 
@@ -1277,9 +1302,6 @@ CHECKCOMPOUNDREP  (Hunspell)			*spell-CHECKCOMPOUNDREP*
 
 CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		禁止复合时出现三个相同的字符。不支持。
-
-CHECKCOMPOUNDPATTERN  (Hunspell)		*spell-CHECKCOMPOUNDPATTERN*
-		匹配对应模式时禁止复合。不支持。
 
 COMPLEXPREFIXES  (Hunspell)				*spell-COMPLEXPREFIXES*
 		允许使用两个前缀。不支持。
@@ -1302,13 +1324,17 @@ COMPOUNDEND	(Hunspell)				*spell-COMPOUNDEND*
 COMPOUNDMIDDLE	(Hunspell)				*spell-COMPOUNDMIDDLE*
 		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
 
+COMPOUNDRULES	(Hunspell)				*spell-COMPOUNDRULES*
+		紧跟其后的 COMPOUNDRULE 行的数目。忽略，但参数必须是数值。
+
 COMPOUNDSYLLABLE  (Hunspell)			*spell-COMPOUNDSYLLABLE*
 		用 SYLLABLE 和 COMPOUNDSYLMAX 代替。|spell-SYLLABLE|
 		|spell-COMPOUNDSYLMAX|
 
-FORBIDDENWORD	(Hunspell)				*spell-FORBIDDENWORD*
-		用 BAD 代替。|spell-BAD|
-
+KEY		(Hunspell)				*spell-KEY*
+		定义键盘上互相靠近的字符。
+		用于给出更好的建议。不支持。
+		
 LANG		(Hunspell)				*spell-LANG*
 		指定语言特定的行为。实际上把部分有关语言的知识放进了程序里。因
 		而 Vim 不支持。必须分别指定每个语言属性。
@@ -1317,10 +1343,7 @@ LEMMA_PRESENT	(Hunspell)				*spell-LEMMA_PRESENT*
 		只用于词态学分析。
 
 MAXNGRAMSUGS	(Hunspell)				*spell-MAXNGRAMSUGS*
-		不支持。
-
-ONLYINCOMPOUND	(Hunspell)				*spell-ONLYINCOMPOUND*
-		用 NEEDCOMPOUND 代替。|spell-NEEDCOMPOUND|
+		设置 n-元组建议的数目。不支持。
 
 PSEUDOROOT	(Hunspell)				*spell-PSEUDOROOT*
 		用 NEEDAFFIX 代替。|spell-NEEDAFFIX|

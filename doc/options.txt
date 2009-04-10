@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.2.  最近更新: 2008年8月
+*options.txt*	For Vim version 7.2.  最近更新: 2009年4月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -613,7 +613,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	  a) 根据词内位置 (开头、中间、结尾和单独出现) 改变/调整字符的形状。
 	  b) 启动合成字符的能力
 	  c) 启动一些字符所需的组合
-	如果关闭，字符显示回复到每个字符单独显示的方式。
+	如果关闭，屏幕用每个字符原来单独显示的方式显示。
 	阿拉伯语是一个复杂的语言，还需要其他的设置。详见 |arabic.txt|。
 
 			*'autoindent'* *'ai'* *'noautoindent'* *'noai'*
@@ -785,7 +785,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			全局
 			{Vi 无此功能}
 	逗号分隔的备份文件的目录名列表。
-	- 备份文件会在第一个可能的目录里建立。
+	- 备份文件会在第一个可能的目录里建立。该目录必须已经存在，Vim 不会帮你
+	  建立该目录。
 	- 空意味着不会建立备份文件 ('patchmode' 是不会工作的！)。写入也可能
 	  因此而失败。
 	- 目录 "." 意味着把备份文件放在被编辑文件的相同目录里。
@@ -938,7 +939,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	  endian (高位在右侧/左侧的字节序) 变种。
 	有些应用程序使用 BOM 识别文件的编码。通常用于 MS-Windows 上的 UCS-2
 	文件。对别的程序而言，这会造成麻烦，比如: "cat file1 file2" 使得 file2
-	的 BOM 出现在结果文件的中间。
+	的 BOM 出现在结果文件的中间。gcc 不接受 BOM。
 	读入文件时，如果 'fileencodings' 以 "ucs-bom" 开头，Vim 会检查 BOM 是
 	否存在，并相应地设置 'bomb'。
 	除非置位 'binary'，BOM 会从首行上移去，所以编辑时你看不到它。如果你没
@@ -1946,6 +1947,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	文件的字符编码可以和 'encoding' 不同。这由 'fileencoding' 指定。转换通
 	过 iconv() 完成或者通过 'charconvert' 指定。
 
+	如果你需要知道 'encoding' 指定的是否是多字节编码，可用: >
+		if has("multi_byte_encoding")
+<
 	通常，'encoding' 应该等同于你现有的 locale。如果 Vim 能识别环境变量的
 	设定，这应是该选项的缺省值。如果 'encoding' 没有设为你现有的 locale，
 	必须设定 'termencoding' 来转换输入和显示的文本。见 |encoding-table|。
@@ -2315,6 +2319,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	|fold-expr|。
 	
 	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	如果 'diff' 选项置位，不能从 |modeline| 中设置。
 
 	计算 'foldexpr' 时不允许修改文本或者跳到其它窗口 |textlock|。
 
@@ -2648,7 +2653,12 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 
 	GTK+ 2 GUI 的字体名看起来如此: >
 	    :set guifont=Andale\ Mono\ 11
-<	就这样多。不再使用 XLFD (X 逻辑字体描述)。
+<	就这样多。不使用 XLFD (X 逻辑字体描述)。有报告说对中文而言，可以这
+	样设: >
+	    if has("gui_gtk2")
+	      set guifont=Bitstream\ Vera\ Sans\ Mono\ 12,Fixed\ 12
+	      set guifontwide=Microsoft\ Yahei\ 12,WenQuanYi\ Zen\ Hei\ 12
+	    endif
 
 	Mac OSX 上，你可以这么用: >
 	    :set guifont=Monaco:h10
@@ -2858,7 +2868,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	如果非空，描述 GUI 标签页行使用的工具提示文本。如果为空，Vim 使用缺省
 	的工具提示。
 	此选项的其它方面类似于上面的 'guitablabel'。
-
+	可以包含换行符。最简单的方法是用 |:let|: >
+		:let &guitabtooltip = "line one\nline two"
+<
 
 						*'helpfile'* *'hf'*
 'helpfile' 'hf'		字符串	(缺省为 (MSDOS)  "$VIMRUNTIME\doc\help.txt"
@@ -3428,8 +3440,6 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	的字符翻译成本键的原始含义。这意味着你不需要改变键盘模式就可以执行普通
 	模式的命令。
 	此选项和 'keymap' 选项相反，那里，映射的是插入模式下的字符。
-	该功能只限 8 位字符。'langmap' 的值可以指定多字节字符 (比如，UTF-8)，
-	但只有每个字符的低 8 位被利用。
 
 	示例 (希腊文，UTF-8):					*greek*  >
 	    :set langmap=ΑA,ΒB,ΨC,ΔD,ΕE,ΦF,ΓG,ΗH,ΙI,ΞJ,ΚK,ΛL,ΜM,ΝN,ΟO,ΠP,QQ,ΡR,ΣS,ΤT,ΘU,ΩV,WW,ΧX,ΥY,ΖZ,αa,βb,ψc,δd,εe,φf,γg,ηh,ιi,ξj,κk,λl,μm,νn,οo,πp,qq,ρr,σs,τt,θu,ωv,ςw,χx,υy,ζz
@@ -3553,8 +3563,16 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 						*'list'* *'nolist'*
 'list'			布尔型	(缺省关闭)
 			局部于窗口
-	列出方式: 把制表显示为 CTRL-I，行尾显示为 $。用于看到制表和空格的区
-	别，还有拖尾的空白。
+	列出方式: 像显示 CTRL-I 那样显示制表，行尾之后显示 $。用于看到制表和空
+	格的区别以及拖尾的空白。'listchars' 选项可以进一步指定改变。
+
+	光标显示在制表占据的空白的开始位置，而不是像通常在普通模式那样显示在最
+	后位置。要用空格来显示制表并同时把光标放在空白开始位置，可用: >
+		:set list lcs=tab\ \ 
+<
+	(译者注: 原文如此，似应为: >
+		:set list lcs=tab:\ \ 
+<	)
 	注意 如果 'cpoptions' 里包含 'L'，本选项也影响排版 (用 'textwidth' 或
 	'wrapmargin' 方法设置的)。'listchars' 说明如何改变制表显示的方式。
 
@@ -4615,7 +4633,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	   winsize	窗口大小
 
 	不要同时包含 "curdir" 和 "sesdir"。
-	如果既没有包含 "curdir" 也没有包含 "sesdir"，文件名使用绝对路径保存。
+	如果既没有包含 "curdir" 也没有包含 "sesdir"，使用绝对路径保存文件名。
 	"slash" 和 "unix" 可用于 Windows 系统中，如果要和 Unix 共享会话文件的
 	话。Unix 版本的 Vim 不能执行 dos 格式的脚本，但是 Windows 版本的 Vim
 	可以执行 unix 版本的脚本。
@@ -4857,7 +4875,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	可视模式里，显示选择区域的大小:
 	- 在行内选择若干字符时，字符数。
 	- 选择多于一行时，行数。
-	- 选择可视列块时，屏幕字符的数目: lines 乘以 columns。
+	- 选择可视列块时，屏幕字符的数目: {lines} 乘以 {columns}。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复
 	位 'compatible'，本选项被设为 Vim 的缺省值。
 
@@ -5452,9 +5470,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	如果标签文件指示它按大小写合并排序并且置位 'ignorecase'，可以避免两次
 	线性查找。在 "!_TAG_FILE_SORTED" 行中使用值 '2'。标签文件可以用多数
 	unix 系统上存在的 "sort" 程序的 -f 选项完成大小写合并的排序，类似于下
-	面的命令: "sort -f -o tags tags"。对于 "Exuberant ctags" 5.3 或更高的
-	版本，-f 或 --fold-case-sort 选项也可用于此目的。注意 要使之工作，大小
-	写必须都被合并到大写字母上。
+	面的命令: "sort -f -o tags tags"。对于 "Exuberant ctags" 5.x 或更高的
+	版本 (至少 5.5)，--sort=foldcase 选项也可用于此目的。注意 要使之工作，
+	大小写必须都被合并到大写字母上。
 
 	如果 'tagbsearch' 关闭，标签查找慢得多，但找不到完整的匹配比找到完整匹
 	配的更慢。没有排序的标签文件里的标签只能在 'tagbsearch' 关闭时找到。
@@ -5964,9 +5982,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
 'viminfo' 'vi'		字符串	(Vi 缺省: ""，Vim MS-DOS、Windows 和 OS/2 的缺
-				   省: '20,<50,s10,h,rA:,rB:，
-				   Amiga: '20,<50,s10,h,rdf0:,rdf1:,rdf2:
-				   其它: '20,<50,s10,h)
+				   省: '100,<50,s10,h,rA:,rB:，
+				   Amiga: '100,<50,s10,h,rdf0:,rdf1:,rdf2:
+				   其它: '100,<50,s10,h)
 			全局
 			{Vi 无此功能}
 			{仅当编译时加入 |+viminfo| 特性才有效}
@@ -6142,7 +6160,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			全局
 			{Vi 无此功能}
 			{仅当编译时加入 |+wildignore| 特性才有效}
-	文件模式的列表。文件和目录名的补全中忽略符合其中任何模式的文件。
+	文件模式的列表。文件和目录名的补全中忽略符合其中任何模式的文件，它也同
+	时影响 |expand()|、|glob()| 和 |globpath()|，除非指定标志位来关闭之。
 	这些模式的应用方式类似于 |:autocmd|，见 |autocmd-patterns|。
 	另见 'suffixes'。
 	例如: >
@@ -6341,6 +6360,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 		:set sidescroll=5
 		:set listchars+=precedes:<,extends:>
 <	见 'sidescroll'、'listchars' 和 |wrap-off|。
+	如果 'diff' 选项置位，不能从 |modeline| 中设置。
 
 						*'wrapmargin'* *'wm'*
 'wrapmargin' 'wm'	数值型	(缺省为 0)

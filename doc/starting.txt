@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.2.  最近更新: 2008年6月
+*starting.txt*  For Vim version 7.2.  最近更新: 2009年4月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -297,12 +297,18 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 							*-C*
 -C		兼容模式。置位 'compatible' 选项。你可以用此参数进入
 		'compatible' 模式，即使存在 .vimrc 文件也是如此。
-		但命令 ":set nocompatible" 总可以超越之。
-		另见 |compatible-default|。{Vi 无此功能}
+		要注意有些插件或启动脚本里的命令 ":set nocompatible" 总可以超
+		越之，所以你最后还是用了 "nocompatible"。要找出原因: >
+			:verbose set compatible?
+<		有些插件在置位 'compatible' 时不能工作，你需要在启动后这样置位
+		之: >
+			vim "+set cp" filename
+<		另见 |compatible-default|。{Vi 无此功能}
 
 							*-N*
 -N		不兼容模式。复位 'compatible' 选项。你可以用此参数设置
-		'nocompatible'，即使不存在 .vimrc 文件也是如此。
+		'nocompatible'，即使不存在 .vimrc 文件或使用 "-u NONE" 时也是
+		如此。
 		另见 |compatible-default|。{Vi 无此功能}
 
 							*-y* *easy*
@@ -317,6 +323,7 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		的媒介上 (例如，软盘上) 编辑文件，这也许有用。
 		也可以通过 ":set updatecount=0" 完成。你可以通过给
 		'updatecount' 选项一些值来重新打开，例如 ":set uc=100"。
+		注意: 不用混用 -n 和 -b，使之成为 -nb，这是另一个意思: |-nb|。
 		执行 vimrc 文件的命令_后_，'updatecount' 才置为 0，但这发生在
 		GUI 初始化之前。因此，该选项会覆盖 vimrc 文件里对
 		'updatecount' 的设置，但不会覆盖 gvimrc 的。见 |startup|。
@@ -512,16 +519,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		试图连接到 Netbeans 并成为它的一个编辑器服务器。第二种形式指定
 		一个文件，从该文件里可以读取连接的信息。第三种形式指定
 		Netbeans 需要的机器名、地址和密码信息。|netbeans-run|
-
-一个使用脚本文件为若干文件里换名的例子:
-	创建文件 "subs.vi"，里面包含替换命令和 :wq 命令: >
-		:%s/Jones/Smith/g
-		:%s/Allen/Peter/g
-		:wq
-<
-	对所有你要改变的文件执行 Vim: >
-
-		foreach i ( *.let ) vim -s subs.vi $i
+		{仅当编译时加入 |+netbeans_intg| 特性才有效；如果没有 -nb 会使
+		 Vim 退出}
 
 如果可执行文件叫 "view"，Vim 会以可读模式启动。如果你可以创建从 "vim" 到
 "view" 的硬链接或者符号链接，就可以这么用。
@@ -668,9 +667,10 @@ Evim 里，以下选项被改变，不同于缺省值:
 	'compatible' 只有可能在以后发生。如果你喜欢，加上 ":set	nocp" 命令。
 	对 Macintosh，读入 $VIMRUNTIME/macmap.vim。
 
-			  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc*
+	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
      c. 在四个地方依次搜索初始化命令。第一个找到的地方被使用，余者被忽略。
-        $MYVIMRC 环境变量被设为最先找到的文件，除非 $MYVIMRC 已经被设置。
+	$MYVIMRC 环境变量被设为最先找到的文件，除非 $MYVIMRC 已经被设置和
+	(译者注: 或？) 使用 VIMINIT。
 
 	-  环境变量 VIMINIT (另见 |compatible-default|) (*)
 	   $VIMINIT 的值作为 Ex 命令行来使用。
@@ -1135,8 +1135,8 @@ Vim 并直接从你希望的设置开始工作。|session-file|
 
 							*viminfo-read*
 如果 Vim 启动时 'viminfo' 选项非空，viminfo 文件的内容被读入，而其中的信息在适
-当的地方被应用。启动时并不读入位置标记 (但是文件标记被读入)。关于如何在启动时
-设置 'viminfo' 选项，见 |initialization|。
+当的地方被应用。填入 |v:oldfile| 变量。启动时并不读入位置标记 (但是文件标记被
+读入)。关于如何在启动时设置 'viminfo' 选项，见 |initialization|。
 
 							*viminfo-write*
 如果 Vim 退出时 'viminfo' 非空，相关信息被保存在 viminfo 文件里 (实际上，如果
@@ -1162,6 +1162,7 @@ Unix 上的 注意 事项:
 退出时的光标位置。用 'viminfo' 的 "r" 标志位指定的字符串开始的任何文件不会保存
 其位置标记。这可以用来防止为可移动媒介上的文件保存位置标记 (MS-DOS 上你可以用
 "ra:,rb:"，Amiga 上 "rdf0:,rdf1:,rdf2:")。
+|v:oldfiles| 变量填入 viminfo 文件中有位置标记的那些文件名。
 
 							*viminfo-file-marks*
 大写位置标记 ('A 到 'Z) 在写入 viminfo 文件时被保存。数字标记 ('0 到 '9) 则有
@@ -1209,7 +1210,7 @@ Vim 会试图从 viminfo 文件写入时所使用的 'encoding' 值转换到当�
 值。这需要 Vim 编译时带上 |+iconv| 特性。文件名不会被转换。
 
 
-手 动 读 写
+手 动 读 写						*viminfo-read-write*
 
 两个命令可以用来手动读写 viminfo 文件。这可以用来在两个运行中的 Vim 程序之间交
 换寄存器的值: 先在其中一个输入 ":wv"，再在另外一个用 ":rv"。注意 如果寄存器里
@@ -1235,7 +1236,7 @@ viminfo 文件，或者修正这个错误，或者先删除这个文件 (在 Vim
 						   *:rv* *:rviminfo* *E195*
 :rv[iminfo][!] [file]	读入 viminfo 文件 [file] (缺省: 见上)。
 			如果给出 [!]，那么任何已经给出的信息 (寄存器、位置标
-			记，等等) 都会被覆盖。{Vi 无此功能}
+			记、|v:oldfiles|，等等) 都会被覆盖。{Vi 无此功能}
 
 					*:wv* *:wviminfo* *E137* *E138* *E574*
 :wv[iminfo][!] [file]	写到 viminfo 文件 [file] (缺省: 见上)。
@@ -1247,5 +1248,20 @@ viminfo 文件，或者修正这个错误，或者先删除这个文件 (在 Vim
 			有没有旧的临时文件没删除 (比如 ~/.viminf*) 还有你是否
 			可以写入 .viminfo 文件所在的目录。
 			{Vi 无此功能}
+
+						*:ol* *:oldfiles*
+:ol[dfiles]		列出 viminfo 文件中存储位置标记的文件。该列表在启动时
+			读入，其后只有 ":rviminfo!" 能改变它。另见
+			|v:oldfiles|。
+			其中的编号可用于 |c_#<|。
+			{Vi 无此功能，仅当编译时加入 +eval 特性才有效}
+
+:bro[wse] ol[dfiles][!]
+			像 |:oldfiles| 那样列出文件名，然后提示要求输入编号。
+			如果编号合法，编辑列表里指定的文件。
+			如果得到 |press-enter| 提示时你可以按 "q" 键并且还能得
+			到输入文件编号的提示。
+			! 用来放弃已修改的缓冲区。|abandon|
+			{仅当编译时使用 tiny 或 small 特性才有效}
 
  vim:tw=78:ts=8:ft=help:norl:

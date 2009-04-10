@@ -1,4 +1,4 @@
-*eval.txt*      For Vim version 7.2.  最近更新: 2008年8月
+*eval.txt*      For Vim version 7.2.  最近更新: 2009年4月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -781,7 +781,7 @@ expr8							*expr8*
 expr8[expr1]		字符串或 |List| 的项目		*expr-[]* *E111*
 
 如果 expr8 是数值或字符串，结果是字符串，包含 expr8 里第 expr1 个字节。expr8
-视作字符串，expr1 视作数值。注意 这里不识别多字节编码。
+视作字符串，expr1 视作数值。这里不识别多字节编码，但可考虑使用 |byteidx()|。
 
 索引 0 给出第一个字符。这和 C 类同。要小心: 文本列号可是从 1 开始的！例如，要
 得到光标所在的字符: >
@@ -801,7 +801,8 @@ expr8[expr1]		字符串或 |List| 的项目		*expr-[]* *E111*
 expr8[expr1a : expr1b]	子字符串或子列表		*expr-[:]*
 
 如果 expr8 是数值或字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
-字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。注意 这里不识别多字节编码。
+字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。这里不识别多字节编码，需用
+|byteidx()| 来计算索引值。
 
 如果省略 expr1a，用零。如果省略 expr1b，用字符串的长度减一。
 
@@ -815,7 +816,8 @@ expr8[expr1a : expr1b]	子字符串或子列表		*expr-[:]*
 	:let c = name[-2:-2]		" 字符串倒数第二个字节
 	:let s = line(".")[4:]		" 从第五个字节到最后
 	:let s = s[:-3]			" 删除最后两个字节
-
+<
+							*sublist* *slice*
 如果 expr8 是 |List|，结果是新的 |List|，包含 expr1 和 expr1b 索引指定的项目。
 和上面描述的字符串情形类似，除了越界的索引会报错以外。例如: >
 	:let l = mylist[:3]		" 前四个项目
@@ -1076,6 +1078,7 @@ Vim 脚本里，可以使用 "s:" 开头的变量。它们不能在脚本之外�
 但不能用在:
 - 该脚本载入的其它脚本
 - 映射
+- 菜单
 - 等等
 
 脚本变量可以用来防止和全局变量名的冲突。看看这个例子: >
@@ -1184,6 +1187,8 @@ v:count		最近的普通模式命令使用的计数。在映射前可用于得�
 	:map _x :<C-U>echo "计数为 " . v:count<CR>
 <		注意: <C-U> 是必要的，它删除紧跟在计数之后 ':' 所给出的行范
 		围。
+		如果有两个计数，如 "3d2w"，它们进行相乘，如同命令行实际发生的
+		那样，等同于 "d6w"。
 		也用于计算 'formatexpr' 选项。
 		为了后向兼容，这里也可以用 "count"。
 
@@ -1328,6 +1333,15 @@ v:mouse_lnum	用 |getchar()| 得到鼠标点击时所在的行号。这是文本
 					*v:mouse_col* *mouse_col-variable*
 v:mouse_col	用 |getchar()| 得到鼠标点击时所在的列号。这是屏幕列号，就像
 		|virtcol()| 那样。如果那时没有鼠标点击，该值为零。
+
+					*v:oldfiles* *oldfiles-variable*
+v:oldfiles	启动时从 |viminfo| 文件载入的文件名列表。Vim 记住的位置标记所
+		在的就是这些文件。列表长度的上限由 'viminfo' 选项的 ' 参数定义
+		(缺省是 100)。
+		另见 |:oldfiles| 和 |c_#<|。
+		此列表可修改，但并不影响之后 |viminfo| 文件保存什么。同时，如
+		果使用非字符串的值，会有问题。
+		{仅当编译时加入 |+viminfo| 特性才有效}
 
 					*v:operator* *operator-variable*
 v:operator	普通模式给出的最近的操作符。除了 <g> 或 <z> 开始的命令是两个
@@ -1489,7 +1503,7 @@ char2nr( {expr})		数值	{expr} 里第一个字符串的 ASCII 值
 cindent( {lnum})		数值	第 {lnum} 行的 C 缩进
 clearmatches()			无	清除所有的匹配
 col( {expr})			数值	光标或位置标记的列号
-complete({startcol}, {matches})	字符串	设置插入模式补全
+complete({startcol}, {matches})	无	设置插入模式补全
 complete_add( {expr})		数值	增加补全匹配
 complete_check()		数值	补全时检查输入的键
 confirm( {msg} [, {choices} [, {default} [, {type}]]])
@@ -1516,7 +1530,7 @@ executable( {expr})		数值	如果可执行文件 {expr} 存在则为 1
 exists( {expr})			数值	如果 {expr} 存在则为真
 extend({expr1}, {expr2} [, {expr3}])
 				列表/字典 把 {expr2} 里的项目插入 {expr1}
-expand( {expr})			字符串	扩展 {expr} 里的特殊关键字
+expand( {expr} [, {flag}])	字符串	扩展 {expr} 里的特殊关键字
 feedkeys( {string} [, {mode}])	数值	给预输入缓冲区加入键序列
 filereadable( {file})		数值	如果 {file} 是个可读文件则为真
 filewritable( {file})		数值	如果 {file} 是个可写文件则为真
@@ -1567,8 +1581,9 @@ gettabwinvar( {tabnr}, {winnr}, {name})
 getwinposx()			数值	GUI Vim 窗口以像素计的 X 坐标
 getwinposy()			数值	GUI Vim 窗口以像素计的 Y 坐标
 getwinvar( {nr}, {varname})	可变	窗口 {expr} 的变量 {varname}
-glob( {expr})			字符串	扩展 {expr} 里的文件通配符
-globpath( {path}, {expr})	字符串	在 {path} 所有目录下执行 glob({expr})
+glob( {expr} [, {flag}])	字符串	扩展 {expr} 里的文件通配符
+globpath( {path}, {expr} [, {flag}])
+				字符串	在 {path} 所有目录下执行 glob({expr})
 has( {feature})			数值	如果支持特性 {feature} 则为真
 has_key( {dict}, {key})		数值	如果 {dict} 有项目 {key} 则为真
 haslocaldir()			数值	如果当前窗口执行过 |:lcd|
@@ -1678,7 +1693,7 @@ setline( {lnum}, {line})	数值	设置第 {lnum} 行的内容为 {line}
 setloclist( {nr}, {list}[, {action}])
 				数值	用 {list} 修改位置列表
 setmatches( {list})		数值	还原匹配列表
-setpos( {expr}, {list})		无	设置 {expr} 的位置为 {list}
+setpos( {expr}, {list})		数值	设置 {expr} 的位置为 {list}
 setqflist( {list}[, {action}])	数值	用 {list} 修改 quickfix 列表
 setreg( {n}, {v}[, {opt}])	数值	设置寄存器的值和类型
 settabwinvar( {tabnr}, {winnr}, {varname}, {val})
@@ -2012,7 +2027,7 @@ complete({startcol}, {matches})			*complete()* *E785*
 		"col('.') - 1" 将用匹配替换单个字符。
 		{matches} 必须是 |List|。每个 |List| 项目是一个匹配。
 		|complete-items| 说明可能的项目类型。
-		注意 调用此函数后，你不能插入任何内容，使补全停止。
+		注意 调用此函数后，你不应插入任何使补全停止的内容。
 		用 CTRL-N 和 CTRL-P 选择匹配，就像普通的插入模式补全那样。如果
 		指定，会出现弹出菜单，见 |ins-completion-menu|。
 		示例: >
@@ -2157,6 +2172,7 @@ cursor({list})
 		如果 {col} 为零，光标留在当前列。
 		如果使用 'virtualedit'，{off} 指定从该字符开始以屏幕列计算的偏
 		移。例如，在制表里或者在最后一个字符之后的某个位置。
+		如果定位成功，返回 0，否则返回 -1。
 
 
 deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
@@ -2808,7 +2824,7 @@ getloclist({nr})					*getloclist()*
 		返回列表，包含窗口 {nr} 的位置列表的所有项目。如果 {nr} 为 0，
 		使用当前窗口。
 		如果是位置列表窗口，返回其显示的位置列表。如果窗口号 {nr} 非
-		法，返回空列表。其它的情况和 getqflist() 相同。
+		法，返回空列表。其它的情况和 |getqflist()| 相同。
 
 getmatches()						*getmatches()*
 		返回之前 |matchadd()| 和 |:match| 命令定义的所有匹配组成的列表
@@ -2902,11 +2918,14 @@ getwinvar({nr}, {varname})				*getwinvar()*
 			:let list_is_on = getwinvar(2, '&list')
 			:echo "myvar = " . getwinvar(1, 'myvar')
 <
-							*glob()*
-glob({expr})	扩展 {expr} 里的文件通配符。|wildcards| 说明其中特殊字符的使用
+glob({expr} [, {flag}])					*glob()*
+		扩展 {expr} 里的文件通配符。|wildcards| 说明其中特殊字符的使用
 		方法。
-		结果是字符串。如果返回多个匹配，以 <NL> 字符分隔。
-		应用 'wildignore' 选项: 跳过匹配任何 'wildignore' 模式的名字。
+		结果是字符串。
+		如果返回多个匹配，以 <NL> 字符分隔。
+		除非给出可选的 {flag} 参数且非零，应用 'suffixes' 和
+		'wildignore' 选项: 跳过匹配任何 'wildignore' 模式的名字，而
+		'suffixes' 影响匹配结果的排序。
 		如果扩展失败，返回空字符串。
 		扩展结果不包含不存在文件的名字。
 
@@ -2919,18 +2938,19 @@ glob({expr})	扩展 {expr} 里的文件通配符。|wildcards| 说明其中特�
 		特殊 Vim 变量的扩展见 |expand()|。|system()| 说明如何得到外部
 		命令的原始输出。
 
-globpath({path}, {expr})				*globpath()*
+globpath({path}, {expr} [, {flag}])			*globpath()*
 		在 {path} 的所有目录下执行 glob() 并连接所有的返回结果。例
 		如: >
 			:echo globpath(&rtp, "syntax/c.vim")
 <		{path} 是逗号分隔的目录名的列表。每个目录名都附加在 {expr} 之
-		前，然后如同 glob() 那样被扩展。必要的话，插入路径分隔符。
+		前，然后如同 |glob()| 那样被扩展。必要的话，插入路径分隔符。
 		要在目录名字里加上逗号，可以使用反斜杠转义。注意 在 MS-Windows
 		上目录的最后可能有一个反斜杠。如果你要在后面加上逗号进行分隔，
 		先把反斜杠去掉。
 		如果某个目录下的扩展失败，不会有错误信息。
-		这里应用 'wildignore' 选项: 忽略匹配 'wildignore' 里任何一个模
-		式的名字。
+		除非给出可选的 {flag} 参数且非零，应用 'suffixes' 和
+		'wildignore' 选项: 跳过匹配任何 'wildignore' 模式的名字，而
+		'suffixes' 影响匹配结果的排序。
 
 		可以用 "**" 项目来搜索目录树。例如，寻找在 'runtimepath' 和它
 		之下所有目录里的 "README.txt" 文件: >
@@ -3085,7 +3105,9 @@ indent({lnum})	返回数值，第 {lnum} 行的缩进距离。缩进的计算以
 
 
 index({list}, {expr} [, {start} [, {ic}]])			*index()*
-		返回 |List| {list} 里值等于 {expr} 的最小项目索引。
+		返回 |List| {list} 里值等于 {expr} 的最小项目索引。这里不进行
+		自动转换，字符串 "4" 不同于数值 4，数值 4 也不等同于浮点数
+		4.0。'ignorecase' 的值此处也不适用，大小写不忽略。
 		如果给出 {start}，从索引为 {start} 的项目开始寻找 (可以为负，
 		指定相对于尾部的项目)。
 		如果给出 {ic} 且非零，忽略大小写。否则，必须匹配大小写。
@@ -3096,9 +3118,9 @@ index({list}, {expr} [, {start} [, {ic}]])			*index()*
 
 
 input({prompt} [, {text} [, {completion}]])		*input()*
-		返回字符串，即用户在命令行上的输入内容，可以为任何值。参数或者
-		是一个提示字符串，或者是一个空白字符串 (没有提示)。'\n' 可以在
-		提示里使用，以开始新行。
+		返回字符串，即用户在命令行上的输入内容，可以为任何值。参数
+		{prompt} 或者是一个提示字符串，或者是一个空白字符串 (没有提
+		示)。'\n' 可以在提示里使用，以开始新行。
 		该提示使用 |:echohl| 设置的高亮。
 		输入方法和命令行相似，也使用相同的编辑命令和映射。但 input()
 		输入的行使用另外的历史。
@@ -3107,8 +3129,8 @@ input({prompt} [, {text} [, {completion}]])		*input()*
 			:  echo "干杯！"
 			:endif
 <
-		如果给出可选的 {text}，它被用作缺省的回答，就像是用户输入的那
-		样。例如: >
+		如果给出可选的 {text} 参数，它被用作缺省的回答，就像是用户输入
+		的那样。例如: >
 			:let color = input("Color? ", "white")
 
 <		可选的 {completion} 参数指定输入支持的补全类型。如果不给出，不
@@ -3133,8 +3155,8 @@ input({prompt} [, {text} [, {completion}]])		*input()*
 			:endfunction
 
 inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
-		类似于 input()，但如果运行 GUI 且支持文本对话框，弹出一个对话
-		框窗口来输入文本。
+		类似于 |input()|，但如果运行 GUI 且支持文本对话框，弹出一个对
+		话框窗口来输入文本。
 		例如: >
 			:let n = inputdialog("value for shiftwidth", &sw)
 			:if n != ""
@@ -3157,8 +3179,8 @@ inputlist({textlist})					*inputlist()*
 				\ '2. green', '3. blue'])
 
 inputrestore()						*inputrestore()*
-		恢复前一个 inputsave() 保存的预输入。应该和 inputsave() 调用的
-		次数相同，不过调用更多次也无妨。
+		恢复前一个 |inputsave()| 保存的预输入。应该和 |inputsave()| 调
+		用的次数相同，不过调用更多次也无妨。
 		如果没有可以恢复的，返回 1，不然返回 0。
 
 inputsave()						*inputsave()*
@@ -3238,7 +3260,7 @@ libcall({libname}, {funcname}, {argument})
 		用单个参数，所以可以调用的标准库函数相当有限。
 		结果是函数返回的字符串。如果函数返回 NULL，在 Vim 里会以空字符
 		串 "" 出现。
-		如果函数返回数值，请使用 libcallnr()！
+		如果函数返回数值，请使用 |libcallnr()|！
 		如果 {argument} 是数值，它以 int 类型传给函数；如果 {argument}
 		是字符串，它以 null 结尾的字符串类型传入。
 		在 |restricted-mode| 里，该函数不能运行。
@@ -3268,7 +3290,7 @@ libcall({libname}, {funcname}, {argument})
 <
 							*libcallnr()*
 libcallnr({libname}, {funcname}, {argument})
-		和 libcall() 类似，但函数返回 int，而不是字符串。
+		和 |libcall()| 类似，但函数返回 int，而不是字符串。
 		{仅当使用 Win32 和一些 Unix 版本且带有 |+libcall| 特性时才有
 		效}
 		例如: >
@@ -3487,7 +3509,7 @@ matchdelete({id})			       *matchdelete()* *E802* *E803*
 		|clearmatches()| 可一次删除所有的匹配。
 
 matchend({expr}, {pat}[, {start}[, {count}]])			*matchend()*
-		和 match() 相同，但返回匹配之后的第一个字符的位置。比如: >
+		和 |match()| 相同，但返回匹配之后的第一个字符的位置。比如: >
 			:echo matchend("testing", "ing")
 <		返回 "7"。
 							*strspn()* *strcspn()*
@@ -3496,18 +3518,18 @@ matchend({expr}, {pat}[, {start}[, {count}]])			*matchend()*
 			:let span = matchend(line, '[^a-zA-Z]')
 <		不过没有匹配时，它返回 -1。
 
-		如果给出 {start}，和 match() 里的用法相同。 >
+		如果给出 {start}，和 |match()| 里的用法相同。 >
 			:echo matchend("testing", "ing", 2)
 <		返回 "7"。 >
 			:echo matchend("testing", "ing", 5)
 <		返回 "-1"。
-		如果 {expr} 是 |List|，结果和 match() 相同。
+		如果 {expr} 是 |List|，结果和 |match()| 相同。
 
 matchlist({expr}, {pat}[, {start}[, {count}]])			*matchlist()*
-		和 match() 相同，但返回 |List|。列表第一项是匹配的字符串，和
-		matchstr() 返回值相同。其后的项目是子匹配，类似 |:substitute|
-		的 "\1"、"\2" 等。如果某个可选的子匹配不匹配，用空字符串代替。
-		例如: >
+		和 |match()| 相同，但返回 |List|。列表第一项是匹配的字符串，和
+		|matchstr()| 返回值相同。其后的项目是子匹配，类似
+		|:substitute| 的 "\1"、"\2" 等。如果某个可选的子匹配不匹配，用
+		空字符串代替。例如: >
 			echo matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)')
 <		返回: ['acd', 'a', '', 'c', 'd', '', '', '', '', '']
 		如果没有匹配，返回空列表。
@@ -3517,7 +3539,7 @@ matchstr({expr}, {pat}[, {start}[, {count}]])			*matchstr()*
 			:echo matchstr("testing", "ing")
 <		返回 "ing"。
 		如果没有匹配，返回 ""。
-		如果给出 {start}，它和 match() 里的用法相同。 >
+		如果给出 {start}，它和 |match()| 里的用法相同。 >
 			:echo matchstr("testing", "ing", 2)
 <		返回 "ing"。 >
 			:echo matchstr("testing", "ing", 5)
@@ -3927,8 +3949,9 @@ remove({dict}, {key})
 
 rename({from}, {to})					*rename()*
 		把文件名 {from} 换成 {to}。这也可用来在文件系统间移动文件。返
-		回数值，如果文件成功换名，返回零，如果换名失败，返回非零。该函
-		数在沙盘里不可用 |sandbox|。
+		回数值，如果文件成功换名，返回零，如果换名失败，返回非零。
+		注意 如果 {to} 已存在，它被覆盖且没有提示。
+		该函数在沙盘里不可用 |sandbox|。
 
 repeat({expr}, {count})					*repeat()*
 		重复 {expr} {count} 次，并返回连接后的结果。例如: >
@@ -4114,7 +4137,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 							*searchpairpos()*
 searchpairpos({start}, {middle}, {end} [, {flags} [, {skip}
 				[, {stopline} [, {timeout}]]]])
-		和 searchpair() 相同，但返回 |List|，包含匹配的行号和列号。
+		和 |searchpair()| 相同，但返回 |List|，包含匹配的行号和列号。
 		|List| 的第一个元素是行号，而第二个元素是匹配所在的列位置的字
 		节位置。如果没有匹配，返回 [0, 0]。
 >
@@ -4370,12 +4393,17 @@ sort({list} [, {func}])					*sort()* *E702*
 		要给当前缓冲区的文本排序，用 |:sort|。
 		如果给出 {func} 且为一，忽略大小写。
 		如果 {func} 为 |Funcref| 或函数名，调用该函数来比较项目。函数
-		调用时使用两个项目作为参数，函数返回时，0 代表相等，1 代表第一
-		个排在第二个之后，-1 代表第一个排在第二个之前。例如: >
+		调用时使用两个项目作为参数，函数返回时，0 代表相等，1 或更高代
+		表第一个排在第二个之后，-1 或更小代表第一个排在第二个之前。
+		例如: >
 			func MyCompare(i1, i2)
 			   return a:i1 == a:i2 ? 0 : a:i1 > a:i2 ? 1 : -1
 			endfunc
 			let sortedlist = sort(mylist, "MyCompare")
+<		对这个简单的例子，有更简短的一个比较版本，不考虑溢出情况: >
+			func MyCompare(i1, i2)
+			   return a:i1 - a:i2
+			endfunc
 <
 
 							*soundfold()*
@@ -4627,10 +4655,12 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"name"		语法项目的名字
 		"fg"		前景色 (GUI: 用于设置颜色的色彩名，cterm: 色彩
 				号，以字符串形式出现，term: 空字符串)
-		"bg"		背景色 (类似于 "fg")
+		"bg"		背景色 (细节同 "fg")
+		"sp"		特殊颜色 (细节同 "fg") |highlight-guisp|
 		"fg#"		类似于 "fg"，但只适用于 GUI，而且 GUI 使用的名
 				字形如 "#RRGGBB"。
-		"bg#"		"bg"，但类似于 "fg#"
+		"bg#"		"bg"，细节同 "fg#"
+		"sp#"		"sp"，细节同 "fg#"
 		"bold"		"1" 如果粗体
 		"italic"	"1" 如果斜体
 		"reverse"	"1" 如果反显
@@ -5047,7 +5077,8 @@ mouse_netterm		编译时加入了 netterm 的鼠标支持。
 mouse_pterm		编译时加入了 qnx 的鼠标支持。
 mouse_sysmouse		编译时加入了 sysmouse 支持 (*BSD 控制台鼠标)
 mouse_xterm		编译时加入了 xterm 的鼠标支持。
-multi_byte		编译时加入了编辑韩语等语言的支持。
+multi_byte		编译时加入了 'encoding' 的支持。
+multi_byte_encoding	'encoding' 设为某个多字节的编码。
 multi_byte_ime		编译时加入了 IME 输入方法的支持。
 multi_lang		编译时加入了多语言的支持。
 mzscheme		编译时加入了 MzScheme 接口支持 |mzscheme|。
@@ -5670,17 +5701,21 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 			建一个备份: >
 				:for item in copy(mylist)
 <			如果不备份，Vim 在为当前项目执行命令前保存列表里下一个
-			项目的引用。这样，删除当前项目不会有任何影响。删除任何
-			后来的项目使之不再能被找到。这意味着下例能工作 (效率低
-			下的使列表为空的方法): >
-				:for item in mylist
-				   :call remove(mylist, 0)
-				:endfor
+			项目的引用。这样，删除当前项目不会影响循环的继续。而删
+			除任何后来的项目也会使循环跳过它。这意味着下例可以工作
+			(一个效率低下的清空列表的方法): >
+				for item in mylist
+				   call remove(mylist, 0)
+				endfor
 <			注意 给列表调整顺序 (例如用 sort() 或 reverse()) 可能
 			会有意想不到的效果。
 			注意 每个列表的类型必须完全相同，以免改变 {var} 类型时
 			产生的错误。不过，在循环体的尾部 unlet 变量就可以使用
-			多种项目类型。
+			多种项目类型: >
+				for item in ["foo", ["bar"]]
+				   echo item
+				   unlet item  " 如果没有，会报错 E706
+				endfor
 
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]
@@ -5880,7 +5915,7 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 		:execute 'while i < 5 | echo i | let i = i + 1 | endwhile'
 <
 
-							*:comment*
+							*:exe-comment*
 			":execute"、":echo" 和 ":echon" 后面不能直接跟注释。
 			因它们把 '"' 看成字符串的开始。但你可以把注释加到 '|'
 			后面。例如: >
