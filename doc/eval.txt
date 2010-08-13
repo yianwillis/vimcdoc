@@ -1,4 +1,4 @@
-*eval.txt*      For Vim version 7.2.  最近更新: 2009年4月
+*eval.txt*      For Vim version 7.3.  最近更新: 2010年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -66,6 +66,7 @@
 	数值 0		-->	字符串 "0"
 	数值 -1		-->	字符串 "-1"
 
+							*octal*
 字符串到数值的转换则把字符串开头的一系列数字位转换成数值。十六进制 "0xf9" 和八
 进制 "017" 形式的数值可以识别。如果字符串不以数字开始，则结果为零。例如: >
 	字符串 "456"	-->	数值 456
@@ -487,6 +488,9 @@ For 循环 ~
 |Funcref| 访问。如果没有任何 |Funcref| 引用，它会被自动删除。
 
 编号函数不一定要有 "dict" 属性。
+
+如果你的编号函数有错，可以用一个技巧知道它是什么内容。假定函数是 42，命令为: >
+ :function {42}
 
 
 字典相关函数 ~
@@ -929,7 +933,8 @@ string							*expr-string* *E114*
 \t	制表 <Tab>
 \\	反斜杠
 \"	双引号
-\<xxx>	"xxx" 命名的特殊字符，例如 "\<C-W>" 代表 CTRL-W。
+\<xxx>	"xxx" 命名的特殊字符，例如 "\<C-W>" 代表 CTRL-W。用于映射，0x80 字节被
+        转义。不要用 <Char-xxxx> 来得到 utf-8 字符，用上面提到的 \uxxxxx。
 
 注意 "\xff" 保存为字节 255，在某些编码中它是不合法的。使用 "\u00ff" 可以按照
 'encoding' 的当前值保存字符 255。
@@ -1157,7 +1162,8 @@ v:beval_text	鼠标指针所在或之后的文本。通常是一个单词，可�
 v:beval_winnr	鼠标指针所在的窗口号。仅当计算 'balloonexpr' 选项时有效。
 
 					*v:char* *char-variable*
-v:char		计算 'formatexpr' 时使用的参数。
+v:char		计算 'formatexpr' 时使用的参数和用于带 <expr> 的缩写中输入的字
+		符 |:map-<expr>|。
 
 			*v:charconvert_from* *charconvert_from-variable*
 v:charconvert_from
@@ -1208,7 +1214,9 @@ v:dying		通常为零。如果捕获到某个 "致命" 的 signal，设为 1。�
 		是否被异常终止。{仅限于 Unix}
 		例如: >
 	:au VimLeave * if v:dying | echo "\nAAAAaaaarrrggghhhh!!!\n" | endif
-<
+<		备注: 如果 v:dying 为一而同时又捕捉到另一个致命的 signal，不执
+		行 VimLeave 自动命令。
+
 					*v:errmsg* *errmsg-variable*
 v:errmsg	最近给出的错误信息。该变量可以设置。
 		例如: >
@@ -1318,9 +1326,9 @@ v:lc_time	运行环境当前的时间消息 locale 设置。它使得 Vim
 		该变量不能直接设置，请使用 |:language| 命令。见 |multi-lang|。
 
 						*v:lnum* *lnum-variable*
-v:lnum		'foldexpr' |fold-expr| 和 'indentexpr' 表达式里的行号，还有
-		'guitablevel' 和 'guitabtooltip' 里的标签页号。只有在计算这些
-		表达式的时候才合法。|sandbox| 里只读。
+v:lnum		'foldexpr' |fold-expr|、'formatexpr' 和 'indentexpr' 表达式中
+		的行号和 'guitablevel' 和 'guitabtooltip' 中的标签页号。只有在
+		计算这些表达式时才合法。在 |sandbox| 里时只读。
 
 					*v:mouse_win* *mouse_win-variable*
 v:mouse_win	用 |getchar()| 得到鼠标点击时所在的窗口号。首个窗口的编号为
@@ -1476,6 +1484,7 @@ v:warningmsg	最近给出的警告消息。该变量可以设置。
 用法				结果	描述	~
 
 abs( {expr})			浮点或数值  {expr} 的绝对值
+acos( {expr})			浮点	{expr} 的反余弦值
 add( {list}, {item})		列表	在 |List| {list} 最后附加 {item}
 append( {lnum}, {string})	数值	在第 {lnum} 行下附加字符串 {string}
 append( {lnum}, {list})		数值	在第 {lnum} 行下附加行 {list}
@@ -1483,7 +1492,9 @@ argc()				数值	参数列表的文件数目
 argidx()			数值	参数列表的当前索引
 argv( {nr})			字符串	参数列表第 {nr} 个参数
 argv( )				列表	参数列表
+asin( {expr})			浮点	{expr} 的反正弦值
 atan( {expr})			浮点	{expr} 的反正切值
+atan2( {expr}, {expr})		浮点	{expr1} / {expr2} 的反正切值
 browse( {save}, {title}, {initdir}, {default})
 				字符串	启动文件请求窗口
 browsedir( {title}, {initdir})	字符串	启动目录请求窗口
@@ -1503,13 +1514,14 @@ char2nr( {expr})		数值	{expr} 里第一个字符串的 ASCII 值
 cindent( {lnum})		数值	第 {lnum} 行的 C 缩进
 clearmatches()			无	清除所有的匹配
 col( {expr})			数值	光标或位置标记的列号
-complete({startcol}, {matches})	无	设置插入模式补全
+complete( {startcol}, {matches}) 无	设置插入模式补全
 complete_add( {expr})		数值	增加补全匹配
 complete_check()		数值	补全时检查输入的键
 confirm( {msg} [, {choices} [, {default} [, {type}]]])
 				数值	用户选择的序号
 copy( {expr})			可变	提供 {expr} 的浅备份
 cos( {expr})			浮点	{expr} 的余弦值
+cosh( {expr})			浮点	{expr} 的双曲余弦值
 count( {list}, {expr} [, {start} [, {ic}]])
 				数值	计算 {list} 里有多少个 {expr}
 cscope_connection( [{num} , {dbpath} [, {prepend}]])
@@ -1528,8 +1540,10 @@ eval( {string})			可变	计算 {string}，返回结果
 eventhandler( )			数值	如果在事件处理中则为真
 executable( {expr})		数值	如果可执行文件 {expr} 存在则为 1
 exists( {expr})			数值	如果 {expr} 存在则为真
-extend({expr1}, {expr2} [, {expr3}])
+extend( {expr1}, {expr2} [, {expr3}])
 				列表/字典 把 {expr2} 里的项目插入 {expr1}
+exp( {expr})			浮点	{expr} 的指数函数值 
+                                        (译者注: 以 e 为底)
 expand( {expr} [, {flag}])	字符串	扩展 {expr} 里的特殊关键字
 feedkeys( {string} [, {mode}])	数值	给预输入缓冲区加入键序列
 filereadable( {file})		数值	如果 {file} 是个可读文件则为真
@@ -1541,6 +1555,7 @@ findfile( {name}[, {path}[, {count}]])
 				字符串	在 {path} 里寻找文件 {name}
 float2nr( {expr})		数值	转换浮点数 {expr} 为数值
 floor( {expr})			浮点	{expr} 向下取整
+fmod( {expr1}, {expr2})		浮点	{expr1} / {expr2} 的浮点余数
 fnameescape( {fname})		字符串  转义 {fname} 中的特殊字符
 fnamemodify( {fname}, {mods})	字符串	修改文件名
 foldclosed( {lnum})		数值	{lnum} 所在折叠的首行，如果是关闭的话
@@ -1569,13 +1584,14 @@ getftime( {fname})		数值	文件的最新修改时间
 getftype( {fname})		字符串	文件 {fname} 类型的描述
 getline( {lnum})		字符串	当前缓冲区的第 {lnum} 行
 getline( {lnum}, {end})		列表	当前缓冲区第 {lnum} 到 {end} 行
-getloclist({nr})		列表	位置列表项目的列表
+getloclist( {nr})		列表	位置列表项目的列表
 getmatches()			列表	当前匹配的列表
 getpid()			数值	Vim 的进程号
 getpos( {expr})			列表	光标、位置标记等的位置
 getqflist()			列表	quickfix 项目的列表
 getreg( [{regname} [, 1]])	字符串	寄存器内容
 getregtype( [{regname}])	字符串	寄存器类型
+gettabvar( {nr}, {varname})	可变	{tabnr} 标签页的 {varname} 变量
 gettabwinvar( {tabnr}, {winnr}, {name})
 				可变	{tabnr} 标签页 {winnr} 窗口的 {name}
 getwinposx()			数值	GUI Vim 窗口以像素计的 X 坐标
@@ -1621,6 +1637,7 @@ line( {expr})			数值	光标所在、末行或者位置标记所在的行号
 line2byte( {lnum})		数值	行 {lnum} 的字节位置
 lispindent( {lnum})		数值	行 {lnum} 的 Lisp 缩进
 localtime()			数值	当前时间
+log( {expr})			浮点	{expr} 的自然对数 (以 e 为底) 
 log10( {expr})			浮点	{expr} 以 10 为底的对数
 map( {expr}, {string})		列表/字典  {expr} 的每个项目改变为 {string}
 maparg( {name}[, {mode} [, {abbr}]])
@@ -1640,11 +1657,12 @@ matchlist( {expr}, {pat}[, {start}[, {count}]])
 matchstr( {expr}, {pat}[, {start}[, {count}]])
 				字符串	第 {count} 个 {expr} 里 {pat} 的匹配文
 					本
-max({list})			数值	{list} 的项目的最大值
-min({list})			数值	{list} 的项目的最小值
-mkdir({name} [, {path} [, {prot}]])
+max( {list})			数值	{list} 的项目的最大值
+min( {list})			数值	{list} 的项目的最小值
+mkdir( {name} [, {path} [, {prot}]])
 				数值	建立目录 {name}
 mode( [expr])			字符串	当前编辑模式
+mzeval( {expr})			可变	计算 |MzScheme| 表达式
 nextnonblank( {lnum})		数值	第一个 >= {lnum} 的非空白行的行号
 nr2char( {expr})		字符串	ASCII 值为 {expr} 的单个字符
 pathshorten( {expr})		字符串	缩短路径里的目录名
@@ -1654,7 +1672,7 @@ printf( {fmt}, {expr1}...)	字符串	排版文本
 pumvisible()			数值	弹出窗口是否可见
 range( {expr} [, {max} [, {stride}]])
 				列表	从 {expr} 到 {max} 的序列
-readfile({fname} [, {binary} [, {max}]])
+readfile( {fname} [, {binary} [, {max}]])
 				列表	得到文件 {fname} 的行列表
 reltime( [{start} [, {end}]])	列表	得到时间值
 reltimestr( {time})		字符串	把时间值转化为字符串
@@ -1675,7 +1693,7 @@ reverse( {list})		列表	反转 {list}，直接修改 {list}
 round( {expr})			浮点	{expr} 四舍五入
 search( {pattern} [, {flags} [, {stopline} [, {timeout}]]])
 				数值	搜索 {pattern}
-searchdecl({name} [, {global} [, {thisblock}]])
+searchdecl( {name} [, {global} [, {thisblock}]])
 				数值	搜索变量声明
 searchpair( {start}, {middle}, {end} [, {flags} [, {skip} [...]]])
 				数值	搜索 start/end 对的另一侧
@@ -1696,6 +1714,9 @@ setmatches( {list})		数值	还原匹配列表
 setpos( {expr}, {list})		数值	设置 {expr} 的位置为 {list}
 setqflist( {list}[, {action}])	数值	用 {list} 修改 quickfix 列表
 setreg( {n}, {v}[, {opt}])	数值	设置寄存器的值和类型
+settabvar( {nr}, {varname}, {val})
+				无	设置标签页 {nr} 的 {varname} 变量为
+					{val}
 settabwinvar( {tabnr}, {winnr}, {varname}, {val})
 				无	设置标签页 {tabnr} 窗口 {winnr} 的
 					{varname} 变量为 {val}
@@ -1704,6 +1725,7 @@ shellescape( {string} [, {special}])
 				字符串	转义 {string} 以便用作外壳命令的参数
 simplify( {filename})		字符串	尽可能简化文件名
 sin( {expr})			浮点	{expr} 的正弦值
+sinh( {expr})			浮点	{expr} 的双曲正弦值
 sort( {list} [, {func}])	列表	排序 {list}，用比较函数 {func}
 soundfold( {word})		字符串	按发音折叠 {word}
 spellbadword()			字符串	光标所在的拼写错误的单词
@@ -1714,6 +1736,8 @@ split( {expr} [, {pat} [, {keepempty}]])
 sqrt( {expr}			浮点	{expr} 的平方根
 str2float( {expr})		浮点	转换字符串为浮点数
 str2nr( {expr} [, {base}])	数值	把字符串转换为数值
+strchars( {expr})		数值	{expr} 字符串的字符长度
+strdisplaywidth( {expr} [, {col}]) 数值	{expr} 字符串的显示长度
 strftime( {format}[, {time}])	字符串	指定格式的时间
 stridx( {haystack}, {needle}[, {start}])
 				数值	{haystack} 里 {needle} 的位置
@@ -1724,6 +1748,7 @@ strpart( {src}, {start}[, {len}])
 strridx( {haystack}, {needle} [, {start}])
 				数值	{haystack} 里最后一个 {needle} 的位置
 strtrans( {expr})		字符串	翻译字符串，使之可以显示
+strwidth( {expr})		数值	{expr} 字符串的显示单元长度
 submatch( {nr})			字符串	":substitute" 的特定匹配
 substitute( {expr}, {pat}, {sub}, {flags})
 				字符串	{expr} 里的所有 {pat} 被 {sub} 替代
@@ -1731,7 +1756,7 @@ synID( {lnum}, {col}, {trans})	数值	{lnum} 行 {col} 列所在的语法 ID
 synIDattr( {synID}, {what} [, {mode}])
 				字符串	syntax ID {synID} 的 {what} 属性
 synIDtrans( {synID})		数值	{synID} 经过翻译的语法 ID
-synstack({lnum}, {col})		列表	{lnum}行 {col} 列所在的语法 ID 堆栈
+synstack( {lnum}, {col})	列表	{lnum} 行 {col} 列所在的语法 ID 堆栈
 system( {expr} [, {input}])	字符串	外壳命令/过滤 {expr} 的输出
 tabpagebuflist( [{arg}])	列表	标签页里的缓冲区号列表
 tabpagenr( [{arg}])		数值	当前或最后标签页的编号
@@ -1739,6 +1764,8 @@ tabpagewinnr( {tabarg}[, {arg}])
 				数值	标签页里当前窗口的编号
 taglist( {expr})		列表	匹配 {expr} 的标签列表
 tagfiles()			列表	使用的标签文件
+tan( {expr})			浮点	{expr} 的正切值
+tanh( {expr})			浮点	{expr} 的双曲正切值
 tempname()			字符串	临时文件的文件名
 tolower( {expr})		字符串	字符串 {expr} 变为小写
 toupper( {expr})		字符串	字符串 {expr} 变为大写
@@ -1746,6 +1773,8 @@ tr( {src}, {fromstr}, {tostr})	字符串	把 {src} 里的 {fromstr} 字符翻译
 					{tostr} 字符
 trunc( {expr}			浮点	浮点数 {expr} 截断小数点
 type( {name})			数值	变量 {name} 的类型
+undofile( {name})		字符串	对应 {name} 的撤销文件名
+undotree()			列表	撤销文件树
 values( {dict})			列表	{dict} 的所有值
 virtcol( {expr})		数值	光标或位置标记的屏幕列
 visualmode( [expr])		字符串	最近使用的可视模式
@@ -1755,16 +1784,16 @@ winheight( {nr})		数值	窗口 {nr} 的高度
 winline()			数值	光标所在的窗口行
 winnr( [{expr}])		数值	当前窗口的编号
 winrestcmd()			字符串	返回恢复窗口大小的命令
-winrestview({dict})		无	恢复当前窗口的视图
+winrestview( {dict})		无	恢复当前窗口的视图
 winsaveview()			字典	保存当前窗口的视图
 winwidth( {nr})			数值	窗口 {nr} 的宽度
-writefile({list}, {fname} [, {binary}])
+writefile( {list}, {fname} [, {binary}])
 				数值	把行列表写到文件 {fname}
 
 abs({expr})							*abs()*
-		返回 {expr} 的绝对值。如果 {expr} 计算结果为 |Float|，abs() 返
-		回 |Float|。如果 {expr} 可以转换为 |Number|，abs() 返回
-		|Number|。否则报错并返回 -1。
+		返回 {expr} 的绝对值。如果 {expr} 计算结果为浮点数，abs() 返回
+		浮点数。如果 {expr} 可以转换为数值，abs() 返回数值。否则报错并
+		返回 -1。
 		示例: >
 			echo abs(1.456)
 <			1.456  >
@@ -1772,6 +1801,17 @@ abs({expr})							*abs()*
 <			5.456  >
 			echo abs(-4)
 <			4
+		{仅当编译时加入 |+float| 特性才有效}
+
+acos({expr})							*acos()*
+		返回以弧度表示的 {expr} 的反余弦值，返回值为 [0, pi] 区间内的
+		浮点数。
+		{expr} 的计算结果必须是 [-1, 1] 区间内的浮点数或数值。
+		示例: >
+			:echo acos(0)
+<			1.570796 >
+			:echo acos(-0.5)
+<			2.094395
 		{仅当编译时加入 |+float| 特性才有效}
 
 add({list}, {expr})					*add()*
@@ -1782,7 +1822,6 @@ add({list}, {expr})					*add()*
 <		注意 如果 {expr} 是 |List|，它被作为单个项目附加进去。
 		|extend()| 可以用来连接 |List|。
 		|insert()| 可以用来把一个项目加到其它的位置上。
-
 
 append({lnum}, {expr})					*append()*
 		当 {expr} 为 |List|: 把每个 |List| 项目作为文本行，附加到当前
@@ -1803,7 +1842,7 @@ argidx()	返回参数列表的当前索引。0 是第一个文件。argc() - 1 �
 
 							*argv()*
 argv([{nr}])	返回当前窗口参数列表第 {nr} 个参数。见 |arglist|。"argv(0)" 是
-		第一个。
+		第一个参数。
 		例如: >
 	:let i = 0
 	:while i < argc()
@@ -1813,16 +1852,40 @@ argv([{nr}])	返回当前窗口参数列表第 {nr} 个参数。见 |arglist|。
 	:endwhile
 <		如果没有 {nr} 参数，返回完整的 {arglist} 的 |List|。
 
+asin({expr})						*asin()*
+		返回以弧度表示的 {expr} 的反正弦值，返回值为 [-pi/2, pi/2] 区
+		间内的浮点数。
+		{expr} 的计算结果必须是 [-1, 1] 区间内的浮点数或数值。
+		示例: >
+			:echo asin(0.8)
+<			0.927295 >
+			:echo asin(-0.5)
+<			-0.523599
+		{仅当编译时加入 |+float| 特性才有效}
+
+
 atan({expr})						*atan()*
-		返回浮点数，即 {expr} 反正切的主值，其弧度值在 [-pi/2, +pi/2]
-		区间。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		返回 {expr} 反正切的主值，返回值为 [-pi/2, +pi/2] 区间内的弧度
+		值浮点数。
+		{expr} 计算结果必须为浮点数或数值。
 		示例: >
 			:echo atan(100)
 <			1.560797 >
 			:echo atan(-4.01)
 <			-1.326405
 		{仅当编译时加入 |+float| 特性才有效}
+
+atan2({expr1}, {expr2})					*atan2()*
+		返回 {expr1} / {expr2} 的反正切值，以弧度计算，返回值为 [-pi,
+		+pi] 区间内的浮点数。
+		{expr1} 和 {expr2} 计算结果必须为浮点数或数值。
+		示例: >
+			:echo atan2(-1, 1)
+<			-0.785398 >
+			:echo atan2(1, -1)
+<			2.356194
+		{仅当编译时加入 |+float| 特性才有效}
+
 
 							*browse()*
 browse({save}, {title}, {initdir}, {default})
@@ -1957,7 +2020,7 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 
 ceil({expr})							*ceil()*
 		返回浮点数，即大于等于 {expr} 的最小整数 (向上取整)。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			echo ceil(1.456)
 <			2.0  >
@@ -2073,10 +2136,12 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		可选的 {default} 参数是用户按 <CR> 使用的选择号。设定 1 使得第
 		一个选项成为缺省，如果是 0，则不设定任何缺省。如果不提供
 		{default}，假设为 1。
-		可选的 {type} 参数指定对话框的类型。只有在 Win32 GUI 上才用得
-		上，它用以指定图标。可以取的值是: "Error"、"Question"、
-		"Info"、 "Warning" 或 "Generic"。只有第一个字符是重要的。如果
-		忽略 {type}，使用 "Generic"。
+
+		可选的 {type} 参数指定对话框的类型。只有在 GTK、Mac、Motif 和
+		Win32 GUI 上才用得上，它用以指定图标。可以取的值是: "Error"、
+		"Question"、 "Info"、 "Warning" 或 "Generic"。只有第一个字符是
+		重要的。如果忽略 {type}，使用 "Generic"。
+
 		如果用户用 <Esc>、CTRL-C 或者别的合法的中断键中止对话框，
 		confirm() 返回 0。
 
@@ -2104,12 +2169,23 @@ copy({expr})	构造 {expr} 的备份。对数值和字符串而言，这和直�
 
 cos({expr})						*cos()*
 		返回浮点数，即以弧度测量的 {expr} 的余弦值。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			:echo cos(100)
 <			0.862319 >
 			:echo cos(-4.01)
 <			-0.646043
+		{仅当编译时加入 |+float| 特性才有效}
+
+
+cosh({expr})						*cosh()*
+		返回 {expr} 的双曲余弦值，返回值为 [1, inf] 区间内的浮点数。
+		{expr} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo cosh(0.5)
+<			1.127626 >
+			:echo cosh(-0.5)
+<			-1.127626
 		{仅当编译时加入 |+float| 特性才有效}
 
 
@@ -2330,6 +2406,17 @@ exists({expr})	返回数值，如果 {expr} 被定义，返回非零，不然返
 <		不检查 "bufcount" 变量是否存在，而是提取 "bufcount" 的值，并检
 		查其 (根据此处的语法) 是否存在。
 
+exp({expr})						*exp()*
+		返回 {expr} 的指数函数值，返回值为 [0, inf] 区间内的浮点数。
+		{expr} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo exp(2)
+<			7.389056 >
+			:echo exp(-1)
+<			0.367879
+		{仅当编译时加入 |+float| 特性才有效}
+
+
 expand({expr} [, {flag}])				*expand()*
 		扩展 {expr} 里的通配符和下列特殊关键字。返回的是字符串。
 
@@ -2493,7 +2580,7 @@ findfile({name}[, {path}[, {count}]])				*findfile()*
 
 float2nr({expr})					*float2nr()*
 		返回数值，即 {expr} 省略小数点部分的结果。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		如果 {expr} 的值超出 |Number| 的范围，结果为 0x7fffffff 或
 		-0x7fffffff。而 NaN 转换为 -0x80000000。
 		示例: >
@@ -2512,7 +2599,7 @@ float2nr({expr})					*float2nr()*
 
 floor({expr})							*floor()*
 		返回浮点数，即小于等于 {expr} 的最大整数 (向下取整)。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			echo floor(1.856)
 <			1.0  >
@@ -2521,6 +2608,21 @@ floor({expr})							*floor()*
 			echo floor(4.0)
 <			4.0
 		{仅当编译时加入 |+float| 特性才有效}
+
+
+fmod({expr1}, {expr2})					*fmod()*
+		返回 {expr1} / {expr2} 的余数，该除法可能实际无法表达出来。选
+		择某整数 i，返回 {expr1} - i * {expr2}，使得如果 {expr2} 非
+		零，结果和 {expr1} 同号而绝对值小于 {expr2} 的绝对值。如果
+		{expr2} 为零，返回零。返回值为浮点数。
+		{expr1} 和 {expr2} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo fmod(12.33, 1.22)
+<			0.13 >
+			:echo fmod(-12.33, 1.22)
+<			-0.13
+		{仅当编译时加入 |+float| 特性才有效}
+
 
 fnameescape({string})					*fnameescape()*
 		转义 {string} 以便用作命令的文件名参数。有特殊意义的字符，如
@@ -2890,6 +2992,11 @@ getregtype([{regname}])					*getregtype()*
 		<CTRL-V> 是一个字符，其值为 0x16。
 		如果没有指定 {regname}，使用 |v:register|。
 
+gettabvar({tabnr}, {varname})				*gettabvar()*
+		得到标签页 {tabnr} 的标签页局部变量 {varname} 的值。|t:var|
+		标签页的编号从一开始。
+		注意 必须使用不带 "t:" 的名字。
+
 gettabwinvar({tabnr}, {winnr}, {varname})		*gettabwinvar()*
 		得到标签页 {tabnr} 的窗口 {winnr} 的窗口局部变量 {varname} 的
 		值。
@@ -3084,7 +3191,8 @@ hostname()						*hostname()*
 iconv({expr}, {from}, {to})				*iconv()*
 		返回字符串，即文本 {expr} 从 {from} 编码转到 {to} 编码以后的文
 		本。
-		如果转换失败，返回空字符串。
+		如果转换完全失败，返回空字符串。如果部分字符无法转换，以 "?"
+		代替之。
 		编码名字可以是任何 iconv() 库函数接受的名字，见
 		":!man 3 iconv"。
 		大多数转换需要 Vim 编译时加入 |+iconv| 特性。不然，只支持
@@ -3317,7 +3425,7 @@ line({expr})	返回数值，即 {expr} 给定的文件位置的行号。可接�
 <							*last-position-jump*
 		如果设置了 '" 位置标记的话，下面的自动命令在打开文件后跳转到最
 		后已知的文件位置: >
-	:au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+	:au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 <
 line2byte({lnum})					*line2byte()*
 		返回当前缓冲区第 {lnum} 行从缓冲区开始计算的字节数。这里包括换
@@ -3340,10 +3448,19 @@ localtime()						*localtime()*
 		返回当前时间，以 1970 年 1 月 1 日开始的秒数计算。另见
 		|strftime()| 和 |getftime()|。
 
+log({expr})						*log()*
+		返回浮点数，即浮点数 {expr} 的自然对数 (即以 e 为底)。
+		{expr} 计算结果必须为 (0, inf] 区间内的浮点数或数值。
+		示例: >
+			:echo log(10)
+<			2.302585 >
+			:echo log(exp(5))
+<			5.0
+		{仅当编译时加入 |+float| 特性才有效}
 
 log10({expr})						*log10()*
 		返回浮点数，即浮点数 {expr} 以 10 为底的对数。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 计算结果必须为浮点数或数值。
 		示例: >
 			:echo log10(1000)
 <			3.0 >
@@ -3357,6 +3474,7 @@ map({expr}, {string})					*map()*
 		{expr} 里的每个项目被 {string} 的计算结果替代。
 		在 {string} 里，|v:val| 包含当前项目的值。
 		对 |Dictionary| 而言，|v:key| 也包含当前项目的键。
+		对 |List| 而言，|v:key| 包含当前项目的索引。
 		例如: >
 			:call map(mylist, '"> " . v:val . " <"')
 <		"mylist" 里的每个项目之前放上 "> "，而之后放上 " <"。
@@ -3599,6 +3717,23 @@ mode([expr])	返回指示当前模式的字符串。
 		它总是返回 "c" 或 "n"。
 		另见 |visualmode()|。
 
+mzeval({expr})							*mzeval()*
+		计算 MzScheme 表达式 {expr} 并返回计算结果，转换为 Vim 本身的
+		数据结构。
+		数值和字符串返回本身。
+		组对 (pair) (包含列表 (list) 和非常规列表 (improper list)) 和
+		向量 (vector) 以 Vim |List| 形式返回。
+		哈希表 (hash table) 以 Vim |Dictionary| 形式返回，其键转换成字
+		符串。
+		所有其它类型依 display 函数调用的结果转换为字符串。
+		示例: >
+		    :mz (define l (list 1 2 3))
+		    :mz (define h (make-hash)) (hash-set! h "list" l)
+		    :echo mzeval("l")
+		    :echo mzeval("h")
+<
+		{仅当编译时带 |+mzscheme| 特性才有效}
+
 nextnonblank({lnum})					*nextnonblank()*
 		返回第一个从 {lnum} 开始的非空白行的行号。例如: >
 			if getline(nextnonblank(1)) =~ "Java"
@@ -3644,7 +3779,7 @@ pathshorten({expr})					*pathshorten()*
 
 pow({x}, {y})						*pow()*
 		返回浮点数，即 {x} 的 {y} 次方。
-		{x} 和 {y} 的计算结果必须是 |Float| 或 |Number|。
+		{x} 和 {y} 的计算结果必须是浮点数或数值。
 		示例: >
 			:echo pow(3, 3)
 <			27.0 >
@@ -3818,13 +3953,15 @@ readfile({fname} [, {binary} [, {max}]])
 		读入文件 {fname} 并返回 |List|。，文件每行一项。在 NL 字符处断
 		开行。以 CR 分隔的 Macintosh 文件会返回单个长行 (除非某处出现
 		了 NL)。
+		所有的 NUL 字符被 NL 字符替代。
 		如果 {binary} 等于 "b"，使用二进制模式:
 		- 如果末行以 NL 结尾，附加额外的一个空列表项。
 		- 不删除 CR 字符。
 		否则:
 		- NL 之前的 CR 字符被删除。
 		- 末行是否以 NL 结尾没有影响。
-		所有的 NUL 字符被 NL 字符替代。
+		- 'encoding' 如是 Unicode 编码，删除文本可能有的 UTF-8 字节顺
+		  序标识。
 		如果给出 {max}，指定读入的最大行数。可用于只想检查文件开始十行
 		这样的场合: >
 			:for line in readfile(fname, '', 10)
@@ -3982,7 +4119,7 @@ reverse({list})	反转 {list} 项目的顺序，直接对 {list} 进行修改。
 round({expr})							*round()*
 		返回浮点数，即最接近于 {expr} 的整数。如果 {expr} 在两个整数的
 		正中间，使用 (译者注: 绝对值) 较大 (远离零的) 那个。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			echo round(0.456)
 <			0.0  >
@@ -4139,8 +4276,8 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip}
 				[, {stopline} [, {timeout}]]]])
 		和 |searchpair()| 相同，但返回 |List|，包含匹配的行号和列号。
 		|List| 的第一个元素是行号，而第二个元素是匹配所在的列位置的字
-		节位置。如果没有匹配，返回 [0, 0]。
->
+		节位置。如果没有匹配，返回 [0, 0]。 >
+
 			:let [lnum,col] = searchpairpos('{', '', '}', 'n')
 <
 		|match-parens| 提供一个更复杂更有用的例子。
@@ -4241,7 +4378,7 @@ setpos({expr}, {list})
 		不修改跳转表。
 
 		"lnum" 和 "col" 是缓冲区里的位置。第一列为 1。"lnum" 为零则删
-		除位置标记。
+		除位置标记。"col" 如小于 1，则以 1 代替。
 
 		除非使用了 'virtualedit'。不用 "off" 值。这是从对应字符开始位置
 		计算的屏幕列。例如，在制表之中或最后一个字符之后的某个位置。
@@ -4275,6 +4412,7 @@ setqflist({list} [, {action}])				*setqflist()*
 		如果 "filename" 和 "bufnr" 项目都不存在或者 "lnum" 和
 		"pattern" 项目都不存在，那么此项目不被当作错误行处理。
 		如果 "pattern" 和 "lnum" 都存在，使用 "pattern"。
+		如果 {list} 为空，quickfix 列表被清除。
 		注意 此列表和 |getqflist()| 返回之值不尽相同。
 
 		如果 {action} 设为 'a'，把 {list} 项目加入已有的 quickfix 列
@@ -4319,6 +4457,14 @@ setreg({regname}, {value} [,{options}])
 
 <		你可以通过附加空串来改变寄存器的类型: >
 			:call setreg('a', '', 'al')
+
+settabvar({tabnr}, {varname}, {val})			*settabvar()*
+		设置标签页 {tabnr} 的标签页局部变量 {varname} 的值为 {val}。
+		注意 必须使用不带 "t:" 的名字。
+		标签页的编号从一开始。
+		Vim 短暂地进入标签页 {tabnr}，所以会激活 TabLeave 和 TabEnter 
+		自动命令。
+		该命令在沙盘里不可用 |sandbox|。
 
 settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 		设置窗口 {nr} 的选项或局部变量 {varname} 的值为 {val}。
@@ -4375,12 +4521,24 @@ simplify({filename})					*simplify()*
 
 sin({expr})						*sin()*
 		返回浮点数，即以弧度测量的 {expr} 的正弦值。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			:echo sin(100)
 <			-0.506366 >
 			:echo sin(-4.01)
 <			0.763301
+		{仅当编译时加入 |+float| 特性才有效}
+
+
+sinh({expr})						*sinh()*
+		返回 {expr} 的双曲正弦值，返回值为 [-inf, inf] 区间内的浮点
+		数。
+		{expr} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo sinh(0.5)
+<			0.521095 >
+			:echo sinh(-0.9)
+<			-1.026517
 		{仅当编译时加入 |+float| 特性才有效}
 
 
@@ -4476,8 +4634,8 @@ split({expr} [, {pattern} [, {keepempty}]])			*split()*
 
 sqrt({expr})						*sqrt()*
 		返回浮点数，即 {expr} 的非负平方根。
-		{expr} 计算结果必须为 |Float| 或 |Number|。如果 {expr} 为负，
-		返回 NaN (Not a Number，非数)。
+		{expr} 的计算结果必须是浮点数或数值。如果 {expr} 为负，返回
+		NaN (Not a Number，非数)。
 		示例: >
 			:echo sqrt(100)
 <			10.0 >
@@ -4508,6 +4666,21 @@ str2nr( {expr} [, {base}])				*str2nr()*
 		返回零。
 		安静地忽略数值之后的文本。
 
+
+strchars({expr})					*strchars()*
+		返回数值，给出字符串 {expr} 占据的字符数。组合用字符也算一个字
+		符。
+		另见 |strlen()|、|strdisplaywidth()| 和 |strwidth()|。
+
+strdisplaywidth({expr}[, {col}])			*strdisplaywidth()*
+		返回数值，给出字符串 {expr} 在屏幕上占据的显示单元的数目。
+		如果省略 {col}，假定为零。 否则给出开始计算的屏幕列号。该值对
+		包含制表符的计算有影响。
+		使用当前窗口的选项设置。其中影响显示的选项也对返回值有影响，如
+		'tabstop' 和 'display'。
+		{expr} 如包含东亚二义性宽度字符类，'ambiwidth' 也会影响返回结
+		果。
+		另见 |strlen()|、|strwidth()| 和 |strchars()|。
 
 strftime({format} [, {time}])				*strftime()*
 		返回字符串，即经过 {format} 字符串的格式转换的日期和时间。使用
@@ -4564,7 +4737,8 @@ strlen({expr})	返回数值，即字符串 {expr} 的字节长度。
 			:let len = strlen(substitute(str, ".", "x", "g"))
 
 <		如果参数为数值，先把它转化为字符串。其它类型报错。
-		另见 |len()|。
+		另见 |len()|、|strchars()|、|strdisplaywidth()| 和
+		|strwidth()|。
 
 strpart({src}, {start}[, {len}])			*strpart()*
 		返回字符串，{src} 从第 {start} 个字节开始字节长度为 {len} 的子
@@ -4600,6 +4774,13 @@ strtrans({expr})					*strtrans()*
 		字符序列 |'isprint'|，类似于窗口里显示的形式。例如: >
 			echo strtrans(@a)
 <		会显示寄存器里的换行符为 "^@" 而不是开启新行。
+
+strwidth({expr})					*strwidth()*
+		返回数值，给出字符串 {expr} 在屏幕上占据的显示单元的数目。制表
+		符算作一个单元。如果不想这样，可用 |strdisplaywidth()|。
+		{expr} 如包含东亚二义性宽度字符类，'ambiwidth' 也会影响返回结
+		果。
+		另见 |strlen()|、|strdisplaywidth()| 和 |strchars()|。
 
 submatch({nr})						*submatch()*
 		只用于 |:substitute| 命令里的表达式。返回匹配文本的第 {nr} 个
@@ -4644,6 +4825,17 @@ synID({lnum}, {col}, {trans})				*synID()*
 		例如 (回显光标所在的语法项目的名字): >
 			:echo synIDattr(synID(line("."), col("."), 1), "name")
 <
+
+synconcealed({lnum}, {col})				*synconcealed()*
+		返回列表。如果 {lnum} 和 {col} 所在位置的字符不在可隐藏区域，
+		列表的第一个项目为 0，否则为 1。列表的第二个项目为字符串。如果
+		第一个值为 1，第二个值包含代替被隐藏文本实际显示的文本，视乎
+		'conceallevel' 的当前值而定。列表的第三个，也即最后一个项目是
+		代表匹配的特定语法区域的唯一的数值。这用于在有两个连续的使用相
+		同替代字符的区域时，检测此处是否是一个新的可隐藏区域的开始。
+		示例可见 $VIMRUNTIME/syntax/2html.vim。
+
+
 synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		返回字符串，syntax ID {synID} 的 {what} 属性。可用于得到语法项
 		目的相关信息。
@@ -4656,6 +4848,7 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"fg"		前景色 (GUI: 用于设置颜色的色彩名，cterm: 色彩
 				号，以字符串形式出现，term: 空字符串)
 		"bg"		背景色 (细节同 "fg")
+		"font"		字体名 (只适用于 GUI) |highlight-font|
 		"sp"		特殊颜色 (细节同 "fg") |highlight-guisp|
 		"fg#"		类似于 "fg"，但只适用于 GUI，而且 GUI 使用的名
 				字形如 "#RRGGBB"。
@@ -4665,6 +4858,7 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"italic"	"1" 如果斜体
 		"reverse"	"1" 如果反显
 		"inverse"	"1" 如果反显 (= reverse)
+		"standout"	"1" 如果突出
 		"underline"	"1" 如果下划线
 		"undercurl"	"1" 如果下曲线
 
@@ -4687,6 +4881,8 @@ synstack({lnum}, {col})					*synstack()*
 			for id in synstack(line("."), col("."))
 			   echo synIDattr(id, "name")
 			endfor
+<		如果 {lnum} 和 {col} 指定的位置非法，不返回任何值。行末字符之
+		后的位置以及空行的第一个位置是合法的位置。
 
 system({expr} [, {input}])				*system()* *E677*
 		得到外壳命令 {expr} 的输出结果。
@@ -4786,12 +4982,30 @@ tempname()					*tempname()* *temp-file-name*
 		至少 26 个接连的调用内不会重复。例如: >
 			:let tmpfile = tempname()
 			:exe "redir > " . tmpfile
-<		Unix 上，文件会在用户个人的目录下 (只有当前用户可以访问) 以避
-		免一些安全问题 (例如，符号链接攻击，或者有给其他人读取文件的可
-		能)。
-		Vim 退出时，该目录和里面的所有文件被删除。
+<		Unix 上，文件会在用户个人的目录中 |tempfile|。
 		MS-Windows 上，如果置位了 'shellslash' 选项或者 'shellcmdflag'
 		以 '-' 开始的时候，使用正斜杠。
+
+tan({expr})						*tan()*
+		返回以弧度测量的 {expr} 的正切值。返回值是 [-inf, inf] 区间内
+		的浮点数。
+		{expr} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo tan(10)
+<			0.648361 >
+			:echo tan(-4.01)
+<			-1.181502
+		{仅当编译时加入 |+float| 特性才有效}
+
+tanh({expr})						*tanh()*
+		返回 {expr} 的双曲正切值，返回值为 [-1, 1] 区间内的浮点数。
+		{expr} 的计算结果必须是浮点数或数值。
+		示例: >
+			:echo tanh(0.5)
+<			0.462117 >
+			:echo tanh(-1)
+<			-0.761594
+		{仅当编译时加入 |+float| 特性才有效}
 
 tolower({expr})						*tolower()*
 		返回给出字符串的备份，但所有的大写字符变为小写 (就如同在字符串
@@ -4816,7 +5030,7 @@ tr({src}, {fromstr}, {tostr})				*tr()*
 
 trunc({expr})							*trunc()*
 		返回浮点数，即绝对值小于等于 {expr} 的最大整数 (向零取整)。
-		{expr} 计算结果必须为 |Float| 或 |Number|。
+		{expr} 的计算结果必须是浮点数或数值。
 		示例: >
 			echo trunc(1.456)
 <			1.0  >
@@ -4841,6 +5055,42 @@ type({expr})	返回数值，取决于 {expr} 的类型:
 			:if type(myvar) == type([])
 			:if type(myvar) == type({})
 			:if type(myvar) == type(0.0)
+
+undofile({name})					*undofile()*
+		返回用于名为 {name} 的文件的撤销文件名。使用 'undodir' 选项并
+		寻找实际存在的目录。并不检查该撤销文件是否存在。
+		{name} 总是扩展为完整路径，因为内部是这么使用的。
+		可用于 |:wundo| 和 |:rundo|。
+		如果编译时没有 +persistent_undo 选项，总是返回空字符串。
+
+undotree()						*undotree()*
+		返回撤销树的当前状态。返回值是包含以下项目的字典:
+		  "seq_last"	最大使用的撤销序列号。
+		  "seq_cur"	撤销树中当前位置的序列号。如果有撤销过的改变，
+				和 "seq_last" 会有不同。
+		  "time_cur"	最近用于 |:earlier| 和相关命令的时间。
+				可用 |strftime()| 转换成可读的格式。
+		  "save_last"	最后的文件写入编号。如果没有写入，返回零。
+		  "save_cur"	撤销树当前位置的编号。
+		  "synced"	如果最后的撤销块已经同步，返回非零值。等待用户
+				输入时会发生。见 |undo-blocks|。
+		  "entries"	关于撤销块的信息的字典的列表。
+
+		"entries" 列表的第一个值是最老的撤销项目。每个列表项目是一个包
+		含以下项目的字典:
+		  "seq"		撤销序列号。和 |:undolist| 显示的相同。
+		  "time"	改变发生的时间。可用 |strftime()| 转换成可读的
+				格式。
+		  "newhead"	只出现在最后加入的项目。标识最后的改变，并指示
+		  		将来的改变加入所在的位置。
+		  "curhead"	只出现在最后撤销的项目。表示撤销树当前的位置，
+		  		该块可用于 redo 命令。如果最后改变之后没有撤销
+				动作，此项目不出现。
+		  "save"	只出现在文件写入前最后的块。该值为写入计数。首
+		  		次写入的编号为 1，最后一次是上面提及的
+				"save_last"。
+		  "alt"		替代项。这又是一个撤销块的列表。每个项目又可以
+		  		有 "alt" 项目。
 
 values({dict})						*values()*
 		返回 |List|，{dict} 的所有值。|List| 项目的顺序不定。
@@ -5064,6 +5314,7 @@ lispindent		编译时加入了 lisp 缩进的支持。
 listcmds		编译时加入了缓冲区列表 |:files| 和参数列表 |arglist|
 			的命令。
 localmap		编译时加入了局部映射和缩写。|:map-local|
+lua			编译时加入了 Lua 接口 |Lua|。
 mac			Vim 的 Macintosh 版本。
 macunix			Vim 的 Macintosh 版本，使用 Unix 文件命名 (OS-X)。
 menu			编译时加入了 |:menu| 的支持。
@@ -5083,12 +5334,13 @@ multi_byte_ime		编译时加入了 IME 输入方法的支持。
 multi_lang		编译时加入了多语言的支持。
 mzscheme		编译时加入了 MzScheme 接口支持 |mzscheme|。
 netbeans_intg		编译时加入了 |netbeans| 的支持。
-netbeans_enabled	编译时加入了 |netbeans| 的支持并且在使用它。
+netbeans_enabled	编译时加入了 |netbeans| 的支持并且已连接上。
 ole			编译时加入了 Win32 OLE automation 的支持。
 os2			Vim 的 OS/2 版本。
 osfiletype		编译时加入了 osfiletypes 的支持。|+osfiletype|
 path_extra		编译时加入了 'path' 和 'tags' 上下搜索的支持。
 perl			编译时加入了 Perl 接口。
+persistent_undo		编译时加入了永久撤销历史的支持。
 postscript		编译时加入了 PostScript 文件打印的支持。
 printer			编译时加入了 |:hardcopy| 的支持。
 profile			编译时加入了 |:profile| 的支持。
@@ -5103,6 +5355,7 @@ showcmd			编译时加入了 'showcmd' 的支持。
 signs			编译时加入了 |:sign| 的支持。
 smartindent		编译时加入了 'smartindent' 的支持。
 sniff			编译时加入了 SNiFF interface 的支持。
+startuptime		编译时加入了 |--startuptime| 支持。
 statusline		编译时加入了 'statusline' 和 'rulerformat' 还有
 			'titlestring' 和 'iconstring' 的特殊格式的支持。
 sun_workshop		编译时加入了 Sun |workshop| 的支持。
@@ -5773,7 +6026,7 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 					*:cat* *:catch* *E603* *E604* *E605*
 :cat[ch] /{pattern}/	匹配 {pattern} 的例外抛出时，如果它没有被前一个
 			":catch" 捕获，则执行本语句之后的命令，直到遇到和本
-			":catch" 处于同一 |:try| 块的下一个 ":catch"、
+			":catch" 处于同一 |:try| 块的下一个 |:catch|、
 			|:finally| 或者 |:endtry| 为止。否则，这些命令被跳过。
 			如果没有提供 {pattern}，所有的错误都会被捕获。
 			示例: >
@@ -5882,13 +6135,14 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 		:exe "normal \<Esc>"
 <
 							*:exe* *:execute*
-:exe[cute] {expr1} ..	计算 {expr1}，返回的字符串作为 Ex 命令执行。多个参数用
-			空格连接。{expr1} 用作被处理的命令，命令行编辑的键不会
-			被识别。
+:exe[cute] {expr1} ..	计算 {expr1}，返回的字符串作为 Ex 命令执行。
+			多个参数用空格连接。如果不想有额外的空格，使用 "." 操
+			作符来连接字符串使之成为一个参数。
+			{expr1} 用作被处理的命令，命令行编辑的键不会被识别。
 			后面不能跟注释。
 			示例: >
-		:execute "buffer " nextbuf
-		:execute "normal " count . "w"
+		:execute "buffer" nextbuf
+		:execute "normal" count . "w"
 <
 			":execute" 可以用来把命令附加到不能接受 '|' 的命令后
 			面。比如: >
@@ -6928,10 +7182,10 @@ Geddes 提供的方法)
 ==============================================================================
 11. 沙盘 (sandbox)				*eval-sandbox* *sandbox* *E48*
 
-'foldexpr'、'includeexpr'、'indentexpr'、'statusline' 和 'foldtext' 选项在沙盘
-(sandbox) 里进行计算。这意味着这些表达式不会产生可怕的副作用。在模式行上设置这
-些选项时，以及在标签文件里和命令行上的 CTRL-R = 执行命令时，这项措施提供了一定
-的安全性。
+'foldexpr'、'formatexpr'、'includeexpr'、'indentexpr'、'statusline' 和
+'foldtext' 选项在沙盘 (sandbox) 里进行计算。这意味着这些表达式不会产生可怕的副
+作用。在模式行上设置这些选项时，以及在标签文件里和命令行上的 CTRL-R = 执行命令
+时，这项措施提供了一定的安全性。
 沙盘也用于 |:sandbox| 命令。
 
 沙盘里，不允许以下操作:

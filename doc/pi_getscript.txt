@@ -1,4 +1,4 @@
-*pi_getscript.txt*  For Vim version 7.2.  最近更新: 2008年7月
+*pi_getscript.txt*  For Vim version 7.3.  最近更新: 2010年5月
 >
 		GETSCRIPT 参考手册 作者: Charles E. Campbell, Jr.
 <				译者: Willis
@@ -7,7 +7,7 @@
 Authors:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamilyA.Mbiz>
 	  (remove NOSPAM from the email address)
 						*GetLatestVimScripts-copyright*
-Copyright: (c) 2004-2006 by Charles E. Campbell, Jr.	*glvs-copyright*
+Copyright: (c) 2004-2009 by Charles E. Campbell, Jr.	*glvs-copyright*
            The VIM LICENSE applies to getscript.vim and
            pi_getscript.txt (see |copyright|) except use
            "getscript" instead of "Vim".  No warranty, express or implied.
@@ -50,7 +50,7 @@ Vim 7.0 没有包含 GetLatestVimScripts.dist 文件，该文件提供了示例�
 GetLatestVimScripts.dist 文件提供了示例和样板，你可以参照来建立自己的列表。你
 尽可以删掉所有那里提到的所有脚本，"紧要的" 部分是头两行。
 
-你的计算机需要带有 wget，这样 GetLatestVimScripts 才能工作。
+你的计算机需要带有 wget 或 curl，这样 GetLatestVimScripts 才能工作。
 
 	1. 如果经过压缩:  gunzip getscript.vba.gz
 	2. Unix:
@@ -161,6 +161,7 @@ Getscript 也会使用该行来帮助构造 GetLatestVimScripts.dat 文件，如
 ==============================================================================
 5. GetLatestVimScripts 友好插件		*getscript-plugins* *glvs-plugins*
 
+		(这一节适用于插件作者们)~
 
 如果插件作者在插件的任何地方包含了下面形式的注释，GetLatestVimScripts 会找到它
 并用来构造用户 GetLatestVimScripts.dat 文件:
@@ -175,7 +176,15 @@ Getscript 也会使用该行来帮助构造 GetLatestVimScripts.dat 文件，如
 的其它脚本。当然，使用相同格式！
 
 多数脚本都可以自动安装。如果你的命令也可以 (见 |glvs-autoinstall|)，那么可在
-"yourscriptname" 开始的位置加上 :AutoInstall:。
+"yourscriptname" 开始的位置之前加上 :AutoInstall:。
+>
+	                         src_id
+	                            v
+	" GetLatestVimScripts: ### ### :AutoInstall: yourscriptname
+	                        ^
+	                    scriptid
+<
+备注: :AutoInstall: 是插件作者的选项，不是 GetLatestVimScripts.dat 的项目！~
 
 如果还没有加入的话，此时就会在用户 GetLatest/GetLatestVimScripts.dat 文件里加
 入这些脚本的 GetLatestVimScript 命令。这是一个相对简单的自动获取所有你的插件所
@@ -262,12 +271,17 @@ after/syntax/c.vim 可能会覆盖用户自己的 c.vim。
 <	缺省= "-q -O"
 		该变量记住用于 g:GetLatestVimScripts_wget 命令的选项。
 >
- 	g:getLatestVimScripts_allowautoinstall
+ 	g:GetLatestVimScripts_allowautoinstall
 <	缺省= 1
-		该变量指示是否允许 GetLatestVimScripts 尝试自动安装脚本。注意
-		它 (还) 不能识别 vimball 包。另外，脚本作者也必须说明他/她的插
-		件是否支持自动安装。
-
+		该变量指示是否允许 GetLatestVimScripts 尝试自动安装脚本。更进
+		一步地，插件作者必须显式地指明他/她的插件是否可以自动安装 (通
+		过 GetLatestVimScripts 注释行的 :AutoInstall: 关键字)。
+>
+	g:GetLatestVimScripts_autoinstalldir
+<	缺省= $HOME/.vim     (linux)
+	缺省= $HOME/vimfiles (windows)
+		覆盖 :AutoInstall: 脚本安装的位置。不用于覆盖 vimball 安装的位
+		置。
 
 ==============================================================================
 8. GetLatestVimScripts 算法			*glvs-algorithm* *glvs-alg*
@@ -303,8 +317,10 @@ src_id 大于 GetLatestVimScripts 脚本记录的值，那就是时候下载该�
 9. GetLatestVimScripts 历史 (英文)	*getscript-history* *glvs-hist* {{{1
 
 v31 Jun 29, 2008 : * (Bill McCarthy) fixed having hls enabled with getscript
+		   * (David Schaefer) the acd option interferes with vimballs
+		     Solution: bypass the acd option
 v30 Jun 13, 2008 : * GLVS now checks for existence of fnameescape() and will
-		     issue an error message if its not supported
+		     issue an error message if it is not supported
 v29 Jan 07, 2008 : * Bram M pointed out that cpo is a global option and that
                      getscriptPlugin.vim was setting it but not restoring it.
 v28 Jan 02, 2008 : * improved shell quoting character handling, cygwin

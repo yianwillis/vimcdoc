@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 7.2.  最近更新：2009年4月
+*if_pyth.txt*   For Vim version 7.3.  最近更新：2010年8月
 
 
 		  VIM REFERENCE MANUAL    by Paul Moore
@@ -13,10 +13,12 @@ Vim 的 Python 编程接口					*python* *Python*
 4. 范围对象			|python-range|
 5. 窗口对象			|python-window|
 6. 动态调入			|python-dynamic|
+7. Python 3			|python3|
 
 {Vi 无此功能}
 
-Vim 的 Python 接口仅当 |+python| 特性被编译进 Vim 时才有效。
+Vim 的 Python 2.x 接口仅当 |+python| 特性被编译进 Vim 时才有效。
+Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 
 ==============================================================================
 1. 命令							*python-commands*
@@ -218,9 +220,11 @@ Python 的输出						*python-output*
 
 缓冲区对象的方法有:
 	b.append(str)	对缓冲区附加一行
+	b.append(str, nr)  同上，在第 "nr" 行之后
 	b.append(list)	对缓冲区附加一系列行
 			备注: append 方法可以带一个字符串列表作为参数，这和
 			Python 中内建的列表对象的对应方法是不同的。
+	b.append(list, nr)  同上，在第 "nr" 行之后
 	b.mark(name)	返回一个 tuple (行，列) 用来代表该位置上的一个命名标记
 			(也可以用于 []"<> 等标记)
 	b.range(s,e)	返回一个范围对象 (参见 |python-range|) 用来代表指定缓
@@ -261,9 +265,11 @@ Python 的输出						*python-output*
 
 范围对象的方法有:
 	r.append(str)	给范围附加一行
+	r.append(str, nr)  同上，在第 "nr" 行之后
 	r.append(list)	给范围附加一系列行
 			备注: append 方法可以带一个字符串列表作为参数，这和
 			Python 中内建的列表对象的对应方法是不同的。
+	r.append(list, nr)  同上，在第 "nr" 行之后
 
 例如 (假设 r 是当前范围):
 	# 发送范围内的所有行给缺省打印机
@@ -302,6 +308,43 @@ MS-Windows 上，可以动态调入 Python 库。|:version| 输出这时应包�
 DLL 的名字必须匹配 Vim 编译时所使用的 Python 版本。目前，该名字为
 "python24.dll"，也就是 Python 2.4。要确信这一点，编辑 "gvim.exe" 文件并查找
 "python\d*.dll\c"。
+
+==============================================================================
+7. Python 3						*python3*
+
+							*:py3* *:python3*
+|:py3| 和 |:python3| 命令和 |:python| 类似。
+							*:py3file*
+|:py3file| 命令和 |:pyfile| 类似。
+
+Vim 可以用四种方式编译 (:version 输出结果):
+1. 无 Python 支持	    (-python、-python3)
+2. 只有 Python 2 支持       (+python 或 +python/dyn、-python3)
+3. 只有 Python 3 支持       (-python、+python3 或 +python3/dyn)
+4. Python 2 和 3 支持       (+python/dyn、+python3/dyn) 
+
+关于第四种特殊情况的更多细节:
+
+要同时支持 Python 2 和 Python 3，两者必须都是动态载入。
+
+在 Linux/Unix 系统上用这种方式并导入全局符号的时候，使用第二个 Python 版本会导
+致系统崩溃。所以，要么载入全局符号但只激活一个 Python 版本，要么考虑不载入全局
+符号。后者使 Python 导入 ("import") 某些期待 Vim 提供某些符号的库的时候会失败。
+							*E836* *E837*
+Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的库进行猜测。如果
+对两个 Python 版本导入该库均成功，那么可以在 Vim 中同时使用两者。否则在一个会
+话中，只允许使用先用到的版本。使用第二个版本会得到 E836 或 E837 的错误信息。
+
+这里 Vim 的行为取决于配置所在的系统。如果两个 Python 版本都用了
+--enable-shared 进行配置，两者会同时激活。但没有链接进 libPython 的第三方库仍
+然会有问题。
+
+要回避这些问题，有以下几个方案:
+1. 重新编译有问题的库，把它链接进相应的 libpython.so 里。
+2. 重新编译 Vim，只用一个 Python 版本。
+3. 配置完后，撤销 auto/config.h 中 PY_NO_RTLD_GLOBAL 的定义。这可能会使 Vim 崩
+   溃。
+
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:

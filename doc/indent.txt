@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.2.    最近更新: 2008年7月
+*indent.txt*    For Vim version 7.3.    最近更新: 2010年8月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -170,7 +170,7 @@ CTRL-D 来改变缩进，Vim 将不会再次缩进。
 		      foo;		  foo;		      foo;
 		  }		      }			    }
 <
-	^N    如果 '{' 在第 0 列，则对其包含的语句增加相对 '一般' 所进 N 个字
+	^N    如果 '{' 在第 0 列，则对其包含的语句增加相对 '一般' 縮进 N 个字
 	      符的缩进。这可以对整个函数设定一个不同的缩进。(有人喜欢将其设成
 	      负数)。(缺省为 0)。
 
@@ -193,6 +193,18 @@ CTRL-D 来改变缩进，Vim 将不会再次缩进。
 			  a = b;	  a = b;
 		      default:	      default:
 		  }		      }
+<
+	LN    控制跳转标签的放置。如果 N 为负，标签放在第一列上。如果 N 非负，
+	      标签的缩进位置为 '一般' 缩进位置减去 N。(缺省为 -1)。
+
+		cino=               cino=L2             cino=Ls >
+		  func()              func()              func()
+		  {                   {                   {
+		      {                   {                   {
+		          stmt;               stmt;               stmt;
+		  LABEL:                    LABEL:            LABEL:
+		      }                   }                   }
+		  }                   }                   }
 <
 	=N    将 case 标号之后的语句放在标号缩进位置之后的 N 个字符处。(缺省为
 	      'shiftwidth')。
@@ -384,24 +396,41 @@ CTRL-D 来改变缩进，Vim 将不会再次缩进。
 		    }
 		});
 <
+				*javascript-cinoptions* *javascript-indenting*
+	JN    正确缩进 JavaScript 对象声明，不把它错误地当成标签。目前 'N' 的
+	      值并没有用到但不能为 0 (比如 'J1'). >
+
+		var bar = {
+		    foo: {
+			that: this,
+			some: ok,
+		    },
+		    "bar":{ 
+			a : 2,
+			b: "123abc",
+			x: 4,
+			"y": 5
+		    }
+		}
+<
 	)N    Vim 最多在 N 行范围内查找没有结束的括号。这将缩小 Vim 用来查找
 	      括号的时间。(缺省 20 行)。
 
 	*N    Vim 最多在 N 行范围内查找没有结束的注释。这将缩小 Vim 用来查找
-	      注释头部的时间。(缺省 30 行)。
+	      注释头部的时间。(缺省 70 行)。
 
 	#N    如果 N 非零，识别 shell/Perl 风格 # 开头的注释。缺省 N 为零:
 	      不识别 '#' 注释。注意 # 开头的行仍将被识别为预处理命令行。
 
 
 全部的缺省值是: 
-	cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,l0,b0,gs,hs,ps,ts,is,+s,c3,C0,
-		   /0,(2s,us,U0,w0,W0,m0,j0,)20,*30,#0
+	cinoptions=>s,e0,n0,f0,{0,}0,^0,L-1,:s,=s,l0,b0,gs,hs,ps,ts,is,+s,
+			c3,C0,/0,(2s,us,U0,w0,W0,m0,j0,J0,)20,*70,#0
 
 Vim 将一行从第一列开始，如果:
 - 它以 '#' 开头 (预处理指令)，并且 'cinkeys' 包含 '#'。
 - 它以一个标号 (后面跟随一个 ':' 的关键字，除了 "case" 或 "default" 以外) 开
-  头。
+  头，并且 'cinoptions' 不包含使用正数值的 'L' 项目。
 - 任何缩进的组合使这一行产生小于 0 的缩进。
 
 ==============================================================================
@@ -485,6 +514,10 @@ PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
 (注意 PHP 标识符和它包含的代码之间额外的缩进)
 -------------
 
+要使 PHP 标签和和包围它的代码使用相同的缩进: >
+    :let g:PHP_outdentphpescape = 0
+-------------
+
 要在 'fileformat' 设为 Unix 时自动删除 '\r' 字符: >
     :let g:PHP_removeCRwhenUnix = 1
 -------------
@@ -509,7 +542,8 @@ PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
 要缩进 switch() 块的 'case:' 和 'default:' 语句: >
     :let g:PHP_vintage_case_default_indent = 1
 
-(缺省，它们和 'switch()' 的使用相同层次的缩进，以避免不必要的缩进)
+(因为 PHP 中 'case/default' 块使用花括号并非必需，缺省，它们和 'switch()' 的使
+用相同层次的缩进，以避免不必要的缩进)
 
 
 PYTHON							*ft-python-indent*
@@ -538,8 +572,9 @@ b:sh_indent_options['continuation-line']
 
 b:sh_indent_options['case-labels']
 				加到 case 标签上的缩进距离。
+				(没有实际实现)
 
-b:sh_indent_options['case-statement']
+b:sh_indent_options['case-statements']
 				加到 case 语句上的缩进距离。
 
 b:sh_indent_options['case-breaks']
@@ -625,7 +660,7 @@ VHDL							*ft-vhdl-indent*
 
 ----------------------------------------
 
-整行注释 ("--" 打头的行) 的缩进和上一行注释对齐，_如果_ “--” 之后有一个空格的
+整行注释 ("--" 打头的行) 的缩进和上一行注释对齐，_如果_ "--" 之后有一个空格的
 话。
 
 示例: >

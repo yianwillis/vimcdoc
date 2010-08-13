@@ -1,4 +1,4 @@
-*ft_sql.txt*	For Vim version 7.2.  最近更新: 2008年6月
+*ft_sql.txt*	For Vim version 7.3.  最近更新: 2010年7月
 
 				作者: David Fishburn
 				译者: Willis
@@ -16,7 +16,8 @@
     1.4 宏					|sql-macros|
 2. SQL 方言					|sql-dialects|
     2.1 SQLSetType				|SQLSetType|
-    2.2 SQL 方言缺省值				|sql-type-default|
+    2.2 SQLGetType				|SQLGetType|
+    2.3 SQL 方言缺省值				|sql-type-default|
 3. 增加新的 SQL 方言				|sql-adding-dialects|
 4. 全能 SQL 补全				|sql-completion|
     4.1 静态模式				|sql-completion-static|
@@ -191,7 +192,7 @@ Vim 预定义了若干处理文本对象动作 |object-motions|的键。本文�
 						*sqlanywhere*
 						*oracle* *plsql* *sqlj*
 						*sqlserver*
-						*mysql* *postgres* *psql*
+						*mysql* *postgresql* *psql*
 						*informix*
 
 所有关系型数据库都支持 SQL。各供应商之间通用 SQL 的一个语言子集 (例如，CREATE
@@ -236,7 +237,17 @@ Vim 支持许多不同的供应商，目前这是通过语法脚本完成的。�
     :SQL<Tab><space><Tab>
 
 
-2.2 SQL 方言缺省值				*sql-type-default*
+2.2 SQLGetType					*sqlgettype* *SQLGetType*
+--------------
+你随时可以用 SQLGetType 命令得到正在使用的 SQL 方言。ftplugin/sql.vim 定义此函
+数: >
+    SQLGetType
+
+会显示: >
+    Current SQL dialect in use:sqlanywhere
+
+
+2.3 SQL 方言缺省值				*sql-type-default*
 -----------------------
 前面已经提到，Vim 语法规则缺省基于 Oracle (PL/SQL)。你可以在 |vimrc| 里加上以
 下各行之一，对此进行修改: >
@@ -299,6 +310,9 @@ SQL 补全插件有两种方式，静态和动态。静态模式从当前语法�
     imap <buffer> <C-C>T <C-\><C-O>:call sqlcomplete#Map('sqlType')<CR><C-X><C-O>
     imap <buffer> <C-C>s <C-\><C-O>:call sqlcomplete#Map('sqlStatement')<CR><C-X><C-O>
 
+"<C-C>" 也可以由用户在 .vimrc 里自定义，因为不是在所有平台下它都可用: >
+    let g:ftplugin_sql_omni_key = '<C-C>'
+>
 静态映射 (基于语法高亮组) 都符合以下格式: >
     imap <buffer> <C-C>k <C-\><C-O>:call sqlcomplete#Map('sqlKeyword')<CR><C-X><C-O>
 
@@ -360,17 +374,20 @@ SQL 补全插件的若干特性使用动态模式。安装完 dbext 插件后，
 
 要在插入模式下打开弹出菜单，可以分别为每组使用下面的键组合 (其中 <C-C> 意味着
 按住 CTRL 键的同时按住 C):
-     表清单		    - <C-C>t
-			    - <C-X><C-O> (缺省映射假定使用表)
-     存储过程清单	    - <C-C>p
-     视图清单		    - <C-C>v
-     列清单		    - <C-C>c
+     表清单		   - <C-C>t
+			   - <C-X><C-O> (缺省映射假定使用表)
+     存储过程清单	   - <C-C>p
+     视图清单		   - <C-C>v
+     列清单		   - <C-C>c
 
-     只用于 Windows 平台    - 查看显示表清单的弹出窗口时，<C-Right> 可将当前高
-			      亮的表替代为该表的列清单。
-			    - 查看显示列清单的弹出窗口时，<C-Left> 可将列清单
-			      替代为表清单。
-			    - 这样你可以快速钻进表里查看包含的列然后快速回来。
+     钻进 / 钻出           - 查看显示表清单的弹出窗口时，<Right> 可将当前高亮
+			     的表替代为该表的列清单。
+			   - 查看显示列清单的弹出窗口时，<Left> 可将列清单替代
+			     为表清单。
+			   - 这样你可以快速钻进表里查看包含的列然后快速回来。
+			   - <Right> 和 <Left> 可在 |.vimrc| 中指定: >
+                                let g:ftplugin_sql_omni_key_right = '<Right>'
+                                let g:ftplugin_sql_omni_key_left  = '<Left>'
 
 SQL 补全插件缓存若干弹出窗口的显示清单。这样，重新显示这些清单的速度就会大大加
 快。如果数据库加入了新表或新列，插件缓存需要清空。此功能的缺省映射是: >
@@ -432,31 +449,26 @@ dbext.vim 插件。它也带有自己的教程。从 SQL 补全插件的角度�
 
 SQL 补全插件也能显示特定表的列清单。<C-C>c 激活列补全。
 
-注意: 下面的例子在弹出菜单激活时用 <C-Right> 来激活列清单。该映射只能用于
-Windows 平台，因为 *nix 不识别同时按下 CTRL 和右箭头键。如果你希望在 *nix 平台
-上打开这个功能，选择一个键并建立下面这些映射之一 ( |sql-completion-maps| 说明
-更多关于在哪里建立该 imap 的细节): >
-    imap <buffer> <你定义的键击> <C-R>=sqlcomplete#DrillIntoTable()<CR>
-    imap <buffer> <你定义的键击> <CR><C-\><C-O>:call sqlcomplete#Map('column')<CR><C-X><C-O>
+注意: 下面的例子在弹出菜单激活时用 <Right> 来激活列清单。
 
 使用列补全的示例:
      - 再按一次 <C-C>t 显示表清单。
-     - 补全窗口显示清单时，按 <C-Right>，表清单会被替换为高亮表包含的列清单
-       (在同样短暂的延迟后)。
-     - 按下 <C-Left>，列清单又被替换为表清单。这样，你就可以来回快速进出各种表
-       和列清单。
-     - 高亮同一个表时，如果又按 <C-Right>，你会注意到不再有延迟，这是因为列清
-       单已经进行了缓存。如果改变了已经缓存的表的模式 (schema)， <C-C>R 命令可
-       以清除 SQL 补全缓存。
-     - 注意: <C-Right> 和 <C-Left> 设计在补全窗口激活时工作。如果没有激活补全
-       窗口，执行普通的 <C-Right> 或 <C-Left>。
+     - 补全窗口显示清单时，按 <Right>，表清单会被替换为高亮表包含的列清单 (在
+       同样短暂的延迟后)。
+     - 按下 <Left>，列清单又被替换为表清单。这样，你就可以来回快速进出各种表和
+       列清单。
+     - 高亮同一个表时，如果又按 <Right>，你会注意到不再有延迟，这是因为列清单
+       已经进行了缓存。如果改变了已经缓存的表的模式 (schema)， <C-C>R 命令可以
+       清除 SQL 补全缓存。
+     - 注意: <Right> 和 <Left> 设计在补全窗口激活时工作。如果没有激活补全窗
+       口，执行普通的 <Right> 或 <Left>。
 
 让我们看看如何动态构造 SQL 语句。select 语句需要一个列清单。SQL 补全插件有两个
 方法构造列清单。 >
     一次一列:
 <	1. 输入 SELECT 后，按 <C-C>t 显示表清单。
 	2. 从清单里选择一个表。
-	3. 按 <C-Right> 显示列清单。
+	3. 按 <Right> 显示列清单。
 	4. 从清单里选择列并按回车。
 	5. 输入 "," 并按 <C-C>c。一般，生成列清单需要光标在表名上。插件使用该
 	   名字来决定从哪个表提取列清单。在这一步，因为我们按 <C-C>c 时光标不
@@ -509,7 +521,7 @@ AS c"。 >
     omni_sql_use_tbl_alias (使用表别名)
 <	- 缺省: a
 	- 只有生成逗号分隔的列清单时才使用此设置。缺省映射为 <C-C>l。生成列清
-	  单时，每列前面都加上一个别名，例如:  e.emp_id, e.emp_name。此选项有
+	  单时，每列前面都加上一个别名，例如:  e.emp_id, c.emp_name。此选项有
 	  三种设置: >
 		n - 不使用别名
 		d - 使用缺省的 (经过计算的) 别名
@@ -529,7 +541,7 @@ AS c"。 >
 		   MYTABLENAME --> M
 
     omni_sql_ignorecase (忽略大小写)
-<	- 缺省: |ignorecase| 的当前设置
+<	- 缺省: 'ignorecase' 的当前设置
 	- 合法的设置是 0 或 1。
 	- 启动补全之前如果输入一些字符，产生的列表会被过滤，只显示这些字符开始
 	  的项目。如果此选项为 0，列表过滤时考虑大小写的敏感性。 >
@@ -587,16 +599,10 @@ AS c"。 >
     <C-C>L
 <	- 显示特定表用逗号分隔的列清单。
 	  只有补全窗口激活时才能使用此映射。 >
-    <C-Right>
-<	- 显示补全窗口当前高亮表的列清单。
-	  多数 Unix 系统不能识别 <C-Right>，所以只有 Windows 平台才会建立该映
-	  射。如果你希望在 Unix 上使用相同的功能，选择另一个键并在 vimrc 里提
-	  供相同的映射。 >
-    <C-Left>
-<	- 显示表清单。
-	  多数 Unix 系统不能识别 <C-Left>，所以只有 Windows 平台才会建立该映
-	  射。如果你希望在 Unix 上使用相同的功能，选择另一个键并在 vimrc 里提
-	  供相同的映射。 >
+    <Right>
+<	- 显示补全窗口当前高亮表的列清单。 >
+    <Left>
+<	- 显示表清单。 >
     <C-C>R
 <	- 本映射删除所有缓存项目并强制 SQL 补全重新生成所有的项目清单。
 

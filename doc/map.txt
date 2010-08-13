@@ -1,4 +1,4 @@
-*map.txt*	For Vim version 7.2.  最后更新: 2009年4月
+*map.txt*	For Vim version 7.3.  最后更新: 2010年8月
 
 
 		  VIM 参考手册    作者: Bram Moolenaar
@@ -199,6 +199,9 @@
 会插入 InsertDot() 函数的返回值。这可以用来检查光标之前的文本并在一定条件下启
 动全能 (omni) 补全。
 
+对于缩写，|v:char| 设为激活缩写的那个输入字符。你可以用它来决定如何扩展
+{lhs}。不能修改 v:char，也无须对它进行插入。
+
 要非常小心副作用！计算表达式的同时正在获取字符，因此很有可能你使得该命令不再可
 用。为此原因禁止以下行为:
 - 改变缓冲区文本 |textlock|
@@ -236,9 +239,10 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 1.3 映 射 与 运 行 模 式				*:map-modes*
 			*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o*
 
-有五种映射存在
+有六种映射存在
 - 用于普通模式: 输入命令时。
 - 用于可视模式: 可视区域高亮并输入命令时。
+- 用于选择模式: 类似于可视模式，但键入的字符对选择区进行替换。
 - 用于操作符等待模式: 操作符等待中 ("d"，"y"，"c" 等等之后)。
   见下: |omap-info|。
 - 用于插入模式: 也用于替换模式。
@@ -261,6 +265,8 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 						*mapmode-x* *mapmode-s*
 有的命令能同时用于可视和选择模式，有的只能用于其中一个。注意 很常见的情况是提
 到 "可视" 的时候实际同时适用可视和选择两种模式。|Select-mode-mapping|
+备注: 在选择模式映射可显示字符容易引起用户的混淆。最好直接用 :xmap 和 :smap 来
+映射可显示字符。或者在定义映射后使用 :sunmap。
 
     命令:				    模式: ~
 					可视	选择 ~
@@ -651,7 +657,7 @@ g@{motion}		调用 'operatorfunc' 选项设置的函数。
 			      参数               如果
 			    "line"	{motion} 本是 |linewise|
 			    "char"	{motion} 本是 |characterwise|
-			    "block"	{motion} 本是 |blockwise-visual||
+			    "block"	{motion} 本是 |blockwise-visual|
 			不过，"block" 很少出现，因为它只能来自可视模式，那里
 			"g@" 不是很有用。
 			{仅当编译时加入 +eval 特性才有效}
@@ -1022,13 +1028,15 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 	-complete=event		自动命令事件
 	-complete=expression	Vim 表达式
 	-complete=file		文件和目录名
-	-complete=shellcmd	外壳命令
+	-complete=filetype	文件类型名 |'filetype'|
 	-complete=function	函数名
 	-complete=help		帮助主题
 	-complete=highlight	高亮组
 	-complete=mapping	映射名
 	-complete=menu		菜单
 	-complete=option	选项
+	-complete=shellcmd	外壳命令
+	-complete=syntax	语法文件名 |'syntax'|
 	-complete=tag		标签
 	-complete=tag_listfiles	标签，但敲入 CTRL-D 时显示文件名
 	-complete=var		用户变量
@@ -1070,9 +1078,11 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
     :com -nargs=1 -bang -complete=customlist,EditFileComplete
 			\ EditFile edit<bang> <args>
     :fun EditFileComplete(A,L,P)
-    :    return split(globpath(&path, a:ArgLead), "\n")
+    :    return split(globpath(&path, a:A), "\n")
     :endfun
 <
+此例不适用于带空格的文件名！
+
 
 范围处理				*E177* *E178* *:command-range*
 							*:command-count*

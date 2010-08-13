@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.2.  最近更新: 2009年4月
+*insert.txt*    For Vim version 7.3.  最近更新: 2010年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -307,10 +307,14 @@ CTRL-G CTRL-J	光标下移一行，到插入开始时所在的列	     *i_CTRL-G
 <PageUp>	上翻窗口一页			     	     *i_<PageUp>*
 <S-Down>	下翻窗口一页				     *i_<S-Down>*
 <PageDown>	下翻窗口一页				     *i_<PageDown>*
-<MouseDown>	向下滚动三行				     *i_<MouseDown>*
-<S-MouseDown>	向下滚动一个整页			     *i_<S-MouseDown>*
-<MouseUp>	向上滚动三行				     *i_<MouseUp>*
-<S-MouseUp>	向上滚动一个整页 			     *i_<S-MouseUp>*
+<ScrollWheelDown>    窗口向下滚动三行			*i_<ScrollWheelDown>*
+<S-ScrollWheelDown>  窗口向下滚动一个整页		*i_<S-ScrollWheelDown>*
+<ScrollWheelUp>      窗口向上滚动三行			*i_<ScrollWheelUp>*
+<S-ScrollWheelUp>    窗口向上滚动一个整页		*i_<S-ScrollWheelUp>*
+<ScrollWheelLeft>    窗口向左滚动六列			*i_<ScrollWheelLeft>*
+<S-ScrollWheelLeft>  窗口向左滚动一个整页		*i_<S-ScrollWheelLeft>*
+<ScrollWheelRight>   窗口向右滚动六列			*i_<ScrollWheelRight>*
+<S-ScrollWheelRight> 窗口向右滚动一个整页		*i_<S-ScrollWheelRight>*
 CTRL-O		执行命令，然后返回到插入模式		     *i_CTRL-O*
 CTRL-\ CTRL-O	类似于 CTRL-O，但不移动光标		     *i_CTRL-\_CTRL-O*
 CTRL-L		置位 'insertmode' 时: 转到普通模式	     *i_CTRL-L*
@@ -534,6 +538,7 @@ CTRL-G j 和 CTRL-G k 命令可以用来在某一列前插入文本。例如: >
 	      return "\<Tab>"
 	   else
 	      return "\<C-N>"
+	   endif
 	endfunction
 	inoremap <Tab> <C-R>=CleverTab()<CR>
 
@@ -552,7 +557,8 @@ CTRL-X CTRL-L		反向搜索和当前行光标前字符序列完全相同的行�
 	CTRL-N		正向搜索下一个匹配行。替换上一次匹配的行。
 
 	CTRL-X CTRL-L	在扩展一行以后，你可以通过接着输入 CTRL-X CTRL-L 得到
-			紧接着匹配行之后的行，直到见到两个 CTRL-X 为止。
+			紧接着匹配行之后的行，直到见到两个 CTRL-X 为止。只能用
+			于已载入的缓冲区。
 
 补全当前文件内的关键字					*compl-current*
 
@@ -1119,7 +1125,7 @@ ctags 5.5.4 版本或更新的版本。在这里可以找到它: http://ctags.so
 
 - 带有附加信息的函数名:
   - 如果是内建函数，列出可能的参数，在 | 之后列出函数返回的数据类型
-  - 如果是用户函数，列出参数和函数定义的文件名 (如果不是当前文件)
+  - 如果是用户函数，列出参数和函数定义所在的文件名 (如果不是当前文件)
 
 - 常量名
 - 在 "new" 声明之后的类名
@@ -1217,6 +1223,36 @@ PHP 语言可以进行语法高亮的项目非常多，而这些项目在全能�
 待的单词。设置 g:omni_syntax_use_iskeyword 选项为 0 会强制语法插件在单词字符上
 断开。在 vimrc 可以加如下行进行控制: >
     let g:omni_syntax_use_iskeyword = 0
+
+为了插件开发者着想，本插件提供了公共函数 OmniSyntaxList。本函数可用于提供语法
+项目的列表。编辑 SQL 文件时 (:e syntax.sql)，可以用 ":syntax list" 命令看到各
+种组和语法项目。示例: >
+    syntax list 
+
+返回的数据类似如此: >
+    sqlOperator    xxx some prior all like and any escape exists in is not 
+                       or intersect minus between distinct
+                       links to Operator
+    sqlType        xxx varbit varchar nvarchar bigint int uniqueidentifier 
+                       date money long tinyint unsigned xml text smalldate 
+                       double datetime nchar smallint numeric time bit char 
+                       varbinary binary smallmoney
+                       image float integer timestamp real decimal
+
+这里列出两个语法组: sqlOperator 和 sqlType。要得到语法项目的列表，可用几种不同
+的方式调用 OminiSyntaxList。要得到不分组的所有语法项目:  >
+    echo OmniSyntaxList( [] )
+
+要得到 sqlOperator 语法组的所有语法项目: >
+    echo OmniSyntaxList( ['sqlOperator'] )
+
+要得到 sqlOperator 和 sqlType 两个组的所有语法项目: >
+    echo OmniSyntaxList( ['sqlOperator', 'sqlType'] )
+
+在插件中，通常可以把输出结果赋给一个列表: >
+    let myKeywords = []
+    let myKeywords = OmniSyntaxList( ['sqlKeyword'] )
+
 
 
 SQL							*ft-sql-omni*
@@ -1427,14 +1463,10 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。{Vi:
 
 这两个命令会继续要求行，直到你输入了只包含 "." 的一行。小心反斜杠开始的行，见
 |line-continuation|。
-如果这些命令和 |:global| 或 |:vglobal| 一起使用，那么从命令之后的文本里获得文
-本行。这些行以反斜杠转义的 NL 分隔: >
-	:global/abc/insert\
-	one line\
-	another line
-不再需要最后的 "." 。
-注意: ":append" 和 ":insert" 在 ":if" 和 ":endif"、":for" 和 ":endfor" 还有
-":while" 和 ":endwhile" 之间不能很好的工作。
+
+注意: 这些命令不能和 |:global| 或 |:vglobal| 一起使用。":append" 和 ":insert"
+在 ":if" 和 ":endif"、":for" 和 ":endfor" 还有 ":while" 和 ":endwhile" 之间不
+能很好的工作。
 
 							*:start* *:startinsert*
 :star[tinsert][!]	在执行完本命令后，启动插入模式。和普通模式下输入 "i"

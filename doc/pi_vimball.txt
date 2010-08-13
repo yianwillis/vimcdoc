@@ -1,4 +1,4 @@
-*pi_vimball.txt*	For Vim version 7.2.  最近更新: 2008年6月
+*pi_vimball.txt*	For Vim version 7.3.  最近更新: 2010年7月
 
 			      --------------------
 			      Vimball 归档处理程序
@@ -8,7 +8,7 @@
 
 Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
+Copyright: (c) 2004-2009 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	   The VIM LICENSE applies to Vimball.vim, and Vimball.txt
 	   (see |copyright|) except use "Vimball" instead of "Vim".
 	   No warranty, express or implied.
@@ -54,7 +54,7 @@ Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 ==============================================================================
 3. Vimball 手册						*vimball-manual*
 
-							*:MkVimball*
+创 建 VIMBALL							*:MkVimball*
 		:[range]MkVimball[!] filename [path]
 
 	行范围内指定要保存在 vimball 里的文件的路径，但不包含通常在
@@ -73,26 +73,28 @@ Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	如果使用感叹号 (!)，MkVimball 总是建立 "filename.vba" 文件。如果已经存
 	在则覆盖之。此行为和 |:w| 类似。
 
-							*g:vimball_mkdir*
+	如要强制允许文件名中包含斜杠，也可用感叹号版本实现 (即 :MkVimball!
+	path/filename)。
+
+	http://vim.wikia.com/wiki/Using_VimBall_with_%27Make%27 给出的技巧提供
+	了用 make 自动生成 vimball 的好方法。
+
+
+通 过 VIMBALL 建 立 目 录				*g:vimball_mkdir*
+
 	首先尝试 |mkdir()| 命令 (并非所有系统都支持)。
 
-	如果该命令不存在，那么 g:vimball_mkdir 也不存在 (译者注: 原文如此)。此
-	时，它设为:
+	如果该命令不存在，而且 g:vimball_mkdir 也不存在，它被设为: >
 	  |g:netrw_local_mkdir|，如果存在的话
-	   "mkdir"，如果可执行的话
-	   "makedir"，如果可执行的话
-	   否则，未定义
-	用户可以自定义 g:vimball_mkdir 来直接指定建立目录的命令。vimball 如有
+	  "mkdir"              ，如果可执行的话
+	  "makedir"            ，如果可执行的话
+	  否则                 ，未定义
+<	用户可以自定义 g:vimball_mkdir 来直接指定建立目录的命令。vimball 如有
 	需要，会通过该命令来建立目录。
 
-							*g:vimball_home*
+控 制 VIMBALL 提 取 目 录				*g:vimball_home*
+
 	通过指定变量 g:vimball_home，你可以覆盖 |'runtimepath'| 的使用。
-
-	路径预处理					*g:vimball_path_escape*
-
-	vimball 使用的路径通过 s:Path() 预处理；此外，若干字符经过转义 (在前面
-	加上反斜杠)。这些字符定义在 g:vimball_path_escape 里，用户可以在
-	.vimrc 初始化脚本中覆盖其定义。
 
 							*vimball-extract*
 		vim filename.vba
@@ -103,18 +105,24 @@ Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	只有首行是 "Vimball Archiver by Charles E. Campbell, Jr., Ph.D." 的文
 	件才会被认为是 vimball 文件，从而才会继续提取操作。
 
-		:VimballList				*:VimballList*
+列 出 VIMBALL 中 的 文 件				*:VimballList*
+
+		:VimballList
 
 	本命令告诉 Vim 列出归档里的所有文件，包括每个文件的行数。
 
-		:UseVimball [path]			*:UseVimball*
+手 动 执 行 VIMABALL 提 取				*:UseVimball*
+
+		:UseVimball [path]
 
 	vimball 文件本身包含了该命令；它调用 vimball#Vimball() 例程，后者负责
 	对 vimball 解包。用户可以手动执行该命令，而无须执行 vimball；用户还可
 	以指定安装的路径来覆盖自动的选择，即 |'runtimepath'| 里的第一个存在的
 	目录。
 
-		:RmVimball vimballfile [path]		*:RmVimball*
+删 除 VIMBALL						*:RmVimball*
+
+		:RmVimball vimballfile [path]
 
 	本命令删除制定 vimball 产生的所有文件 (但不包括它可能建立的任何目录)。
 	用户也选择卸载文件的路径 (见 |'runtimepath'|)；否则，缺省是
@@ -122,10 +130,42 @@ Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	为了实现这一点，该目录下包含一个文件 (.VimballRecord)，它包含了目前为
 	止所有使用过的 vimball 中要删除的文件的记录。
 
+禁 止 载 入
+
+	如果由于某种原因你不想使用 vimball 提取插件，在 <.vimrc> 中加入以下两
+	个变量就可以不载入 vimball.vim: >
+
+		let g:loaded_vimballPlugin= 1
+		let g:loaded_vimball      = 1
+<
+WINDDOWS						*vimball-windows*
+
+	许多 vimball 文件使用 gzip 压缩。Windows 不幸地没有自带解压 gzip 文件
+	的工具。幸运的是，Windows 用户可以找到不少解压 gzip 的工具:
+>
+	    项目     工具/套件    免费   网站
+	    ----     ----------   ----   -------
+	    7zip        工具       是    http://www.7-zip.org/
+	    Winzip      工具       否    http://www.winzip.com/downwz.htm
+	    unxutils    套件       是    http://unxutils.sourceforge.net/
+	    cygwin      套件       是    http://www.cygwin.com/
+	    GnuWin32    套件       是    http://gnuwin32.sourceforge.net/
+	    MinGW       套件       是    http://www.mingw.org/
+<
 
 ==============================================================================
 4. Vimball 历史 (英文)					*vimball-history* {{{1
 
+	30 : Dec 08, 2008 * fnameescape() inserted to protect error
+			    messaging using corrupted filenames from
+			    causing problems
+			  * RmVimball supports filenames that would
+			    otherwise be considered to have "magic"
+			    characters (ie. Abc[1].vba)
+	     Feb 18, 2009 * s:Escape(), g:vimball_shq, and g:netrw_shq
+			    removed (shellescape() used directly)
+	     Oct 05, 2009 * (Nikolai Weibull) suggested that MkVimball
+			    be allowed to use slashes in the filename.
 	26 : May 27, 2008 * g:vimball_mkdir usage installed.  Makes the
 	                    $HOME/.vim (or $HOME\vimfiles) directory if
 			    necessary.
@@ -137,7 +177,7 @@ Copyright: (c) 2004-2008 by Charles E. Campbell, Jr.	*Vimball-copyright*
 	     Apr 18, 2008 * RmVimball command is now protected by saving and
 	                    restoring settings -- in particular, acd was
 			    causing problems as reported by Zhang Shuhan
-	24 : Nov 15, 2007 * |g:vimball_path_escape| used by s:Path() to
+	24 : Nov 15, 2007 * g:vimball_path_escape used by s:Path() to
 	                    prevent certain characters from causing trouble
 	22 : Mar 21, 2007 * uses setlocal instead of set during BufEnter
 	21 : Nov 27, 2006 * (tnx to Bill McCarthy) vimball had a header

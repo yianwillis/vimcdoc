@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.2.  最近更新: 2009年4月
+*autocmd.txt*   For Vim version 7.3.  最近更新: 2010年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -53,14 +53,15 @@
 							*:au* *:autocmd*
 :au[tocmd] [group] {event} {pat} [nested] {cmd}
 			把 {cmd} 加到 Vim 在匹配 {pat} 模式的文件执行 {event}
-			事件时自动执行的命令列表。Vim 把 {cmd} 加到已有的自动
-			命令之后，从而使自动命令的执行顺序与其定义的顺序相同。
+			事件时自动执行的命令列表。见 |autocmd-patterns|。
+			Vim 总把 {cmd} 加到已有的自动命令之后，这样保证自动命
+			令的执行顺序与其定义的顺序相同。
 			关于 [nested]，参见 |autocmd-nested|。
 
 特殊模式 <buffer> 或 <buffer=N> 定义局部于缓冲区的自动命令。见
 |autocmd-buflocal|。
 
-注意 ":autocmd" 的参数里的特殊字符 (例如，"%", "<cword>") 在定义时不会被扩展，
+注意 ":autocmd" 的参数里的特殊字符 (例如，"%"、"<cword>") 在定义时不会被扩展，
 而是在事件发生并执行 {cmd} 的时候才进行。唯一的例外是 "<sfile>" 在定义时扩展。
 例如:
 >
@@ -308,6 +309,7 @@ BufDelete			缓冲区列表删除缓冲区前。可能先调用 BufUnload
 				也在缓冲区列表的某个缓冲区换名之前发生。
 				注意: 执行此自动命令时，当前缓冲区 "%" 可能会
 				和被删除的缓冲区 "<afile>" 及 "<afile>" 不同。
+				此处不可切换到其它缓冲区，否则会引起问题。
 							*BufEnter*
 BufEnter			进入缓冲区后。可用来设定有关文件类型的选项。也
 				在开始编辑缓冲区时执行，它发生在 BufReadPost
@@ -352,6 +354,8 @@ BufUnload			缓冲区卸载前。此时，缓冲区里的文本将要被释放�
 				即将退出时，每个载入的缓冲区也会收到该事件。
 				注意: 执行此自动命令时，当前缓冲区 "%" 可能会
 				和被卸载的缓冲区 "<afile>" 不同。
+				此处不可切换到其它缓冲区，否则会引起问题。
+				退出时如果 v:dying 至少为 2，不触发此事件。
 							*BufWinEnter*
 BufWinEnter			窗口显示缓冲区后。可以是新缓冲区载入 (处理完模
 				式行之后) 或者隐藏缓冲区在窗口开始显示 (从而不
@@ -367,6 +371,7 @@ BufWinLeave			窗口删除缓冲区前。除非它在别的窗口仍然可见。
 				之前激活。
 				注意: 当此自动命令被执行时，当前缓冲区 "%" 可
 				能会和被卸载的缓冲区 "<afile>" 不同。
+				退出时如果 v:dying 至少为 2，不触发此事件。
 							*BufWipeout*
 BufWipeout			完全删除缓冲区前。可能先调用 BufUnload 和
 				BufDelete 事件 (如果缓冲区已经载入并且在缓冲区
@@ -374,7 +379,8 @@ BufWipeout			完全删除缓冲区前。可能先调用 BufUnload 和
 				也在不在缓冲区列表的某个缓冲区换名之前发生。
 				注意: 执行此自动命令时，当前缓冲区 "%" 可能会
 				和被删除的缓冲区 "<afile>" 不同。
-							*BufWrite* *BufWritePre*
+				此处不可切换到其它缓冲区，否则会引起问题。
+						*BufWrite* *BufWritePre*
 BufWrite 或 BufWritePre		把整个缓冲区写回到文件前。
 							*BufWriteCmd*
 BufWriteCmd			把整个缓冲区写回到文件前。应执行把文件写回的操
@@ -465,7 +471,8 @@ FileChangedShell		Vim 注意到文件的修改时间不同于编辑开始的时�
 				注意: 当此自动命令执行时，当前缓冲区 "%" 可能
 				和被改变的缓冲区 "<afile>" 不同。
 				注意: 执行的命令必须不能修改当前缓冲区，跳转到
-				别的缓冲区，或者删除任何一个缓冲区。 *E246*
+				别的缓冲区，或者删除任何一个缓冲区。
+				*E246* *E811*
 				注意: 该事件不会嵌套而引起无限循环。这意味着，
 				FileChangedShell 事件所执行的命令不会引起别的
 				FileChangedShell 事件。
@@ -561,9 +568,9 @@ MenuPopup			刚要显示弹出菜单前 (鼠标右键下)。用于根据光标
 QuickFixCmdPre			开始执行 quickfix 命令前 (|:make|、 |:lmake|、
 				|:grep|、|:lgrep|、|:grepadd|、|:lgrepadd|、
 				|:vimgrep|、|:lvimgrep|、|:vimgrepadd|、
-				|:lvimgrepadd|)。对应的模式匹配执行的命令。如
-				果使用 |:grep| 但 'grepprg' 设为 "internal"，
-				仍然匹配 "grep"。
+				|:lvimgrepadd|、|:cscope|)。对应的模式匹配执行
+				的命令。如果使用 |:grep| 但 'grepprg' 设为
+				"internal"，仍然匹配 "grep"。
 				该命令不能用于设置 'makeprg' 和 'grepprg' 变
 				量。
 				如果该命令出错，不执行 quickfix 命令。
@@ -621,7 +628,7 @@ SwapExists			开始编辑文件时检测到交换文件已存在。只有此时�
 					'a'	中止，就像按了 CTRL-C 一样
 				如果设为空串，则询问用户，就像没有 SwapExists
 				自动命令那样。
-							*E811*
+							*E812*
 				此处不允许切换到其它缓冲区、为缓冲区换名或者更
 				改目录。
 							*Syntax*
@@ -656,12 +663,14 @@ VimEnter			做完所有启动任务后，包括载入 .vimrc 文件，执行
 VimLeave			退出 Vim 前，刚写入 .viminfo 文件之后。和
 				VimLeavePre 一样，只执行一次。
 				要检测非正常的退出，使用 |v:dying|。
+				退出时如果 v:dying 至少为 2，不触发此事件。
 							*VimLeavePre*
 VimLeavePre			退出 Vim 时刚写入 .viminfo 文件之前。如果匹配
 				退出时当前缓冲区的名字匹配才会激活。只执行一
 				次。通常指定 "*" 模式。 >
 	:autocmd VimLeavePre * call CleanupStuff()
 <				要检测非正常的退出，使用 |v:dying|。
+				退出时如果 v:dying 至少为 2，不触发此事件。
 							*VimResized*
 VimResized			在 Vim 窗口的大小改变后，因而 'lines' 和/或
 				'columns' 也已随之改变。不过，启动时不用。
@@ -863,7 +872,7 @@ Vim 也可以非自动地执行自动命令。如果你修改了自动命令或�
 						*:doautoa* *:doautoall*
 :doautoa[ll] [group] {event} [fname]
 			类似于 ":doautocmd"，但对每个已载入的缓冲区应用自动命
-			令。注意 {fname} 用于选择自动命令，而不是其应用的缓冲
+			令。注意 [fname] 用于选择自动命令，而不是其应用的缓冲
 			区。
 			要小心: 不要用这个命令执行删除缓冲区、切换到别的缓冲区
 			或者修改缓冲区内容的自动命令；否则结果不可预测。该命令
@@ -1043,7 +1052,7 @@ Vim 根据你定义的顺序执行所有匹配的自动命令。建议第一个�
 写文件的命令里应该用到这些参数。用 "!" 后缀时，|v:cmdbang| 参数为 1，不然其为
 0。
 
-示例参见 $VIMRUNTIME/plugin/netrw.vim。
+示例参见 $VIMRUNTIME/plugin/netrwPlugin.vim。
 
 ==============================================================================
 11. 屏蔽自动命令					*autocmd-disable*

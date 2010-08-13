@@ -1,4 +1,4 @@
-*message.txt*   For Vim version 7.2.  最近更新: 2009年4月
+*message.txt*   For Vim version 7.3.  最近更新: 2010年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -19,7 +19,7 @@
 :messages" 命令可以查看以前给出的消息。根据 'shortmess' 选项的设置，消息可能被
 覆盖或者截断。这时该命令尤其有用。
 
-使用微小 (tiny) 特性集的版本，记住的消息数目固定是 20。其它版本是 100。
+使用微小 (tiny) 特性集的版本，记住的消息数目固定是 20。其它版本是 200。
 
 								*g<*
 这个命令用于察看前一个命令输出的最后一页。如果你在提示按回车的时候不小心按了空
@@ -67,7 +67,7 @@
   Hangul automata ERROR
   block was not locked
   Didn't get block nr {N}?
-  ml_timestamp: Didn't get block 0??
+  ml_upd_block0(): Didn't get block 0??
   pointer block id wrong {N}
   Updated too many blocks?
   get_varp ERROR
@@ -120,13 +120,12 @@
 颜色名 {name} 未知。多数系统中可用的颜色列表可以参见 |gui-colors|。
 
 							*E458*  >
-  Cannot allocate colormap entry for "xxxx"
   Cannot allocate colormap entry, some colors may be incorrect
 
 这意味着 Vim 没有足够的颜色可以分配。虽然 Vim 还能运行，但是有的颜色可能不会以
 指定的颜色出现。试试停止其它使用很多颜色的应用程序，或者在启动 gvim 之后启动它
-们。已知 Netscape 会消耗很多颜色。要避免这个问题，你可以告诉它使用自己的颜色映
-射表: >
+们。已知很多浏览器会消耗很多颜色。要避免这个问题，你可以告诉 netscape 使用自己
+的颜色映射表: >
 	netscape -install
 或者告诉它只使用有限种的颜色 (64 应该足够了): >
 	netscape -ncols 64
@@ -164,7 +163,7 @@
 得 Vim 可以对它进行覆盖。
 
 							*E46*  >
-  Cannot set read-only variable "{name}"
+  Cannot change read-only variable "{name}"
 
 你试图给一个函数参数 |a:var| 或者 Vim 的内部只读变量 |v:var| 赋值。
 
@@ -251,8 +250,8 @@ Vim 的脚本被执行的情况。
 文件的写入不能成功完成，该文件可能不完整。
 
 							*E13* *E189*  >
-  File exists (use ! to override)
-  "{filename}" exists (use ! to override)
+  File exists (add ! to override)
+  "{filename}" exists (add ! to override)
 
 系统为了保护你，不让你不小心覆盖已存在文件。如有必要，使用相同的命令但在其后加
 "!"。例如: >
@@ -312,7 +311,7 @@ Vim 的脚本被执行的情况。
 是: 用 {foo,bar} 匹配 "foo" 和 "bar"。
 
 							*E315*  >
-  ml_get: invalid lnum:
+  ml_get: invalid lnum: {number}
 
 内部错误。如果你知道如何重现该问题，请提交漏洞报告。|bugreport.vim|。
 
@@ -375,8 +374,8 @@ Vim 的脚本被执行的情况。
   |:map-<buffer>|
 
 							*E37* *E89*  >
-  No write since last change (use ! to override)
-  No write since last change for buffer {N} (use ! to override)
+  No write since last change (add ! to override)
+  No write since last change for buffer {N} (add ! to override)
 
 你试图放弃 |abandon| 一个有过改动的文件。Vim 不让你这么做，以免丢失你的工作。
 你可以把改动的部分用 ":w" 写回，如果你坚持要放弃而不介意并丢失所有的改变，可以
@@ -417,7 +416,15 @@ Vim 内部出错，产生一个 NULL 指针。如果你知道如何重现，请�
 
 噢，噢。你可能作了一些特别复杂的操作，或者有其它程序正在占用你的内存。小心！
 Vim 没有完全准备好内存溢出的情况。首先确保所有的改变被保存。然后试图解决内存的
-短缺问题。要确保安全无虞，先退出 Vim，再重新开始。另见 |msdos-limitations|。
+短缺问题。要确保安全无虞，先退出 Vim，再重新开始。
+
+缓冲区只是部分保存在内存里，所以编辑一个很大的文件不太可能导致内存溢出错误。撤
+销信息则是完全保存在内存里，可以用以下选项减少内存的占用:
+- 'undolevels'  设为较小的值，或 -1 以完全关闭之。对影响所有行的改变这会很有帮
+  助。
+- 'undoreload' 设为零以关闭之。
+
+另见 |msdos-limitations|。
 
 							*E339*  >
   Pattern too long
@@ -426,7 +433,7 @@ Vim 没有完全准备好内存溢出的情况。首先确保所有的改变被�
 试试短一些的模式。
 
 							*E45*  >
-  'readonly' option is set (use ! to override)
+  'readonly' option is set (add ! to override)
 
 你试图写入一个标为只读的文件。如果要坚持这么做，或者复位 'readonly' 选项，或者
 在你用的命令后面增加 '!' 字符。例如: >
@@ -519,6 +526,7 @@ Vim 不能建立交换文件。你可以继续编辑该文件，但如果 Vim �
 启动时的时候可能出现这样的错误。这不是 Vim 的问题，而是你的 X11 配置有问题。你
 可以在这里看到如何解决这个问题的提示:
 http://groups.yahoo.com/group/solarisonintel/message/12179。
+[此 URL 已不可用]
 
 							*W10*  >
   Warning: Changing a readonly file
@@ -564,7 +572,7 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 'autoread' 可以自动重读文件。
 
 							*E211*  >
-  Warning: File "{filename}" no longer available
+  File "{filename}" no longer available
 
 你已经开始编辑的文件现在不再存在或不能访问。确定你把缓冲区写到某处，以免丢失改
 动。如果 'buftype' 非空，该消息不会给出。
@@ -603,7 +611,7 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 这是由 Ex 命令执行时需要的参数没有提供引起的。
 
 							*E474* *E475*  >
-  Invalid argument
+  Invalid argument: {arg}
 
 执行 Ex 命令时使用了非法的参数。
 
@@ -630,8 +638,8 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 Vim 不能建立临时文件。
 
 							*E484* *E485*  >
-  Can't open file %s"
-  Can't read file %s"
+  Can't open file {filename}
+  Can't read file {filename}
 
 Vim 不能读临时文件。
 
@@ -669,8 +677,9 @@ Vim 不能读临时文件。
 -> 按 ":" 或者其它普通模式的命令字符开始执行该命令。
 -> 按 'k'、<Up>、'u'、'b' 或 'g' 可以使消息回滚。这和 |more-prompt| 中的工作方
    式一样。只有关闭 'compatible' 并且打开 'more' 时才有效。
--> 消息的滚动离开屏幕的顶部时，按 'j'、'd' 或 <Down> 没有效果，'compatible' 关
-   闭且 'more' 打开。这是为了避免按 'j' 太多而使得消息完全消失。
+-> 消息的滚动离开屏幕的顶部时，按 'j'、'f'、'd' 或 <Down> 没有效果，
+   'compatible' 关闭且 'more' 打开。这是为了避免按 'j' 或 'f' 太多而使得消息完
+   全消失。
 -> 按 <C-Y> 复制 (抽出) 一个无模式的选择到剪贴板寄存器中。
 -> 使用菜单。应用命令行模式定义的字符。
 -> 如果 'mouse' 包含 'r' 标志位，按鼠标左键和按 <Space> 效果相同。不过这使得选

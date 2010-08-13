@@ -1,11 +1,11 @@
-*version7.txt*  For Vim version 7.2.  最近更新: 2009年4月
+*version7.txt*  For Vim version 7.3.  最近更新: 2010年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
 				译者: Willis
 				http://vimcdoc.sf.net
 
-									*vim7*
+					*vim7* *version-7.0* *version7.0*
 欢迎来到 Vim 版本 7！新版本增加了很多新特性。本文档列出所有加入的新项目、已
 有特性的改动以及 Vim 6.x 以来的漏洞修正。使用这个命令可以看到你使用的版本: >
 	:version
@@ -56,6 +56,18 @@ POSIX 兼容性				|new-posix|
 改动					|changed-7.2|
 新增					|added-7.2|
 修正					|fixed-7.2|
+
+7.3 版本			|version-7.3|
+
+永久化撤销 				|new-persistent-undo|
+更多加密				|new-more-encryption|
+隐藏文本				|new-conceal|
+Lua 接口				|new-lua|
+Python3 接口				|new-python3|
+
+改动					|changed-7.3|
+新增					|added-7.3|
+修正					|fixed-7.3|
 
 (译者注: 各版本的修正一节，因内容过于琐碎，保留原文未翻译)
 
@@ -202,7 +214,7 @@ Vim 已经集成了拼写检查。本来有一些脚本的实现，但都较慢�
 用 'spellfile'	  选项指定加入新词的文件名。
 用 'spellsuggest' 选项指定提供建议的方法。
 
-用 |[s| 和 |]s| 命令移动到下一个或前一个错误。
+用 |]s| 和 |[s| 命令移动到下一个或前一个错误。
 用 |zg| 和 |zw| 命令加入好词和坏词。
 用 |z=| 	命令改正单词。
 用 |:mkspell|	命令从单词列表生成 Vim 的拼写文件。
@@ -556,7 +568,8 @@ CTRL-\ CTRL-O		执行普通模式命令。类似于 CTRL-O，但不移动光标�
 'maxmempattern'		模式匹配使用的最大内存量
 'mkspellmem'		|:mkspell| 使用内存的相关参数
 'mzquantum'		毫秒计的调度 MzScheme 线程的时间间隔。
-'numberwidth'		'number' 选项使用空间的最小宽度。(Emmanuel Renieris)
+'numberwidth'		'number' 和 'relativenumber' 选项使用空间的最小宽度。
+			(Emmanuel Renieris)
 'omnifunc'		全能补全使用的函数名。
 'operatorfunc'		|g@| 操作符使用的函数
 'printmbcharset'	:hardcopy 使用的 CJK 字符集
@@ -2573,7 +2586,7 @@ Motif: default to using XpmAttributes instead of XpmAttributes_21.
 A few more changes for 64 bit MS-Windows. (George Reilly)
 
 Got ml_get errors when doing "o" and selecting in other window where there are
-less line shorter than the cursor position in the other window.  ins_mouse()
+less lines shorter than the cursor position in the other window.  ins_mouse()
 was using position in wrong window.
 
 Win32 GUI: Crash when giving a lot of messages during startup.  Allocate twice
@@ -2753,7 +2766,7 @@ another, the cursor was displayed at the end of the line instead of after the
 match.  Now show the cursor after the match while still searching for matches.
 
 GUI: The mouse shape changed on the statusline even when 'mouse' was empty and
-they can't be dragged..
+they can't be dragged.
 
 GTK2: Selecting a button in the confirm() dialog with Tab or cursor keys and
 hitting Enter didn't select that button.  Removed GTK 1 specific code. (Neil
@@ -2801,7 +2814,7 @@ CTRL-N or a printable character while still searching for matches.
 
 
 ==============================================================================
-7.1 版 本						*version-7.1*
+7.1 版 本					*version-7.1* *version7.1*
 
 本小节讨论 7.0 和 7.1 版本之间的改进。
 
@@ -4443,7 +4456,7 @@ Patch 7.1b.002
 相关文件:   src/memfile.c
 
 ==============================================================================
-7.2 版本						*version-7.2*
+7.2 版 本					*version-7.2* *version7.2*
 
 本小节讨论 7.1 和 7.2 版本之间的改进。
 
@@ -4740,7 +4753,7 @@ Patch 7.1.027
 
 Patch 7.1.028
 问题:	    Can't use last search pattern for ":sort". (Brian McKee)
-解决方案:   When the pattern is emtpy use the last search pattern. (Martin
+解决方案:   When the pattern is empty use the last search pattern. (Martin
 	    Toft)
 相关文件:   runtime/doc/change.txt, src/ex_cmds.c
 
@@ -5278,7 +5291,7 @@ Patch 7.1.116
 相关文件:   src/screen.c
 
 Patch 7.1.117
-问题:	    Can't check wether Vim was compiled with Gnome. (Tony Mechelynck)
+问题:	    Can't check whether Vim was compiled with Gnome. (Tony Mechelynck)
 解决方案:   Add gui_gnome to the has() list.
 相关文件:   src/eval.c
 
@@ -5333,7 +5346,7 @@ Patch 7.1.124 (extra)
 
 Patch 7.1.125
 问题:	    The TermResponse autocommand event is not always triggered. (Aron
-	    Griffix)
+	    Griffis)
 解决方案:   When unblocking autocommands check if v:termresponse changed and
 	    trigger the event then.
 相关文件:   src/buffer.c, src/diff.c, src/ex_getln.c, src/fileio.c,
@@ -6535,8 +6548,7 @@ Patch 7.1.325
 
 Patch 7.1.326
 问题:	    ":s!from!to!" works, but ":smagic!from!to!" doesn't.  It sees the
-	    "!" as a flag to to the command.  Same for ":snomagic". (Johan
-	    Spetz)
+	    "!" as a flag to the command.  Same for ":snomagic". (Johan Spetz)
 解决方案:   When checking for a forced command also ignore ":smagic" and
 	    ":snomagic". (Ian Kelling)
 相关文件:   src/ex_docmd.c
@@ -6957,5 +6969,2970 @@ Pelle)
 
 Mac: Could not build with Perl interface.
 
+==============================================================================
+7.3 版 本					*version-7.3* *version7.3*
 
+本小节讨论 7.2 和 7.3 版本之间的改进。
+
+这个版本有几百个漏洞修正，和若干新特性。最主要的新特性有:
+
+
+永久化撤销					*new-persistent-undo*
+---------------
+
+保存撤销信息到文件。可以撤销到文件读入之前的状态，即使是已卸载的缓冲区也可。见
+|undo-persistence| (部分由 Jordan Lewis 提供)
+
+新增 ":earlier 1f" 和 ":later 1f" 命令。
+撤销信息中新增文件保存计数。
+新增 |undotree()| 和 |undofile()| 函数。
+
+新增 'undoreload' 选项。可以在缓冲区重载时保存当前文本，以便使重载可以撤销。
+
+
+更多加密					*new-more-encryption*
+---------------
+
+支持 Blowfish 加密。新增 'cryptmethod' 选项。
+主要由 Moshin Ahmed 提供。
+
+另外，也对交换文件和撤销文件的文本进行加密。
+
+
+隐藏文本					*new-conceal*
+------------
+
+新增 |+conceal| 功能。(Vince Negri)
+这样可以基于语法高亮隐藏成串的文本。
+也可以用单个字符替换成串的文本 |:syn-cchar|。
+'conceallevel' 选项指定文本匹配包含 conceal 属性的语法项目时如何操作。
+'concealcursor' 选项指定光标行的行为。
+
+帮助文件隐藏用于标记标签和示例的字符。
+
+新增 |synconcealed()| 函数，用于 :TOhtml。(Benjamin Fritz)
+
+
+Lua 接口					*new-lua*
+-------------
+
+新增 |Lua| 接口。(Luis Carvalho)
+
+
+Python3 接口					*new-python3*
+-----------------
+
+新增 Python3 接口。 它和 Python 2.x 同时支持，也可以同时使用。|python3|
+(Roland Puntaier)
+
+
+改动							*changed-7.3*
+-------
+
+MS-Windows 安装程序不再需要用户在控制台输入任何字符。安装程序现在也可用于 64
+位系统，包括 "Edit with Vim" 上下文菜单。
+gvim 可执行程序是 32 位的，安装的 gvimext.dll 可以是 32 或 64 位 (主要由
+George Reilly 提供)
+DOS 安装程序可用于更多编译器。
+MS-Windows big gvim 现在使用 Python 2.7 和 3.1.2、Perl 5.12 和 Ruby 1.9.1。需
+要配套的 .dll 文件才能使用。
+
+附加和语言文件不再分别发布。
+所有系统需要的源代码都包含在同一个发布里。
+
+用 ":recover" 或其它方式来恢复文件后，":x" 和 "ZZ" 过去不保存你看到的内容。这
+会使得工作丢失。现在恢复后的文本会和原来文本比较。如果不同，标注缓冲区为已修改
+。
+
+如果 Vim 因为收到致命信号而退出且 v:dying 为 2 或以上，不执行 VimLeavePre、
+VimLeave、BufWinLeave 和 BufUnload 自动命令。
+
+删除 GTK 1 的支持。没有人维护它，而且源代码需要很多的 #ifdef。GTK 2 应该在所有
+的系统上都可用了。(James Vega)
+
+不再允许在模式行上设置 'encoding' 选项。可能会破坏文本。(Patrick Texier)
+
+把 runtime/spell/fixdup 换名为 runtime/spell/fixdup.vim。
+
+删除废弃的 Mac 代码。
+
+更新拼写文件使用的 Ubuntu locale 名。
+
+切换 autoconf 2.63 到 2.65。
+
+删除 Mupad 缩进和文件类型插件文件，没有用。
+
+新增							*added-7.3*
+-----
+
+加入 'relativenumber' 选项。(Markus Heidelberg)
+
+加入 'colorcolumn' 选项: 高亮窗口的一到多个列。例如高亮 'textwidth' 之后的列。
+(主要由 Gregor Uhlenheuer 提供)
+
+加入 NetBeans 的终端支持。加入 |:nbstart| 和 |:nbclose|。(Xavier de Gaye)
+
+更多浮点函数: |acos()|、|asin()|、|atan2()|、|cosh()|、|exp()|、|fmod()|、
+|log()|、|sinh()|、|tan()|、|tanh()|。(Bill McCarthy)
+
+加入 |gettabvar()| 和 |settabvar()| 函数。(Yegappan Lakshmanan)
+
+加入 |strchars()|、|strwidth()| 和 |strdisplaywidth()| 函数。
+
+支持 Mac 上 GTK 的 GDK_SUPER_MASK。(Stephan Schulz)
+
+使 CTRL 和 ALT 修饰符可用于鼠标滚轮。(Benjamin Haskell)
+
+加入横向滚轮的支持。(Bjorn Winckler)
+
+缓冲区处于比较模式时，:TOhtml 创建显示并排比较的 HTML。(Christian Brabandt)
+
+":TOhtml" 和 2html.vim 脚本的若干改进。(Benjamin Fritz)
+
+'cinoptions' 新增 'L' 项目。(Manuel Konig)
+
+改进 Javascript 缩进。'cinoptions' 新增 "J" 标志位。(Hari Kumar G)
+
+Mac: 支持关闭反锯齿。(LC Mi)
+
+Mac: 新增 Mac 控制台的剪贴板支持。(Bjorn Winckler)
+
+支持把标签页标签拖拽到其它位置。(Paul B. Mahol)
+
+建立色彩方案菜单的更好的实现。(Juergen Kraemer)
+
+可视模式下使用 'showcmd' 显示字节和字符数。
+
+编译不带 GUI 时使 synIDattr() 可以得到 GUI 属性。(Matt Wozniski)
+
+支持 ":find" 进行补全。加入测试 73。(Nazri Ramliy)
+
+:ownsyntax 和 :setfiletype 的命令行补全。(Dominique Pelle)
+
+:lmap 和 :lunmap 的命令行补全。
+
+支持用户命令的语法和文件类型补全。(Christian Brabandt)
+
+加入 ":ownsyntax" 的补全和改进了 ":filetype" 的补全。
+
+避免使用 GTK mail_loop()，以便使用 GtkFileChooser。(James Vega)
+
+'formatexpr' 计算非零时回到内部排版机制，"gq" 亦同。(James Vega)
+
+:browse 支持接受错误文件的参数的命令。(Lech Lorens)
+
+gvimext 支持宽文件名。(Szabolcs Horvat)
+
+改进合并行的测试。(Milan Vancura)
+使行范围的合并加快很多。(Milan Vancura)
+
+新增改进 z/OS (OS/390) 支持的补丁。(Ralf Schandl)
+
+新增 helphelp.txt 文件。文本来自原来的 various.txt。
+
+新增 'statusline' 的 "q" 项目。新增 |w:quickfix_title|。(Lech Lorens)
+
+VMS 的各种改进。(Zoltan Arpadffy)
+
+
+新语法文件: ~
+Haskell Cabal 构造文件 (Vincent Berthoux)
+ChaiScript (Jason Turner)
+Cucumber (Tim Pope)
+Datascript (Dominique Pelle)
+Fantom (Kamil Toman)
+Liquid (Tim Pope)
+Markdown (Tim Pope)
+wavefront 的 obj 文件 (Vincent Berthoux)
+Perl 6 (Andy Lester)
+SDC - Synopsys Design Constraints (Maurizio Tranchero)
+SVG - Scalable Vector Graphics (Vincent Berthoux)
+task data (John Florian)
+task 42 edit (John Florian)
+
+新文件类型插件: ~
+Cucumber (Tim Pope)
+Liquid (Tim Pope)
+Markdown (Tim Pope)
+Tcl (Robert L Hicks)
+
+新缩进插件: ~
+ChaiScript (Jason Turner)
+Cucumber (Tim Pope)
+CUDA (Bram Moolenaar)
+LifeLines (Patrick Texier)
+Liquid (Tim Pope)
+Mail (Bram Moolenaar)
+Perl 6 (Andy Lester)
+
+其它新运行时文件: ~
+布列塔尼语拼写文件 (Dominique Pelle)
+巴伐利亚语教程 (Sepp Hell)
+世界语教程。(Dominique Pellé)
+韩语翻译。(SungHyun Nam)
+Dvorak 键盘映射表 (Ashish Shukla)
+塞尔维亚菜单翻译 (Aleksandar Jelenak)
+德顿语拼写文件。
+
+
+修正							*fixed-7.3*
+-----
+
+Patch 7.2.001
+问题:	    Mac: pseudo-ttys don't work properly on Leopard, resulting in the
+	    shell not to have a prompt, CTRL-C not working, etc.
+解决方案:   Don't use SVR4 compatible ptys, even though they are detected.
+	    (Ben Schmidt)
+相关文件:   src/pty.c
+
+Patch 7.2.002
+问题:	    Leaking memory when displaying menus.
+解决方案:   Free allocated memory. (Dominique Pelle)
+相关文件:   src/menu.c
+
+Patch 7.2.003
+问题:	    Typo in translated message.  Message not translated.
+解决方案:   Correct spelling. Add _(). (Dominique Pelle)
+相关文件:   src/spell.c, src/version.c
+
+Patch 7.2.004
+问题:	    Cscope help message is not translated.
+解决方案:   Put it in _(). (Dominique Pelle)
+相关文件:   src/if_cscope.c, src/if_cscope.h
+
+Patch 7.2.005
+问题:	    A few problems when profiling.  Using flag pointer instead of flag
+	    value.  Allocating zero bytes.  Not freeing used memory.
+解决方案:   Remove wrong '&' characters.  Skip dumping when there is nothing
+	    to dump.  Free used memory. (Dominique Pelle)
+相关文件:   src/eval.c
+
+Patch 7.2.006
+问题:	    HTML files are not recognized by contents.
+解决方案:   Add a rule to the scripts file. (Nico Weber)
+相关文件:   runtime/scripts.vim
+
+Patch 7.2.007 (extra)
+问题:	    Minor issues for VMS.
+解决方案:   Minor fixes for VMS.  Add float support. (Zoltan Arpadffy)
+相关文件:   runtime/doc/os_vms.txt, src/os_vms_conf.h, src/Make_vms.mms,
+	    src/testdir/Make_vms.mms, src/testdir/test30.in,
+	    src/testdir/test54.in
+
+Patch 7.2.008
+问题:	    With a BufHidden autocommand that invokes ":bunload" the window
+	    count for a buffer can be wrong. (Bob Hiestand)
+解决方案:   Don't call enter_buffer() when already in that buffer.
+相关文件:   src/buffer.c
+
+Patch 7.2.009
+问题:	    Can't compile with Perl 5.10 on MS-Windows. (Cesar Romani)
+解决方案:   Add the Perl_sv_free2 function for dynamic loading. (Dan Sharp)
+相关文件:   src/if_perl.xs
+
+Patch 7.2.010
+问题:	    When using "K" in Visual mode not all characters are properly
+	    escaped. (Ben Schmidt)
+解决方案:   Use a function with the functionality of shellescape(). (Jan
+	    Minar)
+相关文件:   src/mbyte.c, src/misc2.c, src/normal.c
+
+Patch 7.2.011
+问题:	    Get an error when inserting a float value from the expression
+	    register.
+解决方案:   Convert the Float to a String automatically in the same place
+	    where a List would be converted to a String.
+相关文件:   src/eval.c
+
+Patch 7.2.012
+问题:	    Compiler warnings when building with startup timing.
+解决方案:   Add type casts.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.013
+问题:	    While waiting for the X selection Vim consumes a lot of CPU time
+	    and hangs until a response is received.
+解决方案:   Sleep a bit when the selection event hasn't been received yet.
+	    Time out after a couple of seconds to avoid a hang when the
+	    selection owner isn't responding.
+相关文件:   src/ui.c
+
+Patch 7.2.014
+问题:	    synstack() doesn't work in an empty line.
+解决方案:   Accept column zero as a valid position.
+相关文件:   src/eval.c
+
+Patch 7.2.015
+问题:	    "make all test install" doesn't stop when the test fails. (Daniel
+	    Shahaf)
+解决方案:   When test.log contains failures exit with non-zero status.
+相关文件:   src/testdir/Makefile
+
+Patch 7.2.016
+问题:	    The pattern being completed may be in freed memory when the
+	    command line is being reallocated. (Dominique Pelle)
+解决方案:   Keep a pointer to the expand_T in the command line structure.
+	    Don't use <S-Tab> as CTRL-P when there are no results.  Clear the
+	    completion when using a command line from the history.
+相关文件:   src/ex_getln.c
+
+Patch 7.2.017
+问题:	    strlen() used on text that may not end in a NUL. (Dominique Pelle)
+	    Pasting a very big selection doesn't work.
+解决方案:   Use the length passed to the XtSelectionCallbackProc() function.
+	    After getting the SelectionNotify event continue dispatching
+	    events until the callback is actually called.  Also dispatch the
+	    PropertyNotify event.
+相关文件:   src/ui.c
+
+Patch 7.2.018
+问题:	    Memory leak when substitute is aborted.
+解决方案:   Free the buffer allocated for the new text. (Dominique Pelle)
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.019
+问题:	    Completion of ":noautocmd" doesn't work and exists(":noautocmd")
+	    returns zero. (Ben Fritz)
+解决方案:   Add "noautocmd" to the list of modifiers and commands.
+相关文件:   src/ex_cmds.h, src/ex_docmd.c
+
+Patch 7.2.020
+问题:	    Starting the GUI when the executable starts with 'k', but the KDE
+	    version no longer exists.
+解决方案:   Don't have "kvim" start the GUI.
+相关文件:   src/main.c
+
+Patch 7.2.021
+问题:	    When executing autocommands getting the full file name may be
+	    slow. (David Kotchan)
+解决方案:   Postpone calling FullName_save() until autocmd_fname is used.
+相关文件:   src/ex_docmd.c, src/fileio.c, src/globals.h
+
+Patch 7.2.022 (extra)
+问题:	    Testing is not possible when compiling with MingW.
+解决方案:   Add a MingW specific test Makefile. (Bill McCarthy)
+相关文件:   Filelist, src/testdir/Make_ming.mak
+
+Patch 7.2.023
+问题:	    'cursorcolumn' is in the wrong place in a closed fold when the
+	    display is shifted left. (Gary Johnson)
+解决方案:   Subtract w_skipcol or w_leftcol when needed.
+相关文件:   src/screen.c
+
+Patch 7.2.024
+问题:	    It's possible to set 'history' to a negative value and that causes
+	    an out-of-memory error.
+解决方案:   Check that 'history' has a positive value. (Doug Kearns)
+相关文件:   src/option.c
+
+Patch 7.2.025
+问题:	    When a CursorHold event invokes system() it is retriggered over
+	    and over again.
+解决方案:   Don't reset did_cursorhold when getting K_IGNORE.
+相关文件:   src/normal.c
+
+Patch 7.2.026 (after 7.2.010)
+问题:	    "K" doesn't use the length of the identifier but uses the rest of
+	    the line.
+解决方案:   Copy the desired number of characters first.
+相关文件:   src/normal.c
+
+Patch 7.2.027
+问题:	    Can use cscope commands in the sandbox.
+解决方案:   Disallow them, they might not be safe.
+相关文件:   src/ex_cmds.h
+
+Patch 7.2.028
+问题:	    Confusing error message for missing ().
+解决方案:   Change "braces" to "parentheses". (Gary Johnson)
+相关文件:   src/eval.c
+
+Patch 7.2.029
+问题:	    No completion for ":doautoall".
+解决方案:   Complete ":doautoall" like ":doautocmd".  (Doug Kearns)
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.030 (after 7.2.027)
+问题:	    Can't compile.
+解决方案:   Remove prematurely added ex_oldfiles.
+相关文件:   src/ex_cmds.h
+
+Patch 7.2.031
+问题:	    Information in the viminfo file about previously edited files is
+	    not available to the user.  There is no way to get a complete list
+	    of files edited in previous Vim sessions.
+解决方案:   Add v:oldfiles and fill it with the list of old file names when
+	    first reading the viminfo file.  Add the ":oldfiles" command,
+	    ":browse oldfiles" and the "#<123" special file name.  Increase
+	    the default value for 'viminfo' from '20 to '100.
+相关文件:   runtime/doc/cmdline.txt, runtime/doc/eval.txt,
+	    runtime/doc/starting.txt, runtime/doc/usr_21.txt, src/eval.c,
+	    src/ex_cmds.c, src/ex_cmds.h, src/ex_docmd.c, src/feature.h,
+	    src/fileio.c, src/main.c, src/mark.c, src/misc1.c,
+	    src/proto/eval.pro, src/proto/ex_cmds.pro, src/proto/mark.pro,
+	    src/option.c, src/structs.h, src/vim.h
+
+Patch 7.2.032 (after 7.2.031)
+问题:	    Can't build with EXITFREE defined. (Dominique Pelle)
+解决方案:   Change vv_string to vv_str.
+相关文件:   src/eval.c
+
+Patch 7.2.033
+问题:	    When detecting a little endian BOM "ucs-2le" is used, but the text
+	    might be "utf-16le".
+解决方案:   Default to "utf-16le", it also works for "ucs-2le". (Jia Yanwei)
+相关文件:   src/fileio.c, src/testdir/test42.ok
+
+Patch 7.2.034
+问题:	    Memory leak in spell info when deleting buffer.
+解决方案:   Free the memory. (Dominique Pelle)
+相关文件:   src/buffer.c
+
+Patch 7.2.035
+问题:	    Mismatches between alloc/malloc, free/vim_free,
+	    realloc/vim_realloc.
+解决方案:   Use the right function. (Dominique Pelle)
+相关文件:   src/gui_x11.c, src/mbyte.c, src/misc2.c, src/os_unix.c
+
+Patch 7.2.036 (extra)
+问题:	    Mismatches between alloc/malloc, free/vim_free,
+	    realloc/vim_realloc.
+解决方案:   Use the right function. (Dominique Pelle)
+相关文件:   src/gui_riscos.c, src/gui_w48.c, src/mbyte.c, src/os_vms.c,
+	    src/os_w32exe.c, src/os_win16.c
+
+Patch 7.2.037
+问题:	    Double free with GTK 1 and compiled with EXITFREE.
+解决方案:   Don't close display. (Dominique Pelle)
+相关文件:   src/os_unix.c
+
+Patch 7.2.038
+问题:	    Overlapping arguments to memcpy().
+解决方案:   Use mch_memmove(). (Dominique Pelle)
+相关文件:   src/if_xcmdsrv.c
+
+Patch 7.2.039
+问题:	    Accessing freed memory on exit when EXITFREE is defined.
+解决方案:   Call hash_init() on the v: hash table.
+相关文件:   src/eval.c
+
+Patch 7.2.040
+问题:	    When using ":e ++ff=dos fname" and the file contains a NL without
+	    a CR before it and 'ffs' contains "unix" then the fileformat
+	    becomes unix.
+解决方案:   Ignore 'ffs' when using the ++ff argument. (Ben Schmidt)
+	    Also remove unreachable code.
+相关文件:   src/fileio.c
+
+Patch 7.2.041
+问题:	    In diff mode, when using two tabs, each with two diffed buffers,
+	    editing a buffer of the other tab messes up the diff.  (Matt
+	    Mzyzik)
+解决方案:   Only copy options from a window where the buffer was edited that
+	    doesn't have 'diff' set or is for the current tab page.
+	    Also fix that window options for a buffer are stored with the
+	    wrong window.
+相关文件:   src/buffer.c, src/ex_cmds.c, src/ex_cmds2.c, src/ex_docmd.c,
+	    src/ex_getln.c, src/if_sniff.c, src/main.c, src/netbeans.c,
+	    src/normal.c, src/popupmnu.c, src/proto/buffer.pro,
+	    src/proto/ex_cmds.pro src/quickfix.c, src/window.c
+
+Patch 7.2.042
+问题:	    When using winrestview() in a BufWinEnter autocommand the window
+	    is scrolled anyway. (Matt Zyzik)
+解决方案:   Don't recompute topline when above 'scrolloff' from the bottom.
+	    Don't always put the cursor halfway when entering a buffer.  Add
+	    "w_topline_was_set".
+相关文件:   src/buffer.c, src/move.c, src/structs.h
+
+Patch 7.2.043
+问题:	    VMS: Too many characters are escaped in filename and shell
+	    commands.
+解决方案:   Escape fewer characters. (Zoltan Arpadffy)
+相关文件:   src/vim.h
+
+Patch 7.2.044
+问题:	    Crash because of STRCPY() being over protective of the destination
+	    size. (Dominique Pelle)
+解决方案:   Add -D_FORTIFY_SOURCE=1 to CFLAGS.  Use an intermediate variable
+	    for the pointer to avoid a warning.
+相关文件:   src/auto/configure, src/configure.in, src/eval.c
+
+Patch 7.2.045
+问题:	    The Python interface has an empty entry in sys.path.
+解决方案:   Filter out the empty entry. (idea from James Vega)
+相关文件:   src/if_python.c
+
+Patch 7.2.046
+问题:	    Wrong check for filling buffer with encoding. (Danek Duvall)
+解决方案:   Remove pointers. (Dominique Pelle)
+相关文件:   src/mbyte.c
+
+Patch 7.2.047
+问题:	    Starting Vim with the -nb argument while it's not supported causes
+	    the other side to hang.
+解决方案:   When -nb is used while it's not supported exit Vim. (Xavier de
+	    Gaye)
+相关文件:   src/main.c, src/vim.h
+
+Patch 7.2.048
+问题:	    v:prevcount is changed too often.  Counts are not multiplied when
+	    setting v:count.
+解决方案:   Set v:prevcount properly.  Multiply counts. (idea by Ben Schmidt)
+相关文件:   src/eval.c, src/normal.c, src/proto/eval.pro
+
+Patch 7.2.049 (extra)
+问题:	    Win32: the clipboard doesn't support UTF-16.
+解决方案:   Change UCS-2 support to UTF-16 support. (Jia Yanwei)
+相关文件:   src/gui_w32.c, src/gui_w48.c, src/mbyte.c, src/misc1.c,
+	    src/os_mswin.c, src/os_win32.c, src/proto/os_mswin.pro
+
+Patch 7.2.050
+问题:	    Warnings for not checking return value of fwrite(). (Chip Campbell)
+解决方案:   Use the return value.
+相关文件:   src/spell.c
+
+Patch 7.2.051
+问题:	    Can't avoid 'wildignore' and 'suffixes' for glob() and globpath().
+解决方案:   Add an extra argument to these functions. (Ingo Karkat)
+相关文件:   src/eval.c, src/ex_getln.c, src/proto/ex_getln.pro,
+	    runtime/doc/eval.txt, runtime/doc/options.txt
+
+Patch 7.2.052
+问题:	    synIDattr() doesn't support "sp" for special color.
+解决方案:   Recognize "sp" and "sp#".  (Matt Wozniski)
+相关文件:   runtime/doc/eval.txt, src/eval.c
+
+Patch 7.2.053
+问题:	    Crash when using WorkShop command ":ws foo". (Dominique Pelle)
+解决方案:   Avoid using a NULL pointer.
+相关文件:   src/workshop.c
+
+Patch 7.2.054
+问题:	    Compilation warnings for format in getchar.c.
+解决方案:   Use fputs() instead of fprintf().  (Dominique Pelle)
+相关文件:   src/getchar.c
+
+Patch 7.2.055
+问题:	    Various compiler warnings with strict checking.
+解决方案:   Avoid the warnings by using return values and renaming.
+相关文件:   src/diff.c, src/eval.c, src/ex_cmds.c, src/ex_docmd.c,
+	    src/fileio.c, src/fold.c, src/globals.h, src/gui.c,
+	    src/gui_at_sb.c, src/gui_gtk_x11.c, src/gui_xmdlg.c,
+	    src/gui_xmebw.c, src/main.c, src/mbyte.c, src/message.c,
+	    src/netbeans.c, src/option.c, src/os_unix.c, src/spell.c,
+	    src/ui.c, src/window.c
+
+Patch 7.2.056 (after 7.2.050)
+问题:	    Tests 58 and 59 fail.
+解决方案:   Don't invoke fwrite() with a zero length. (Dominique Pelle)
+相关文件:   src/spell.c
+
+Patch 7.2.057 (after 7.2.056)
+问题:	    Combination of int and size_t may not work.
+解决方案:   Use size_t for variable.
+相关文件:   src/spell.c
+
+Patch 7.2.058
+问题:	    Can't add a patch name to the ":version" output.
+解决方案:   Add the extra_patches array.
+相关文件:   src/version.c
+
+Patch 7.2.059
+问题:	    Diff display is not always updated.
+解决方案:   Update the display more often.
+相关文件:   src/diff.c
+
+Patch 7.2.060
+问题:	    When a spell files has many compound rules it may take a very long
+	    time making the list of suggestions.  Displaying also can be slow
+	    when there are misspelled words.
+	    Can't parse some Hunspell .aff files.
+解决方案:   Check if a compounding can possibly work before trying a
+	    combination, if the compound rules don't contain wildcards.
+	    Implement using CHECKCOMPOUNDPATTERN.
+	    Ignore COMPOUNDRULES.  Ignore a comment after most items.
+	    Accept ONLYINCOMPOUND as an alias for NEEDCOMPOUND.
+	    Accept FORBIDDENWORD as an alias for BAD.
+相关文件:   runtime/doc/spell.txt, src/spell.c
+
+Patch 7.2.061
+问题:	    Can't create a funcref for an autoload function without loading
+	    the script first. (Marc Weber)
+解决方案:   Accept autoload functions that don't exist yet in function().
+相关文件:   src/eval.c
+
+Patch 7.2.062
+问题:	    "[Scratch]" is not translated.
+解决方案:   Mark the string for translation. (Dominique Pelle)
+相关文件:   src/buffer.c
+
+Patch 7.2.063
+问题:	    Warning for NULL argument of Perl_sys_init3().
+解决方案:   Use Perl_sys_init() instead. (partly by Dominique Pelle)
+相关文件:   src/if_perl.xs
+
+Patch 7.2.064
+问题:	    Screen update bug when repeating "~" on a Visual block and the
+	    last line doesn't change.
+解决方案:   Keep track of changes for all lines.  (Moritz Orbach)
+相关文件:   src/ops.c
+
+Patch 7.2.065
+问题:	    GTK GUI: the cursor disappears when doing ":vsp" and the Vim
+	    window is maximized.  (Dominique Pelle, Denis Smolyar)
+解决方案:   Don't change "Columns" back to an old value at a wrong moment.
+	    Do change "Rows" when it should not be a problem.
+相关文件:   src/gui.c
+
+Patch 7.2.066
+问题:	    It's not easy to see whether 'encoding' is a multi-byte encoding.
+解决方案:   Add has('multi_byte_encoding').
+相关文件:   runtime/doc/eval.txt, src/eval.c
+
+Patch 7.2.067
+问题:	    Session file can't load extra file when the path contains special
+	    characters.
+解决方案:   Escape the file name. (Lech Lorens)
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.068
+问题:	    Emacs tags file lines can be too long, resulting in an error
+	    message. (James Vega)
+解决方案:   Ignore lines with errors if they are too long.
+相关文件:   src/tag.c
+
+Patch 7.2.069 (after 7.2.060)
+问题:	    Compiler warning for storing size_t in int.
+解决方案:   Add type cast.
+相关文件:   src/spell.c
+
+Patch 7.2.070
+问题:	    Crash when a function returns a:000. (Matt Wozniski)
+解决方案:   Don't put the function struct on the stack, allocate it.  Free it
+	    only when nothing in it is used.
+相关文件:   src/eval.c
+
+Patch 7.2.071 (extra)
+问题:	    Win32: Handling netbeans events while Vim is busy updating the
+	    screen may cause a crash.
+解决方案:   Like with GTK, only handle netbeans messages in the main loop.
+	    (Xavier de Gaye)
+相关文件:   src/gui_w48.c, src/netbeans.c
+
+Patch 7.2.072 (extra)
+问题:	    Compiler warning in Sniff code.
+解决方案:   Use return value of pipe(). (Dominique Pelle)
+相关文件:   src/if_sniff.c
+
+Patch 7.2.073
+问题:	    ":set <xHome>" has the same output as ":set <Home>". (Matt
+	    Wozniski)
+解决方案:   Don't translate "x" keys to its alternative for ":set".
+相关文件:   src/gui_mac.c, src/misc2.c, src/option.c, src/proto/misc2.pro
+
+Patch 7.2.074 (extra, after 7.2.073)
+问题:	    ":set <xHome>" has the same output as ":set <Home>". (Matt
+	    Wozniski)
+解决方案:   Don't translate "x" keys to its alternative for ":set".
+相关文件:   src/gui_mac.c
+
+Patch 7.2.075 (after 7.2.058)
+问题:	    Explanation about making a diff for extra_patches is unclear.
+解决方案:   Adjust comment.
+相关文件:   src/version.c
+
+Patch 7.2.076
+问题:	    rename(from, to) deletes the file if "from" and "to" are not equal
+	    but still refer to the same file.  E.g., on a FAT32 filesystem
+	    under Unix.
+解决方案:   Go through another file name.
+相关文件:   src/fileio.c
+
+Patch 7.2.077 (after 7.2.076)
+问题:	    rename(from, to) doesn't work if "from" and "to" differ only in
+	    case on a system that ignores case in file names.
+解决方案:   Go through another file name.
+相关文件:   src/fileio.c
+
+Patch 7.2.078
+问题:	    When deleting a fold that is specified with markers the cursor
+	    position may be wrong.  Folds may not be displayed properly after
+	    a delete.  Wrong fold may be deleted.
+解决方案:   Fix the problems. (mostly by Lech Lorens)
+相关文件:   src/fold.c
+
+Patch 7.2.079
+问题:	    "killed" netbeans events are not handled correctly.
+解决方案:   A "killed" netbeans event is sent when the buffer is deleted or
+	    wiped out (in this case, the netbeans annotations in this buffer
+	    have been removed).  A user can still remove a sign with the
+	    command ":sign unplace" and this does not trigger a "killed"
+	    event.  (Xavier de Gaye)
+相关文件:   runtime/doc/netbeans.txt, src/buffer.c, src/globals.h,
+	    src/netbeans.c, src/proto/netbeans.pro
+
+Patch 7.2.080
+问题:	    When typing a composing character just after starting completion
+	    may access memory before its allocation point. (Dominique Pelle)
+解决方案:   Don't delete before the completion start column.  Add extra checks
+	    for the offset not being negative.
+相关文件:   src/edit.c
+
+Patch 7.2.081
+问题:	    Compiler warning for floating point overflow on VAX.
+解决方案:   For VAX use a smaller number. (Zoltan Arpadffy)
+相关文件:   src/message.c
+
+Patch 7.2.082
+问题:	    When 'ff' is "mac" then "ga" on a ^J shows 0x0d instead of 0x0a.
+	    (Andy Wokula)
+解决方案:   Use NL for this situation. (Lech Lorens)
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.083
+问题:	    ":tag" does not return to the right tag entry from the tag stack.
+解决方案:   Don't change the current match when there is no argument.
+	    (Erik Falor)
+相关文件:   src/tag.c
+
+Patch 7.2.084
+问题:	    Recursive structures are not handled properly in Python
+	    vim.eval().
+解决方案:   Keep track of references in a better way. (Yukihiro Nakadaira)
+相关文件:   src/if_python.c
+
+Patch 7.2.085
+问题:	    ":set <M-b>=<Esc>b" does not work when 'encoding' is utf-8.
+解决方案:   Put the <M-b> character in the input buffer as valid utf-8.
+	    (partly by Matt Wozniski)
+相关文件:   src/term.c
+
+Patch 7.2.086
+问题:	    Using ":diffget 1" in buffer 1 corrupts the text.
+解决方案:   Don't do anything when source and destination of ":diffget" or
+	    ":diffput" is the same buffer. (Dominique Pelle)
+相关文件:   src/diff.c
+
+Patch 7.2.087
+问题:	    Adding URL to 'path' doesn't work to edit a file.
+解决方案:   Skip simplify_filename() for URLs. (Matt Wozniski)
+相关文件:   src/misc2.c
+
+Patch 7.2.088 (extra)
+问题:	    OpenClipboard() may fail when another application is using the
+	    clipboard.
+解决方案:   Retry OpenClipboard() a few times. (Jianrong Yu)
+相关文件:   src/os_mswin.c
+
+Patch 7.2.089 (extra)
+问题:	    Win32: crash when using Ultramon buttons.
+解决方案:   Don't use a WM_OLE message of zero size. (Ray Megal)
+相关文件:   src/if_ole.cpp, src/gui_w48.c
+
+Patch 7.2.090
+问题:	    User command containing 0x80 in multi-byte character does not work
+	    properly. (Yasuhiro Matsumoto)
+解决方案:   Undo replacement of K_SPECIAL and CSI characters when executing
+	    the command.
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.091
+问题:	    ":cs help" output is not aligned for some languages.
+解决方案:   Compute character size instead of byte size. (Dominique Pelle)
+相关文件:   src/if_cscope.c
+
+Patch 7.2.092
+问题:	    Some error messages are not translated.
+解决方案:   Add _() around the messages. (Dominique Pelle)
+相关文件:   src/eval.c
+
+Patch 7.2.093 (extra)
+问题:	    Win32: inputdialog() and find/replace dialogs can't handle
+	    multi-byte text.
+解决方案:   Use the wide version of dialog functions when available. (Yanwei
+	    Jia)
+相关文件:   src/gui_w32.c, src/gui_w48.c
+
+Patch 7.2.094
+问题:	    Compiler warning for signed/unsigned compare.
+解决方案:   Add type cast.  Also fix a few typos.
+相关文件:   src/edit.c
+
+Patch 7.2.095
+问题:	    With Visual selection, "r" and then CTRL-C Visual mode is stopped
+	    but the highlighting is not removed.
+解决方案:   Call reset_VIsual().
+相关文件:   src/normal.c
+
+Patch 7.2.096
+问题:	    After ":number" the "Press Enter" message may be on the wrong
+	    screen, if switching screens for shell commands.
+解决方案:   Reset info_message. (James Vega)
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.097
+问题:	    "!xterm&" doesn't work when 'shell' is "bash".
+解决方案:   Ignore SIGHUP after calling setsid(). (Simon Schubert) 
+相关文件:   src/os_unix.c
+
+Patch 7.2.098
+问题:	    Warning for signed/unsigned pointer.
+解决方案:   Add type cast.
+相关文件:   src/eval.c
+
+Patch 7.2.099
+问题:	    Changing GUI options causes an unnecessary redraw when the GUI
+	    isn't active.
+解决方案:   Avoid the redraw. (Lech Lorens)
+相关文件:   src/option.c
+
+Patch 7.2.100
+问题:	    When using ":source" on a FIFO or something else that can't rewind
+	    the first three bytes are skipped.
+解决方案:   Instead of rewinding read the first line and detect a BOM in that.
+	    (mostly by James Vega)
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.101 (extra)
+问题:	    MSVC version not recognized.
+解决方案:   Add the version number to the list.  (Zhong Zhang)
+相关文件:   src/Make_mvc.mak
+
+Patch 7.2.102 (after 7.2.100)
+问题:	    When 'encoding' is "utf-8" a BOM at the start of a Vim script is
+	    not removed. (Tony Mechelynck)
+解决方案:   When no conversion is taking place make a copy of the line without
+	    the BOM.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.103
+问题:	    When 'bomb' is changed the window title is updated to show/hide a
+	    "+", but the tab page label isn't. (Patrick Texier)
+解决方案:   Set "redraw_tabline" in most places where "need_maketitle" is set.
+	    (partly by Lech Lorens)
+相关文件:   src/option.c
+
+Patch 7.2.104
+问题:	    When using ":saveas bar.c" the tab label isn't updated right away.
+解决方案:   Set redraw_tabline. (Francois Ingelrest)
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.105
+问题:	    Modeline setting for 'foldmethod' overrules diff options. (Ingo
+	    Karkat)
+解决方案:   Don't set 'foldmethod' and 'wrap' from a modeline when 'diff' is
+	    on.
+相关文件:   src/option.c
+
+Patch 7.2.106
+问题:	    Endless loop when using "]s" in HTML when there are no
+	    misspellings. (Ingo Karkat)
+解决方案:   Break the search loop.  Also fix pointer alignment for systems
+	    with pointers larger than int.
+相关文件:   src/spell.c
+
+Patch 7.2.107
+问题:	    When using a GUI dialog and ":echo" commands the messages are
+	    deleted after the dialog. (Vincent Birebent)
+解决方案:   Don't call msg_end_prompt() since there was no prompt.
+相关文件:   src/message.c
+
+Patch 7.2.108 (after 7.2.105)
+问题:	    Can't build without the diff feature.
+解决方案:   Add #ifdef.
+相关文件:   src/option.c
+
+Patch 7.2.109
+问题:	    'langmap' does not work for multi-byte characters.
+解决方案:   Add a list of mapped multi-byte characters. (based on work by
+	    Konstantin Korikov, Agathoklis Hatzimanikas)
+相关文件:   runtime/doc/options.txt, src/edit.c, src/getchar.c, src/macros.h,
+	    src/normal.c, src/option.c, src/proto/option.pro, src/window.c
+
+Patch 7.2.110
+问题:	    Compiler warning for unused variable.
+解决方案:   Init the variable.
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.111
+问题:	    When using Visual block mode with 'cursorcolumn' it's unclear what
+	    is selected.
+解决方案:   Don't use 'cursorcolumn' highlighting inside the Visual selection.
+	    (idea by Dominique Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.112
+问题:	    Cursor invisible in Visual mode when 'number' is set and cursor in
+	    first column. (Matti Niemenmaa, Renato Alves)
+解决方案:   Check that vcol_prev is smaller than vcol.
+相关文件:   src/screen.c
+
+Patch 7.2.113
+问题:	    Crash for substitute() call using submatch(1) while there is no
+	    such submatch. (Yukihiro Nakadaira)
+解决方案:   Also check the start of the submatch is set, it can be NULL when
+	    an attempted match didn't work out.
+相关文件:   src/regexp.c
+
+Patch 7.2.114
+问题:	    Using wrong printf format.
+解决方案:   Use "%ld" instead of "%d". (Dominique Pelle)
+相关文件:   src/netbeans.c
+
+Patch 7.2.115
+问题:	    Some debugging code is never used.
+解决方案:   Remove nbtrace() and nbprt(). (Dominique Pelle)
+相关文件:   src/nbdebug.c, src/nbdebug.h
+
+Patch 7.2.116
+问题:	    Not all memory is freed when EXITFREE is defined.
+解决方案:   Free allocated memory on exit. (Dominique Pelle)
+相关文件:   src/ex_docmd.c, src/gui_gtk_x11.c, src/misc2.c, src/search.c,
+	    src/tag.c
+
+Patch 7.2.117
+问题:	    Location list incorrectly labelled "Quickfix List".
+解决方案:   Break out of both loops for finding window for location list
+	    buffer. (Lech Lorens)
+相关文件:   src/buffer.c, src/quickfix.c, src/screen.c
+
+Patch 7.2.118
+问题:	    <PageUp> at the more prompt only does half a page.
+解决方案:   Make <PageUp> go up a whole page.  Also make 'f' go a page
+	    forward, but not quit the more prompt. (Markus Heidelberg)
+相关文件:   src/message.c
+
+Patch 7.2.119
+问题:	    Status line is redrawn too often.
+解决方案:   Check ScreeenLinesUC[] properly. (Yukihiro Nakadaira)
+相关文件:   src/screen.c
+
+Patch 7.2.120
+问题:	    When opening the quickfix window or splitting the window and
+	    setting the location list, the location list is copied and then
+	    deleted, which is inefficient.
+解决方案:   Don't copy the location list when not needed. (Lech Lorens)
+相关文件:   src/quickfix.c, src/vim.h, src/window.c
+
+Patch 7.2.121
+问题:	    In gvim "!grep a *.c" spews out a lot of text that can't be
+	    stopped with CTRL-C.
+解决方案:   When looping to read and show text, do check for typed characters
+	    every two seconds.
+相关文件:   src/os_unix.c
+
+Patch 7.2.122
+问题:	    Invalid memory access when the VimResized autocommand changes
+	    'columns' and/or 'lines'.
+解决方案:   After VimResized check for changed values. (Dominique Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.123
+问题:	    Typing 'q' at more prompt for ":map" output still displays another
+	    line, causing another more prompt. (Markus Heidelberg)
+解决方案:   Quit listing maps when 'q' typed.
+相关文件:   src/getchar.c
+
+Patch 7.2.124
+问题:	    Typing 'q' at more prompt for ":tselect" output still displays
+	    more lines, causing another more prompt. (Markus Heidelberg)
+解决方案:   Quit listing tags when 'q' typed.
+相关文件:   src/tag.c
+
+Patch 7.2.125
+问题:	    Leaking memory when reading XPM bitmap for a sign.
+解决方案:   Don't allocate the memory twice. (Dominique Pelle)
+相关文件:   src/gui_x11.c
+
+Patch 7.2.126
+问题:	    When EXITFREE is defined signs are not freed.
+解决方案:   Free all signs on exit.  Also free keymaps. (Dominique Pelle)
+相关文件:   src/misc2.c, src/ex_cmds.c, src/proto/ex_cmds.pro
+
+Patch 7.2.127
+问题:	    When listing mappings and a wrapping line causes the more prompt,
+	    after typing 'q' there can be another more prompt. (Markus
+	    Heidelberg)
+解决方案:   Set "lines_left" to allow more lines to be displayed.
+相关文件:   src/message.c
+
+Patch 7.2.128 (after 7.2.055)
+问题:	    Using ":lcd" makes session files not work.
+解决方案:   Compare return value of mch_chdir() properly. (Andreas Bernauer)
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.129
+问题:	    When opening a command window from input() it uses the search
+	    history.
+解决方案:   Use get_cmdline_type(). (James Vega)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.130
+问题:	    Vim may haing until CTRL-C is typed when using CTRL-Z.
+解决方案:   Avoid using pause().  Also use "volatile" for variables used in
+	    signal functions. (Dominique Pelle)
+相关文件:   src/auto/configure, src/configure.in, src/config.h.in,
+	    src/globals.h, src/os_unix.c
+
+Patch 7.2.131
+问题:	    When 'keymap' is cleared may still use the cursor highlighting for
+	    when it's enabled.
+解决方案:   Reset 'iminsert' and 'imsearch'. (partly by Dominique Pelle)
+	    Also avoid ":setlocal" for these options have a global effect.
+相关文件:   src/option.c
+
+Patch 7.2.132
+问题:	    When changing directory during a SwapExists autocmd freed memory
+	    may be accessed. (Dominique Pelle)
+解决方案:   Add the allbuf_lock flag.
+相关文件:   src/ex_getln.c, src/globals.h, src/fileio.c,
+	    src/proto/ex_getln.pro
+
+Patch 7.2.133
+问题:	    ":diffoff!" changes settings in windows not in diff mode.
+解决方案:   Only change settings in other windows when 'diff' is set, always
+	    do it for the current window. (Lech Lorens)
+相关文件:   src/diff.c
+
+Patch 7.2.134
+问题:	    Warning for discarding "const" from pointer.
+解决方案:   Don't pass const pointer to mch_memmove().
+相关文件:   src/fileio.c
+
+Patch 7.2.135
+问题:	    Memory leak when redefining user command with complete argument.
+解决方案:   Free the old complete argument. (Dominique Pelle)
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.136 (after 7.2.132)
+问题:	    ":cd" is still possible in a SwapExists autocmd.
+解决方案:   Check the allbuf_lock flag in ex_cd().
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.137
+问题:	    When 'virtualedit' is set, a left shift of a blockwise selection
+	    that starts and ends inside a tab shifts too much. (Helmut
+	    Stiegler)
+解决方案:   Redo the block left shift code. (Lech Lorens)
+相关文件:   src/ops.c, src/testdir/Makefile, src/testdir/test66.in,
+	    src/testdir/test66.ok
+
+Patch 7.2.138 (extra part of 7.2.137)
+问题:	    See 7.2.137.
+解决方案:   See 7.2.137.
+相关文件:   src/testdir/Make_amiga.mak, src/testdir/Make_dos.mak,
+	    src/testdir/Make_ming.mak, src/testdir/Make_os2.mak,
+	    src/testdir/Make_vms.mms
+
+Patch 7.2.139
+问题:	    Crash when 'virtualedit' is "all". (James Vega)
+解决方案:   Avoid overflow when column is MAXCOL. (Dominique Pelle)
+相关文件:   src/misc2.c
+
+Patch 7.2.140
+问题:	    Diff highlighting isn't displayed before the Visual area if it
+	    starts at the cursor position. (Markus Heidelberg)
+解决方案:   Also check fromcol_prev.
+相关文件:   src/screen.c
+
+Patch 7.2.141
+问题:	    When redrawing a character for bold spill this causes the next
+	    character to be redrawn as well.
+解决方案:   Only redraw one extra character. (Yukihiro Nakadaira)
+相关文件:   src/screen.c
+
+Patch 7.2.142
+问题:	    Motif and Athena balloons don't use tooltip colors.
+解决方案:   Set the colors. (Matt Wozniski)
+相关文件:   src/gui_beval.c
+
+Patch 7.2.143
+问题:	    No command line completion for ":cscope" command.
+解决方案:   Add the completion for ":cscope". (Dominique Pelle)
+相关文件:   src/ex_docmd.c, src/ex_getln.c, src/if_cscope.c,
+	    src/proto/if_cscope.pro, src/vim.h
+
+Patch 7.2.144
+问题:	    When 't_Co' is set to the value it already had the color scheme is
+	    reloaded anyway.
+解决方案:   Only load the colorscheme when the t_Co value changes. (Dominique
+	    Pelle)
+相关文件:   src/option.c
+
+Patch 7.2.145
+问题:	    White space in ":cscope find" is not ignored.
+解决方案:   Ignore the white space, but not when the leading white space is
+	    useful for the argument.
+相关文件:   runtime/doc/if_scop.txt, src/if_cscope.c
+
+Patch 7.2.146
+问题:	    v:warningmsg isn't used for all warnings.
+解决方案:   Set v:warningmsg for relevant warnings. (Ingo Karkat)
+相关文件:   src/fileio.c, src/misc1.c, src/option.c
+
+Patch 7.2.147
+问题:	    When compiled as small version and 'number' is on the cursor is
+	    displayed in the wrong position after a tab. (James Vega)
+解决方案:   Don't increment vcol when still displaying the line number.
+相关文件:   src/screen.c
+
+Patch 7.2.148
+问题:	    When searching for "$" while 'hlsearch' is set, highlighting the
+	    character after the line does not work in the cursor column.
+	    Also highlighting for Visual mode after the line end when this
+	    isn't needed.  (Markus Heidelberg)
+解决方案:   Only compare the cursor column in the cursor line.  Only highlight
+	    for Visual selection after the last character when it's needed to
+	    see where the Visual selection ends.
+相关文件:   src/screen.c
+
+Patch 7.2.149
+问题:	    Using return value of function that doesn't return a value results
+	    in reading uninitialized memory.
+解决方案:   Set the default to return zero.  Make cursor() return -1 on
+	    failure.  Let complete() return an empty string in case of an
+	    error.  (partly by Dominique Pelle)
+相关文件:   runtime/doc/eval.txt, src/eval.c
+
+Patch 7.2.150 (extra)
+问题:	    Can't use tab pages from VisVim.
+解决方案:   Add tab page support to VisVim. (Adam Slater)
+相关文件:   src/VisVim/Commands.cpp, src/VisVim/Resource.h,
+	    src/VisVim/VisVim.rc
+
+Patch 7.2.151
+问题:	    ":hist a" doesn't work like ":hist all" as the docs suggest.
+解决方案:   Make ":hist a" and ":hist al" work. (Dominique Pelle)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.152
+问题:	    When using "silent echo x" inside ":redir" a next echo may start
+	    halfway the line. (Tony Mechelynck, Dennis Benzinger)
+解决方案:   Reset msg_col after redirecting silently.
+相关文件:   src/ex_docmd.c, src/message.c, src/proto/message.pro
+
+Patch 7.2.153
+问题:	    Memory leak for ":recover empty_dir/".
+解决方案:   Free files[] when it becomes empty. (Dominique Pelle)
+相关文件:   src/memline.c
+
+Patch 7.2.154 (after 7.2.132)
+问题:	    ":cd" is still possible in a SwapExists autocmd.
+解决方案:   Set allbuf_lock in do_swapexists().
+相关文件:   src/memline.c
+
+Patch 7.2.155
+问题:	    Memory leak in ":function /pat".
+解决方案:   Free the memory. (Dominique Pelle)
+相关文件:   src/eval.c
+
+Patch 7.2.156 (after 7.2.143)
+问题:	    No completion for :scscope and :lcscope commands.
+解决方案:   Implement the completion. (Dominique Pelle)
+相关文件:   src/if_cscope.c, src/ex_docmd.c, src/proto/if_cscope.pro
+
+Patch 7.2.157
+问题:	    Illegal memory access when searching in path.
+解决方案:   Avoid looking at a byte after end of a string. (Dominique Pelle)
+相关文件:   src/search.c
+
+Patch 7.2.158
+问题:	    Warnings from VisualC compiler.
+解决方案:   Add type casts. (George Reilly)
+相关文件:   src/ops.c
+
+Patch 7.2.159
+问题:	    When $x_includes ends up being "NONE" configure fails.
+解决方案:   Check for $x_includes not to be "NONE" (Rainer)
+相关文件:   src/auto/configure, src/configure.in
+
+Patch 7.2.160
+问题:	    Search pattern not freed on exit when 'rightleft' set.
+解决方案:   Free mr_pattern_alloced.
+相关文件:   src/search.c
+
+Patch 7.2.161
+问题:	    Folds messed up in other tab page. (Vlad Irnov)
+解决方案:   Instead of going over all windows in current tab page go over all
+	    windows in all tab pages.  Also free memory for location lists in
+	    other tab pages when exiting. (Lech Lorens)
+相关文件:   src/fileio.c, src/mark.c, src/misc1.c, src/misc2.c
+
+Patch 7.2.162
+问题:	    The quickfix window may get wrong filetype.
+解决方案:   Do not detect the filetype for the quickfix window. (Lech Lorens)
+相关文件:   src/quickfix.c
+
+Patch 7.2.163
+问题:	    The command line window may get folding.
+解决方案:   Default to no/manual folding. (Lech Lorens)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.164
+问题:	    When 'showbreak' is set the size of the Visual block may be
+	    reported wrong. (Eduardo Daudt Flach)
+解决方案:   Temporarily make 'sbr' empty.
+相关文件:   src/normal.c, src/ops.c
+
+Patch 7.2.165
+问题:	    The argument for the FuncUndefined autocmd event is expanded like
+	    a file name.
+解决方案:   Don't try expanding it. (Wang Xu)
+相关文件:   src/fileio.c
+
+Patch 7.2.166
+问题:	    No completion for ":sign" command.
+解决方案:   Add ":sign" completion. (Dominique Pelle)
+相关文件:   src/ex_cmds.c, src/ex_docmd.c, src/ex_getln.c, src/vim.h,
+	    src/proto/ex_cmds.pro
+
+Patch 7.2.167
+问题:	    Splint doesn't work well for checking the code.
+解决方案:   Add splint arguments in the Makefile.  Exclude some code from
+	    splint that it can't handle.  Tune splint arguments to give
+	    reasonable errors.  Add a filter for removing false warnings from
+	    splint output.  Many small changes to avoid warnings.  More to
+	    follow...
+相关文件:   Filelist, src/Makefile, src/buffer.c, src/charset.c,
+	    src/cleanlint.vim, src/digraph.c, src/edit.c, src/ex_cmds.c,
+	    src/globals.h, src/ops.c, src/os_unix.c, src/os_unix.h,
+	    src/proto/buffer.pro, src/proto/edit.pro, src/screen.c,
+	    src/structs.h
+
+Patch 7.2.168
+问题:	    When no ctags program can be found, "make tags" attempts to
+	    execute the first C file.
+解决方案:   Default to "ctags" when no ctags program can be found.
+相关文件:   src/configure.in, src/auto/configure
+
+Patch 7.2.169
+问题:	    Splint complains about a lot of things.
+解决方案:   Add type casts, #ifdefs and other changes to avoid warnings.
+	    Change colnr_T from unsigned to int.  Avoids mistakes with
+	    subtracting columns.
+相关文件:   src/cleanlint.vim, src/diff.c, src/edit.c, src/ex_cmds.c,
+	    src/ex_cmds2.c, src/ex_docmd.c, src/proto/ex_cmds.pro,
+	    src/proto/spell.pro, src/quickfix.c, src/spell.c, src/structs.h,
+	    src/term.h, src/vim.h
+
+Patch 7.2.170
+问题:	    Using b_dev while it was not set. (Dominique Pelle)
+解决方案:   Add the b_dev_valid flag.
+相关文件:   src/buffer.c, src/fileio.c, src/structs.h
+
+Patch 7.2.171 (after 7.2.169)
+问题:	    Compiler warnings. (Tony Mechelynck)
+解决方案:   Add function prototype. (Patrick Texier)  Init variable.
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.172 (extra)
+问题:	    Compiler warning.
+解决方案:   Adjust function prototype. (Patrick Texier)
+相关文件:   src/os_mswin.c
+
+Patch 7.2.173
+问题:	    Without lint there is no check for unused function arguments.
+解决方案:   Use gcc -Wunused-parameter instead of lint.  For a few files add
+	    attributes to arguments that are known not to be used.
+相关文件:   src/auto/configure, src/buffer.c, src/charset.c, src/diff.c,
+	    src/configure.in, src/config.h.in, src/edit.c, src/ex_cmds.c,
+	    src/ex_cmds2.c, src/version.c, src/vim.h
+
+Patch 7.2.174
+问题:	    Too many warnings from gcc -Wextra.
+解决方案:   Change initializer.  Add UNUSED.  Add type casts.
+相关文件:   src/edit.c, src/eval.c, src/ex_cmds.c, src/ex_docmd.c,
+	    src/ex_getln.c, src/fileio.c, getchar.c, globals.h, main.c,
+	    memline.c, message.c, src/misc1.c, src/move.c, src/normal.c,
+	    src/option.c, src/os_unix.c, src/os_unix.h, src/regexp.c,
+	    src/search.c, src/tag.c
+
+Patch 7.2.175
+问题:	    Compiler warning in OpenBSD.
+解决方案:   Add type cast for NULL. (Dasn)
+相关文件:   src/if_cscope.c
+
+Patch 7.2.176
+问题:	    Exceptions for splint are not useful.
+解决方案:   Remove the S_SPLINT_S ifdefs.
+相关文件:   src/edit.c, src/ex_cmds.c, src/ex_docmd.c, src/os_unix.c,
+	    src/os_unix.h, src/os_unixx.h, src/structs.h, src/term.h
+
+Patch 7.2.177
+问题:	    Compiler warnings when using -Wextra
+解决方案:   Add UNUSED and type casts.
+相关文件:   src/eval.c, src/ex_docmd.c, src/ex_eval.c, src/ex_getln.c,
+	    src/fileio.c, src/hardcopy.c, src/if_cscope.c, src/if_xcmdsrv.c,
+	    src/farsi.c, src/mark.c, src/menu.c
+
+Patch 7.2.178
+问题:	    Using negative value for device number might not work.
+解决方案:   Use a separate flag for whether ffv_dev was set.
+相关文件:   src/misc2.c
+
+Patch 7.2.179
+问题:	    Using negative value for device number might not work.
+解决方案:   Use a separate flag for whether sn_dev was set.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.180
+问题:	    Some more compiler warnings when using gcc -Wextra.
+解决方案:   Add UNUSED and type casts.
+相关文件:   src/buffer.c, src/ex_cmds.c, src/macros.h, src/main.c,
+	    src/menu.c, src/message.c, src/misc1.c, src/mbyte.c,
+	    src/normal.c, src/option.c, src/os_unix.c, src/quickfix.c,
+	    src/screen.c, src/search.c, src/spell.c, src/syntax.c, src/tag.c,
+	    src/term.c, src/ui.c
+
+Patch 7.2.181
+问题:	    Some more compiler warnings when using gcc -Wextra.
+解决方案:   Add UNUSED and type casts.
+相关文件:   src/if_mzsch.c, src/gui.c, src/gui_gtk.c, src/gui_gtk_x11.c,
+	    src/gui_gtk_f.c, src/gui_beval.c, src/netbeans.c
+
+Patch 7.2.182 (after 7.2.181)
+问题:	    Compilation problems after previous patch for Motif.  Gvim with
+	    GTK crashes on startup.
+解决方案:   Add comma.  Init form structure to zeroes.
+相关文件:   src/netbeans.c, src/gui_gtk_f.c
+
+Patch 7.2.183
+问题:	    Configure problem for sys/sysctl.h on OpenBSD. (Dasn)
+解决方案:   Add separate check for this header file.  Also switch to newer
+	    version of autoconf.
+相关文件:   src/auto/configure, src/configure.in
+
+Patch 7.2.184
+问题:	    Some more compiler warnings when using gcc -Wextra.
+解决方案:   Add UNUSED and type casts.  Autoconf check for wchar_t.
+相关文件:   src/auto/configure, src/config.h.in, src/configure.in,
+	    src/gui_athena.c, src/gui_x11.c, src/gui.c, src/gui_beval.c,
+	    src/gui_at_sb.c, src/gui_at_fs.c, src/gui_motif.c,
+	    src/gui_xmdlg.c, src/gui_xmebw.c, src/if_python.c, src/window.c,
+	    src/workshop.c
+
+Patch 7.2.185
+问题:	    Some more compiler warnings when using gcc -Wextra.
+解决方案:   Add UNUSED and type casts.
+相关文件:   src/Makefile, src/if_tlc.c, src/if_ruby.c
+
+Patch 7.2.186
+问题:	    Some more compiler warnings when using gcc -Wextra.
+解决方案:   Now with the intended if_tcl.c changes.
+相关文件:   src/if_tcl.c
+
+Patch 7.2.187 (after 7.2.186)
+问题:	    Doesn't build with older versions of TCL. (Yongwei Wu)
+解决方案:   Add #ifdefs. (Dominique Pelle)
+相关文件:   src/if_tcl.c
+
+Patch 7.2.188
+问题:	    Crash with specific use of function calls. (Meikel Brandmeyer)
+解决方案:   Make sure the items referenced by a function call are not freed
+	    twice.  (based on patch from Nico Weber)
+相关文件:   src/eval.c
+
+Patch 7.2.189
+问题:	    Possible hang for deleting auto-indent. (Dominique Pelle)
+解决方案:   Make sure the position is not beyond the end of the line.
+相关文件:   src/edit.c
+
+Patch 7.2.190
+问题:	    The register executed by @@ isn't restored.
+解决方案:   Mark the executable register in the viminfo file.
+相关文件:   src/ops.c
+
+Patch 7.2.191
+问题:	    Mzscheme interface doesn't work on Ubuntu.
+解决方案:   Change autoconf rules.  Define missing macro.  Some changes to
+	    avoid gcc warnings.  Remove per-buffer namespace. (Sergey Khorev)
+相关文件:   runtime/doc/if_mzsch.txt, src/Makefile, src/Make_ming.mak,
+	    src/Make_mvc.mak, src/auto/configure, src/configure.in,
+	    src/config.mk.in, src/eval.c, src/if_mzsch.c, src/if_mzsch.h,
+	    src/main.c, src/proto/if_mzsch.pro
+
+Patch 7.2.192 (after 7.2.188)
+问题:	    Still a crash in the garbage collector for a very rare situation.
+解决方案:   Make sure current_copyID is always incremented correctly. (Kent
+	    Sibilev)
+相关文件:   src/eval.c
+
+Patch 7.2.193
+问题:	    Warning for uninitialized values.
+解决方案:   Initialize all the struct items.
+相关文件:   src/eval.c
+
+Patch 7.2.194 (extra)
+问题:	    MSVC: rem commands are echoed.
+解决方案:   Add commands to switch off echo. (Wang Xu)
+相关文件:   src/msvc2008.bat
+
+Patch 7.2.195
+问题:	    Leaking memory for the command Vim was started with.
+解决方案:   Remember the pointer and free it.
+相关文件:   src/gui_gtk_x11.c
+
+Patch 7.2.196 (after 7.2.167)
+问题:	    Turns out splint doesn't work well enough to be usable.
+解决方案:   Remove splint support.
+相关文件:   Filelist, src/cleanlint.vim
+
+Patch 7.2.197
+问题:	    Warning for uninitialized values.
+解决方案:   Initialize all the struct items of typebuf.
+相关文件:   src/globals.h
+
+Patch 7.2.198
+问题:	    Size of buffer used for tgetent() may be too small.
+解决方案:   Use the largest known size everywhere.
+相关文件:   src/vim.h
+
+Patch 7.2.199
+问题:	    Strange character in comment.
+解决方案:   Change to "message". (Yongwei Wu)
+相关文件:   src/term.c
+
+Patch 7.2.200
+问题:	    Reading past end of string when navigating the menu bar or
+	    resizing the window.
+解决方案:   Add and use mb_ptr2len_len(). (partly by Dominique Pelle)
+	    Also add mb_ptr2cells_len() to prevent more trouble.
+相关文件:   src/gui_gtk_x11.c, src/os_unix.c, src/globals.h, src/mbyte.c,
+	    src/proto/mbyte.pro
+
+Patch 7.2.201
+问题:	    Cannot copy/paste HTML to/from Firefox via the clipboard.
+解决方案:   Implement this for GTK.  Add the "html" value to 'clipboard'.
+相关文件:   runtime/doc/options.txt, src/globals.h, src/gui_gtk_x11.c,
+	    src/mbyte.c, src/proto/mbyte.pro, src/option.c
+
+Patch 7.2.202
+问题:	    BufWipeout autocommand that edits another buffer causes problems.
+解决方案:   Check for the situation, give an error and quit the operation.
+相关文件:   src/fileio.c
+
+Patch 7.2.203
+问题:	    When reloading a buffer or doing anything else with a buffer that
+	    is not displayed in a visible window, autocommands may be applied
+	    to the current window, folds messed up, etc.
+解决方案:   Instead of using the current window for the hidden buffer use a
+	    special window, splitting the current one temporarily.
+相关文件:   src/fileio.c, src/globals.h, src/gui.c, src/if_perl.xs,
+	    src/progo/gui.pro, src/proto/window.pro, src/screen.c,
+	    src/structs.h, src/window.c
+
+Patch 7.2.204 (extra)
+问题:	    Win32: Can't build with Visual Studio 2010 beta 1.
+解决方案:   Fix the makefile. (George Reilly)
+相关文件:   src/Make_mvc.mak
+
+Patch 7.2.205 (extra)
+问题:	    Win32: No support for High DPI awareness.
+解决方案:   Fix the manifest file. (George Reilly)
+相关文件:   src/Make_mvc.mak, src/gvim.exe.mnf
+
+Patch 7.2.206
+问题:	    Win32: Can't build netbeans interface with Visual Studio 2010.
+解决方案:   Undefine ECONNREFUSED. (George Reilly)
+相关文件:   src/netbeans.c
+
+Patch 7.2.207
+问题:	    Using freed memory with ":redrawstatus" when it works recursively.
+解决方案:   Prevent recursively updating the status line. (partly by Dominique
+	    Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.208
+问题:	    "set novice" gives an error message, it should be ignored.
+解决方案:   Don't see "no" in "novice" as unsetting an option.  (Patrick
+	    Texier)
+相关文件:   src/option.c
+
+Patch 7.2.209
+问题:	    For xxd setmode() is undefined on Cygwin.
+解决方案:   Include io.h. (Dominique Pelle)
+相关文件:   src/xxd/xxd.c
+
+Patch 7.2.210
+问题:	    When a file that is being edited has its timestamp updated outside
+	    of Vim and ":checktime" is used still get a warning when writing
+	    the file. (Matt Mueller)
+解决方案:   Store the timestamp in b_mtime_read when the timestamp is the only
+	    thing that changed.
+相关文件:   src/fileio.c
+
+Patch 7.2.211
+问题:	    Memory leak when expanding a series of file names.
+解决方案:   Use ga_clear_strings() instead of ga_clear().
+相关文件:   src/misc1.c
+
+Patch 7.2.212 (extra)
+问题:	    Warnings for redefining SIG macros.
+解决方案:   Don't define them if already defined. (Bjorn Winckler)
+相关文件:   src/os_mac.h
+
+Patch 7.2.213
+问题:	    Warning for using vsprintf().
+解决方案:   Use vim_vsnprintf().
+相关文件:   src/netbeans.c
+
+Patch 7.2.214
+问题:	    Crash with complete function for user command. (Andy Wokula)
+解决方案:   Avoid using a NULL pointer (Dominique Pelle)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.215
+问题:	    ml_get error when using ":vimgrep".
+解决方案:   Load the memfile for the hidden buffer before putting it in a
+	    window.  Correct the order of splitting the window and filling
+	    the window and buffer with data.
+相关文件:   src/fileio.c, src/proto/window.pro, src/quickfix.c, src/window.c
+
+Patch 7.2.216
+问题:	    Two error messages have the same number E812.
+解决方案:   Give one message a different number.
+相关文件:   runtime/doc/autocmd.txt, runtime/doc/if_mzsch.txt, src/if_mzsch.c
+
+Patch 7.2.217
+问题:	    Running tests with valgrind doesn't work as advertised.
+解决方案:   Fix the line in the Makefile.
+相关文件:   src/testdir/Makefile
+
+Patch 7.2.218
+问题:	    Cannot build GTK with hangul_input feature. (Dominique Pelle)
+解决方案:   Adjust #ifdef.  (SungHyun Nam)
+相关文件:   src/gui.c
+
+Patch 7.2.219 (extra)
+问题:	    Photon GUI is outdated.
+解决方案:   Updates for QNX 6.4.0. (Sean Boudreau)
+相关文件:   src/gui_photon.c
+
+Patch 7.2.220 (after 7.2.215)
+问题:	    a BufEnter autocommand that changes directory causes problems.
+	    (Ajit Thakkar)
+解决方案:   Disable autocommands when opening a hidden buffer in a window.
+相关文件:   src/fileio.c
+
+Patch 7.2.221
+问题:	    X cut_buffer0 text is used as-is, it may be in the wrong encoding.
+解决方案:   Convert between 'enc' and latin1. (James Vega)
+相关文件:   src/gui_gtk_x11.c, src/message.c, src/ops.c, src/proto/ui.pro,
+	    src/ui.c
+
+Patch 7.2.222
+问题:	   ":mksession" doesn't work properly with 'acd' set. 
+解决方案:   Make it work. (Yakov Lerner)
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.223
+问题:	    When a script is run with ":silent" it is not able to give warning
+	    messages.
+解决方案:   Add the ":unsilent" command.
+相关文件:   runtime/doc/various.txt, src/ex_cmds.h, src/ex_docmd.c
+
+Patch 7.2.224
+问题:	    Crash when using 'completefunc'. (Ingo Karkat)
+解决方案:   Disallow entering edit() recursively when doing completion.
+相关文件:   src/edit.c
+
+Patch 7.2.225
+问题:	    When using ":normal" a saved character may be executed.
+解决方案:   Also store old_char when saving typeahead.
+相关文件:   src/getchar.c, src/structs.h
+
+Patch 7.2.226
+问题:	    ml_get error after deleting the last line. (Xavier de Gaye)
+解决方案:   When adjusting marks a callback may be invoked.  Adjust the cursor
+	    position before invoking deleted_lines_mark().
+相关文件:   src/ex_cmds.c, src/ex_docmd.c, src/if_mzsch.c, src/if_python.c,
+	    src/if_perl.xs, src/misc1.c
+
+Patch 7.2.227
+问题:	    When using ":cd" in a script there is no way to track this.
+解决方案:   Display the directory when 'verbose' is 5 or higher.
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.228
+问题:	    Cscope is limited to 8 connections.
+解决方案:   Allocated the connection array to handle any number of
+	    connections. (Dominique Pelle)
+相关文件:   runtime/doc/if_cscop.txt, src/if_cscope.h, src/if_cscope.c
+
+Patch 7.2.229
+问题:	    Warning for shadowed variable.
+解决方案:   Rename "wait" to "wait_time".
+相关文件:   src/os_unix.c
+
+Patch 7.2.230
+问题:	    A few old lint-style ARGUSED comments.
+解决方案:   Change to the new UNUSED style.
+相关文件:   src/getchar.c
+
+Patch 7.2.231
+问题:	    Warning for unreacheable code.
+解决方案:   Add #ifdef.
+相关文件:   src/if_perl.xs
+
+Patch 7.2.232
+问题:	    Cannot debug problems with being in a wrong directory.
+解决方案:   When 'verbose' is 5 or higher report directory changes.
+相关文件:   src/os_unix.c, src/os_unix.h, src/proto/os_unix.pro
+
+Patch 7.2.233 (extra part of 7.2.232)
+问题:	    Cannot debug problems with being in a wrong directory.
+解决方案:   When 'verbose' is 5 or higher report directory changes.
+相关文件:   src/os_msdos.c, src/os_mswin.c, src/os_riscos.c, src/os_mac.h
+
+Patch 7.2.234
+问题:	    It is not possible to ignore file names without a suffix.
+解决方案:   Use an empty entry in 'suffixes' for file names without a dot.
+相关文件:   runtime/doc/cmdline.txt, src/misc1.c
+
+Patch 7.2.235
+问题:	    Using CTRL-O z= in Insert mode has a delay before redrawing.
+解决方案:   Reset msg_didout and msg_scroll.
+相关文件:   src/misc1.c, src/spell.c
+
+Patch 7.2.236
+问题:	    Mac: Compiling with Ruby doesn't always work.
+解决方案:   In configure filter out the --arch argument (Bjorn Winckler)
+相关文件:   src/configure.in, src/auto/configure
+
+Patch 7.2.237
+问题:	    Crash on exit when window icon not set.
+解决方案:   Copy terminal name when using it for the icon name.
+相关文件:   src/os_unix.c
+
+Patch 7.2.238
+问题:	    Leaking memory when setting term to "builtin_dumb".
+解决方案:   Free memory when resetting term option t_Co.
+相关文件:   src/option.c, src/proto/option.pro, src/term.c
+
+Patch 7.2.239
+问题:	    Using :diffpatch twice or when patching fails causes memory
+	    corruption and/or a crash.  (Bryan Venteicher)
+解决方案:   Detect missing output file.  Avoid using non-existing buffer.
+相关文件:   src/diff.c
+
+Patch 7.2.240
+问题:	    Crash when using find/replace dialog repeatedly. (Michiel
+	    Hartsuiker)
+解决方案:   Avoid doing the operation while busy or recursively.  Also refuse
+	    replace when text is locked.
+相关文件:   src/gui.c
+
+Patch 7.2.241
+问题:	    When using a combination of ":bufdo" and "doautoall" we may end up
+	    in the wrong directory. (Ajit Thakkar)
+	    Crash when triggering an autocommand in ":vimgrep".  (Yukihiro
+	    Nakadaira)
+解决方案:   Clear w_localdir and globaldir when using the aucmd_win.
+	    Use a separate flag to decide aucmd_win needs to be restored.
+相关文件:   src/fileio.c, src/globals.h, src/structs.h
+
+Patch 7.2.242
+问题:	    Setting 'lazyredraw' causes the cursor column to be recomputed.
+	    (Tom Link)
+解决方案:   Only recompute the cursor column for a boolean option if changes
+	    the cursor position.
+相关文件:   src/option.c
+
+Patch 7.2.243
+问题:	    Memory leak when using :vimgrep and resizing. (Dominique Pelle)
+解决方案:   Free memory for aucmd_win when resizing and don't allocate it
+	    twice.
+相关文件:   src/screen.c
+
+Patch 7.2.244
+问题:	    When 'enc' is utf-8 and 'fenc' is latin1, writing a non-latin1
+	    character gives a conversion error without any hint what is wrong.
+解决方案:   When known add the line number to the error message.
+相关文件:   src/fileio.c
+
+Patch 7.2.245
+问题:	    When 'enc' is "utf-16" and 'fenc' is "utf-8" writing a file does
+	    conversion while none should be done. (Yukihiro Nakadaira) When
+	    'fenc' is empty the file is written as utf-8 instead of utf-16.
+解决方案:   Do proper comparison of encodings, taking into account that all
+	    Unicode values for 'enc' use utf-8 internally.
+相关文件:   src/fileio.c
+
+Patch 7.2.246
+问题:	    Cscope home page link is wrong.
+解决方案:   Update the URL. (Sergey Khorev)
+相关文件:   runtime/doc/if_cscop.txt
+
+Patch 7.2.247
+问题:	    Mzscheme interface minor problem.
+解决方案:   Better error message when build fails. (Sergey Khorev)
+相关文件:   src/if_mzsch.c
+
+Patch 7.2.248 (extra)
+问题:	    Mzscheme interface building minor problems.
+解决方案:   Update Win32 makefiles. (Sergey Khorev)
+相关文件:   src/Make_cyg.mak, src/Make_ming.mak, src/Make_mvc.mak
+
+Patch 7.2.249
+问题:	    The script to check .po files can't handle '%' in plural forms.
+解决方案:   Remove "Plural-Forms:" from the checked string.
+相关文件:   src/po/check.vim
+
+Patch 7.2.250 (extra)
+问题:	    Possible buffer overflow.
+解决方案:   Compute the remaining space. (Dominique Pelle)
+相关文件:   src/GvimExt/gvimext.cpp
+
+Patch 7.2.251 (after 7.2.044)
+问题:	    Compiler adds invalid memory bounds check.
+解决方案:   Remove _FORTIFY_SOURCE=2 from CFLAGS. (Dominique Pelle)
+相关文件:   src/auto/configure, src/configure.in
+
+Patch 7.2.252
+问题:	    When using a multi-byte 'enc' the 'iskeyword' option cannot
+	    contain characters above 128.
+解决方案:   Use mb_ptr2char_adv().
+相关文件:   src/charset.c
+
+Patch 7.2.253
+问题:	    Netbeans interface: getLength always uses current buffer.
+解决方案:   Use ml_get_buf() instead of ml_get(). (Xavier de Gaye)
+相关文件:   src/netbeans.c
+
+Patch 7.2.254
+问题:	    Compiler warning for assigning size_t to int.
+解决方案:   Use size_t for the variable. (George Reilly)
+相关文件:   src/fileio.c
+
+Patch 7.2.255 (after 7.2.242)
+问题:	    Setting 'rightleft', 'linebreak' and 'wrap' may cause cursor to be
+	    in wrong place.
+解决方案:   Recompute the cursor column for these options.
+相关文件:   src/option.c
+
+Patch 7.2.256
+问题:	    When 'guifont' was not set GTK font dialog doesn't have a default.
+	    (Andreas Metzler)
+解决方案:   Set default to DEFAULT_FONT. (James Vega)
+相关文件:   src/gui_gtk_x11.c
+
+Patch 7.2.257
+问题:	    With GTK 2.17 lots of assertion error messages.
+解决方案:   Remove check for static gravity. (Sebastian Droege)
+相关文件:   src/gui_gtk_f.c
+
+Patch 7.2.258
+问题:	    v:beval_col and b:beval_text are wrong in UTF-8 text. (Tony
+	    Mechelynck)
+解决方案:   Use byte number instead of character number for the column.
+相关文件:   src/ui.c
+
+Patch 7.2.259
+问题:	    exists() doesn't work properly for an empty aucmd group.
+解决方案:   Change how au_exists() handles a missing pattern.  Also add a
+	    test for this. (Bob Hiestand)
+相关文件:   src/fileio.c, src/testdir/Makefile, src/testdir/test67.in,
+	    src/testdir/test67.ok
+
+Patch 7.2.260 (extra part of 7.2.259)
+问题:	    exists() doesn't work properly for empty aucmd group.
+解决方案:   Change how au_exists() handles a missing pattern.  Also add a
+	    test for this. (Bob Hiestand)
+相关文件:   src/testdir/Make_amiga.mak, src/testdir/Make_dos.mak,
+	    src/testdir/Make_ming.mak, src/testdir/Make_os2.mak,
+	    src/testdir/Make_vms.mms
+
+Patch 7.2.261
+问题:	    When deleting lines with a specific folding configuration E38 may
+	    appear. (Shahaf)
+解决方案:   When adjusting nested folds for deleted lines take into account
+	    that they don't start at the top of the enclosing fold.
+相关文件:   src/fold.c
+
+Patch 7.2.262
+问题:	    When using custom completion for a user command the pattern string
+	    goes beyond the cursor position. (Hari Krishna Dara)
+解决方案:   Truncate the string at the cursor position.
+相关文件:   src/ex_getln.c, src/structs.h
+
+Patch 7.2.263
+问题:	    GTK2: when using the -geom argument with an offset from the right
+	    edge and the size is smaller than the default, the Vim window is
+	    not positioned properly.
+解决方案:   Use another function to set the size. (Vitaly Minko)
+相关文件:   src/gui_gtk_x11.c
+
+Patch 7.2.264
+问题:	    GTK2: When the Vim window is maximized setting 'columns' or
+	    'lines' doesn't work.
+解决方案:   Unmaximize the window before setting the size. (Vitaly Minko)
+相关文件:   src/gui.c, src/gui_gtk_x11.c, src/proto/gui_gtk_x11.pro
+
+Patch 7.2.265
+问题:	    When using ":silent broken" inside try/catch silency may persist.
+	    (dr-dr xp)
+解决方案:   Set msg_silent when there is an error and it's bigger than the
+	    saved value.
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.266
+问题:	    When an expression abbreviation is triggered, the typed character
+	    is unknown.
+解决方案:   Make the typed character available in v:char.
+相关文件:   runtime/doc/map.txt, src/eval.c, src/getchar.c, src/ops.c,
+	    src/proto/eval.pro
+
+Patch 7.2.267
+问题:	    Crash for narrow window and double-width character.
+解决方案:   Check for zero width.  (Taro Muraoka)
+相关文件:   src/charset.c
+
+Patch 7.2.268
+问题:	    Crash when using Python to set cursor beyond end of line.
+	    (winterTTr)
+解决方案:   Check the column to be valid.
+相关文件:   src/if_python.c
+
+Patch 7.2.269
+问题:	    Many people struggle to find out why Vim startup is slow.
+解决方案:   Add the --startuptime command line flag.
+相关文件:   runtime/doc/starting.txt, src/globals.h, src/feature.h,
+	    src/main.c, src/macros.h
+
+Patch 7.2.270
+问题:	    Using ":@c" when the c register contains a CR causes the rest to
+	    be executed later. (Dexter Douglas)
+解决方案:   Don't check for typeahead to start with ':', keep executing
+	    commands until all added typeahead has been used.
+相关文件:   src/ex_docmd.c
+
+Patch 7.2.271
+问题:	    Using freed memory in Motif GUI version when making a choice.
+解决方案:   Free memory only after using it. (Dominique Pelle)
+相关文件:   src/gui_xmdlg.c
+
+Patch 7.2.272
+问题:	    "_.svz" is not recognized as a swap file. (David M. Besonen)
+解决方案:   Accept .s[uvw][a-z] as a swap file name extension.
+相关文件:   src/memline.c
+
+Patch 7.2.273
+问题:	    Crash with redir to unknown array. (Christian Brabandt)
+解决方案:   Don't assign the redir result when there was an error.
+相关文件:   src/eval.c
+
+Patch 7.2.274
+问题:	    Syntax folding doesn't work properly when adding a comment.
+解决方案:   Fix it and add a test. (Lech Lorens)
+相关文件:   src/fold.c, src/testdir/test45.in, src/testdir/test45.ok
+
+Patch 7.2.275
+问题:	    Warning for unused argument and comparing signed and unsigned.
+解决方案:   Add type cast.
+相关文件:   src/memline.c
+
+Patch 7.2.276
+问题:	    Crash when setting 'isprint' to a small bullet. (Raul Coronado)
+解决方案:   Check for the character to be < 256.  Also make it possible to
+	    specify a range of multi-byte characters. (Lech Lorens)
+相关文件:   src/charset.c
+
+Patch 7.2.277
+问题:	    CTRL-Y in a diff'ed window may move the cursor outside of the
+	    window. (Lech Lorens)
+解决方案:   Limit the number of filler lines to the height of the window.
+	    Don't reset filler lines to zero for an empty buffer.
+相关文件:   src/move.c
+
+Patch 7.2.278
+问题:	    Using magic number in the folding code.
+解决方案:   Use the defined MAX_LEVEL.
+相关文件:   src/fold.c
+
+Patch 7.2.279
+问题:	    Invalid memory read with visual mode "r". (Dominique Pelle)
+解决方案:   Make sure the cursor position is valid.  Don't check the cursor
+	    position but the position being used.  And make sure we get the
+	    right line.
+相关文件:   src/misc2.c, src/ops.c
+
+Patch 7.2.280
+问题:	    A redraw in a custom statusline with %! may cause a crash.
+	    (Yukihiro Nakadaira)
+解决方案:   Make a copy of 'statusline'.  Also fix typo in function name
+	    redraw_custum_statusline. (partly by Dominique Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.281
+问题:	    'cursorcolumn' highlighting is wrong in diff mode.
+解决方案:   Adjust the column computation. (Lech Lorens)
+相关文件:   src/screen.c
+
+Patch 7.2.282
+问题:	    A fold can't be closed.
+解决方案:   Initialize fd_small to MAYBE. (Lech Lorens)
+相关文件:   src/fold.c
+
+Patch 7.2.283
+问题:	    Changing font while the window is maximized doesn't keep the
+	    window maximized.
+解决方案:   Recompute number of lines and columns after changing font. (James
+	    Vega)
+相关文件:   src/gui_gtk_x11.c
+
+Patch 7.2.284
+问题:	    When editing the same buffer in two windows, one with folding,
+	    display may be wrong after changes.
+解决方案:   Call set_topline() to take care of side effects. (Lech Lorens)
+相关文件:   src/misc1.c
+
+Patch 7.2.285 (after 7.2.169)
+问题:	    CTRL-U in Insert mode also deletes indent. (Andrey Voropaev)
+解决方案:   Fix mistake made in patch 7.2.169.
+相关文件:   src/edit.c
+
+Patch 7.2.286 (after 7.2.269)
+问题:	    The "--startuptime=<file>" argument is not consistent with other
+	    arguments.
+解决方案:   Use "--startuptime <file>".  Added the +startuptime feature.
+相关文件:   runtime/doc/eval.txt, runtime/doc/starting.txt,
+	    runtime/doc/various.txt, src/eval.c, src/main.c, src/version.c
+
+Patch 7.2.287
+问题:	    Warning from gcc 3.4 about uninitialized variable.
+解决方案:   Move assignment outside of #ifdef.
+相关文件:   src/if_perl.xs
+
+Patch 7.2.288
+问题:	    Python 2.6 pyconfig.h redefines macros.
+解决方案:   Undefine the macros before including pyconfig.h.
+相关文件:   src/if_python.c
+
+Patch 7.2.289
+问题:	    Checking wrong struct member.
+解决方案:   Change tb_buf to tb_noremap. (Dominique Pelle)
+相关文件:   src/getchar.c
+
+Patch 7.2.290
+问题:	    Not freeing memory from ":lmap", ":xmap" and ":menutranslate".
+解决方案:   Free the memory when exiting. (Dominique Pelle)
+相关文件:   src/misc2.c
+
+Patch 7.2.291
+问题:	    Reading uninitialised memory in arabic mode.
+解决方案:   Use utfc_ptr2char_len() rather than utfc_ptr2char().  (Dominique
+	    Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.292
+问题:	    Block right-shift doesn't work properly with multi-byte encoding
+	    and 'list' set.
+解决方案:   Add the missing "else". (Lech Lorens)
+相关文件:   src/ops.c
+
+Patch 7.2.293
+问题:	    When setting 'comments' option it may be used in a wrong way. 
+解决方案:   Don't increment after skipping over digets. (Yukihiro Nakadaira)
+相关文件:   src/misc1.c
+
+Patch 7.2.294
+问题:	    When using TEMPDIRS dir name could get too long.
+解决方案:   Overwrite tail instead of appending each time.  Use mkdtemp() when
+	    available. (James Vega)
+相关文件:   src/auto/configure, src/config.h.in, src/configure.in, src/fileio.c
+
+Patch 7.2.295
+问题:	    When using map() on a List the index is not known.
+解决方案:   Set v:key to the  index. (Hari Krishna Dara)
+相关文件:   runtime/doc/eval.txt, src/eval.c
+
+Patch 7.2.296
+问题:	    Help message about startuptime is wrong. (Dominique Pelle)
+解决方案:   Remove the equal sign.
+相关文件:   src/main.c
+
+Patch 7.2.297
+问题:	    Reading freed memory when writing ":reg" output to a register.
+	    (Dominique Pelle)
+解决方案:   Skip the register being written to.
+相关文件:   src/ops.c
+
+Patch 7.2.298
+问题:	    ":vimgrep" crashes when there is an autocommand that sets a
+	    window-local variable.
+解决方案:   Initialize the w: hashtab for re-use. (Yukihiro Nakadaira)
+相关文件:   src/fileio.c
+
+Patch 7.2.299
+问题:	    Crash when comment middle is longer than start.
+解决方案:   Fix size computation. (Lech Lorens)
+相关文件:   src/misc1.c
+
+Patch 7.2.300
+问题:	    Vim doesn't close file descriptors when forking and executing
+	    another command, e.g., ":shell".
+解决方案:   Use FD_CLOEXEC when available. (James Vega)
+相关文件:   auto/configure, src/config.h.in, src/configure.in,
+	    src/ex_cmdds2.c, src/fileio.c, src/memfile.c, src/memline.c
+
+Patch 7.2.301
+问题:	    Formatting is wrong when 'tw' is set to a small value.
+解决方案:   Fix it and add tests.  Also fix behavior of "1" in 'fo'. (Yukihiro
+	    Nakadaira)
+相关文件:   src/edit.c, src/testdir/Makefile, src/testdir/test68.in,
+	    src/testdir/test68.ok, src/testdir/test69.in,
+	    src/testdir/test69,ok
+
+Patch 7.2.302 (extra part of 7.2.301)
+问题:	    Formatting wrong with small 'tw' value.
+解决方案:   Add build rules for tests.
+相关文件:   src/testdir/Make_amiga.mak, src/testdir/Make_dos.mak,
+	    src/testdir/Make_ming.mak, src/testdir/Make_os2.mak,
+	    src/testdir/Make_vms.mms
+
+Patch 7.2.303 (after 7.2.294)
+问题:	    Can't build on MS-Windows.
+解决方案:   Add #ifdef around vim_settempdir(). (James Vega)
+相关文件:   src/fileio.c
+
+Patch 7.2.304
+问题:	    Compiler warning for bad pointer cast.
+解决方案:   Use another variable for int pointer.
+相关文件:   src/ops.c
+
+Patch 7.2.305
+问题:	    Recursively redrawing causes a memory leak. (Dominique Pelle)
+解决方案:   Disallow recursive screen updating.
+相关文件:   src/screen.c
+
+Patch 7.2.306
+问题:	    shellescape("10%%", 1) only escapes first %. (Christian Brabandt)
+解决方案:   Don't copy the character after the escaped one.
+相关文件:   src/misc2.c
+
+Patch 7.2.307
+问题:	    Crash with a very long syntax match statement. (Guy Gur Ari)
+解决方案:   When the offset does not fit in the two bytes available give an
+	    error instead of continuing with invalid pointers.
+相关文件:   src/regexp.c
+
+Patch 7.2.308
+问题:	    When using a regexp in the "\=" expression of a substitute
+	    command, submatch() returns empty strings for further lines.
+	    (Clockwork Jam)
+解决方案:   Save and restore the line number and line count when calling
+	    reg_getline().
+相关文件:   src/regexp.c
+
+Patch 7.2.309 (after 7.2.308)
+问题:	    Warning for missing function prototype. (Patrick Texier)
+解决方案:   Add the prototype.
+相关文件:   src/regexp.c
+
+Patch 7.2.310
+问题:	    When a filetype plugin in ~/.vim/ftdetect uses ":setfiletype" and
+	    the file starts with a "# comment" it gets "conf" filetype.
+解决方案:   Check for "conf" filetype after using ftdetect plugins.
+相关文件:   runtime/filetype.vim
+
+Patch 7.2.311
+问题:	    Can't compile with FreeMiNT.
+解决方案:   Change #ifdef for limits.h. (Alan Hourihane)
+相关文件:   src/fileio.c
+
+Patch 7.2.312
+问题:	    iconv() returns an invalid character sequence when conversion
+	    fails.  It should return an empty string. (Yongwei Wu)
+解决方案:   Be more strict about invalid characters in the input.
+相关文件:   src/mbyte.c
+
+Patch 7.2.313
+问题:	    Command line completion doesn't work after "%:h" and similar.
+解决方案:   Expand these items before doing the completion.
+相关文件:   src/ex_getln.c, src/misc1.c, src/proto/misc1.pro
+
+Patch 7.2.314
+问题:	    Missing function in small build.
+解决方案:   Always include concat_str.
+相关文件:   src/misc1.c
+
+Patch 7.2.315
+问题:	    Python libs can't be found on 64 bit system.
+解决方案:   Add lib64 to the list of directories. (Michael Henry)
+相关文件:   src/auto/configure, src/configure.in
+
+Patch 7.2.316
+问题:	    May get multiple _FORTIFY_SOURCE arguments. (Tony Mechelynck)
+解决方案:   First remove all these arguments and then add the one we want.
+	    (Dominique Pelle)
+相关文件:   src/auto/configure, src/configure.in
+
+Patch 7.2.317
+问题:	    Memory leak when adding a highlight group with unprintable
+	    characters, resulting in E669.
+解决方案:   Free the memory.  And fix a few typos. (Dominique Pelle)
+相关文件:   src/syntax.c
+
+Patch 7.2.318
+问题:	    Wrong locale value breaks floating point numbers for gvim.
+解决方案:   Set the locale again after doing GUI inits. (Dominique Pelle)
+相关文件:   src/main.c
+
+Patch 7.2.319
+问题:	    Motif: accessing freed memory when cancelling font dialog.
+解决方案:   Destroy the widget only after accessing it. (Dominique Pelle)
+相关文件:   src/gui_xmdlg.c
+
+Patch 7.2.320
+问题:	    Unused function in Mzscheme interface.
+解决方案:   Remove the function and what depends on it. (Dominique Pelle)
+相关文件:   src/if_mzsch.c, src/proto/if_mzsch.pro
+
+Patch 7.2.321
+问题:	    histadd() and searching with "*" fails to add entry to history
+	    when it is empty.
+解决方案:   Initialize the history. (Lech Lorens)
+相关文件:   src/eval.c, src/normal.c
+
+Patch 7.2.322
+问题:	    Wrong indenting in virtual replace mode with CTRL-Y below a short
+	    line.
+解决方案:   Check for character to be NUL. (suggested by Lech Lorens)
+相关文件:   src/edit.c
+
+Patch 7.2.323 (extra)
+问题:	    Balloon evaluation crashes on Win64.
+解决方案:   Change pointer types. (Sergey Khorev)
+相关文件:   src/gui_w32.c
+
+Patch 7.2.324
+问题:	    A negative column argument in setpos() may cause a crash.
+解决方案:   Check for invalid column number. (James Vega)
+相关文件:   src/eval.c, src/misc2.c
+
+Patch 7.2.325
+问题:	    A stray "w" in the startup vimrc file causes the edited file to be
+	    replaced with an empty file. (Stone Kang).
+解决方案:   Do not write a buffer when it has never been loaded.
+相关文件:   src/fileio.c
+
+Patch 7.2.326
+问题:	    Win32: $HOME doesn't work when %HOMEPATH% is not defined.
+解决方案:   Use "\" for %HOMEPATH% when it is not defined.
+相关文件:   src/misc1.c
+
+Patch 7.2.327
+问题:	    Unused functions in Workshop.
+解决方案:   Add "#if 0" and minor cleanup. (Dominique Pelle)
+相关文件:   src/workshop.c, src/integration.c, src/integration.h
+
+Patch 7.2.328
+问题:	    has("win64") does not return 1 on 64 bit MS-Windows version.
+解决方案:   Also check for _WIN64 besides WIN64.
+相关文件:   src/eval.c
+
+Patch 7.2.329
+问题:	    "g_" doesn't position cursor correctly when in Visual mode and
+	    'selection' is "exclusive". (Ben Fritz)
+解决方案:   Call adjust_for_sel().
+相关文件:   src/normal.c
+
+Patch 7.2.330
+问题:	    Tables for Unicode case operators are outdated.
+解决方案:   Add a Vim script for generating the tables.  Include tables for
+	    Unicode 5.2.
+相关文件:   runtime/tools/README.txt, runtime/tools/unicode.vim, src/mbyte.c
+
+Patch 7.2.331
+问题:	    Can't interrupt "echo list" for a very long list.
+解决方案:   Call line_breakcheck() in list_join().
+相关文件:   src/eval.c
+
+Patch 7.2.332
+问题:	    Crash when spell correcting triggers an autocommand that reloads
+	    the buffer.
+解决方案:   Make a copy of the line to be modified. (Dominique Pelle)
+相关文件:   src/spell.c
+
+Patch 7.2.333
+问题:	    Warnings from static code analysis.
+解决方案:   Small changes to various lines. (Dominique Pelle)
+相关文件:   src/buffer.c, src/edit.c, src/ex_getln.c, src/fileio.c,
+	    src/if_cscope.c, src/netbeans.c, src/ops.c, src/quickfix.c,
+	    src/syntax.c, src/ui.c
+
+Patch 7.2.334
+问题:	    Postponing keys in Netbeans interface does not work properly.
+解决方案:   Store the key string instead of the number.  Avoid an infinite
+	    loop. (Mostly by Xavier de Gaye)
+相关文件:   src/netbeans.c, src/proto/netbeans.pro
+
+Patch 7.2.335
+问题:	    The CTRL-] command escapes too many characters.
+解决方案:   Use a different list of characters to be escaped. (Sergey Khorev)
+相关文件:   src/normal.c
+
+Patch 7.2.336
+问题:	    MzScheme interface can't evaluate an expression.
+解决方案:   Add mzeval(). (Sergey Khorev)
+相关文件:   runtime/doc/eval.txt, runtime/doc/if_mzsch.txt,
+	    runtime/doc/usr_41.txt, src/eval.c, src/if_mzsch.c,
+	    src/proto/eval.pro, src/proto/if_mzsch.pro,
+	    src/testdir/Make_dos.mak, src/testdir/Make_ming.mak,
+	    src/testdir/Makefile, src/testdir/main.aap, src/testdir/test1.in,
+	    src/testdir/test70.in, src/testdir/test70.ok
+
+Patch 7.2.337
+问题:	    The :compiler command doesn't function properly when invoked in a
+	    function.
+解决方案:   Add "g:" before "current_compiler". (Yukihiro Nakadaira)
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.338 (after 7.2.300)
+问题:	    Part of FD_CLOEXEC change is missing.
+解决方案:   Include source file skipped because of typo.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.339 (after 7.2.269)
+问题:	    Part of --startuptime patch is missing.
+解决方案:   Add check for time_fd.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.340
+问题:	    Gcc warning for condition that can never be true. (James Vega)
+解决方案:   Use start_lvl instead flp->lvl.
+相关文件:   src/fold.c
+
+Patch 7.2.341
+问题:	    Popup menu wraps to next line when double-wide character doesn't
+	    fit. (Jiang Ma)
+解决方案:   Display a ">" instead. (Dominique Pelle)
+相关文件:   src/screen.c
+
+Patch 7.2.342
+问题:	    Popup menu displayed wrong in 'rightleft' mode when there are
+	    multi-byte characters.
+解决方案:   Adjust the column computations. (Dominique Pelle)
+相关文件:   src/popupmnu.c
+
+Patch 7.2.343 (after 7.2.338)
+问题:	    Can't compile on Win32.
+解决方案:   Insert the missing '|'.
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.344 (after 7.2.343)
+问题:	    Can't compile on some systems
+解决方案:   Move the #ifdef outside of the mch_open macro. (Patrick Texier)
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.345
+问题:	    Tab line is not updated when the value of 'bt' is changed.
+解决方案:   Call redraw_titles(). (Lech Lorens)
+相关文件:   src/option.c
+
+Patch 7.2.346
+问题:	    Repeating a command with @: causes a mapping to be applied twice.
+解决方案:   Do not remap characters inserted in the typeahead buffer. (Kana
+	    Natsuno)
+相关文件:   src/ops.c
+
+Patch 7.2.347
+问题:	    Crash when executing <expr> mapping redefines that same mapping.
+解决方案:   Save the values used before evaluating the expression.
+相关文件:   src/getchar.c
+
+Patch 7.2.348 (after 7.2.330)
+问题:	    Unicode double-width characters are not up-to date.
+解决方案:   Produce the double-width table like the others.
+相关文件:   runtime/tools/unicode.vim, src/mbyte.c
+
+Patch 7.2.349
+问题:	    CTRL-W gf doesn't put the new tab in the same place as "tab split"
+	    and "gf". (Tony Mechelynck)
+解决方案:   Store the tab number in cmdmod.tab.
+相关文件:   src/window.c
+
+Patch 7.2.350
+问题:	    Win32: When changing font the window may jump from the secondary
+	    to the primary screen. (Michael Wookey)
+解决方案:   When the screen position was negative don't correct it to zero.
+相关文件:   src/gui.c
+
+Patch 7.2.351 (after 7.2.347)
+问题:	    Can't build with some compilers.
+解决方案:   Move the #ifdef outside of a macro.  Cleanup the code.
+相关文件:   src/getchar.c
+
+Patch 7.2.352 (extra)
+问题:	    Win64: Vim doesn't work when cross-compiled with MingW libraries.
+解决方案:   Always return TRUE for the WM_NCCREATE message. (Andy Kittner)
+相关文件:   src/gui_w48.c
+
+Patch 7.2.353
+问题:	    No command line completion for ":profile".
+解决方案:   Complete the subcommand and file name.
+相关文件:   src/ex_docmd.c, src/ex_cmds2.c, src/ex_getln.c,
+	    src/proto/ex_cmds2.pro, src/vim.h
+
+Patch 7.2.354
+问题:	    Japanese single-width double-byte characters not handled correctly.
+解决方案:   Put 0x8e in ScreenLines[] and the second byte in ScreenLines2[].
+	    (partly by Kikuchan)
+相关文件:   src/screen.c
+
+Patch 7.2.355
+问题:	    Computing the cursor column in validate_cursor_col() is wrong when
+	    line numbers are used and 'n' is not in 'cpoptions', causing the
+	    popup menu to be positioned wrong.
+解决方案:   Correctly use the offset. (partly by Dominique Pelle)
+相关文件:   src/move.c
+
+Patch 7.2.356
+问题:	    When 'foldmethod' is changed not all folds are closed as expected.
+解决方案:   In foldUpdate() correct the start position and reset fd_flags when
+	    w_foldinvalid is set. (Lech Lorens)
+相关文件:   src/fold.c
+
+Patch 7.2.357
+问题:	    When changing 'fileformat' from/to "mac" and there is a CR in the
+	    text the display is wrong.
+解决方案:   Redraw the text when 'fileformat' is changed. (Ben Schmidt)
+相关文件:   src/option.c
+
+Patch 7.2.358
+问题:	    Compiler warnings on VMS. (Zoltan Arpadffy)
+解决方案:   Pass array itself instead its address.  Return a value.
+相关文件:   src/gui_gtk_x11.c, src/os_unix.c
+
+Patch 7.2.359
+问题:	    Crash when using the Netbeans join command.
+解决方案:   Make sure the ml_flush_line() function is not used recursively.
+	    (Xavier de Gaye)
+相关文件:   src/memline.c
+
+Patch 7.2.360
+问题:	    Ruby on MS-Windows: can't use sockets.
+解决方案:   Call NtInitialize() during initialization. (Ariya Mizutani)
+相关文件:   src/if_ruby.c
+
+Patch 7.2.361
+问题:	    Ruby 1.9 is not supported.
+解决方案:   Add Ruby 1.9 support. (Masaki Suketa)
+相关文件:   src/Makefile, src/auto/configure, src/configure.in, src/if_ruby.c
+
+Patch 7.2.362 (extra, after 7.2.352)
+问题:	    Win64: Vim doesn't work when cross-compiled with MingW libraries.
+解决方案:   Instead of handling WM_NCCREATE, create wide text area window
+	    class if the parent window iw side. (Sergey Khorev)
+相关文件:   src/gui_w32.c, src/gui_w48.c
+
+Patch 7.2.363
+问题:	    Can't dynamically load Perl 5.10.
+解决方案:   Add the function Perl_croak_xs_usage. (Sergey Khorev)
+相关文件:   src/if_perl.xs
+
+Patch 7.2.364 (extra)
+问题:	    Can't build gvimext.dll on Win 7 x64 using MinGW (John Marriott)
+解决方案:   Check if _MSC_VER is defined. (Andy Kittner)
+相关文件:   src/GvimExt/gvimext.h
+
+Patch 7.2.365 (extra)
+问题:	    MS-Windows with MingW: "File->Save As" does not work. (John
+	    Marriott)
+解决方案:   Correctly fill in structure size. (Andy Kittner)
+相关文件:   src/gui_w48.c
+
+Patch 7.2.366
+问题:	    CTRL-B doesn't go back to the first line of the buffer.
+解决方案:   Avoid an overflow when adding MAXCOL.
+相关文件:   src/move.c
+
+Patch 7.2.367
+问题:	    "xxd -r -p" doesn't work as documented.
+解决方案:   Skip white space. (James Vega)
+相关文件:   src/xxd/xxd.c
+
+Patch 7.2.368 (after 7.2.361)
+问题:	    Ruby interface: Appending line doesn't work. (Michael Henry)
+解决方案:   Reverse check for NULL line. (James Vega)
+相关文件:   src/if_ruby.c
+
+Patch 7.2.369
+问题:	    Error message is not easy to understand.
+解决方案:   Add quotes. (SungHyun Nam)
+相关文件:   src/ex_cmds2.c
+
+Patch 7.2.370 (after 7.2.356)
+问题:	    A redraw may cause folds to be closed.
+解决方案:   Revert part of the previous patch.  Add a test. (Lech Lorens)
+相关文件:   src/diff.c, src/fold.c, src/option.c, src/testdir/test45.in,
+	    src/testdir/test45.ok
+
+Patch 7.2.371
+问题:	    Build problems on Tandem NonStop.
+解决方案:   A few changes to #ifdefs (Joachim Schmitz)
+相关文件:   src/auto/configure, src/configure.in, src/config.h.in, src/vim.h,
+	    src/if_cscope.c, src/osdef1.h.in, src/tag.c
+
+Patch 7.2.372 (extra)
+问题:	    Cross-compiling GvimExt and xxd doesn't work.
+解决方案:   Change the build files. (Markus Heidelberg)
+相关文件:   src/INSTALLpc.txt, src/GvimExt/Make_ming.mak, src/Make_cyg.mak,
+	    src/Make_ming.mak, src/xxd/Make_cyg.mak
+
+Patch 7.2.373
+问题:	    Gcc 4.5 adds more error messages. (Chris Indy)
+解决方案:   Update default 'errorformat'.
+相关文件:   src/option.h
+
+Patch 7.2.374
+问题:	    Ruby eval() doesn't understand Vim types.
+解决方案:   Add the vim_to_ruby() function.  (George Gensure)
+相关文件:   src/eval.c, src/if_ruby.c
+
+Patch 7.2.375
+问题:	    ml_get errors when using ":bprevious" in a BufEnter autocmd.
+	    (Dominique Pelle)
+解决方案:   Clear w_valid when entering another buffer.
+相关文件:   src/buffer.c
+
+Patch 7.2.376
+问题:	    ml_get error when using SiSU syntax. (Nathan Thomas)
+解决方案:   If the match ends below the last line move it to the end of the
+	    last line.
+相关文件:   src/syntax.c
+
+Patch 7.2.377 (extra, after 7.2.372)
+问题:	    Misplaced assignment.  Duplicate build line for gvimext.dll.
+解决方案:   Move setting CROSS_COMPILE to before ifneq.  Remove the wrong
+	    build line. (Markus Heidelberg)
+相关文件:   src/Make_ming.mak
+
+Patch 7.2.378
+问题:	    C function declaration indented too much. (Rui)
+解决方案:   Don't see a line containing { or } as a type. (Matt Wozniski)
+相关文件:   src/misc1.c
+
+Patch 7.2.379
+问题:	    'eventignore' is set to an invalid value inside ":doau". (Antony
+	    Scriven)
+解决方案:   Don't include the leading comma when the option was empty.
+相关文件:   src/fileio.c
+
+Patch 7.2.380 (after 7.2.363)
+问题:	    Perl interface builds with 5.10.1 but not with 5.10.0.
+解决方案:   Change the #ifdefs. (Sergey Khorev)
+相关文件:   src/if_perl.xs
+
+Patch 7.2.381
+问题:	    No completion for :behave.
+解决方案:   Add :behave completion.  Minor related fixes. (Dominique Pelle)
+相关文件:   src/ex_docmd.c, src/ex_getln.c, src/proto/ex_docmd.pro, src/vim.h
+
+Patch 7.2.382
+问题:	    Accessing freed memory when closing the cmdline window when
+	    'bufhide' is set to "wipe".
+解决方案:   Check if the buffer still exists before invoking close_buffer()
+	    (Dominique Pelle)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.383
+问题:	    Vim doesn't build cleanly with MSVC 2010.
+解决方案:   Change a few types. (George Reilly)
+相关文件:   src/ex_cmds2.c, src/if_python.c, src/syntax.c
+
+Patch 7.2.384 (extra)
+问题:	    Vim doesn't build properly with MSVC 2010.
+解决方案:   Add the nmake version to the build file. (George Reilly)
+相关文件:   src/Make_mvc.mak, src/testdir/Make_dos.mak
+
+Patch 7.2.385
+问题:	    When in the command line window dragging status line only works
+	    for last-but-one window. (Jean Johner)
+解决方案:   Remove the code that disallows this.
+相关文件:   src/ui.c
+
+Patch 7.2.386
+问题:	    Focus hack for KDE 3.1 causes problems for other window managers.
+解决方案:   Remove the hack. (forwarded by Joel Bradshaw)
+相关文件:   src/gui_gtk.c
+
+Patch 7.2.387
+问题:	    Ruby with MingW still doesn't build all versions.
+解决方案:   More #ifdefs for the  Ruby code. (Sergey Khorev)
+相关文件:   src/if_ruby.c
+
+Patch 7.2.388 (extra part of 7.2.387)
+问题:	    Ruby with MingW still doesn't build all versions.
+解决方案:   Different approach to build file. (Sergey Khorev)
+相关文件:   src/Make_ming.mak
+
+Patch 7.2.389
+问题:	    synIDattr() cannot return the font.
+解决方案:   Support the "font" argument. (Christian Brabandt)
+相关文件:   runtime/doc/eval.txt, src/eval.c, src/syntax.c
+
+Patch 7.2.390
+问题:	    In some situations the popup menu can be displayed wrong.
+解决方案:   Remove the popup menu if the cursor moved. (Lech Lorens)
+相关文件:   src/edit.c
+
+Patch 7.2.391
+问题:	    Internal alloc(0) error when doing "CTRL-V $ c". (Martti Kuparinen)
+解决方案:   Fix computations in getvcol(). (partly by Lech Lorens)
+相关文件:   src/charset.c, src/memline.c
+
+Patch 7.2.392
+问题:	    Netbeans hangs reading from a socket at the maximum block size.
+解决方案:   Use select() or poll(). (Xavier de Gaye)
+相关文件:   src/vim.h, src/os_unixx.h, src/if_xcmdsrv.c, src/netbeans.c
+
+Patch 7.2.393
+问题:	    Mac: Can't build with different Xcode developer tools directory.
+解决方案:   make "Developer" directory name configurable. (Rainer Muller)
+相关文件:   src/configure.in, src/auto/configure
+
+Patch 7.2.394
+问题:	    .lzma and .xz files are not supported.
+解决方案:   Recognize .lzma and .xz files so that they can be edited.
+相关文件:   runtime/plugin/gzip.vim
+
+Patch 7.2.395
+问题:	    In help CTRL=] on g?g? escapes the ?, causing it to fail. (Tony
+	    Mechelynck)
+解决方案:   Don't escape ? for a help command. (Sergey Khorev)
+相关文件:   src/normal.c
+
+Patch 7.2.396
+问题:	    Get E38 errors. (Dasn)
+解决方案:   Set cursor to line 1 instead of 0. (Dominique Pelle)
+相关文件:   src/popupmnu.c
+
+Patch 7.2.397
+问题:	    Redundant check for w_lines_valid.
+解决方案:   Remove the if.  (Lech Lorens)
+相关文件:   src/fold.c
+
+Patch 7.2.398
+问题:	    When moving windows the cursor ends up in the wrong line.
+解决方案:   Set the window width and height properly. (Lech Lorens)
+相关文件:   src/window.c
+
+Patch 7.2.399 (extra, after 7.2.388)
+问题:	    Cannot compile on MingW.
+解决方案:   Move ifneq to separate line. (Vlad Sandrini, Dominique Pelle)
+相关文件:   src/Make_ming.mak
+
+Patch 7.2.400 (after 7.2.387)
+问题:	    Dynamic Ruby is not initialised properly for version 1.9.1.
+	    Ruby cannot create strings from NULL.
+解决方案:   Cleanup #ifdefs.  Handle NULL like an empty string.  Add
+	    ruby_init_stack. (Sergey Khorev)
+相关文件:   src/if_ruby.c
+
+Patch 7.2.401
+问题:	    ":e dir<Tab>" with 'wildmode' set to "list" doesn't highlight
+	    directory names with a space. (Alexandre Provencio)
+解决方案:   Remove the backslash before checking if the name is a directory.
+	    (Dominique Pelle)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.402
+问题:	    This gives a #705 error: let X = function('haslocaldir')
+	    let X = function('getcwd')
+解决方案:   Don't give E705 when the name is found in the hashtab. (Sergey
+	    Khorev)
+相关文件:   src/eval.c
+
+Patch 7.2.403 (after 7.2.400)
+问题:	    Compiler warning for pointer type. (Tony Mechelynck)
+解决方案:   Move type cast to the right place.
+相关文件:   src/if_ruby.c
+
+Patch 7.2.404
+问题:	    Pointers for composing characters are not properly initialized.
+解决方案:   Compute the size of the pointer, not what it points to. (Yukihiro
+	    Nakadaira)
+相关文件:   src/screen.c
+
+Patch 7.2.405
+问题:	    When built with small features the matching text is not
+	    highlighted for ":s/pat/repl/c".
+解决方案:   Remove the #ifdef for IncSearch. (James Vega)
+相关文件:   src/syntax.c
+
+Patch 7.2.406
+问题:	    Patch 7.2.119 introduces uninit mem read. (Dominique Pelle)
+解决方案:   Only used ScreeenLinesC when ScreeenLinesUC is not zero. (Yukihiro
+	    Nakadaira)  Also clear ScreeenLinesC when allocating.
+相关文件:   src/screen.c
+
+Patch 7.2.407
+问题:	    When using an expression in ":s" backslashes in the result are
+	    dropped. (Sergey Goldgaber, Christian Brabandt)
+解决方案:   Double backslashes.
+相关文件:   src/regexp.c
+
+Patch 7.2.408
+问题:	    With ":g/the/s/foo/bar/" the '[ and '] marks can be set to a line
+	    that was not changed.
+解决方案:   Only set '[ and '] marks when a substitution was done.
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.409
+问题:	    Summary of number of substitutes is incorrect for ":folddo". (Jean
+	    Johner)
+解决方案:   Reset sub_nsubs and sub_nlines in global_exe().
+相关文件:   src/ex_cmds.c
+
+Patch 7.2.410
+问题:	    Highlighting directories for completion doesn't work properly.
+解决方案:   Don't halve backslashes when not needed, expanded "~/".
+	    (Dominique Pelle)
+相关文件:   src/ex_getln.c
+
+Patch 7.2.411
+问题:	    When parsing 'cino' a comma isn't skipped properly.
+解决方案:   Skip the comma. (Lech Lorens)
+相关文件:   src/misc1.c
+
+Patch 7.2.412
+问题:	    [ or ] followed by mouse click doesn't work.
+解决方案:   Reverse check for key being a mouse event. (Dominique Pelle)
+相关文件:   src/normal.c
+
+Patch 7.2.413
+问题:	    Large file support is incorrect.
+解决方案:   Add AC_SYS_LARGEFILE to configure. (James Vega)
+相关文件:   src/configure.in, src/config.h.in, src/auto/configure
+
+Patch 7.2.414
+问题:	    CTRK-K <space> <space> does not produce 0xa0 as expected. (Tony
+	    Mechelynck)
+解决方案:   Remove the Unicode range 0xe000 - 0xefff from digraphs, these are
+	    not valid characters.
+相关文件:   src/digraph.c
+
+Patch 7.2.415
+问题:	    Win32: Can't open a remote file when starting Vim.
+解决方案:   Don't invoke cygwin_conv_path() for URLs. (Tomoya Adachi)
+相关文件:   src/main.c
+
+Patch 7.2.416
+问题:	    Logtalk.dict is not installed.
+解决方案:   Add it to the install target. (Markus Heidelberg)
+相关文件:   src/Makefile
+
+Patch 7.2.417
+问题:	    When 'shell' has an argument with a slash then 'shellpipe' is not
+	    set properly. (Britton Kerin)
+解决方案:   Assume there are no spaces in the path, arguments follow.
+相关文件:   src/option.c
+
+Patch 7.2.418
+问题:	    Vim tries to set the background or foreground color in a terminal
+	    to -1.  (Graywh)  Happens with ":hi Normal ctermbg=NONE".
+解决方案:   When resetting the foreground or background color don't set the
+	    color, let the clear screen code do that.
+相关文件:   src/syntax.c
+
+Patch 7.2.419
+问题:	    Memory leak in Motif when clicking on "Search Vim Help".
+解决方案:   Free string returned by XmTextGetString(). (Dominique Pelle)
+相关文件:   src/gui_motif.c
+
+Patch 7.2.420
+问题:	    ":argedit" does not accept "++enc=utf8" as documented. (Dominique
+	    Pelle)
+解决方案:   Add the ARGOPT flag to ":argedit".
+相关文件:   src/ex_cmds.h
+
+Patch 7.2.421
+问题:	    Folds are sometimes not updated properly and there is no way to
+	    force an update.
+解决方案:   Make "zx" and "zX" recompute folds (suggested by Christian
+	    Brabandt)
+相关文件:   src/normal.c
+
+Patch 7.2.422
+问题:	    May get E763 when using spell dictionaries.
+解决方案:   Avoid utf-8 case folded character to be truncated to 8 bits and
+	    differ from latin1. (Dominique Pelle)
+相关文件:   src/spell.c
+
+Patch 7.2.423
+问题:	    Crash when assigning s: to variable. (Yukihiro Nakadaira)
+解决方案:   Make ga_scripts contain pointer to scriptvar_T instead of
+	    scriptvar_T itself. (Dominique Pelle)
+相关文件:   src/eval.c
+
+Patch 7.2.424
+问题:	    ":colorscheme" without an argument doesn't do anything.
+解决方案:   Make it echo the current color scheme name.  (partly by Christian
+	    Brabandt)
+相关文件:   runtime/doc/syntax.txt, src/ex_cmds.h, src/ex_docmd.c
+
+Patch 7.2.425
+问题:	    Some compilers complain about fourth EX() argument.
+解决方案:   Add cast to long_u.
+相关文件:   src/ex_cmds.h
+
+Patch 7.2.426
+问题:	    Commas in 'langmap' are not always handled correctly.
+解决方案:   Require commas to be backslash escaped. (James Vega)
+相关文件:   src/option.c
+
+Patch 7.2.427
+问题:	    The swapfile is created using the destination of a symlink, but
+	    recovery doesn't follow symlinks.
+解决方案:   When recovering, resolve symlinks. (James Vega)
+相关文件:   src/memline.c
+
+Patch 7.2.428
+问题:	    Using setqflist([]) to clear the error list doesn't work properly.
+解决方案:   Set qf_nonevalid to TRUE when appropriate. (Christian Brabandt)
+相关文件:   src/quickfix.c
+
+Patch 7.2.429
+问题:	    A file that exists but access is denied may result in a "new file"
+	    message.  E.g. when its directory is unreadable.
+解决方案:   Specifically check for ENOENT to decide a file doesn't exist.
+	    (partly by James Vega)
+相关文件:   src/fileio.c
+
+Patch 7.2.430
+问题:	    The ++bad argument is handled wrong, resulting in an invalid
+	    memory access.
+解决方案:   Use the bad_char field only for the replacement character, add
+	    bad_char_idx to store the position. (Dominique Pelle)
+相关文件:   src/eval.c, src/ex_cmds.h, src/ex_docmd.c
+
+Patch 7.2.431
+问题:	    ":amenu" moves the cursor when in Insert mode.
+解决方案:   Use CTRL-\ CTRL-O instead of CTRL-O. (Christian Brabandt)
+相关文件:   src/menu.c
+
+Patch 7.2.432
+问题:	    When menus are translated they can only be found by the translated
+	    name.  That makes ":emenu" difficult to use.
+解决方案:   Store the untranslated name and use it for completion and :emenu.
+	    (Liang Peng (Bezetek James), Edward L. Fox)
+相关文件:   src/menu.c, src/structs.h
+
+Patch 7.2.433
+问题:	    Can't use cscope with QuickFixCmdPre and QuickFixCmdPost.
+解决方案:   Add cscope support for these autocmd events. (Bryan Venteicher)
+相关文件:   runtime/doc/autocmd.txt, src/if_cscope.c
+
+Patch 7.2.434 (after 7.2.432)
+问题:	    Compilation fails without the multi-lang feature.
+解决方案:   Add #ifdefs. (John Marriott)
+相关文件:   src/menu.c
+
+Patch 7.2.435 (after 7.2.430)
+问题:	    Crash when using bad_char_idx uninitialized. (Patrick Texier)
+解决方案:   Don't use bad_char_idx, reproduce the ++bad argument from bad_char.
+相关文件:   src/eval.c, src/ex_cmds.h, src/ex_docmd.c
+
+Patch 7.2.436
+问题:	    Reproducible crash in syntax HL. (George Reilly, Dominique Pelle)
+解决方案:   Make sst_stacksize an int instead of short. (Dominique Pelle)
+相关文件:   src/structs.h
+
+Patch 7.2.437 (after 7.2.407)
+问题:	    When "\\\n" appears in the expression result the \n doesn't result
+	    in a line break. (Andy Wokula)
+解决方案:   Also replace a \n after a backslash into \r.
+相关文件:   src/regexp.c
+
+Patch 7.2.438 (after 7.2.427)
+问题:	    "vim -r" crashes.
+解决方案:   Don't use NULL pointer argument.
+相关文件:   src/memline.c
+
+Patch 7.2.439
+问题:	    Invalid memory access when doing thesaurus completion and
+	    'infercase' is set.
+解决方案:   Use the minimal length of completed word and replacement.
+	    (Dominique Pelle)
+相关文件:   src/edit.c
+
+Patch 7.2.440
+问题:	    Calling a function through a funcref, where the function deletes
+	    the funcref, leads to an invalid memory access.
+解决方案:   Make a copy of the function name. (Lech Lorens)
+相关文件:   src/eval.c, src/testdir/test34.in, src/testdir/test34.ok
+
+Patch 7.2.441
+问题:	    When using ":earlier" undo information may be wrong.
+解决方案:   When changing alternate branches also adjust b_u_oldhead.
+相关文件:   src/undo.c
+
+Patch 7.2.442 (after 7.2.201)
+问题:	    Copy/paste with OpenOffice doesn't work.
+解决方案:   Do not offer the HTML target when it is not supported. (James
+	    Vega)
+相关文件:   src/gui_gtk_x11.c, src/option.c, src/proto/gui_gtk_x11.pro
+
+Patch 7.2.443
+问题:	    Using taglist() on a tag file with duplicate fields generates an
+	    internal error. (Peter Odding)
+解决方案:   Check for duplicate field names.
+相关文件:   src/eval.c, src/proto/eval.pro, src/tag.c
+
+Patch 7.2.444 (after 7.2.442)
+问题:	    Can't build with GTK 1, gtk_selection_clear_targets() is not
+	    available. (Patrick Texier)
+解决方案:   Don't change the targets for GTK 1, set them once.
+相关文件:   src/gui_gtk_x11.c, src/option.c
+
+Patch 7.2.445
+问题:	    Crash when using undo/redo and a FileChangedRO autocmd event that
+	    reloads the buffer. (Dominique Pelle)
+解决方案:   Do not allow autocommands while performing and undo or redo.
+相关文件:   src/misc1.c, src/undo.c
+
+Patch 7.2.446
+问题:	    Crash in GUI when closing the last window in a tabpage. (ryo7000)
+解决方案:   Remove the tabpage from the list before freeing the window.
+相关文件:   src/window.c
+
+When writing a file, switching tab pages and selecting a word the file write
+message would be displayed again.  This happened in Insert mode and with
+'cmdheight' set to 2.
+
+When using ":lang" to set a locale that uses a comma for decimal separator and
+using GTK floating point numbers stop working.  Use gtk_disable_setlocale().
+(James Vega)
+
+"g8" didn't produce the right value on a NUL. (Dominique Pelle)
+
+Use BASEMODLIBS instead of MODLIBS for Python configuration to pick up the
+right compiler flags. (Michael Bienia)
+
+Window title was not updated after dropping a file on Vim. (Hari G)
+
+synstack() did not return anything when just past the end of the line.  Useful
+when using the cursor position in Insert mode.
+
+When entering a digraph or special character after a line that fits the window
+the '?' or '^' on the next line is not redrawn. (Ian Kelling)
+
+Composing characters in |:s| substitute text were dropped.
+
+|exists()| was causing an autoload script to be loaded.
+
+Filter out -pthread for cproto.
+
+Make CTRL-L in command line mode respect 'ignorecase' and 'smartcase'. (Martin
+Toft)
+
+Spell menu moved the cursor, causing Copy not to work.  Spell replacement
+didn't work in 'compatible' mode.
+
+Various small fixes from Dominique Pelle.
+
+Fix that :mksession may generate "2argu" even though there is no such
+argument. (Peter Odding)
+
+Fixes for time in clipboard request.  Also fix ownership.  (David Fries)
+
+Fixed completion of file names with '%' and '*'.
+
+Fixed MSVC makefile use of /Wp64 flag.
+
+Correct use of long instead of off_t for file size. (James Vega)
+
+Add a few #ifdefs to exclude functions that are not used. (Dominique Pelle)
+
+Remove old and unused method to allocate memory for undo.
+
+Fix definition of UINT_PTR for 64 bit systems.
+
+Some versions of Ruby redefine rb_str_new2 to rb_str_new_cstr.
+
+Window title not updated after file dropped.
+
+Fixed crash for ":find" completion, might also happen in other path expansion
+usage.
+
+When 'searchhl' causes a hang make CTRL-C disable 'searchhl'.
+
+When resetting both 'title' and 'icon' the title would be set after a shell
+command.
+
+Reset 'title' and 'icon' in test47 to avoid the xterm title getting messed up.
+
+Fix for compiler warning about function prototype in pty.c.
+
+Added 'window' to the options window.
+
+Fixed: errors for allocating zero bytes when profiling an empty function.
+
+Remove -arch flag from build flags for Perl. (Bjorn Wickler)
+
+Fix 'autochdir' not showing up in :options window. (Dominique Pelle)
+
+Fix: test 69 didn't work on MS-Windows.  Test 72 beeped too often.
+
+Avoid illegal memory access in spell suggestion. (Dominique Pelle)
+Fix: crash in spell checking with a 0x300 character.
+
+Avoid that running tests changes viminfo.
+
+Fix: changing case of a character removed combining characters.
+Fixed: CTRL-R in Insert mode doesn't insert composing characters.
+
+Added the WOW64 flag to OLE registration, for 64 bit Windows systems.
+
+Various fixes for coverity warnings.
+
+Fix compile warnings, esp. for 64-bit systems.  (Mike Williams)
+
+Fix: :redir to a dictionary that is changed before ":redir END" causes a
+memory access error.
+
+Fix: terminal title not properly restored when there are multi-byte
+characters.  (partly by James Vega)
+
+Set 'wrapscan' when checking the .po files. (Mike Williams)
+
+Win32: Put quotes around the gvim.exe path for the "Open with" menu entry.
+
+On MS-Windows sometimes files with number 4913 or higher are left behind.
+
+'suffixesadd' was used for finding tags file.
+
+Removed unused code.
+
+Improved positioning of combining characters in GTK.
+
+Made test 11 pass when there is no gzip program. (John Beckett)
+
+Changed readfile() to ignore byte order marks, unless in binary mode.
+
+On MS-Windows completion of shell commands didn't work.
+
+An unprintable multi-byte character at the start of the screen line caused the
+following text to be drawn at the wrong position.
+
+Got ml_get errors when using undo with 'virtualedit'.
+
+Call gui_mch_update() before triggering GuiEnter autocmd. (Ron Aaron)
+
+Unix "make install" installed a few Amiga .info files.
+
+Disallow setting 'ambiwidth' to "double" when 'listchars' or 'fillchars'
+contains a character that would become double width.
+
+Set 'wrapscan' when checking the .po files. (Mike Williams)
+
+Fixed: using expression in command line may cause a crash.
+
+Avoid warnings from the clang compiler. (Dominique Pelle)
+
+Fix: Include wchar.h in charset.c for towupper().
+
+ 
  vim:tw=78:ts=8:ft=help:norl:

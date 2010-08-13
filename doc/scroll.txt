@@ -1,4 +1,4 @@
-*scroll.txt*    For Vim version 7.2.  最近更新: 2006年12月
+*scroll.txt*    For Vim version 7.3.  最近更新: 2010年7月
 
 
 		     Vim 参考手册    作者：Bram Moolenaar
@@ -205,30 +205,40 @@ ze			水平滚动文本，使光标置于屏幕的结束处 (最右侧)。仅当
 6. 用鼠标滚轮滚屏				*scroll-mouse-wheel*
 
 当您的鼠标有一个滚轮时，它在 GUI 方式下的 Vim 中应该可以正常工作。它怎么工作取
-决于您的系统。它在 xterm 中也可能可以工作，参见：|xterm-mouse-wheel|。
+决于您的系统。它在 xterm 中也可能可以工作，参见：|xterm-mouse-wheel|。缺省只支
+持垂直滚轮，但有些 GUI 也支持横向滚轮。
 
 Win32 GUI 的滚动功能是通过硬编码实现的。它的效果就像在拖曳当前窗口的滚动条。具
 体滚多少行取决于您的鼠标驱动程序。如果滚屏功能造成了输入焦点的问题，请看：
 |intellimouse-wheel-problems|。
 
-而对 X11 GUI (Motif、Athena 和 GTK) 而言，滚动滚轮产生 <MouseDown> 和
-<MouseUp> 的按键动作。这些键的默认行为如下：
-    <MouseDown>		向下滚动 3 行。			*<MouseDown>*
-    <S-MouseDown>	向下滚动一整页。		*<S-MouseDown>*
-    <C-MouseDown>	向下滚动一整页。		*<C-MouseDown>*
-    <MouseUp>		向上滚动 3 行。			*<MouseUp>*
-    <S-MouseUp>		向上滚动一整页。		*<S-MouseUp>*
-    <C-MouseUp>		向上滚动一整页。		*<C-MouseUp>*
+而对 X11 GUI (Motif、Athena 和 GTK) 而言，滚动滚轮产生 <ScrollWheelDown>、
+<ScrollWheelUp>、<ScrollWheelLeft> 和 <ScrollWheelRight> 的按键动作。这些键的
+默认行为如下：
+    <ScrollWheelUp>	    向上滚动三行	*<ScrollWheelUp>*
+    <S-ScrollWheelUp>	    向上滚动一页	*<S-ScrollWheelUp>*
+    <C-ScrollWheelUp>	    向上滚动一页	*<C-ScrollWheelUp>*
+    <ScrollWheelDown>	    向下滚动三行	*<ScrollWheelDown>*
+    <S-ScrollWheelDown>	    向下滚动一页	*<S-ScrollWheelDown>*
+    <C-ScrollWheelDown>	    向下滚动一页	*<C-ScrollWheelDown>*
+    <ScrollWheelLeft>	    向左滚动六列	*<ScrollWheelLeft>*
+    <S-ScrollWheelLeft>	    向左滚动一页	*<S-ScrollWheelLeft>*
+    <C-ScrollWheelLeft>	    向左滚动一页	*<C-ScrollWheelLeft>*
+    <ScrollWheelRight>	    向右滚动六列	*<ScrollWheelRight>*
+    <S-ScrollWheelRight>    向右滚动一页	*<S-ScrollWheelRight>*
+    <C-ScrollWheelRight>    向右滚动一页	*<C-ScrollWheelRight>*
 它们应该适用于所有模式，编辑命令行时除外。
 
-注意 <MouseDown> 是用来使文本向下滚动的，但是这要求您向上滚动您的鼠标滚轮！
+注意 仅当 'nowrap' 置位时横向滚动可用。此外，除非 'guioptions' 设置了 "h" 标志
+位，如果光标行将要滚动到屏幕之外，移动光标到最长的可见行 (和横向滚动条的工作方
+式类似)。
 
-您可以通过键盘映射来改变这种行为。例如，要使得普通模式下滚轮一次滚动一行或半
+您可以通过键盘映射来改变缺省行为。例如，要使得普通模式下滚轮一次滚动一行或半
 页: >
-   :map <MouseDown> <C-Y>
-   :map <S-MouseDown> <C-U>
-   :map <MouseUp> <C-E>
-   :map <S-MouseUp> <C-D>
+   :map <ScrollWheelUp> <C-Y>
+   :map <S-ScrollWheelUp> <C-U>
+   :map <ScrollWheelDown> <C-E>
+   :map <S-ScrollWheelDown> <C-D>
 您也可以使用 Alt 和 Ctrl 修饰符。
 
 自然，这些功能仅在 Vim 可以获取滚动事件时才可以使用。您可以使用 "xev" 程序来确
@@ -241,6 +251,10 @@ Win32 GUI 的滚动功能是通过硬编码实现的。它的效果就像在拖�
     ZAxisMapping 4 5
 欲了解更多的信息，请看 XFree86 的文档。
 
+						*<MouseDown>* *<MouseUp>*
+<MouseDown> 和 <MouseUp> 键已废弃。用 <ScrollWheelUp> 来代替 <MouseDown>，
+<ScrollWheelDown> 来代替 <MouseUp>。
+
 							*xterm-mouse-wheel*
 如前所述，您仅需要使滚轮鼠标在您的 Xserver 上工作正常，它就可以在一个新的
 xterm 中工作。
@@ -249,7 +263,8 @@ xterm 中工作。
 1. 如前所述，使它在您的 Xserver 上工作正常。
 2. 给 xterm 添加转换，使得 xterm 可以用转义序列 (escape sequence) 来传递一个滚
    屏事件。
-3. 给 Vim 添加映射，来把这些转义序列解释为 <MouseUp>、<MouseDown> 键。
+3. 给 Vim 添加映射，来把这些转义序列解释为 <ScrollWheelDown>、<ScrollWheelUp>
+   键。
 
 把以下代码添加到您的 ~.Xdefaults 文件 (或者其他保存您 X 资源的文件) 中来进行转
 换: >
@@ -263,13 +278,13 @@ xterm 中工作。
 		<Btn5Up>:
 
 把这些映射加到您的 vimrc 文件： >
-	:map <M-Esc>[62~ <MouseDown>
-	:map! <M-Esc>[62~ <MouseDown>
-	:map <M-Esc>[63~ <MouseUp>
-	:map! <M-Esc>[63~ <MouseUp>
-	:map <M-Esc>[64~ <S-MouseDown>
-	:map! <M-Esc>[64~ <S-MouseDown>
-	:map <M-Esc>[65~ <S-MouseUp>
-	:map! <M-Esc>[65~ <S-MouseUp>
+	:map <M-Esc>[62~ <ScrollWheelUp>
+	:map! <M-Esc>[62~ <ScrollWheelUp>
+	:map <M-Esc>[63~ <ScrollWheelDown>
+	:map! <M-Esc>[63~ <ScrollWheelDown>
+	:map <M-Esc>[64~ <S-ScrollWheelUp>
+	:map! <M-Esc>[64~ <S-ScrollWheelUp>
+	:map <M-Esc>[65~ <S-ScrollWheelDown>
+	:map! <M-Esc>[65~ <S-ScrollWheelDown>
 <
  vim:tw=78:ts=8:ft=help:norl:
