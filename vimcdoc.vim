@@ -7,7 +7,6 @@ if exists("g:loaded_vimcdoc")
 endif
 let g:loaded_vimcdoc = 1
 
-set encoding=utf-8
 if version >= 603
   set helplang=cn
 endif
