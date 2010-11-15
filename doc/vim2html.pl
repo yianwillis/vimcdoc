@@ -15,7 +15,7 @@ use Encode;
 use vars qw/%url $date/;
 
 %url = ();
-$date = Encode::decode_utf8(`date --universal`);
+$date = Encode::decode_utf8(`date -u`);
 chop $date;
 
 sub maplink
