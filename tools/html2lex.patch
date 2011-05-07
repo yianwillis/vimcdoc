@@ -1,0 +1,154 @@
+--- html2lex.c.orig	2011-05-06 20:36:25.000000000 -0700
++++ html2lex.c	2011-05-06 20:40:04.000000000 -0700
+@@ -1913,6 +1913,12 @@
+     }
+ }
+ 
++bool in_header;
++int  in_math;
++int  in_verb;
++int  in_alltt;
++
++
+ void print_str_(FILE *fout, char *str);
+ void print_str_(FILE *fout, char *str)
+ {
+@@ -1980,10 +1986,13 @@
+         else if ((unsigned char)*str >= ' ' && (unsigned char)*str <= HIGHASCII)
+             ch = *str;
+         if (fout)
+-            if (   ch == '_' || ch == '#' || ch == '[' || ch == ']'
++            if (   ch == '#' || ch == '[' || ch == ']'
++                || ch == '-' || ch == '\\' || ch == '\'' || ch == ','
++                || ch == '`' || ch == '<' || ch == '='
+                 || ch == '{' || ch == '}' || ch == '%' || ch == '&'
+-                || ch == '~' || ch == '\0')
+-                fputc('.', fout);
++                || ch == '~' || ch == '\0') {
++                fprintf(fout, "_%2d", (int)ch);
++            }
+             else
+                 fputc(ch, fout);
+     }
+@@ -2012,6 +2021,11 @@
+                     break;
+             if (codes[i] == '\0')
+                 fputc('%', fout);
++            else if (codes[i] == 'a')
++            {
++              print_str(fout, strs[i], NULL, "", 0,in_math, in_verb, in_alltt); 
++              str++;
++            }
+             else
+             {   print_str_(fout, strs[i]);
+                 str++;
+@@ -2021,12 +2035,6 @@
+ 
+ /* Generation state values */
+ 
+-bool in_header;
+-int  in_math;
+-int  in_verb;
+-int  in_alltt;
+-
+-
+ #define URL_not     0
+ #define URL_ftp     1
+ #define URL_mailto  2
+@@ -2279,11 +2287,12 @@
+ 
+     /* correct .html file: */
+     else if (href_status == 0)
+-    {   char *strs[4];
++    {   char *strs[5];
+         char filenr[10];
+         sprintf(filenr, opt_filenr, find_file(file)->nr);
+         strs[0] = filenr;
+-        strs[1] = fragil_env ? c_protect : "";
++        strs[1] = atext;
++        strs[2] = fragil_env ? c_protect : "";
+ 
+         if (  in_header
+             ? opt_href_in_header == OPT_NORMAL
+@@ -2294,25 +2303,25 @@
+                 /* ignore */;
+             else if (name[0] == '\0')
+                 print_f(fout, latex_fmt[0] != '\0' ? latex_fmt : opt_cf, 
+-                        "fp", strs);
++                        "fap", strs);
+             else
+-            {   strs[2] = name;
++            {   strs[3] = name;
+                 print_f(fout, latex_fmt[0] != '\0' ? latex_fmt : opt_cf_n, 
+-                        "fpn", strs);
++                        "fapn", strs);
+             }
+         }
+         else if (f_kind == FOOTNOTE_KIND_MARK)
+             fputs(c_footmark, fout);
+         else
+-        {   strs[2] =   f_kind == FOOTNOTE_KIND_NORMAL
++        {   strs[3] =   f_kind == FOOTNOTE_KIND_NORMAL
+                       ? c_footnote : c_foottext;
+             if (name[0] == '\0')
+                 print_f(fout, latex_fmt[0] != '\0' ? latex_fmt : opt_f_cf, 
+-                        "fpF", strs);
++                        "fapF", strs);
+             else
+-            {   strs[3] = name;
++            {   strs[4] = name;
+                 print_f(fout, latex_fmt[0] != '\0' ? latex_fmt : opt_f_cf_n, 
+-                        "fpFn", strs);
++                        "fapFn", strs);
+             }
+         }
+     }
+@@ -2615,8 +2624,8 @@
+ #define H_DEL     48
+    { "del",     C_YES, T_CHAR, 0, "", "" },
+ #define H_PRE     49
+-   { "pre",     C_YES, T_VERB, LATEX_KIND_VERB, "\\begin{verbatim} ",
+-                                                "\\end{verbatim}\n" },
++   { "pre",     C_YES, T_VERB, LATEX_KIND_ALLTT, "\\begin{alltt} ",
++                                                 "\\end{alltt}\n" },
+ #define H_XMP     50
+    { "xmp",     C_YES, T_VERB, LATEX_KIND_VERB, "\\begin{verbatim} ",
+                                                 "\\end{verbatim}\n" },
+@@ -3212,7 +3221,8 @@
+              || (in_header && tagkind == T_P)
+              || (item_depth >= 4 && tagkind == T_LIST)
+              || in_verb
+-             || (in_alltt && tagkind != T_CHAR))
++             || (in_alltt && !(latex_kind & LATEX_KIND_ALLTT) &&
++                 tagkind != T_CHAR))
+     {   if (freport && option_warn)
+         fprintf(freport,
+                 "%s (%d) : <%s> ignored in LaTeX.\n",
+@@ -4522,7 +4532,7 @@
+                 LATEX_CLOSES(tagnr)
+             else if (OPEN_TAG(T_CHAR))
+             {
+-                if (tagnr == H_FONT)
++                if (tagnr == H_FONT || tagnr == H_CODE)
+                 {
+                     LATEX_OPEN(tagnr) // FONT may be nested
+                 }
+@@ -4630,10 +4640,11 @@
+                     {   empty_line = FALSE;
+                         empty_item = FALSE;
+                     }
+-                    add_to_comment(ch, &i);
+-                    ch = (char)fgetc(fin);
+                     if (active_href && atext_len < MAX_AT)
+                         atext[atext_len++] = ch;
++                    else
++                      add_to_comment(ch, &i);
++                    ch = (char)fgetc(fin);
+                 }
+                 add_to_comment('\0', &i);
+                 if (no_header && !no_copy && !empty_line && fout != NULL)
+@@ -5167,4 +5178,3 @@
+ 
+     return 0;
+ } 
+-

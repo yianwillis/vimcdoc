@@ -1,0 +1,23 @@
+TOPLEVELDIR=..
+@VERSION     = TOPLEVELDIR + '/VERSION'
+:include {once} $TOPLEVELDIR/common.aap
+:child $TOPLEVELDIR/tools/main.aap
+
+all:
+	:print Use 'aap clean' to clean up.
+	:print Use 'aap reference.pdf' to generate reference.pdf
+
+help.html:
+	:execute ../doc/main.aap allhtml
+	:sys ./uncss.sh
+
+:rule %.tex: help.html ../tools/html2lex %.inp
+	:sys ../tools/html2lex ${match}.inp -o $target
+
+:rule %.pdf: %.tex
+	:sys {f} latexmk $match
+
+clean:
+	:del {r}{force} *.html *.pdf *.tex *.aux *.log *.out *.fdb_latexmk
+	:execute ../doc/main.aap clean
+	:execute ../tools/main.aap clean

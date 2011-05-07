@@ -43,7 +43,7 @@ sub readTagFile
 
 		$tag = $1;
 		my $label = $tag;
-		($file= $2) =~ s/.\w+$/.html/g; 
+		($file= $2) =~ s/.\w+$/.html/g;
 
 		$url{ $tag } = "<a href=\"$file#".escurl($tag)."\">".esctext($label)."</a>";
 	}
@@ -80,7 +80,7 @@ $tabstop = 8;
 
 sub mylength
 {
-    my ($str) = @_;
+	my ($str) = @_;
 	my $length = length($str);
 	my $i = 0;
 	my @chars = unpack("U*", $str);
@@ -90,18 +90,19 @@ sub mylength
 	return $length;
 }
 
+# expand tabs.
 sub myexpand
-{   
-    my (@l) = @_;
-    for $_ (@l) {
-        1 while s/(^|\n)([^\t\n]*)(\t+)/
-            $1. $2 . (" " x 
-                ($tabstop * length($3)
-                - (mylength($2) % $tabstop)))
-            /sex;
-    }
-    return @l if wantarray;
-    return $l[0];
+{
+	my (@l) = @_;
+	for $_ (@l) {
+		1 while s/(^|\n)([^\t\n]*)(\t+)/
+						$1. $2 . (" " x
+								($tabstop * length($3)
+									- (mylength($2) % $tabstop)))
+						/sex;
+	}
+	return @l if wantarray;
+	return $l[0];
 }
 
 sub vim2html
@@ -189,13 +190,20 @@ EOF
 
 		s/\s+$//g;
 
+		if( $inexample == 2 ) {
+			print OUT "<code class=\"example\">" . esctext($_) . "</code>\n";
+			$inheader = 0;
+			next;
+		}
+
 		# Various vim highlights. note that < and > have already been escaped
 		# so that HTML doesn't get screwed up.
 
 		my @out = ();
 		#		print "Text: $_\n";
 		LOOP:
-		foreach my $token ( split /((?:\|[^*"|[:space:]]+\|)|(?:\*[^*"|[:space:]]+\*))/ ) {
+		# split on |token| or *token*
+		foreach my $token ( split /((?:\|[^*"|[:space:]]+\|)|(?:\*[^*"|[:space:]]+\*(?=[[:space:]]|$)))/ ) {
 			if ( $token =~ /^\|([^*"|[:space:]]+)\|/ ) {
 				# link
 				push( @out, "|".maplink( $1 )."|" );
@@ -209,16 +217,27 @@ EOF
 			}
 
 			$_ = esctext($token);
-			s/CTRL-(\w+|.)/<code class="keystroke">CTRL-$1<\/code>/g;
+			# keystroke
+			s/CTRL-(\w+|[^{])/<code class="keystroke">CTRL-$1<\/code>/g;
+
+			# parameter '...'
+			s/'(\w{2,}|t_..)'/maplink($&)/ge;
+
 			# parameter <...>
-			s/&lt;(.*?)&gt;/<code class="special">&lt;$1&gt;<\/code>/g;
+			s/&lt;([a-zA-Z0-9_-]*)&gt;/<code class="special">&lt;$1&gt;<\/code>/g;
 
 			# parameter [...]
-			s/\[(range|line|count|offset|cmd|[-+]?num)\]/<code class="special">\[$1\]<\/code>/g;
+			s/\[(range|line|count|offset|cmd|[-+]?num|\+cmd|\+\+opt|arg|arguments|ident|addr|group)\]/<code class="special">\[$1\]<\/code>/g;
+			s/\s\K\[(\w+)\]/<code class="special">\[$1\]<\/code>/g;
+
 			# note
 			s/(Note[:\s])/<code class="note">$1<\/code>/gi;
-
 			s/(注意|备注)( (?=[^[:print:][:space:]]))?/<code class="note">$1<\/code>/g;
+
+			# parameter {...}
+			s/\{([^ {}'"|]*)\}/<code class="special">{$1}<\/code>/g;
+
+			# title
 			s/VIM (?:参考手册|用户手册).*|译者[注]?/<code class="vim">$&<\/code>/g;
 
 			# local heading
@@ -228,13 +247,10 @@ EOF
 
 		$_ = join( "", @out );
 
-		# parameter {...}
-		s/\{([^{}'"|]*)\}/<code class="special">{$1}<\/code>/g;
-		s/\{((?:Vi|仅)[^}]*)\}/<code class="special">{$1}<\/code>/g;
+		# compatibility notes: {Vi: }.
+		s/\{((?:Vi[ :]|仅)[^}]*)\}/<code class="notvi">{$1}<\/code>/g;
 
-		if( $inexample == 2 ) {
-			print OUT "<code class=\"example\">$_</code>\n";
-		} elsif ($inheader == 1) {
+		if ($inheader == 1) {
 			print OUT "<h4>$_</h4>";
 		} else {
 			print OUT $_,"\n";
