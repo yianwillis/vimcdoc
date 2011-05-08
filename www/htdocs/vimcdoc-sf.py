@@ -117,7 +117,6 @@ def PrintSidebar():
     print '<p> <a href="http://sourceforge.net/export/rss2_projnews.php?group_id=56777">News RSS</a></p>'
     #print '<p> <a href="http://sourceforge.net/export/rss2_projnews.php?group_id=56777&rss_fulltext=1">File RSS</a></p>'
     print '<hr noshade="noshade" size="1">'
-    print '<p><a href="http://vcd.gro.clinux.org">GRO Mirror</a></p>'
     print '<p><a href="http://www.vim.org">Vim Home</a></p>'
     print '<p><a href="http://vimdoc.sf.net">English VimDoc</a></p>'
     print '<hr noshade="noshade" size="1">'
@@ -188,17 +187,17 @@ def PrintGetVimcdoc():
     print '</table>'
     print '<p class="LEFT">'
     print 'The latest version is <font color="red">' + vimcdoc_ver + '!</font><br>'
-    print 'Vimcdoc is hosted by sourceforge. So you should be able to'
-    print 'get it from any sourceforge mirror. See the links below '
-    print '(some external links may be out of date):'
+    print 'Vimcdoc is hosted by sourceforge. You should be able to'
+    print 'get it from any sourceforge mirror. See the links below:'
     print '<br><br>'
     print '</p>'
     print '<ul class="LEFT">'
-    exe_address = 'http://prdownloads.sourceforge.net/vimcdoc/vimcdoc-' + vimcdoc_ver
-    exe_ansi_address = exe_address + '-setup.exe?download'
-    exe_unicode_address = exe_address + '-setup-unicode.exe?download'
-    tarball_address = 'http://prdownloads.sourceforge.net/vimcdoc/vimcdoc-' + vimcdoc_ver
-    tarball_address = tarball_address + '.tar.gz?download'
+    base_address = 'http://prdownloads.sourceforge.net/vimcdoc/'
+    exe_ansi_address = base_address + 'vimcdoc-' + vimcdoc_ver + '-setup.exe?download'
+    exe_unicode_address = base_address + 'vimcdoc-' + vimcdoc_ver + '-setup-unicode.exe?download'
+    tarball_address = base_address + 'vimcdoc-' + vimcdoc_ver + '.tar.gz?download'
+    user_manual_address = base_address + 'user_manual.pdf?download'
+    reference_address = base_address + 'reference.pdf?download'
 
     print '<li> Latest <a href=' + exe_ansi_address + '>win32 installation program</a>'
     print '</li>'
@@ -206,22 +205,15 @@ def PrintGetVimcdoc():
     print '</li>'
     print '<li> Latest platform independent <a href=' + tarball_address + '> tarball</a>, including an Linux/BSD installation script'
     print '</li>'
-    print '<li> If you are a BSD user, you might want to check out this\
-            <a href="http://www.freshports.org/chinese/vim-scdoc">port</a>.\
-            Thanks for hamigua. '
-    print '<li> There is package for Debian systems too available at\
-            <a href="http://chinese.alioth.debian.org/vimcdoc">here</a>.\
-            Thanks for Carlos Liu. '
-    print '<li> Latest <a href=vim_user_manual_603.0.pdf>PDF</a> version of the translated Vim user manual. '
+    print '<li> Latest <a href=' + user_manual_address + '>User Manual in PDF</a> (1.6M)'
+    print '</li>'
+    print '<li> Latest <a href=' + reference_address + '>Reference Manual in PDF</a> (8.5M)'
+    print '</li>'
+    print '<li> Older <a href=vim_user_manual_603.0.pdf>PDF</a> version of the translated Vim user manual from slimzhao. '
     print 'Thanks slimzhao for permission to host this file.'
     print '</li>'
-    print '<li> For more please use the \'Download\' link on the left.</li>'
+    print '<li> For older versions, please use the \'Download\' link on the left.</li>'
     print '</ul>'
-    print '<p class="LEFT">'
-    print '<a href="http://gro.clinux.org">gro</a> has a '
-    print '<a href="http://vcd.gro.clinux.org">mirror</a>, where you can get the latest for'
-    print 'Linux and windows platform.'
-    print '<br><br>'
     print '</p>'
 
 def PrintAuthors():
@@ -243,7 +235,7 @@ def PrintAuthors():
     print '<p class="LEFT">'
     print 'Vimcdoc was started by Ken in 2002.6. lang2 started a similiar'
     print 'project from <a href="http://www.linuxforum.net">linuxforum</a> soon after. At the end of 2002 they merged and the'
-    print 'current vimcdoc took form. We have 19 '
+    print 'current vimcdoc took form. We have many '
     print '<a href="http://sourceforge.net/project/memberlist.php?group_id=56777">members</a>, among'
     print 'whom the following has contributed a lot to this project:'
     print '<ul class="LEFT">'
@@ -264,7 +256,7 @@ def PrintAuthors():
 
 def EndMainBody():
     print '<p class="SMALL">'
-    print 'Vimcdoc is &copy; 2005 by the vimcdoc team.'
+    print 'Vimcdoc is &copy; 2011 by the vimcdoc team.'
     print 'All rights reserved.'
     print '<br><br>'
     print '<a href="http://sourceforge.net">'
