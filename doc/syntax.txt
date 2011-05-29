@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.3.  最近更新: 2010年8月
+*syntax.txt*	For Vim version 7.3.  最近更新: 2011年5月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -359,9 +359,9 @@ Vim。
 
 	:10,40TOhtml
 
-警告: 这挺慢的！脚本必须处理每行的每个字符。因为它太慢，缺省每个会花很长时间的
-步骤都会在状态行上显示进度条。如果不想看到进度条，可以关闭之，这会有很不显著的
-速度提高:
+警告: 这可能会挺慢的！脚本必须处理每行的每个字符。因为它需时甚久，缺省转换过程
+的每个主要步骤都会在状态行上显示进度条。如果不想看到进度条，可以关闭之，这会有
+很不显著的速度提高: >
 
 	let g:html_no_progress = 1
 
@@ -407,7 +407,7 @@ HTML。可以通过设置 g:html_diff_one_file 变量来关闭之: >
    :let g:html_dynamic_folds = 1
 
 html_dynamic_folds 会隐含定义 html_use_css，因为要在旧版浏览器支持该功能太困难
-了。不过，html_ignore_folding 优先于 html_dynamic_folds.
+了。不过，html_ignore_folding 优先于 html_dynamic_folds。
 
 html_dynamic_folds 缺省会生成折叠列，如同 vim 的 foldcolumn 设置，它会用
 javascript 打开或关闭 HTML 文档中的折叠。此折叠列的宽度至少为 |'foldcolumn'|
@@ -425,39 +425,83 @@ html_hover_unfold。打开此选项会使用 CSS 2.0，当用户把鼠标移到�
 置位 html_no_foldcolumn 和 html_dynamic_folds 会自动置位 html_hover_unfold，否
 则折叠就不可能是动态的了。
 
-缺省使用 "<pre>" 和 "</pre>" 围绕文本。使得这些文本看起来和 Vim 的一致，但没有
-回绕。如果你希望有回绕，且可以忍受不太一致的外观，可使用: >
-   :let g:html_no_pre = 1
-这会在每行结束的地方使用 <br>，而用 "&nbsp;" 来显示连续的空格。
+缺省使用 "<pre>" 和 "</pre>" 围绕文本。要转换的窗口中如置位了 'wrap'，使用
+CSS 2.0 的 "white-space:pre-wrap" 值。要显式打开回绕: >
+   :let g:html_pre_wrap = 1
+要关闭之 >
+   :let g:html_pre_wrap = 0
+生成的 HTML 看起来已和 Vim 很接近，但终究还有少量区别，例如不能在 HTML 实现
+'showbreak' 选项，或指定断行的位置。
 
-'encoding' 的当前值用于指定 HTML 文件的字符集。这只适用于 'encoding' 的值有对
-应的 HTML 字符集名字的时候。要改变这种机制，设置 g:html_use_encoding 为要用的
-字符集名: >
-   :let g:html_use_encoding = "foobar"
-如果不想产生指定字符集的那行，设置 g:html_use_encoding 为空字符串: >
+有另一个在 HTML 中有回绕效果的方法，可能会使生成的外观更不一致。使用: >
+   :let g:html_no_pre = 1
+这会在每行结束的地方使用 <br>，而用 "&nbsp;" 来显示连续的空格。此方法和旧式的
+浏览器更兼容，而现代浏览器支持 "white-space" 方法。
+
+如果你继续使用缺省的 "<pre>" 标签，文本中的 <Tab> 字符保留在生成的输出中的条件
+是它们不影响文本的外观，而且应是在文档中有意使用的。这使得 HTML 输出可从浏览器
+中复制粘贴，而不丢失文档中的实际空白。
+
+具体来说，<Tab> 字符保留的条件是: 'tabstop' 选项设为缺省的 8，'expandtab' 没有
+置位，HTML 输出中不包含 foldcolumn，也不包含行号 (见上面的选项)。如任一项不满
+满足，文本中的 <Tab> 在 HTML 输出中被扩展为相应的空格。
+
+包含 "<pre>" 时，即使其他条件不满足，可以强制 :TOhtml 保留制表符: >
+   :let g:html_expand_tabs = 0
+注意 这样很容易打乱 HTML 中文本的对齐和缩进。
+
+即使可以保留，也要强制扩展制表符: >
+   :let g:html_expand_tabs = 1
+
+单个文件的比较模式 (用 g:html_diff_one_file) 中，连续多于三行的填充行显示为三
+行，中间行提示插入的总行数。如果你宁愿看到所有的插入行，用于逐行比较: >
+    :let g:html_whole_filler = 1
+要回到最多显示三行的模式: >
+    :unlet g:html_whole_filler
+
+对多数缓冲区，如设置 'fileencoding'，TOhtml 使用其当前值，否则使用 'encoding'
+来决定 HTML 的字符集和 'fileencoding'。对某些 'buftype' 类型，总使用
+'encoding'，一般而言，这里的描述适用于所有 |encoding-names| 指定的编码，但
+TOhtml 目前只自动使用那些广为支持的特定编码，对尚不能自动检测的特定编码，你可
+以自定义支持。
+
+要完全跳过自动字符集检测，设置 g:html_use_encoding 为你要使用的字符集。TOhtml
+会根据字符集名自行决定合适的 'fileencoding'。如果 TOhtml 办不到，你也可以手动
+指定。但建议设置该变量为广为支持的值，如 UTF-8，以便为网页服务器支持: >
+   :let g:html_use_encoding = "UTF-8"
+如果不想产生指定字符集的 HTML 行，设置 g:html_use_encoding 为空字符串: >
    :let g:html_use_encoding = ""
 要回到自动的机制，删除 g:html_use_encoding 变量: >
    :unlet g:html_use_encoding
+
+如果TOhtml 不能自动检测 g:html_use_encoding 指定的字符集对应的 'fileencoding'
+设置，用 g:html_encoding_override 可以让 TOhtml 检测到正确的编码。这是个由字符
+集到编码的组对所构成的字典，它会替代 TOhtml 自动检测所生成的相应组对，或扩充新
+组对以支持新的字符集。例如，要让 TOhtml 正确检测 HTML 字符集 "windows-1252" 对
+应的编码为 "8bit-cp1252"，用: >
+   :let g:html_encoding_override = {'windows-1252': '8bit-cp1252'}
 <
-关于 diff 模式，多于三行的填充行序列显示为三行，中间行提到插入的总行数。如果你
-宁愿看到所有的插入行，用: >
-    :let g:html_whole_filler = 1
-要回到三行的显示方式: >
-    :unlet g:html_whole_filler
-<
+g:html_charset_override 类似，它指定 TOhtml 不能自动检测的 'fileencoding' 或
+'encoding' 所对应的 HTML 字符集。也可用来覆盖现有的编码到字符集的组对。例如，
+TOhtml 缺省对所有 Unicode/UCS 编码使用 UTF-8。要用 UTF-16 和 UTFS-32 代替之，
+用: >
+   :let g:html_charset_override = {'ucs-4': 'UTF-32', 'utf-16': 'UTF-16'}
+
+注意 UTF-32 或 UTF-16 编码的文档和已知至少一个主要浏览器有兼容问题。
+
 					    *convert-to-XML* *convert-to-XHTML*
-另一个选择是使用该脚本产生 XHTML (XML 兼容的 HTML)。这可以通过设置
-"html_use_xhtml" 变量完成: >
+如果你不喜欢普通的 HTML，一个选择是使用该脚本产生 XHTML (XML 兼容的 HTML)。这
+可以通过设置 "html_use_xhtml" 变量完成: >
     :let g:html_use_xhtml = 1
 
-任何选项都可以通过显式设置想要的值来打开或关闭，或者通过 |:unlet| 删除该变量来
-恢复其缺省值。
+所有上述的开/关选项都可以通过显式设置想要的值来打开或关闭，或者通过 |:unlet|
+删除该变量来恢复其缺省值。
 
 评注:
-- 只有在 GUI 支持的版本里，才能工作。如果没有运行 GUI (可能仍然使用 X11)，或许
-  也可以，但是效果不一定好 (颜色可能不对)。
 - 一些真的很老的浏览器可能不会显示背景色。
 - 你可以在大多数浏览器里打印文件 (而且有颜色)！
+- 本版本的 TOhtml 可以和旧版本的 Vim 共用，但某些功能，例如隐藏 (conceal) 支持
+  不会工作，而对编译时没有加入 GUI 支持的旧版本，色彩也可能不对。
 
 此处是一个如何在 Unix 外壳上给所有的 .c 和 .h 文件运行此脚本的例子: >
    for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2html.vim" +"wq" +"q" $f; done
@@ -782,8 +826,8 @@ dircolors 工具的高亮定义有一个选项。它的存在是为了和 Slackw
 
 
 DOCBOOK					*docbk.vim* *ft-docbk-syntax* *docbook*
-DOCBOOK	XML				*docbkxml.vim* *ft-docbkxml-syntax*
-DOCBOOK	SGML				*docbksgml.vim* *ft-docbksgml-syntax*
+DOCBOOK XML				*docbkxml.vim* *ft-docbkxml-syntax*
+DOCBOOK SGML				*docbksgml.vim* *ft-docbksgml-syntax*
 
 有两种类型的 DocBook 文件: SGML 和 XML。要指定使用那种类型，需要设置
 "b:docbk_type" 变量。如果 Vim 能够识别，它会自动设置该变量。如果 Vim 猜不到，
@@ -927,6 +971,7 @@ Erlang 是大小写敏感的，缺省的扩展名是 ".erl"。
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
 
 FlexWiki 是基于 ASP.NET 的 wiki 包，从 http://www.flexwiki.com 可以获得。
+备注: 此网站已不可用，Wikipedia 指出开发已在 2009 年停止。
 
 多数常用的 FlexWiki 语法元素都提供了语法高亮。本文件类型插件脚本设置了若干局部
 于缓冲区的选项，使 FlexWiki 页面的编辑更加便捷。因为 FlexWiki 把换行符看成新段
@@ -2750,6 +2795,9 @@ Vim 理解三种语法项目的类型:
    :hi par1 ctermfg=red guifg=red
    :hi par2 ctermfg=blue guifg=blue
    :hi par3 ctermfg=darkgreen guifg=darkgreen
+<
+						*E849*
+语法组的最大数目为 19999。
 
 ==============================================================================
 6. :syntax 参数						*:syn-arguments*
@@ -2788,10 +2836,10 @@ concealends						*:syn-concealends*
 才可以用 "matchgroup" 来定义自己单独的高亮隐藏方式。
 
 cchar							*:syn-cchar*
-
+							*E844*
 "cchar" 参数定义代替可隐藏项目的字符 (只有给出 conceal 参数时设置 "cchar" 才有
 意义)。如果没有给出 "cchar"，缺省的隐藏代替字符是 'listchars' 选项定义的字符。
-示例: >
+该字符不能是控制字符，如制表符。示例: >
    :syntax match Entity "&amp;" conceal cchar=&
 关于高亮，见 |hl-Conceal|。
 
@@ -3201,6 +3249,9 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
    :syntax match Stuff "( aaa bbb )" contains=@BigGroup
    :syntax cluster BigGroup remove=B	" 没有效果，因为 B 不在 BigGroup 里
    :syntax cluster SmallGroup remove=B	" 现在 Stuff 不再匹配 bbb
+<
+						*E848*
+簇的最大数目是 9767。
 
 ==============================================================================
 9. 包含语法文件						*:syn-include* *E397*
@@ -3232,6 +3283,9 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
 	  在 'runtimepath' 里搜索该文件，然后载入所有匹配的文件。建议使用相对
 	  路径，因为它允许用户用自己的版本替代被包含的文件，而不用修改使用
 	  ":syn include" 命令的文件。
+
+						*E847*
+包含的最大数目是 999。
 
 ==============================================================================
 10. 同步					*:syn-sync* *E403* *E404*
@@ -3398,7 +3452,7 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 
     :sy[ntax] list {group-name}
 
-要列出单个簇的所有语法组:					*E392*	 >
+要列出单个簇的所有语法组:					*E392*  >
 
     :sy[ntax] list @{cluster-name}
 

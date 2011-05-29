@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.3.  最近更新: 2010年8月
+*pi_netrw.txt*  For Vim version 7.3.  最近更新: 2011年5月
 
 
 	    -----------------------------------------------------
@@ -10,7 +10,7 @@
 Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
 
-Copyright: Copyright (C) 1999-2010 Charles E Campbell, Jr    *netrw-copyright*
+Copyright: Copyright (C) 1999-2011 Charles E Campbell, Jr    *netrw-copyright*
 	   Permission is hereby granted to use and distribute this code, with
 	   or without modifications, provided that this copyright notice is
 	   copied with it. Like anything else that's free, netrw.vim,
@@ -44,7 +44,7 @@ Copyright: Copyright (C) 1999-2010 Charles E Campbell, Jr    *netrw-copyright*
       NETRC..............................................|netrw-netrc|
       密 码..............................................|netrw-passwd|
 5.  激活.................................................|netrw-activate|
-6.  透明文件编辑.........................................|netrw-transparent|
+6.  透明远程文件编辑....................................|netrw-transparent|
 7.  Ex 命令..............................................|netrw-ex|
 8.  变量和选项...........................................|netrw-var|
 9.  目录浏览.............................................|netrw-browse|
@@ -68,6 +68,7 @@ Copyright: Copyright (C) 1999-2010 Charles E Campbell, Jr    *netrw-copyright*
       显示文件信息.......................................|netrw-qf|
       编辑文件或目录隐藏列表.............................|netrw-ctrl-h|
       编辑排序序列.......................................|netrw-S|
+      强制作为文件或目录对待.............................|netrw-gd| |netrw-gf|
       向上一层...........................................|netrw--|
       隐藏文件或目录.....................................|netrw-a|
       改进浏览...........................................|netrw-ssh-hack|
@@ -175,19 +176,19 @@ netrw 支持用 url "透明" 地编辑其它机器上的文件 (见 |netrw-trans
 
 	  协议      变量	       缺省值
 	--------  ----------------  -------------
-	   dav:  *g:netrw_dav_cmd*   = "cadaver"      如果    cadaver 可执行
+	   dav:   *g:netrw_dav_cmd*    = "cadaver"      如果    cadaver 可执行
 	   dav:   g:netrw_dav_cmd    = "curl -o"      否则，如果 curl 可执行
-	 fetch:  *g:netrw_fetch_cmd* = "fetch -o"     如果 fetch 可用
-	   ftp:  *g:netrw_ftp_cmd*   = "ftp"
-	  http:  *g:netrw_http_cmd*  = "elinks"       如果       elinks 可用
+	 fetch:   *g:netrw_fetch_cmd*  = "fetch -o"     如果 fetch 可用
+	   ftp:   *g:netrw_ftp_cmd*    = "ftp"
+	  http:   *g:netrw_http_cmd*   = "elinks"       如果       elinks 可用
 	  http:   g:netrw_http_cmd   = "links"        否则，如果  links 可用
 	  http:   g:netrw_http_cmd   = "curl"         否则，如果  curl  可用
 	  http:   g:netrw_http_cmd   = "wget"         否则，如果  wget  可用
 	  http:   g:netrw_http_cmd   = "fetch"        否则，如果  fetch 可用
-	   rcp:  *g:netrw_rcp_cmd*   = "rcp"
-	 rsync:  *g:netrw_rsync_cmd* = "rsync -a"
-	   scp:  *g:netrw_scp_cmd*   = "scp -q"
-	  sftp:  *g:netrw_sftp_cmd*  = "sftp"
+	   rcp:   *g:netrw_rcp_cmd*    = "rcp"
+	 rsync:   *g:netrw_rsync_cmd*  = "rsync -a"
+	   scp:   *g:netrw_scp_cmd*    = "scp -q"
+	  sftp:   *g:netrw_sftp_cmd*   = "sftp"
 
 	*g:netrw_http_xcmd* : http://... 协议的选项字符串由此字符串指定，而且
 	可以独立修改。缺省地，http 处理命令的选项参数是
@@ -456,9 +457,23 @@ FreeBSD) 提供了一个叫 "fetch" 的工具，它使用 ftp 协议，但是没
 >
 	vim ftp://[user@]machine[[:#]portnumber]/path
 <
-不然，ftp 通常需要查询用户需要的用户名和密码。后者通常不会被显示出来；也就是，
-输入的密码显示的是星号。netrw 会保留用户名和密码，以便以后从相同机器的读写不需
-要再提示输入。
+Windows 提供的 ftp (通常在 c:\Windows\System32\ftp.exe) 接受选项 -s:filename
+(filename 应该是也必须是完整路径)，该文件包含 ftp 启动时自动执行的 ftp 命令。
+用这个功能，你可以为一个网站输入用户名和密码: >
+	userid
+	password
+如果 |g:netrw_ftp_cmd| 包含 -s:[path/]MACHINE，那么 (只适用于 Windows)，netrw
+会用当前要 ftp 连接的机器名来替代 MACHINE，这样你就可以有多个 machine.ftp 文
+件，包含不同的登录名和密码。例如: >
+
+	g:netrw_ftp_cmd= 'c:\Windows\System32\ftp -s:C:\Users\Myself\MACHINE'
+	vim ftp://myhost.somewhere.net/
+会使用文件 >
+	C:\Users\Myself\myhost.ftp
+<
+通常，ftp 需要查询用户需要的用户名和密码。后者通常不会被显示出来；也就是，输入
+的密码显示的是星号。netrw 会保留用户名和密码，以便以后从相同机器的读写不需要再
+提示输入。
 
 								*netrw-urls*
   +=================================+============================+============+
@@ -568,7 +583,7 @@ plugin/netrwPlugin.vim。netrw 的主要脚本定义在 autoload/netrw.vim 中�
 <
 
 ==============================================================================
-6. 透明文件编辑					*netrw-transparent* {{{1
+6. 透明远程文件编辑					*netrw-transparent* {{{1
 
 透明文件传输指通过普通的文件读写命令进行的传输 (通过 |:autocmd| 的
 |BufReadCmd|、|BufWriteCmd| 或 |SourceCmd| 事件)。这样网络文件的读写或执行就能
@@ -1113,8 +1128,8 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 切 换 到 较 早 访 问 的 目 录			*netrw-u* *netrw-updir* {{{2
 
 每次你切换到新目录时 (当前会话里新出现)，netrw 会把该目录保存在最近访问过的目
-录历史列表里 (除非 g:netrw_dirhistmax 为零；缺省该值为 10)。用 "u" 映射可以切
-换到较早访问的目录 (前任)。相反的操作见 |netrw-U|。
+录历史列表里 (除非 |g:netrw_dirhistmax| 为零；缺省该值为 10)。用 "u" 映射可以
+切换到较早访问的目录 (前任)。相反的操作见 |netrw-U|。
 
 
 切 换 到 较 迟 访 问 的 目 录			*netrw-U* *netrw-downdir* {{{2
@@ -1372,6 +1387,18 @@ Unix 上: >
 相关设置变量: |g:netrw_sort_sequence| |g:netrw_sort_options|
 
 
+强 制 作 为 文 件 或 目 录 对 待		*netrw-gd* *netrw-gf* {{{2
+
+远端符号链接 (即通过 ssh 或 ftp 列出的) 有一个问题，不容易知道它们实际链接到文
+件还是目录。
+
+强制作为文件: 用 >
+	gd
+<
+强制作为目录: 用 >
+	gf
+<
+
 向 上 一 层							*netrw--* {{{2
 
 要到上一层的目录，按 "-" 或在列表的 ../ 目录项上按 <cr>。
@@ -1554,6 +1581,14 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 "mf"。这也适用于 gvim 的 <s-leftmouse>。按 "mu" 可以一次撤销所有标记 (见
 |netrw-mu|)。
 
+标记的文件使用 "netrwMarkFile" 高亮组高亮，该组缺省链接到 "Identifier" (见
+|group-name| 下的 Identifier)。可以把以下代码 >
+
+	highlight clear netrwMarkFile
+	hi link netrwMarkFile ..随便什么..
+<
+加入 $HOME/.vim/after/syntax/netrw.vim 来改变高亮组设置。
+
 *markfilelist* *global_markfilelist* *local_markfilelist*
 所有的标记文件都进入全局标记文件列表；只有唯一的这样的列表。此外，每个 netrw
 缓冲区都有自己局部的标记文件列表；因为 netrw 缓冲区和特定的目录相关联，这意味
@@ -1597,7 +1632,7 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 		      (使用全局标记文件列表)
 
 用 mt 选择目标目录 (|netrw-mt|)。然后改变目录，选择文件 (见 |netrw-mf|)，然后
-按 "mc"。
+按 "mc"。从当前窗口 (执行 mf 的地方) 复制到目标。
 
 相关设置变量: |g:netrw_localcopycmd| |g:netrw_ssh_cmd|
 
@@ -1642,7 +1677,7 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 	试，要么用 mc 和 D 先进行复制然后再删除。请自行负责！
 
 用 mt 选择目标目录 (|netrw-mt|)。然后改变目录，选择文件 (见 |netrw-mf|)，然后
-按 "mm"。
+按 "mm"。从当前窗口 (执行 mf 的地方) 移动到目标。
 
 相关设置变量: |g:netrw_localmovecmd| |g:netrw_ssh_cmd|
 
@@ -1713,20 +1748,20 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
    ----				----
    变量				解释
    ----				----
-< *g:netrw_alto*		置位此变量后，分割后的新窗口出现在下方而不是上
-				方 (见 |netrw-o|)
+< *g:netrw_alto*		  置位此变量后，分割后的新窗口出现在下方而不是
+				上方 (见 |netrw-o|)
 				 缺省: =&sb           (见 |'sb'|)
 
-  *g:netrw_altv*		置位此变量后，分割后的新窗口出现在右方而不是左
-				方  (见 |netrw-v|)
+  *g:netrw_altv*		  置位此变量后，分割后的新窗口出现在右方而不是
+  				左方  (见 |netrw-v|)
 				 缺省: =&spr          (见 |'spr'|)
 
-  *g:netrw_banner*		显示/关闭横幅
+  *g:netrw_banner*		  显示/关闭横幅
 				=0: 关闭横幅
 				=1: 显示横幅1 (缺省)
 				注意: 关闭横幅是新功能，可能会引起问题。
 
-  *g:netrw_browse_split*	浏览时，<cr> 这样打开文件:
+  *g:netrw_browse_split*	  浏览时，<cr> 这样打开文件:
 				=0: 重用同一个窗口
 				=1: 先水平分割窗口
 				=2: 先垂直分割窗口
@@ -1735,7 +1770,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				    注意 可用 |g:netrw_preview| 来进行垂直分割
 				    而不是水平分割。
 
-  *g:netrw_browsex_viewer*	指定查阅器的用户偏好: >
+  *g:netrw_browsex_viewer*	  指定查阅器的用户偏好: >
 					"kfmclient exec"
 					"gnome-open"
 <				如果使用了 >
@@ -1743,32 +1778,42 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 <				那么 netrwFileHandler() 将寻找处理该扩展名的脚
 				本/函数 (见 |netrw_filehandler|)。
 
-  *g:netrw_chgperm*		Unix/Linux: "chmod PERM FILENAME"
+  *g:netrw_chgperm*		  Unix/Linux: "chmod PERM FILENAME"
 				Windows:    "cacls FILENAME /e /p PERM"
 				用以改变文件的访问权限。
 
-  *g:netrw_compress*		="gzip"
+  *g:netrw_compress*		  ="gzip"
 				    用此命令压缩带标记文件
 
-  *g:netrw_ctags*		="ctags"
+  *g:netrw_ctags*		  ="ctags"
 				建立标签使用的缺省外部程序
 
-  *g:netrw_cursorline*		= 1 (缺省)
-				使用局部的 |'cursorline'| 设置，如果
-				|g:netrw_liststyle| ==0 (瘦列表) 或
-				|g:netrw_liststyle| ==1 (长列表) 或
-				|g:netrw_liststyle| ==3 (树形列表)
-				(也即，不影响宽列表的显示)
-				=0: 关闭
-				=2: 同 ==1，但宽列表同时使用局部的
-				|'cursorline'| 和|'cursorcolumn'|。
+  *g:netrw_cursor*		  = 2 (缺省)
+  				本选项控制 netrw 使用的 |'cursorline'| (cul)
+				和 |'cursorcolumn'| (cuc) 设置:
 
-  *g:netrw_decompress*		= { ".gz" : "gunzip" ,
+				 值        瘦-长-树            宽
+				 =0      u-cul u-cuc      u-cul u-cuc
+				 =1      u-cul u-cuc        cul u-cuc
+				 =2        cul u-cuc        cul u-cuc
+				 =3        cul u-cuc        cul   cuc
+				 =4        cul   cuc        cul   cuc
+
+				其中	
+				  u-cul : 用户使用的 |'cursorline'|
+				  u-cuc : 用户使用的 |'cursorcolumn'|
+				  cul   : 局部设置的 |'cursorline'|
+				  cuc   : 局部设置的 |'cursorcolumn'|
+
+  *g:netrw_decompress*		  = { ".gz" : "gunzip" ,
 				    ".bz2" : "bunzip2" ,
 				    ".zip" : "unzip" ,
 				    ".tar" : "tar -xf"}
 				  映射后缀到解压程序的字典。
-  *g:netrw_fastbrowse*		=0: 慢速浏览；
+  *g:netrw_dirhistmax*            =10: 控制过去历史最大数量。零关闭之。
+				     (相关: |netrw-qb| |netrw-u| |netrw-U|)
+
+  *g:netrw_fastbrowse*		  =0: 慢速浏览；
 				    不会重用目录列表，
 				    总是重新获取目录列表。
 				=1: 中速浏览；
@@ -1784,11 +1829,11 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				本选项提供用户机会来选择准确性 (即最新的列表)
 				和速度的权衡。
 
-  *g:netrw_fname_escape*	=' ?&;%'
+  *g:netrw_fname_escape*	  =' ?&;%'
   				远程读取/写入前用于文件名。
 
-  *g:netrw_ftp_browse_reject*	ftp 可能会生成一些错误和警告信息，它们会作为
-				"目录" 和 "文件" 出现在列表里。使用本模式来删
+  *g:netrw_ftp_browse_reject*	  ftp 可能会生成一些错误和警告信息，它们会作为
+  				"目录" 和 "文件" 出现在列表里。使用本模式来删
 				除这些内嵌的消息。缺省值为:
 				 '^total\s\+\d\+$\|
 				 ^Trying\s\+\d\+.*$\|
@@ -1798,78 +1843,79 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				 : connect to address [0-9a-fA-F:]*
 				 : No route to host$'
 
-  *g:netrw_ftp_list_cmd*	传递给 ftp 用于列出目录的选项。缺省为:
+  *g:netrw_ftp_list_cmd*	  传递给 ftp 用于列出目录的选项。缺省为:
 				 unix 或置位 g:netrw_cygwin 时:	"ls -lF"
                                  否则                           "dir"
 
 
-  *g:netrw_ftp_sizelist_cmd*	传递给 ftp 用于列出目录并按文件大小排序的选
+  *g:netrw_ftp_sizelist_cmd*	  传递给 ftp 用于列出目录并按文件大小排序的选
 				项。
 				缺省:
 				 unix 或置位 g:netrw_cygwin 时: "ls -slF"
 				 否则                           "dir"
 
-  *g:netrw_ftp_timelist_cmd*	传递给 ftp 用于列出目录并按文件最后修改时间排
-				序的选项。
+  *g:netrw_ftp_timelist_cmd*	  传递给 ftp 用于列出目录并按文件最后修改时间
+  				排序的选项。
 				缺省:
 				 unix 或置位 g:netrw_cygwin 时: "ls -tlF"
 				 否则                           "dir"
 
-  *g:netrw_glob_escape*		='[]*?`{~$' (unix)
+  *g:netrw_glob_escape*		  ='[]*?`{~$' (unix)
 				='[]*?`{$'  (windows
   				应用 glob() 前，目录名中的这些字符被转义
 
-  *g:netrw_hide*		如果为真，使用隐藏列表
+  *g:netrw_hide*		  如果为真，使用隐藏列表
 				 缺省: =0
 
-  *g:netrw_home*		书签和历史保存的主目录 (分别存为 .netrwbook 和
-				.netrwhist)。
+  *g:netrw_home*		  书签和历史保存的主目录 (分别存为 .netrwbook
+  				和 .netrwhist)。
 				 缺省: |'runtimepath'| 的第一个目录
 
-  *g:netrw_keepdir*		=1 (缺省) 浏览目录时不影响当前目录。
+  *g:netrw_keepdir*		  =1 (缺省) 浏览目录时不影响当前目录。
 				=0 浏览目录时设置当前目录为该目录。
 				当前的浏览目录保存在 b:netrw_curdir 里 (另见
 				|netrw-c|)
 
-  *g:netrw_list_cmd*		列出远程目录的命令
+  *g:netrw_list_cmd*		  列出远程目录的命令
 				 缺省: (如果 ssh 可执行)
                                        "ssh USEPORT HOSTNAME ls -FLa"
 
-  *g:netrw_liststyle*		设置缺省的列表风格:
+  *g:netrw_liststyle*		  设置缺省的列表风格:
                                 = 0: 瘦列表 (每个文件一行)
                                 = 1: 长列表 (每个文件一行，带有时间信息和文件
                                      长度)
 				= 2: 宽列表 (多个文件，分列显示)
 				= 3: 树型风格列表
-  *g:netrw_list_hide*		逗号分隔的隐藏文件的模式列表
+  *g:netrw_list_hide*		  逗号分隔的隐藏文件的模式列表
 				模式是正规表达式 (见 |regexp|)
 				示例: let g:netrw_list_hide= '.*\.swp$'
 				 缺省: ""
 
-  *g:netrw_localcopycmd*	="cp" Linux/Unix/MacOS/Cygwin
+  *g:netrw_localcopycmd*	  ="cp" Linux/Unix/MacOS/Cygwin
   				="copy" Windows
 				把带标记文件 (|netrw-mf|) 复制到目标目录
 				(|netrw-mt|、|netrw-mc|)
 
-  *g:netrw_localmovecmd*	="mv" Linux/Unix/MacOS/Cygwin
+  *g:netrw_localmovecmd*	  ="mv" Linux/Unix/MacOS/Cygwin
   				="move" Windows
 				把带标记文件 (|netrw-mf|) 移动到目标目录
 				(|netrw-mt|、|netrw-mm|)
 
-  *g:netrw_local_mkdir*		建立本地目录的命令
+  *g:netrw_local_mkdir*		  建立本地目录的命令
 				 缺省: "mkdir"
 
-  *g:netrw_local_rmdir*		删除目录的命令 (rmdir)
+  *g:netrw_local_rmdir*		  删除目录的命令 (rmdir)
 				 缺省: "rmdir"
 
-  *g:netrw_maxfilenamelen*	=32 缺省之所以选为该值，使为了使长列表能在 80
-				列内显示。如果你的屏幕更宽或者文件或目录名可能
-				长于 32 个字节，可以设置此选项使列表按列排列
+  *g:netrw_maxfilenamelen*	  =32 缺省之所以选为该值，使为了使长列表能在
+				80 列内显示。如果你的屏幕更宽或者文件或目录名
+				可能长于 32 个字节，可以设置此选项使列表按列排
+				列
 
-  *g:netrw_mkdir_cmd*		建立远程目录的命令
+  *g:netrw_mkdir_cmd*		  建立远程目录的命令
 				 缺省: "ssh USEPORT HOSTNAME mkdir"
 
-  *g:netrw_mousemaps*		=1 (缺省) 打开鼠标按钮的功能
+  *g:netrw_mousemaps*		  =1 (缺省) 打开鼠标按钮的功能
 				   浏览时:
 				     leftmouse       : 打开文件/目录
 				     shift-leftmouse : 标记文件
@@ -1877,7 +1923,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				     rightmouse      : 删除文件/目录
 				=0: 关闭鼠标映射
 
-  *g:netrw_retmap*		如果存在且为一，那么:
+  *g:netrw_retmap*		  如果存在且为一，那么:
   				 * 如果在 netrw 选择的文件中，_且_
 				 * 没有定义过普通模式的 <2-leftmouse> 映射，
 				那么 <2-leftmouse> 会被映射以方便地回到 netrw
@@ -1894,34 +1940,35 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 
 				  缺省: =0
 
-  *g:netrw_rm_cmd*		删除文件的命令
+  *g:netrw_rm_cmd*		  删除文件的命令
 				 缺省: "ssh USEPORT HOSTNAME rm"
 
-  *g:netrw_rmdir_cmd*		删除目录的命令
+  *g:netrw_rmdir_cmd*		  删除目录的命令
 				 缺省: "ssh USEPORT HOSTNAME rmdir"
 
-  *g:netrw_rmf_cmd*		删除软链接的命令
+  *g:netrw_rmf_cmd*		  删除软链接的命令
 				 缺省: "ssh USEPORT HOSTNAME rm -f"
 
-  *g:netrw_sort_by*		按 "name" (名字)、"time" (时间) 或 "size" (大
-  				小) 排序
+  *g:netrw_sort_by*		  按 "name" (名字)、"time" (时间) 或 "size"
+				(大小) 排序
 				 缺省: "name"
 
-  *g:netrw_sort_direction*	排序方向: "normal" (普通) 或 "reverse" (反转)
-				 缺省: "normal"
+  *g:netrw_sort_direction*	  排序方向: "normal" (普通) 或 "reverse" (反
+  				转) 缺省: "normal"
 
-  *g:netrw_sort_options*	排序是通过 |:sort| 命令进行的；此变量的值会附
+  *g:netrw_sort_options*	  排序是通过 |:sort| 命令进行的；此变量的值会附
 				加到排序命令之后。例如，在 .vimrc 里加上以下内
 				容就可以忽略大小写: >
 					let g:netrw_sort_options="i"
 <				 缺省: ""
 
-  *g:netrw_sort_sequence*	按名字排序时，先按逗号分隔的此模式序列排序。
+  *g:netrw_sort_sequence*	  按名字排序时，先按逗号分隔的此模式序列排序。
 				注意 模式也要考虑表示文件类型的附綴。
 				 缺省: '[\/]$,*,\.bak$,\.o$,\.h$,
                                         \.info$,\.swp$,\.obj$'
 
-  *g:netrw_special_syntax*	如果为真，特定文件会以特殊语法出现在浏览器中:
+  *g:netrw_special_syntax*	  如果为真，特定文件会以特殊语法出现在浏览器
+  				中:
 
 					netrwBak     : *.bak
 					netrwCompress: *.gz *.bz2 *.Z *.zip
@@ -1941,19 +1988,19 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 					hi link netrwCompress Visual
 <				来定义自己的偏好。
 
-  *g:netrw_ssh_cmd*		可以用此值代替 ssh，用于执行列表，删除文件等这
-				些远程动作的可执行命令。
+  *g:netrw_ssh_cmd*		  可以用此值代替 ssh，用于执行列表，删除文件等
+  				这些远程动作的可执行命令。
 				 缺省: ssh
 
-  *g:netrw_ssh_browse_reject*	ssh 有时产生你不想要的行、消息、标题和任何你不
-				希望看作是 "目录" 和 "文件" 的内容。
+  *g:netrw_ssh_browse_reject*	  ssh 有时产生你不想要的行、消息、标题和任何你
+  				不希望看作是 "目录" 和 "文件" 的内容。
 				此模式可用于删除这些内嵌的信息。缺省值为:
 					 '^total\s\+\d\+$'
 
-  *g:netrw_tmpfile_escape*	=' &;'
+  *g:netrw_tmpfile_escape*	  =' &;'
   				对所有的临时文件使用 escape() 来转义这些字符。
 
-  *g:netrw_timefmt*		指定代替 %c 的 strftime() 的格式字符串
+  *g:netrw_timefmt*		  指定代替 %c 的 strftime() 的格式字符串
 				缺省值 "%c"，根据我的 strftime() 项目的 man 页
 				面，是 "建议使用的本地 locale 日期时间的表现方
 				式"；不过，不是所有人都满意。一些选择:
@@ -1961,18 +2008,18 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				 " %a %Y-%m-%d  %I-%M-%S %p"
 				 缺省: "%c"
 
-  *g:netrw_use_noswf*		netrw 通常避免给浏览器缓冲区写入交换文件。不
+  *g:netrw_use_noswf*		  netrw 通常避免给浏览器缓冲区写入交换文件。不
 				过，在有些系统上，看来这么做引起讨厌的 ml_get
 				错误；如果你看到 ml_get 错误，尝试在 .vimrc 中
 				放入
 				  let g:netrw_use_noswf= 0
 
-  *g:netrw_winsize*		指定 "o" (见 |netrw-o|)、"v" (见 |netrw-v|)、
+  *g:netrw_winsize*		  指定 "o" (见 |netrw-o|)、"v" (见 |netrw-v|)、
 				|:Hexplore| 或 |:Vexplore| 建立的新窗口的初始
 				大小。
 				 缺省: ""
 
-  *g:netrw_xstrlen*		控制 netrw 如何计算包含多字节字符的字符串的长
+  *g:netrw_xstrlen*		  控制 netrw 如何计算包含多字节字符的字符串的长
   				度 (来自 N Weibull、T Mechelynck)
 				=0: 使用 Vim 的内建 strlen()
 				=1: 代码点的个数 (Latin a + 组合用 circumflex
@@ -1984,7 +2031,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				    宽 CJK 是 2 而不是 1，阿拉伯 alif 在 lam
 				    之前是零，否则为 1，等等)
 
-  *g:NetrwTopLvlMenu*		指定顶层子菜单名；缺省为 "Netrw."。
+  *g:NetrwTopLvlMenu*		  指定顶层子菜单名；缺省为 "Netrw."。
 				如果你想改变，在 .vimrc 里进行。
 
 NETRW 浏 览 和 选 项 不 兼 容 性		*netrw-incompatible* {{{2
@@ -1996,7 +2043,7 @@ netrw 的设计中，对用户选项的处理是先保存它们，设置和 netr
 而言之，autochdir 设置当前目录为包含该 "文件" 的目录 (即使该 "文件" 本身也是目
 录)。
 
-NETRW 设 置						*netrw-settings* {{{2
+NETRW 浏 览 设 置				*netrw-settings* {{{2
 
 使用 NetrwSettings.vim 插件， >
 	:NetrwSettings
@@ -2031,6 +2078,7 @@ netrw 也可以用本地浏览器 "获得" 文件。netrw 显示的目录不一�
  * 要自动使得当前浏览目录总成为当前目录可见 |g:netrw_keepdir|。
 
 
+							*netrw-createfile*
 在 NETRW 当 前 目 录 打 开 新 文 件		*netrw-%*
 
 要在 netrw 当前目录打开一个新文件，按 "%"。此映射询问用户新的文件名；然后在
@@ -2337,11 +2385,11 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 
 通常可以这样得到 <netrw.vim> 脚本:
 >
-	/usr/local/share/vim/vim6x/plugin/netrw.vim
-	/usr/local/share/vim/vim6x/autoload/netrw.vim
-< -或- >
-	/usr/local/share/vim/vim7x/plugin/netrw.vim
+ 	/usr/local/share/vim/vim7x/plugin/netrwPlugin.vim
 	/usr/local/share/vim/vim7x/autoload/netrw.vim
+< -或- >
+	/usr/local/share/vim/vim6x/plugin/netrwPlugin.vim
+	/usr/local/share/vim/vim6x/autoload/netrw.vim
 <
 在启动时自动被加载 (假设 :set nocp)。
 
@@ -2383,6 +2431,16 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 ==============================================================================
 12. 历史 (英文)						*netrw-history* {{{1
 
+	v141: Aug 28, 2010 * added -s:... support for Windows ftp
+			   * restored 2-leftmouse for :Rex-like return
+			   * added balloon help for banner
+	      Oct 26, 2010 * :Texplore changed to start from netrw's idea
+			     of the current directory, not pwd's
+	      Feb 10, 2011 * netrwPlugin modified to use BufReadCmd
+			     when the "filename" ends with a "/" or a "\"
+			     Avoids "... is a directory" message, works
+			     inside a try-catch-endtry clause.
+	      Feb 22, 2011 * for menus, &go =~# used to insure correct case
 	v140: Jul 27, 2010 * (Lech Lorens) unexpected change of window
 	v139: May 14, 2010 * when viewing remote directory listings and
 			     changing listing style, going to tree listing
@@ -2409,7 +2467,7 @@ g:netrw_rename_cmd 变量实现换名。缺省值为:
 	v137: Dec 28, 2009 * modified the preview window handling for
 			     vertically split windows.  The preview
 			     window will take up all but g:netrw_winsize
-			     columns of the original window; those 
+			     columns of the original window; those
 			     g:netrw_winsize columns will be used for
 			     the netrw listing.
 			   * (Simon Dambe) removed "~" from

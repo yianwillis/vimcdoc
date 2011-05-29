@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.3.  最近更新: 2010年8月
+*options.txt*	For Vim version 7.3.  最近更新: 2011年5月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -130,6 +130,16 @@ termcap 值。设置后，可以用于映射。如果 "xx" 包含特殊字符，
 	:set <M-b>=^[b
 (这里 ^[ 是真正的 <Esc>，用 CTRL-V <Esc> 来输入)
 这个方法优于映射之处在于它能适用于所有情况。
+
+你可以定义任何键码，如: >
+	:set t_xy=^[foo;
+如果使用不能识别的名字，没有警告。你可以随便定义映射: >
+	:map <t_xy> something
+<								*E846*
+还没有设置的键码会被当作不存在。试图得到其值会报错: >
+	:set t_kb=
+	:set t_kb
+	E846: Key code not set: t_kb
 
 为了安全原因，t_xx 选项不能在 |modeline| 或者 |sandbox| 里设置。
 
@@ -301,6 +311,7 @@ C 源代码使用的值。可用这个命令: >
 			选项两次，导致不同的设置和语法文件被载入。
 			{Vi 无此功能}
 
+				*option-window* *optwin*
 :bro[wse] se[t]			*:set-browse* *:browse-set* *:opt* *:options*
 :opt[ions]		打开窗口，阅读和设置所有的选项。选项以功能分组。
 			提供每个选项简短的帮助。在简短帮助上按 <CR>，会打开帮
@@ -661,7 +672,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	置位本选项也意味着 Vim 的行为就像打开 'autowrite' 一样。
 
 							*'background'* *'bg'*
-'background' 'bg'	字符串	(缺省为 "dark" 或 "light")
+'background' 'bg'	字符串	(缺省为 "dark" 或 "light"，见下)
 			全局
 			{Vi 无此功能}
 	设为 "dark" 时，Vim 试图使用深色背景上看起来舒服的颜色。如果设为
@@ -685,8 +696,13 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	该值，而 Vim 检测到背景实际上很深，'background' 会设为 "dark"。但这在
 	.gvimrc 读入_之后_才发生 (因为窗口需要被打开才能发现实际的背景色)。要
 	避免这一点，在 .gvimrc 里放上 ":gui" 命令以强迫打开 GUI 窗口。它应在使
-	用 'background' 的值的命令之前 (比如，在 ":syntax on" 之前)。通常，该
-	选项应在 .vimrc 文件里设置。可能和终端的名字有关。比如: >
+	用 'background' 的值的命令之前 (比如，在 ":syntax on" 之前)。
+
+	MS-DOS、Windows 和 OS/2 缺省值是 "dark"。
+	其他系统下，当 'term' 为 "linux"、”screen.linux"、"cygwin" 或 "putty"
+	时，或当 $COLORFGBG 建议使用深色时，使用 "dark"，否则为 "light"。
+
+	通常，该选项应在 .vimrc 文件里设置。可以依赖于终端名。比如: >
 		:if &term == "pcterm"
 		:  set background=dark
 		:endif
@@ -1182,6 +1198,14 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			"unnamed" 都使用指定的寄存器。剪贴板寄存器总是可以显式
 			地用 "* 记法来访问。另见 |gui-clipboard|。
 
+	unnamedplus	"unnamed" 标志位的变种，对除了抽出的所有操作，以剪贴板
+			'+' 寄存器 (|quoteplus|) 代替 '*' 寄存器。
+			抽出动作会把文本放入 '+' 寄存器，如也包含 "unnamed"，
+			则同时放入 '*' 寄存器。
+			仅当 |+X11| 特性存在时才可用。
+			以下方法可检查该选项是否可用: >
+				if has('unnamedplus')
+<
 	autoselect	和 'guioptions' 的 'a' 标志位工作方法类似: 如果存在，
 			无论什么时候启动可视模式或者可视区域扩展，Vim 都试图成
 			为窗口系统全局选择区的拥有者，或者把选择的文本放置到选
@@ -1231,6 +1255,23 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{Vi 无此功能}
 			{仅当编译时加入 |+vertsplit| 特性才有效}
 	命令行窗口的屏幕行数。|cmdwin|
+
+						*'colorcolumn'* *'cc'*
+'colorcolumn' 'cc'	字符串	(缺省为 "")
+			局部于窗口
+			{Vi 无此功能}
+			{仅当编译时加入 |+syntax| 特性才有效}
+	'colorcolumn' 是逗号分隔的屏幕列的列表，这些列会用 ColorColumn
+	|hl-ColorColumn| 高亮。可用于对齐文本。会使屏幕刷新变慢。
+	屏幕列可以是绝对值，也可以在数值之前带有 '+' 或 '-' ，后者会采用从
+	'textwidth' 加上或减去该值之后的值。 >
+
+		:set cc=+1  " 高亮 'textwidth' 之后的列
+		:set cc=+1,+2,+3  " 高亮 'textwidth' 之后的三列
+		:hi ColorColumn ctermbg=lightgrey guibg=lightgrey
+<
+	'textwidth' 为零时不使用带 '-' 和 '+' 的项目。
+	最多高亮 256 列。
 
 						*'columns'* *'co'* *E594*
 'columns' 'co'		数值型	(缺省为 80 或终端宽度)
@@ -1389,6 +1430,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	本选项指定插入模式补全 CTRL-X CTRL-U 使用的函数。|i_CTRL-X_CTRL-U|
 	|complete-functions| 解释如何调用该函数以及它应该返回何值。
 
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	字符串	(缺省: "menu,preview")
@@ -2296,15 +2338,21 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	  2. 如果找到一个 <NL> 而 'fileformats' 包含 "unix" 的话，'fileformat'
 	     设为 "unix"。注意 如果找到的 <NL> 没有前导 <CR>，"unix" 比 "dos"
 	     优先。
-	  3. 如果 'fileformats' 包含 "mac"，'fileformat' 设为 "mac"。这意味着
-	     "mac" 只有在没有给出 "unix" 或者在文件里没有找到 <NL>，并且没有给
-	     出 "dos" 或者没有在文件里找到 <CR><NL> 时才会使用。
-	     如果先选择 "unix"，但第一个 <CR> 出现在第一个 <NL> 之前，而文件里
-	     的 <CR> 比 <NL> 多的话，'fileformat' 也设为 "mac"。
+	  3. 如果 'fileformat' 没有设置，且 'fileformats' 包含 "mac"，
+	     'fileformat' 设为 "mac"。
+	     这意味着 "mac" 只有在:
+	      没有给出 "unix" 或者在文件里没有找到 <NL>，并且
+	      没有给出 "dos" 或者没有在文件里找到 <CR><NL> 时
+	     才会使用。
+	     例外: 如果先选择 "unix"，但在第一个出现的 <NL> 之前有 <CR>，而文
+	     件的头几行中 <CR> 比 <NL> 看起来多的话，也使用 "mac"。
 	  4. 如果还是不能设置 'fileformat'，使用 'fileformats' 的第一个名字。
 	  读入文件到已有的缓冲区时，完成相同的步骤，但如同 'fileformat' 已经为
 	  该文件合适地设置过，不改变该选项。
 	如果置位 'binary'，不使用 'fileformats' 的值。
+
+	注意  Vim 启动时使用的空缓冲区不使用本选项。请在 .vimrc 里自行设置
+	'fileformat'。
 
 	对于使用 DOS 类型的 <EOL> (<CR><NL>) 的系统来说，读入待执行的脚本
 	(":source") 或者 vimrc 文件时，可能进行自动 <EOL> 的检测:
@@ -2481,7 +2529,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			局部于窗口
 			{Vi 无此功能}
 			{仅当编译时加入 |+folding| 特性才有效}
-	设置会显示为关闭折叠的最少屏幕行数。也适用于手动关闭的折叠。
+	设置屏幕行数，超过该值的折叠可以关闭。也适用于手动关闭的折叠。
+	缺省值 1 意味着折叠只有在占据两行或更多时才能关闭。
+	设为零则可以关闭只占据一个屏幕行的折叠。
 	注意 这只对显示的效果有影响。使用 "zc" 关闭折叠以后，如果该折叠比
 	'foldminlines' 小，会显示为打开。但接下来的 "zc" 就可能会关闭包含该折
 	叠的折叠。
@@ -2502,6 +2552,10 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{仅当编译时加入 |+folding| 特性才有效}
 	如果某个命令移动光标到关闭的折叠，本选项指定该命令是什么类型时会打开折
 	叠。这是一个逗号分隔的项目列表。
+	备注: 当命令是映射一部分时不使用本选项。在映射中加入 |zv| 命令可以达到
+	相同的效果。
+	(原因: 映射本身可能想要控制折叠的打开)
+
 		项目		命令 ~
 		all		任何
 		block		"("、"{"、"[["、"[{" 等。
@@ -2516,8 +2570,6 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 				也用于 |[s| 和 |]s|。
 		tag		跳转到标签: ":ta"、CTRL-T 等。
 		undo		撤销或重做: "u" 和 CTRL-R
-	如果命令是映射的一部分，不使用本选项。要达到相同的效果，在映射里加入
-	|zv| 命令。
 	如果移动命令用作操作符 (比如，"dl" 或 "y%")，不使用本选项。这意味着操
 	作符会包含整个关闭的折叠。
 	注意 这里不包括垂直移动命令，否则移过关闭的折叠会非常困难。
@@ -2593,7 +2645,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 
 	函数如果返回非零，Vim 依旧使用内部的排版机制。
 
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	可以在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。不过那里本选
+	项无法达到需要的效果，因为你不能改变缓冲区的文本。
 
 						*'fsync'* *'fs'*
 'fsync' 'fs'		布尔型	(缺省打开)
@@ -3317,6 +3370,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	计算一行所需的缩进距离的表达式。在建立新行、|=| 操作符和插入模式下输入
 	'indentkeys' 选项指定的热键时使用。
 	如果此选项非空，它否决 'cindent' 和 'smartindent' 的缩进计算。
+	如果置位 'lisp'，则本选项被自带的 Lisp 缩进算法否决。
 	如果置位 'paste'，不使用此选项来计算缩进。
 	计算此表达式时，|v:lnum| 设为要计算缩进的行号。光标在计算表达式时也在
 	该行上 (但此后可以移开)。
@@ -3500,6 +3554,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 		:set key=
 <	不能用 ":set key" 或 "echo &key" 得到本选项的值。以防本来不应该知道的
 	人能够看到。这也意味着一旦设置以后，你自己也无法看到，小心不要输错！
+	在表达式中可用 "&key" 来判断加密是否已打开。如果 'key' 已设置，该值
+	返回 "*****" (五颗星)。
 
 					*'keymap'* *'kmp'* *E544*
 'keymap' 'kmp'		字符串	(缺省为 "")
@@ -3771,23 +3827,6 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 <	可以给出占位符 "$*" (甚至多次) 来指示包含参数的位置。例如: >
 	    :set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
 <	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
-
-						*'colorcolumn'* *'cc'*
-'colorcolumn' 'cc'	字符串	(缺省为 "")
-			局部于窗口
-			{Vi 无此功能}
-			{仅当编译时加入 |+syntax| 特性才有效}
-	'colorcolumn' 是逗号分隔的屏幕列的列表，这些列会用 ColorColumn
-	|hl-ColorColumn| 高亮。可用于对齐文本。会使屏幕刷新变慢。
-	屏幕列可以是绝对值，也可以是 '+' 或 '-' 开头的数值，会从 'textwidth'
-	加减该值。 >
-
-		:set cc=+1  " 高亮 'textwidth' 之后的列
-		:set cc=+1,+2,+3  " 高亮 'textwidth' 之后的三列
-		:hi ColorColumn ctermbg=lightgrey guibg=lightgrey
-<
-	'textwidth' 为零时不使用带 '-' 和 '+' 的项目。
-	最多高亮 256 列。
 
 						*'matchpairs'* *'mps'*
 'matchpairs' 'mps'	字符串	(缺省为 "(:),{:},[:]")
@@ -4832,9 +4871,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	Amiga 和 MS-DOS 上，缺省为 ">"。输出直接存到文件里，不在屏幕上回显。
 	Unix 上，缺省是 "| tee"。编译器的标准输出存到文件里，并在屏幕上回显。
 	如果初始化后，'shell' 选项是 "csh" 或 "tcsh"，缺省值变为 "|& tee"。如
-	果 'shell' 选项为 "sh"、"ksh"、"zsh" 或 "bash"，缺省值为 "2>&1| tee"。
-	这意味着标准错误 (stderr) 也被包含在内。使用 "shell" 选项时排除路径部
-	分，也就是 "/bin/sh" 被当成 "sh"。
+	果 'shell' 选项为 "sh"、"ksh"、”mksh"、"pdksh"、"zsh" 或 "bash"，缺省
+	值为 "2>&1| tee"。这意味着标准错误 (stderr) 也被包含在内。
+	使用 "shell" 选项时排除路径部分，也就是 "/bin/sh" 被当成 "sh"。
 	此选项的初始化在读入 ".vimrc" 和其它初始化步骤之后完成，所以如果那里设
 	置 'shell' 选项，'shellpipe' 选项被自动更改，除非之前已经被显式地设置
 	过。
@@ -5115,7 +5154,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{仅当编译时加入 |+smartindent| 特性才有效}
 	开启新行时使用智能自动缩进。适用于 C 这样的程序，但或许也能用于其它语
 	言。'cindent' 类似，它多数情况下更好，但更严格，见 |C-indenting|。如果
-	打开 'cindent'，置位 'si' 没有效果。
+	打开 'cindent' 或设置了 'indentexpr'，置位 'si' 没有效果。
 	'indentexpr' 是更高级的替代方案。
 	通常，使用 'smartindent' 时也应该打开 'autoindent'。
 	在这些情况下自动插入缩进:
@@ -5302,7 +5341,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	在缓冲区改变命令里，光标定位在上次缓冲区编辑时它所在的列上。
 	注意: 如果置位 'compatible'，该选项也被置位。
 
-			   *'statusline'* *'stl'* *E540* *E541* *E542*
+			   *'statusline'* *'stl'* *E540* *E542*
 'statusline' 'stl'	字符串	(缺省为空)
 			全局或局部于窗口 |global-local|
 			{Vi 无此功能}
@@ -5313,7 +5352,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	目有如下形式:
 	  %-0{minwid}.{maxwid}{item}
 	除了 {item} 以外，每个字段都是可选的。单个百分号可以用 "%%" 给出。最多
-	可给出 80 个项目。
+	可给出 80 个项目。 *E541*
 
 	如果此选项以 "%!" 开始，它用作表达式。计算此表达式的结果用作选项值。例
 	如: >
@@ -5360,7 +5399,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	k S   "b:keymap_name" 的值或使用 |:lmap| 映射时的 'keymap':
 	      "<keymap>"。
 	n N   缓冲区号。
-	b N   光标所在字节的值。
+	b N   光标所在字符的值。
 	B N   同上，以十六进制表示。
 	o N   光标所在字节在文件中的字节偏移，第一个字节为 1。
 	      助记: 从文件开始的偏移 (Offset) (加上 1)
@@ -6192,7 +6231,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	字符	值	~
 	!	如果包含，保存和恢复大写字母开头，并且不包含小写字母的全局变
 		量。这样，保存 "KEEPTHIS" 和 "K_L_M"，但不保存 "KeepThis" 和
-		"_K_L_M"。只保存字符串和数值类型。
+		"_K_L_M"。不能正确读回嵌套的列表和字典值，它们变成空值。
 	"	每个寄存器最大保存的行数。'<' 项目的旧名，缺点是你需要在 " 之
 		前加上反斜杠，不然它被识别为注释的开始！
 	%	如果包含，保存和恢复缓冲区列表。如果 Vim 启动时指定文件名参
@@ -6364,6 +6403,15 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 		:set wildignore=*.o,*.obj
 <	建议使用 |:set+=| 和 |:set-=| 来从列表里加减模式。这可以避免未来版本使
 	用其它缺省值出现的问题。
+
+		*'wildignorecase'* *'wic'* *'nowildignorecase'* *'nowic'*
+'wildignorecase' 'wic'	布尔型	(缺省关闭)
+			全局
+			{Vi 无此功能}
+	置位时对文件名和目录的补全忽略大小写。对完全忽略文件名大小写的系统没有
+	作用。
+	不适用于用 shell 扩展通配符的情况，当有特殊字符时这会发生。
+
 
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
 'wildmenu' 'wmnu'	布尔型	(缺省关闭)

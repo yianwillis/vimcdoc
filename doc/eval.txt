@@ -1,4 +1,4 @@
-*eval.txt*      For Vim version 7.3.  最近更新: 2010年8月
+*eval.txt*      For Vim version 7.3.  最近更新: 2011年5月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -61,21 +61,20 @@
 
 数值和字符串类型之间会根据使用的情况自动转换。
 
-数值到字符串的转换使用数值的 ASCII 表示。例如: >
-	数值 123	-->	字符串 "123"
-	数值 0		-->	字符串 "0"
-	数值 -1		-->	字符串 "-1"
-<
+数值到字符串的转换使用数值的 ASCII 表示。例如:
+	数值 123	-->	字符串 "123" ~
+	数值 0		-->	字符串 "0" ~
+	数值 -1		-->	字符串 "-1" ~
 							*octal*
 字符串到数值的转换则把字符串开头的一系列数字位转换成数值。十六进制 "0xf9" 和八
-进制 "017" 形式的数值可以识别。如果字符串不以数字开始，则结果为零。例如: >
-	字符串 "456"	-->	数值 456
-	字符串 "6bar"	-->	数值 6
-	字符串 "foo"	-->	数值 0
-	字符串 "0xf1"	-->	数值 241
-	字符串 "0100"	-->	数值 64
-	字符串 "-8"	-->	数值 -8
-	字符串 "+8"	-->	数值 0
+进制 "017" 形式的数值可以识别。如果字符串不以数字开始，则结果为零。例如:
+	字符串 "456"	-->	数值 456 ~
+	字符串 "6bar"	-->	数值 6 ~
+	字符串 "foo"	-->	数值 0 ~
+	字符串 "0xf1"	-->	数值 241 ~
+	字符串 "0100"	-->	数值 64 ~
+	字符串 "-8"	-->	数值 -8 ~
+	字符串 "+8"	-->	数值 0 ~
 
 要强制从字符串转换到数值，给它加零: >
 	:echo "0100" + 0
@@ -1014,8 +1013,7 @@ function(expr1, ...)	函数调用
 
 
 ==============================================================================
-3. 内部变量					*internal-variables* *E121*
-									*E461*
+3. 内部变量					*internal-variables* *E461*
 内部变量的名字由字母、数字和 '_' 组成。但不能由数字开始。可以使用花括号，见
 |curly-braces-names|。
 
@@ -1159,11 +1157,13 @@ v:beval_text	鼠标指针所在或之后的文本。通常是一个单词，可�
 		仅当计算 'balloonexpr' 选项时有效。
 
 					*v:beval_winnr* *beval_winnr-variable*
-v:beval_winnr	鼠标指针所在的窗口号。仅当计算 'balloonexpr' 选项时有效。
+v:beval_winnr	鼠标指针所在的窗口号。仅当计算 'balloonexpr' 选项时有效。首个
+		窗口的编号为零 (这和多数需要窗口编号的地方不同)。
 
 					*v:char* *char-variable*
 v:char		计算 'formatexpr' 时使用的参数和用于带 <expr> 的缩写中输入的字
 		符 |:map-<expr>|。
+		也用于 |InsertPreChar| 事件。
 
 			*v:charconvert_from* *charconvert_from-variable*
 v:charconvert_from
@@ -1377,8 +1377,10 @@ v:progname	包含 Vim 启动时使用的名字 (路径已被去掉)。可以用�
 		只读。
 
 					*v:register* *register-variable*
-v:register	最近的普通模式命令使用的寄存器名字。如果没有使用过，为空。
-		|getreg()| |setreg()|
+v:register	当前的普通模式命令使用的寄存器名字。如果没有特殊指定，使用缺省
+		寄存器 '"'。除非 'clipboard' 包含 "unamed" 或 "unamedplus"，此
+		时它为 '*' 或 '+'。
+		另见 |getreg()| 和 |setreg()|
 
 					*v:scrollstart* *scrollstart-variable*
 v:scrollstart	指示使屏幕上滚的脚本或函数的字符串。只有在原来为空时才设置，因
@@ -1473,6 +1475,13 @@ v:version	Vim 的版本号: 主版本号乘以 100 加上副版本号。5.0 版�
 
 					*v:warningmsg* *warningmsg-variable*
 v:warningmsg	最近给出的警告消息。该变量可以设置。
+
+					*v:windowid* *windowid-variable*
+v:windowid	基于 X11 的任何 GUI 运行时，或者在终端运行且 Vim 连接到 X 服务
+		器 (|-X|) 时，给出窗口号。
+		MS-Windows GUI 支行时，给出窗口的句柄。
+		否则该值为零。
+		注意: Vim 内部的窗口请用 |winnr()|。
 
 ==============================================================================
 4. 内建函数						*functions*
@@ -1640,7 +1649,7 @@ localtime()			数值	当前时间
 log( {expr})			浮点	{expr} 的自然对数 (以 e 为底)
 log10( {expr})			浮点	{expr} 以 10 为底的对数
 map( {expr}, {string})		列表/字典  {expr} 的每个项目改变为 {string}
-maparg( {name}[, {mode} [, {abbr}]])
+maparg( {name}[, {mode} [, {abbr} [, {dict}]]])
 				字符串	模式 {mode} 的映射 {name} 的右边
 mapcheck( {name}[, {mode} [, {abbr}]])
 				字符串	检查匹配 {name} 的映射
@@ -1733,7 +1742,7 @@ spellsuggest( {word} [, {max} [, {capital}]])
 				列表	拼写建议
 split( {expr} [, {pat} [, {keepempty}]])
 				列表	从 {pat} 分割的 {expr} 里构造 |List|
-sqrt( {expr}			浮点	{expr} 的平方根
+sqrt( {expr})			浮点	{expr} 的平方根
 str2float( {expr})		浮点	转换字符串为浮点数
 str2nr( {expr} [, {base}])	数值	把字符串转换为数值
 strchars( {expr})		数值	{expr} 字符串的字符长度
@@ -1756,6 +1765,7 @@ synID( {lnum}, {col}, {trans})	数值	{lnum} 行 {col} 列所在的语法 ID
 synIDattr( {synID}, {what} [, {mode}])
 				字符串	syntax ID {synID} 的 {what} 属性
 synIDtrans( {synID})		数值	{synID} 经过翻译的语法 ID
+synconcealed( {lnum}, {col})	列表    关于隐藏的信息
 synstack( {lnum}, {col})	列表	{lnum} 行 {col} 列所在的语法 ID 堆栈
 system( {expr} [, {input}])	字符串	外壳命令/过滤 {expr} 的输出
 tabpagebuflist( [{arg}])	列表	标签页里的缓冲区号列表
@@ -1771,7 +1781,7 @@ tolower( {expr})		字符串	字符串 {expr} 变为小写
 toupper( {expr})		字符串	字符串 {expr} 变为大写
 tr( {src}, {fromstr}, {tostr})	字符串	把 {src} 里的 {fromstr} 字符翻译为
 					{tostr} 字符
-trunc( {expr}			浮点	浮点数 {expr} 截断小数点
+trunc( {expr})			浮点	浮点数 {expr} 截断小数点
 type( {name})			数值	变量 {name} 的类型
 undofile( {name})		字符串	对应 {name} 的撤销文件名
 undotree()			列表	撤销文件树
@@ -2419,6 +2429,7 @@ exp({expr})						*exp()*
 
 expand({expr} [, {flag}])				*expand()*
 		扩展 {expr} 里的通配符和下列特殊关键字。返回的是字符串。
+		'wildignorecase' 此处适用。
 
 		如果返回多个匹配，以 <NL> 字符分隔 [备注: 5.0 版本使用空格。但
 		是文件名如果也包含空格就会有问题]。
@@ -2437,6 +2448,7 @@ expand({expr} [, {flag}])				*expand()*
 			<abuf>		自动命令缓冲区号 (以字符串形式出现！)
 			<amatch>	自动命令匹配的名字
 			<sfile>		载入的脚本文件名
+			<slnum>		载入脚本文件行号
 			<cword>		光标所在的单词
 			<cWORD>		光标所在的字串 (WORD)
 			<client>	最近收到的消息的 {clientid}
@@ -3033,6 +3045,7 @@ glob({expr} [, {flag}])					*glob()*
 		除非给出可选的 {flag} 参数且非零，应用 'suffixes' 和
 		'wildignore' 选项: 跳过匹配任何 'wildignore' 模式的名字，而
 		'suffixes' 影响匹配结果的排序。
+		'wildignorecase' 则总是适用。
 		如果扩展失败，返回空字符串。
 		扩展结果不包含不存在文件的名字。
 
@@ -3491,21 +3504,44 @@ map({expr}, {string})					*map()*
 		如果 {string} 计算时有错误，{expr} 的其余项目不再处理。
 
 
-maparg({name}[, {mode} [, {abbr}]])			*maparg()*
-		返回模式 {mode} 名为 {name} 的映射的右边。如果没有名为 {name}
-		的映射，返回空字符串。
+maparg({name}[, {mode} [, {abbr} [, {dict}]]])			*maparg()*
+		当 {dict} 省略或为零，返回模式 {mode} 名为 {name} 的映射的右手
+		边 (rhs)。返回字符串中的特殊字符用和 ":map" 命令输出的同样方式
+		进行翻译。
+
+		如果没有名为 {name} 的映射，返回空字符串。
+
+		{name} 可包含特殊键名，一如 ":map" 命令。
+
 		{mode} 可以使用下列字符串之一:
-			n	普通模式
-			v	可视模式
-			o	操作符等待模式
-			i	插入模式
-			c	命令行模式
-			l	Language-Argument ("r"、 "f"、"t" 等等) 模式
+			"n"	普通模式
+			"v"	可视模式 (包括选择)
+			"o"	操作符等待模式
+			"i"	插入模式
+			"c"	命令行模式
+			"s"	选择模式
+			"x"	可视模式
+ 			"l"	语言映射 |language-mapping|
 			""	普通、可视和操作符等待模式。
 		如果没有提供 {mode}，使用 "" 指定的模式。
+
 		如果提供 {abbr} 且非零，使用缩写而不是映射。
-		{name} 可以使用特殊键名，如同 ":map" 命令那样。返回的字符串会
-		把特殊的字符翻译成和 ":map" 命令所列出输出结果一样的格式。
+
+		如果提供 {dict} 且非零，返回字典，包含关于映射的所有信息。有
+		如下项目:
+		  "lhs"	     映射的 {lhs}。
+		  "rhs"	     映射的 {rhs}，保持输入原样。
+		  "silent"   1 若是 |:map-silent| 映射，否则为 0。
+		  "noremap"  1 若是映射的 {rhs} 不能再映射。
+		  "expr"     1 若是表达式映射 (|:map-<expr>|)。
+		  "buffer"   1 若是缓冲区本地映射 (|:map-local|)。
+		  "mode"     映射定义使用的模式。除了以上提到的模式以外，还会
+			     使用:
+			     " "     普通、可视和操作符等待模式
+			     "!"     插入和命令行模式
+				     (|mapmode-ic|)
+		  "sid"	     脚本局部 ID，用于 <sid> 映射 (|<SID>|)。
+
 		先检查局部于当前缓冲区的映射，然后再检查全局映射。
 		此函数可以用来给键映射。如果已经映射过，还可以使用原来映射的内
 		容。大意: >
@@ -3542,6 +3578,7 @@ match({expr}, {pat}[, {start}[, {count}]])			*match()*
 		否则，{expr} 用作字符串。返回数值，给出 {expr} 里 {pat} 匹配的
 		(字节计算的偏移量) 位置。
 		在第一个字符或 |List| 项目上的匹配返回零。若无匹配，返回 -1。
+		要得到子匹配，见 |matchlist()|。
 		例如: >
 			:echo match("testing", "ing")	" 返回 4
 			:echo match([1, 'x'], '\a')	" 返回 1
@@ -4704,8 +4741,8 @@ stridx({haystack}, {needle} [, {start}])		*stridx()*
 		字节位置。
 		如果给出 {start}，搜索从 {start} 位置开始。可用来寻找第二个匹
 		配: >
-			:let comma1 = stridx(line, ",")
-			:let comma2 = stridx(line, ",", comma1 + 1)
+			:let colon1 = stridx(line, ":")
+			:let colon2 = stridx(line, ":", colon1 + 1)
 <		搜索对大小写敏感。
 		模式搜索可用 |match()|。
 		如果 {needle} 不出现在 {haystack} 里，返回 -1。
@@ -4809,6 +4846,9 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 <		删除 'path' 选项的最后一部分。 >
 			:echo substitute("testing", ".*", "\\U\\0", "")
 <		返回 "TESTING"。
+		{sub} 参数可以 \= 开始，和 |:substitute| 相同。示例: >
+			:echo substitute(s, '%\(\x\x\)',
+			   \ '\=nr2char("0x" . submatch(1))', 'g')
 
 synID({lnum}, {col}, {trans})				*synID()*
 		返回数值，即当前窗口 {lnum} 行 {col} 列所在的语法 ID。
@@ -4825,16 +4865,6 @@ synID({lnum}, {col}, {trans})				*synID()*
 		例如 (回显光标所在的语法项目的名字): >
 			:echo synIDattr(synID(line("."), col("."), 1), "name")
 <
-
-synconcealed({lnum}, {col})				*synconcealed()*
-		返回列表。如果 {lnum} 和 {col} 所在位置的字符不在可隐藏区域，
-		列表的第一个项目为 0，否则为 1。列表的第二个项目为字符串。如果
-		第一个值为 1，第二个值包含代替被隐藏文本实际显示的文本，视乎
-		'conceallevel' 的当前值而定。列表的第三个，也即最后一个项目是
-		代表匹配的特定语法区域的唯一的数值。这用于在有两个连续的使用相
-		同替代字符的区域时，检测此处是否是一个新的可隐藏区域的开始。
-		示例可见 $VIMRUNTIME/syntax/2html.vim。
-
 
 synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		返回字符串，syntax ID {synID} 的 {what} 属性。可用于得到语法项
@@ -4869,6 +4899,16 @@ synIDtrans({synID})					*synIDtrans()*
 		返回数值，即 {synID} 经过翻译的语法 ID。这是用于高亮字符的语法
 		组的 ID。":highlight link" 给出的高亮组被跟随，以找到实际使用
 		的组。
+
+synconcealed({lnum}, {col})				*synconcealed()*
+		返回列表。如果 {lnum} 和 {col} 所在位置的字符不在可隐藏区域，
+		列表的第一个项目为 0，否则为 1。列表的第二个项目为字符串。如果
+		第一个值为 1，第二个值包含代替被隐藏文本实际显示的文本，视乎
+		'conceallevel' 的当前值而定。列表的第三个，也即最后一个项目是
+		代表匹配的特定语法区域的唯一的数值。这用于在有两个连续的使用相
+		同替代字符的区域时，检测此处是否是一个新的可隐藏区域的开始。
+		示例可见 $VIMRUNTIME/syntax/2html.vim。
+
 
 synstack({lnum}, {col})					*synstack()*
 		返回 |List|，即当前窗口在 {lnum} 行 {col} 列语法项目的堆栈。列
@@ -5263,17 +5303,17 @@ cmdline_compl		编译时加入了 |cmdline-completion| 的支持。
 cmdline_hist		编译时加入了 |cmdline-history| 的支持。
 cmdline_info		编译时加入了 'showcmd' and 'ruler' 的支持。
 comments		编译时加入了 |'comments'| 的支持。
+compatible		编译时确保和 Vi 非常兼容。
 cryptv			编译时加入了加密的支持。|encryption|。
 cscope			编译时加入了 |cscope| 的支持。
-compatible		编译时确保和 Vi 非常兼容。
 debug			编译时定义了 "DEBUG"。
 dialog_con		编译时加入了控制台对话框的支持。
 dialog_gui		编译时加入了 GUI 对话框的支持。
 diff			编译时加入了 |vimdiff| 和 'diff' 的支持。
 digraphs		编译时加入了二合字母的支持。
 dnd			编译时加入了 "~ 寄存器的支持 |quote_~|。
-dos32			Vim 的 32 位 DOS 的 (DJGPP) 版本。
 dos16			Vim 的 16 位的 DOS 版本。
+dos32			Vim 的 32 位 DOS 的 (DJGPP) 版本。
 ebcdic			在使用 ebcdic 字符集的机器上编译。
 emacs_tags		编译时加入了 Emcac 标签的支持。
 eval			编译时加入了表达式计算的支持。当然总要打开啦！
@@ -5292,15 +5332,15 @@ fork			编译时决定使用 fork()/exec() 而不是 system()。
 gettext			编译时加入了信息翻译 |multi-lang|。
 gui			编译时加入了 GUI 的支持。
 gui_athena		编译时加入了 Athena GUI。
+gui_gnome		编译时加入了 Gnome 支持 (同时也定义了 gui_gtk)。
 gui_gtk			编译时加入了 GTK+ GUI (任何版本)。
 gui_gtk2		编译时加入了 GTK+ 2 GUI (同时也定义了 gui_gtk)。
-gui_gnome		编译时加入了 Gnome 支持 (同时也定义了 gui_gtk)。
 gui_mac			编译时加入了 Macintosh GUI。
 gui_motif		编译时加入了 Motif GUI。
 gui_photon		编译时加入了 Photon GUI。
+gui_running		Vim 在 GUI 上运行，或者 GUI 将很快启动。
 gui_win32		编译时加入了 MS Windows Win32 GUI。
 gui_win32s		同上，使用了 Win32s 系统 (Windows 3.1)
-gui_running		Vim 在 GUI 上运行，或者 GUI 将很快启动。
 hangul_input		编译时加入了韩语 (Hangul) 输入的支持。 |hangul|
 iconv			可以使用 iconv() 进行转换。
 insert_expand		编译时加入了插入模式中 CTRL-X 扩展命令的支持。
@@ -5321,20 +5361,20 @@ menu			编译时加入了 |:menu| 的支持。
 mksession		编译时加入了 |:mksession| 的支持。
 modify_fname		编译时加入了文件名的修饰符支持。|filename-modifiers|
 mouse			编译时加入了鼠标的支持。
-mouseshape		编译时加入了 'mouseshape' 的支持。
 mouse_dec		编译时加入了 Dec 终端的鼠标支持。
 mouse_gpm		编译时加入了 gpm (Linux 控制台鼠标) 的支持。
 mouse_netterm		编译时加入了 netterm 的鼠标支持。
 mouse_pterm		编译时加入了 qnx 的鼠标支持。
 mouse_sysmouse		编译时加入了 sysmouse 支持 (*BSD 控制台鼠标)
 mouse_xterm		编译时加入了 xterm 的鼠标支持。
+mouseshape		编译时加入了 'mouseshape' 的支持。
 multi_byte		编译时加入了 'encoding' 的支持。
 multi_byte_encoding	'encoding' 设为某个多字节的编码。
 multi_byte_ime		编译时加入了 IME 输入方法的支持。
 multi_lang		编译时加入了多语言的支持。
 mzscheme		编译时加入了 MzScheme 接口支持 |mzscheme|。
-netbeans_intg		编译时加入了 |netbeans| 的支持。
 netbeans_enabled	编译时加入了 |netbeans| 的支持并且已连接上。
+netbeans_intg		编译时加入了 |netbeans| 的支持。
 ole			编译时加入了 Win32 OLE automation 的支持。
 os2			Vim 的 OS/2 版本。
 osfiletype		编译时加入了 osfiletypes 的支持。|+osfiletype|
@@ -5344,7 +5384,8 @@ persistent_undo		编译时加入了持久化撤销历史的支持。
 postscript		编译时加入了 PostScript 文件打印的支持。
 printer			编译时加入了 |:hardcopy| 的支持。
 profile			编译时加入了 |:profile| 的支持。
-python			编译时加入了 Python 接口。
+python			编译时加入了 Python 2.x 接口。|has-python|
+python3			编译时加入了 Python 3.x 接口。|has-python|
 qnx			Vim 的 QNX 版本。
 quickfix		编译时加入了 |quickfix| 的支持。
 reltime			编译时加入了 |reltime()| 的支持。
@@ -5355,11 +5396,11 @@ showcmd			编译时加入了 'showcmd' 的支持。
 signs			编译时加入了 |:sign| 的支持。
 smartindent		编译时加入了 'smartindent' 的支持。
 sniff			编译时加入了 SNiFF interface 的支持。
+spell			编译时加入了拼写检查的支持 |spell|。
 startuptime		编译时加入了 |--startuptime| 支持。
 statusline		编译时加入了 'statusline' 和 'rulerformat' 还有
 			'titlestring' 和 'iconstring' 的特殊格式的支持。
 sun_workshop		编译时加入了 Sun |workshop| 的支持。
-spell			编译时加入了拼写检查的支持 |spell|。
 syntax			编译时加入了语法高亮的支持 |syntax|。
 syntax_items		当前缓冲区有激活的语法高亮项目。
 system			编译时决定使用 system() 而不是 fork()/exec()。
@@ -5377,9 +5418,9 @@ title			编译时加入了窗口标题的支持。|'title'|。
 toolbar			编译时加入了 |gui-toolbar| 的支持。
 unix			Vim 的 Unix 版本。
 user_commands		用户定义命令支持。
-viminfo			编译时加入了 viminfo 的支持。
-vim_starting		如果在启动载入脚本的阶段则为真。
 vertsplit		编译时加入了垂直分割窗口的支持 |:vsplit|。
+vim_starting		如果在启动载入脚本的阶段则为真。|startup|
+viminfo			编译时加入了 viminfo 的支持。
 virtualedit		编译时加入了 'virtualedit' 选项支持。
 visual			编译时加入了可视模式的支持。
 visualextra		编译时加入了附加的可视模式命令支持。
@@ -5388,13 +5429,14 @@ vms			Vim 的 VMS 版本。
 vreplace		编译时加入了 |gR| and |gr| 命令支持。
 wildignore		编译时加入了 'wildignore' 选项支持。
 wildmenu		编译时加入了 'wildmenu' 选项支持。
-windows			编译时加入了多窗口的支持。
-winaltkeys		编译时加入了 'winaltkeys' 选项。
 win16			Vim 的 Win16 版本。(MS-Windows 3.1)。
-win32			Vim 的 Win32 版本。(MS-Windows 95/98/ME/NT/2000/XP)。
-win64			Vim 的 Win64 版本。(MS-Windows 64 位)。
+win32			Vim 的 Win32 版本。(MS-Windows 95 及其后的 32 或 64 位
+			版本)。
 win32unix		Vim 的 Win32 版本。使用 Unix 文件命名 (Cygwin)
+win64			Vim 的 Win64 版本。(MS-Windows 64 位)。
 win95			支持 MS-Windows 95/98/ME 的 Win32 版本。
+winaltkeys		编译时加入了 'winaltkeys' 选项。
+windows			编译时加入了多窗口的支持。
 writebackup		编译时决定缺省打开 'writebackup'。
 xfontset		编译时加入了 X 字体集 的支持。|xfontset|。
 xim			编译时加入了 X 输入法 的支持。|xim|。
@@ -5504,7 +5546,7 @@ x11			编译时加入了 X11 的支持。
 				:delfunc dict.init
 <			会删除 "dict" 的 "init" 项目。如果没有更多指向它的引
 			用，该函数被删除。
-							*:retu* *:return* *E133*
+						*:retu* *:return* *E133*
 :retu[rn] [expr]	从函数返回。如果给出 "[expr]"，计算该表达式的结果成为
 			函数的返回值。如果没有给出 "[expr]"，返回 0。
 			如果函数退出时没有显式的调用 ":return"，返回 0。
@@ -5827,7 +5869,8 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 :let [{name}, ..., ; {lastname}] += {expr1}
 :let [{name}, ..., ; {lastname}] -= {expr1}
 			同上，但附加/加/减值到每个 |List| 项目。
-							*E106*
+
+								*E121*
 :let {var-name}	..	列出变量 {var-name} 的值。可以给出多个变量的名字。这里
 			识别特殊的名字包括:		*E738*
 			  g:	全局变量
@@ -6066,7 +6109,8 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 			终该例外没有被捕获，命令处理被终止。
 			示例: >
 		:try | throw "oops" | catch /^oo/ | echo "caught" | endtry
-<
+<			注意 ”catch" 可能需要放在单独一行上，因为某些错误可以
+			导致整行在解析时被跳过而无法看到分隔命令的 "|"。
 
 							*:ec* *:echo*
 :ec[ho] {expr1} ..	回显每个 {expr1}，以空格分隔。第一个 {expr1} 开启一个
