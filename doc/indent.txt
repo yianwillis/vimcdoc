@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.3.    最近更新: 2011年5月
+*indent.txt*    For Vim version 7.3.    最近更新: 2013年1月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -387,7 +387,7 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 		       c3			    c3
 		      ) && c4;			) && c4;
 <
-							*cino-2*
+							*cino-w*
 	wN    如果 N 非零，在没有结束的括号内如果使用 "(0" 或是 "u0"，或当没有
 	      结束的括号是所在行的首个非空白字符但使用 "U0" 时，对齐使用的是紧
 	      随在没有结束括号之后的字符，而不一定是其后首个非空白字符。
@@ -411,6 +411,20 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 			      argument);	argument);
 		  a_short_line(argument,    a_short_line(argument,
 			       argument);		 argument);
+<
+							*cino-k*
+	kN    在 "if"、"for" 或 "while" 之后没有结束的括号内且 N 非零时，覆盖
+	      "(N" 定义的行为: 相对外层上下文 (即 "if"、"for" 或 "while" 所在
+	      行) 缩进 N 个字符。对更深层的嵌套没有影响。影响 "wN" 等标志位的
+	      行为，但仅限于 "if"、"for" 和 "while" 条件。0 值对应的缺省是
+	      "(N" 标志位定义的行为。(缺省为 0)。
+
+		cino=(0			   cino=(0,ks >
+		  if (condition1	    if (condition1
+		      && condition2)		    && condition2)
+		      action();			action();
+		  function(argument1	    function(argument1
+			   && argument2);	     && argument2);
 <
 							*cino-m*
 	mN    如果 N 非零，则将 ')' 开始的行和与其匹配的 '(' 所在行的第一个字
@@ -436,8 +450,9 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 		     )				   )
 <
 				*java-cinoptions* *java-indenting* *cino-j*
-	jN    正确地缩进 Java 匿名类。目前，'N' 的值并没有用到但其不能为 0
-	      (比如 'j1')。'j1' 将对下面的代码段这样正确的缩进: >
+	jN    正确地缩进 Java 匿名类，也适用于 Javascript。目前，'N' 的值并没
+	      有用到但其不能为 0 (比如 'j1')。'j1' 将对下面的代码段这样正确的
+	      缩进: >
 
 		object.add(new ChangeListener() {
 		    public void stateChanged(ChangeEvent e) {
@@ -447,7 +462,8 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 <
 			*javascript-cinoptions* *javascript-indenting* *cino-J*
 	JN    正确缩进 JavaScript 对象声明，不把它错误地当成标签。目前 'N' 的
-	      值并没有用到但不能为 0 (比如 'J1'). >
+	      值并没有用到但不能为 0 (比如 'J1'). 要打开之，也应考虑同时打开
+	      |cino-j|。>
 
 		var bar = {
 		    foo: {
@@ -479,7 +495,7 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 
 全部的缺省值是:
 	cinoptions=>s,e0,n0,f0,{0,}0,^0,L-1,:s,=s,l0,b0,gs,hs,N0,ps,ts,is,+s,
-			c3,C0,/0,(2s,us,U0,w0,W0,m0,j0,J0,)20,*70,#0
+			c3,C0,/0,(2s,us,U0,w0,W0,k0,m0,j0,J0,)20,*70,#0
 
 Vim 将一行从第一列开始，如果:
 - 它以 '#' 开头 (预处理指令)，并且 'cinkeys' 包含 '#'。
@@ -501,10 +517,12 @@ Vim 将一行从第一列开始，如果:
 
 FORTRAN							*ft-fortran-indent*
 
-Block if、select case 和 where 代码块被缩进。如果 Fortran 在自由格式下，注释，
-标号语句和续行被缩进；如果在固定宽度格式下，这些就不会被缩进，因为左边必须要求
-留出空白。因此，在固定宽度格式下，需要手动对标号语句和续行缩进。关于检测源码格
-式的更深入讨论，参见 |ft-fortran-syntax|。
+Block if、select case、where 和 forall 代码块被缩进。type、interface、
+associate、block 和 enum 结构也是。subrountine、function、module 和 program
+block 的缩进可选。如果 Fortran 在自由格式下，注释，标号语句和续行被缩进；如果
+在固定宽度格式下，这些就不会被缩进，因为左边必须要求留出空白。因此，在固定宽度
+格式下，需要手动对标号语句和续行缩进。关于检测源码格式的更深入讨论，参见
+|ft-fortran-syntax|。
 
 do 循环 ~
 缺省情况下，所有的 do 循环保持原样，不缩进。在 Fortran 里，循环甚至是多重循环
@@ -524,6 +542,17 @@ do 循环 ~
   au! BufRead,BufNewFile *.f90 let b:fortran_do_enddo=1
 
 使 .f90 文件里的 do 循环被缩进而在其它扩展名里，比如 .for 文件中不被缩进。
+
+程序单元 ~
+缺省打开程序单元 (subrountine、function、module 和 program block) 的缩进，如果
+需要轻量级的节省屏幕宽度的缩进风格，可以关闭之。要关闭所有 fortran 文件的程序
+单元的缩进，在 .vimrc 里设置全局变量 fortran_indent_less >
+
+  let fortran_indent_less=1
+
+要更精细的控制，可以设置对应的缓冲区局部变量 >
+
+  let b:fortran_indent_less=1
 
 
 PHP				*ft-php-indent* *php-indent* *php-indenting*
@@ -612,6 +641,38 @@ PYTHON							*ft-python-indent*
 续行的缩进: >
 	let g:pyindent_continue = '&sw * 2'
 
+
+R								*ft-r-indent*
+
+函数参数如果跨越多行，会进行对齐。如果不想函数参数进行对齐，在 |vimrc| 里放入:
+>
+   let r_indent_align_args = 0
+<
+所有注释字符 # 开始的行和正常 R 代码采用相同的缩进级别。Emacs/ESS 的用户可能习
+惯单个 # 的缩进于第 40 列，而 ## 以正常 R 代码方式缩进，### 不缩进。 如果你习
+惯 Emacs/ESS 的注释对齐方式，在 |vimrc| 里放入:
+>
+   let r_indent_ess_comments = 1
+<
+要单个 # 开始行的对齐不在第 40 列，给 r_indent_common_column 设置一个新值，如
+下例所示:
+>
+   let r_indent_comment_column = 30
+<
+缩进所有以 "<-" 结束的行之后的代码。Emacs/ESS 则不缩进顶层函数的代码。如果你希
+望 Vim-R-plugin 这方面采用 Emacs/ESS 风格，在 |.vimrc| 里放入:
+>
+   let r_indent_ess_compatible = 1
+<
+下面举一个打开和关闭此选项的缩进例子:
+>
+   ### r_indent_ess_compatible = 1           ### r_indent_ess_compatible = 0
+   foo <-                                    foo <-
+       function(x)                               function(x)
+   {                                             {
+       paste(x)                                      paste(x)
+   }                                             }
+<
 
 SHELL							*ft-sh-indent*
 

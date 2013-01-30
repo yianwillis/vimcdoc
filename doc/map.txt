@@ -1,4 +1,4 @@
-*map.txt*	For Vim version 7.3.  最后更新: 2011年5月
+*map.txt*	For Vim version 7.3.  最后更新: 2013年1月
 
 
 		  VIM 参考手册    作者: Bram Moolenaar
@@ -100,6 +100,8 @@
 :lmapc[lear]			|mapmode-l|		*:lmapc*  *:lmapclear*
 :cmapc[lear]			|mapmode-c|		*:cmapc*  *:cmapclear*
 			在映射命令作用的模式中删除_所有_的映射。{Vi 无此功能}
+			<buffer> 参数可用来删除所的有缓冲区局部映射
+			|:map-<buffer>|
 			警告: 同时也会删除缺省的映射。
 
 :map				|mapmode-nvo|
@@ -208,8 +210,14 @@
 - 编辑其它缓冲区
 - |:normal| 命令
 - 可以移动光标，但事后光标会被恢复
-- 你可以使用 getchar()，但不能看到已有的预输入，而新的预输入也会被丢弃。
 如果你希望通过映射来完成这些操作，让返回的字符做这些事情。
+
+你可以使用 getchar()，丢弃可能有的预输入。例如，如果有以下的映射: >
+  inoremap <expr> <C-L> nr2char(getchar())
+  inoremap <expr> <C-L>x "foo"
+此时你如果输入 CTRL-L，什么都不会发生。Vim 需要下一个字符来决定采用哪个映射。
+如果键入 'x'，采用第二个映射，插入 "foo"。如果键入其他字符，采用第一个映射，
+getchar() 得到键入的字符并返回之。
 
 这里是插入递增的列表编号的例子: >
 	let counter = 0
@@ -451,7 +459,7 @@ CTRL-V)。
 					*<LocalLeader>* *maplocalleader*
 <LocalLeader> 和 <Leader> 类似，除了它使用 "maplocalleader" 而非 "mapleader"
 以外。<LocalLeader> 用于局部于缓冲区的映射，例如: >
-      :map <LocalLeader>q  \DoItNow
+      :map <buffer> <LocalLeader>A  oanother line<Esc>
 <
 在一个全局插件里应该使用 <Leader> 而在一个文件类型插件里应该用 <LocalLeader>。
 "mapleader" 和 "maplocalleader" 可以是相同的。尽管如此，如果你把它们设为不同，
@@ -472,6 +480,7 @@ CTRL-V)。
 	<Char-123>	字符 123
 	<Char-033>	字符 27
 	<Char-0x7f>	字符 127
+	<S-Char-114>    字符 114 ('r') 加上 Shift ('R')
 它可以用来在一个 'keymap' 文件里指定一个 (多字节) 字符。大小写的区别此处不计。
 
 							*map-comments*
@@ -799,10 +808,11 @@ non-id	  匹配的前面是一个空格、制表或者行或插入的开始。
 
 :ab[breviate] {lhs}	列出以 {lhs} 开头的缩写
 
-:ab[breviate] [<expr>] {lhs} {rhs}
+:ab[breviate] [<expr>] [<buffer>] {lhs} {rhs}
 			增加一个从 {lhs} 到 {rhs} 的缩写。如果 {lhs} 已经存在
 			则它会被替换成新的 {rhs}。{rhs} 可包含空格。
 			|:map-<expr>| 说明可选的 <expr> 参数。
+			|:map-<buffer>| 说明可选的 <buffer> 参数。
 
 						*:una* *:unabbreviate*
 :una[bbreviate] {lhs}	从列表中删除 {lhs} 的缩写。如果找不到，删除 {rhs} 匹配
@@ -810,41 +820,41 @@ non-id	  匹配的前面是一个空格、制表或者行或插入的开始。
 			写。要避免扩展，插入 CTRL-V (记住输入两次)。
 
 						*:norea* *:noreabbrev*
-:norea[bbrev] [<expr>] [lhs] [rhs]
+:norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			与 ":ab" 一样，但 {rhs} 不进行重映射。{Vi 无此功能}
 
 						*:ca* *:cabbrev*
-:ca[bbrev] [<expr>] [lhs] [rhs]
+:ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			与 ":ab" 一样，但仅在命令行模式中使用。{Vi 无此功能}
 
 						*:cuna* *:cunabbrev*
 :cuna[bbrev] {lhs}	与 ":una" 一样，但仅在命令行模式中使用。{Vi 无此功能}
 
 						*:cnorea* *:cnoreabbrev*
-:cnorea[bbrev] [<expr>] [lhs] [rhs]
+:cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			与 ":ab" 一样，但仅在命令行模式中使用并且 {rhs} 不进行
 			重映射。{Vi 中无此功能}
 
 						*:ia* *:iabbrev*
-:ia[bbrev] [<expr>] [lhs] [rhs]
+:ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			与 ":ab" 一样，但仅在插入模式中使用。{Vi 无此功能}
 
 						*:iuna* *:iunabbrev*
 :iuna[bbrev] {lhs}	与 ":una" 一样，但仅在插入模式中使用。{Vi 无此功能}
 
 						*:inorea* *:inoreabbrev*
-:inorea[bbrev] [<expr>] [lhs] [rhs]
+:inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
 			与 ":ab" 一样，但仅在插入模式中使用并且 {rhs} 不进行重
 			映射。{Vi 无此功能}
 
 							*:abc* *:abclear*
-:abc[lear]		删除所有的缩写。{Vi 无此功能}
+:abc[lear] [<buffer>]	删除所有的缩写。{Vi 无此功能}
 
 							*:iabc* *:iabclear*
-:iabc[lear]		为插入模式删除所有的缩写。{Vi 无此功能}
+:iabc[lear] [<buffer>]	为插入模式删除所有的缩写。{Vi 无此功能}
 
 							*:cabc* *:cabclear*
-:cabc[lear]		为命令行模式删除所有的缩写。{Vi 无此功能}
+:cabc[lear] [<buffer>]	为命令行模式删除所有的缩写。{Vi 无此功能}
 
 							*using_CTRL-V*
 在一个缩写的 {rhs} 中使用特殊字符是可能的。CTRL-V 可以用来避免多数不可显示字符
@@ -1027,17 +1037,23 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 
 	-complete=augroup	自动命令组
 	-complete=buffer	缓冲区名
+	-complete=behave	:behave 子选项
+	-complete=color		颜色方案
 	-complete=command	Ex 命令 (及其参数)
+	-complete=compiler	编译器
 	-complete=cscope	|:cscope| 子选项
 	-complete=dir		目录名
 	-complete=environment	环境变量名
 	-complete=event		自动命令事件
 	-complete=expression	Vim 表达式
 	-complete=file		文件和目录名
+	-complete=file_in_path	|'path'| 中的文件和目录名
 	-complete=filetype	文件类型名 |'filetype'|
 	-complete=function	函数名
 	-complete=help		帮助主题
 	-complete=highlight	高亮组
+	-complete=history	|:history| 子选项
+	-complete=locale	locale 名 (和 locale -a 给出的相同)
 	-complete=mapping	映射名
 	-complete=menu		菜单
 	-complete=option	选项
