@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.3.  最近更新: 2013年1月
+*change.txt*    For Vim version 7.4.  最近更新: 2013年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -65,8 +65,20 @@
 			|Visual-mode|)。在可视列块模式里，"D" 删除高亮的文本直
 			到行尾。{Vi 无此功能}
 
-					*:d* *:de* *:del* *:delete* *:dl*
+					*:d* *:de* *:del* *:delete* *:dl* *:dp*
 :[range]d[elete] [x]	删除 [range] 范围的行 (缺省: 当前行) [到寄存器 x 里]。
+			注意 这些奇异的缩写:
+			   :dl		删除并列出 (list)
+			   :dell	同上
+			   :delel	同上
+			   :deletl	同上
+			   :deletel	同上
+			   :dp		删除并显示 (print)
+			   :dep		同上
+			   :delp	同上
+			   :delep	同上
+			   :deletp	同上
+			   :deletep	同上
 
 :[range]d[elete] [x] {count}
 			从 [range] 指定的范围开始，删除 {count} 行 (缺省: 当前
@@ -512,8 +524,11 @@ MS-Windows 上，使用 GetTempFileName() 系统函数。
 			保持相同的标志位。
 
 								*g&*
-g&			等价于 `:%s//~/&` (在所有行上重复上次的 substitute，并
-			使用相同的标志位)。
+g&			等价于 `:%s//~/&` (在所有行上使用上次的匹配模式，重复
+			上次的 substitute，并使用相同的标志位)。
+			例如，如果先用了替代 `:s/pattern/repl/flags` 然后
+			`/search` 搜索了其他模式，`g&`  会执行
+			`:%s/search/repl/flags`。
 			助记: 全局 (global) 替代 (substitute)。{Vi 无此功能}
 
 						*:snomagic* *:sno*
@@ -574,6 +589,8 @@ g&			等价于 `:%s//~/&` (在所有行上重复上次的 substitute，并
 
 [n]	报告匹配的次数，并不实际进行替代。忽略 [c] 标志位。匹配报告的发生就像
 	'report' 总是为零那样。可用于 |count-items|。
+	如果使用 \= |sub-replace-expression|，在 |sandbox| 里对每一个匹配执行
+	该表达式。
 
 [p]	显示包含最后一次替代的行。
 
@@ -673,6 +690,10 @@ magic	nomagic	  动作    ~
   :s/abcde/abc^Mde/		 修改 "abcde"    为 "abc"、"de" (两行)
   :s/$/\^M/			 修改 "abcde"    为 "abcde^M"
   :s/\w\+/\u\0/g		 修改 "bla bla"  为 "Bla Bla"
+  :s/\w\+/\L\u/g		 修改 "BLA bla"  为 "Bla Bla"
+
+注意: "\L\u" 可用于使单词的首个字母变大写。此行为和 Vi 以及旧版 Vim 不兼容，那
+里 "\u" 会抵消 ”\L"。"\U\l" 亦然。
 
 注意: 在以前的版本里，CTRL-V 以特殊的方式处理。因为和 Vi 不兼容，该功能已经被
 去掉了，现在用反斜杠来替代。
@@ -1259,6 +1280,7 @@ n	在对文本排版时，识别编号的列表。实际上，这里使用了 'f
 			first line of a paragraph
 		second line of the same paragraph
 		third line.
+<	也适用于注释内部，并忽略注释前导符。
 v	Vi-兼容的插入模式自动回绕: 只有在当前输入命令键入的空白上才会分行。
 	(注意: 这并不能 100% Vi 兼容。Vi 在这方面有些 "意想不到的特性"，换而言
 	之，漏洞。它使用屏幕列而非实际的列。)
@@ -1271,6 +1293,11 @@ m	可以在任何值高于 255 的多字节字符上分行。这对亚洲文本�
 M	在连接行时，不要在多字节字符之前或之后插入空格。优先于 'B' 标志位。
 B	在连接行时，不要在两个多字节字符之间插入空格。有 'M' 标志位时无效。
 1	不要在单字母单词后分行。如有可能，在它之前分行。
+j	在合适的场合，连接行时删除注释前导符。例如，连接:
+		int i;   // the index ~
+		         // in the list ~
+	结果是:
+		int i;   // the index in the list ~
 
 
 't' 和 'c' 不同组合方式决定 Vim 何时进行自动回绕:
