@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.3.    最近更新: 2013年1月
+*indent.txt*    For Vim version 7.4.    最近更新: 2013年8月
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -515,6 +515,99 @@ Vim 将一行从第一列开始，如果:
 特 定 缩 进 文 件 的 若 干 评 注 ~
 
 
+ 
+CLOJURE					*ft-clojure-indent* *clojure-indent*
+
+Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括号的使用，还有部分是
+社群习惯的差异。这些惯例又不是普遍遵循的，所以 Closure 缩进脚本提供了若干可
+配置的选项，如下所述。
+
+如果当前的 vim 不支持 searchpairpos()，缩进脚本回到普通 'lisp' 缩进方式，忽略
+以下的选项。
+
+							*g:clojure_maxlines*
+
+设置 searchpairpos() 的最大检索距离。更大值用性能换取处理更长表达式 (form) 的
+正确性。0 会使检索没有限制。
+>
+	" 缺省
+	let g:clojure_maxlines = 100
+<
+
+						*g:clojure_fuzzy_indent*
+					*g:clojure_fuzzy_indent_patterns*
+					*g:clojure_fuzzy_indent_blacklist*
+
+'lispwords' 选项是一个逗号分隔的单词列表，指定那些需要以两个空格缩进子表达式的
+特殊表达式。
+
+例如:
+>
+	(defn bad []
+	      "错误的缩进")
+
+	(defn good []
+	  "正确的缩进")
+<
+如果想用 |pattern| 来代替 'lispwords'，可用模糊缩进功能:
+>
+	" 缩进
+	let g:clojure_fuzzy_indent = 1
+	let g:clojure_fuzzy_indent_patterns = ['^with', '^def', '^let']
+	let g:clojure_fuzzy_indent_blacklist =
+		\ ['-fn$', '\v^with-%(meta|out-str|loading-context)$']
+
+	" 旧式的逗号分隔窗口版本；建议采用上面的列表格式。注意这里的模式总是隐
+	" 含假定开始 ^ 和 $ 结束
+	let g:clojure_fuzzy_indent_patterns = 'with.*,def.*,let.*'
+<
+|g:clojure_fuzzy_indent_patterns| 和 |g:clojure_fuzzy_indent_blacklist| 是模式
+的列表 |Lists|，用于匹配 Lisp 列表 (list) 的头部去掉引号和限定词的部分。这意味
+形如 "^foo" 的模式会匹配以下的候选: "foobar"、"my.ns/foobar" 和 "#'foobar"。
+
+每个候选词会以下列顺序进行是否需要特殊处理的测试:
+
+	1. 若单词按本义出现在 'lispwords' 中，返回真
+	2. 若单词匹配 |g:clojure_fuzzy_indent_blacklist| 中的某个模式，返回假
+	3. 若单词匹配 |g:clojure_fuzzy_indent_patterns| 中的某个模式，返回真
+	4. 否则返回假，按正常方式缩进
+
+					*g:clojure_special_indent_words*
+
+有些 Closure 的表达式的缩进方式要求每个子表达式只缩进两格，不管 'lispwords'
+如何设置。如果你有自己的要求这种独特的缩进方式的结构，可以把这些符号加入下面的
+缺省列表。
+>
+	" 缺省
+	let g:clojure_special_indent_words =
+	   \ 'deftype,defrecord,reify,proxy,extend-type,extend-protocol,letfn'
+<
+
+					*g:clojure_align_multiline_strings*
+
+多行字符串的后续行和引导引号之后的列对齐，而不是对齐与同一列。
+
+示例:
+>
+	(def default
+	  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+	  eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+	  enim ad minim veniam, quis nostrud exercitation ullamco laboris
+	  nisi ut aliquip ex ea commodo consequat.")
+
+	(def aligned
+	  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+	   eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+	   enim ad minim veniam, quis nostrud exercitation ullamco laboris
+	   nisi ut aliquip ex ea commodo consequat.")
+<
+缺省关闭此选项。
+>
+	" 缺省
+	let g:clojure_align_multiline_strings = 0
+<
+
+
 FORTRAN							*ft-fortran-indent*
 
 Block if、select case、where 和 forall 代码块被缩进。type、interface、
@@ -555,6 +648,47 @@ do 循环 ~
   let b:fortran_indent_less=1
 
 
+HTML				*ft-html-indent* *html-indent* *html-indenting*
+
+这里说明定制 HTML 缩进的相关变量，可以把它们放到你的 vimrc 里。
+
+可以设置 <script> 和 <style> 这些 "区块标签" 之后的首行缩进 (缺省为 "zero"): >
+
+      :let g:html_indent_script1 = "inc"
+      :let g:html_indent_style1 = "inc"
+<
+      值	含义 ~
+      "zero"	零缩进
+      "auto"	自动缩进 (和匹块标签相同的缩进)
+      "inc"	自动缩进 + 一个缩进位置
+
+缺省，给许多标签之后的内容增加缩进 (见脚本里的 "Add Indent Tags")。可以加入更
+多类似的标签: >
+
+      :let g:html_indent_inctags = "html,body,head,tbody"
+
+还可以删除已有的标签: >
+
+      :let g:html_indent_autotags = "th,td,tr,tfoot,thead"
+
+这两个变量的缺省值为空。注意: 初始的 "inctags" 值只在每个 Vim 会话中定义一次。
+
+只在脚本执行时读入这些用户变量。要在会话中间执行更改，除了重载 HTML 文件外，可
+以手动调用: >
+
+      :call HtmlIndent_CheckUserSettings()
+
+细节:
+  "区块标签" 内的缩进的计算，有些 "外来的" 内容:
+      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE ~
+      <script> : {可定制}	    如果是区块的首行
+	       : cindent(v:lnum)    如果没有属性或其中包含 "java"
+	       : -1		    否则 (vbscript、tcl、...)
+      <style>  : {customizable}	    如果是区块的首行
+	       : GetCSSIndent()	    否则
+      <!-- --> : -1
+
+
 PHP				*ft-php-indent* *php-indent* *php-indenting*
 
 注意:	只有激活 PHP 语法 |syntax| 才能正确缩进 PHP 文件。
@@ -569,7 +703,7 @@ PHP 文件 (每次 |BufRead|) 时安静地删除它们。
 
 选项: ~
 
-PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
+PHP 缩进可以通过修改若干全局变量的值来对几个方面进行改变:
 
 								*php-comment*
 要缺省不打开注释的自动排版 (如果要使用自己的 'formatoptions' 的话): >
@@ -577,6 +711,17 @@ PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
 
 否则，'t' 会从 'formatoptions' 字符串中去除，并加上 "qrowcb"，详见
 |fo-table|。
+-------------
+
+要给单行注释增加额外的缩进: >
+    :let g:PHP_outdentSLComments = N
+
+其中的 N 是要增加的 'shiftwidth' 的倍数。
+
+只影响如下所示的单行注释: >
+    # Comment
+    // Comment
+    /* Comment */
 -------------
 
 要给所有 PHP 行增加额外的缩进 N 个 'shiftwidth': >
@@ -625,8 +770,9 @@ PHP 缩进可以通过修改若干变量的值来对几个方面进行改变:
 要缩进 switch() 块的 'case:' 和 'default:' 语句: >
     :let g:PHP_vintage_case_default_indent = 1
 
-(因为 PHP 中 'case/default' 块使用花括号并非必需，缺省，它们和 'switch()' 的使
-用相同层次的缩进，以避免不必要的缩进)
+PHP 中 'case/default' 块使用花括号并非必需，因此，'case:' 和 'default:' 和
+'switch()' 使用相同层次的缩进，以避免不必要的缩进。可用上述的选项来恢复传统的
+缩进方式。
 
 
 PYTHON							*ft-python-indent*

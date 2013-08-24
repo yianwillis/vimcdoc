@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.3.  最近更新: 2013年1月
+*insert.txt*    For Vim version 7.4.  最近更新: 2013年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -112,6 +112,7 @@ CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 				如果结果是 |List|，里面的项目被看作行，之间以
 				换行符连接。
 				如果结果是浮点数，自动转化为字符串。
+				调用 append() 或 setline() 会破坏撤销序列。
 		关于寄存器见 |registers|。{Vi 无此功能}
 
 CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
@@ -326,7 +327,8 @@ CTRL-G u	打断撤销序列，开始新的改变		     *i_CTRL-G_u*
 CTRL-O 命令有时有副作用: 如果光标在行尾之后，它会先被移动该行最后一个字符上。
 在映射里，通常更好的方法是使用 <Esc>  (先在文本中放一个 "x"，<Esc> 这时总会把
 光标放到它的上面)。或者使用 CTRL-\ CTRL-O，不过这时要注意光标可能移到行尾之外
-的位置。
+的位置。注意 CTRL-\ CTRL-O 之后的命令仍然可以移动光标，不会恢复光标到原来的位
+置。
 
 CTRL-O 命令带你到普通模式，此时你如使用进入插入模式的命令，插入模式通常不会嵌
 套。因而，输入完 "a<C-O>a" 然后按 <Esc>，你会回到普通模式，不需要按 <Esc> 两
@@ -848,6 +850,8 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
 			都会调用函数。
 忽略其他项目。			
 
+要在补全结束之后有所行动，参见 |CompleteDone| 自动命令事件。
+
 例如，函数可以这么做: >
 	let matches = ... 单词列表 ...
 	return {'words': matches, 'refresh': 'always'}
@@ -1207,9 +1211,10 @@ Vim 能够对将近 500 种语言进行语法高亮。高亮支持的一部分�
 能补全列表。它适用于任何文件类型，并可以提供基本但和语言相关的补全机制。
 
 要打开语法打开补全: >
-	setlocal omnifunc=syntaxcomplete#Complete
+    setlocal omnifunc=syntaxcomplete#Complete
 
-你可以把下列语句放到 vimrc 中 (要在任何 ":filetype" 命令之后)，使其自动生效 >
+你可以把下列语句放到 |.vimrc| 中 (要在任何 ":filetype" 命令之后)，使其自动生
+效: >
     if has("autocmd") && exists("+omnifunc")
 	autocmd Filetype *
 		    \	if &omnifunc == "" |
@@ -1223,26 +1228,37 @@ Vim 能够对将近 500 种语言进行语法高亮。高亮支持的一部分�
 让我们看看 PHP 文件类型如何处理。
 
 如果你正在编辑一个 index.php 文件，运行如下命令: >
-	:syntax list
+    syntax list
 
 首先你将看到有许多不同的语法组。PHP 语言可以包含来自不同语言的元素，比如
 HTML、 JavaScript 和许多其它语言。这种情况下，syntax 插件只包含由文件类型
 "php" 开头的语法组。例如，缺省 PHP 包含这些语法组: phpEnvVar、phpIntVar、
 phpFunctions。
 
-PHP 语言可以进行语法高亮的项目非常多，而这些项目在全能补全列表里都会出现。有些
-人可能觉得现这个列表不实用或者只对某些项感兴趣。
+如果希望包括非本文件类型指定的其他语法项目，可用正规表达式语法
+(autoload\syntaxcomplete.vim 的 13.0 版本加入) 来加入项目。编辑 PHP 文件时查看
+":syntax list" 的输出，我可以看到如下一些项目: >
+    htmlArg,htmlTag,htmlTagName,javaScriptStatement,javaScriptGlobalObjects
 
-(如有必要) 有两种方法可以裁剪这个列表。如果不想显示特定语法组，在 vimrc 中增加
-下列语句: >
-	let g:omni_syntax_group_exclude_php = 'phpCoreConstant,phpConstant'
+要在编辑 PHP 文件时时使用 Javascript 和 HTML 关键字语法高亮组，可以指定三个正
+规表达式，每种语言分别一个。也可以简单限制包含组为特写值，而无需正规表达式: >
+    let g:omni_syntax_group_include_php = 'php\w\+,javaScript\w\+,html\w\+'
+    let g:omni_syntax_group_include_php = 'phpFunctions,phpMethods'
+<
+这个变量的基本形式是: >
+    let g:omni_syntax_group_include_{filetype} = '逗号,分隔的,列表'
+
+PHP 语言可以进行语法高亮的项目非常多，而这些项目在全能补全列表里都会出现。
+
+有些人可能觉得这个列表不实用或者只对某些项感兴趣。(如有必要) 有两种方法可以裁
+剪这个列表。如果不想显示特定语法组，有两种不同的方法来标识这些组。第一个具体列
+出这些语法组的名字。第二个使用正规表达式来指定所有想要的语法组。在 vimrc 中增
+加两者之一即可: >
+    let g:omni_syntax_group_exclude_php = 'phpCoreConstant,phpConstant'
+    let g:omni_syntax_group_exclude_php = 'php\w*Constant'
 
 该列表可以加入多个语法组，以逗号分隔。这个变量的基本形式是: >
-	let g:omni_syntax_group_exclude_{filetype} = '逗号,分隔的,列表'
-
-为了完整起见，还有相反的形式。在 vimrc 里建立下面的变量可以只包含 phpFunctions
-和 phpMethods 语法组的项目: >
-	let g:omni_syntax_group_include_php = 'phpFunctions,phpMethods'
+    let g:omni_syntax_group_exclude_{filetype} = '逗号,分隔的,列表'
 
 可以建立任意多个这些变量，只要变量名尾部的文件类型不同就行了。
 
@@ -1276,6 +1292,9 @@ PHP 语言可以进行语法高亮的项目非常多，而这些项目在全能�
 
 要得到 sqlOperator 和 sqlType 两个组的所有语法项目: >
     echo OmniSyntaxList( ['sqlOperator', 'sqlType'] )
+
+也可用正规表达式: >
+    echo OmniSyntaxList( ['sql\w\+'] )
 
 在插件中，通常可以把输出结果赋给一个列表: >
     let myKeywords = []
@@ -1542,11 +1561,13 @@ Ex 模式 (见 |-e|) 下，行尾的反斜杠可用来插入 NUL 字符。所以
 			|++opt| 说明 [++opt] 可能的取值。
 
 							*:r!* *:read!*
-:[range]r[ead] !{cmd}	执行 {cmd} 并把它的标准输出插入到光标下方。临时文件会
+:[range]r[ead] [++opt] !{cmd}
+			执行 {cmd} 并把它的标准输出插入到光标下方。临时文件会
 			建立来保存命令输出的结果，并被读到缓冲区里。
 			'shellredir' 用来保存命令的输出结果，它可以设置是否包
 			含标准错误的输出。{cmd} 的执行和 ":!{cmd}" 类似，任何
 			的 '!' 会被替换成以前的命令 |:!|。
+			|++opt| 说明 [++opt] 可能的取值。
 
 这些命令插入文件的内容，或者命令的输出结果到缓冲区里。两者都可以撤销。但不能用
 "." 命令重复。它们是基于行工作的，插入从光标所在行或指定行的下方开始。要在第一

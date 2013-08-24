@@ -1,4 +1,4 @@
-*if_mzsch.txt*  For Vim version 7.3.  最近更新: 2010年6月
+*if_mzsch.txt*  For Vim version 7.4.  最近更新: 2013年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -6,14 +6,15 @@
 				http://vimcdoc.sf.net
 
 
-Vim 的 MzScheme 接口	    				*mzscheme* *MzScheme*
+Vim 的 MzScheme 接口					*mzscheme* *MzScheme*
 
-1. 命令	    				|mzscheme-commands|
-2. 示例	    				|mzscheme-examples|
-3. 线程	    				|mzscheme-threads|
+1. 命令					|mzscheme-commands|
+2. 示例					|mzscheme-examples|
+3. 线程					|mzscheme-threads|
 4. MzScheme 对 Vim 的访问		|mzscheme-vim|
-5. mzeval() Vim 函数                    |mzscheme-mzeval|
-6. 动态调入	    			|mzscheme-dynamic|
+5. mzeval() Vim 函数			|mzscheme-mzeval|
+6. 使用函数引用				|mzscheme-funcref|
+7. 动态调入				|mzscheme-dynamic|
 
 {Vi 无此功能}
 
@@ -22,10 +23,15 @@ Vim 的 MzScheme 接口	    				*mzscheme* *MzScheme*
 来自于 Brent Fulgham 的工作。
 动态调入部分则由 Sergey Khorev 加入。
 
-如何下载 MzScheme 和其它的信息可见:
-	http://www.plt-scheme.org/software/mzscheme/
+MzScheme 和 PLT Scheme 已经重新命名为 Racket。详情可查阅
+http://racket-lang.org。
 
-备注: FreeBSD 上应该用 "drscheme" 移植版本。
+Racket 5.x 版本直至 5.3.1 (包含) 的 futures 和 places 和 Vim 创建的进程不能一
+同工作。
+最简单的解决方法是自己编译 Racket，关闭以下这些特性: >
+  ./configure --disable-futures --disable-places --prefix=your-install-prefix
+
+要加快进程的速度，也可考虑使用 --disable-gracket 和 --disable-docs。
 
 ==============================================================================
 1. 命令	    						*mzscheme-commands*
@@ -147,8 +153,10 @@ Vim 控制台版本的线程调度不如 GUI 版本的可靠。
     (command {command-string})	    执行 Vim ":Ex" 风格的命令。
     (eval {expr-string})	    计算 vim 表达式，返回相应的 MzScheme 对
                                     象: |List| 返回 Scheme 列表，|Dictionary|
-				    返回 哈希表。
-				    注意 这和 MzScheme 的 eval 有冲突。
+				    返回 哈希表，|Funcref| 返回函数 (另见
+				    |mzscheme-funcref|)
+				    注意 这和 MzScheme 的 eval 有冲突，可用
+				    模块限定符避免之。
     (range-start)		    Scheme 命令传递的行范围的开始行
     (range-end)			    和结束行。
     (beep)			    响铃
@@ -223,7 +231,22 @@ Vim 控制台版本的线程调度不如 GUI 版本的可靠。
 Vim。
 
 ==============================================================================
-6. 动态调入					    *mzscheme-dynamic* *E815*
+6. 使用函数引用						    *mzscheme-funcref*
+
+MzScheme 接口允许使用 |Funcref| 来从 Scheme 里直接调用 Vim 的函数。例如: >
+    function! MyAdd2(arg)
+	return a:arg + 2
+    endfunction
+    mz (define f2 (vim-eval "function(\"MyAdd2\")"))
+    mz (f2 7)
+< 或 : >
+    :mz (define indent (vim-eval "function('indent')"))
+    " return Vim indent for line 12
+    :mz (indent 12)
+<
+
+==============================================================================
+7. 动态调入					    *mzscheme-dynamic* *E815*
 
 MS-Windows 上，可以动态调入 MzScheme 库。|:version| 输出这时应包括
 |+mzscheme/dyn|。

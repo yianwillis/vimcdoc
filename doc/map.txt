@@ -1,4 +1,4 @@
-*map.txt*	For Vim version 7.3.  最后更新: 2013年1月
+*map.txt*	For Vim version 7.4.  最后更新: 2013年8月
 
 
 		  VIM 参考手册    作者: Bram Moolenaar
@@ -48,7 +48,7 @@
 :nm[ap]	{lhs} {rhs}		|mapmode-n|		*:nm* *:nmap*
 :vm[ap]	{lhs} {rhs}		|mapmode-v|		*:vm* *:vmap*
 :xm[ap]	{lhs} {rhs}		|mapmode-x|		*:xm* *:xmap*
-:smap	{lhs} {rhs}		|mapmode-s|		      *:smap*
+:smap	{lhs} {rhs}		|mapmode-s|		    *:smap*
 :om[ap]	{lhs} {rhs}		|mapmode-o|		*:om* *:omap*
 :map!	{lhs} {rhs}		|mapmode-ic|		*:map!*
 :im[ap]	{lhs} {rhs}		|mapmode-i|		*:im* *:imap*
@@ -145,20 +145,29 @@
 
 1.2 特 殊 参 数						*:map-arguments*
 
-"<buffer>"，"<silent>"，"<special>"、"<script>"、"<expr>" 和 "<unique>" 可以按
-任意顺序使用。它们必须紧跟在命令的后边，而在其它任何参数的前边。
+"<buffer>"，"<nowait>"，"<silent>"，"<special>"、"<script>"、"<expr>" 和
+"<unique>" 可以按任意顺序使用。它们必须紧跟在命令的后边，而在其它任何参数的前
+边。
 
 				*:map-local* *:map-<buffer>* *E224* *E225*
 如果这些命令的第一个参数是 "<buffer>"，映射将只局限于当前的缓冲区内。例如: >
 	:map <buffer>  ,w  /[.,;]<CR>
 然后你可以在另一个缓冲区内把 ",w" 作另外的映射: >
 	:map <buffer>  ,w  /[#&!]<CR>
-局部缓冲区映射在全局映射之前被应用。
+局部缓冲区映射在全局映射之前被应用。下面介绍的 <nowait> 可以使一个较短的局部
+映射在较长的全局映射存在时不起作用。
 "<buffer>" 参数也可以用于清除映射: >
 	:unmap <buffer> ,w
 	:mapclear <buffer>
 当一个缓冲区被删除时局部映射也会被清除，但是在它被卸载时不会。就象局部选项值的
 情况一样。
+另见 |map-precedence|。
+
+						*:map-<nowait>* *:map-nowait*
+定义局部于缓冲区的映射 "," 时，可能有另一个全局映射也以 "," 开始。这时你需要
+键入另一个字符，Vim 才能知道是用 ”," 映射还是更长的那个。要避免这个问题，加入
+<nowait> 参数。这样映射一旦匹配就会被使用，Vim 不会等待更多字符的输入。但如果
+那些字符已经输入了，还是会使用的。
 
 						*:map-<silent>* *:map-silent*
 要在定义一个映射时不在命令行上回显该映射，可以使用 "<silent>" 作为第一个参数，
@@ -326,9 +335,9 @@ CTRL-U (<C-U>) 用于删除命令行上 Vim 可能插入的范围。普通模式
    载入一个相关语言映射集合的最简单的方法是通过使用 'keymap' 选项。
 参考 |45.5|。
    在插入模式和命令行模式中可用 CTRL-^ 命令来关闭映射 |i_CTRL-^| |c_CTRL-^|。
-普通命令行 (非模式搜索) 开始输入时，映射被关闭直到输入 CTRL-^ 为止。而插入模式
-和模式搜索却会分别记住上次使用的状态。需要输入一个字符作为参数的命令，如 "f"
-或 "t" 之类，也使用插入模式的状态。
+这些命令改变 'iminsert' 选项的值。普通命令行 (非模式搜索) 开始输入时，映射被关
+闭直到输入 CTRL-^ 为止。而插入模式和模式搜索却会分别记住上次使用的状态。需要输
+入一个字符作为参数的命令，如 "f" 或 "t" 之类，也使用插入模式的状态。
    语言映射永远不能应用于已经映射的字符上。它们仅用于键入的字符上。这意味着输
 入映射时，语言映射已经完成。
 
@@ -511,6 +520,7 @@ CTRL-V)。
 在插入或命令行模式中输入时要避免字符被映射，可以先输入一个 CTRL-V。在插入模式
 中如果 'paste' 选项被打开的话，映射也会被禁止。
 
+							*map-error*
 注意 当遇到错误时 (会导致一个错误信息或蜂鸣) 剩下的映射将不会被执行。这是为了
 保持和 Vi 兼容。
 
@@ -566,6 +576,16 @@ CTRL-V)。
 'timeout' 选项 (这是缺省选项) Vim 仅会等待一秒钟 (或任何 'timeoutlen' 指定的时
 间)。之后，它假定 'q' 已经不会再被输入。如果你的输入很慢，或者你的系统很慢，复
 位 'timeout' 选项。这时，你可能还需要是否置位 'ttimeout' 选项。
+
+                            				*map-precedence*
+缓冲区局部映射 (|:map-<buffer>| 所定义的) 优先于全局映射。如果缓冲区局部映射和
+全局映射完全相同，Vim 使用缓冲区局部映射。另外，Vim 立即使用完整出现的映射，
+如果该映射以 <nowait> 定义的话，即便有一个更长的映射使用相同的前缀。例如，给
+定以下的映射: >
+    :map <buffer> <nowait> \a   :echo "Local \a"<CR>
+    :map                   \abc :echo "Global \abc"<CR>
+键入 \a 后会立即使用那个缓冲区局部映射。Vim 不再等待更多的字符来判断用户是否想
+输入 \abc。
 
 							*map-keys-fails*
 有若干情况键码可能不被识别:
@@ -1060,8 +1080,10 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 	-complete=shellcmd	外壳命令
 	-complete=sign		|:sign| 子选项
 	-complete=syntax	语法文件名 |'syntax'|
+	-complete=syntime	|:syntime| 子选项
 	-complete=tag		标签
 	-complete=tag_listfiles	标签，但敲入 CTRL-D 时显示文件名
+	-complete=user		用户名
 	-complete=var		用户变量
 	-complete=custom,{func} 用户定制的自动补全，通过 {func} 来定义
 	-complete=customlist,{func} 用户定制的自动补全，通过 {func} 来定义

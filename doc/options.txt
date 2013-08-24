@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.3.  最近更新: 2013年1月
+*options.txt*	For Vim version 7.4.  最近更新: 2013年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -231,8 +231,8 @@ Vim 基本上依照你的想法使用这些选项值。不幸的是，要满足�
 现在 'list' 选项不被置位，因为 ":set nolist" 复位全局值，而 ":setlocal list"
 只改变局部值，但 ":e two" 又使用全局值。注意 如果你接下来这么做: >
 	:e one
-你不会得到上次编辑 "one" 时的 'list' 值。不会为每个缓冲区分别记住局部于窗口的
-选项。
+你会得到上次编辑 "one" 时的 'list' 值。因为每个缓冲区会分别记住局部于窗口的选
+项。也适用于未载入的缓冲区，但真正删除缓冲区 |:bwipe| 时此信息就丢失了。
 
 							*:setl* *:setlocal*
 :setl[ocal] ...		类似于 ":set"，但只设置局部于当前缓冲区或者窗口的值。
@@ -399,35 +399,39 @@ $HOMEDRIVE$HOMEPATH 扩展后的值。
 有两种模式行。第一种形式:
 	[text]{white}{vi:|vim:|ex:}[white]{options}
 
-[text]		任何文本，可以为空
-{white}		不少于一个的空白字符 (<Space> 或 <Tab>)
-{vi:|vim:|ex:}	字符串 "vi:"、"vim:" 或 "ex:"
-[white]		可选的空白字符
-{options}	选项设置的列表，用空格或 ':' 分隔。每个 ':' 之间的部分成为一个
-		":set" 命令的参数 (可为空)
+[text]			任何文本，可以为空
+{white}			不少于一个的空白字符 (<Space> 或 <Tab>)
+{vi:|vim:|ex:}		字符串 "vi:"、"vim:" 或 "ex:"
+[white]			可选的空白字符
+{options}		选项设置的列表，用空格或 ':' 分隔。每个 ':' 之间的部分
+			成为一个 ":set" 命令的参数 (可为空)
 
 例如:
    vi:noai:sw=3 ts=6 ~
+   vim: tw=77 ~
 
 第二种形式 (和部分版本的 Vi 兼容):
 
-	[text]{white}{vi:|vim:|ex:}[white]se[t] {options}:[text]
+	[text]{white}{vi:|vim:|Vim:|ex:}[white]se[t] {options}:[text]
 
-[text]		任何文本，可以为空
-{white}		不少于一个的空白字符 (<Space> 或 <Tab>)
-{vi:|vim:|ex:}	字符串 "vi:"、"vim:" 或 "ex:"
-[white]		可选的空白字符
-se[t]		字符串 "set " 或 "se " (注意 空格)
-{options}	选项列表，以空白分隔。每个部分成为一个 ":set" 命令的参数
-:		冒号
-[text]		任何文本，可以为空
+[text]			任何文本，可以为空
+{white}			不少于一个的空白字符 (<Space> 或 <Tab>)
+{vi:|vim:|ex:}		字符串 "vi:"、"vim:" 或 "ex:"
+[white]			可选的空白字符
+se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
+			是 "set"。
+{options}		选项列表，以空白分隔。每个部分成为一个 ":set" 命令的参
+			数
+:			冒号
+[text]			任何文本，可以为空
 
 例如:
    /* vim: set ai tw=75: */ ~
+   /* Vim: set ai tw=75: */ ~
 
-{vi:|vim:|ex:} 之前的空格是必要的。这样可以减少错用比如 "lex:" 这样的普通单词
-的可能性。有一个特例: "vi:" 和 "vim:" 也可以出现在行首 (为和 3.0 版本兼容)。
-在行首使用 "ex:" 会被忽略 (这可以是 "example:" 的缩写)。
+{vi:|vim:|Vim:|ex:} 之前的空格是必要的。这样可以减少错用比如 "lex:" 这样的普通
+单词的可能性。有一个特例: "vi:" 和 "vim:" 也可以出现在行首 (为和 3.0 版本兼
+容)。在行首使用 "ex:" 会被忽略 (这可以是 "example:" 的缩写)。
 
 							*modeline-local*
 选项的设置类似于 ":setlocal": 新值只适用于包含该文件的缓冲区和窗口。尽管可以从
@@ -439,7 +443,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 于窗口的选项会被设置。
 
 							*modeline-version*
-如果模式行只用于某些版本的 Vim，版本号应在使用 "vim:" 时指定:
+如果模式行只用于某些版本的 Vim，版本号应在使用 "vim:" 或 "Vim:" 时指定:
 	vim{vers}:	{vers} 版本或更高
 	vim<{vers}:	{vers} 之前的版本
 	vim={vers}:	{vers} 版本
@@ -577,6 +581,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	Windows 9x/ME 或 Windows 2k/XP 上，如果系统 locale 为 CJK locale，也应
 	把本选项设为 "double"。见 Unicode Standard Annex #11
 	(http://www.unicode.org/reports/tr11)。
+
+	如果编译时加入 |+termresponse| 特性并且 |t_u7| 设为获取光标位置报告的
+	转义序列，Vim 可以在启动时自动设置此选项。
 
 			*'antialias'* *'anti'* *'noantialias'* *'noanti'*
 'antialias' 'anti'	布尔型 (缺省: 关闭)
@@ -810,8 +817,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	逗号分隔的备份文件的目录名列表。
 	- 备份文件会在第一个可能的目录里建立。该目录必须已经存在，Vim 不会帮你
 	  建立该目录。
-	- 空意味着不会建立备份文件 ('patchmode' 是不会工作的！)。写入也可能
-	  因此而失败。
+	- 空意味着不会建立备份文件 ( 'patchmode' 是不会工作的！)。写入也可能因
+	  此而失败。
 	- 目录 "." 意味着把备份文件放在被编辑文件的相同目录里。
 	- "./" (或 MS-DOS 等环境的 ".\") 开始的目录意味着把备份文件放在被编辑
 	  文件所在的相对位置。开头的 "." 由被编辑文件的路径名替换。
@@ -913,7 +920,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	算结果非空，Vim 不会试图发送消息给外部调试器 (Netbeans 或 Sun
 	Workshop)。
 
-	表达式的计算可能在沙盘 |sandbox| 里进行，见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 
 	计算 'balloonexpr' 时，不能改变文本或跳到别的窗口 |textlock|。
 
@@ -1199,20 +1207,24 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	本选项是逗号分隔的名字列表。
 	识别以下名字:
 
+						*clipboard-unnamed*
 	unnamed		如果包含，Vim 使用剪贴板寄存器 '*' 来执行所有的抽出、
 			删除、修改和放置操作，而不是通常使用的无名寄存器。除非
 			显式指定了寄存器，这时不管 'clipboard' 是不是包含
 			"unnamed" 都使用指定的寄存器。剪贴板寄存器总是可以显式
 			地用 "* 记法来访问。另见 |gui-clipboard|。
 
-	unnamedplus	"unnamed" 标志位的变种，对除了抽出的所有操作，以剪贴板
-			'+' 寄存器 (|quoteplus|) 代替 '*' 寄存器。
-			抽出动作会把文本放入 '+' 寄存器，如也包含 "unnamed"，
-			则同时放入 '*' 寄存器。
+						*clipboard-unnamedplus*
+	unnamedplus	"unnamed" 标志位的变种，对所有通常使用无名寄存器来抽
+			出、删除、修改和放置操作，以剪贴板 '+' 寄存器
+			(|quoteplus|) 代替 '*' 寄存器。如也包含 "unnamed"，抽
+			出动作 (但不包括删除、修改和放置) 会同时把文本放入 '*'
+			寄存器。
 			仅当 |+X11| 特性存在时才可用。
 			以下方法可检查该选项是否可用: >
 				if has('unnamedplus')
 <
+						*clipboard-autoselect*
 	autoselect	和 'guioptions' 的 'a' 标志位工作方法类似: 如果存在，
 			无论什么时候启动可视模式或者可视区域扩展，Vim 都试图成
 			为窗口系统全局选择区的拥有者，或者把选择的文本放置到选
@@ -1221,9 +1233,15 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			志位。如果没有激活 GUI，使用本 "autoselect" 标志位。
 			也适用于无模式的选择。
 
+						*clipboard-autoselectplus*
+	autoselectplus  类似于 "autoselect"，但用 + 寄存器代替 * 寄存器。可以
+			和 'guioptions' 的 'P' 标志位相比拟。
+
+						*clipboard-autoselectml*
 	autoselectml	类似于 "autoselect"，但只适用于无模式的选择。可以和
 			'guioptions' 的 'A' 标志位相比拟。
 
+						*clipboard-html*
 	html		当剪贴板包含 HTML 时，粘贴时使用 HTML 格式。放置文本到
 			剪贴板时，标识为 HTML。可用于从 Firefox 复制 HTML 内容
 			并粘贴原始 HTML 码到 Vim，或从 Vim 选择 HTML 码，然后
@@ -1232,6 +1250,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			只支持 GTK 版本 2 或以上。
 			只有在编译时带 |+multi_byte| 特性才可用。
 
+						*clipboard-exclude*
 	exclude:{pattern}
 			定义用来匹配终端名 'term' 的模式。匹配的终端不连接到 X
 			服务器。可用于以下这种情形:
@@ -1822,7 +1841,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	设置是否使用 quickfix 窗口来显示 cscope 的结果。
 	见 |cscopequickfix|。
 
-						*'cscoperelative'* *'csre'*
+		*'cscoperelative'* *'csre'* *'nocscoperelative'* *'nocsre'*
 'cscoperelative' 'csre' 布尔型 (缺省关闭)
 			全局
 			{仅当编译时加入 |+cscope| 特性才有效}
@@ -2328,7 +2347,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	见 |file-formats| 和 |file-read|。
 	文件使用的字符编码见 'fileencoding'。
 	如果设置 'binary'，忽略 'fileformat' 的值。文件输入/输出如同它被设为
-	"unix' 那样。
+	"unix" 那样。
 	文件开始编辑时，如果 'fileformats' 非空而 'binary' 关闭，本选项被自动
 	设置。
 	开始编辑文件后，如果设置本选项，'modified' 选项被置位，因为文件被认为
@@ -2385,6 +2404,13 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	位 'textauto'，否则置位 'textauto'。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
+
+		*'fileignorecase'* *'fic'* *'nofileignorecase'* *'nofic'*
+'fileignorecase' 'fic'	布尔型 (缺省在一般忽略文件名大小写的系统上打开)
+			全局
+			{Vi 无此功能}
+	置位时，使用文件名和目录时忽略大小写。
+	若只要被全时忽略大小写，参见 'wildignorecase'。
 
 					*'filetype'* *'ft'*
 'filetype' 'ft'		字符串 (缺省: "")
@@ -2483,7 +2509,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	'foldmethod' 为 "expr" 时使用的表达式。每行使用它计算折叠级别。见
 	|fold-expr|。
 
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 	如果 'diff' 选项置位，不能从 |modeline| 中设置。
 
 	计算 'foldexpr' 时不允许修改文本或者跳到其它窗口 |textlock|。
@@ -2602,7 +2629,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{仅当编译时加入 |+folding| 特性才有效}
 	用来指定替代关闭折叠的显示文本的表达式。见 |fold-foldtext|。
 
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 
 	计算 'foldtext' 时不允许修改文本或者跳到其它窗口 |textlock|。
 
@@ -2637,7 +2665,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	串，使用内部的排版函数 |C-indenting|。
 	环境变量被扩展 |:set_env|。|option-backslash| 说明如何包含空格和反斜
 	杠。
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'formatexpr'* *'fex'*
 'formatexpr' 'fex'	字符串 (缺省 "")
@@ -2663,8 +2691,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 
 	函数如果返回非零，Vim 依旧使用内部的排版机制。
 
-	可以在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。不过那里本选
-	项无法达到需要的效果，因为你不能改变缓冲区的文本。
+	模式行中设置时会在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	不过那里本选项无法达到需要的效果，因为你不能改变缓冲区的文本。
 
 						*'fsync'* *'fs'*
 'fsync' 'fs'		布尔型	(缺省打开)
@@ -2906,6 +2934,10 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	空，Pango/Xft 会选择 'guifont' 里没有的字符的字体。所以，你完全可以不
 	必设置 'guifontwide'，除非你想改变 Pango/Xft 的选择。
 
+	仅限于 Windows +multibyte:		*guifontwide_win_mbyte*
+
+	如果设置且合法，IME 使用 'guifontwide' 代替 'guifont'。
+
 						*'guiheadroom'* *'ghr'*
 'guiheadroom' 'ghr'	数值型	(缺省为 50)
 			全局
@@ -2937,6 +2969,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 		    如果不存在，Vim 不会成为窗口系统的全局选择区，除非使用 "*
 		寄存器进行抽出和删除操作，这时该选择区被显式地占有。
 		同样适用无模式的选择。
+								*'go-P'*
+	  'P'	类似于自动选择，但使用 "+ 寄存器代替 "* 寄存器。
 								*'go-A'*
 	  'A'	自动选择无模式的选择。类似于 'a'，但仅限于无模式的选择。
 
@@ -3122,7 +3156,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	|hl-ModeMsg|	 M  模式 (例如，"-- INSERT --")
 	|hl-LineNr|	 n  ":number" 和 ":#" 命令的行号，也用于 'number' 和
 			    'relativenumber' 选项置位时的行号。
-	|hl-CursorLineNr|  N 类似 n，用于 'cursorline'。
+	|hl-CursorLineNr|  N 类似 n，用于 'cursorline' 或 'relativenumber'。
 	|hl-Question|	 r  |hit-enter| 提示和 yes/no 问题
 	|hl-StatusLine|	 s  当前窗口的状态行 |status-line|
 	|hl-StatusLineNC| S  非当前窗口的状态行
@@ -3248,6 +3282,24 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	另见 'smartcase'。
 	可以在模式里使用 "\c" 或 "\C" 否决这里的设置。见 |/ignorecase|。
 
+						*'imactivatefunc'* *'imaf'*
+'imactivatefunc' 'imaf'	字符串 (缺省 "")
+			全局
+			{Vi 无此功能}
+			{仅当编译时加入 |+xim| 和 |+GUI_GTK| 特性才有效}
+	此选项指定的函数会在输入法激活或关闭时调用。
+
+	示例: >
+		function ImActivateFunc(active)
+		  if a:active
+		    ... 做点什么
+		  else
+		    ... 做点什么
+		  endif
+		  " 返回值被忽略
+		endfunction
+		set imactivatefunc=ImActivateFunc
+<
 						*'imactivatekey'* *'imak'*
 'imactivatekey' 'imak'	字符串 (缺省为 "")
 			全局
@@ -3331,6 +3383,22 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	在 Athena 和 Motif 上，一些 XIM 方法可能使值 0 不能正确工作。这时，用
 	'imdisable' 关闭 XIM。
 
+						*'imstatusfunc'* *'imsf'*
+'imstatusfunc' 'imsf'	字符串 (缺省 "")
+			全局
+			{Vi 无此功能}
+			{仅当编译时加入 |+xim| 和 |+GUI_GTK| 特性才有效}
+	此选项指定的函数会被调用来得到输入法的状态。IME 激活时应返回一个正数。
+
+	示例: >
+		function ImStatusFunc()
+		  let is_active = ...做点什么
+		  return is_active ? 1 : 0
+		endfunction
+		set imstatusfunc=ImStatusFunc
+<
+	备注: 此函数调用非常频繁。必须保持快速。
+
 						*'include'* *'inc'*
 'include' 'inc'		字符串	(缺省为 "^\s*#\s*include")
 			全局或局部于缓冲区 |global-local|
@@ -3359,7 +3427,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	'include' 语句之后的名字上执行 "gf"。
 	也用于 |<cfile>|。
 
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 
 	计算 'includeexpr' 时不允许修改文本或者跳到其它窗口 |textlock|。
 
@@ -3407,7 +3476,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	见 |indent-expression|。
 	注意: 如果置位 'compatible'，本选项被清空。
 
-	可能在沙盘 |sandbox| 里计算此表达式。见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 
 	计算 'indentexpr' 时不允许修改文本或者跳到其它窗口 |textlock|。
 
@@ -3752,11 +3822,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 
 	光标显示在制表占据的空白的开始位置，而不是像通常在普通模式那样显示在最
 	后位置。要用空格来显示制表并同时把光标放在空白开始位置，可用: >
-		:set list lcs=tab\ \ 
-<
-	(译者注: 原文如此，似应为: >
 		:set list lcs=tab:\ \ 
-<	)
+<
 	注意 如果 'cpoptions' 里包含 'L'，本选项也影响排版 (用 'textwidth' 或
 	'wrapmargin' 方法设置的)。'listchars' 说明如何改变制表显示的方式。
 
@@ -3766,17 +3833,24 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{Vi 无此功能}
 	'list' 模式和 |:list| 命令使用的字符串。这是逗号分隔的字符串设置的列
 	表。
+	  						*lcs-eol*
 	  eol:c		行尾显示的字符。如果忽略，行尾没有额外的字符。
+	  						*lcs-tab*
 	  tab:xy	用于显示制表的两个字符。使用第一个字符一次。然后重复第
 			二个字符来填充制表通常填充的位置。
 			"tab:>-" 会显示占据四个空格的制表 ">---"。
 			如果忽略，制表显示为 ^I。
+	  						*lcs-trail*
 	  trail:c	拖尾空白显示的字符。如果忽略，拖尾空白显示为空格。
+	  						*lcs-extends*
 	  extends:c	如果 'wrap' 关闭，而行在屏幕右边界之后还要继续时，最后
 			一列显示的字符。
+	  						*lcs-precedes*
 	  precedes:c	如果 'wrap' 关闭，而行在可视范围第一列之前还有内容时，
 			第一列显示的字符。
+	  						*lcs-conceal*
 	  conceal:c	用于替代隐藏文本的字符，用于 'conceallevel' 为 1 时。
+	  						*lcs-nbsp*
 	  nbsp:c	显示不可间断空格的字符 (字符 0xA0，160)。如果忽略，留
 			出一个空格。
 
@@ -3853,8 +3927,10 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 'matchpairs' 'mps'	字符串	(缺省为 "(:),{:},[:]")
 			局部于缓冲区
 			{Vi 无此功能}
-	形成配对的字符。|%| 命令从其中一个跳转到另一个。目前，只能使用单字节的
-	字符配对，而且必须不同。字符使用冒号分隔。多个配对之间使用逗号分隔。包
+	形成配对的字符。|%| 命令从其中一个跳转到另一个。
+	可以接受字符配对的必须不同，例如，不能在两个双引号间跳转。
+	字符使用冒号分隔。
+	多个配对之间使用逗号分隔。包
 	含 '<' 和 '>' 的例子 (HTML): >
 		:set mps+=<:>
 
@@ -4182,7 +4258,17 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	'numberwidth' 选项可以用来设置行号使用的空间。
 	如果长的回绕的行不从第一个字符开始，'-' 字符出现在行号前面。
 	|hl-LineNr| 和 |hl-CursorLineNr| 说明行号使用的高亮。
-	置位此选项时，关闭 'relativenumber' 选项。
+						*number_relativenumber*
+	'relativenumber' 选项影响相对光标的的显示数字。和 'number' 合用，有以
+	下四个不同组合 (光标在第三行):
+
+              	'nonu'          'nu'            'nonu'          'nu'
+		'nornu'         'nornu'         'rnu'           'rnu'
+
+	    |apple          |  1 apple      |  2 apple      |  2 apple
+	    |pear           |  2 pear       |  1 pear       |  1 pear
+	    |nobody         |  3 nobody     |  0 nobody     |3   nobody
+	    |there          |  4 there      |  1 there      |  1 there
 
 						*'numberwidth'* *'nuw'*
 'numberwidth' 'nuw'	数值型	(Vim 缺省: 4  Vi 缺省: 8)
@@ -4207,6 +4293,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	|i_CTRL-X_CTRL-O|。
 	|complete-functions| 解释如何调用该函数以及它应该返回何值。
 	本选项通常在文件类型插件里设置: |:filetype-plugin-on|
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 
 			    *'opendevice'* *'odev'* *'noopendevice'* *'noodev'*
@@ -4508,6 +4595,18 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	如果重画需时超过这么多的毫秒数，不再继续高亮匹配。用于避免 Vim 在使用
 	非常复杂的模式时挂起。
 
+						*'regexpengine'* *'re'*
+'regexpengine' 're'	数值置	(缺省为 0)
+			全局
+			{Vi 无此功能}
+	选择缺省正规表达式引擎。|two-engines|
+	可用值为:
+		0	自动选择
+		1	旧引擎
+		2	NFA 引擎
+	注意 使用 NFA 引擎时如果模式包含不支持的部分，整个模式会不匹配。只用于
+	调试正规表达式引擎。
+
 		*'relativenumber'* *'rnu'* *'norelativenumber'* *'nornu'*
 'relativenumber' 'rnu'	布尔型	(缺省关闭)
 			局部于窗口
@@ -4520,7 +4619,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	可用 'numberwidth' 选项设置行号所需的空间。
 	经回绕的长行如果不是从首个字符开始，行号之前会加上 '-' 字符。
 	行号使用的高亮见 |hl-LineNr| 和 |hl-CursorLineNr|。
-	如果置位此选项，关闭 'number' 选项。
+
+	光标行之前的数字也取决于 'number' 的值，关于两个选项的可能组合，参见
+	|number_relativenumber|。
 
 						*'remap'* *'noremap'*
 'remap'			布尔型	(缺省打开)
@@ -5014,6 +5115,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 'shiftwidth' 'sw'	数值型	(缺省为 8)
 			局部于缓冲区
 	(自动) 缩进每一步使用的空白数目。用于 |'cindent'|、|>>|、|<<| 等。
+	如果为零，使用 'ts' 的值。|shiftwidth()| 函数可用来得到有效的
+	shiftwidth 值。
 
 						*'shortmess'* *'shm'*
 'shortmess' 'shm'	字符串	(Vim 缺省 "filnxtToO"，Vi 缺省: ""，
@@ -5224,6 +5327,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	合。这可以用来维持 'ts' 的设置为标准值 8 不变，但编辑时感觉就像它被设
 	为 'sts' 那样。不过，"x" 这样的命令仍然会在实际的字符上操作。
 	如果 'sts' 为零，关闭此特性。
+	如果 'sts' 为负，使用 'shiftwidth' 的值。
 	如果置位 'paste' 选项，'softtabstop' 被设为 0。
 	另见 |ins-expandtab|。如果没有置位 'expandtab'，通过使用 <Tab>，使空格
 	数目减到最小。
@@ -5448,7 +5552,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	V N   虚拟列号，表示为 -{num}。如果等于 'c' 的值，不显示。
 	p N   行数计算在文件位置的百分比，如同 |CTRL-G| 给出的那样。
 	P S   显示窗口在文件位置的百分比，类似于 'ruler' 描述的百分比。长度总
-	      是为 3。
+	      是为 3，除非经过翻译。
 	a S   参数列表状态，就像缺省标题里的那样。({current} of {max})
 	      如果参数列表里的文件数为零或一，空字符串。
 	{ NF  计算 '%{' 和 '}' 之间的表达式，并返回其结果替代。注意 结束的 '}'
@@ -5482,7 +5586,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	为目前要显示的状态行所属的窗口 (缓冲区)，而表达式会使用此上下文计算。
 	变量 "actual_curbuf" 被设为实际的当前缓冲区的 'bufnr()' 号。
 
-	可能在沙盘 |sandbox| 里计算 'statusline' 选项。见 |sandbox-option|。
+	如果从模式行中设置，此表达式的计算在沙盘 |sandbox| 里进行，见
+	|sandbox-option|。
 
 	计算 'statusline' 时不允许修改文本或者跳到其它窗口 |textlock|。
 
@@ -5789,7 +5894,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			{仅当编译时加入 |+multi_byte| 特性才有效}
 			{Vi 无此功能}
 	终端使用的编码。它指定键盘产生的和显示能识别的字符编码。对 GUI 而言，
-	这只适用于键盘 ('encoding' 用于显示)。Mac 上如果 'macatsui' 关闭时例
+	这只适用于键盘 ( 'encoding' 用于显示)。Mac 上如果 'macatsui' 关闭时例
 	外，此时 'termencoding' 应是 "macroman"。
 	在 Win32 控制台版本上，缺省值为控制台的代码页，如果和 ANSI 代码页有所
 	不同的话。
@@ -6082,6 +6187,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	   pterm	QNX 终端鼠标处理。
 							*urxvt-mouse*
 	   urxvt	urxvt (rxvt-unicode) 终端鼠标处理.
+							*sgr-mouse*
+	   sgr		对产生 SGR 风格鼠标报告的终端鼠标处理。用于 xterm 277
+	   		或更新版本。
 
 	鼠标处理的支持必须在编译时打开 |+mouse_xterm| |+mouse_dec|
 	|+mouse_netterm|。
@@ -6092,6 +6200,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	"xterm" 或者 "xterm2" 的话，本选项自动设为 "xterm"。提供本选项的主要目
 	的是在终端名不以 "xterm" 开始但它能处理 xterm 鼠标代码时把本选项设为
 	"xterm"。
+	如果报告的 xterm 版本是 277 或更高，本值设为 "sgr"。
 	如果报告的 xterm 版本是 95 或更高，本值设为 "xterm2"。只有在编译时加入
 	|+termresponse| 特性并且 |t_RV| 设为请求 xterm 版本号的转义序列以后，
 	才会如此。否则，必须显式地设置 "xterm2"。如果你不想 'ttymouse' 被自动
@@ -6126,7 +6235,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	如果该文件不可读，报错，但不再继续查找。
 	见 |undo-persistence|。
 
-						*'undofile'* *'udf'*
+				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
 'undofile' 'udf'	布尔型	(缺省关闭)
 			局部于缓冲区
 			{Vi 无此功能}
@@ -6136,7 +6245,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	撤销文件写入的目录由 'undodir' 指定。
 	关于此功能，可详见 |undo-persistence|。
 	如果 'undoreload' 导致重载前为了可撤销而保存缓冲区，不读入撤销文件。
-	警 告: 这是很新的功能，小心使用！
+	关闭 'undofile' 时并_不_删除撤销文件。
 
 						*'undolevels'* *'ul'*
 'undolevels' 'ul'	数值型	(缺省为 100，Unix、VMS、Win32 和 OS/2 为 1000)
@@ -6360,7 +6469,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	些命令更加一致。以前，在空行上光标总是刚刚超过行尾。但这和 Vi 远远不兼
 	容，而且也有可能使一些插件或 Vim 脚本不能工作，比如因为 |l| 可以移动光
 	标到行尾字符之后。小心使用！
-	|$| 命令总是移动到行尾字符上，而不是超过它。这使光标可能实际向左移动！
+	`$` 命令总是移动到行尾字符上，而不是超过它。这使光标可能实际向左移动！
+	`g$` 命令则移动到屏幕行尾。
 	组合使用 "all" 和 "onemore" 没有意义，但你不会因此得到警告。
 
 			*'visualbell'* *'vb'* *'novisualbell'* *'novb'* *beep*
@@ -6446,8 +6556,9 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 			全局
 			{Vi 无此功能}
 			{仅当编译时加入 |+wildignore| 特性才有效}
-	文件模式的列表。文件和目录名的补全中忽略符合其中任何模式的文件，它也同
-	时影响 |expand()|、|glob()| 和 |globpath()|，除非指定标志位来关闭之。
+	文件模式的列表。扩展 |wildcards| 和文件和目录名的补全中忽略符合其中任
+	何模式的文件，它也同时影响 |expand()|、|glob()| 和 |globpath()|，除非
+	指定标志位来关闭之。
 	这些模式的应用方式类似于 |:autocmd|，见 |autocmd-patterns|。
 	另见 'suffixes'。
 	例如: >
@@ -6459,8 +6570,8 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 'wildignorecase' 'wic'	布尔型	(缺省关闭)
 			全局
 			{Vi 无此功能}
-	置位时对文件名和目录的补全忽略大小写。对完全忽略文件名大小写的系统没有
-	作用。
+	置位时对文件名和目录的补全忽略大小写。'fileignorecase' 置位时没有作
+	用。
 	不适用于用 shell 扩展通配符的情况，当有特殊字符时这会发生。
 
 
@@ -6475,6 +6586,7 @@ se[t]		字符串 "set " 或 "se " (注意 空格)
 	CTRL-P/CTRL-N，移动高亮到合适的匹配上。
 	使用 'wildmode' 时，指定 "full" 会启用 "wildmenu" 模式。"longest" 和
 	"list" 则不会启动 "wildmenu" 模式。
+	可用 |wildmenumode()| 查看当前模式。
 	如果多个匹配超过一行，在右侧显示 ">" 和/或在左侧显示 "<"。需要的话，滚
 	动状态行。
 	按下不用于选择补全项的键时，放弃 "wildmenu" 模式。
