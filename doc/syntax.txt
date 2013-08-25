@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.3.  最近更新: 2013年1月
+*syntax.txt*	For Vim version 7.4.  最近更新: 2013年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -37,6 +37,7 @@ Vim 支持所有终端上的语法高亮。但因为多数普通的终端只有�
 15. 高亮标签			|tag-highlight|
 16. 窗口局部语法		|:ownsyntax|
 17. 彩色 xterm			|xterm-color|
+18. 语法太慢了			|:syntime|
 
 {Vi 无此功能}
 
@@ -349,154 +350,19 @@ Vim。
 它本身并不是语法文件，只是一个把当前窗口转换成 HTML 的脚本。Vim 打开一个新窗
 口，在那里它构造 HTML 文件。
 
+保存结果文件以后，你可以使用任何浏览器浏览。那里的颜色应该和你在 Vim 里看到的
+一模一样。|g:html_line_ids| 可使你通过在浏览器的地址栏中 URL 尾部加入 (例如)
+#L123 或 #123 来跳到指定行。|g:html_dynamic_folds| 则使你可以打开或关闭 Vim 中
+的折叠。
+
 你不应该设置 'filetype' 或 'syntax' 选项为 "2html"！执行此脚本，以转换当前文
 件: >
 
 	:runtime! syntax/2html.vim
 <
-							*:TOhtml*
-也可以使用 ":TOhtml" 用户命令。它是在一个标准插件里定义的。":TOhtml" 可用于行
-范围和可视区域: >
-
-	:10,40TOhtml
-
-警告: 这可能会挺慢的！脚本必须处理每行的每个字符。因为它需时甚久，缺省转换过程
-的每个主要步骤都会在状态行上显示进度条。如果不想看到进度条，可以关闭之，这会有
-很不显著的速度提高: >
-
-	let g:html_no_progress = 1
-
-":TOhtml" 还有个特殊功能: 如果窗口处于比较模式，会生成显示所有相关窗口的
-HTML。可以通过设置 g:html_diff_one_file 变量来关闭之: >
-
-	let g:html_diff_one_file = 1
-
-
-保存结果文件以后，你可以使用任何浏览器浏览。那里的颜色应该和你在 Vim 里看到的
-一模一样。
-
-要限制转换的行范围，给 |:TOhtml| 命令加上行范围，或者设置 "html_start_line" 和
-"html_end_line" 分别为要转换的第一行和最后一行。例如，要指定最近设置的可视区
-域: >
-
-	:let g:html_start_line = line("'<")
-	:let g:html_end_line = line("'>")
-
-行的标号方式根据 'number' 选项和 Number 高亮属性而定。通过设置
-"html_number_lines" 为一非零值，你可以让输出的 HTML 强制给行编号: >
-   :let g:html_number_lines = 1
-设为零则强制关闭行号: >
-   :let g:html_number_lines = 0
-要回到缺省情况，即使用 'number' 的设置，可删除此变量: >
-   :unlet g:html_number_lines
-
-缺省情况生成使用层叠样式表 (CSS1) 的合法 HTML 4.01 文件。如果你真的需要生成支
-持旧版本的浏览器或其它没有基本 CSS 支持的用户代理 (user agent) 的标记。可用: >
-   :let g:html_use_css = 0
-
-可隐藏文本被从 HTML 中去除，并取决于 'conceallevel' 的当前值，用 |:syn-cchar|
-或 'listchars' 代替。如果你总是想显示文档的所有文本，要么在执行 2html 前设置
-'conceallevel' 为零，要么: >
-   :let g:html_ignore_conceal = 1
-
-类似地，HTML 里关闭折叠的处理和实际显示的效果一样。如果不想如此，启动 2html 前
-用 |zR| 命令，或者: >
-   :let g:html_ignore_folding = 1
-
-你可能希望生成所有数据都包含在折叠中的 HTML，以便用户能像和 Vim 相同的方式浏览
-经折叠的数据。为此可生成动态的折叠信息，用: >
-   :let g:html_dynamic_folds = 1
-
-html_dynamic_folds 会隐含定义 html_use_css，因为要在旧版浏览器支持该功能太困难
-了。不过，html_ignore_folding 优先于 html_dynamic_folds。
-
-html_dynamic_folds 缺省会生成折叠列，如同 vim 的 foldcolumn 设置，它会用
-javascript 打开或关闭 HTML 文档中的折叠。此折叠列的宽度至少为 |'foldcolumn'|
-的当前值，但会加宽以匹配文档的最大折叠级别。如果你完全不想显示折叠列，用: >
-   :let g:html_no_foldcolumn = 1
-
-用此选项，HTML 中不会产生能打开折叠的折叠列。为此，提供另一个选项:
-html_hover_unfold。打开此选项会使用 CSS 2.0，当用户把鼠标移到折叠之上时就会打
-开折叠。注意 旧版本的浏览器 (尤其是 Internet Explorer 6) 不支持该功能。我们生
-成 IE6 浏览器特定的 HTML 标记使之回归到普通的 CSS 1 代码，这样折叠还能在此浏览
-器下正常显示，但没有折叠列它们无法被打开。注意 使用 html_hover_unfold 可以在关
-闭 javascript 的现代浏览器中仍然能看到关闭的折叠。要使用此选项，用: >
-   :let g:html_hover_unfold = 1
-
-置位 html_no_foldcolumn 和 html_dynamic_folds 会自动置位 html_hover_unfold，否
-则折叠就不可能是动态的了。
-
-缺省使用 "<pre>" 和 "</pre>" 围绕文本。要转换的窗口中如置位了 'wrap'，使用
-CSS 2.0 的 "white-space:pre-wrap" 值。要显式打开回绕: >
-   :let g:html_pre_wrap = 1
-要关闭之 >
-   :let g:html_pre_wrap = 0
-生成的 HTML 看起来已和 Vim 很接近，但终究还有少量区别，例如不能在 HTML 实现
-'showbreak' 选项，或指定断行的位置。
-
-有另一个在 HTML 中有回绕效果的方法，可能会使生成的外观更不一致。使用: >
-   :let g:html_no_pre = 1
-这会在每行结束的地方使用 <br>，而用 "&nbsp;" 来显示连续的空格。此方法和旧式的
-浏览器更兼容，而现代浏览器支持 "white-space" 方法。
-
-如果你继续使用缺省的 "<pre>" 标签，文本中的 <Tab> 字符保留在生成的输出中的条件
-是它们不影响文本的外观，而且应是在文档中有意使用的。这使得 HTML 输出可从浏览器
-中复制粘贴，而不丢失文档中的实际空白。
-
-具体来说，<Tab> 字符保留的条件是: 'tabstop' 选项设为缺省的 8，'expandtab' 没有
-置位，HTML 输出中不包含 foldcolumn，也不包含行号 (见上面的选项)。如任一项不满
-满足，文本中的 <Tab> 在 HTML 输出中被扩展为相应的空格。
-
-包含 "<pre>" 时，即使其他条件不满足，可以强制 :TOhtml 保留制表符: >
-   :let g:html_expand_tabs = 0
-注意 这样很容易打乱 HTML 中文本的对齐和缩进。
-
-即使可以保留，也要强制扩展制表符: >
-   :let g:html_expand_tabs = 1
-
-单个文件的比较模式 (用 g:html_diff_one_file) 中，连续多于三行的填充行显示为三
-行，中间行提示插入的总行数。如果你宁愿看到所有的插入行，用于逐行比较: >
-    :let g:html_whole_filler = 1
-要回到最多显示三行的模式: >
-    :unlet g:html_whole_filler
-
-对多数缓冲区，如设置 'fileencoding'，TOhtml 使用其当前值，否则使用 'encoding'
-来决定 HTML 的字符集和 'fileencoding'。对某些 'buftype' 类型，总使用
-'encoding'，一般而言，这里的描述适用于所有 |encoding-names| 指定的编码，但
-TOhtml 目前只自动使用那些广为支持的特定编码，对尚不能自动检测的特定编码，你可
-以自定义支持。
-
-要完全跳过自动字符集检测，设置 g:html_use_encoding 为你要使用的字符集。TOhtml
-会根据字符集名自行决定合适的 'fileencoding'。如果 TOhtml 办不到，你也可以手动
-指定。但建议设置该变量为广为支持的值，如 UTF-8，以便为网页服务器支持: >
-   :let g:html_use_encoding = "UTF-8"
-如果不想产生指定字符集的 HTML 行，设置 g:html_use_encoding 为空字符串: >
-   :let g:html_use_encoding = ""
-要回到自动的机制，删除 g:html_use_encoding 变量: >
-   :unlet g:html_use_encoding
-
-如果TOhtml 不能自动检测 g:html_use_encoding 指定的字符集对应的 'fileencoding'
-设置，用 g:html_encoding_override 可以让 TOhtml 检测到正确的编码。这是个由字符
-集到编码的组对所构成的字典，它会替代 TOhtml 自动检测所生成的相应组对，或扩充新
-组对以支持新的字符集。例如，要让 TOhtml 正确检测 HTML 字符集 "windows-1252" 对
-应的编码为 "8bit-cp1252"，用: >
-   :let g:html_encoding_override = {'windows-1252': '8bit-cp1252'}
-<
-g:html_charset_override 类似，它指定 TOhtml 不能自动检测的 'fileencoding' 或
-'encoding' 所对应的 HTML 字符集。也可用来覆盖现有的编码到字符集的组对。例如，
-TOhtml 缺省对所有 Unicode/UCS 编码使用 UTF-8。要用 UTF-16 和 UTFS-32 代替之，
-用: >
-   :let g:html_charset_override = {'ucs-4': 'UTF-32', 'utf-16': 'UTF-16'}
-
-注意 UTF-32 或 UTF-16 编码的文档和已知至少一个主要浏览器有兼容问题。
-
-					    *convert-to-XML* *convert-to-XHTML*
-如果你不喜欢普通的 HTML，一个选择是使用该脚本产生 XHTML (XML 兼容的 HTML)。这
-可以通过设置 "html_use_xhtml" 变量完成: >
-    :let g:html_use_xhtml = 1
-
-所有上述的开/关选项都可以通过显式设置想要的值来打开或关闭，或者通过 |:unlet|
-删除该变量来恢复其缺省值。
+许多变量可用来调整 2html.vim 的结果；见下。下面列出的开关选项可以通过显式设置
+其值来达到打开和关闭的目的，也可以通过用 |:unlet| 删除变量的方式来恢复其缺省
+值。
 
 评注:
 - 一些真的很老的浏览器可能不会显示背景色。
@@ -506,6 +372,301 @@ TOhtml 缺省对所有 Unicode/UCS 编码使用 UTF-8。要用 UTF-16 和 UTFS-3
 
 此处是一个如何在 Unix 外壳上给所有的 .c 和 .h 文件运行此脚本的例子: >
    for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2html.vim" +"wq" +"q" $f; done
+<
+					*g:html_start_line* *g:html_end_line*
+要限制转换的行范围，给正面介绍的 |:TOhtml| 命令加上行范围，或者设置
+"g:html_start_line" 和 "g:html_end_line" 分别为要转换的第一行和最后一行。例
+如，要指定最近设置的可视区域: >
+
+	:let g:html_start_line = line("'<")
+	:let g:html_end_line = line("'>")
+	:runtime! syntax/2html.vim
+<
+							*:TOhtml*
+:[range]TOhtml		":TOhtml" 命令在一个标准插件里定义。该命令为你执行
+			|2html.vim|。给出范围时，设置 |g:html_start_line| 和
+			|g:html_end_line| 分别为范围的开始和结束行。缺省范围是
+			整个缓冲区。
+
+			如果窗口处于比较模式，除非置位了
+			|g:html_diff_one_file|，:TOhtml 会在生成的 HTML 里把当
+			前标签页里所有参与比较的窗口并排放在一个 <table>
+			元素里。|g:html_line|ids| 还可以允许你跳到指定窗口的指
+			定行，(例如) #W1L42 跳到首个参加比较的窗口的第 42 行，
+			#W3L87 则是第三个窗口的第 87 行。
+
+			示例: >
+
+	:10,40TOhtml " 把第 10-40 行转换为 html
+	:'<,'>TOhtml " 转换当前/最近的可视选择
+	:TOhtml      " 转换整个缓冲区
+<
+							*g:html_diff_one_file*
+缺省: 0。
+为 0 时，|:TOhtml| 会在生成的 HTML 里把当前标签页里所有参与比较的窗口并排放在
+一个 <table> 元素里。为 1 时，只转换当前的缓冲区。
+示例: >
+
+	let g:html_diff_one_file = 1
+<
+							 *g:html_whole_filler*
+缺省: 0。
+为 0 时，如果 |g:html_diff_one_file| 为 1，连续多于三行的填充行显示为三行，中
+间行提示插入的总行数。
+为 1 里，显示所有的插入行，这也是 |g:html_diff_one_file| 没有置位时在行为。
+>
+    :let g:html_whole_filler = 1
+<
+				     *TOhtml-performance* *g:html_no_progress*
+缺省: 0。
+为 0 时，每个主要步骤都会在状态行上显示进度条。
+为 1 时，不显示进度条。会有很不显著的速度提高，但你无法估计转换过程要花多长时
+间；对大文件而言可能会挺久的！
+示例: >
+
+	let g:html_no_progress = 1
+
+通过指示 Vim 不用交互方式运行会得到更好的效率提高，因为不用在脚本切换缓冲区和
+窗口时花时间重画屏幕，例如: >
+
+  vim -E -s -c "let g:html_no_progress=1" -c "syntax on" -c "set ft=c" -c "runtime syntax/2html.vim" -cwqa myfile.c
+<
+注意 -s 标志位停止 .vimrc 和任何插件的载入，因此必须显式执行/打开影响 HTML
+转换的设置。详见 |-E| 和 |-s-ex|。最好单独建一个脚本来代替这里的 -c 命令，然后
+用 -u 标志位载入之，这样就不用一个个列出要执行的命令了。
+
+							 *g:html_number_lines*
+缺省: 当前的 'number' 设置。
+为 0 时，生成的 HTML 里显示缓冲区文本，不带行号。
+为 1 时，生成的 HTML 里加入一列行号，使用和 Vim 的行号列相同的高亮
+(|hl-LineNr|) 。
+强制给行编号，即使没有置位 'number': >
+   :let g:html_number_lines = 1
+强制关闭行号: >
+   :let g:html_number_lines = 0
+要回到缺省情况，即使用 'number' 的设置，可删除此变量: >
+   :unlet g:html_number_lines
+<
+                                                             *g:html_line_ids*
+缺省: 1 如果 |g:html_number_lines| 置位，否则为 0。
+为 1 时，为每个行号加上 HTML 的 id 属性，或者如果行号不显示，为同样的目的加入
+一个空的 <span> 。对单个缓冲区的 HTML 页面，ID 属性形如 L123，对比较视图的页面
+则形如 W2L123，可以用它来跳转到该行 (或比较视图中某个窗口)。加入 Javascript 以
+便在跳到指定行之前打开它可能所在的已关闭的动态折叠 (|g:html_dynamic_folds|)。
+Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
+示例: >
+
+	page.html#L123	跳转到单个缓冲区文件的第 123 行
+	page.html#123	同上
+
+	diff.html#W1L42	跳转到比较的首个窗口的第 42 行
+	diff.html#42	同上
+<
+							      *g:html_use_css*
+缺省: 1。
+为 1 时，生成使用层叠样式表 (CSS1) 的合法 HTML 4.01 文件，所有的现代浏览器和
+多数旧式的浏览器都支持。
+为 0 时，生成 <font> 标签或类似的过时的标记。不推荐，但对真的很老的浏览器、电
+邮客户端、论坛帖子和类似的不支持最基本的 CSS 的情况可能会更好些。
+例如: >
+   :let g:html_use_css = 0
+<
+						       *g:html_ignore_conceal*
+缺省: 0。
+为 0 时，可隐藏文本被从 HTML 中去除，并取决于 'conceallevel' 的当前值，用
+|:syn-cchar| 或 'listchars' 代替。
+为 1 时，在生成的 HTML 中包括所有的缓冲区文本，即使是经过隐藏 (|conceal|)。
+
+以下两个命令的任何一个都可以确保缓冲区的所有文本都包含在生成的 HTML 里 (除非有
+折叠的情况): >
+   :let g:html_ignore_conceal = 1
+   :setl conceallevel=0
+<
+						       *g:html_ignore_folding*
+缺省: 0。
+为 0 时，关闭折叠里的实际文本被 Vim 显示折叠所用的文本 (|fold-foldtext|) 代
+替。如果你还想允许在 HTML 中用户可以扩展折叠看到实际文本，就象 Vim 可以做的那
+样的话，另见 |g:html_dynamic_folds|。
+为 1 时，在生成的 HTML 中包括所有的缓冲区文本；不管文本是否在折叠中都一样。此
+时，|g:html_dynamic_folds| 无效。
+
+以下两个命令的任何一个都可以确保缓冲区的所有文本都包含在生成的 HTML 里 (除非有
+隐藏 (conceal) 的情况): >
+   zR
+   :let g:html_ignore_folding = 1
+<
+							*g:html_dynamic_folds*
+缺省: 0。
+为 0 时，关闭折叠里的文本不包含在生成的 HTML 中。
+为 1 时，生成 Javascript 以便打开折叠，并显示其中的文本，如同 Vim 那样。
+
+设置此变量为 1 使得 2html.vim 总是使用 CSS 生成样式，不管 |g:html_use_css| 的
+设置如何。
+
+|g:html_ignore_folding| 置位时，忽略此变量。
+>
+   :let g:html_dynamic_folds = 1
+<
+							*g:html_no_foldcolumn*
+缺省: 0。
+为 0 时，如果 |g:html_dynamic_folds| 为 1，生成折叠列，如同 vim 的 foldcolumn
+(|fold-foldcolumn|)，用户点击该列时切换折叠的开与关。
+为 1 时，不生成此列；如果置位了 |g:html_hover_unfold|，可以用鼠标移到折叠文本
+来打开折叠。
+>
+   :let g:html_no_foldcolumn = 1
+<
+				*TOhtml-uncopyable-text* *g:html_prevent_copy*
+缺省: 空字符串。
+如果在浏览器中选中生成的 HTML 文档的全部文本并复制，此选项防止其中部分区域被复
+制。 用于保证用户只复制-粘贴原始的文本，而不是折叠列或生成内容显示的行号。可以
+这样来指定影响的区域:
+	f:	折叠列
+	n:	行号 (也包括折叠文本中的)
+	t:	折叠文本
+	d:	比较填充行
+
+例如，要使折叠列和行号不被复制: >
+	:let g:html_prevent_copy = "fn"
+<
+此功能目前的实现方法是插入只读的 <input> 元素包围不想复制的区域。这不总是适
+用。若干理解 HTML 的应用还是会粘贴 <input> 元素。但只接受平凡文本的粘贴目标应
+该都行。
+
+							   *g:html_no_invalid*
+缺省: 0。
+为 0 时，如 |g:html_prevent_copy| 非空，有意地给 <input> 元素插入一个非法的属
+性。这使更多的应用不会粘贴这些 <input> 元素。特别地，Microsoft Word 不会粘贴
+有非法属性的 <input> 元素。
+为 1 时， 不会有意插入非法的标记，生成的页面总是合法的。不过，
+|g:html_prevent_copy| 非空时，小心粘贴到 Microsoft Word；一旦粘贴，很难去掉这
+些 <input> 元素。
+
+							 *g:html_hover_unfold*
+缺省: 0。
+为 0 时，唯一打开 2html.vim 用 |g:html_dynmaic_folds| 设置产生折叠的方法是点击
+生成的折叠列。
+为 1 时，用 CSS 2.0 机制，使得用户把鼠标移到显示的折叠文本上时可以打开折叠。对
+不想打开 Javascript 但想看到折叠文本的用户会有用。
+
+注意 旧版本的浏览器 (尤其是 Internet Explorer 6) 不支持该功能。我们生成 IE6 浏
+览器特定的 HTML 标记使之回归到普通的 CSS 1 代码，这样折叠还能在此浏览器下正常
+显示，但没有折叠列它们无法被打开。
+>
+   :let g:html_hover_unfold = 1
+<
+							      *g:html_id_expr*
+缺省: ""
+动态折叠和行号的跳转依赖于文档中生成的 ID 的唯一性。如果生成的 HTML 被复制到更
+大的文档时，ID 的唯一性就很难保证了。设置 |g:html_id_expr| 可以指定一个表达
+式，让 Vim 用来生成唯一的字符串，附加到给定文档中的每个 ID 之后，以保证生成的
+完整 ID 即使和更大的 HTML 文档的其他内容合并时也保持唯一。例如，要给每个 ID 后
+附加 _ 和缓冲区号: >
+
+	:let g:html_id_expr = '"_".bufnr("%")'
+<
+要给每个 ID 号附加字符串 "_mystring": >
+
+	:let g:html_id_expr = '"_mystring"'
+<
+注意 转换比较视图到 HTML 时，只对比较中的首个窗口计算此表达式，计算结果会用于
+所有的窗口。
+
+					  *TOhtml-wrap-text* *g:html_pre_wrap*
+缺省: 当前 'wrap' 的设置。
+为 0 时，如果 |g:html_no_pre| 为 0 或未设，生成的 HTML 中的文本不在浏览器窗口
+的边缘处回绕。
+为 1 时，如果 |g:html_use_css| 为 1，使用 CSS 2.0 的 "white-space:pre-wrap"
+值，使文本在浏览器窗口边缘处回绕。
+要显式打开回绕: >
+   :let g:html_pre_wrap = 1
+要关闭回绕 >
+   :let g:html_pre_wrap = 0
+回归到缺省值，由 'wrap' 设置值来决定回绕与否: >
+   :unlet g:html_pre_wrap
+<
+							       *g:html_no_pre*
+缺省: 0。
+为 0 时，生成的 HTML 的缓冲区文本用 <pre>...</pre> 标签围绕。连续空格的显示如
+同 Vim 那样，无需特别标记，制表符也可以按本义使用 (见 |g:html_expand_tabs|)。
+为 1 时 (不推荐)，使用普通的 <div> 代替 <pre> 标签，用一串 "&nbsp;" 来显示连续
+的空格，<br> 用于结束每行。这是支持生成的 HTML 中文本回绕的另一个方法，此方法
+和旧式的浏览器更兼容，但使 2html.vim 生成的页面显示效果与 Vim 的显示差别更大。
+>
+   :let g:html_no_pre = 1
+<
+							  *g:html_expand_tabs*
+缺省: 1 如果 'tabstop' 为 8，'expandtab' 为 0，生成的 HTML 没有折叠列或行号；
+      0 不然。
+为 0 时，缓冲区文本中的 <Tab> 被合适数目的空格，或当 |g:html_no_pre| 为 1 时，
+&nbsp；所替代。
+为 1 时，如果 |g:html_no_pre| 为 0 或未设，缓冲区文本中的 <Tab> 字符在生成的
+HTMl 中保留。这使得 HTML 输出可从浏览器中复制粘贴，而不丢失原始文档中的实际空
+白。注意 这样很容易打乱 HTML 中文本的对齐和缩进，除非按照缺省设置的那些条件。
+
+强制 |2html.vim| 保留 <Tab> 字符: >
+   :let g:html_expand_tabs = 0
+
+强制扩展制表符: >
+   :let g:html_expand_tabs = 1
+<
+				    *TOhtml-encoding-detect* *TOhtml-encoding*
+强烈建议用 |g:html_use_encoding| 来为任何要放到 web 服务器上的内容指定编码。
+
+如果没有指定编码，|2html.vim| 使用 'fileencoding' 的当前值 (如设置) 或者
+'encoding' 值的 IANA 的推荐名字来设置。
+对某些 'buftype' 类型，总使用 'encoding'。会根据选中的文档编码相应的设置
+'fileencoding' 的值。
+
+自动检测适用于所有 |encoding-names| 指定的编码，但 TOhtml 目前只自动使用那些广
+为浏览器支持的编码，对缺省不自动检测的特定编码，你可以强制其检测 (见下面的选
+项)。IANA 名字可见 http://www.iana.org/assignments/character-sets。
+
+备注，缺省所有 Unicode 编码所生成的 HTML 会转化为不带 BOM 的 UTF-8，这是 W3C
+建议的:
+
+	http://www.w3.org/International/questions/qa-choosing-encodings
+	http://www.w3.org/International/questions/qa-byte-order-mark
+
+							 *g:html_use_encoding*
+缺省: 无，使用 'fileencoding' 的当前值的 IANA 名字，见上述。
+要完全跳过自动字符集检测，设置 g:html_use_encoding 为你要使用的字符集。强烈
+建议对所有要放上网页服务器的内容设置此值为广为支持的编码，如 UTF-8: >
+   :let g:html_use_encoding = "UTF-8"
+如果不想产生指定字符集的 HTML 行，设置 g:html_use_encoding 为空字符串 (_不_推
+荐): >
+   :let g:html_use_encoding = ""
+要回到自动的机制，删除 g:html_use_encoding 变量: >
+   :unlet g:html_use_encoding
+<
+						    *g:html_encoding_override*
+缺省: 无，autoload/tohtml.vim 包含 |encoding-names| 中提到名字的编码的转换。
+如果用 |g:html_use_encoding| 指定的编码不在缺省的转换列表中，本选项可以使
+|2html.vim| 检测到正确的 'fileencoding'。
+
+这是个由字符集到编码的组对所构成的字典，它会替代 TOhtml 自动检测所生成的相应组
+对，或扩充新组对以支持新的字符集。
+
+要检测 HTML 字符集 "windows-1252" 对应的编码为 "8bit-cp1252"，用: >
+   :let g:html_encoding_override = {'windows-1252': '8bit-cp1252'}
+<
+						     *g:html_charset_override*
+缺省: 无，autoload/tohtml.vim 包含 |encoding-names| 中提到名字的和有广泛浏览器
+		支持的转换。
+本选项指定|2html.vim| 不能自动检测的 'fileencoding' 或 'encoding' 所对应的
+HTML 字符集。也可用来覆盖现有的编码到字符集的组对。例如，
+TOhtml 缺省对所有 Unicode/UCS 编码使用 UTF-8。要用 UTF-16 和 UTF-32 代替之，
+用: >
+   :let g:html_charset_override = {'ucs-4': 'UTF-32', 'utf-16': 'UTF-16'}
+
+注意 UTF-32 或 UTF-16 编码的文档和已知至少一个主要浏览器有兼容问题。
+
+			*convert-to-XML* *convert-to-XHTML* *g:html_use_xhtml*
+缺省: 0。
+为 0 时，生成标准 HTML 4.01 (如有可能，strict)。
+为 1 时，生成 XHTML 1.0 (XML 兼容的 HTML)。
+>
+    :let g:html_use_xhtml = 1
 <
 
 ABEL						*abel.vim* *ft-abel-syntax*
@@ -576,7 +737,9 @@ ASSEMBLY	*ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
 最灵活的方式是在你的汇编文件里加上如下一行: >
 	asmsyntax=nasm
 把 "nasm" 换成实际的汇编语法的名字。该行必须是文件头五行中的一行。此文本前后不
-能紧接着非空白的其它文本。
+能紧接着非空白的其它文本。注意 指定 asmsyntax=foo 等价于在 |modeline| 中设置
+ft=foo，如果两者有冲突，模式行的设置优先 (尤其，如果模式行上有 ft=asm，总是使
+用 GNU 的语法高亮，而不管 asmsyntax 如何设置)。
 
 语法类型可以为某个缓冲区定制。方法是设置 b:asmsyntax 变量: >
 	:let b:asmsyntax = "nasm"
@@ -765,6 +928,14 @@ ColdFusion 有 HTML 注释的自己的版本。要打开 ColdFusion 风格的注
 ColdFusion 语法文件是基于 HTML 的语法文件的。
 
 
+CPP						*cpp.vim* *ft-cpp-syntax*
+
+多数同 |ft-c-syntax|。
+
+变量			特色 ~
+cpp_no_c11		不高亮 C++ 标准项目
+
+
 CSH						*csh.vim* *ft-csh-syntax*
 
 这里讨论名为 "csh" 的外壳。注意 有的系统实际使用的是 tcsh。
@@ -845,6 +1016,9 @@ DOCBOOK SGML				*docbksgml.vim* *ft-docbksgml-syntax*
 或: >
 	:set filetype=docbkxml
 
+可以指定 DocBook 版本: >
+	:let docbk_ver = 3
+如无指定假定为 4。
 
 DOSBATCH				*dosbatch.vim* *ft-dosbatch-syntax*
 
@@ -960,15 +1134,16 @@ EIFFEL					*eiffel.vim* *ft-eiffel-syntax*
 
 ERLANG						*erlang.vim* *ft-erlang-syntax*
 
-erlang 高亮支持 Erlang 语言 (ERicsson LANGuage)。
-Erlang 是大小写敏感的，缺省的扩展名是 ".erl"。
+Erlang 是 Ericsson 开发的函数编程语言。下列文件后缀被识别为 Erlang 文件: erl、
+hrl、yaws。
 
-如果你想关闭关键字高亮，在 .vimrc 里加上: >
-	:let erlang_keywords = 1
-如果你想关闭内建函数的高亮，在 .vimrc 里加上: >
-	:let erlang_functions = 1
-如果你想关闭特殊字符的高亮，在 .vimrc 里加上: >
-	:let erlang_characters = 1
+缺省打开 BIF (内建函数) 的高亮。要关闭之，在 .vimrc 里加上: >
+
+	:let g:erlang_highlight_bifs = 0
+
+要打开某些特殊原子 (atom) 的高亮，在 .vimrc 里加上: >
+
+	:let g:erlang_highlight_special_atoms = 1
 
 
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
@@ -1758,9 +1933,10 @@ PERL						*perl.vim* *ft-perl-syntax*
 
 perl 的语法高亮有一些可用的选项。
 
-如果你使用 POD 文件或者 POD 段，可能会: >
+现在缺省打开内建 POD 的高亮。如果不希望因高亮 Perl 文件内嵌的 POD 高亮增加复杂
+度，可以把 'perl_include_pod'  选项设为 0: >
 
-	:let perl_include_pod = 1
+	:let perl_include_pod = 0
 
 要减低分析的复杂度 (同时提高了效率)，你可以关闭变量名和内容的分析过程的两个元
 素。
@@ -1807,14 +1983,19 @@ perl 的语法高亮有一些可用的选项。
 
 	:let perl_fold_blocks = 1
 
-要避免设置 perl_fold 时对 package (包) 和 sub (例程) 进行折叠，设置合适的变
-量:
->
+'perl_fold' 置位时，缺省打开例程的折叠。如果不想要，可以设置
+'perl_nofold_subs': >
 
-	:unlet perl_nofold_packages
-	:unlet perl_nofold_subs
+	:let perl_nofold_subs = 1
 
+缺省不打开无名例程的折叠；可以用 'perl_fold_anonymous_subs' 打开之: >
 
+	:let perl_fold_anonymous_subs = 1
+
+'perl_fold' 置位时，缺省打开包的折叠。如果不想要，可以设置
+'perl_nofold_packages': >
+
+	:let perl_nofold_packages = 1
 
 PHP3 和 PHP4		*php.vim* *php3.vim* *ft-php-syntax* *ft-php3-syntax*
 
@@ -1993,22 +2174,30 @@ PROGRESS				*progress.vim* *ft-progress-syntax*
 
 PYTHON						*python.vim* *ft-python-syntax*
 
-有四个选项可以控制 Python 的语法高亮。
+有六个选项可以控制 Python 的语法高亮。
 
-要高亮数值: >
-	:let python_highlight_numbers = 1
+关于高亮数值: >
+	:let python_no_number_highlight = 1
 
-要高亮内建函数: >
-	:let python_highlight_builtins = 1
+关于高亮内建函数: >
+	:let python_no_builtin_highlight = 1
 
-要高亮标准例外: >
-	:let python_highlight_exceptions = 1
+关于高亮标准例外: >
+	:let python_no_exception_highlight = 1
+
+关于高亮 doctest 和其中的代码: >
+	:let python_no_doctest_highlight = 1
+或 >
+	:let python_no_doctest_code_highlight = 1
+(第一个选项包含第二个)。
 
 要高亮行尾的空白还有空格和制表的混合: >
-	:let python_highlight_space_errors = 1
+	:let python_space_error_highlight = 1
 
-如果你想要所有可能的 Python 高亮 (等同于设置以上的所有选项): >
+如果你想要所有可能的 Python 高亮 (等同于置位以上最后选项，及复位其余选项): >
 	:let python_highlight_all = 1
+
+注意: 以上选项只关心其存在于否，它们的值并不重要，可以把上面的 1 换成任何值。
 
 
 QUAKE						*quake.vim* *ft-quake-syntax*
@@ -2039,6 +2228,12 @@ readline 语法的文件前，在命令行输入: >
 	let readline_has_bash = 1
 
 这使得 BASH (2.05a 和其后的版本，也包括部分以前的) 增加的命令被高亮。
+
+
+RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
+
+可以这样设置代码块使用的语法定义
+	let rst_syntax_code_list = ['vim', 'lisp', ...]
 
 
 REXX						*rexx.vim* *ft-rexx-syntax*
@@ -2338,9 +2533,24 @@ VIM 认定不应该存在反斜杠 + 引号的构造，在 .vimrc 里加入这�
 的缺点是重画会变慢。
 
 
-TEX						*tex.vim* *ft-tex-syntax*
+TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
 
-								*tex-folding*
+			Tex 内容~
+	Tex: 要语法折叠么？				|tex-folding|
+	Tex: 不想拼写检查				|g:tex_nospell|
+	Tex: 不想检查注释里的拼写？			|tex-nospell|
+	Tex: 需要在 Verbatim 区中使用拼写检查？		|tex-verb|
+	Tex: 在注释还是数学模式里			|tex-runon|
+	Tex: 语法高亮很慢？				|tex-slow|
+	Tex: 想高亮更多的命令？				|tex-morecommands|
+	Tex: 过多的 Error 高亮？			|tex-error|
+	Tex: 需要新的数学模式的组？			|tex-math|
+	Tex: 开始新的风格？				|tex-style|
+	Tex: 利用隐藏模式				|tex-conceal|
+	Tex: 选择性的隐藏模式				|g:tex_conceal|
+	Tex: 控制 iskeyword				|g:tex_isk|
+
+				*tex-folding* *g:tex_fold_enabled*
  Tex: 要语法折叠么？ ~
 
 <syntax/tex.vim> 的版本 28 支持基于语法的 part、chapter、section、subsection
@@ -2350,29 +2560,31 @@ TEX						*tex.vim* *ft-tex-syntax*
 的模式行里来执行: >
 	% vim: fdm=syntax
 如果系统过慢，可以看看 >
- 	http://vim.wikia.com/wiki/Keep_folds_closed_while_inserting_text
+	https://vimhelp.appspot.com/vim_faq.txt.html#faq-29.7
 <
-								*tex-nospell*
+						*g:tex_nospell*
+ Tex: 不想拼写检查~
+
+如果不想 LaTeX 文档在任何地方检查拼写，在 .vimrc 里加入 >
+	let g:tex_nospell=1
+如果只想关闭注释中的拼写检查，见 |g:tex_comment_nospell|。
+
+				*tex-nospell* *g:tex_comment_nospell*
  Tex: 不想检查注释里的拼写？ ~
 
 有些家伙喜欢在注释里写源代码，所以希望在 LaTeX 文件的注释里关闭拼写检查。为
 此，在 <.vimrc> 里放上: >
       let g:tex_comment_nospell= 1
-注释行 >
-	% nospell{
-	...
-	% nospell}
-可用来关闭两行之间的拼写检查。这些注释行拼写控制已知是脆弱的 (fragile)；例如，
-不能在 nospell 块间包含任何的段落命令 (\part、\chapter、\section、\paragraph
-等)，也不可交错使用环境 (environment) (例如 math) 和 nospell 块。
-								*tex-verb*
+如果你要关闭 LaTeX 文档中所有地方的拼写检查，见 |g:tex_nospell|。
+
+				*tex-verb* *g:tex_verbspell*
  Tex: 需要在 Verbatim 区中使用拼写检查？~
 
 通常 verbatim 区域用于源代码这类的东西；很少有人想对源代码进行拼写检查。如果你
 真的想要对 verbatim 区进行拼写检查，在 <.vimrc> 里放入: >
 	let g:tex_verbspell= 1
 <
-								*tex-runon*
+					*tex-runon* *tex-stopzone*
  Tex: 在注释还是数学模式里？~
 
 <syntax/tex.vim> 高亮支持 TeX、LaTeX 和部分的 AmsTeX。高亮支持包括三个主要的区
@@ -2382,7 +2594,7 @@ TEX						*tex.vim* *ft-tex-syntax*
 	%stopzone
 它会使得 texZone 或 texMathZone 强迫终止。
 
-								*tex-slow*
+					*tex-slow* *tex-sync*
  Tex: 语法高亮很慢？~
 
 如果你使用机器速度很慢，可能会想减小这些变量的值 >
@@ -2393,6 +2605,31 @@ TEX						*tex.vim* *ft-tex-syntax*
 
 另外一个高亮缓慢的原因是基于语法的折叠；解决办法见 |tex-folding|。
 
+					*g:tex_fast*
+
+最后，如果语法高亮还是太慢，可以在 .vimrc 里设置
+
+	:let g:tex_fast= ""
+
+g:tex_fast 变量使得语法高亮脚本避免定义任何语法区域和相关的同步。这使得语法高
+亮速度大大加快；作为代价：高亮和基于语法的折叠会少很多，也不能进行基于语法的
+错误检查。
+
+可以选择接受若干而非全部的语法项目；用下表可以选择性地打开部分语法高亮: >
+
+    b : 接受粗体和斜体语法
+    c : 接受 texComment 语法
+    m : 接受 texMatcher 语法 (即 {...} 和 [...])
+    M : 接受 texMath 语法
+    p : 接受 部分、章节、小节等的语法
+    r : 接受 texRefZone 语法 (nocite、bibliography、label、pageref、eqref)
+    s : 接受 上标/下标区域
+    S : 接受 texStyle 语法
+    v : 接受 verbatim 语法
+    V : 接受 texNewEnv 和 texNewCmd 语法
+<
+例如，g:tex_fast= "M" 会打开数学相关的高亮但关闭其他基于区域的语法高亮。
+
 					    *tex-morecommands* *tex-package*
  Tex: 想高亮更多的命令？ ~
 
@@ -2402,12 +2639,12 @@ LaTeX 是可编程的语言，因而有数以千计的包，包含各种专门�
 的高亮处理。任何你编写的扩展一般应放在 $HOME/after/syntax/tex/[pkgname].vim，
 并请考虑上传到 http://vim.sf.net/。
 
-								*tex-error*
+					*tex-error* *g:tex_no_error*
  Tex: 过多的 Error 高亮？~
 
 <tex.vim> 支持各种的词法检查。尽管错误检查经常很有用，它指示的地方实际上可能没
 有错误。如果你有这个问题，可以在 <.vimrc> 里放上如下的语句: >
-	let tex_no_error=1
+	let g:tex_no_error=1
 从而 <tex.vim> 提供的所有错误检查都会被抑制。
 
 								*tex-math*
@@ -2422,7 +2659,7 @@ LaTeX 是可编程的语言，因而有数以千计的包，包含各种专门�
 需要把 "mathzone" 换成新数学组的组名，然后在 .vim/after/syntax/tex.vim 里调
 用。如果 "starform" 变量为真，意味着新数学组有星号的形式 (比如， eqnarray*)。
 
-								*tex-style*
+					*tex-style* *b:tex_stylish*
  Tex: 开始新的风格？~
 
 你可以在 *.tex 文件里使用 "\makeatletter"，从而在命令里可用 "@"。不过，因为
@@ -2446,7 +2683,7 @@ utf-8 字形，包括各种重音字符、数学模式的希腊字母。数学�
 一个用法是垂直分割窗口 (见 |CTRL-W_v|)；其中一个把 |'conceallevel'| 设为 0，另
 一个设为 2；两者都用 |'scrollbind'|。
 
-							*g:tex_conceal*
+					*g:tex_conceal*
  Tex: 选择性的隐藏模式~
 
 通过在 <.vimrc> 中设置 g:tex_conceal，可以有选择性地使用隐藏模式。缺省的设置为
@@ -2461,16 +2698,22 @@ utf-8 字形，包括各种重音字符、数学模式的希腊字母。数学�
 <
 省略其中一个或几个字符关闭对应的使用隐藏字符进行替代的操作。
 
-						*g:tex_isk*
- Tex: 控制关键字的组成~
+						*g:tex_isk* *g:tex_stylish*
+ Tex: 控制 iskeyword~
 
-(La)Tex 关键字通常只使用字符集 0-9,a-z,A-Z,192-255，但 "_" 是唯一可能出问题的
-字符。所以缺省，syntax/tex.vim 覆盖通用的 |'iskeyword'| 设置 (通过
-|:setlocal|) 来指定 LaTex 适用的字符。
+通常，LaTeX 关键字只支持 0-9, a-z, A-Z, 192-255。Latex 关键字不支持下划线，除
+了 *.sty 文件以外。语法高亮脚本使用以下的逻辑:
 
-不过，可以通过变量 g:tex_isk 来修改 iskeyword 的覆盖。在 .vimrc 中你可以将它设
-为任何你想要的值，它会取代缺省的设置。
- 
+	* 如果 g:tex_stylish 存在且为 1
+		文件被作为 "sty" 文件对待，允许 "_" 成为关键字一的部分
+		(独立于 g:tex_isk)
+	* 否则如果文件名后缀是 sty、cls、clo、dtx 或 ltx
+		文件被作为 "sty" 文件对待，允许 "_" 成为关键字一的部分
+		(独立于 g:tex_isk)
+
+	* 如果 g:tex_isk 存在，它被用作局部的 'iskeyword'
+	* 否则局部的 'iskeyword' 设为 48-57,a-z,A-Z,192-255
+
 
 TF						*tf.vim* *ft-tf-syntax*
 
@@ -2480,8 +2723,7 @@ tf 语法高亮有一个选项。
 希望的值。例如: >
 
 	:let tf_minlines = 你的选择
-
-
+<
 VIM			*vim.vim* 		*ft-vim-syntax*
 			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
 
@@ -3143,7 +3385,7 @@ s-{nr}	模式匹配部分的开始位置向左 {nr} 个字符
 e	模式匹配部分的结束位置
 e+{nr}	模式匹配部分的结束位置向右 {nr} 个字符
 e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
-{nr}	(只用于 "lc"): 向左 {nr} 个字符开始匹配
+{nr}	(只用于 "lc"): 从开始处向右 {nr} 个字符开始匹配
 
 例如: "ms=s+1"，"hs=e-2"，"lc=3"。
 
@@ -3228,7 +3470,7 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
 
 以下附加的正规表达式项目可以用在区域项目的模式中:
 
-						*/\z(* */\z(\)* *E50* *E52*
+					*/\z(* */\z(\)* *E50* *E52* *E879*
     \z(\)	标记该子表达式为 "外部的"，这意味着它可以在别的模式匹配里访
 		问。目前，只能在语法区域的开始模式中应用。
 
@@ -3800,7 +4042,8 @@ IncSearch	'incsearch' 高亮；也用于被 ":s///c" 替换的文本
 LineNr		":number" 和 ":#" 命令与置位 'number' 或 'relativenumber' 选项
 		时的行号。
 							*hl-CursorLineNr*
-CursorLineNr	和 LineNr 类似，置位 'cursorline' 时用于光标行。
+CursorLineNr	和 LineNr 类似，置位 'cursorline' 或 'relativenumber' 时用于光
+		标行。
 							*hl-MatchParen*
 MatchParen	如果光标所在或刚刚在它之前的字符是配对的括号一部分的话，它和它
 		的配对。|pi_paren.txt|
@@ -4184,5 +4427,53 @@ terminfo 并执行如下命令: >
 要确信打开了 TTpro 的 Setup / Window / Full Color，并确信_没有_打开 Setup /
 Font / Enable Bold。
 (由 John Love-Jensen <eljay@Adobe.COM> 提供信息)
+
+
+==============================================================================
+18. 语 法 太 慢 了						*:syntime*
+
+本节主要针对语法文件的作者。
+
+如果语法导致重画变慢，有一些小窍门。要知道是否会慢，打开一些通常会有影响的特
+性，比如 'relativenumber' 和 |folding|。
+
+注意: 仅当编译时带 |+profile| 特性才可用。可能需要编译 Vim 时带 "huge" 特性
+包。
+
+要知道哪些模式花了最多时间，下面的命令序列会给出概要: >
+	:syntime on
+	[ 至少用 CTRL-L 重画文本一次 ]
+	:syntime report
+
+此时会显示使用到的语法模式的列表，按匹配文本使用的时间排序。
+
+:syntime on		开始测量语法时间。会增加若干开销，用来计算语法模式匹配
+			的时间。
+
+:syntime off		停止测量语法时间。
+
+:syntime clear		把所有的计数清零，重新开始测量。
+
+:syntime report		在当前窗口显示 ":syntime on" 开始使用的语法项目。使用
+			更宽的显示可以看到更多输出。
+
+			列表按总时间排序。显示以下诸列:
+			TOTAL		用于匹配本模式的总时间，按秒计。
+			COUNT		本模式使用的次数。
+			MATCH		本模式实际匹配的次数。
+			SLOWEST		单次匹配最长的时间。
+			AVERAGE		单次匹配平均时间。
+			NAME		语法项目名。注意 这未必唯一。
+			PATTERN		使用的模式。
+
+模式的匹配如果要尝试不同的分支时会变慢。尽量包括更多的直义文本，以减少模式_不_
+匹配的可能性。
+
+如果用 "\@<=" 和 "\@<!" 项目，加入最大范围来避免匹配本行和前行的所有可能位置。
+例如，如要项目是直义文本，指明文本的长度 (以字节计):
+
+"<\@<=span"	匹配 "<span" 中的 "span"。会试图在很多位置匹配 "<"。
+"<\@1<=span"	相同匹配，但仅尝试 "span" 之前的一个字节。
+
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:
