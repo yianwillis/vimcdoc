@@ -58,8 +58,8 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 
 							*:pydo*
 :[range]pydo {body}	对 [range] 里的每一行执行 Python 函数 "def
-			_vim_pydo(line, linenr): {body}"，其中的函数数设为每行
-			文本，不带尾部的 <EOL> ，以及行号。该函数 应该返回字符
+			_vim_pydo(line, linenr): {body}"，其中的函数参数设为每
+			行不带尾部 <EOL> 的文本，以及行号。该函数应该返回字符
 			串或者 None。如果返回字符串，它会用来替代当前执行的
 			行。缺省 [range] 为整个文件: "1,$"。
 			{Vi 无此功能}
@@ -167,11 +167,11 @@ vim.bindeval(str)					*python-bindeval*
 	(|Funcref|) vim 对象。
 
 vim.strwidth(str)					*python-strwidth*
-	类似于 |strwidth()|: 返回 str 占据的显示单元数，tab 算作一个单元。
+	类似于 |strwidth()|: 返回 str 占据的显示单元数，制表符算作一个单元。
 
 vim.foreach_rtp(callable)				*python-foreach_rtp*
 	对 'runtimepath' 的每个路径调用给定的 callable，直到某次 callable 返回
-	非 None 值，抛出例外、或者没有更多的路径为止。如果因为 callable 返回
+	非 None 值、抛出例外、或者没有更多的路径为止。如果因为 callable 返回
 	非 None 而停止，vim.foreach_rtp 函数返回 callable 返回的值。
 
 vim.chdir(*args, **kwargs)				*python-chdir*
@@ -208,10 +208,10 @@ vim.windows						*python-windows*
 	    :py w in vim.windows	# 成员测试
 	    :py n = len(vim.windows)	# 成员个数
 	    :py for w in vim.windows:	# 顺序存取
-<	注意: vim.windows 对象总是访问当前标签页。|python-tabpage|。
-	windows 对象和父 |python-tabpage| 对象绑定，总是使用该标签页的窗口
-	(如果该标签页该删除，抛出 vim.error)。你可以得到两者的引用而无需保存
-	vim 模块对象或 |python-tabpage| 的引用。此时它们不会失去自己的属性。
+<	注意: vim.windows 对象总是访问当前标签页。|python-tabpage|.windows 对
+	象和父 |python-tabpage| 对象绑定，总是使用该标签页的窗口 (如果该标签页
+	该删除，抛出 vim.error)。你可以得到两者的引用而无需保存 vim 模块对象或
+	|python-tabpage| 的引用。此时它们不会失去自己的属性。
 
 vim.tabpages						*python-tabpages*
 	一个序列对象，用来提供 vim 标签页的操作。该对象支持以下操作: >
@@ -235,7 +235,7 @@ vim.current						*python-current*
 
 	注意: 赋值给 vim.current.{buffer,window,tagpage} 时，分别期待合法的
 	|python-buffer|、|python-window| 或 |python-tabpage| 对象。赋值触发
-	到给定缓冲区、窗口、标签页的正常切换 (带有 |autocommand| 自动事件)。这
+	到给定缓冲区、窗口、标签页的正常切换 (带有 |autocommand| 自动命令)。这
 	是在 python 里切换 UI 对象的唯一方法: 不能给 |python-tabpage|.window
 	属性赋值。要想进行切换但不执行自动命令，可用 >
 	    py << EOF
@@ -258,7 +258,7 @@ vim.options						*python-options*
 	值或以任何方式去访问只限局部的变量。如果没有指定名字的全局变量，抛出
 	KeyError (也即，对 |global-local| 或只限全局的选项，不会抛出此例外，
 	但对局部于窗口或局部于缓冲区的则会)。|python-buffer| 对象可用于访问局
-	局部于缓冲区的选项，|python-window| 选项则可用于访问局部于窗口的选项。
+	部于缓冲区的选项，|python-window| 选项则可用于访问局部于窗口的选项。
 
 	可通过 vim 模块的 "Options" 属性取得此对象的类型。
 
@@ -336,7 +336,7 @@ vim.VIM_SPECIAL_PATH					*python-VIM_SPECIAL_PATH*
 	种情况下，使用特殊载入程序。
 
 	注意: 不能直接使用该常数的值，必须使用 vim.VIM_SPECIAL_PATH 对象。
-	
+
 vim.find_module(...)					*python-find_module*
 vim.path_hook(path)					*python-path_hook*
 	用于实现上述路径载入的方法或对象。除非你想对 sys.meta_path 进行处理而
@@ -349,7 +349,7 @@ vim._get_paths						*python-_get_paths*
 
 	返回 'runtimepath' 中每个 {rtp} 对应的 {rtp}/python2 (或
 	{rtp}/python3) 和 {rtp}/pythonx 的目录列表。
-	
+
 ==============================================================================
 3. 缓冲区对象						*python-buffer*
 
@@ -516,7 +516,7 @@ vim.Dictionary 对象				*python-Dictionary*
                     vim.VAR_LOCKED  变量已上锁，但可以解锁
                     vim.VAR_FIXED   变量已上锁，且不可以解锁
                    读写。可以通过给本属性赋值 `True` 或 `False` 来给变量解锁。
-		   不支持递归上锁。
+                   不支持递归上锁。
         scope      以下值之一
                     值                 描述 ~
                     zero               字典无作用域
@@ -534,17 +534,17 @@ vim.Dictionary 对象				*python-Dictionary*
                     从字典读入 key 对应值，如果不存在返回 default。
         pop(key[, default])
                     从字典中删除给定 key 并返回对应值。如果找不到 key 且给出
-		    default 返回 default，不然抛出 KeyErrror。
+                    default 返回 default，不然抛出 KeyErrror。
         popitem()
                     从字典中删除随机键，并返回 (键, 值) 对。
         has_key(key)
                     检查字典中是否包含给定的键 key，类似于 `key in dict`。
 
         __new__(), __new__(iterable), __new__(dictionary), __new__(update)
-		    用 `vim.Dictionary()` 可以建立新的 vim 字典。
-		    `d=vim.Dictionary(arg)` 等价于
+                    用 `vim.Dictionary()` 可以建立新的 vim 字典。
+                    `d=vim.Dictionary(arg)` 等价于
                     `d=vim.bindeval('{}');d.update(arg)`。无参数的版本构建空
-		    字典。
+                    字典。
 
     示例: >
         d = vim.Dictionary(food="bar")		# 构造函数
@@ -572,7 +572,7 @@ vim.List 对象					*python-List*
                         用 `vim.List()` 可以建立新的 vim 列表。
                         `l=vim.List(iterable)` 等价于
                         `l=vim.bindeval('[]');l.extend(iterable)`。无参数的版
-                        版本方法构建空列表。
+                        本方法构建空列表。
     示例: >
         l = vim.List("abc")		# 构造函数，返回: ['a', 'b', 'c']
         l.extend(['abc', 'def'])	# .extend() 方法
@@ -649,7 +649,8 @@ Vim 可以用四种方式编译 (:version 输出结果):
 
 在 Linux/Unix 系统上用这种方式并导入全局符号的时候，使用第二个 Python 版本会导
 致系统崩溃。所以，要么载入全局符号但只激活一个 Python 版本，要么考虑不载入全局
-符号。后者使 Python 导入 ("import") 某些期待 Vim 提供某些符号的库的时候会失败。
+符号。后者使 Python 导入 ("import") 某些期待 Vim 提供某些符号的库的时候会失
+败。
 							*E836* *E837*
 Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的库进行猜测。如果
 对两个 Python 版本导入该库均成功，那么可以在 Vim 中同时使用两者。否则在一个会

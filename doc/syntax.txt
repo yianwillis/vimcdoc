@@ -360,9 +360,8 @@ Vim。
 
 	:runtime! syntax/2html.vim
 <
-许多变量可用来调整 2html.vim 的结果；见下。下面列出的开关选项可以通过显式设置
-其值来达到打开和关闭的目的，也可以通过用 |:unlet| 删除变量的方式来恢复其缺省
-值。
+许多变量可用来调整 2html.vim 的结果；见下。列出的开关选项可以通过显式设置其值
+来达到打开和关闭的目的，也可以通过用 |:unlet| 删除变量的方式来恢复其缺省值。
 
 评注:
 - 一些真的很老的浏览器可能不会显示背景色。
@@ -374,7 +373,7 @@ Vim。
    for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2html.vim" +"wq" +"q" $f; done
 <
 					*g:html_start_line* *g:html_end_line*
-要限制转换的行范围，给正面介绍的 |:TOhtml| 命令加上行范围，或者设置
+要限制转换的行范围，给下面介绍的 |:TOhtml| 命令加上行范围，或者设置
 "g:html_start_line" 和 "g:html_end_line" 分别为要转换的第一行和最后一行。例
 如，要指定最近设置的可视区域: >
 
@@ -391,7 +390,7 @@ Vim。
 			如果窗口处于比较模式，除非置位了
 			|g:html_diff_one_file|，:TOhtml 会在生成的 HTML 里把当
 			前标签页里所有参与比较的窗口并排放在一个 <table>
-			元素里。|g:html_line|ids| 还可以允许你跳到指定窗口的指
+			元素里。|g:html_line_ids| 还可以允许你跳到指定窗口的指
 			定行，(例如) #W1L42 跳到首个参加比较的窗口的第 42 行，
 			#W3L87 则是第三个窗口的第 87 行。
 
@@ -404,7 +403,8 @@ Vim。
 							*g:html_diff_one_file*
 缺省: 0。
 为 0 时，|:TOhtml| 会在生成的 HTML 里把当前标签页里所有参与比较的窗口并排放在
-一个 <table> 元素里。为 1 时，只转换当前的缓冲区。
+一个 <table> 元素里。
+为 1 时，只转换当前的缓冲区。
 示例: >
 
 	let g:html_diff_one_file = 1
@@ -413,20 +413,20 @@ Vim。
 缺省: 0。
 为 0 时，如果 |g:html_diff_one_file| 为 1，连续多于三行的填充行显示为三行，中
 间行提示插入的总行数。
-为 1 里，显示所有的插入行，这也是 |g:html_diff_one_file| 没有置位时在行为。
+为 1 里，显示所有的插入行，这也是 |g:html_diff_one_file| 没有置位时的行为。
 >
     :let g:html_whole_filler = 1
 <
 				     *TOhtml-performance* *g:html_no_progress*
 缺省: 0。
-为 0 时，每个主要步骤都会在状态行上显示进度条。
+为 0 时，2html.vim 转换的每个主要步骤都会在状态行上显示进度条。
 为 1 时，不显示进度条。会有很不显著的速度提高，但你无法估计转换过程要花多长时
 间；对大文件而言可能会挺久的！
 示例: >
 
 	let g:html_no_progress = 1
 
-通过指示 Vim 不用交互方式运行会得到更好的效率提高，因为不用在脚本切换缓冲区和
+通过指示 Vim 以非交互方式运行会得到更好的效率提高，因为不用在脚本切换缓冲区和
 窗口时花时间重画屏幕，例如: >
 
   vim -E -s -c "let g:html_no_progress=1" -c "syntax on" -c "set ft=c" -c "runtime syntax/2html.vim" -cwqa myfile.c
@@ -437,12 +437,11 @@ Vim。
 
 							 *g:html_number_lines*
 缺省: 当前的 'number' 设置。
-为 0 时，生成的 HTML 里显示缓冲区文本，不带行号。
-为 1 时，生成的 HTML 里加入一列行号，使用和 Vim 的行号列相同的高亮
-(|hl-LineNr|) 。
-强制给行编号，即使没有置位 'number': >
+为 0 时，生成的 HTML 里显示缓冲区文本时不带行号。
+为 1 时，生成的 HTML 里加入行号列，和 Vim 的行号列相同高亮 (|hl-LineNr|) 。
+要强制给行编号，即使没有置位 'number': >
    :let g:html_number_lines = 1
-强制关闭行号: >
+要强制关闭行号: >
    :let g:html_number_lines = 0
 要回到缺省情况，即使用 'number' 的设置，可删除此变量: >
    :unlet g:html_number_lines
@@ -450,9 +449,10 @@ Vim。
                                                              *g:html_line_ids*
 缺省: 1 如果 |g:html_number_lines| 置位，否则为 0。
 为 1 时，为每个行号加上 HTML 的 id 属性，或者如果行号不显示，为同样的目的加入
-一个空的 <span> 。对单个缓冲区的 HTML 页面，ID 属性形如 L123，对比较视图的页面
-则形如 W2L123，可以用它来跳转到该行 (或比较视图中某个窗口)。加入 Javascript 以
-便在跳到指定行之前打开它可能所在的已关闭的动态折叠 (|g:html_dynamic_folds|)。
+一个空的 <span> 。单个缓冲区的 HTML 页面的 ID 属性形如 L123，比较视图的页面则
+形如 W2L123，可以用 ID 来跳转到该行 (或比较视图中某个窗口)。同时，加入
+Javascript 代码，在跳到指定行之前打开其所在的已关闭的动态折叠
+(|g:html_dynamic_folds|)。
 Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 示例: >
 
@@ -465,9 +465,9 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 							      *g:html_use_css*
 缺省: 1。
 为 1 时，生成使用层叠样式表 (CSS1) 的合法 HTML 4.01 文件，所有的现代浏览器和
-多数旧式的浏览器都支持。
-为 0 时，生成 <font> 标签或类似的过时的标记。不推荐，但对真的很老的浏览器、电
-邮客户端、论坛帖子和类似的不支持最基本的 CSS 的情况可能会更好些。
+多数旧式的浏览器都支持 CSS1。
+为 0 时，生成 <font> 标签和类似的过时标记。不推荐，但对真的很老的浏览器、电邮
+客户端、论坛帖子和类似不支持基本 CSS 的情形，可能会更好些。
 例如: >
    :let g:html_use_css = 0
 <
@@ -497,11 +497,11 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 <
 							*g:html_dynamic_folds*
 缺省: 0。
-为 0 时，关闭折叠里的文本不包含在生成的 HTML 中。
-为 1 时，生成 Javascript 以便打开折叠，并显示其中的文本，如同 Vim 那样。
+为 0 时，生成的 HTML 不包含关闭折叠里的文本。
+为 1 时，生成 Javascript 以动态打开折叠并显示其中的文本，如同 Vim 那样。
 
-设置此变量为 1 使得 2html.vim 总是使用 CSS 生成样式，不管 |g:html_use_css| 的
-设置如何。
+设置此变量为 1 时，2html.vim 总是使用 CSS 生成样式，不管 |g:html_use_css| 的设
+置。
 
 |g:html_ignore_folding| 置位时，忽略此变量。
 >
@@ -510,17 +510,17 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 							*g:html_no_foldcolumn*
 缺省: 0。
 为 0 时，如果 |g:html_dynamic_folds| 为 1，生成折叠列，如同 vim 的 foldcolumn
-(|fold-foldcolumn|)，用户点击该列时切换折叠的开与关。
-为 1 时，不生成此列；如果置位了 |g:html_hover_unfold|，可以用鼠标移到折叠文本
-来打开折叠。
+(|fold-foldcolumn|) 那样，用户点击该列时切换折叠的开与关。
+为 1 时，不生成折叠列；如果置位了 |g:html_hover_unfold|，可以用鼠标移到折叠文
+本来打开折叠。
 >
    :let g:html_no_foldcolumn = 1
 <
 				*TOhtml-uncopyable-text* *g:html_prevent_copy*
 缺省: 空字符串。
 如果在浏览器中选中生成的 HTML 文档的全部文本并复制，此选项防止其中部分区域被复
-制。 用于保证用户只复制-粘贴原始的文本，而不是折叠列或生成内容显示的行号。可以
-这样来指定影响的区域:
+制。此项功能用于保证用户只复制-粘贴原始的文本，而不包括生成内容显示的折叠列或
+行号。可以这样来指定不被复制的区域:
 	f:	折叠列
 	n:	行号 (也包括折叠文本中的)
 	t:	折叠文本
@@ -529,7 +529,7 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 例如，要使折叠列和行号不被复制: >
 	:let g:html_prevent_copy = "fn"
 <
-此功能目前的实现方法是插入只读的 <input> 元素包围不想复制的区域。这不总是适
+此功能目前的实现方法是插入只读的 <input> 元素来包围不想复制的区域。这不总是适
 用。若干理解 HTML 的应用还是会粘贴 <input> 元素。但只接受平凡文本的粘贴目标应
 该都行。
 
@@ -538,20 +538,20 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 为 0 时，如 |g:html_prevent_copy| 非空，有意地给 <input> 元素插入一个非法的属
 性。这使更多的应用不会粘贴这些 <input> 元素。特别地，Microsoft Word 不会粘贴
 有非法属性的 <input> 元素。
-为 1 时， 不会有意插入非法的标记，生成的页面总是合法的。不过，
+为 1 时，不会有意插入非法的标记，生成的页面总是合法的。不过，
 |g:html_prevent_copy| 非空时，小心粘贴到 Microsoft Word；一旦粘贴，很难去掉这
 些 <input> 元素。
 
 							 *g:html_hover_unfold*
 缺省: 0。
-为 0 时，唯一打开 2html.vim 用 |g:html_dynmaic_folds| 设置产生折叠的方法是点击
+为 0 时，打开 2html.vim 用 |g:html_dynmaic_folds| 设置产生折叠的唯一方法是点击
 生成的折叠列。
 为 1 时，用 CSS 2.0 机制，使得用户把鼠标移到显示的折叠文本上时可以打开折叠。对
 不想打开 Javascript 但想看到折叠文本的用户会有用。
 
 注意 旧版本的浏览器 (尤其是 Internet Explorer 6) 不支持该功能。我们生成 IE6 浏
-览器特定的 HTML 标记使之回归到普通的 CSS 1 代码，这样折叠还能在此浏览器下正常
-显示，但没有折叠列它们无法被打开。
+览器特定的 HTML 标记，使之回归到普通的 CSS 1 代码，这样折叠还能在此浏览器下正
+常显示，但没有折叠列它们无法被打开。
 >
    :let g:html_hover_unfold = 1
 <
@@ -574,35 +574,36 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 
 					  *TOhtml-wrap-text* *g:html_pre_wrap*
 缺省: 当前 'wrap' 的设置。
-为 0 时，如果 |g:html_no_pre| 为 0 或未设，生成的 HTML 中的文本不在浏览器窗口
-的边缘处回绕。
+为 0 时，如果 |g:html_no_pre| 为 0 或未设，生成的 HTML 中的文本在浏览器窗口
+边缘处不回绕。
 为 1 时，如果 |g:html_use_css| 为 1，使用 CSS 2.0 的 "white-space:pre-wrap"
 值，使文本在浏览器窗口边缘处回绕。
 要显式打开回绕: >
    :let g:html_pre_wrap = 1
-要关闭回绕 >
+要关闭回绕: >
    :let g:html_pre_wrap = 0
 回归到缺省值，由 'wrap' 设置值来决定回绕与否: >
    :unlet g:html_pre_wrap
 <
 							       *g:html_no_pre*
 缺省: 0。
-为 0 时，生成的 HTML 的缓冲区文本用 <pre>...</pre> 标签围绕。连续空格的显示如
+为 0 时，生成的 HTML 用 <pre>...</pre> 标签来包围缓冲区文本。连续空格的显示如
 同 Vim 那样，无需特别标记，制表符也可以按本义使用 (见 |g:html_expand_tabs|)。
 为 1 时 (不推荐)，使用普通的 <div> 代替 <pre> 标签，用一串 "&nbsp;" 来显示连续
 的空格，<br> 用于结束每行。这是支持生成的 HTML 中文本回绕的另一个方法，此方法
-和旧式的浏览器更兼容，但使 2html.vim 生成的页面显示效果与 Vim 的显示差别更大。
+和旧式的浏览器更兼容，但 2html.vim 生成的页面显示效果与 Vim 的差别显著。
 >
    :let g:html_no_pre = 1
 <
 							  *g:html_expand_tabs*
-缺省: 1 如果 'tabstop' 为 8，'expandtab' 为 0，生成的 HTML 没有折叠列或行号；
+缺省: 1 如果 'tabstop' 为 8，'expandtab' 为 0，且生成的 HTML 不用折叠列或行
+	号；
       0 不然。
 为 0 时，缓冲区文本中的 <Tab> 被合适数目的空格，或当 |g:html_no_pre| 为 1 时，
-&nbsp；所替代。
-为 1 时，如果 |g:html_no_pre| 为 0 或未设，缓冲区文本中的 <Tab> 字符在生成的
-HTMl 中保留。这使得 HTML 输出可从浏览器中复制粘贴，而不丢失原始文档中的实际空
-白。注意 这样很容易打乱 HTML 中文本的对齐和缩进，除非按照缺省设置的那些条件。
+&nbsp；，所替代。
+为 1 时，如果 |g:html_no_pre| 为 0 或未设，在生成的 HTML 中保留缓冲区文本中的
+<Tab> 字符。这使得浏览器中复制粘贴不会丢失原始文档中的实际空白。注意 除非按照
+缺省设置的那些条件，这会很容易打乱 HTML 中文本的对齐和缩进。
 
 强制 |2html.vim| 保留 <Tab> 字符: >
    :let g:html_expand_tabs = 0
@@ -611,7 +612,7 @@ HTMl 中保留。这使得 HTML 输出可从浏览器中复制粘贴，而不丢
    :let g:html_expand_tabs = 1
 <
 				    *TOhtml-encoding-detect* *TOhtml-encoding*
-强烈建议用 |g:html_use_encoding| 来为任何要放到 web 服务器上的内容指定编码。
+强烈建议用 |g:html_use_encoding| 来为任何要放到网页服务器上的内容指定编码。
 
 如果没有指定编码，|2html.vim| 使用 'fileencoding' 的当前值 (如设置) 或者
 'encoding' 值的 IANA 的推荐名字来设置。
@@ -653,7 +654,7 @@ HTMl 中保留。这使得 HTML 输出可从浏览器中复制粘贴，而不丢
 						     *g:html_charset_override*
 缺省: 无，autoload/tohtml.vim 包含 |encoding-names| 中提到名字的和有广泛浏览器
 		支持的转换。
-本选项指定|2html.vim| 不能自动检测的 'fileencoding' 或 'encoding' 所对应的
+本选项指定 |2html.vim| 不能自动检测的 'fileencoding' 或 'encoding' 所对应的
 HTML 字符集。也可用来覆盖现有的编码到字符集的组对。例如，
 TOhtml 缺省对所有 Unicode/UCS 编码使用 UTF-8。要用 UTF-16 和 UTF-32 代替之，
 用: >
@@ -930,10 +931,10 @@ ColdFusion 语法文件是基于 HTML 的语法文件的。
 
 CPP						*cpp.vim* *ft-cpp-syntax*
 
-多数同 |ft-c-syntax|。
+多数设置同 |ft-c-syntax|。
 
 变量			特色 ~
-cpp_no_c11		不高亮 C++ 标准项目
+cpp_no_c11		不高亮 C++11 标准项目
 
 
 CSH						*csh.vim* *ft-csh-syntax*
@@ -1933,8 +1934,8 @@ PERL						*perl.vim* *ft-perl-syntax*
 
 perl 的语法高亮有一些可用的选项。
 
-现在缺省打开内建 POD 的高亮。如果不希望因高亮 Perl 文件内嵌的 POD 高亮增加复杂
-度，可以把 'perl_include_pod'  选项设为 0: >
+现在缺省打开内建 POD 的高亮。如果不希望因 Perl 文件内嵌的 POD 高亮增加复杂度，
+可以把 'perl_include_pod'  选项设为 0: >
 
 	:let perl_include_pod = 0
 
@@ -1983,16 +1984,16 @@ perl 的语法高亮有一些可用的选项。
 
 	:let perl_fold_blocks = 1
 
-'perl_fold' 置位时，缺省打开例程的折叠。如果不想要，可以设置
+'perl_fold' 置位时，缺省折叠例程。如果不想要，可以设置
 'perl_nofold_subs': >
 
 	:let perl_nofold_subs = 1
 
-缺省不打开无名例程的折叠；可以用 'perl_fold_anonymous_subs' 打开之: >
+缺省不折叠无名例程；可以用 'perl_fold_anonymous_subs' 打开之: >
 
 	:let perl_fold_anonymous_subs = 1
 
-'perl_fold' 置位时，缺省打开包的折叠。如果不想要，可以设置
+'perl_fold' 置位时，缺省对包折叠。如果不想要，可以设置
 'perl_nofold_packages': >
 
 	:let perl_nofold_packages = 1
@@ -2189,15 +2190,15 @@ PYTHON						*python.vim* *ft-python-syntax*
 	:let python_no_doctest_highlight = 1
 或 >
 	:let python_no_doctest_code_highlight = 1
-(第一个选项包含第二个)。
+(第一个选项隐含第二个)。
 
 要高亮行尾的空白还有空格和制表的混合: >
 	:let python_space_error_highlight = 1
 
-如果你想要所有可能的 Python 高亮 (等同于置位以上最后选项，及复位其余选项): >
+如果你想要所有可能的 Python 高亮 (等同于置位上面最后的选项及复位其余选项): >
 	:let python_highlight_all = 1
 
-注意: 以上选项只关心其存在于否，它们的值并不重要，可以把上面的 1 换成任何值。
+注意: 对以上选项，只关心其存在于否，值并不重要，可以把上面的 1 换成任何值。
 
 
 QUAKE						*quake.vim* *ft-quake-syntax*
@@ -3962,9 +3963,9 @@ font={font-name}					*highlight-font*
 	字体名 "NONE" 可以用来恢复到缺省字体。如果为 "Normal" 组设置字体，该字
 	体成为缺省字体 (直到改变了 'guifont' 选项为止；使用最后设置的那个)。
 	以下说明只适用于 Motif 和 Athena，不包括其它 GUI:
-	设置 "Menu" 组的字体会改变菜单。设置 "Tooltip" 组的字体会改变工具提示。
-	除了 Menu 和 Tooltip 的所有使用的字体必须和缺省字体的字符大小相同。否
-	则，重画时会有问题。
+	设置 "Menu" 组的字体会改变菜单。设置 "Tooltip" 组的字体会改变工具提
+	示。除了 Menu 和 Tooltip 的所有使用的字体必须和缺省字体的字符大小相
+	同。否则，重画时会有问题。
 
 guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
@@ -4434,8 +4435,8 @@ Font / Enable Bold。
 
 本节主要针对语法文件的作者。
 
-如果语法导致重画变慢，有一些小窍门。要知道是否会慢，打开一些通常会有影响的特
-性，比如 'relativenumber' 和 |folding|。
+如果语法导致重画变慢，有一些小窍门。打开一些通常会有干扰的特性，比如
+'relativenumber' 和 |folding|，会看到是否变慢。
 
 注意: 仅当编译时带 |+profile| 特性才可用。可能需要编译 Vim 时带 "huge" 特性
 包。
