@@ -1,19 +1,31 @@
+# Following are steps for a new release:
+#   aap ChangeLog: update ChangeLog file
+#   VERSION, NEWS, INSTALL: to be updated manually
+#   aap release: release/vimcdoc-<ver>.tar.gz, release/vimcdoc-<ver>-setup.exe, release/vimcdoc-<ver>-setup-unicode.exe
+#   aap -f pdf_maker/main.aap release: release/reference-<ver>.pdf, pdf_maker/user_manual-<ver>.pdf
+#   aap -f doc/main.aap allhtml: docs/*.html
+#   aap -f www/htdocs/main.aap index.html: www/htdocs/index.html
+#
+# Steps to publish:
+#   aap -f release/main.aap publish   (release packages and pdf manuals)
+#   aap -f doc/main.aap publish       (vimcdoc.sf.net help files)
+#   aap -f www/htdocs/main.aap publish (vimcdoc homepage)
+#
+# External tools we would need:
+#   svn2cl (needed for ChangeLog)
+#   nsis, ANSI (standard) and unicode (3.0 alpha needed)
+#	wine, if running from non-windows environment
+#   latex, latexmk
+#   latex packages: CJK, alltt, color, verbatim, hyperref, url
+
 TOPLEVELDIR=.
-VERSION=$TOPLEVELDIR/VERSION
 :include $TOPLEVELDIR/common.aap
 
-@VERSION     = file2string( "./VERSION" )
-RELEASE_NAME = $(VCD)-$(VERSION)
-TARBALL      = $(RELEASE_NAME).tar
-TARGZ        = $(TARBALL).gz
-DOC_DIR      = $TOPLEVELDIR/doc
-RELEASE_DIR  = $TOPLEVELDIR/release
 # ANSI NSIS, available from nsis.sourceforge.net/.
 MAKENSIS     = makensis
+# Unicode NSIS, available from offical NSIS 3.0a1 
+MAKENSIS_UNI = "c:\Program Files\NSIS\makensis"
 NSISFILE     = vcd-setup.nsi
-# Unicode NSIS and utilities, available for www.scratchpaper.com/.
-A2U			 = a2u
-MAKENSIS_UNI = makensisu
 NSISFILE_UNI = vcd-setup-unicode.nsi
 NSISZIP      = /X"SetCompressor bzip2"
 NSISOUTPUT   = /V0
@@ -53,12 +65,14 @@ release {virtual}: $RELEASE_NAME
 	:copy $NSISFILE $NSISFILE_UNI $RELEASE_NAME
 	:cd $RELEASE_NAME
 	:sys $(MAKENSIS) $(NSISFILE)
-	:sys $(A2U) ENGLISH LICENSE # unicode nsis requires unicode version
-	:sys $(MAKENSIS_UNI) $(NSISFILE_UNI)
+	os = $OSTYPE
+	@if os == "mswin":
+		:sys $(MAKENSIS_UNI) $(NSISFILE_UNI)
+	@else:
+		:sys wine $(MAKENSIS_UNI) $(NSISFILE_UNI)
 	:cd -
 	:move $RELEASE_NAME/$(VCD)-setup.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup.exe
 	:move $RELEASE_NAME/$(VCD)-setup-unicode.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup-unicode.exe
-	os = $OSTYPE
 	@if os == "posix":
 		:sys 'pwd'
 	@elif os == "mswin":
@@ -71,7 +85,7 @@ $RELEASE_NAME: VERSION
 	:copy $(MISC_FILES) $(RELEASE_NAME)
 
 ChangeLog: $Vimcdoc_txt 
-	:sys svn2cl.sh --strip-prefix=/
+	:sys svn2cl --strip-prefix=/
 
 all:
 	:print Use 'aap clean' to clean up.

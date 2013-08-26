@@ -52,7 +52,7 @@ LangString StartVim ${LANG_ENGLISH} "View the Chinese help after installation"
 LangString SetupVim ${LANG_SIMPCHINESE} "设置中文为缺省帮助语言"
 LangString SetupVim ${LANG_ENGLISH} "Set Chinese as the default help language"
 
-LangString BrandingText ${LANG_SIMPCHINESE} "http://vcd.gro.clinux.org"
+LangString BrandingText ${LANG_SIMPCHINESE} "http://vimcdoc.sf.net"
 LangString BrandingText ${LANG_ENGLISH} "http://vimcdoc.sf.net"
 BrandingText $(BrandingText)
 
