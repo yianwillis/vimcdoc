@@ -1,0 +1,1043 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: windows</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>WINDOWS</h2>
+<pre>
+<b class="vimtag">*<a name="windows.txt">windows.txt</a>*</b>   For Vim version 7.4.  最后更新: 2013年8月
+
+
+                  VIM  参 考 手 册    作者: Bram Moolenaar
+                                      <code class="vim">译者</code>: Dasn
+                                      http://vimcdoc.sf.net
+
+
+使用多个窗口和缓冲区进行编辑                            <b class="vimtag">*<a name="windows">windows</a>*</b> <b class="vimtag">*<a name="buffers">buffers</a>*</b>
+
+本章我们看一下操作多个窗口和缓冲区的命令。另外有些命令在操作多个窗口的时候不同
+于单个窗口，这些命令也会在本章被介绍。
+
+一些基本的内容在用户手册的第 7、8 两个章节里 |<a href="usr_07.html#usr_07.txt">usr_07.txt</a>| |<a href="usr_08.html#usr_08.txt">usr_08.txt</a>| 已经介
+绍过了。
+
+1.  简介                                        |<a href="windows.html#windows-intro">windows-intro</a>|
+2.  启动 Vim                                    |<a href="windows.html#windows-starting">windows-starting</a>|
+3.  打开和关闭窗口                              |<a href="windows.html#opening-window">opening-window</a>|
+4.  把光标移动到另一个窗口                      |<a href="windows.html#window-move-cursor">window-move-cursor</a>|
+5.  移动窗口                                    |<a href="windows.html#window-moving">window-moving</a>|
+6.  改变窗口大小                                |<a href="windows.html#window-resize">window-resize</a>|
+7.  参数和缓冲区列表的命令                      |<a href="windows.html#buffer-list">buffer-list</a>|
+8.  在所有的缓冲区和窗口里执行命令              |<a href="windows.html#list-repeat">list-repeat</a>|
+9.  当前光标处的标签和文件名                    |<a href="windows.html#window-tag">window-tag</a>|
+10. 预览窗口                                    |<a href="windows.html#preview-window">preview-window</a>|
+11. 使用隐藏缓冲区                              |<a href="windows.html#buffer-hidden">buffer-hidden</a>|
+12. 特殊类型缓冲区                              |<a href="windows.html#special-buffers">special-buffers</a>|
+
+<code class="notvi">{Vi 没有这些命令}</code>
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+windows">+windows</a>| 特性才能使用多窗口功能}</code>
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+vertsplit">+vertsplit</a>| 特性才能使用垂直分割窗口功能}</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 简介                                         <b class="vimtag">*<a name="windows-intro">windows-intro</a>*</b> <b class="vimtag">*<a name="window">window</a>*</b></h4>
+小结:
+   缓冲区是内存中的文件文本。
+   窗口是缓冲区的视窗。
+   标签页是窗口的集合。
+
+"窗口" 被用来查看缓冲区里的内容。你可以用多个窗口观察同一个缓冲区，也可以用多
+个窗口观察不同的缓冲区。
+
+"缓冲区" 是一块内存区域，里面存储着正在编辑的文件。如果没有把缓冲区里的文件存
+盘，那么原始文件不会被更改。
+
+缓冲区的状态可以是下述三种情况之一:
+
+                                                        <b class="vimtag">*<a name="active-buffer">active-buffer</a>*</b>
+激活:     缓冲区的内容在窗口里显示。如果该缓冲区是针对某一个文件创建的，那么该
+          文件已经被读入缓冲区。如果缓冲区被更改过，其内容便会与原文件不同。
+                                                        <b class="vimtag">*<a name="hidden-buffer">hidden-buffer</a>*</b>
+隐藏:     缓冲区的内容不被显示。如果该缓冲区是针对某一个文件创建的，那么该文件
+          已经被读入缓冲区。除此以外，与激活状态一样，只是你看不见它。
+                                                        <b class="vimtag">*<a name="inactive-buffer">inactive-buffer</a>*</b>
+非激活:   缓冲区的内容不被显示，也不包含任何数据。如果曾经载入过文件，与该缓冲
+          区相关的选项会被记住。它可以包括来自 |<a href="starting.html#viminfo">viminfo</a>| 文件的位置标记，但是
+          这种缓冲区不包含文本。
+
+用一个表来说明:
+
+<code class="section">状态            在窗口显示      文件载入        ":buffers" 命令显示 </code>
+激活                是             是             'a'
+隐藏                否             是             'h'
+非激活              否             否             ' '
+
+<code class="note">备注</code>: 所有的 <code class="keystroke">CTRL-W</code> 命令都可以用 |<a href="windows.html#:wincmd">:wincmd</a>| 执行，当我们不能输入普通模式命令，
+或者输入不方便时可以试一下。
+
+主 Vim 窗口可以容纳多个分割的窗口。此外还有标签页 |<a href="tabpage.html#tab-page">tab-page</a>|，每个标签页能容纳
+多个窗口。
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. 启动 Vim                                             <b class="vimtag">*<a name="windows-starting">windows-starting</a>*</b></h4>
+在默认情况下，与 Vi 类似，Vim 启动后只打开一个窗口。
+
+参数 "-o" 和 "-O" 可以让 Vim 为参数列表里的每一个文件打开一个窗口。参数 "-o"
+水平分割窗口；参数 "-O" 垂直分割窗口。如果 "-o" 和 "-O" 都用了，那么最后一个参
+数决定分割的方向。例如，下面的例子打开三个水平分割的窗口:
+<code class="example">        vim -o file1 file2 file3</code>
+<code class="example"></code>
+参数 "-oN"，这里的 N 是一个十进制数，用这个参数可以打开 N 个水平分割的窗口。
+如果文件名的个数多于窗口数目，则只打开 N 个窗口，这样有一些文件就得不到窗口来
+显示。如果指定的窗口数多于文件的个数，那么后面的几个窗口会编辑空的缓冲区。同
+样， "-ON"  打开 N 个垂直分割的窗口，相应的规则与 "-oN" 相同。
+
+如果你打开了很多的文件，每个窗口都会便得很小。你可能需要设置 <a href="options.html#'winheight'">'winheight'</a> 和
+<a href="options.html#'winwidth'">'winwidth'</a> 选项来创建一个适合工作的环境。
+
+Buf/Win Enter/Leave 等自动命令 |<a href="autocmd.html#autocommand">autocommand</a>| 不会在打开窗口或读取文件时运行，
+只有在真正进入缓冲区后才会执行。
+
+                                                        <b class="vimtag">*<a name="status-line">status-line</a>*</b>
+状态行用来分割窗口。选项 <a href="options.html#'laststatus'">'laststatus'</a> 用来设置最后一个窗口在什么时候可以有状态
+栏:
+        <a href="options.html#'laststatus'">'laststatus'</a> = 0        永远不会有状态行
+        <a href="options.html#'laststatus'">'laststatus'</a> = 1        窗口数多于一个的时候
+        <a href="options.html#'laststatus'">'laststatus'</a> = 2        总是显示状态行
+
+你可以通过设置 <a href="options.html#'statusline'">'statusline'</a> 选项来改变状态行的内容。此选项可以局部于窗口，所以
+你可以为每个窗口设置不同的状态行。
+
+通常状态行用反色显示。你可以通过修改 <a href="options.html#'highlight'">'highlight'</a> 选项中的 's' 字符来改变。例
+如，"sb" 设置为粗体字。如果状态行没有启用高亮 ("sn")，那么字符 '^' 表示当前窗
+口，字符 '=' 表示其它窗口。如果支持鼠标并且已经通过设置 <a href="options.html#'mouse'">'mouse'</a> 选项使之启动，
+那么你可以用鼠标拖动状态行以改变窗口的大小。
+
+<code class="note">备注</code>: 如果你想让状态行以反色显示，但是没有效果。查看一下 <a href="options.html#'highlight'">'highlight'</a> 选项是否
+包含了 "si"。在 3.0 版本里，这意味着逆转 (invert) 状态行。但是现在应该使用
+"sr"，反转 (reverse) 状态行，因为 "si" 现在表示斜体 (italic)！如果你的终端不支
+持斜体，那么状态行还是会以反色显示；这种问题只会出现在有斜体的 termcap 码的终
+端上。
+
+</pre><hr class="doubleline" /><pre>
+<h4>3. 打开和关闭窗口                                       <b class="vimtag">*<a name="opening-window">opening-window</a>*</b> <b class="vimtag">*<a name="E36">E36</a>*</b></h4>
+<code class="keystroke">CTRL-W</code> s                                                <b class="vimtag">*<a name="CTRL-W_s">CTRL-W_s</a>*</b>
+<code class="keystroke">CTRL-W</code> S                                                <b class="vimtag">*<a name="CTRL-W_S">CTRL-W_S</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-S</code>                                           <b class="vimtag">*<a name="CTRL-W_CTRL-S">CTRL-W_CTRL-S</a>*</b>
+:[N]sp[lit] <code class="special">[++opt]</code> <code class="special">[+cmd]</code>                              <b class="vimtag">*<a name=":sp">:sp</a>*</b> <b class="vimtag">*<a name=":split">:split</a>*</b>
+                把当前窗口分割成两个，结果是两个窗口显示同一个文件。新打开的窗
+                口高度为 N (默认值是当前窗口高度的一半)。减少当前窗口的高度，
+                空出地方给新的窗口 (如果你置位了 <a href="options.html#'equalalways'">'equalalways'</a> 选项，并且
+                <a href="options.html#'eadirection'">'eadirection'</a> 没有设置为 "hor"，并且其它窗口中的一个高于当前或
+                新窗口的话，其它窗口也被影响)。
+                <code class="note">备注</code>: 不是在所有的终端都能使用 <code class="keystroke">CTRL-S</code>，并且可能导致不能继续输
+                入，遇到这种情况，用 <code class="keystroke">CTRL-Q</code> 继续。参见 |<a href="editing.html#++opt">++opt</a>| 和 |<a href="editing.html#+cmd">+cmd</a>|。
+
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-V</code>                                           <b class="vimtag">*<a name="CTRL-W_CTRL-V">CTRL-W_CTRL-V</a>*</b>
+<code class="keystroke">CTRL-W</code> v                                                <b class="vimtag">*<a name="CTRL-W_v">CTRL-W_v</a>*</b>
+:[N]vs[plit] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">[file]</code>                      <b class="vimtag">*<a name=":vs">:vs</a>*</b> <b class="vimtag">*<a name=":vsplit">:vsplit</a>*</b>
+                与 |<a href="windows.html#:split">:split</a>| 类似，但垂直分割窗口。满足以下条件的话，窗口会被均
+                匀地水平铺开:
+                1. 没有指定宽度，
+                2. 打开了 <a href="options.html#'equalalways'">'equalalways'</a> 选项，
+                3. <a href="options.html#'eadirection'">'eadirection'</a> 不是 "ver"，且
+                4. 其它窗口中的一个宽于当前或新窗口。
+                <code class="note">备注</code>: 在其它地方 <code class="keystroke">CTRL-Q</code> 与 <code class="keystroke">CTRL-V</code> 相同，但是在这里不是！
+
+<code class="keystroke">CTRL-W</code> n                                                <b class="vimtag">*<a name="CTRL-W_n">CTRL-W_n</a>*</b>
+<code class="keystroke">CTRL-W</code> CTRL_N                                           <b class="vimtag">*<a name="CTRL-W_CTRL-N">CTRL-W_CTRL-N</a>*</b>
+:[N]new <code class="special">[++opt]</code> <code class="special">[+cmd]</code>                                  <b class="vimtag">*<a name=":new">:new</a>*</b>
+                创建一个新窗口并且开始编辑一个空文件。新窗口的高度为 N (默认值
+                为现存高度的一半)。减少当前窗口的高度，为新窗口留出空间 (如果
+                你打开了 <a href="options.html#'equalalways'">'equalalways'</a> 选项，并且 <a href="options.html#'eadirection'">'eadirection'</a> 没有设置为
+                "hor"，其它窗口也会被影响)。
+                参见: |<a href="editing.html#++opt">++opt</a>| and |<a href="editing.html#+cmd">+cmd</a>|。
+                如果设置了 <a href="options.html#'fileformats'">'fileformats'</a> 选项，那么新缓冲区会使用其中的第一个
+                格式。如果 <a href="options.html#'fileformats'">'fileformats'</a> 为空，那么使用当前缓冲区的
+                <a href="options.html#'fileformat'">'fileformat'</a> 值。这个值可以被 |<a href="editing.html#++opt">++opt</a>| 参数覆盖。
+                自动命令以如下顺序被执行:
+                1. 在当前窗口执行 WinLeave
+                2. 在新窗口里执行 WinEnter
+                3. 在当前缓冲区执行 BufLeave
+                4. 在新缓冲区执行 BufEnter
+                这跟先执行 ":split"，再执行一个 ":enew" 命令的效果差不多。
+
+:[N]vne[w] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">[file]</code>                        <b class="vimtag">*<a name=":vne">:vne</a>*</b> <b class="vimtag">*<a name=":vnew">:vnew</a>*</b>
+                与 |<a href="windows.html#:new">:new</a>| 命令相似，但是它垂直分割窗口，如果打开了
+                <a href="options.html#'equalalways'">'equalalways'</a> 选项，并且选项 <a href="options.html#'eadirection'">'eadirection'</a> 没有设置为 "ver"，
+                窗口会被均匀地水平铺开，除非你给出了指定窗口宽度的参数。
+
+:[N]new <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code>
+:[N]sp[lit] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code>                       <b class="vimtag">*<a name=":split_f">:split_f</a>*</b>
+                创建一个新的窗口，并且开始编辑文件 <code class="special">{file}</code>。这跟先执行
+                ":split"，再执行一个 ":e" 命令的效果差不多。
+                如果使用了 <code class="special">[+cmd]</code> 参数，文件加载完毕后会执行命令 |<a href="editing.html#+cmd">+cmd</a>|。
+                也参见: |<a href="editing.html#++opt">++opt</a>|。
+                新窗口的高度为 N (默认值为现存高度的一半)。减少当前窗口的高
+                度，为新窗口留出空间 (如果你打开了 <a href="options.html#'equalalways'">'equalalways'</a> 选项，其它窗
+                口也会被影响)。
+
+:[N]sv[iew] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code>               <b class="vimtag">*<a name=":sv">:sv</a>*</b> <b class="vimtag">*<a name=":sview">:sview</a>*</b> <b class="vimtag">*<a name="splitview">splitview</a>*</b>
+                与 ":split" 命令相同，但是会给缓冲区置位 <a href="options.html#'readonly'">'readonly'</a> 选项。
+
+:[N]sf[ind] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code>               <b class="vimtag">*<a name=":sf">:sf</a>*</b> <b class="vimtag">*<a name=":sfind">:sfind</a>*</b> <b class="vimtag">*<a name="splitfind">splitfind</a>*</b>
+                与 ":split" 命令相同，但是会在 <a href="options.html#'path'">'path'</a> 里寻找 <code class="special">{file}</code>，就像
+                |<a href="editing.html#:find">:find</a>| 那样。如果找不到，就不会分割窗口。
+
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-^</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-^">CTRL-W_CTRL-^</a>*</b> <b class="vimtag">*<a name="CTRL-W_^">CTRL-W_^</a>*</b>
+<code class="keystroke">CTRL-W</code> ^        执行 ":split #" 命令，把窗口分成两个，并且编辑轮换文件。如果指
+                定了计数，就变成了 ":split #N"，分割窗口，并且编辑第 N 个缓冲
+                区。
+
+<code class="note">注意</code> <a href="options.html#'splitbelow'">'splitbelow'</a> 和 <a href="options.html#'splitright'">'splitright'</a> 选项会影响新窗口的位置。
+
+                                                <b class="vimtag">*<a name=":vert">:vert</a>*</b> <b class="vimtag">*<a name=":vertical">:vertical</a>*</b>
+:vert[ical] <code class="special">{cmd}</code>
+                执行 <code class="special">{cmd}</code>。如果包含一个分割窗口的命令，那么将垂直分割窗口。
+                不能用于 |<a href="eval.html#:execute">:execute</a>| 和 |<a href="various.html#:normal">:normal</a>|。
+
+:lefta[bove] <code class="special">{cmd}</code>                              <b class="vimtag">*<a name=":lefta">:lefta</a>*</b> <b class="vimtag">*<a name=":leftabove">:leftabove</a>*</b>
+:abo[veleft] <code class="special">{cmd}</code>                              <b class="vimtag">*<a name=":abo">:abo</a>*</b> <b class="vimtag">*<a name=":aboveleft">:aboveleft</a>*</b>
+                执行 <code class="special">{cmd}</code>。如果包含一个分割窗口的命令，那么将从当前窗口的左
+                (垂直分割) 或者上方 (水平分割) 分割窗口，而忽略 <a href="options.html#'splitbelow'">'splitbelow'</a>
+                和 <a href="options.html#'splitright'">'splitright'</a> 的设置。
+                不能用于 |<a href="eval.html#:execute">:execute</a>| 和 |<a href="various.html#:normal">:normal</a>|。
+
+:rightb[elow] <code class="special">{cmd}</code>                             <b class="vimtag">*<a name=":rightb">:rightb</a>*</b> <b class="vimtag">*<a name=":rightbelow">:rightbelow</a>*</b>
+:bel[owright] <code class="special">{cmd}</code>                             <b class="vimtag">*<a name=":bel">:bel</a>*</b> <b class="vimtag">*<a name=":belowright">:belowright</a>*</b>
+                执行 <code class="special">{cmd}</code>。如果包含一个分割窗口的命令，那么将从当前窗口的右
+                (垂直分割) 或者下方 (水平分割) 分割窗口，而忽略 <a href="options.html#'splitbelow'">'splitbelow'</a>
+                和 <a href="options.html#'splitright'">'splitright'</a> 的设置。
+                不能用于 |<a href="eval.html#:execute">:execute</a>| 和 |<a href="various.html#:normal">:normal</a>|。
+
+                                                <b class="vimtag">*<a name=":topleft">:topleft</a>*</b> <b class="vimtag">*<a name="E442">E442</a>*</b>
+:to[pleft] <code class="special">{cmd}</code>
+                执行 <code class="special">{cmd}</code>。如果包含一个分割窗口的命令，那么该窗口出现在顶部，
+                并且占据最大宽度。当垂直分割窗口时，窗口出现在最左边，并且占据
+                最大高度。
+                不能用于 |<a href="eval.html#:execute">:execute</a>| 和 |<a href="various.html#:normal">:normal</a>|。
+
+                                                <b class="vimtag">*<a name=":botright">:botright</a>*</b>
+:bo[tright] <code class="special">{cmd}</code>
+                执行 <code class="special">{cmd}</code>。如果包含一个分割窗口的命令，那么该窗口出现在底部，
+                并且占据最大宽度。当垂直分割窗口时，窗口出现在最右边，并且占据
+                最大高度。
+                不能用于 |<a href="eval.html#:execute">:execute</a>| 和 |<a href="various.html#:normal">:normal</a>|。
+
+这些修饰符可以结合使用来打开一个垂直分割的并且占据最大高度的窗口:
+<code class="example">        :vertical topleft split tags</code>
+在 Vim 窗口最左边打开一个垂直分割的、最大高度的窗口，用来编辑 tags 文件。
+
+
+关闭窗口
+</pre><hr class="singleline" /><pre>
+
+<code class="keystroke">CTRL-W</code> q                                                <b class="vimtag">*<a name="CTRL-W_q">CTRL-W_q</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-Q</code>                                           <b class="vimtag">*<a name="CTRL-W_CTRL-Q">CTRL-W_CTRL-Q</a>*</b>
+:q[uit]         退出当前窗口。如果退出的是最后一个窗口 (不包括帮助窗口)，就会
+                退出 Vim。
+                如果置位了 <a href="options.html#'hidden'">'hidden'</a> 并且只有此一个窗口监视当前缓冲区，那么该缓
+                冲区被隐藏。
+                如果没有置位 <a href="options.html#'hidden'">'hidden'</a>，并且只有当前这一个窗口监视该缓冲区，而
+                且缓冲区被修改了，那么该命令不会成功。
+                (<code class="note">注意</code>: <code class="keystroke">CTRL-Q</code> 不是在所有的终端下都好用)
+
+:q[uit]!        退出当前窗口。如果这是缓冲区的最后一个窗口，那么对于此缓冲区的
+                改动将全部丢失。如果退出的是最后一个窗口 (不包括帮助窗口)，就
+                会退出 Vim。缓冲区里的全部内容将丢失。即使置位了 <a href="options.html#'hidden'">'hidden'</a> 选项
+                也是如此。
+
+<code class="keystroke">CTRL-W</code> c                                        <b class="vimtag">*<a name="CTRL-W_c">CTRL-W_c</a>*</b> <b class="vimtag">*<a name=":clo">:clo</a>*</b> <b class="vimtag">*<a name=":close">:close</a>*</b>
+:clo[se][!]     关闭当前窗口。如果置位了 <a href="options.html#'hidden'">'hidden'</a>，或者改动了缓冲区但是命令里
+                用了 [!]，缓冲区会被隐藏 (除非还有一个窗口在编辑该缓冲区)。
+                如果当前标签页只有一个窗口而且有其它标签页，关闭当前标签页。
+                |<a href="tabpage.html#tab-page">tab-page</a>|。
+                该命令在下述情况下会失败:                       <b class="vimtag">*<a name="E444">E444</a>*</b>
+                - 屏幕上只剩下最后一个窗口的时候。
+                - 当 <a href="options.html#'hidden'">'hidden'</a> 没有置位，也没有用 [!]，并且缓冲区也已经被修改，
+                  而且也没有其它窗口监视该缓冲区的时候。
+                对缓冲区的改动既不写入文件，也不会丢失，所以这是个 "安全" 的命
+                令。
+
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code>                                           <b class="vimtag">*<a name="CTRL-W_CTRL-C">CTRL-W_CTRL-C</a>*</b>
+                你可能会认为 <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code> 关闭当前窗口，但是这不行，因为
+                <code class="keystroke">CTRL-C</code> 会撤消整个命令。
+
+                                                        <b class="vimtag">*<a name=":hide">:hide</a>*</b>
+:hid[e]         除非是屏幕上的最后一个窗口，退出当前窗口，缓冲区被隐藏起来
+                (除非还有另一个窗口正在编辑它，或者 <a href="options.html#'bufhidden'">'bufhidden'</a> 设置为
+                "unload" 或 "delete")。
+                如果这是当前标签页的最后一个窗口，关闭此标签页。|<a href="tabpage.html#tab-page">tab-page</a>|
+                此命令不受 <a href="options.html#'hidden'">'hidden'</a> 的值影响。
+                对缓冲区的改动既不写入文件，也不会丢失，所以这是个 "安全" 的命
+                令。
+
+:hid[e] <code class="special">{cmd}</code>   执行 <code class="special">{cmd}</code>，其间置位 <a href="options.html#'hidden'">'hidden'</a> 选项。<code class="special">{cmd}</code> 执行完毕后，先前的
+                <a href="options.html#'hidden'">'hidden'</a> 选项会被恢复。
+                例如:
+<code class="example">                    :hide edit Makefile</code>
+                编辑 "Makefile" 文件，如果当前缓冲区有改动的话，隐藏之。
+
+<code class="keystroke">CTRL-W</code> o                                                <b class="vimtag">*<a name="CTRL-W_o">CTRL-W_o</a>*</b> <b class="vimtag">*<a name="E445">E445</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-O</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-O">CTRL-W_CTRL-O</a>*</b> <b class="vimtag">*<a name=":on">:on</a>*</b> <b class="vimtag">*<a name=":only">:only</a>*</b>
+:on[ly][!]      使当前窗口成为屏幕上唯一的窗口。其它窗口都关闭。
+                如果置位了 <a href="options.html#'hidden'">'hidden'</a> 选项，被关闭窗口里的所有缓冲区变成隐藏。
+                如果没有置位 <a href="options.html#'hidden'">'hidden'</a>，但是置位了 <a href="options.html#'autowrite'">'autowrite'</a> 选项，那么已经更
+                改的缓冲区被写入文件。否则，除非使用 [!] 强制关闭，那些包含修
+                改过的缓冲区的窗口不被删除，它们转入隐藏状态。因为修改过的缓冲
+                区永远不会被放弃，缓冲区的改动也永远不会丢失。
+
+</pre><hr class="doubleline" /><pre>
+<h4>4. 把光标移动到另一个窗口                       <b class="vimtag">*<a name="window-move-cursor">window-move-cursor</a>*</b></h4>
+<code class="keystroke">CTRL-W</code> <code class="special">&lt;Down&gt;</code>                                   <b class="vimtag">*<a name="CTRL-W_%3CDown%3E">CTRL-W_&lt;Down&gt;</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-J</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-J">CTRL-W_CTRL-J</a>*</b> <b class="vimtag">*<a name="CTRL-W_j">CTRL-W_j</a>*</b>
+<code class="keystroke">CTRL-W</code> j        把光标向下移动 N 个窗口。用光标的位置在若干窗口之间做出选择。
+
+<code class="keystroke">CTRL-W</code> <code class="special">&lt;Up&gt;</code>                                     <b class="vimtag">*<a name="CTRL-W_%3CUp%3E">CTRL-W_&lt;Up&gt;</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-K</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-K">CTRL-W_CTRL-K</a>*</b> <b class="vimtag">*<a name="CTRL-W_k">CTRL-W_k</a>*</b>
+<code class="keystroke">CTRL-W</code> k        把光标向上移动 N 个窗口。用光标的位置在若干窗口之间做出选择。
+
+<code class="keystroke">CTRL-W</code> <code class="special">&lt;Left&gt;</code>                                   <b class="vimtag">*<a name="CTRL-W_%3CLeft%3E">CTRL-W_&lt;Left&gt;</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-H</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-H">CTRL-W_CTRL-H</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="special">&lt;BS&gt;</code>                                     <b class="vimtag">*<a name="CTRL-W_%3CBS%3E">CTRL-W_&lt;BS&gt;</a>*</b> <b class="vimtag">*<a name="CTRL-W_h">CTRL-W_h</a>*</b>
+<code class="keystroke">CTRL-W</code> h        把光标向左移动 N 个窗口。用光标的位置在若干窗口之间做出选择。
+
+<code class="keystroke">CTRL-W</code> <code class="special">&lt;Right&gt;</code>                                  <b class="vimtag">*<a name="CTRL-W_%3CRight%3E">CTRL-W_&lt;Right&gt;</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-L</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-L">CTRL-W_CTRL-L</a>*</b> <b class="vimtag">*<a name="CTRL-W_l">CTRL-W_l</a>*</b>
+<code class="keystroke">CTRL-W</code> l        把光标向右移动 N 个窗口。用光标的位置在若干窗口之间做出选择。
+
+<code class="keystroke">CTRL-W</code> w                                        <b class="vimtag">*<a name="CTRL-W_w">CTRL-W_w</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-W">CTRL-W_CTRL-W</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-W</code>   如果没有添加计数，则将光标移动到当前窗口的右/下方的窗口。如果
+                右/下方没有窗口，就移动到左上角的窗口。
+                要是添加了计数，就移动到第 N 个窗口 (从左上方到右下方依次计
+                数)。窗口号可以通过 |<a href="eval.html#bufwinnr()">bufwinnr()</a>| 和 |<a href="eval.html#winnr()">winnr()</a>| 来获得。如果 N
+                大于窗口总数，跳到最后一个窗口。
+
+                                                <b class="vimtag">*<a name="CTRL-W_W">CTRL-W_W</a>*</b>
+<code class="keystroke">CTRL-W</code> W        如果没有添加计数，则将光标移动到当前窗口的左/上方的窗口。如
+                果左/上方没有窗口，就移动到右下角的窗口。
+                要是添加了计数，就移动到第 N 个窗口，类似于 <code class="keystroke">CTRL-W</code> w。
+
+<code class="keystroke">CTRL-W</code> t                                        <b class="vimtag">*<a name="CTRL-W_t">CTRL-W_t</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-T">CTRL-W_CTRL-T</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-T</code>   把光标移动到左上角的窗口。
+
+<code class="keystroke">CTRL-W</code> b                                        <b class="vimtag">*<a name="CTRL-W_b">CTRL-W_b</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-B">CTRL-W_CTRL-B</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-B</code>   把光标移动到右下角的窗口。
+
+<code class="keystroke">CTRL-W</code> p                                        <b class="vimtag">*<a name="CTRL-W_p">CTRL-W_p</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-P">CTRL-W_CTRL-P</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-P</code>   移动到前一个 (previous) (上次访问的) 窗口。
+
+                                                <b class="vimtag">*<a name="CTRL-W_P">CTRL-W_P</a>*</b> <b class="vimtag">*<a name="E441">E441</a>*</b>
+<code class="keystroke">CTRL-W</code> P        移动到预览窗口。如果没有预览窗口就会出错。
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+quickfix">+quickfix</a>| 特性才有效}</code>
+
+在可视模式下，如果新窗口编辑的是同一个缓冲区，则设置光标位置使得相同的区域被选
+择。如果不是同一个缓冲区，则终止可视模式。
+
+                                                <b class="vimtag">*<a name=":winc">:winc</a>*</b> <b class="vimtag">*<a name=":wincmd">:wincmd</a>*</b>
+这些命令也可以用 ":wincmd" 来执行:
+
+:<code class="special">[count]</code>winc[md] <code class="special">{arg}</code>
+                与 <code class="keystroke">CTRL-W</code> <code class="special">[count]</code> <code class="special">{arg}</code> 相同。例如:
+<code class="example">                        :wincmd j</code>
+                把光标移动到当前窗口下面的窗口。
+                这个命令在普通模式不可用的时候 (比如在 |<a href="autocmd.html#CursorHold">CursorHold</a>| 自动命令执
+                行的时候)，或者在启用普通模式不方便时，特别好用。
+                计数也可以是一个窗口号。例如:
+<code class="example">                        :exe nr . "wincmd w"</code>
+                这会切换到窗口 "nr"。
+
+</pre><hr class="doubleline" /><pre>
+<h4>5. 移动窗口                                             <b class="vimtag">*<a name="window-moving">window-moving</a>*</b></h4>
+<code class="keystroke">CTRL-W</code> r                                <b class="vimtag">*<a name="CTRL-W_r">CTRL-W_r</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-R">CTRL-W_CTRL-R</a>*</b> <b class="vimtag">*<a name="E443">E443</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-R</code>   向右/下方向旋转窗口。第一个窗口变成第二个，第二个变成第三个……
+                最后一个变成第一个。光标保留在相同窗口里。
+                本操作只在和当前窗口同行或同列的窗口间移动。
+
+                                                <b class="vimtag">*<a name="CTRL-W_R">CTRL-W_R</a>*</b>
+<code class="keystroke">CTRL-W</code> R        向左/上方向旋转窗口。第二个窗口变成第一个，第三个变成第二个……
+                第一个变成最后一个。光标保留在相同窗口里。
+                本操作只在和当前窗口同行或同列的窗口间移动。
+
+<code class="keystroke">CTRL-W</code> x                                        <b class="vimtag">*<a name="CTRL-W_x">CTRL-W_x</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-X">CTRL-W_CTRL-X</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-X</code>   若没有计数: 交换当前窗口与下一个窗口。如果没有下一个窗口，则
+                与前一个窗口交换。
+                若有计数: 交换当前窗口与第 N 个窗口 (第一个窗口为 1)。光标被放
+                置在那个窗口里。
+                如果既有垂直分割又有水平分割，那么只能与当前窗口同行或者同列的
+                窗口进行交换。
+
+下面的几个命令可以被用来改变窗口的布局。例如，<code class="keystroke">CTRL-W</code> K 可以把两个垂直分割的窗
+口变成水平分割的窗口。<code class="keystroke">CTRL-W</code> H 则正好相反。
+
+                                                <b class="vimtag">*<a name="CTRL-W_K">CTRL-W_K</a>*</b>
+<code class="keystroke">CTRL-W</code> K        把当前窗口放到最顶端，并且是最大宽度。这很像在关闭当前窗口之
+                后，再用 ":topleft split" 打开一个新的窗口，不过新窗口会包含当
+                前窗口的内容。
+
+                                                <b class="vimtag">*<a name="CTRL-W_J">CTRL-W_J</a>*</b>
+<code class="keystroke">CTRL-W</code> J        把当前窗口放到最底部，并且是最大宽度。这很像在关闭当前窗口之
+                后，再用 ":botright split" 打开一个新的窗口，不过新窗口会包含
+                当前窗口的内容。
+
+                                                <b class="vimtag">*<a name="CTRL-W_H">CTRL-W_H</a>*</b>
+<code class="keystroke">CTRL-W</code> H        把当前窗口放到最左边，并且是最大高度。这很像在关闭当前窗口之
+                后，再用 ":vert topleft split" 打开一个新的窗口，不过新窗口会
+                包含当前窗口的内容。
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+vertsplit">+vertsplit</a>| 特性才有效}</code>
+
+                                                <b class="vimtag">*<a name="CTRL-W_L">CTRL-W_L</a>*</b>
+<code class="keystroke">CTRL-W</code> L        把当前窗口放到最右边，并且是最大高度。这很像在关闭当前窗口之
+                后，再用 ":vert botright split" 打开一个新的窗口，不过新窗口会
+                包含当前窗口的内容。
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+vertsplit">+vertsplit</a>| 特性才有效}</code>
+
+                                                <b class="vimtag">*<a name="CTRL-W_T">CTRL-W_T</a>*</b>
+<code class="keystroke">CTRL-W</code> T        把当前窗口移到一个新的标签页上。如果当前标签页只有一个窗口，此
+                命令失败。
+                如果给出计数，打开的新标签页会出现在该索引给出的标签页之前。否
+                则，它出现在当前标签页之后。
+
+</pre><hr class="doubleline" /><pre>
+<h4>6. 改变窗口大小                                         <b class="vimtag">*<a name="window-resize">window-resize</a>*</b></h4>
+                                                <b class="vimtag">*<a name="CTRL-W_%20">CTRL-W_=</a>*</b>
+<code class="keystroke">CTRL-W</code> =        使得所有窗口 (几乎) 等宽、等高，但当前窗口使用 <a href="options.html#'winheight'">'winheight'</a> 和
+                <a href="options.html#'winwidth'">'winwidth'</a>。
+                置位 <a href="options.html#'winfixheight'">'winfixheight'</a> 的窗口保持它们的高度，而置位 <a href="options.html#'winfixwidth'">'winfixwidth'</a>
+                的窗口保持它们的宽度。
+
+:res[ize] -N                                    <b class="vimtag">*<a name=":res">:res</a>*</b> <b class="vimtag">*<a name=":resize">:resize</a>*</b> <b class="vimtag">*<a name="CTRL-W_-">CTRL-W_-</a>*</b>
+<code class="keystroke">CTRL-W</code> -        使得当前窗口高度减 N (默认值是 1)。
+                如果在 <code class="badlink">'vertical'</code> 之后使用，则使得宽度减 N。
+
+:res[ize] +N                                    <b class="vimtag">*<a name="CTRL-W_+">CTRL-W_+</a>*</b>
+<code class="keystroke">CTRL-W</code> +        使得当前窗口高度加 N (默认值是 1)。
+                如果在 <code class="badlink">'vertical'</code> 之后使用，则使得宽度加 N。
+
+:res[ize] <code class="special">[N]</code>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-_</code>                                   <b class="vimtag">*<a name="CTRL-W_CTRL-_">CTRL-W_CTRL-_</a>*</b> <b class="vimtag">*<a name="CTRL-W__">CTRL-W__</a>*</b>
+<code class="keystroke">CTRL-W</code> _        设置当前窗口的高度为 N (默认值为最大可能高度)。
+
+z<code class="special">{nr}</code><code class="special">&lt;CR&gt;</code>       设置当前窗口的高度为 <code class="special">{nr}</code>。
+
+                                                <b class="vimtag">*<a name="CTRL-W_%3C">CTRL-W_&lt;</a>*</b>
+<code class="keystroke">CTRL-W</code> &lt;        使得当前窗口宽度减 N (默认值是 1)。
+
+                                                <b class="vimtag">*<a name="CTRL-W_%3E">CTRL-W_&gt;</a>*</b>
+<code class="keystroke">CTRL-W</code> &gt;        使得当前窗口宽度加 N (默认值是 1)。
+
+:vertical res[ize] <code class="special">[N]</code>                  <b class="vimtag">*<a name=":vertical-resize">:vertical-resize</a>*</b> <b class="vimtag">*<a name="CTRL-W_bar">CTRL-W_bar</a>*</b>
+<code class="keystroke">CTRL-W</code> |        设置当前窗口的宽度为 N (默认值为最大可能宽度)。
+
+你也可以用鼠标上下拖动状态行来改变窗口的高度，或者左右拖动垂直分割线来改变窗口
+宽度。这些功能只有在支持鼠标的版本里，并且设置了 <a href="options.html#'mouse'">'mouse'</a> 选项才可以用。
+
+选项 <a href="options.html#'winheight'">'winheight'</a> (<a href="options.html#'wh'">'wh'</a>) 用来设置当前窗口的最小高度。每当其它窗口变为当前窗口的
+时候，这一选项就会生效。如果设置为 0，则禁用。把 <a href="options.html#'winheight'">'winheight'</a> 设一个很大的值，
+例如，<code class="badlink">'9999'</code>，就使得当前窗口永远占据尽可能大的空间。尽量设置成一个编辑时比较舒
+服的值，比如说，<code class="badlink">'10'</code> 就是一个合理的值。
+
+同样，<a href="options.html#'winwidth'">'winwidth'</a> (<a href="options.html#'wiw'">'wiw'</a>) 选项设定了当前窗口的最小宽度。
+
+如果置位了 <a href="options.html#'equalalways'">'equalalways'</a> (<a href="options.html#'ea'">'ea'</a>) 选项，在分割或者关闭窗口之后，所有窗口都会变为
+相同大小。如果你不置位这个选项，分割窗口时会减少当前窗口的大小，而其它窗口保持
+不变。当关闭窗口时，多出来的行会被上面的窗口占用。
+
+选项 <a href="options.html#'eadirection'">'eadirection'</a> 用来限制 <a href="options.html#'equalalways'">'equalalways'</a> 的作用方向。默认值是 "both"，两个方
+向都改变。当设置为 "ver" 时，只限制所有窗口的高度必须相同，这样你可以自己调节
+窗口的宽度。而垂直分割窗口的大小如果经过手工调整，其宽度也不会被破坏。同样，
+"hor" 使得窗口的宽度都相等。
+
+选项 <a href="options.html#'cmdheight'">'cmdheight'</a> (<a href="options.html#'ch'">'ch'</a>) 用来设置命令行的高度。如果你对 |<a href="message.html#hit-enter">hit-enter</a>| 的提示信息
+感到厌烦，可以将它设置为 2 或 3。
+
+如果只有一个窗口，那么改变该窗口大小的同时也会改变命令行的高度。如果有多个窗
+口，那么改变当前窗口的大小也会改变它下面的窗口 (有时是上面的窗口) 的高度。
+
+一个窗口的最小高度和最小宽度可以用 <a href="options.html#'winminheight'">'winminheight'</a> 和 <a href="options.html#'winminwidth'">'winminwidth'</a> 设定。这是
+硬性值，一旦设定，窗口的高度 (或宽度) 将不能小于该值。
+
+</pre><hr class="doubleline" /><pre>
+<h4>7. 参数和缓冲区列表的命令                               <b class="vimtag">*<a name="buffer-list">buffer-list</a>*</b></h4>
+<code class="section">      参数列表                缓冲区列表           含义 </code>
+1. :[N]argument <code class="special">[N]</code>     11. :[N]buffer <code class="special">[N]</code>      切换至第 N 号参数/缓冲区
+2. :[N]next [file ..]   12. :[N]bnext <code class="special">[N]</code>       切换至向后第 N 个参数/缓冲区
+3. :[N]Next <code class="special">[N]</code>         13. :[N]bNext <code class="special">[N]</code>       切换至向前第 N 个参数/缓冲区
+4. :[N]previous <code class="special">[N]</code>     14. :[N]bprevious <code class="special">[N]</code>   切换至向前第 N 个参数/缓冲区
+5. :rewind / :first     15. :brewind / :bfirst  切换至第一个参数/缓冲区
+6. :last                16. :blast              切换至最后一个参数/缓冲区
+7. :all                 17. :ball               编辑所有的参数/缓冲区
+                        18. :unhide             编辑所有已载入的缓冲区
+                        19. :[N]bmod <code class="special">[N]</code>        切换至第 N 个已修改的缓冲区
+
+<code class="section">  分割 &amp; 参数列表        分割 &amp; 缓冲区列表         含义 </code>
+21. :[N]sargument <code class="special">[N]</code>   31. :[N]sbuffer <code class="special">[N]</code>     分割并至第 N 号参数/缓冲区
+22. :[N]snext [file ..] 32. :[N]sbnext <code class="special">[N]</code>      分割并至向后第 N 个参数/缓冲区
+23. :[N]sNext <code class="special">[N]</code>       33. :[N]sbNext <code class="special">[N]</code>      分割并至向前第 N 个参数/缓冲区
+24. :[N]sprevious <code class="special">[N]</code>   34. :[N]sbprevious <code class="special">[N]</code>  分割并至向前第 N 个参数/缓冲区
+25. :srewind / :sfirst  35. :sbrewind / :sbfirst 分割并至第一个参数/缓冲区
+26. :slast              36. :sblast             分割并至最后一个参数/缓冲区
+27. :sall               37: :sball              编辑所有的参数/缓冲区
+                        38. :sunhide            编辑所有已载入的缓冲区
+                        39. :[N]sbmod <code class="special">[N]</code>       分割并至第 N 个已修改的缓冲区
+
+40. :args               显示参数列表
+41. :buffers            显示缓冲区列表
+
+上述命令中的 <code class="special">[N]</code> 的含义取决于你使用的命令:
+ <code class="special">[N]</code> 在命令 ?2、?3 和 ?4 中是向前/向后的缓冲区个数。
+ <code class="special">[N]</code> 在命令 1 和 21      中是参数号，默认值是当前参数。
+ <code class="special">[N]</code> 在命令 11 和 31     中是缓冲区号，默认值是当前缓冲区。
+ <code class="special">[N]</code> 在命令 19 和 39     中是计数。
+
+<code class="note">备注</code>: ":next" 是一个例外，因为它必须以文件名列表为参数，这是为了和 Vi 兼容。
+
+
+参数列表和多窗口
+</pre><hr class="singleline" /><pre>
+
+每一个窗口所编辑的文件可能位于参数列表的不同位置。记住！用 ":e file" 编辑文件
+后，你在参数列表中的位置没有变化，但你并不是在编辑处于那个位置的文件。为了说明
+这一点，文件消息 (和标题栏，如果有的话) 会显示 "(file (N) of M)"，"(N)" 是当前
+文件在列表中的位置，"M" 是列表中文件的数量。
+
+所有参数列表中的条目都被加载到缓冲区列表中，这样你也可以用缓冲区列表的命令进行
+操作，比如 ":bnext"。
+
+:[N]al[l][!] <code class="special">[N]</code>                                <b class="vimtag">*<a name=":al">:al</a>*</b> <b class="vimtag">*<a name=":all">:all</a>*</b> <b class="vimtag">*<a name=":sal">:sal</a>*</b> <b class="vimtag">*<a name=":sall">:sall</a>*</b>
+:[N]sal[l][!] <code class="special">[N]</code>
+                重新整理屏幕，为每一个参数打开一个窗口。其它窗口统统关闭。如果
+                使用了计数，则其数值为窗口数目的最大值。
+                如果带 |<a href="tabpage.html#:tab">:tab</a>| 修饰符，为每个参数打开一个标签页。如果参数数目多
+                于 <a href="options.html#'tabpagemax'">'tabpagemax'</a>，多余参数成为最后一个标签页的分割窗口。
+                如果设置了 <a href="options.html#'hidden'">'hidden'</a>，所有要关闭的窗口变为隐藏。
+                如果没有设置 <a href="options.html#'hidden'">'hidden'</a>，但是设置了 <a href="options.html#'autowrite'">'autowrite'</a>，那么所有改动
+                的缓冲区被写入文件。否则，包含更改过的缓冲区的窗口不会被删除，
+                除非你用 [!] 使它们隐藏。更改过的缓冲区永远不会被丢弃，所以改
+                动不会丢失。
+                <code class="special">[N]</code> 是最大可以打开的窗口数。<a href="options.html#'winheight'">'winheight'</a> 也限制打开的窗口数。
+                (如果前加了 |<a href="windows.html#:vertical">:vertical</a>| 的话 <a href="options.html#'winwidth'">'winwidth'</a>)。
+                Buf/Win Enter/Leave 自动命令不会被这里的新窗口执行，只有在它
+                们真正进入时才会执行。
+
+:[N]sa[rgument][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">[N]</code>                   <b class="vimtag">*<a name=":sa">:sa</a>*</b> <b class="vimtag">*<a name=":sargument">:sargument</a>*</b>
+                这是 ":split | argument <code class="special">[N]</code>" 命令的简写。分割窗口并切换至第 N
+                号参数。但是如果该参数不存在，窗口不会分割。参见 |<a href="editing.html#++opt">++opt</a>| 和
+                |<a href="editing.html#+cmd">+cmd</a>|。
+
+:[N]sn[ext][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> [file ..]                 <b class="vimtag">*<a name=":sn">:sn</a>*</b> <b class="vimtag">*<a name=":snext">:snext</a>*</b>
+                这是 ":split | <code class="special">[N]</code>next" 命令的简写。分割窗口并切换到向后第 N
+                个参数。但是如果该参数不存在，窗口不会分割。参见 |<a href="editing.html#++opt">++opt</a>| 和
+                |<a href="editing.html#+cmd">+cmd</a>|。
+
+:[N]spr[evious][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">[N]</code>                   <b class="vimtag">*<a name=":spr">:spr</a>*</b> <b class="vimtag">*<a name=":sprevious">:sprevious</a>*</b>
+:[N]sN[ext][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">[N]</code>                       <b class="vimtag">*<a name=":sN">:sN</a>*</b> <b class="vimtag">*<a name=":sNext">:sNext</a>*</b>
+                这是 ":split | <code class="special">[N]</code>Next" 命令的简写。分割窗口并切换到向前第 N
+                个参数。但是如果该参数不存在，窗口不会分割。参见 |<a href="editing.html#++opt">++opt</a>| 和
+                |<a href="editing.html#+cmd">+cmd</a>|。
+
+                                                <b class="vimtag">*<a name=":sre">:sre</a>*</b> <b class="vimtag">*<a name=":srewind">:srewind</a>*</b>
+:sre[wind][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code>
+                这是 ":split | rewind" 命令的简写。分割窗口并切换到第一个参
+                数。但是如果没有参数列表，窗口不会分割。参见 |<a href="editing.html#++opt">++opt</a>| 和
+                |<a href="editing.html#+cmd">+cmd</a>|。
+
+                                                <b class="vimtag">*<a name=":sfir">:sfir</a>*</b> <b class="vimtag">*<a name=":sfirst">:sfirst</a>*</b>
+:sfir[st] <code class="special">[++opt]</code> <code class="special">[+cmd]</code>
+                与 ":srewind" 相同。
+
+                                                <b class="vimtag">*<a name=":sla">:sla</a>*</b> <b class="vimtag">*<a name=":slast">:slast</a>*</b>
+:sla[st][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code>
+                这是 ":split | last" 命令的简写。分割窗口并切换到最后一个参
+                数。但是如果没有参数列表，窗口不会分割。参见 |<a href="editing.html#++opt">++opt</a>| 和
+                |<a href="editing.html#+cmd">+cmd</a>|。
+                                                <b class="vimtag">*<a name=":dr">:dr</a>*</b> <b class="vimtag">*<a name=":drop">:drop</a>*</b>
+:dr[op] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code> ..
+                在一个窗口内编辑第一个 <code class="special">{file}</code>。
+                － 如果该文件已经被打开，切换至该文件所在窗口。
+                － 如果该文件尚未被打开，在当前窗口内打开该文件。如果当前窗口
+                   无法被放弃 |<a href="editing.html#abandon">abandon</a>|，窗口会先被分割。
+                参数列表 |<a href="editing.html#argument-list">argument-list</a>| 会被象使用 |<a href="editing.html#:next">:next</a>| 命令一样被设定。
+                此命令的目的在于: 允许 debugger 之类的程序里让 Vim 编辑另一个
+                文件。
+                如果使用 |<a href="tabpage.html#:tab">:tab</a>| 修饰符，为每个参数打开一个标签页。如果为空，使
+                用最后一个窗口。
+                另见 |<a href="editing.html#++opt">++opt</a>| 和 |<a href="editing.html#+cmd">+cmd</a>|。
+                <code class="notvi">{仅当编译时有 GUI 才可用}</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>8. 在所有的缓冲区或窗口里执行命令                               <b class="vimtag">*<a name="list-repeat">list-repeat</a>*</b></h4>
+                                                        <b class="vimtag">*<a name=":windo">:windo</a>*</b>
+:windo <code class="special">{cmd}</code>            在每一个窗口里执行 <code class="special">{cmd}</code>。
+                        这就像是:
+<code class="example">                                CTRL-W t</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                CTRL-W w</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                等等……</code>
+                        只在当前标签页进行操作。
+                        如果在一个窗口里检测到错误，余下的窗口不再访问。
+                        最后一个窗口 (或者出错的那个窗口) 成为当前窗口。
+                        <code class="special">{cmd}</code> 可以包含 '|' 来连接多个命令。
+                        <code class="special">{cmd}</code> 不能打开或关闭窗口，也不能更换它们的顺序。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅在编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+                        也参见 |<a href="tabpage.html#:tabdo">:tabdo</a>|、|<a href="editing.html#:argdo">:argdo</a>| 和 |<a href="windows.html#:bufdo">:bufdo</a>|。
+
+                                                        <b class="vimtag">*<a name=":bufdo">:bufdo</a>*</b>
+:bufdo[!] <code class="special">{cmd}</code>         在缓冲区列表的每一个缓冲区里执行 <code class="special">{cmd}</code>。
+                        就像是:
+<code class="example">                                :bfirst</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                :bnext</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                等等……</code>
+                        如果当前文件不能被丢弃 |<a href="editing.html#abandon">abandon</a>|，并且没有使用 [!]，命
+                        令失败。
+                        当在一个缓冲区里检测到错误，剩下的缓冲区不再访问。
+                        跳过列表外缓冲区。
+                        最后一个缓冲区 (或者出错的那个缓冲区) 成为当前缓冲区。
+                        <code class="special">{cmd}</code> 可以包含 '|' 来连接多个命令。
+                        <code class="special">{cmd}</code> 不能删除或添加缓冲区到缓冲区列表。
+                        <code class="note">备注</code>: 此命令执行时，通过把 Syntax 加入 <a href="options.html#'eventignore'">'eventignore'</a>
+                        来屏蔽此自动命令事件。这样大大加快了每个缓冲区的编辑速
+                        度。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅在编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+                        也参见 |<a href="tabpage.html#:tabdo">:tabdo</a>|、|<a href="editing.html#:argdo">:argdo</a>| 和 |<a href="windows.html#:windo">:windo</a>|。
+
+例子:
+<code class="example"></code>
+<code class="example">        :windo set nolist nofoldcolumn | normal zn</code>
+<code class="example"></code>
+这个命令会复位 <a href="options.html#'list'">'list'</a> 选项并在所有的窗口里关闭折叠功能。
+<code class="example"></code>
+<code class="example">        :bufdo set fileencoding= | update</code>
+<code class="example"></code>
+此命令在每个缓冲区里复位 <a href="options.html#'fileencoding'">'fileencoding'</a> 选项的值，并将改动的缓冲区存盘。结果是
+所有的缓冲区都会用 <a href="options.html#'encoding'">'encoding'</a> 编码 (如果能够正确转换的话)。
+
+</pre><hr class="doubleline" /><pre>
+<h4>9. 当前光标处的标签和文件名                             <b class="vimtag">*<a name="window-tag">window-tag</a>*</b></h4>
+                                                        <b class="vimtag">*<a name=":sta">:sta</a>*</b> <b class="vimtag">*<a name=":stag">:stag</a>*</b>
+:sta[g][!] <code class="special">[tagname]</code>
+                执行 ":tag[!] <code class="special">[tagname]</code>" 并且分割窗口打开新的标签。参见
+                |<a href="tagsrch.html#:tag">:tag</a>|。
+
+<code class="keystroke">CTRL-W</code> ]                                        <b class="vimtag">*<a name="CTRL-W_]">CTRL-W_]</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-]">CTRL-W_CTRL-]</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-]</code>   把当前窗口一分为二，把光标所在的标识符当作标签，并在上面的新窗
+                口跳转至标签所指向的地方。新窗口的高度为 N。
+
+                                                        <b class="vimtag">*<a name="CTRL-W_g]">CTRL-W_g]</a>*</b>
+<code class="keystroke">CTRL-W</code> g ]      把当前窗口一分为二，把光标所在的标识符当作标签，并在上面的新窗
+                口里执行 ":tselect"。新窗口的高度为 N。
+
+                                                        <b class="vimtag">*<a name="CTRL-W_g_CTRL-]">CTRL-W_g_CTRL-]</a>*</b>
+<code class="keystroke">CTRL-W</code> g <code class="keystroke">CTRL-]</code> 把当前窗口一分为二，把光标所在的标识符当作标签，并在上面的新窗
+                口里执行 ":tjump"。新窗口的高度为 N。
+
+<code class="keystroke">CTRL-W</code> f                                        <b class="vimtag">*<a name="CTRL-W_f">CTRL-W_f</a>*</b> <b class="vimtag">*<a name="CTRL-W_CTRL-F">CTRL-W_CTRL-F</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-F</code>   把当前窗口一分为二。编辑光标下的文件名。
+                类似 ":split gf"，但是找不到文件或者文件不存在时，不会分割窗
+                口。
+                此操作在 <a href="options.html#'path'">'path'</a> 变量所定义的目录和当前文件所在的目录里寻找文
+                件。
+                如果是一个类似 "type://machine/path" 的超链接，那么只使用
+                "/path"。
+                如果指定了计数 N，那么编辑第 N 个匹配的文件。
+                <code class="notvi">{仅在编译时加入 |<a href="various.html#+file_in_path">+file_in_path</a>| 特性才有效}</code>
+
+<code class="keystroke">CTRL-W</code> F                                                <b class="vimtag">*<a name="CTRL-W_F">CTRL-W_F</a>*</b>
+                把当前窗口一分为二。编辑光标下的文件名并跳转到文件名之后的行号
+                上。|<a href="editing.html#gF">gF</a>| 详细说明该行号如何获取。
+                <code class="notvi">{仅在编译时加入 |<a href="various.html#+file_in_path">+file_in_path</a>| 特性才有效}</code>
+
+<code class="keystroke">CTRL-W</code> gf                                               <b class="vimtag">*<a name="CTRL-W_gf">CTRL-W_gf</a>*</b>
+                打开新标签页，并编辑光标下的文件名。类似于 "tab split" 和
+                "gf"，但如果文件不存在，不建立新标签页。
+                <code class="notvi">{仅在编译时加入 |<a href="various.html#+file_in_path">+file_in_path</a>| 特性才有效}</code>
+
+<code class="keystroke">CTRL-W</code> gF                                               <b class="vimtag">*<a name="CTRL-W_gF">CTRL-W_gF</a>*</b>
+                打开新标签页，编辑光标下的文件名，并跳转到文件名之后的行号上。
+                类似于 "tab split" 然后 "gF"，但如果文件不存在，不建立新标签
+                页。
+                <code class="notvi">{仅在编译时加入 |<a href="various.html#+file_in_path">+file_in_path</a>| 特性才有效}</code>
+
+另见 |<a href="tagsrch.html#CTRL-W_CTRL-I">CTRL-W_CTRL-I</a>|: 为包含当前光标下的关键字的头文件打开窗口。
+
+</pre><hr class="doubleline" /><pre>
+<h4>10. 预览窗口                                    <b class="vimtag">*<a name="preview-window">preview-window</a>*</b></h4>
+预览窗口是显示 (预览) 其它文件的特殊窗口。它通常是一个用来查看包含文件或者函数
+定义的小窗口。<code class="notvi">{仅当编译时加入 |<a href="various.html#+quickfix">+quickfix</a>| 特性才有效}</code>
+
+(每个标签页) 只能有一个预览窗口，可以用如下命令之一创建。另外，<a href="options.html#'previewheight'">'previewheight'</a>
+选项可以用来指定预览窗口的高度；预览窗口设定 <a href="options.html#'previewwindow'">'previewwindow'</a> 选项以便区分。
+<a href="options.html#'winfixheight'">'winfixheight'</a> 选项也被设定用来保持该窗口的高度，不受其它窗口开关的影响。
+
+                                                <b class="vimtag">*<a name=":pta">:pta</a>*</b> <b class="vimtag">*<a name=":ptag">:ptag</a>*</b>
+:pta[g][!] <code class="special">[tagname]</code>
+                执行 ":tag[!] <code class="special">[tagname]</code>" 并且在预览窗口里显示标签所指向的内
+                容，不改变当前缓冲区和光标的位置。如果预览窗口已经打开，则会被
+                重用 (类似于帮助窗口)。新预览窗口的高度由 <a href="options.html#'previewheight'">'previewheight'</a> 决
+                定。另见 |<a href="tagsrch.html#:tag">:tag</a>|。
+                参考下面的例子。|<a href="windows.html#CursorHold-example">CursorHold-example</a>|
+                与 |<a href="tagsrch.html#:tag">:tag</a>| 有细小的差别: 当 <code class="special">[tagname]</code> 与当前显示的标签相同时，
+                该命令不会重新设置标签匹配表的当前位置。这使 |<a href="tagsrch.html#:ptnext">:ptnext</a>| 执行完
+                后，|<a href="windows.html#CursorHold-example">CursorHold-example</a>| 仍可以运行。
+
+<code class="keystroke">CTRL-W</code> z                                <b class="vimtag">*<a name="CTRL-W_z">CTRL-W_z</a>*</b>
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-Z</code>                           <b class="vimtag">*<a name="CTRL-W_CTRL-Z">CTRL-W_CTRL-Z</a>*</b> <b class="vimtag">*<a name=":pc">:pc</a>*</b> <b class="vimtag">*<a name=":pclose">:pclose</a>*</b>
+:pc[lose][!]    关闭当前打开的预览窗口。如果置位了 <a href="options.html#'hidden'">'hidden'</a>，或者更改了缓冲区
+                并且使用了 [!]，则缓冲区变为隐藏 (除非还有其它窗口正在编辑该
+                缓冲区)。如果预览窗口的缓冲区不能关闭，此命令失败。也参见
+                |<a href="windows.html#:close">:close</a>|。
+
+                                                        <b class="vimtag">*<a name=":pp">:pp</a>*</b> <b class="vimtag">*<a name=":ppop">:ppop</a>*</b>
+:<code class="special">[count]</code>pp[op][!]
+                在预览窗口执行 ":<code class="special">[count]</code>pop[!]"。参见 |<a href="tagsrch.html#:pop">:pop</a>| 和 |<a href="windows.html#:ptag">:ptag</a>|。
+                <code class="notvi">{Vi 无此功能}</code>
+
+<code class="keystroke">CTRL-W</code> }                                                <b class="vimtag">*<a name="CTRL-W_}">CTRL-W_}</a>*</b>
+                使用当前光标所处位置的标识符作为标签，执行 :ptag。生成预览窗口
+                (如果需要的话)，窗口的高度为 N，如果没指定高度，就使用
+                <a href="options.html#'previewheight'">'previewheight'</a> 的值。
+
+<code class="keystroke">CTRL-W</code> g }                                              <b class="vimtag">*<a name="CTRL-W_g}">CTRL-W_g}</a>*</b>
+                使用当前光标所处位置的标识符作为标签，执行 :ptjump。生成预览窗
+                口 (如果需要的话)，窗口的高度为 N，如果没指定高度，就使用
+                <a href="options.html#'previewheight'">'previewheight'</a> 的值。
+
+                                                        <b class="vimtag">*<a name=":ped">:ped</a>*</b> <b class="vimtag">*<a name=":pedit">:pedit</a>*</b>
+:ped[it][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{file}</code>
+                在预览窗口里编辑文件 <code class="special">{file}</code>。预览窗口打开的方式和 |<a href="windows.html#:ptag">:ptag</a>| 类
+                似。当前窗口和光标的位置都不改变。可用实例:
+<code class="example">                        :pedit +/fputc /usr/include/stdio.h</code>
+
+                                                        <b class="vimtag">*<a name=":ps">:ps</a>*</b> <b class="vimtag">*<a name=":psearch">:psearch</a>*</b>
+:<code class="special">[range]</code>ps[earch][!] <code class="special">[count]</code> [/]pattern[/]
+                与 |<a href="tagsrch.html#:ijump">:ijump</a>| 命令很像，只是找到的匹配在预览窗口显示。预览窗口用
+                |<a href="windows.html#:ptag">:ptag</a>| 打开。当前窗口和光标的位置都不改变。有用的例子:
+<code class="example">                        :psearch popen</code>
+                这很像 |<a href="windows.html#:ptag">:ptag</a>| 命令，你可以用它自动显示光标所在单词的相关信
+                息。这个命令虽然不如 |<a href="windows.html#:ptag">:ptag</a>| 强大，但是你可以不使用标签文件，
+                而同样可以找到系统的头文件。例如:
+<code class="example">  :au! CursorHold *.[ch] nested exe "silent! psearch " . expand("&lt;cword&gt;")</code>
+                警告: 可能会很慢。
+
+例子                                            <b class="vimtag">*<a name="CursorHold-example">CursorHold-example</a>*</b>
+<code class="example"></code>
+<code class="example">  :au! CursorHold *.[ch] nested exe "silent! ptag " . expand("&lt;cword&gt;")</code>
+<code class="example"></code>
+如果光标停留达到至少 <a href="options.html#'updatetime'">'updatetime'</a> 指定的时间，这条命令以当前光标位置处的关键字
+为参数，执行 ":ptag" 命令。"nested" 使得其它自动命令得以执行，这样可以在预览窗
+口里启用语法高亮。"silent!" 屏蔽了在找不到标签时产生的错误信息。也参见
+|<a href="autocmd.html#CursorHold">CursorHold</a>|。要禁用此功能:
+<code class="example"></code>
+<code class="example">  :au! CursorHold</code>
+<code class="example"></code>
+更好的改进是能高亮找到的标签，光标处没有单词时不执行 ":ptag"，还能处理一些其它
+细节，见下:
+<code class="example"></code>
+<code class="example">  :au! CursorHold *.[ch] nested call PreviewWord()</code>
+<code class="example">  :func PreviewWord()</code>
+<code class="example">  :  if &amp;previewwindow                  " 不要在预览窗口里执行</code>
+<code class="example">  :    return</code>
+<code class="example">  :  endif</code>
+<code class="example">  :  let w = expand("&lt;cword&gt;")          " 在当前光标位置抓词</code>
+<code class="example">  :  if w =~ '\a'                       " 如果该单词包括一个字母</code>
+<code class="example">  :</code>
+<code class="example">  :    " 在显示下一个标签之前，删除所有现存的语法高亮</code>
+<code class="example">  :    silent! wincmd P                 " 跳转至预览窗口</code>
+<code class="example">  :    if &amp;previewwindow                " 如果确实转到了预览窗口……</code>
+<code class="example">  :      match none                     " 删除语法高亮</code>
+<code class="example">  :      wincmd p                       " 回到原来的窗口</code>
+<code class="example">  :    endif</code>
+<code class="example">  :</code>
+<code class="example">  :    " 试着显示当前光标处匹配的标签</code>
+<code class="example">  :    try</code>
+<code class="example">  :       exe "ptag " . w</code>
+<code class="example">  :    catch</code>
+<code class="example">  :      return</code>
+<code class="example">  :    endtry</code>
+<code class="example">  :</code>
+<code class="example">  :    silent! wincmd P                 " 跳转至预览窗口</code>
+<code class="example">  :    if &amp;previewwindow                " 如果确实转到了预览窗口……</code>
+<code class="example">  :      if has("folding")</code>
+<code class="example">  :        silent! .foldopen            " 展开折叠的行</code>
+<code class="example">  :      endif</code>
+<code class="example">  :      call search("$", "b")          " 到前一行的行尾</code>
+<code class="example">  :      let w = substitute(w, '\\', '\\\\', "")</code>
+<code class="example">  :      call search('\&lt;\V' . w . '\&gt;') " 定位光标在匹配的单词上</code>
+<code class="example">  :      " 给在此位置的单词加上匹配高亮</code>
+<code class="example">  :      hi previewWord term=bold ctermbg=green guibg=green</code>
+<code class="example">  :      exe 'match previewWord "\%' . line(".") . 'l\%' . col(".") . 'c\k*"'</code>
+<code class="example">  :      wincmd p                       " 返回原来的窗口</code>
+<code class="example">  :    endif</code>
+<code class="example">  :  endif</code>
+<code class="example">  :endfun</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>11. 使用隐藏缓冲区                                      <b class="vimtag">*<a name="buffer-hidden">buffer-hidden</a>*</b></h4>
+隐藏的缓冲区不会在窗口里显示，但仍然载入内存，这使得 Vim 可以在文件间切换，而
+无需每次在一个窗口里读入另一个缓冲区时读写文件。
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+
+                                                        <b class="vimtag">*<a name=":buffer-!">:buffer-!</a>*</b>
+如果置位了 <a href="options.html#'hidden'">'hidden'</a> (<a href="options.html#'hid'">'hid'</a>) 选项，":edit"、":next"、":tag" 等编辑其它文件的命
+令会保留被丢弃的缓冲区。有时虽然没有置位 <a href="options.html#'hidden'">'hidden'</a>，一些在缓冲区列表中穿梭的命
+令还是会把当前窗口变为隐藏。这种情况发生在: 你试图用 '!' 从窗口里强制删除修改
+过的缓冲区。但 <a href="options.html#'autowrite'">'autowrite'</a> 选项关闭或者缓冲区无法写回，
+
+你可以用任何启动编辑的命令使隐藏的缓冲区不再隐藏。或者用 ":bdelete" 命令将其删
+除。
+
+<a href="options.html#'hidden'">'hidden'</a> 是全局选项，它作用于所有的缓冲区。<a href="options.html#'bufhidden'">'bufhidden'</a> 选项可以作用于指定的缓
+冲区，该选项可以是下面的值:
+
+        <code class="special">&lt;empty&gt;</code>         使用全局 <a href="options.html#'hidden'">'hidden'</a> 的值。
+        hide            隐藏该缓冲区，<a href="options.html#'hidden'">'hidden'</a> 没有置位也是如此。
+        unload          不隐藏，而是卸载该缓冲区，<a href="options.html#'hidden'">'hidden'</a> 置位也是如此。
+        delete          删除该缓冲区。
+
+                                                        <b class="vimtag">*<a name="hidden-quit">hidden-quit</a>*</b>
+如果存在一个隐藏且修改过的缓冲区，退出 Vim 会得到一条错误信息，并且 Vim 会把该
+缓冲区变为当前的缓冲区。你可以决定是保存 (":wq") 还是退出 ( ":q!")。<code class="note">注意</code>: 可
+能不止一个这样的缓冲区！
+
+缓冲区也可能是列表外的 (unlisted)，这意味着此缓冲区存在，但是从缓冲区列表中看
+不到。|<a href="windows.html#unlisted-buffer">unlisted-buffer</a>|
+
+
+:files[!]                                       <b class="vimtag">*<a name=":files">:files</a>*</b>
+:buffers[!]                                     <b class="vimtag">*<a name=":buffers">:buffers</a>*</b> <b class="vimtag">*<a name=":ls">:ls</a>*</b>
+:ls[!]          显示所有缓冲区。例如:
+
+<code class="section">                        1 #h   "/test/text"             line 1 </code>
+<code class="section">                        2u     "asdf"                   line 0 </code>
+<code class="section">                        3 %a + "version.c"              line 1 </code>
+
+                如果使用了 [!]，将显示所有的缓冲区，包括列表外缓冲区
+                (此时，"列表外" (unlisted) 这一术语多少有点儿别扭……)。
+
+                每一个缓冲区都有唯一的号码与之对应。这个编号是不会改变的，所以
+                你可以一直使用 ":buffer N" 或 "N <code class="keystroke">CTRL-^</code>" (N 是缓冲区编号) 来选
+                择特定的缓冲区。
+
+                标识符号 (同一列上的符号不可能同时出现):
+                u       列表外缓冲区 (只有使用 [!] 才能看到) |<a href="windows.html#unlisted-buffer">unlisted-buffer</a>|
+                 %      当前窗口里的缓冲区
+                 #      用 ":e #" 或 <code class="keystroke">CTRL-^</code> 可切换到的轮换缓冲区
+                  a     激活缓冲区: 已载入内存并且可见
+                  h     隐藏缓冲区: 已载入内存但是没有窗口显示它
+                        |<a href="windows.html#hidden-buffer">hidden-buffer</a>|
+                   -    不可更改的缓冲区，选项 <a href="options.html#'modifiable'">'modifiable'</a> 被关闭。
+                   =    只读缓冲区
+                    +   已经更改的缓冲区
+                    x   有读错误的缓冲区
+
+                                                <b class="vimtag">*<a name=":bad">:bad</a>*</b> <b class="vimtag">*<a name=":badd">:badd</a>*</b>
+:bad[d] [+lnum] <code class="special">{fname}</code>
+                在缓冲区列表里添加文件名 <code class="special">{fname}</code>，但是不把该文件载入内存。
+                如果指定了 "lnum"，那么第一次进入缓冲区时，光标会停留在那一
+                行。<code class="note">注意</code> 其它 + 后面的命令将被忽略。
+
+:[N]bd[elete][!]                        <b class="vimtag">*<a name=":bd">:bd</a>*</b> <b class="vimtag">*<a name=":bdel">:bdel</a>*</b> <b class="vimtag">*<a name=":bdelete">:bdelete</a>*</b> <b class="vimtag">*<a name="E516">E516</a>*</b>
+:bd[elete][!] <code class="special">[N]</code>
+                卸载缓冲区 <code class="special">[N]</code> (默认: 当前缓冲区) 并且从缓冲区列表里删除该缓冲
+                区。如果缓冲区被改动过，那么该命令将失败，除非使用 [!]，但是这
+                样所有的改动都会丢失，文件不受影响。该缓冲区的所有窗口都会关
+                闭。如果缓冲区 <code class="special">[N]</code> 是当前的缓冲区，那么 Vim 会显示另一个缓冲区
+                来代替。具体来说，Vim 会选择跳转表里最新且已经载入的缓冲区。
+                实际上，该缓冲区还没有被完全删除，但是缓冲区列表把它除名
+                |<a href="windows.html#unlisted-buffer">unlisted-buffer</a>|，而且该缓冲区中选项的值、变量、映射和缩写被
+                清空。
+
+:bdelete[!] <code class="special">{bufname}</code>                                           <b class="vimtag">*<a name="E93">E93</a>*</b> <b class="vimtag">*<a name="E94">E94</a>*</b>
+                类似 ":bdelete[!] <code class="special">[N]</code>"，但是使用名字指定缓冲区。
+                <code class="note">注意</code> 如果缓冲区名字是一个数字，不能使用名字来访问；而应用其编
+                号代替。如果名字里含有空格，在空格前插入反斜杠。
+
+:bdelete[!] N1 N2 ...
+                对缓冲区 N1、N2、…… 执行 ":bdelete[!]"。参数可以是缓冲区名或号
+                (但不能是本身为数字的缓冲区名)。如果名字里含有空格，在空格前插
+                入反斜杠。
+
+:N,Mbdelete[!]  对 N 到 M 号 (包含 N 和 M |<a href="motion.html#inclusive">inclusive</a>|) 缓冲区执行
+                ":bdelete[!]"。
+
+:[N]bw[ipeout][!]                       <b class="vimtag">*<a name=":bw">:bw</a>*</b> <b class="vimtag">*<a name=":bwipe">:bwipe</a>*</b> <b class="vimtag">*<a name=":bwipeout">:bwipeout</a>*</b> <b class="vimtag">*<a name="E517">E517</a>*</b>
+:bw[ipeout][!] <code class="special">{bufname}</code>
+:N,Mbw[ipeout][!]
+:bw[ipeout][!] N1 N2 ...
+                类似 ":bdelete"，但真正删除缓冲区。所有和缓冲区相关的信息都丢
+                失了。所有位置标记失效，选项丢失，诸如此类。除非你确切地知道自
+                己正在做什么，否则不要使用这个命令。
+
+:[N]bun[load][!]                                <b class="vimtag">*<a name=":bun">:bun</a>*</b> <b class="vimtag">*<a name=":bunload">:bunload</a>*</b> <b class="vimtag">*<a name="E515">E515</a>*</b>
+:bun[load][!] <code class="special">[N]</code>
+                卸载缓冲区 <code class="special">[N]</code> (默认: 当前缓冲区)。原来占用的内存将被释放。该
+                缓冲区还保留在缓冲区列表里。
+                如果缓冲区被改动过，那么该命令将失败，除非使用 [!]，但是这样所
+                有的改动都会丢失。
+                该缓冲区的所有窗口都会关闭。如果缓冲区 <code class="special">[N]</code> 是当前的缓冲区，那
+                么 Vim 会显示另一个缓冲区来代替。具体来说，Vim 会选择跳转表里
+                最新且已经载入的缓冲区。
+
+:bunload[!] <code class="special">{bufname}</code>
+                类似 ":bunload[!] <code class="special">[N]</code>"，但是使用名字指定缓冲区。
+                <code class="note">注意</code> 如果缓冲区名字是一个数字，不能使用名字来访问；而应用其编
+                号代替。如果名字里含有空格，在空格前插入反斜杠。
+
+:N,Mbunload[!]  对 N 到 M 号 (包含 N 和 M |<a href="motion.html#inclusive">inclusive</a>|) 缓冲区执行
+                ":bunload[!]" 。
+
+:bunload[!] N1 N2 ...
+                对缓冲区 N1、N2、…… 执行 ":bunload[!]"。参数可以是缓冲区名或号
+                (但不能是本身为数字的缓冲区名)。如果名字里含有空格，在空格前插
+                入反斜杠。
+
+:[N]b[uffer][!] <code class="special">[N]</code>                     <b class="vimtag">*<a name=":b">:b</a>*</b> <b class="vimtag">*<a name=":bu">:bu</a>*</b> <b class="vimtag">*<a name=":buf">:buf</a>*</b> <b class="vimtag">*<a name=":buffer">:buffer</a>*</b> <b class="vimtag">*<a name="E86">E86</a>*</b>
+                编辑缓冲区列表中第 <code class="special">[N]</code> 个缓冲区，如果没指定 <code class="special">[N]</code>，就编辑当前的
+                缓冲区。关于 [!] 参见 |<a href="windows.html#:buffer-!">:buffer-!</a>|。这个命令同样可以编辑不在列
+                表里的缓冲区，<a href="options.html#'buflisted'">'buflisted'</a> 不会因而被置位。
+
+:[N]b[uffer][!] <code class="special">{bufname}</code>
+                编辑缓冲区列表中 <code class="special">{bufname}</code> 对应的缓冲区。关于 [!] 参见
+                |<a href="windows.html#:buffer-!">:buffer-!</a>|。这个命令同样可以编辑不在列表里的缓冲区，
+                <a href="options.html#'buflisted'">'buflisted'</a> 不会因而被置位。
+
+:[N]sb[uffer] <code class="special">[N]</code>                                       <b class="vimtag">*<a name=":sb">:sb</a>*</b> <b class="vimtag">*<a name=":sbuffer">:sbuffer</a>*</b>
+                分割窗口并编辑缓冲区列表中第 <code class="special">[N]</code> 个缓冲区，如果没指定 <code class="special">[N]</code>，就
+                编辑当前的缓冲区。分割时，适用 <a href="options.html#'switchbuf'">'switchbuf'</a> 的 "useopen" 设置。
+                这个命令同样可以编辑不在列表里的缓冲区，<a href="options.html#'buflisted'">'buflisted'</a> 不会因而被
+                置位。
+
+:[N]sb[uffer] <code class="special">{bufname}</code>
+                分割窗口并编辑缓冲区列表中 <code class="special">{bufname}</code> 对应的缓冲区。这个命令同
+                样可以编辑不在列表里的缓冲区，<a href="options.html#'buflisted'">'buflisted'</a> 不会因而被置位。
+                <code class="note">备注</code>: 如果你想做的是分割缓冲区并在另一个名字下建立备份，可以这
+                么做:
+<code class="example">                        :w foobar | sp #</code>
+<code class="example"></code>
+:[N]bn[ext][!] <code class="special">[N]</code>                                      <b class="vimtag">*<a name=":bn">:bn</a>*</b> <b class="vimtag">*<a name=":bnext">:bnext</a>*</b> <b class="vimtag">*<a name="E87">E87</a>*</b>
+                至缓冲区列表里往后第 <code class="special">[N]</code> 个缓冲区。[N] 默认是 1。如果到了缓冲
+                区列表的末尾，则从头循环。
+                关于 [!] 参见 |<a href="windows.html#:buffer-!">:buffer-!</a>|。
+                如果你在帮助缓冲区里，这条命令让你跳到后面的帮助缓冲区 (如果有
+                的话)。同样，你在一个正常 (非帮助) 缓冲区里，就会使你跳到后面
+                的正常缓冲区。这样是为了在打开帮助的时候不会影响到浏览正常的代
+                码或文本。下面三个命令都是如此。
+
+                                                        <b class="vimtag">*<a name=":sbn">:sbn</a>*</b> <b class="vimtag">*<a name=":sbnext">:sbnext</a>*</b>
+:[N]sbn[ext] <code class="special">[N]</code>
+                分割窗口并至缓冲区列表往后第 <code class="special">[N]</code> 个缓冲区。如果到了缓冲区列表
+                的末尾，则从头循环。使用 <a href="options.html#'switchbuf'">'switchbuf'</a>
+
+:[N]bN[ext][!] <code class="special">[N]</code>              <b class="vimtag">*<a name=":bN">:bN</a>*</b> <b class="vimtag">*<a name=":bNext">:bNext</a>*</b> <b class="vimtag">*<a name=":bp">:bp</a>*</b> <b class="vimtag">*<a name=":bprevious">:bprevious</a>*</b> <b class="vimtag">*<a name="E88">E88</a>*</b>
+:[N]bp[revious][!] <code class="special">[N]</code>
+                至缓冲区列表往前第 <code class="special">[N]</code> 个缓冲区。[N] 默认是 1。如果到了缓冲区
+                列表的顶端，则从末尾往前循环。
+                关于 [!] 参见 |<a href="windows.html#:buffer-!">:buffer-!</a>| 和 <a href="options.html#'switchbuf'">'switchbuf'</a>。
+
+:[N]sbN[ext] <code class="special">[N]</code>                <b class="vimtag">*<a name=":sbN">:sbN</a>*</b> <b class="vimtag">*<a name=":sbNext">:sbNext</a>*</b> <b class="vimtag">*<a name=":sbp">:sbp</a>*</b> <b class="vimtag">*<a name=":sbprevious">:sbprevious</a>*</b>
+:[N]sbp[revious] <code class="special">[N]</code>
+                分割窗口并至缓冲区列表往前第 <code class="special">[N]</code> 个缓冲区。如果到了缓冲区列表
+                的顶端，则从末尾往前循环。使用 <a href="options.html#'switchbuf'">'switchbuf'</a>
+
+                                                        <b class="vimtag">*<a name=":br">:br</a>*</b> <b class="vimtag">*<a name=":brewind">:brewind</a>*</b>
+:br[ewind][!]
+                至缓冲区列表中的第一个缓冲区。如果列表为空，则转到第一个列表外
+                缓冲区。
+                对于 [!] 参见 |<a href="windows.html#:buffer-!">:buffer-!</a>|
+
+                                                        <b class="vimtag">*<a name=":bf">:bf</a>*</b> <b class="vimtag">*<a name=":bfirst">:bfirst</a>*</b>
+:bf[irst]       与 ":brewind" 相同。
+
+                                                        <b class="vimtag">*<a name=":sbr">:sbr</a>*</b> <b class="vimtag">*<a name=":sbrewind">:sbrewind</a>*</b>
+:sbr[ewind]     分割窗口并至缓冲区列表中的第一个缓冲区。如果列表为空，则转到第
+                一个列表外缓冲区。
+                还需考虑 <a href="options.html#'switchbuf'">'switchbuf'</a> 选项。
+
+                                                        <b class="vimtag">*<a name=":sbf">:sbf</a>*</b> <b class="vimtag">*<a name=":sbfirst">:sbfirst</a>*</b>
+:sbf[irst]      与 ":sbrewind" 相同。
+
+                                                        <b class="vimtag">*<a name=":bl">:bl</a>*</b> <b class="vimtag">*<a name=":blast">:blast</a>*</b>
+:bl[ast][!]     至缓冲区列表中的最后一个缓冲区。如果列表为空，则转到最后一个列
+                表外缓冲区。
+                对于 [!] 参见 |<a href="windows.html#:buffer-!">:buffer-!</a>|
+
+                                                        <b class="vimtag">*<a name=":sbl">:sbl</a>*</b> <b class="vimtag">*<a name=":sblast">:sblast</a>*</b>
+:sbl[ast]       分割窗口并至缓冲区列表中的最后一个缓冲区。如果列表为空，则转到
+                最后一个列表外缓冲区。
+                还需考虑 <a href="options.html#'switchbuf'">'switchbuf'</a> 选项。
+
+:[N]bm[odified][!] <code class="special">[N]</code>                          <b class="vimtag">*<a name=":bm">:bm</a>*</b> <b class="vimtag">*<a name=":bmodified">:bmodified</a>*</b> <b class="vimtag">*<a name="E84">E84</a>*</b>
+                至往后第 <code class="special">[N]</code> 个修改过的缓冲区。<code class="note">备注</code>: 这一命令同样也能找到列表
+                外缓冲区。如果没有修改的缓冲区，此命令失败。
+
+:[N]sbm[odified] <code class="special">[N]</code>                                    <b class="vimtag">*<a name=":sbm">:sbm</a>*</b> <b class="vimtag">*<a name=":sbmodified">:sbmodified</a>*</b>
+                分割窗口并至往后第 <code class="special">[N]</code> 个修改过的缓冲区。
+                还需考虑 <a href="options.html#'switchbuf'">'switchbuf'</a> 选项。
+                <code class="note">备注</code>: 这个命令也能找到不在列表里的缓冲区。
+
+:[N]unh[ide] <code class="special">[N]</code>                        <b class="vimtag">*<a name=":unh">:unh</a>*</b> <b class="vimtag">*<a name=":unhide">:unhide</a>*</b> <b class="vimtag">*<a name=":sun">:sun</a>*</b> <b class="vimtag">*<a name=":sunhide">:sunhide</a>*</b>
+:[N]sun[hide] <code class="special">[N]</code>
+                重新排列屏幕，给缓冲区列表中的每一个载入的缓冲区打开一个窗口。
+                如果给出计数，则计数为打开窗口的最多数目。
+
+:[N]ba[ll] <code class="special">[N]</code>                                  <b class="vimtag">*<a name=":ba">:ba</a>*</b> <b class="vimtag">*<a name=":ball">:ball</a>*</b> <b class="vimtag">*<a name=":sba">:sba</a>*</b> <b class="vimtag">*<a name=":sball">:sball</a>*</b>
+:[N]sba[ll] <code class="special">[N]</code> 重新排列屏幕，给缓冲区列表中的每一个缓冲区打开一个窗口。如果给
+                出计数，则计数为打开窗口的最多数目。'<a href="options.html#'winheight'">'winheight'</a> 也限制了打开
+                窗口的数目 (当前缀 |<a href="windows.html#:vertical">:vertical</a>| 时则为 <a href="options.html#'winwidth'">'winwidth'</a>)。
+                Buf/Win Enter/Leave 不会在新窗口执行，只有真正进入这些窗口时才
+                会。
+                如果使用 |<a href="tabpage.html#:tab">:tab</a>| 修饰符，新窗口在新标签页上打开，直到用完
+                <a href="options.html#'tabpagemax'">'tabpagemax'</a> 个标签页为止。
+
+<code class="note">备注</code>: 上面所有开始编辑另一个缓冲区的命令维持 <a href="options.html#'readonly'">'readonly'</a> 的原值。这和 ":edit"
+命令不同，它每次读入文件时都会设置 <a href="options.html#'readonly'">'readonly'</a> 标志位。
+
+</pre><hr class="doubleline" /><pre>
+<h4>12. 特殊类型缓冲区                              <b class="vimtag">*<a name="special-buffers">special-buffers</a>*</b></h4>
+除了用来存放文本，缓冲区也可以用于其它目的。一些选项可以改变缓冲区的行为:
+        <a href="options.html#'bufhidden'">'bufhidden'</a>     缓冲区不再在窗口里显示时的行为
+        <a href="options.html#'buftype'">'buftype'</a>       缓冲区的类型
+        <a href="options.html#'swapfile'">'swapfile'</a>      缓冲区是否需要交换文件
+        <a href="options.html#'buflisted'">'buflisted'</a>     缓冲区是否在缓冲区列表中出现
+
+有用的缓冲区类型:
+
+quickfix        用来存放错误列表和位置列表。参见 |<a href="quickfix.html#:cwindow">:cwindow</a>| 和 |<a href="quickfix.html#:lwindow">:lwindow</a>|。这
+                些命令设置 <a href="options.html#'buftype'">'buftype'</a> 的值为 "quickfix"。你不应该修改它！
+                <a href="options.html#'swapfile'">'swapfile'</a> 为关。
+
+help            包含帮助文件。只能用 |<a href="helphelp.html#:help">:help</a>| 命令创建，缓冲区的帮助标志是内置
+                的，不能被更改。选项 <a href="options.html#'buflisted'">'buflisted'</a> 在帮助缓冲区里被复位。
+
+directory       显示目录内容。可用于文件探索器插件。该缓冲区由以下设置创建:
+<code class="example">                        :setlocal buftype=nowrite</code>
+<code class="example">                        :setlocal bufhidden=delete</code>
+<code class="example">                        :setlocal noswapfile</code>
+                缓冲区的名字就是目录的名字，并且在使用 |<a href="editing.html#:cd">:cd</a>| 命令时会作出相应
+                的调整。
+
+scratch         该缓冲区包含的文本可以被随时扔掉。在关闭窗口时，缓冲区被保存下
+                来，要删除缓冲区必须显式进行。
+                设置如下:
+<code class="example">                        :setlocal buftype=nofile</code>
+<code class="example">                        :setlocal bufhidden=hide</code>
+<code class="example">                        :setlocal noswapfile</code>
+                如果你能起个有意义的名字，缓冲区的名字可以用来标识该缓冲区。
+
+                                                <b class="vimtag">*<a name="unlisted-buffer">unlisted-buffer</a>*</b>
+unlisted        该缓冲区不在缓冲区列表里。它不能用来编辑，但是可以显示帮助文
+                件、记住文件名或标记。":bdelete" 命令也会设置这个选项，这样就
+                不会完全地删除该缓冲区。设置如下:
+<code class="example">                        :setlocal nobuflisted</code>
+
+
+ vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

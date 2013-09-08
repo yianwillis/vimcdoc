@@ -1,0 +1,449 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: if_cscop</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>IF_CSCOP</h2>
+<pre>
+<b class="vimtag">*<a name="if_cscop.txt">if_cscop.txt</a>*</b>  For Vim version 7.4.  最近更新: 2013年1月
+
+
+                  VIM REFERENCE MANUAL    by Andy Kahn
+                <code class="vim">译者</code>: lang2，tocer http://vimcdoc.sf.net
+
+                                                        <b class="vimtag">*<a name="cscope">cscope</a>*</b> <b class="vimtag">*<a name="Cscope">Cscope</a>*</b>
+本文档阐述如何使用 Vim 的 cscope 接口。
+
+Cscope 是一个类似 ctags 的工具。 你可以把它想作是超过频的 ctags，因为它功能比
+ctags 强大很多。 在 Vim 里，通过 cscope 查询结果来跳转就象跳转到其他的标签完全
+一样；它被保存在标签栈里。这样你就可以象使用 |<a href="tagsrch.html#tags">tags</a>| 一样在函数等等之间便捷的跳
+转。
+
+1. Cscope 简介                  |<a href="if_cscop.html#cscope-intro">cscope-intro</a>|
+2. Cscope 相关命令              |<a href="if_cscop.html#cscope-commands">cscope-commands</a>|
+3. Cscope 选项                  |<a href="if_cscop.html#cscope-options">cscope-options</a>|
+4. 如何在 Vim 中使用 cscope     |<a href="if_cscop.html#cscope-howtouse">cscope-howtouse</a>|
+5. 缺陷                         |<a href="if_cscop.html#cscope-limitations">cscope-limitations</a>|
+6. 建议的使用方法               |<a href="if_cscop.html#cscope-suggestions">cscope-suggestions</a>|
+7. 如何获取 cscope 等信息       |<a href="if_cscop.html#cscope-info">cscope-info</a>|
+
+目前为止 cscope 接口仅在 Unix 及 Win32 平台上有效。
+<code class="notvi">{Vi 无此功能}</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. Cscope 简介                                          <b class="vimtag">*<a name="cscope-intro">cscope-intro</a>*</b></h4>
+下面文本摘自 cscope 的手册页:
+
+</pre><hr class="singleline" /><pre>
+
+  Cscope 是一个交互式的屏幕下使用的工具，用来帮助你:
+
+       无须在厚厚的程序清单中翻来翻去就可以认识一个 C 程序的工作原理。
+
+       无须熟悉整个程序就可以知道清楚程序 bug 所要修改的代码位置。
+
+       检查提议的改动 (如添加一个枚举值) 可能会产生的效果。
+
+       验证所有的源文件都已经作了需要的修改；例如给某一个现存的函数添加一个参
+       数。
+
+       在所有相关的源文件中对一个全局变量改名。
+
+       在所有相关的位置将一个常数改为一个预处理符号。
+
+  它被设计用来回答以下的问题:
+       什么地方用到了这个符号？
+       这是在什么地方定义的？
+       这个变量在哪里被赋值？
+       这个全局符号的定义在哪里？
+       这个函数在源文件中的哪个地方？
+       哪些函数调用了这个函数？
+       这个函数调用了哪些函数？
+       信息 "out of space" 从哪来？
+       这个源文件在整个目录结构中处于什么位置？
+       哪些文件包含这个头文件？
+
+  Cscope 在第一次被使用在指定的源文件时会建立一个符号的数据库。接下来调用时，
+  cscope 仅仅重建那些被改动或者和新文件相关的数据库。那些没有被改动的文件相关
+  的数据库会被直接复制使用。这使得重建数据库要比第一次运行快许多。
+
+</pre><hr class="singleline" /><pre>
+
+当 cscope 正常调用时，你会得到一个全屏幕的选择窗口。你可以针对以上问题输入一个
+查询。然而，一旦找到一个匹配而你进入了一个文本编辑器来查看和编辑包含匹配的源文
+件时，你无法像在 vi 中使用 Ctrl-] 或 :tag 命令那样方便地跳转。
+
+Vim 的 cscope 接口的工作原理是: 先调用 cscope 的命令行接口，然后分析其输出结果
+从而找到匹配处。最终结果是: cscope 查询结果就象一般的标签一样。你可以使用一般
+的标签命令 (Ctrl-］ 或 :tag) 然后再用 Ctrl-T 回跳。 (<code class="note">注意</code> 不过，其实你不能直接
+使用 Ctrl-] 或 :tag 跳转到标签。在那之前你必须重新定义映射或设定一些选项值。下
+面的几节会告诉你 cscope 接口如何工作，以及建议的使用方式。)
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. Cscope 相关命令                                      <b class="vimtag">*<a name="cscope-commands">cscope-commands</a>*</b></h4>
+                <b class="vimtag">*<a name=":cscope">:cscope</a>*</b> <b class="vimtag">*<a name=":cs">:cs</a>*</b> <b class="vimtag">*<a name=":scs">:scs</a>*</b> <b class="vimtag">*<a name=":scscope">:scscope</a>*</b> <b class="vimtag">*<a name="E259">E259</a>*</b> <b class="vimtag">*<a name="E262">E262</a>*</b> <b class="vimtag">*<a name="E561">E561</a>*</b> <b class="vimtag">*<a name="E560">E560</a>*</b>
+所有命令都是通过主命令 ":cscope" 的子项完成的。主命令最短的缩写是 ":cs"。
+":scscope" 完成同样的功能的同时还可以分割窗口 (缩写: "scs")。
+
+可用的子命令有:
+
+                        <b class="vimtag">*<a name="E563">E563</a>*</b> <b class="vimtag">*<a name="E564">E564</a>*</b> <b class="vimtag">*<a name="E566">E566</a>*</b> <b class="vimtag">*<a name="E568">E568</a>*</b> <b class="vimtag">*<a name="E569">E569</a>*</b> <b class="vimtag">*<a name="E622">E622</a>*</b> <b class="vimtag">*<a name="E623">E623</a>*</b>
+                        <b class="vimtag">*<a name="E625">E625</a>*</b> <b class="vimtag">*<a name="E626">E626</a>*</b> <b class="vimtag">*<a name="E609">E609</a>*</b>
+    add   : 添加一个新的 cscope 数据库／连接。
+
+        用法    :cs add {file|dir} [pre-path] <code class="special">[flags]</code>
+
+            [pre-path] 用来通知 cscope 使用 -P [pre-path] 选项。
+
+            <code class="special">[flags]</code> 可以用来给 cscope 传递额外的选项。
+
+        例子
+<code class="example">            :cscope add /usr/local/cdb/cscope.out</code>
+<code class="example">            :cscope add /projects/vim/cscope.out /usr/local/vim</code>
+<code class="example">            :cscope add cscope.out /usr/local/vim -C</code>
+
+                                      <b class="vimtag">*<a name="cscope-find">cscope-find</a>*</b> <b class="vimtag">*<a name="cs-find">cs-find</a>*</b> <b class="vimtag">*<a name="E567">E567</a>*</b>
+    find  : 查询 cscope。除了第 5 个之外的所有 cscope 查询功能都可以使用。
+            第 5 个是 "Change this grep pattern"。
+
+        用法    :cs find <code class="special">{querytype}</code> <code class="special">{name}</code>
+
+            <code class="special">{querytype}</code> 对应 cscope 控制台接口编号和 nvi 的缺省命令:
+
+                0 或 s: 查找本 C 符号
+                1 或 g: 查找本定义
+                2 或 d: 查找本函数调用的函数
+                3 或 c: 查找调用本函数的函数
+                4 或 t: 查找本字符串
+                6 或 e: 查找本 egrep 模式
+                7 或 f: 查找本文件
+                8 或 i: 查找包含本文件的文件
+
+        除了 4 和 6 之外的类型忽略 <code class="special">{name}</code> 之前的空格。4 和 6 在 <code class="special">{querytype}</code> 和
+        <code class="special">{name}</code> 之间只能有一个空格分隔。多余的空格是 <code class="special">{name}</code> 的一部分。
+
+        例如
+<code class="example">            :cscope find c vim_free</code>
+<code class="example">            :cscope find 3  vim_free</code>
+
+            这两个例子执行同样的查询: 名为 "vim_free" 的函数。
+<code class="example"></code>
+<code class="example">            :cscope find t initOnce</code>
+<code class="example">            :cscope find t  initOnce</code>
+
+            前者查找文本 "initOnce"，后者查找 " initOnce"。
+<code class="example"></code>
+<code class="example">            :cscope find 0 DEFAULT_TERM</code>
+
+            在 Vim 5.1 的源代码内执行以上的命令得到以下的结果:
+
+            Cscope tag: DEFAULT_TERM
+               #   line  filename / context / line
+               1   1009  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"amiga"
+               2   1013  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"win32"
+               3   1017  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"pcterm"
+               4   1021  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"ansi"
+               5   1025  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"vt52"
+               6   1029  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"os2ansi"
+               7   1033  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"ansi"
+               8   1037  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         # undef DEFAULT_TERM
+               9   1038  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"beos-ansi"
+              10   1042  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;GLOBAL&gt;</code>&gt;
+                         #define DEFAULT_TERM (char_u *)"mac-ansi"
+              11   1335  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;set_termname&gt;</code>&gt;
+                         term = DEFAULT_TERM;
+              12   1459  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;set_termname&gt;</code>&gt;
+                         if (STRCMP(term, DEFAULT_TERM))
+              13   1826  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;termcapinit&gt;</code>&gt;
+                         term = DEFAULT_TERM;
+              14   1833  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;termcapinit&gt;</code>&gt;
+                         term = DEFAULT_TERM;
+              15   3635  vim-5.1-gtk/src/term.c &lt;<code class="special">&lt;update_tcap&gt;</code>&gt;
+                         p = find_builtin_term(DEFAULT_TERM);
+            Enter nr of choice (<code class="special">&lt;CR&gt;</code> to abort):
+
+            这样的输出显示了几类信息:
+            1. 标签号码 (例子中有 15 个)。
+            2. 标签所在的行号。
+            3. 标签所在文件的文件名。
+            4. 标签的上下文 (如: 全局或函数名)。
+            5. 标签所在行的文本。
+
+    help  : 显示一个简单的帮助。
+
+            用法    :cs help
+
+                                                        <b class="vimtag">*<a name="E261">E261</a>*</b>
+    kill  : 终止一个 cscope 连接 (或终止所有 cscope 连接)。
+
+            用法   :cs kill {num|partial_name}
+
+            要终止一个连接，需要给出连接号或者部分的连接名称。部分名称可以
+            是数据库文件路径的任何一部分。所以要当心使用这个功能！
+
+            如果给定的连接号是 -1，那么 所 有 的 cscope 连接都会被终止。
+
+    reset : 重新初始化所有连接。
+
+            用法    :cs reset
+
+    show  : 显示当前的连接。
+
+            用法    :cs show
+
+                                                        <b class="vimtag">*<a name=":lcscope">:lcscope</a>*</b> <b class="vimtag">*<a name=":lcs">:lcs</a>*</b>
+此命令和 ":cscope" 命令相同，除了在置位选项 <a href="options.html#'cscopequickfix'">'cscopequickfix'</a> 的时候，使用当前
+窗口的位置列表而不是 quickfix 列表来显示 cscope 的结果。
+
+                                                        <b class="vimtag">*<a name=":cstag">:cstag</a>*</b> <b class="vimtag">*<a name="E257">E257</a>*</b> <b class="vimtag">*<a name="E562">E562</a>*</b>
+如果你同时使用 cscope 和 ctags，|<a href="if_cscop.html#:cstag">:cstag</a>| 允许你在跳转前对两者都进行查询。例
+如，你可以选择先查询 cscope 数据库，如果无法找到匹配，再查询标签文件。这种做法
+的次序可以通过 |<a href="if_cscop.html#csto">csto</a>| 的值来调整。参见 |<a href="if_cscop.html#cscope-options">cscope-options</a>|。
+
+|<a href="if_cscop.html#:cstag">:cstag</a>| 在搜索 cscope 数据库时执行和 ":cs find g" 加上标识符一样的操作。
+
+|<a href="if_cscop.html#:cstag">:cstag</a>| 在搜索标签文件时执行和 |<a href="tagsrch.html#:tjump">:tjump</a>| 加上标识符一样的操作。
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>3. Cscope 选项                                          <b class="vimtag">*<a name="cscope-options">cscope-options</a>*</b></h4>
+所有 cscope 有关的选项都可以用 |<a href="options.html#:set">:set</a>| 命令来设定。比较理想的做法是将这些设定添
+加到你的启动文件中 (如: .vimrc)。某些 cscope 选项仅仅在 |<a href="starting.html#.vimrc">.vimrc</a>| 文件内才有
+效。在 vim 启动之后再设定它们的值没有任何效果！
+
+                                                        <b class="vimtag">*<a name="cscopeprg">cscopeprg</a>*</b> <b class="vimtag">*<a name="csprg">csprg</a>*</b>
+<a href="options.html#'cscopeprg'">'cscopeprg'</a> 指定用来执行 cscope 的命令。缺省值是 "cscope"。例如:
+<code class="example">        :set csprg=/usr/local/bin/cscope</code>
+
+                                            <b class="vimtag">*<a name="cscopequickfix">cscopequickfix</a>*</b> <b class="vimtag">*<a name="csqf">csqf</a>*</b> <b class="vimtag">*<a name="E469">E469</a>*</b>
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+quickfix">+quickfix</a>| 特性才有效}</code>
+<a href="options.html#'cscopequickfix'">'cscopequickfix'</a> 设定是否使用 quickfix 窗口来显示 cscope 结果。这是一组用逗号
+分隔的值。每个值可以代表一个 |<a href="if_cscop.html#cscope-find">cscope-find</a>| 命令 (s、g、d、c、t、e、f 或 i) 加
+一个标志位 (+、- 或 0)。
+'+' 表示结果必须被添加到 quickfix 窗口中。'-' 表示清除上次的结果，'0' 或命令本
+身不存在表示不使用 quickfix。搜索从字符串首开始直到命令第一次出现时结束。缺省
+值是 "" (不使用 quickfix 窗口)。下面是个可能有用的值:
+<code class="example">        :set cscopequickfix=s-,c-,d-,i-,t-,e-</code>
+
+                                                        <b class="vimtag">*<a name="cscopetag">cscopetag</a>*</b> <b class="vimtag">*<a name="cst">cst</a>*</b>
+若置位了 <a href="options.html#'cscopetag'">'cscopetag'</a> 选项，":tag" 命令，<code class="keystroke">CTRL-]</code> 以及 "vim -t" 都会使用 |<a href="if_cscop.html#:cstag">:cstag</a>|
+而不是缺省的 :tag。也就是说，设定 <a href="options.html#'cst'">'cst'</a> 选项意味着你总同时搜索 cscope 数据库和
+标签文件。缺省值为关。例如:
+<code class="example">        :set cst</code>
+<code class="example">        :set nocst</code>
+
+                                                        <b class="vimtag">*<a name="cscoperelative">cscoperelative</a>*</b> <b class="vimtag">*<a name="csre">csre</a>*</b>
+若置位了 <a href="options.html#'cscoperelative'">'cscoperelative'</a>，而没有给 cscope 提供前缀 (即 cscope 的 -P 选项参
+数)，cscope.out 所在位置的目录名 (通常是项目的根目录) 用作前缀来构造绝对路径。
+缺省关闭此功能。<code class="note">注意</code>: 此选项仅当 cscope (cscopeprg) 启动时没有前缀路径 (-P) 时
+才适用。示例:
+<code class="example">        :set csre</code>
+<code class="example">        :set nocsre</code>
+
+                                                        <b class="vimtag">*<a name="cscopetagorder">cscopetagorder</a>*</b> <b class="vimtag">*<a name="csto">csto</a>*</b>
+<a href="options.html#'csto'">'csto'</a> 的值决定 |<a href="if_cscop.html#:cstag">:cstag</a>| 命令查找的次序。如果 <a href="options.html#'csto'">'csto'</a> 被设为 0，cscope 数据库先
+被搜索，搜索失败的情况下在搜索标签文件。如果 <a href="options.html#'csto'">'csto'</a> 被设为 1，标签文件会在
+cscope 数据库之前被搜索。缺省值为 0。
+例:
+<code class="example">        :set csto=0</code>
+<code class="example">        :set csto=1</code>
+
+                                                <b class="vimtag">*<a name="cscopeverbose">cscopeverbose</a>*</b> <b class="vimtag">*<a name="csverb">csverb</a>*</b>
+如果 <a href="options.html#'cscopeverbose'">'cscopeverbose'</a> 没有被设定 (缺省情况)，当添加一个数据库时，成功与否不会被
+显示。理想的情况是，你先在 |<a href="starting.html#.vimrc">.vimrc</a>| 文件中复位该选项，再添加 cscope 数据库，然
+后再置位。这样，如果你在使用 vim 当中动态添加数据库，你就会被 vim 告知结果。例
+如:
+<code class="example">        :set csverb</code>
+<code class="example">        :set nocsverb</code>
+
+                                                      <b class="vimtag">*<a name="cscopepathcomp">cscopepathcomp</a>*</b> <b class="vimtag">*<a name="cspc">cspc</a>*</b>
+<a href="options.html#'cspc'">'cspc'</a> 的值决定显示文件路径的多少部分。在缺省值 0 的情况下整个路径都会被显示。
+1 只显示文件名，而不显示路径名。其它值会显示该值表示数目的部分。例如:
+<code class="example">        :set cspc=3</code>
+会显示文件路径的最后 3 个部分，包括文件名本身。
+
+</pre><hr class="doubleline" /><pre>
+<h4>4. 如何在 Vim 中使用 cscope                             <b class="vimtag">*<a name="cscope-howtouse">cscope-howtouse</a>*</b></h4>
+首先你要做的是为你的源文件建立一个 cscope 数据库。最简单的做法是使用
+"cscope -b" 命令。更详细的说明请查阅 cscope 的手册页。
+
+假定你已经建立了一个 cscope 数据库，你需要将其添加 "add" 到 Vim 中来。这会建立
+一个 cscope "连接" 给 Vim 来使用。你可以把这些加入到你的 .vimrc 文件里。也可以
+在 vim 启动之后手动完成。例如，要添加一个 cscope 数据库 "cscope.out"，你可以这
+样做:
+<code class="example"></code>
+<code class="example">        :cs add cscope.out</code>
+
+
+你可以用 ":cs show" 命令来检查一下结果。该命令会产生类似下面的结果:
+<code class="example"></code>
+<code class="example"> # pid    database name                       prepend path</code>
+<code class="example"> 0 28806  cscope.out                          &lt;none&gt;</code>
+
+<code class="note">备注</code>:
+因为 Microsoft RTL 的缺陷，Win32 版本只能显示 0 而不是真正的进程 ID。
+
+一旦建立了 cscope 连接，你就可以做各种查询并得到结果。查询所用的命令是
+":cs find"。例如:
+<code class="example"></code>
+<code class="example">        :cs find g ALIGN_SIZE</code>
+
+这样要做很多的打字工作，所以有些麻烦。幸运的是，我们可以通过定义快捷键来避免过
+多的输入。参考 |<a href="if_cscop.html#cscope-suggestions">cscope-suggestions</a>| 可以得到一些使用的建议。
+
+如果匹配结果只有一个，你会被自动带到该处。如果匹配结果多于一个，Vim 会显示一个
+选择屏幕让你来选择一处匹配。在你跳转到新的位置后，简单地用 Ctrl-T 就可以跳回原
+处。
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>5. 缺陷                                                 <b class="vimtag">*<a name="cscope-limitations">cscope-limitations</a>*</b></h4>
+Vim 对 cscope 的支持仅当所在系统支持以下四个系统调用时才可用: fork()，
+pipe()，execl()，waitpid()。这意味着它基本上仅限于 Unix 系统。
+
+另外 cscope 支持在 Win32 也可以使用。更多的信息以及一个 Win32 版本的 cscope 可
+以在这里找到:
+
+        http://iamphet.nm.ru/cscope/index.html
+
+http://cscope.sourceforge.net 的 DJGPP 编译版本已知不能和 Vim 一起工作。
+
+硬性的限制: 在用 |<a href="if_cscop.html#:cstag">:cstag</a>| 搜索标签文件时要执行 |<a href="tagsrch.html#:tjump">:tjump</a>|，这一点是无法配置的 (
+如: 你不能选择使用 tselect)。
+
+</pre><hr class="doubleline" /><pre>
+<h4>6. 建议的使用方法                                       <b class="vimtag">*<a name="cscope-suggestions">cscope-suggestions</a>*</b></h4>
+将下面的设定加入到你的 .vimrc 里 (根据你的情况调整文件路径):
+<code class="example"></code>
+<code class="example">        if has("cscope")</code>
+<code class="example">                set csprg=/usr/local/bin/cscope</code>
+<code class="example">                set csto=0</code>
+<code class="example">                set cst</code>
+<code class="example">                set nocsverb</code>
+<code class="example">                " add any database in current directory</code>
+<code class="example">                if filereadable("cscope.out")</code>
+<code class="example">                    cs add cscope.out</code>
+<code class="example">                " else add database pointed to by environment</code>
+<code class="example">                elseif $CSCOPE_DB != ""</code>
+<code class="example">                    cs add $CSCOPE_DB</code>
+<code class="example">                endif</code>
+<code class="example">                set csverb</code>
+<code class="example">        endif</code>
+<code class="example"></code>
+我们设定了 <a href="options.html#'cscopetag'">'cscopetag'</a>，这样所有的 :tag 命令就会实际上调用 :cstag。这包括
+:tag、Ctrl-] 及 "vim -t"。结果是一般的 tag 命令不仅搜索由 ctags 产生的标签文
+件，同时也搜索 cscope 数据库。
+
+有些用户也许向保留原来的标签命令，而用另外一个快捷键来执行 :cstag 命令。例如，
+你可以用下面的命令将 Ctrl-_ (下划线) 映射到 :cstag:
+<code class="example"></code>
+<code class="example">        map &lt;C-_&gt; :cstag &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example"></code>
+常用的 cscope 查询 (用 ":cs find") 包括寻找所有调用指定函数的函数以及寻找所有
+出现某个指定的 C 符号的地方。你可以参照以下的映射:
+<code class="example"></code>
+<code class="example">        map g&lt;C-]&gt; :cs find 3 &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        map g&lt;C-\&gt; :cs find 0 &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example"></code>
+这些对 Ctrl-] (右方括号) 和 Ctrl-\ (反斜杠) 的映射使你可以将光标移动到你想作查
+询的函数或 C 符号，然后快速地查询 cscope 数据库。
+
+或者，你也可以使用下面的方式。这些映射借鉴了 Cscope 主页
+(http://cscope.sourceforge.net/) 上的 Vim/Cscope 教程:
+<code class="example"></code>
+<code class="example">        nmap &lt;C-_&gt;s :cs find s &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;g :cs find g &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;c :cs find c &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;t :cs find t &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;e :cs find e &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;f :cs find f &lt;C-R&gt;=expand("&lt;cfile&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;i :cs find i ^&lt;C-R&gt;=expand("&lt;cfile&gt;")&lt;CR&gt;$&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-_&gt;d :cs find d &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example"></code>
+<code class="example">        " Using 'CTRL-spacebar' then a search type makes the vim window</code>
+<code class="example">        " split horizontally, with search result displayed in</code>
+<code class="example">        " the new window.</code>
+<code class="example"></code>
+<code class="example">        nmap &lt;C-Space&gt;s :scs find s &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;g :scs find g &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;c :scs find c &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;t :scs find t &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;e :scs find e &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;f :scs find f &lt;C-R&gt;=expand("&lt;cfile&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;i :scs find i ^&lt;C-R&gt;=expand("&lt;cfile&gt;")&lt;CR&gt;$&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;d :scs find d &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example"></code>
+<code class="example">        " Hitting CTRL-space *twice* before the search type does a vertical</code>
+<code class="example">        " split instead of a horizontal one</code>
+<code class="example"></code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;s</code>
+<code class="example">                \:vert scs find s &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;g</code>
+<code class="example">                \:vert scs find g &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;c</code>
+<code class="example">                \:vert scs find c &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;t</code>
+<code class="example">                \:vert scs find t &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;e</code>
+<code class="example">                \:vert scs find e &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;i</code>
+<code class="example">                \:vert scs find i ^&lt;C-R&gt;=expand("&lt;cfile&gt;")&lt;CR&gt;$&lt;CR&gt;</code>
+<code class="example">        nmap &lt;C-Space&gt;&lt;C-Space&gt;d</code>
+<code class="example">                \:vert scs find d &lt;C-R&gt;=expand("&lt;cword&gt;")&lt;CR&gt;&lt;CR&gt;</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>7. 如何获取 Cscope 等信息                               <b class="vimtag">*<a name="cscope-info">cscope-info</a>*</b></h4>
+如果你还没有 cscope (你的编译器或 OS 发布不包括 cscope)，你可以从下面的地址免
+费下载:
+        http://cscope.sourceforge.net/
+这是 SCO 以 BSD 许可发布的。
+
+如果你想要更新的版本，你可以购买它。根据 (旧的) nvi 文档:
+
+        你可以用 $400 从 AT&amp;T Software Solutions 购买无限制的许可的源码。致电
+        +1-800-462-8146。
+
+你还可以从 World-Wide Exptools Open Sourcean 的网页下载 cscope 13.x 及
+mlcscope 14.x (多语言 cscope，支持 C、C++、Java、lex、yacc、breakpoint
+listing、Ingres 及 SDL)。网址如下:
+        http://www.bell-labs.com/project/wwexptools/packages.html
+
+在 Solaris 2.x 上，如果你有 C 编译器的许可，你也就有 cscope。两者通常位于
+/opt/SUNWspro/bin。
+
+SGI 开发者也可以得到 cscope。在以下的地址搜索 cscope:
+        http://freeware.sgi.com/index-by-alpha.html
+        https://toolbox.sgi.com/toolbox/utilities/cscope/
+第二个地址仅对那些拥有 SGI toolbox 密码的用户有效。
+
+网上还有一个旧版本的 cscope 的克隆 (叫 "cs") 。出于各种原因，Vim 不支持该程
+序。
+
+Vim cscope 接口/支持的原作者是 Andy Kahn &lt;ackahn@netapp.com&gt;。原始的结构 (包括
+很少一部分代码) 来自 nvi 的 cscope 接口。如果你在使用 Vim cscope 接口时有任何
+问题，建议，patches 等等，请与他联系。
+                                                        <b class="vimtag">*<a name="cscope-win32">cscope-win32</a>*</b>
+这里可以找到一个 Win32 版本的 cscope:
+        http://code.google.com/p/cscope-win32/
+
+Win32 支持是 Sergey Khorev &lt;sergey.khorev@gmail.com&gt; 加入的。如果你有 Win32 相
+关的问题，请联系他。
+
+ vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

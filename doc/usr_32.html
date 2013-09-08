@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: usr_32</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>USR_32</h2>
+<pre>
+<b class="vimtag">*<a name="usr_32.txt">usr_32.txt</a>*</b>    For Vim version 7.4.  最近更新: 2010年7月
+
+                     VIM USER MANUAL - by Bram Moolenaar
+                                <code class="vim">译者</code>: Willis
+                                http://vimcdoc.sf.net
+
+                              撤销树
+
+
+Vim 提供了多层撤销功能。如果你撤销了一些改变然后又进行了一些新的改变，你就在撤
+销树里建立了一个分支。本文本讨论如何在分支间来回移动。
+
+|<a href="usr_32.html#32.1">32.1</a>|  撤销到文件写入时的状态
+|<a href="usr_32.html#32.2">32.2</a>|  为每次改变进行编号
+|<a href="usr_32.html#32.3">32.3</a>|  撤销树内任意跳转
+|<a href="usr_32.html#32.4">32.4</a>|  时间旅行
+
+           后一章: |<a href="usr_40.html#usr_40.txt">usr_40.txt</a>|  创建新的命令
+           前一章: |<a href="usr_31.html#usr_31.txt">usr_31.txt</a>|  利用 GUI
+             目录: |<a href="usr_toc.html#usr_toc.txt">usr_toc.txt</a>|
+
+</pre><hr class="doubleline" /><pre>
+<h4><b class="vimtag">*<a name="32.1">32.1</a>*</b>  撤销到文件写入时的状态</h4>
+有时你做了一些改变，然后发现还是想恢复到最近写入文件时的状态。没问题，用下面的
+命令就可以:
+<code class="example"></code>
+<code class="example">        :earlier 1f</code>
+<code class="example"></code>
+这里，"f" 代表 "file" (文件)。
+
+可以重复此命令，回到更遥远的过去。使用不同于 1 的计数值可以回去得快一些。
+
+如果回去太久了，可以这样往前:
+<code class="example"></code>
+<code class="example">        :later 1f</code>
+<code class="example"></code>
+<code class="note">注意</code> 这些命令真的是依据时间序列进行的。如果你在撤销一些改变后又进行过改变，这
+一点很有区别。下一节有所解释。
+
+另外也请 <code class="note">注意</code> 我们说的是文本写入。要把撤销信息写入文件见 |<a href="undo.html#undo-persistence">undo-persistence</a>|。
+
+</pre><hr class="doubleline" /><pre>
+<h4><b class="vimtag">*<a name="32.2">32.2</a>*</b>  为每次改变进行编号</h4>
+|<a href="usr_02.html#02.5">02.5</a>| 一节，我们只讨论了单线的撤销/重做。其实，可以出现分支。当你撤销了一些改
+变，又进行了一些新的改变，新的改变构成了撤销树的一个分支。
+
+让我们从文本 "one" 开始。第一个要做的改变是附加 " too"。然后移动到第一个 'o'
+上并修改为 'w'。这时我们有了两个改变，分别编号为 1 和 2，而文本有三个状态:
+
+<code class="section">                one </code>
+                 |
+              改变 1
+                 |
+<code class="section">              one too </code>
+                 |
+              改变 2
+                 |
+<code class="section">              one two </code>
+
+如果我们撤销一次改变，回到 "one too"，然后把 "one" 换成 "me"，我们就在撤销树里
+建立了一个分支:
+
+<code class="section">                one </code>
+                 |
+              改变 1
+                 |
+<code class="section">              one too </code>
+              /     \
+         改变 2    改变 3
+            |         |
+<code class="section">         one two    me too </code>
+
+现在你可以用 |<a href="undo.html#u">u</a>| 命令来撤销。如果你做两次，你得到的是 "one"。用 |<a href="undo.html#CTRL-R">CTRL-R</a>| 来重
+做，你会到达 "one too"。多做一次 |<a href="undo.html#CTRL-R">CTRL-R</a>| 又把你带到 "me too"。现在我们看到，
+撤销/重做使用最近使用的分支，在树内上下移动。
+
+这里重要的是改变发生的顺序。这里说的改变不考虑撤销和重做。每次改变后，你会得到
+一个新的文本状态。
+
+<code class="note">注意</code> 只有改变被编号，上面显示的文本没有标识符。通常，通过它上方的改变号来引用
+它。但有时也通过他下方的某个改变之一来引用。特别是在树内往上移动的时候，这样你
+可以知道哪个改变刚刚被撤销掉。
+
+</pre><hr class="doubleline" /><pre>
+<h4><b class="vimtag">*<a name="32.3">32.3</a>*</b>  撤销树内任意跳转</h4>
+那么你现在怎么能到 "one two" 呢？你可以用这个命令:
+<code class="example"></code>
+<code class="example">        :undo 2</code>
+<code class="example"></code>
+文本现在成为了 "one two"，因为它在改变号 2 之下。用 |<a href="undo.html#:undo">:undo</a>| 命令可以跳转到树内
+任何改变之下的文本。
+
+现在再进行一项改变: 把 "one" 改成 "not":
+
+<code class="section">                one </code>
+                 |
+              改变 1
+                 |
+<code class="section">              one too </code>
+              /     \
+         改变 2    改变 3
+            |         |
+<code class="section">         one two    me too </code>
+            |
+         改变 4
+            |
+<code class="section">         not two </code>
+
+现在你又改了主意想回到 "me too" 了。用 |<a href="undo.html#g-">g-</a>| 命令。它在时间点上往后退，也就是
+说，它不是在树内上下移动，而是回到之前所在的改变。
+
+你可以重复 |<a href="undo.html#g-">g-</a>|，这样你会看到文本的变化过程:
+<code class="section">        me too </code>
+<code class="section">        one two </code>
+<code class="section">        one too </code>
+<code class="section">        one </code>
+
+用 |<a href="undo.html#g+">g+</a>| 时间点上往前进:
+<code class="section">        one </code>
+<code class="section">        one too </code>
+<code class="section">        one two </code>
+<code class="section">        me too </code>
+<code class="section">        not two </code>
+
+|<a href="undo.html#:undo">:undo</a>| 用于你知道你要跳转到哪个改变的场合。|<a href="undo.html#g-">g-</a>| 和 |<a href="undo.html#g+">g+</a>| 用于你不知道具体要到
+达的改变号的情况。
+
+你可以在 |<a href="undo.html#g-">g-</a>| 和 |<a href="undo.html#g+">g+</a>| 之前加上计数来重复执行。
+
+</pre><hr class="doubleline" /><pre>
+<h4><b class="vimtag">*<a name="32.4">32.4</a>*</b>  时间旅行</h4>
+如果你在文本上工作了一段时间，撤销树变得相当大。这时你可能想回到几分钟之前的文
+本上。
+
+要看撤销树里有什么分支，用:
+<code class="example"></code>
+<code class="example">        :undolist</code>
+<code class="section">        number changes  time </code>
+             3       2  16 seconds ago
+             4       3  5 seconds ago
+
+这里你可以看到每个分支上叶结点的编号，还有改变发生的时间。假定我们在改变号 4
+下方的 "not two" 那里，你可以这样回到十秒前:
+<code class="example"></code>
+<code class="example">        :earlier 10s</code>
+<code class="example"></code>
+取决于改变发生了多长时间，你回到达树内的某个位置。|<a href="undo.html#:earlier">:earlier</a>| 命令参数可以用
+"m" 代表分钟，"h" 代表小时，"d" 代表天。用一个很大的数，你可以一路回到很久以
+前:
+<code class="example"></code>
+<code class="example">        :earlier 100d</code>
+<code class="example"></code>
+要 (再次) 进入未来世界，用 |<a href="undo.html#:later">:later</a>| 命令:
+<code class="example"></code>
+<code class="example">        :later 1m</code>
+<code class="example"></code>
+参数可以用 "s"、"m" 和 "h"，和 |<a href="undo.html#:earlier">:earlier</a>| 完全类似。
+
+要看到更多的细节，或者要对信息进行操作，可以用 |<a href="eval.html#undotree()">undotree()</a>| 函数。要看看它返回
+什么:
+<code class="example"></code>
+<code class="example">        :echo undotree()</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<code class="example"></code>
+下一章: |<a href="usr_40.html#usr_40.txt">usr_40.txt</a>|  创建新的命令
+
+版权: 参见 |<a href="usr_01.html#manual-copyright">manual-copyright</a>|  vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

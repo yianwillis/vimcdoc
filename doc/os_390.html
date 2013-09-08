@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: os_390</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>OS_390</h2>
+<pre>
+<b class="vimtag">*<a name="os_390.txt">os_390.txt</a>*</b>    For Vim version 7.4.  最近更新: 2010年7月
+
+
+                  <code class="vim">VIM 参考手册    by Ralf Schandl</code>
+                                <code class="vim">译者</code>: Willis
+                                http://vimcdoc.sf.net
+
+                                        <b class="vimtag">*<a name="zOS">zOS</a>*</b> <b class="vimtag">*<a name="z%2FOS">z/OS</a>*</b> <b class="vimtag">*<a name="OS390">OS390</a>*</b> <b class="vimtag">*<a name="os390">os390</a>*</b> <b class="vimtag">*<a name="MVS">MVS</a>*</b>
+本文包含了 VIM 的 z/OS UNIX 版本的特点。
+
+1. 依赖于 ASCII/EBCDIC 编码的脚本       |<a href="os_390.html#zOS-has-ebcdic">zOS-has-ebcdic</a>|
+2. Putty 和色彩                         |<a href="os_390.html#zOS-PuTTY">zOS-PuTTY</a>|
+3. Motif 的问题                         |<a href="os_390.html#zOS-Motif">zOS-Motif</a>|
+4  漏洞                                 |<a href="os_390.html#zOS-Bugs">zOS-Bugs</a>|
+5. 限制                                 |<a href="os_390.html#zOS-limitations">zOS-limitations</a>|
+6. z/OS UNIX 上的开源软件               |<a href="os_390.html#zOS-open-source">zOS-open-source</a>|
+
+<code class="section">贡献者: </code>
+本 z/OS UNIX 的移植是由 Ralf Schandl 为了下面提到的红皮书完成的。
+
+提供修改、报告漏洞、或者两者都有者:
+
+        David Moore
+        Anthony Giorgio
+        还有其他
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 依赖于 ASCII/EBCDIC 的脚本           <b class="vimtag">*<a name="OS390-has-ebcdic">OS390-has-ebcdic</a>*</b> <b class="vimtag">*<a name="zOS-has-ebcdic">zOS-has-ebcdic</a>*</b></h4>
+为了内部脚本语言的编写方便，增加了 "ebcdic" 特性。所以你可以用以下方式修正依赖
+于ASCII 的脚本:
+
+<code class="example">    if has("ebcdic")</code>
+<code class="example">        let space = 64</code>
+<code class="example">    else</code>
+<code class="example">        let space = 32</code>
+<code class="example">    endif</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. PuTTY 和色彩                         <b class="vimtag">*<a name="OS390-PuTTY">OS390-PuTTY</a>*</b> <b class="vimtag">*<a name="zOS-PuTTY">zOS-PuTTY</a>*</b></h4>
+如果使用 PuTTY 连接到 z/OS 有语法高亮的问题或者显示不正常，可以:
+
+- 配置 Putty 使用 "vt220" 终端 (Connection-&gt;Data)
+- 在 vimrc 加入以下 3 行:
+
+
+<code class="example">    set t_AB=[4%p1%dm</code>
+<code class="example">    set t_AF=[3%p1%dm</code>
+<code class="example">    set t_CO=8</code>
+
+
+<code class="note">注意</code>:  是一个字符，用 <code class="special">&lt;C-V&gt;</code><code class="special">&lt;Esc&gt;</code> 可以输入。
+
+</pre><hr class="doubleline" /><pre>
+<h4>3. Motif 问题                           <b class="vimtag">*<a name="OS390-Motif">OS390-Motif</a>*</b> <b class="vimtag">*<a name="zOS-Motif">zOS-Motif</a>*</b></h4>
+<code class="note">备注</code>: Vim 6.* 发现过，此后没有测试过。
+
+看起来，在移植 Motif 库到 z/OS 的时候，忘记把下拉菜单的快捷键从 EBCDIC 翻译成
+ASCII 了。即使在我手动修改菜单以后，快捷键也只能打开菜单 (比如 <code class="special">&lt;Alt-F&gt;</code> 打开
+文件菜单)，但是不能打开菜单项 (比如 <code class="special">&lt;Alt-F&gt;</code>O 打开文件浏览器)。
+
+现在还没有这个问题的解决方法。
+
+</pre><hr class="doubleline" /><pre>
+<h4>4. 漏洞                                 <b class="vimtag">*<a name="OS390-bugs">OS390-bugs</a>*</b> <b class="vimtag">*<a name="zOS-Bugs">zOS-Bugs</a>*</b></h4>
+- 在可视块模式，如果选择了大量的文本，Vim 一定会挂起。这可能是由一个内存错误引
+  起的。 <code class="note">注意</code> 终端和 GUI 版本都存在这个问题。
+
+</pre><hr class="doubleline" /><pre>
+<h4>5. 限制                                 <b class="vimtag">*<a name="OS390-limitations">OS390-limitations</a>*</b> <b class="vimtag">*<a name="zOS-limitations">zOS-limitations</a>*</b></h4>
+- tag 文件不能进行二进制查找。
+  /bin/sort 程序缺省按照 ASCII 值排序。通常，ctags 调用这个程序来为标签 (tag)
+  排序。也许有一个 ctags 版本能够做正确的事情，不过我们不能肯定。看起来，这是
+  个永久的限制。
+
+- 在我们的大型机上测试的版本上，cscope 接口 (|<a href="if_cscop.html#cscope">cscope</a>|) 不能工作。我们有一个
+  15.0b12 版本的。在用 "cscope add" 命令的时候，它使得 Vim 挂起。我猜这是因为
+  cscope 数据库的二进制格式和 Vim 期待的不符所致。我试图把最新的 cscope (15.3)
+  移植到 z/OS 上，看来成效不大。如果有人有兴趣尝试并有进展，请给我个消息。
+
+- 没有 glib/gtk 支持。我不能成功在 z/OS UNIX 上编译 glib。这意味着你没法用漂亮
+  的 gtk 工具栏了。
+
+编译时关闭的功能:
+    - 多字节支持                (|<a href="mbyte.html#multibyte">multibyte</a>|)
+    - 从右到左模式              (|<a href="rileft.html#rileft">rileft</a>|)
+    - 波斯键盘映射              (|<a href="farsi.html#Farsi">Farsi</a>|)
+    - 阿拉伯语言支持            (|<a href="arabic.html#Arabic">Arabic</a>|)
+    - 拼写检查                  (|<a href="spell.html#spell">spell</a>|)
+
+还未测试:
+    - Perl 接口                 (|<a href="if_perl.html#perl">perl</a>|)
+    - 韩语 (Hangul) 输入        (|<a href="hangulin.html#hangul">hangul</a>|)
+    - 加密支持                  (|<a href="editing.html#encryption">encryption</a>|)
+    - 语言映射                  (|<a href="options.html#'langmap'">'langmap'</a>|)
+    - Python 支持               (|<a href="if_pyth.html#Python">Python</a>|)
+    - 从右到左模式              (|<a href="options.html#'rightleft'">'rightleft'</a>|)
+    - SNiFF+ 接口               (|<a href="if_sniff.html#sniff">sniff</a>|)
+    - TCL 接口                  (|<a href="if_tcl.html#tcl">tcl</a>|)
+    ...
+
+如果你尝试过这些特性而且成功了，告诉我们！
+
+</pre><hr class="doubleline" /><pre>
+<h4>6. z/OS UNIX 上的开源软件               <b class="vimtag">*<a name="OS390-open-source">OS390-open-source</a>*</b> <b class="vimtag">*<a name="zOS-open-source">zOS-open-source</a>*</b></h4>
+如果你对 z/OS UNIX 上的其它开源软件感兴趣，请参考以下的红皮书:
+
+    Mike MacIsaac et al
+    "Open Source Software for z/OS and OS/390 UNIX"
+    IBM Form Number: SG24-5944-01
+    ISBN: 0738424633
+    http://www-03.ibm.com/systems/resources/servers_eserver_zseries_zos_unix_redbook_sg245944.pdf
+
+另见:
+    http://www.redbooks.ibm.com
+    http://www-03.ibm.com/systems/z/os/zos/features/unix/
+    http://www-03.ibm.com/systems/z/os/zos/features/unix/library/IBM+Redbooks/index.html
+
+
+
+</pre><hr class="singleline" /><pre>
+ vim:tw=78:fo=tcq2:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

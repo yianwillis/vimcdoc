@@ -1,0 +1,576 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: various</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>VARIOUS</h2>
+<pre>
+<b class="vimtag">*<a name="various.txt">various.txt</a>*</b>   For Vim version 7.4.  最近更新: 2013年8月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+                                http://vimcdoc.sf.net
+
+
+各种其他命令                                            <b class="vimtag">*<a name="various">various</a>*</b>
+
+1. 其他命令                     |<a href="various.html#various-cmds">various-cmds</a>|
+2. 用 Vim 代替 less 或 more     |<a href="various.html#less">less</a>|
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 其他命令                                             <b class="vimtag">*<a name="various-cmds">various-cmds</a>*</b></h4>
+                                                        <b class="vimtag">*<a name="CTRL-L">CTRL-L</a>*</b>
+<code class="keystroke">CTRL-L</code>                  清屏并重画屏幕。重画可能稍后发生，在处理完预读入之后。
+
+                                                        <b class="vimtag">*<a name=":redr">:redr</a>*</b> <b class="vimtag">*<a name=":redraw">:redraw</a>*</b>
+:redr[aw][!]            立即重画屏幕。如果有 !，先清屏。
+                        这对在执行脚本或函数的中间要刷新屏幕，或者在置位了
+                        <a href="options.html#'lazyredraw'">'lazyredraw'</a> 而执行映射的过程中间都有用。
+
+                                                <b class="vimtag">*<a name=":redraws">:redraws</a>*</b> <b class="vimtag">*<a name=":redrawstatus">:redrawstatus</a>*</b>
+:redraws[tatus][!]      重画当前窗口的状态行。如果有 !，重画所有的状态行。它适
+                        用于 <a href="options.html#'statusline'">'statusline'</a> 包含有不能自动更新项目的时候。
+
+                                                        <b class="vimtag">*<a name="N%3CDel%3E">N&lt;Del&gt;</a>*</b>
+<code class="special">&lt;Del&gt;</code>                   输入数字的时候: 删除上一位数字。 <code class="note">注意</code>: 如果你想要 <code class="special">&lt;BS&gt;</code>
+                        做同样的事，在 .vimrc 里加入如下的映射:
+<code class="example">                                :map CTRL-V &lt;BS&gt;   CTRL-V &lt;Del&gt;</code>
+                        如果你的 <code class="special">&lt;Del&gt;</code> 键工作不正常，可参见 |<a href="options.html#:fixdel">:fixdel</a>|。
+
+:as[cii]        或                                      <b class="vimtag">*<a name="ga">ga</a>*</b> <b class="vimtag">*<a name=":as">:as</a>*</b> <b class="vimtag">*<a name=":ascii">:ascii</a>*</b>
+ga                      显示光标下字符的 ascii 值，分别以十进制、十六进制和八
+                        进制显示。例如，如果光标下是 'R':
+<code class="section">                                <code class="special">&lt;R&gt;</code>  82,  Hex 52,  Octal 122 </code>
+                        如果该字符不是标准的 ASCII 字符，但据 <a href="options.html#'isprint'">'isprint'</a> 选项可
+                        以显示，则另给出不可显示的版本。另外，如果该字符大于
+                        127，还显示 <code class="special">&lt;M-X&gt;</code> 形式的结果。例如:
+<code class="section">                                &lt;~A&gt;  &lt;M-^A&gt;  129,  Hex 81,  Octal 201 </code>
+<code class="section">                                <code class="special">&lt;p&gt;</code>  &lt;|~&gt;  &lt;M-~&gt;  254,  Hex fe,  Octal 376 </code>
+                        (其中的 <code class="special">&lt;p&gt;</code> 是某个特殊字符)
+                        文件里的 <code class="special">&lt;Nul&gt;</code> 字符内部以 <code class="special">&lt;NL&gt;</code> 存储，但显示为:
+<code class="section">                                &lt;^@&gt;  0,  Hex 00,  Octal 000 </code>
+                        如果字符有合成用字符，同时显示它们。<a href="options.html#'maxcombine'">'maxcombine'</a> 的值
+                        这时不起作用。
+                        助记: 得到 (Get) Ascii 值。<code class="notvi">{Vi 无此功能}</code>
+
+                                                        <b class="vimtag">*<a name="g8">g8</a>*</b>
+g8                      显示光标下字符 (假定其为 |<a href="mbyte.html#UTF-8">UTF-8</a>| 编码) 的各字节的十六
+                        进制值。它会同时显示合成用字符。<a href="options.html#'maxcombine'">'maxcombine'</a> 的值这时
+                        不起作用。
+                        一个带三个合成用字符的字符示例:
+<code class="section">                                e0 b8 81 + e0 b8 b9 + e0 b9 89 </code>
+                        <code class="notvi">{Vi 无此功能}</code> {仅当编译时加入 |<a href="various.html#+multi_byte">+multi_byte</a>| 特性才有
+                        效}
+
+                                                        <b class="vimtag">*<a name="8g8">8g8</a>*</b>
+8g8                     寻找光标所在或之后的非法 UTF-8 字节序列。两种情形下这
+                        可以工作:
+                        1. 如果 <a href="options.html#'encoding'">'encoding'</a> 是任何 8 位编码
+                        2. 如果 <a href="options.html#'encoding'">'encoding'</a> 是 "utf-8" 而 <a href="options.html#'fileencoding'">'fileencoding'</a> 是任何
+                           8 位编码
+                        所以它可以用来编辑本来应该是 UTF-8 但因为包含了非法字
+                        节而读入时被当作 8 位编码的文件。
+                        文件尾不回绕。
+                        <code class="note">注意</code> 如果光标在非法字节上或者光标在多字节字符的中间，
+                        此命令不移动光标。
+                        <code class="notvi">{Vi 无此功能}</code> {仅当编译时加入 |<a href="various.html#+multi_byte">+multi_byte</a>| 特性才有
+                        效}
+
+                                                <b class="vimtag">*<a name=":p">:p</a>*</b> <b class="vimtag">*<a name=":pr">:pr</a>*</b> <b class="vimtag">*<a name=":print">:print</a>*</b> <b class="vimtag">*<a name="E749">E749</a>*</b>
+:<code class="special">[range]</code>p[rint][flags]
+                        显示 <code class="special">[range]</code> 范围里的行 (缺省是当前行)。
+                        <code class="note">注意</code>: 如果你要打印你的文本到纸张上，见 |<a href="print.html#:hardcopy">:hardcopy</a>|。
+                        GUI 上可以使用 File.Print 菜单项。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+:<code class="special">[range]</code>p[rint] <code class="special">{count}</code> <code class="special">[flags]</code>
+                        显示 <code class="special">{count}</code> 行，从 <code class="special">[range]</code> 指定的范围开始 (缺省是当前
+                        行 |<a href="cmdline.html#cmdline-ranges">cmdline-ranges</a>|)。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+                                                        <b class="vimtag">*<a name=":P">:P</a>*</b> <b class="vimtag">*<a name=":Print">:Print</a>*</b>
+:<code class="special">[range]</code>P[rint] <code class="special">[count]</code> <code class="special">[flags]</code>
+                        和 ":print" 相同。Vi 里加入这个功能，很明显地，是给那
+                        些按 Shift 键太久的人用的 ...
+                        <code class="note">备注</code>: 用户命令可以覆盖此命令。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+                                                        <b class="vimtag">*<a name=":l">:l</a>*</b> <b class="vimtag">*<a name=":list">:list</a>*</b>
+:<code class="special">[range]</code>l[ist] <code class="special">[count]</code> <code class="special">[flags]</code>
+                        和 :print 相同，但是不可显示字符用 '^' 代替，行尾加上
+                        $。这可进一步用 <a href="options.html#'listchars'">'listchars'</a> 选项改变。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+                                                        <b class="vimtag">*<a name=":nu">:nu</a>*</b> <b class="vimtag">*<a name=":number">:number</a>*</b>
+:<code class="special">[range]</code>nu[mber] <code class="special">[count]</code> <code class="special">[flags]</code>
+                        和 :print 相同，但每行之前显示行号 (也参见 <a href="options.html#'highlight'">'highlight'</a>
+                        和 <a href="options.html#'numberwidth'">'numberwidth'</a> 选项)。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+                                                        <b class="vimtag">*<a name=":%23">:#</a>*</b>
+:<code class="special">[range]</code># <code class="special">[count]</code> <code class="special">[flags]</code>
+                        和 :number 相同。
+
+                                                        <b class="vimtag">*<a name=":%23!">:#!</a>*</b>
+:#!<code class="special">{anything}</code>           忽略，从而你可以用下面的方式开始 Vim 脚本:
+<code class="example">                                #!vim -S</code>
+<code class="example">                                echo "this is a Vim script"</code>
+<code class="example">                                quit</code>
+
+                                                        <b class="vimtag">*<a name=":z">:z</a>*</b> <b class="vimtag">*<a name="E144">E144</a>*</b>
+:<code class="special">{range}</code>z[+-^.=]<code class="special">{count}</code> 显示包围 <code class="special">{range}</code> 指定行的若干行文本，如果没有 <code class="special">{range}</code>,
+                        这显示当前行上下的文本。如果有 <code class="special">{count}</code>，它指定你能看到
+                        的行数。否则，如果只有一个窗口，使用 <a href="options.html#'scroll'">'scroll'</a> 选项值的
+                        两倍。再不然，使用当前的窗口大小减 3。
+
+                        如果提供了 <code class="special">{count}</code>，<a href="options.html#'window'">'window'</a> 选项会被设为该值。
+
+                        :z 可以单独使用，也可以后跟数个标点符号中的一个。他们
+                        有如下的效果:
+
+<code class="section">                        标记   首行          末行           新光标行 </code>
+                        ----   ----------    ---------      ------------
+                        +      当前行        向前 1 屏      向前 1 屏
+                        -      向后 1 屏     当前行         当前行
+                        ^      向后 2 屏     向后 1 屏      向后 1 屏
+                        .      向后 1/2 屏   向前 1/2 屏    向前 1/2 屏
+                        =      向后 1/2 屏   向前 1/2 屏    当前行
+
+                        不指定任何标记相当于指定 "+"。如果标记是 "="，当前行会
+                        被连字符组成的两行包围。
+
+:<code class="special">{range}</code>z#[+-^.=]<code class="special">{count}</code>                                <b class="vimtag">*<a name=":z%23">:z#</a>*</b>
+                        和 ":z" 类似，但显示行号。
+                        <code class="notvi">{Vi 并非所有版本都有此功能和所有这些参数}</code>
+
+                                                        <b class="vimtag">*<a name=":%20">:=</a>*</b>
+:= <code class="special">[flags]</code>              显示末行的行号。
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+:<code class="special">{range}</code>= <code class="special">[flags]</code>       显示 <code class="special">{range}</code> 范围内最后一行的行号。例如，打印当前行
+                        号:
+<code class="example">                                :.=</code>
+                        |<a href="cmdline.html#ex-flags">ex-flags</a>| 说明 <code class="special">[flags]</code>。
+
+:norm[al][!] <code class="special">{commands}</code>                                 <b class="vimtag">*<a name=":norm">:norm</a>*</b> <b class="vimtag">*<a name=":normal">:normal</a>*</b>
+                        执行若干普通模式命令 <code class="special">{commands}</code>。这使得在命令行上执行
+                        普通模式命令成为可能。<code class="special">{commands}</code> 的执行就像从键盘输入
+                        那样。撤销命令会撤销所有的命令。
+                        如果发生错误，结束执行。
+
+                        如果给出 [!]，不使用映射。
+                        如果没有，如果一个不可重新映射的映射 (|<a href="map.html#:noremap">:noremap</a>|) 调用
+                        该命令，它的参数就因而还是有可能被重新映射。
+
+                        <code class="special">{commands}</code> 必须是完整的命令。如果 <code class="special">{commands}</code> 没有完整
+                        给出一个命令，未完成的最后那个命令会被终止，如同键入了
+                        <code class="special">&lt;Esc&gt;</code> 或 <code class="special">&lt;C-C&gt;</code> 一样。
+                        这意味着插入命令也必须完整 (要开始插入模式，
+                        见 |<a href="insert.html#:startinsert">:startinsert</a>|)。":" 命令也必须完整。而且你不能用
+                        "Q" 或 "gQ" 启动 Ex 模式。
+
+                        ":normal" 还在工作的时候，显示不会被刷新。
+
+                        <code class="special">{commands}</code> 不能以空格开始，如果要，前面加个计数 1
+                        (一)。"1 " 就是一个空格。
+
+                        <code class="special">{commands}</code> 里忽略 <a href="options.html#'insertmode'">'insertmode'</a> 选项。
+
+                        该命令后面不能跟其他命令。因为任何 '|' 都被认为是命令
+                        的一部分。
+
+                        该命令可以递归使用，但是深度不能超过 <a href="options.html#'maxmapdepth'">'maxmapdepth'</a>。
+
+                        一个替代的方法是 |<a href="eval.html#:execute">:execute</a>|，它可以用表达式作为参数。
+                        这样就可使用可显示字符来代表特殊字符。
+
+                        例如:
+<code class="example">                                :exe "normal \&lt;c-w&gt;\&lt;c-w&gt;"</code>
+                        <code class="notvi">{Vi 当然无此功能}</code>
+                        <code class="notvi">{仅当编译时加入 |<a href="various.html#+ex_extra">+ex_extra</a>| 特性才可用}</code>
+
+:<code class="special">{range}</code>norm[al][!] <code class="special">{commands}</code>                          <b class="vimtag">*<a name=":normal-range">:normal-range</a>*</b>
+                        在 <code class="special">{range}</code> 指定的范围中的每行执行若干普通模式命令
+                        <code class="special">{commands}</code>。在执行 <code class="special">{commands}</code> 之前，光标先定位在该行的
+                        第一列。除此以外，和没有给出范围的 ":normal" 命令并无
+                        差别。
+                        <code class="notvi">{Vi 无此功能}</code>
+                        <code class="notvi">{仅当编译时加入 |<a href="various.html#+ex_extra">+ex_extra</a>| 特性才可用}</code>
+
+                                                        <b class="vimtag">*<a name=":sh">:sh</a>*</b> <b class="vimtag">*<a name=":shell">:shell</a>*</b> <b class="vimtag">*<a name="E371">E371</a>*</b>
+:sh[ell]                该命令启动一个外壳。外壳退出后 (执行完 "exit" 命令)，
+                        你会回到 Vim。外壳命令的名字来自 <a href="options.html#'shell'">'shell'</a> 选项。
+                                                        <b class="vimtag">*<a name="E360">E360</a>*</b>
+                        <code class="note">注意</code>: 当 Vim 在 Amiga 上通过编译器的 QuickFix 模式时启
+                        动时，该命令不能使用。这是因为编译器把标准输入设为非交
+                        互模式。
+
+                                                        <b class="vimtag">*<a name=":!cmd">:!cmd</a>*</b> <b class="vimtag">*<a name=":!">:!</a>*</b> <b class="vimtag">*<a name="E34">E34</a>*</b>
+:!<code class="special">{cmd}</code>                 在外壳里执行 <code class="special">{cmd}</code> 命令。也可参见 <a href="options.html#'shell'">'shell'</a> 和
+                        <a href="options.html#'shelltype'">'shelltype'</a> 选项。
+                        <code class="special">{cmd}</code> 里的任何 '!' 都被前一个外部命令所取代 (参见
+                        <a href="options.html#'cpoptions'">'cpoptions'</a>)，除非之前有反斜杠。这时反斜杠被去掉。例
+                        如: "!ls" 之后的 "!echo ! \! \\!" 实际执行
+                        "echo ls ! \!"。
+                        命令执行之后，检查当前文件的修改时间 |<a href="editing.html#timestamp">timestamp</a>|。
+                        <code class="special">{cmd}</code> 里的 '|' 会传给外壳，你不能用来附加 Vim 命令。
+                        见 |<a href="cmdline.html#:bar">:bar</a>|。
+                        <code class="special">{cmd}</code> 以换行符结尾，其后的内容被理解为另外一个 ":" 命
+                        令。不过，如果换行之前有反斜杠，该反斜杠被去掉，<code class="special">{cmd}</code>
+                        继续接受参数。无论之前有多少个反斜杠都是如此。只有一个
+                        会被去掉。
+                        Unix 上命令通常在非交互的外壳里运行。如果你希望用交互
+                        外壳 (比如要用别名机制 aliases)，设置 <code class="badlink">'shellcmdflags'</code>
+                        为 "-ic"。Win32 上可参见 |<a href="os_win32.html#:!start">:!start</a>|。
+                        Vim 在命令结束以后重画屏幕，因为命令可能显示任何文本。
+                        因此，你会有一个按回车的提示，以便你看到执行结果。要避
+                        免这一点:
+<code class="example">                                :silent !{cmd}</code>
+                        这样屏幕就不会重画。如果确实有输出，你需要用 <code class="keystroke">CTRL-L</code> 或
+                        ":redraw!" 来刷新。
+                        参见 |<a href="tips.html#shell-window">shell-window</a>|。
+
+                                                        <b class="vimtag">*<a name=":!!">:!!</a>*</b>
+:!!                     重复上次的 ":!<code class="special">{cmd}</code>"。
+
+                                                        <b class="vimtag">*<a name=":ve">:ve</a>*</b> <b class="vimtag">*<a name=":version">:version</a>*</b>
+:ve[rsion]              显示编辑器的版本号。如果编译器能解释 "__DATE__"，也显
+                        示编译的日期。不然，显示固定的发布日期。
+                        然后，显示 Vim 编译时所带特性的信息。如果某特性之前有
+                        '+'，该特性被包含。如果之前有 '-'，该特性没有包含。要
+                        改变编译时带的特性，修改 feature.h 并重新编译 Vim。
+                        要在表达式里确定是否包含某特性，参见 |<a href="eval.html#has()">has()</a>|。
+                        以下是特性的总览。
+                        第一列显示包含该特性的最小版本。
+                           T    tiny (微小)
+                           S    small (小)
+                           N    normal (普通)
+                           B    big (大)
+                           H    huge (巨大)
+                           m    手动设定或者依赖于其他特性
+                         (无)   依赖于系统
+                        这样，如果一个特性标记为 "N"，它包含在 Vim 的 normal、
+                        big 和 huge 版本里。
+
+                                                        <b class="vimtag">*<a name="+feature-list">+feature-list</a>*</b>
+   <b class="vimtag">*<a name="+ARP">+ARP</a>*</b>               仅对 Amiga 有效: 支持 ARP
+B  <b class="vimtag">*<a name="+arabic">+arabic</a>*</b>            支持阿拉伯语 |<a href="arabic.html#Arabic">Arabic</a>|
+N  <b class="vimtag">*<a name="+autocmd">+autocmd</a>*</b>           |<a href="autocmd.html#:autocmd">:autocmd</a>|，自动命令
+m  <b class="vimtag">*<a name="+balloon_eval">+balloon_eval</a>*</b>      气泡表达式支持 |<a href="debugger.html#balloon-eval">balloon-eval</a>|。如果编译时包含支持的
+                        GUI (Motif、GTK、GUI) 同时还有 Netbeans/Sun Workshop
+                        集成或者 |<a href="various.html#+eval">+eval</a>| 特性之一就包含此特性。
+N  <b class="vimtag">*<a name="+browse">+browse</a>*</b>            |<a href="editing.html#:browse">:browse</a>| 命令
+N  <b class="vimtag">*<a name="+builtin_terms">+builtin_terms</a>*</b>     一些内建终端项 |<a href="term.html#builtin-terms">builtin-terms</a>|
+B  <b class="vimtag">*<a name="++builtin_terms">++builtin_terms</a>*</b>    最大内建终端项支持 |<a href="term.html#builtin-terms">builtin-terms</a>|
+N  <b class="vimtag">*<a name="+byte_offset">+byte_offset</a>*</b>       支持 <a href="options.html#'statusline'">'statusline'</a> 选项的 'o' 标志位、"go" 和 ":goto"
+                        命令。
+N  <b class="vimtag">*<a name="+cindent">+cindent</a>*</b>           |<a href="options.html#'cindent'">'cindent'</a>|，C 缩进
+N  <b class="vimtag">*<a name="+clientserver">+clientserver</a>*</b>      Unix 和 Win32: 远程调用 |<a href="remote.html#clientserver">clientserver</a>|
+   <b class="vimtag">*<a name="+clipboard">+clipboard</a>*</b>         剪贴板支持 |<a href="gui.html#clipboard">clipboard</a>|
+N  <b class="vimtag">*<a name="+cmdline_compl">+cmdline_compl</a>*</b>     命令行补全 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|
+N  <b class="vimtag">*<a name="+cmdline_hist">+cmdline_hist</a>*</b>      命令行历史 |<a href="cmdline.html#cmdline-history">cmdline-history</a>|
+N  <b class="vimtag">*<a name="+cmdline_info">+cmdline_info</a>*</b>      |<a href="options.html#'showcmd'">'showcmd'</a>| 和 |<a href="options.html#'ruler'">'ruler'</a>|
+N  <b class="vimtag">*<a name="+comments">+comments</a>*</b>          支持 |<a href="options.html#'comments'">'comments'</a>|
+B  <b class="vimtag">*<a name="+conceal">+conceal</a>*</b>           "conceal" 支持，见 |<a href="syntax.html#conceal">conceal</a>| |<a href="syntax.html#:syn-conceal">:syn-conceal</a>| 等。
+N  <b class="vimtag">*<a name="+cryptv">+cryptv</a>*</b>            加密支持 |<a href="editing.html#encryption">encryption</a>|
+B  <b class="vimtag">*<a name="+cscope">+cscope</a>*</b>            支持 |<a href="if_cscop.html#cscope">cscope</a>|
+m  <b class="vimtag">*<a name="+cursorbind">+cursorbind</a>*</b>        |<a href="options.html#'cursorbind'">'cursorbind'</a>| 支持
+m  <b class="vimtag">*<a name="+cursorshape">+cursorshape</a>*</b>       |<a href="term.html#termcap-cursor-shape">termcap-cursor-shape</a>| 支持
+m  <b class="vimtag">*<a name="+debug">+debug</a>*</b>             带调试的编译。
+N  <b class="vimtag">*<a name="+dialog_gui">+dialog_gui</a>*</b>        支持 |<a href="editing.html#:confirm">:confirm</a>| 显示 GUI 对话框。
+N  <b class="vimtag">*<a name="+dialog_con">+dialog_con</a>*</b>        支持 |<a href="editing.html#:confirm">:confirm</a>| 显示控制台对话框。
+N  <b class="vimtag">*<a name="+dialog_con_gui">+dialog_con_gui</a>*</b>    支持 |<a href="editing.html#:confirm">:confirm</a>| 显示 GUI 或控制台对话框。
+N  <b class="vimtag">*<a name="+diff">+diff</a>*</b>              |<a href="diff.html#vimdiff">vimdiff</a>| 和 <a href="options.html#'diff'">'diff'</a>
+N  <b class="vimtag">*<a name="+digraphs">+digraphs</a>*</b>          |<a href="digraph.html#digraphs">digraphs</a>| <b class="vimtag">*<a name="E196">E196</a>*</b>
+   <b class="vimtag">*<a name="+dnd">+dnd</a>*</b>               "~ 寄存器的拖放支持 |<a href="change.html#quote_%7E">quote_~</a>|。
+B  <b class="vimtag">*<a name="+emacs_tags">+emacs_tags</a>*</b>        |<a href="tagsrch.html#emacs-tags">emacs-tags</a>| 文件
+N  <b class="vimtag">*<a name="+eval">+eval</a>*</b>              表达式计算 |<a href="eval.html#eval.txt">eval.txt</a>|
+N  <b class="vimtag">*<a name="+ex_extra">+ex_extra</a>*</b>          Vim 附加的 Ex 命令: |<a href="change.html#:center">:center</a>|、|<a href="change.html#:left">:left</a>|、|<a href="various.html#:normal">:normal</a>|、
+                        |<a href="change.html#:retab">:retab</a>| 和 |<a href="change.html#:right">:right</a>|
+N  <b class="vimtag">*<a name="+extra_search">+extra_search</a>*</b>      |<a href="options.html#'hlsearch'">'hlsearch'</a>| 和 |<a href="options.html#'incsearch'">'incsearch'</a>| 选项。
+B  <b class="vimtag">*<a name="+farsi">+farsi</a>*</b>             |<a href="farsi.html#farsi">farsi</a>| 波斯语言
+N  <b class="vimtag">*<a name="+file_in_path">+file_in_path</a>*</b>      |<a href="editing.html#gf">gf</a>|、|<a href="windows.html#CTRL-W_f">CTRL-W_f</a>| 和 |<a href="cmdline.html#%3Ccfile%3E">&lt;cfile&gt;</a>|
+N  <b class="vimtag">*<a name="+find_in_path">+find_in_path</a>*</b>      包含文件搜索: |<a href="tagsrch.html#[I">[I</a>|、|<a href="tagsrch.html#:isearch">:isearch</a>|、|<a href="tagsrch.html#CTRL-W_CTRL-I">CTRL-W_CTRL-I</a>|、
+                        |<a href="tagsrch.html#:checkpath">:checkpath</a>|，等等。
+N  <b class="vimtag">*<a name="+folding">+folding</a>*</b>           折叠 |<a href="fold.html#folding">folding</a>|
+   <b class="vimtag">*<a name="+footer">+footer</a>*</b>            信息页脚 |<a href="debugger.html#gui-footer">gui-footer</a>|
+   <b class="vimtag">*<a name="+fork">+fork</a>*</b>              只对 Unix 有效: |<a href="os_unix.html#fork">fork</a>| 外壳命令
+   <b class="vimtag">*<a name="+float">+float</a>*</b>             浮点数支持
+N  <b class="vimtag">*<a name="+gettext">+gettext</a>*</b>           消息翻译 |<a href="mlang.html#multi-lang">multi-lang</a>|
+   <b class="vimtag">*<a name="+GUI_Athena">+GUI_Athena</a>*</b>        只对 Unix 有效: Athena |<a href="gui.html#GUI">GUI</a>|
+   <b class="vimtag">*<a name="+GUI_neXtaw">+GUI_neXtaw</a>*</b>        只对 Unix 有效: neXtaw |<a href="gui.html#GUI">GUI</a>|
+   <b class="vimtag">*<a name="+GUI_GTK">+GUI_GTK</a>*</b>           只对 Unix 有效: GTK+ |<a href="gui.html#GUI">GUI</a>|
+   <b class="vimtag">*<a name="+GUI_Motif">+GUI_Motif</a>*</b>         只对 Unix 有效: Motif |<a href="gui.html#GUI">GUI</a>|
+   <b class="vimtag">*<a name="+GUI_Photon">+GUI_Photon</a>*</b>        只对 QNX 有效:  Photon |<a href="gui.html#GUI">GUI</a>|
+m  <b class="vimtag">*<a name="+hangul_input">+hangul_input</a>*</b>      韩语 (Hangul) 输入支持 |<a href="hangulin.html#hangul">hangul</a>|
+   <b class="vimtag">*<a name="+iconv">+iconv</a>*</b>             编译时有 |<a href="eval.html#iconv()">iconv()</a>| 函数
+   <b class="vimtag">*<a name="+iconv%2Fdyn">+iconv/dyn</a>*</b>         类似 |<a href="mbyte.html#iconv-dynamic">iconv-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+N  <b class="vimtag">*<a name="+insert_expand">+insert_expand</a>*</b>     |<a href="insert.html#insert_expand">insert_expand</a>| 插入模式补全
+N  <b class="vimtag">*<a name="+jumplist">+jumplist</a>*</b>          跳转表 |<a href="motion.html#jumplist">jumplist</a>|
+B  <b class="vimtag">*<a name="+keymap">+keymap</a>*</b>            键盘映射表 |<a href="options.html#'keymap'">'keymap'</a>|
+B  <b class="vimtag">*<a name="+langmap">+langmap</a>*</b>           语言映射表 |<a href="options.html#'langmap'">'langmap'</a>|
+N  <b class="vimtag">*<a name="+libcall">+libcall</a>*</b>           函数库调用 |<a href="eval.html#libcall()">libcall()</a>|
+N  <b class="vimtag">*<a name="+linebreak">+linebreak</a>*</b>         |<a href="options.html#'linebreak'">'linebreak'</a>|、|<a href="options.html#'breakat'">'breakat'</a>| 和 |<a href="options.html#'showbreak'">'showbreak'</a>|
+N  <b class="vimtag">*<a name="+lispindent">+lispindent</a>*</b>        |<a href="options.html#'lisp'">'lisp'</a>|
+N  <b class="vimtag">*<a name="+listcmds">+listcmds</a>*</b>          Vim 的缓冲区列表相关命令 |<a href="windows.html#buffer-hidden">buffer-hidden</a>| 和参数列表
+                        |<a href="editing.html#:argdelete">:argdelete</a>|
+N  <b class="vimtag">*<a name="+localmap">+localmap</a>*</b>          支持缓冲区的局部映射 |<a href="map.html#:map-local">:map-local</a>|
+m  <b class="vimtag">*<a name="+lua">+lua</a>*</b>               |<a href="if_lua.html#Lua">Lua</a>| 接口
+m  <b class="vimtag">*<a name="+lua%2Fdyn">+lua/dyn</a>*</b>           |<a href="if_lua.html#Lua">Lua</a>| 接口 |<a href="various.html#%2Fdyn">/dyn</a>|
+N  <b class="vimtag">*<a name="+menu">+menu</a>*</b>              菜单 |<a href="gui.html#:menu">:menu</a>|
+N  <b class="vimtag">*<a name="+mksession">+mksession</a>*</b>         创建会话 |<a href="starting.html#:mksession">:mksession</a>|
+N  <b class="vimtag">*<a name="+modify_fname">+modify_fname</a>*</b>      文件名修饰符 |<a href="cmdline.html#filename-modifiers">filename-modifiers</a>|
+N  <b class="vimtag">*<a name="+mouse">+mouse</a>*</b>             鼠标处理 |<a href="term.html#mouse-using">mouse-using</a>|
+N  <b class="vimtag">*<a name="+mouseshape">+mouseshape</a>*</b>        鼠标形状 |<a href="options.html#'mouseshape'">'mouseshape'</a>|
+B  <b class="vimtag">*<a name="+mouse_dec">+mouse_dec</a>*</b>         只对 Unix 有效: Dec 终端鼠标处理 |<a href="options.html#dec-mouse">dec-mouse</a>|
+N  <b class="vimtag">*<a name="+mouse_gpm">+mouse_gpm</a>*</b>         只对 Unix 有效: Linux 终端鼠标处理 |<a href="term.html#gpm-mouse">gpm-mouse</a>|
+B  <b class="vimtag">*<a name="+mouse_netterm">+mouse_netterm</a>*</b>     只对 Unix 有效: netterm 终端鼠标处理 |<a href="options.html#netterm-mouse">netterm-mouse</a>|
+N  <b class="vimtag">*<a name="+mouse_pterm">+mouse_pterm</a>*</b>       只对 QNX 有效: pterm 终端鼠标处理 |<a href="os_qnx.html#qnx-terminal">qnx-terminal</a>|
+N  <b class="vimtag">*<a name="+mouse_sysmouse">+mouse_sysmouse</a>*</b>    只对 Unix 有效: *BSD 控制台鼠标处理 |<a href="term.html#sysmouse">sysmouse</a>|
+B  <b class="vimtag">*<a name="+mouse_sgr">+mouse_sgr</a>*</b>         只对 Unix 有效: sgr 鼠标处理 |<a href="options.html#sgr-mouse">sgr-mouse</a>|
+B  <b class="vimtag">*<a name="+mouse_urxvt">+mouse_urxvt</a>*</b>       只对 Unix 有效: urxvt 鼠标处理 |<a href="options.html#urxvt-mouse">urxvt-mouse</a>|
+N  <b class="vimtag">*<a name="+mouse_xterm">+mouse_xterm</a>*</b>       只对 Unix 有效: xterm 终端鼠标处理 |<a href="options.html#xterm-mouse">xterm-mouse</a>|
+N  <b class="vimtag">*<a name="+multi_byte">+multi_byte</a>*</b>        16 和 32 位字符 |<a href="mbyte.html#multibyte">multibyte</a>|
+   <b class="vimtag">*<a name="+multi_byte_ime">+multi_byte_ime</a>*</b>    Win32 多字节字符的输入法 |<a href="mbyte.html#multibyte-ime">multibyte-ime</a>|
+N  <b class="vimtag">*<a name="+multi_lang">+multi_lang</a>*</b>        非英语语言支持 |<a href="mlang.html#multi-lang">multi-lang</a>|
+m  <b class="vimtag">*<a name="+mzscheme">+mzscheme</a>*</b>          Mzscheme 接口 |<a href="if_mzsch.html#mzscheme">mzscheme</a>|
+m  <b class="vimtag">*<a name="+mzscheme%2Fdyn">+mzscheme/dyn</a>*</b>      Mzscheme 接口 |<a href="if_mzsch.html#mzscheme-dynamic">mzscheme-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+m  <b class="vimtag">*<a name="+netbeans_intg">+netbeans_intg</a>*</b>     |<a href="netbeans.html#netbeans">netbeans</a>|
+m  <b class="vimtag">*<a name="+ole">+ole</a>*</b>               只对 Win32 GUI 有效: |<a href="if_ole.html#ole-interface">ole-interface</a>|
+N  <b class="vimtag">*<a name="+path_extra">+path_extra</a>*</b>        <a href="options.html#'path'">'path'</a> 和 <a href="options.html#'tags'">'tags'</a> 的向上和向下搜索
+m  <b class="vimtag">*<a name="+perl">+perl</a>*</b>              Perl 接口 |<a href="if_perl.html#perl">perl</a>|
+m  <b class="vimtag">*<a name="+perl%2Fdyn">+perl/dyn</a>*</b>          Perl 接口 |<a href="if_perl.html#perl-dynamic">perl-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+N  <b class="vimtag">*<a name="+persistent_undo">+persistent_undo</a>*</b>   撤销的持久性 |<a href="undo.html#undo-persistence">undo-persistence</a>|
+   <b class="vimtag">*<a name="+postscript">+postscript</a>*</b>        |<a href="print.html#:hardcopy">:hardcopy</a>| 可以写 PostScript 文件
+N  <b class="vimtag">*<a name="+printer">+printer</a>*</b>           |<a href="print.html#:hardcopy">:hardcopy</a>| 命令
+H  <b class="vimtag">*<a name="+profile">+profile</a>*</b>           |<a href="repeat.html#:profile">:profile</a>| 命令
+m  <b class="vimtag">*<a name="+python">+python</a>*</b>            Python 2 接口 |<a href="if_pyth.html#python">python</a>|
+m  <b class="vimtag">*<a name="+python%2Fdyn">+python/dyn</a>*</b>        Python 2 接口 |<a href="if_pyth.html#python-dynamic">python-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+m  <b class="vimtag">*<a name="+python3">+python3</a>*</b>           Python 3 接口 |<a href="if_pyth.html#python">python</a>|
+m  <b class="vimtag">*<a name="+python3%2Fdyn">+python3/dyn</a>*</b>       Python 3 接口 |<a href="if_pyth.html#python-dynamic">python-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+N  <b class="vimtag">*<a name="+quickfix">+quickfix</a>*</b>          |<a href="quickfix.html#:make">:make</a>| 和 |<a href="quickfix.html#quickfix">quickfix</a>| 命令
+N  <b class="vimtag">*<a name="+reltime">+reltime</a>*</b>           |<a href="eval.html#reltime()">reltime()</a>| 函数，<a href="options.html#'hlsearch'">'hlsearch'</a>/<a href="options.html#'incsearch'">'incsearch'</a> 超时，
+                        <a href="options.html#'redrawtime'">'redrawtime'</a> 选项
+B  <b class="vimtag">*<a name="+rightleft">+rightleft</a>*</b>                 从右到左输入 |<a href="options.html#'rightleft'">'rightleft'</a>|
+m  <b class="vimtag">*<a name="+ruby">+ruby</a>*</b>              Ruby 接口 |<a href="if_ruby.html#ruby">ruby</a>|
+m  <b class="vimtag">*<a name="+ruby%2Fdyn">+ruby/dyn</a>*</b>          Ruby 接口 |<a href="if_ruby.html#ruby-dynamic">ruby-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+N  <b class="vimtag">*<a name="+scrollbind">+scrollbind</a>*</b>        滚动绑定 |<a href="options.html#'scrollbind'">'scrollbind'</a>|
+B  <b class="vimtag">*<a name="+signs">+signs</a>*</b>             标号 |<a href="sign.html#:sign">:sign</a>|
+N  <b class="vimtag">*<a name="+smartindent">+smartindent</a>*</b>       |<a href="options.html#'smartindent'">'smartindent'</a>|
+m  <b class="vimtag">*<a name="+sniff">+sniff</a>*</b>             SniFF 接口 |<a href="if_sniff.html#sniff">sniff</a>|
+N  <b class="vimtag">*<a name="+startuptime">+startuptime</a>*</b>       |<a href="starting.html#--startuptime">--startuptime</a>| 参数
+N  <b class="vimtag">*<a name="+statusline">+statusline</a>*</b>        <a href="options.html#'statusline'">'statusline'</a>、<a href="options.html#'rulerformat'">'rulerformat'</a> 选项和
+                        <a href="options.html#'titlestring'">'titlestring'</a> 和 <a href="options.html#'iconstring'">'iconstring'</a> 的特殊格式
+m  <b class="vimtag">*<a name="+sun_workshop">+sun_workshop</a>*</b>      |<a href="workshop.html#workshop">workshop</a>|
+N  <b class="vimtag">*<a name="+syntax">+syntax</a>*</b>            语法高亮 |<a href="syntax.html#syntax">syntax</a>|
+   <b class="vimtag">*<a name="+system()">+system()</a>*</b>          只对 Unix 有效: |<a href="various.html#+fork">+fork</a>| 的相反特性
+N  <b class="vimtag">*<a name="+tag_binary">+tag_binary</a>*</b>        标签文件的二分查找 |<a href="tagsrch.html#tag-binary-search">tag-binary-search</a>|
+N  <b class="vimtag">*<a name="+tag_old_static">+tag_old_static</a>*</b>    支持静态标签的旧方法 |<a href="tagsrch.html#tag-old-static">tag-old-static</a>|
+m  <b class="vimtag">*<a name="+tag_any_white">+tag_any_white</a>*</b>     标签文件里允许空白 |<a href="tagsrch.html#tag-any-white">tag-any-white</a>|
+m  <b class="vimtag">*<a name="+tcl">+tcl</a>*</b>               Tcl 接口 |<a href="if_tcl.html#tcl">tcl</a>|
+m  <b class="vimtag">*<a name="+tcl%2Fdyn">+tcl/dyn</a>*</b>           Tcl 接口 |<a href="if_tcl.html#tcl-dynamic">tcl-dynamic</a>| |<a href="various.html#%2Fdyn">/dyn</a>|
+   <b class="vimtag">*<a name="+terminfo">+terminfo</a>*</b>          用 |<a href="term.html#terminfo">terminfo</a>| 代替 termcap
+N  <b class="vimtag">*<a name="+termresponse">+termresponse</a>*</b>      支持 |<a href="term.html#t_RV">t_RV</a>| 和 |<a href="eval.html#v:termresponse">v:termresponse</a>|
+N  <b class="vimtag">*<a name="+textobjects">+textobjects</a>*</b>       文本对象 |<a href="motion.html#text-objects">text-objects</a>| 选择
+   <b class="vimtag">*<a name="+tgetent">+tgetent</a>*</b>           只对非 Unix 有效: 可以使用外部 termcap
+N  <b class="vimtag">*<a name="+title">+title</a>*</b>             设置窗口 |<a href="options.html#'title'">'title'</a>| 和 <a href="options.html#'icon'">'icon'</a>
+N  <b class="vimtag">*<a name="+toolbar">+toolbar</a>*</b>           GUI 工具栏 |<a href="gui.html#gui-toolbar">gui-toolbar</a>|
+N  <b class="vimtag">*<a name="+user_commands">+user_commands</a>*</b>     用户定义命令。|<a href="map.html#user-commands">user-commands</a>|
+N  <b class="vimtag">*<a name="+viminfo">+viminfo</a>*</b>           |<a href="options.html#'viminfo'">'viminfo'</a>|
+N  <b class="vimtag">*<a name="+vertsplit">+vertsplit</a>*</b>                 垂直分割窗口 |<a href="windows.html#:vsplit">:vsplit</a>|
+N  <b class="vimtag">*<a name="+virtualedit">+virtualedit</a>*</b>       |<a href="options.html#'virtualedit'">'virtualedit'</a>|
+S  <b class="vimtag">*<a name="+visual">+visual</a>*</b>            可视模式 |<a href="visual.html#Visual-mode">Visual-mode</a>|
+N  <b class="vimtag">*<a name="+visualextra">+visualextra</a>*</b>       额外的可视模式命令 |<a href="visual.html#blockwise-operators">blockwise-operators</a>|
+N  <b class="vimtag">*<a name="+vreplace">+vreplace</a>*</b>          |<a href="change.html#gR">gR</a>| 和 |<a href="change.html#gr">gr</a>|
+N  <b class="vimtag">*<a name="+wildignore">+wildignore</a>*</b>        忽略文件通配 |<a href="options.html#'wildignore'">'wildignore'</a>|
+N  <b class="vimtag">*<a name="+wildmenu">+wildmenu</a>*</b>          匹配菜单 |<a href="options.html#'wildmenu'">'wildmenu'</a>|
+S  <b class="vimtag">*<a name="+windows">+windows</a>*</b>           多于一个窗口
+m  <b class="vimtag">*<a name="+writebackup">+writebackup</a>*</b>       |<a href="options.html#'writebackup'">'writebackup'</a>| 缺省打开
+m  <b class="vimtag">*<a name="+xim">+xim</a>*</b>               X 输入法 |<a href="mbyte.html#xim">xim</a>|
+   <b class="vimtag">*<a name="+xfontset">+xfontset</a>*</b>          X 字体集支持 |<a href="mbyte.html#xfontset">xfontset</a>|
+m  <b class="vimtag">*<a name="+xpm_w32">+xpm_w32</a>*</b>           只对 Win32 GUI 有效: pixmap 支持 |<a href="gui_w32.html#w32-xpm-support">w32-xpm-support</a>|
+   <b class="vimtag">*<a name="+xsmp">+xsmp</a>*</b>              XSMP (X 会话管理) 支持
+   <b class="vimtag">*<a name="+xsmp_interact">+xsmp_interact</a>*</b>     交互 XSMP (X 会话管理) 支持
+N  <b class="vimtag">*<a name="+xterm_clipboard">+xterm_clipboard</a>*</b>   只对 Unix 有效: xterm 剪贴板处理
+m  <b class="vimtag">*<a name="+xterm_save">+xterm_save</a>*</b>        保存和恢复 xterm 屏幕 |<a href="tips.html#xterm-screens">xterm-screens</a>|
+N  <b class="vimtag">*<a name="+X11">+X11</a>*</b>               只对 Unix 有效: 可以恢复窗口标题 |<a href="options.html#X11">X11</a>|
+
+                                                        <b class="vimtag">*<a name="%2Fdyn">/dyn</a>*</b> <b class="vimtag">*<a name="E370">E370</a>*</b> <b class="vimtag">*<a name="E448">E448</a>*</b>
+                        有些特性可能会显示 "/dyn"，表明该特性只有在动态调入相
+                        关库时才可用。
+
+:ve[rsion] <code class="special">{nr}</code>         现在已被忽略。以前用来检查 .vimrc 文件的版本号。现在取
+                        消的原因是因为你可以用 ":if" 命令区别不同版本的不同行
+                        为。<code class="notvi">{Vi 无此功能}</code>
+
+                                                        <b class="vimtag">*<a name=":redi">:redi</a>*</b> <b class="vimtag">*<a name=":redir">:redir</a>*</b>
+:redi[r][!] &gt; <code class="special">{file}</code>    重定向消息到文件 <code class="special">{file}</code>。将命令的输出消息写到该文件，
+                        直到重定向结束。消息也同时显示在屏幕上。如果有 [!]，覆
+                        盖已存在的文件。如果没有但文件 <code class="special">{file}</code> 存在，该命令会失
+                        败。
+                        一次只能激活一个 ":redir"。也就是，调用 ":redir" 开始
+                        重定向到新的目标之前，任何已激活的重定向都会被关闭。
+                        如果不想在屏幕上显示消息或者命令的回显，在函数里调用命
+                        令，以 ":silent call Function()" 方式调用该函数。
+                        一个替代方案是使用 <a href="options.html#'verbosefile'">'verbosefile'</a> 选项，它也可以和
+                        ":redir" 组合使用。
+                        <code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] &gt;&gt; <code class="special">{file}</code>      重定向消息到文件 <code class="special">{file}</code>，如果文件 <code class="special">{file}</code> 已存在，附加
+                        在其后。<code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] @<code class="special">{a-zA-Z}</code>
+:redi[r] @<code class="special">{a-zA-Z}</code>&gt;     重定向消息到寄存器 <code class="special">{a-z}</code>。如果给出的名字是大写 <code class="special">{A-Z}</code>，
+                        附加到已有内容之后。寄存器名后的 '&gt;' 可选。
+                        <code class="notvi">{Vi 无此功能}</code>
+:redi[r] @<code class="special">{a-z}</code>&gt;&gt;       附加消息到寄存器 <code class="special">{a-z}</code>。<code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] @*&gt;
+:redi[r] @+&gt;            重定向消息到选择区或剪贴板。为了后向兼容，寄存器名后的
+                        '&gt;' 可以省略。见 |<a href="gui.html#quotestar">quotestar</a>| 和 |<a href="gui_x11.html#quoteplus">quoteplus</a>|。
+                        <code class="notvi">{Vi 无此功能}</code>
+:redi[r] @*&gt;&gt;
+:redi[r] @+&gt;&gt;           附加消息到选择区或剪贴板。<code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] @"&gt;            重定向消息到无名寄存器。为了后向兼容，寄存器名后的 '&gt;'
+                        可以省略。<code class="notvi">{Vi 无此功能}</code>
+:redi[r] @"&gt;&gt;           附加消息到无名寄存器。<code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] =&gt; <code class="special">{var}</code>       重定向消息到变量。如果变量不存在，建立之。如果变量已经
+                        存在，它被初始化为空字符串，而且保持为空，直到重定向结
+                        束为止。只能使用字符串变量。重定向开始后，如果变量被删
+                        除或加锁或类型被改变，那么将来的命令输出消息会报错。
+                        <code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] =&gt;&gt; <code class="special">{var}</code>      附加消息到已有的变量。只能使用字符串变量。
+                        <code class="notvi">{Vi 无此功能}</code>
+
+:redi[r] END            结束消息的重定向。<code class="notvi">{Vi 无此功能}</code>
+
+                                                <b class="vimtag">*<a name=":sil">:sil</a>*</b> <b class="vimtag">*<a name=":silent">:silent</a>*</b>
+:sil[ent][!] <code class="special">{command}</code>  安静地执行命令 <code class="special">{command}</code>。不显示正常的消息，也不会把它
+                        加进消息历史。
+                        如果有 [!]，同时跳过错误消息，检测到错误时，命令和映射
+                        也也不会被终止。但还是会相应设置 |<a href="eval.html#v:errmsg">v:errmsg</a>|。
+                        如果没有 [!]，错误信息会使得其后的所有消息都被正常显
+                        示。
+                        |<a href="various.html#:redir">:redir</a>| 开始的重定向会继续工作，但可能有些细微差异。
+                        命令输出仍然重定向，但屏幕上看不到。例如:
+<code class="example">                            :redir &gt;/tmp/foobar</code>
+<code class="example">                            :silent g/Aap/p</code>
+<code class="example">                            :redir END</code>
+                        要安静地执行普通模式命令，用 |<a href="various.html#:normal">:normal</a>| 命令。例如，要
+                        搜索字符串且不给出任何消息:
+<code class="example">                            :silent exe "normal /path\&lt;CR&gt;"</code>
+                        ":silent!" 可以用来执行命令，不管该命令是否失败都继续
+                        执行。
+                        例如:
+<code class="example">                            :let v:errmsg = ""</code>
+<code class="example">                            :silent! /^begin</code>
+<code class="example">                            :if v:errmsg != ""</code>
+<code class="example">                            : ... 模式没找到</code>
+                        ":silent" 还可以避免敲入回车 (hit-enter) 的提示。执行
+                        外部命令时，这可能会使屏幕显示混乱。这时，用 |<a href="various.html#CTRL-L">CTRL-L</a>|
+                        可以清理。
+                        ":silent menu ..." 定义一个不会回显命令行命令的菜单。
+                        但该命令仍然产生消息。如果连这也不要，在命令本身前用
+                        ":silent": ":silent menu .... :silent command"。
+
+                                                <b class="vimtag">*<a name=":uns">:uns</a>*</b> <b class="vimtag">*<a name=":unsilent">:unsilent</a>*</b>
+:uns[ilent] <code class="special">{command}</code>   非安静模式执行命令 <code class="special">{command}</code>。仅当在用了 |<a href="various.html#:silent">:silent</a>| 之
+                        后才有意义。
+                        用此命令可以在用了 |<a href="various.html#:silent">:silent</a>| 之后还是可以给出消息。下
+                        例中，|<a href="various.html#:silent">:silent</a>| 用于避免读入文件时给出消息，而
+                        |<a href="various.html#:unsilent">:unsilent</a>| 用于列出每个文件的第一行。
+<code class="example">                :silent argdo unsilent echo expand('%') . ": " . getline(1)</code>
+
+
+                                                <b class="vimtag">*<a name=":verb">:verb</a>*</b> <b class="vimtag">*<a name=":verbose">:verbose</a>*</b>
+:<code class="special">[count]</code>verb[ose] <code class="special">{command}</code>
+                        执行命令 <code class="special">{command}</code>，执行期间 <a href="options.html#'verbose'">'verbose'</a> 设为 <code class="special">[count]</code>。
+                        如果忽略 <code class="special">[count]</code>，缺省为 1。":0verbose" 可以用来设置
+                        <a href="options.html#'verbose'">'verbose'</a> 为零。
+
+                        在此基础之上再应用 ":silent"，可以产生相应详细度的消息
+                        但不显示。":silent" 和 ":verbose" 的组合因而可以只在内
+                        部产生消息，然后用 |<a href="eval.html#v:statusmsg">v:statusmsg</a>| 或相关命令进行检查。
+                        例如:
+<code class="example">                                :let v:statusmsg = ""</code>
+<code class="example">                                :silent verbose runtime foobar.vim</code>
+<code class="example">                                :if v:statusmsg != ""</code>
+<code class="example">                                :  " foobar.vim 找不到</code>
+<code class="example">                                :endif</code>
+                        如果和别的命令相连接，":verbose" 只适用于第一个命令:
+<code class="example">                                :4verbose set verbose | set verbose</code>
+<code class="section">                                  verbose=4 </code>
+<code class="section">                                  verbose=0 </code>
+                        要记录 verbose 消息到文件，用 <a href="options.html#'verbosefile'">'verbosefile'</a> 选项。
+
+                                                        <b class="vimtag">*<a name=":verbose-cmd">:verbose-cmd</a>*</b>
+如果 <a href="options.html#'verbose'">'verbose'</a> 非零，列出 Vim 选项、键映射、缩写、用户定义的函数或命令、高亮组
+或者自动命令的值会同时显示它最近被定义的位置。如果手动定义，不会有这个 "Last
+set" 消息。如果在执行函数、用户命令或者自动命令时定义，报告它定义所在的脚本。
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+eval">+eval</a>| 特性才有效}</code>
+
+                                                        <b class="vimtag">*<a name="K">K</a>*</b>
+K                       运行程序，查找光标下的关键字。该程序的名字由
+                        <a href="options.html#'keywordprg'">'keywordprg'</a> (kp) 选项给出 (缺省是 "man")。该关键字由
+                        字母、数值和 <a href="options.html#'iskeyword'">'iskeyword'</a> 里的字符组成，它出现在光标所
+                        在或右侧的位置。以下命令可以达到同样的效果
+<code class="example">                                :!{program} {keyword}</code>
+                        在 Vim 的 tools 目录下有一个示例程序。它叫作 <code class="badlink">'ref'</code>，做
+                        简单的拼写检查。
+                        特例:
+                        - 如果 <a href="options.html#'keywordprg'">'keywordprg'</a> 为空，使用 ":help" 命令。此时，如
+                          果要找到更多帮助，应该在 <a href="options.html#'iskeyword'">'iskeyword'</a> 里加入更多的字
+                          符。
+                        - 如果 <a href="options.html#'keywordprg'">'keywordprg'</a> 是 "man"，K 之前的计数会被插在
+                          "man" 命令之后和关键字之前。例如，如果光标在 "mkdir"
+                          之上用 "2K"，结果是:
+<code class="example">                                !man 2 mkdir</code>
+                        - 如果 <a href="options.html#'keywordprg'">'keywordprg'</a> 是 "man -s"，K 之前的计数会插在
+                          "-s" 之后。如果没有计数，则去掉 "-s"。
+                        <code class="notvi">{Vi 无此功能}</code>
+
+                                                        <b class="vimtag">*<a name="v_K">v_K</a>*</b>
+<code class="special">{Visual}</code>K               和 "K" 类似，但用可视的高亮文本代替关键字。只在高亮文
+                        本不超过一行时有效。<code class="notvi">{Vi 无此功能}</code>
+
+[N]gs                                                   <b class="vimtag">*<a name="gs">gs</a>*</b> <b class="vimtag">*<a name=":sl">:sl</a>*</b> <b class="vimtag">*<a name=":sleep">:sleep</a>*</b>
+:[N]sl[eep] <code class="special">[N]</code> <code class="special">[m]</code>     停止 (睡眠) <code class="special">[N]</code> 秒。如果有 <code class="special">[m]</code>，停止 <code class="special">[N]</code> 毫秒。"gs" 前
+                        的计数总是表示秒数。缺省值是 1 秒。
+<code class="example">                             :sleep          "睡眠一秒</code>
+<code class="example">                             :5sleep         "睡眠五秒</code>
+<code class="example">                             :sleep 100m     "睡眠一百毫秒</code>
+<code class="example">                             10gs            "睡眠十秒</code>
+                        可以被 <code class="keystroke">CTRL-C</code> (MS-DOS 上的 <code class="keystroke">CTRL-Break</code>) 中断。
+                        "gs" 代表 "goto sleep"。
+                        睡眠时如果在可见位置的话，光标定位于文本处。
+                        <code class="notvi">{Vi 无此功能}</code>
+
+                                                        <b class="vimtag">*<a name="g_CTRL-A">g_CTRL-A</a>*</b>
+g <code class="keystroke">CTRL-A</code>                只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
+                        见): 显示内存用量的统计。只对调试 Vim 有用。
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. 用 Vim 代替 less 或 more                                     <b class="vimtag">*<a name="less">less</a>*</b></h4>
+如果你用 less 或 more 程序来查阅文件，你不会有语法高亮。所以，你也许会更喜欢
+用 Vim。你可以用外壳脚本 "$VIMRUNTIME/macros/less.sh" 来做到这一点。
+
+这个外壳脚本用到 Vim 脚本 "$VIMRUNTIME/macros/less.vim"。它设置了一些映射来模
+拟 less 支持的命令。除此以外，你可以正常使用 Vim 命令。
+
+这还没有尽善尽美。例如，即使查阅短的文件，Vim 还是会使用整屏。但对大多数应用而
+言，这已经足够好了。何况你还有语法高亮呢。
+
+"h" 键给你一个可用命令的简短小结。
+
+ vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

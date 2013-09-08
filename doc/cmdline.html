@@ -1,0 +1,958 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: cmdline</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>CMDLINE</h2>
+<pre>
+<b class="vimtag">*<a name="cmdline.txt">cmdline.txt</a>*</b>   For Vim version 7.4.  最近更新: 2013年8月
+
+
+                        VIM 参 考 手 册         by Bram Moolenaar
+
+                                翻译: Dasn, tocer  http://vimcdoc.sf.net
+
+
+                                <b class="vimtag">*<a name="Cmdline-mode">Cmdline-mode</a>*</b> <b class="vimtag">*<a name="Command-line-mode">Command-line-mode</a>*</b>
+命令行模式              <b class="vimtag">*<a name="Cmdline">Cmdline</a>*</b> <b class="vimtag">*<a name="Command-line">Command-line</a>*</b> <b class="vimtag">*<a name="mode-cmdline">mode-cmdline</a>*</b> <b class="vimtag">*<a name=":">:</a>*</b>
+
+命令行模式可以用来输入 Ex 命令 (":")，搜索符合模式的字符串 ("/" 和 "?")，和过
+滤命令 ("!")。
+
+一些基本的、与命令行编辑相关的内容在用户手册的第 20 章里有所描述，见:
+|<a href="usr_20.html#usr_20.txt">usr_20.txt</a>|。
+
+1. 命令行编辑                   |<a href="cmdline.html#cmdline-editing">cmdline-editing</a>|
+2. 命令行补全                   |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|
+3. Ex 命令行                    |<a href="cmdline.html#cmdline-lines">cmdline-lines</a>|
+4. Ex 命令行的范围              |<a href="cmdline.html#cmdline-ranges">cmdline-ranges</a>|
+5. Ex 命令行的标志位            |<a href="cmdline.html#ex-flags">ex-flags</a>|
+6. Ex 特殊字符                  |<a href="cmdline.html#cmdline-special">cmdline-special</a>|
+7. 命令行窗口                   |<a href="cmdline.html#cmdline-window">cmdline-window</a>|
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 命令行编辑                                           <b class="vimtag">*<a name="cmdline-editing">cmdline-editing</a>*</b></h4>
+通常，字符会在光标位置前插入。你可以用键盘上的左右键来移动光标的位置。还可以通
+过 <code class="special">&lt;Insert&gt;</code> 键，在 "插入" 和 "替换" 两种模式之间切换。
+<code class="notvi">{Vi: 只能改变每一行的最后一个字符}</code>
+
+<code class="note">注意</code>，如果你的键盘上没有可以移动光标的键或其它特殊键，你可以用 ":cnoremap" 定
+义另外一个键来代替它们。例如，定义一组 tcsh 风格的键:   <b class="vimtag">*<a name="tcsh-style">tcsh-style</a>*</b>
+<code class="example">        :cnoremap &lt;C-A&gt; &lt;Home&gt;</code>
+<code class="example">        :cnoremap &lt;C-F&gt; &lt;Right&gt;</code>
+<code class="example">        :cnoremap &lt;C-B&gt; &lt;Left&gt;</code>
+<code class="example">        :cnoremap &lt;Esc&gt;b &lt;S-Left&gt;</code>
+<code class="example">        :cnoremap &lt;Esc&gt;f &lt;S-Right&gt;</code>
+(<code class="special">&lt;&gt;</code> 记法，见 |<a href="intro.html#%3C%3E">&lt;&gt;</a>|；上面的例子要一字不落地输入)
+
+                                                        <b class="vimtag">*<a name="cmdline-too-long">cmdline-too-long</a>*</b>
+当命令行指令长度大于屏幕的宽度时，只有合适的部分被显示出来。光标只能在命令的
+可视部分移动，所以你不能编辑其他部分。
+
+                                                <b class="vimtag">*<a name="cmdline-history">cmdline-history</a>*</b> <b class="vimtag">*<a name="history">history</a>*</b>
+在命令行里输入的命令会存储在历史记录中，你可以使用上下箭头键来翻阅它们。有五个
+历史表:
+- 一个是为 ':' 命令准备的
+- 一个是为搜索字符串准备的
+- 一个是为表达式准备的
+- 一个是为输入行准备的，用来输入 |<a href="eval.html#input()">input()</a>| 函数。
+- 一个是为调试模式下的命令准备的
+
+这些记录是完全分开的。每一种输入模式只能访问与之相关的一个记录。
+选项 <a href="options.html#'history'">'history'</a> 用来设定保存历史记录的行数 (默认值: 20 ) 。
+
+<code class="note">注意</code>:
+- 如果你输入了一条命令与历史记录中已有的命令完全相同，那么历史记录中的这条旧命
+  令会被删除 (这样做是为了避免历史列表被大量的重复指令占据)。
+- 只有键入的命令才会记录下来。完全来自映射的命令不会。
+- 所有的搜索操作都会放到与搜索相关的历史记录中，包括通过 "*" 和 "#" 进行的搜
+  索。但是对于映射，只有最近一次的搜索会被记录下来 (这样是为了避免很长的映射把
+  历史记录搞乱) 。
+<code class="notvi">{Vi: 没有历史记录}</code>
+<code class="notvi">{仅当编译的时候加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+
+命令行的自动匹配功能；见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|。
+
+                                                        <b class="vimtag">*<a name="c_CTRL-V">c_CTRL-V</a>*</b>
+<code class="keystroke">CTRL-V</code>          下一个字符如果是非数字字符，按本义插入。不然，不超过三个的数字
+                字符用于输入单个字节的十进制编码。非数字和三个数字字符不会被映
+                射。这与插入模式下的工作方式相同 (见 |<a href="insert.html#i_CTRL-V">i_CTRL-V</a>|)。
+                <code class="note">注意</code>: 由于在 Windows 系统上，<code class="keystroke">CTRL-V</code> 被映射为 "粘贴文本"，这时
+                我们要用 <code class="keystroke">CTRL-Q</code> 代替 <code class="keystroke">CTRL-V</code>。
+                                                        <b class="vimtag">*<a name="c_CTRL-Q">c_CTRL-Q</a>*</b>
+<code class="keystroke">CTRL-Q</code>          与 <code class="keystroke">CTRL-V</code> 相同。但是有些终端把它定义为控制字符，那样就无法使用
+                了。
+
+                                                        <b class="vimtag">*<a name="c_%3CLeft%3E">c_&lt;Left&gt;</a>*</b> <b class="vimtag">*<a name="c_Left">c_Left</a>*</b>
+<code class="special">&lt;Left&gt;</code>          光标左移
+                                                        <b class="vimtag">*<a name="c_%3CRight%3E">c_&lt;Right&gt;</a>*</b> <b class="vimtag">*<a name="c_Right">c_Right</a>*</b>
+<code class="special">&lt;Right&gt;</code>         光标右移
+                                                        <b class="vimtag">*<a name="c_%3CS-Left%3E">c_&lt;S-Left&gt;</a>*</b>
+<code class="special">&lt;S-Left&gt;</code> 或 <code class="special">&lt;C-Left&gt;</code>                                    <b class="vimtag">*<a name="c_%3CC-Left%3E">c_&lt;C-Left&gt;</a>*</b>
+                光标左移一个字串 (WORD)
+                                                        <b class="vimtag">*<a name="c_%3CS-Right%3E">c_&lt;S-Right&gt;</a>*</b>
+<code class="special">&lt;S-Right&gt;</code> 或 <code class="special">&lt;C-Right&gt;</code>                                  <b class="vimtag">*<a name="c_%3CC-Right%3E">c_&lt;C-Right&gt;</a>*</b>
+                光标右移一个字串 (WORD)
+<code class="keystroke">CTRL-B</code> 或 <code class="special">&lt;Home&gt;</code>                                <b class="vimtag">*<a name="c_CTRL-B">c_CTRL-B</a>*</b> <b class="vimtag">*<a name="c_%3CHome%3E">c_&lt;Home&gt;</a>*</b> <b class="vimtag">*<a name="c_Home">c_Home</a>*</b>
+                光标移动至命令的起始
+<code class="keystroke">CTRL-E</code> 或 <code class="special">&lt;End&gt;</code>                                 <b class="vimtag">*<a name="c_CTRL-E">c_CTRL-E</a>*</b> <b class="vimtag">*<a name="c_%3CEnd%3E">c_&lt;End&gt;</a>*</b> <b class="vimtag">*<a name="c_End">c_End</a>*</b>
+                光标移动至命令的末尾
+
+                                                        <b class="vimtag">*<a name="c_%3CLeftMouse%3E">c_&lt;LeftMouse&gt;</a>*</b>
+<code class="special">&lt;LeftMouse&gt;</code>     将光标置于点击鼠标的地方。
+
+<code class="keystroke">CTRL-H</code>                                          <b class="vimtag">*<a name="c_%3CBS%3E">c_&lt;BS&gt;</a>*</b> <b class="vimtag">*<a name="c_CTRL-H">c_CTRL-H</a>*</b> <b class="vimtag">*<a name="c_BS">c_BS</a>*</b>
+<code class="special">&lt;BS&gt;</code>            删除光标前面的字符 (如果你的 <code class="special">&lt;BS&gt;</code> 键不能正常工作，请参阅
+                |<a href="options.html#:fixdel">:fixdel</a>| )。
+                                                        <b class="vimtag">*<a name="c_%3CDel%3E">c_&lt;Del&gt;</a>*</b> <b class="vimtag">*<a name="c_Del">c_Del</a>*</b>
+<code class="special">&lt;Del&gt;</code>           删除光标下的字符 (如果光标处于行的末尾，则删除光标前的字符)
+                (如果你的 <code class="special">&lt;Del&gt;</code> 键不能正常工作，请参阅 |<a href="options.html#:fixdel">:fixdel</a>|)。
+                                                        <b class="vimtag">*<a name="c_CTRL-W">c_CTRL-W</a>*</b>
+<code class="keystroke">CTRL-W</code>          删除光标前的单词 (|<a href="motion.html#word">word</a>|)。单词范围受 <a href="options.html#'iskeyword'">'iskeyword'</a> 选项影响。
+                                                        <b class="vimtag">*<a name="c_CTRL-U">c_CTRL-U</a>*</b>
+<code class="keystroke">CTRL-U</code>          删除光标所在位置与行首之间的所有字符。先前一些版本的 vim 删
+                除整行的所有字符。如果你喜欢原先的这种方式，可以把下面的命令
+                加入到你的 .vimrc :
+<code class="example">                        :cnoremap &lt;C-U&gt; &lt;C-E&gt;&lt;C-U&gt;</code>
+
+                                                <b class="vimtag">*<a name="c_%3CInsert%3E">c_&lt;Insert&gt;</a>*</b> <b class="vimtag">*<a name="c_Insert">c_Insert</a>*</b>
+<code class="special">&lt;Insert&gt;</code>        在插入和替换之间切换。<code class="notvi">{Vi 没有该功能}</code>
+
+<code class="special">{char1}</code> <code class="special">&lt;BS&gt;</code> <code class="special">{char2}</code>    或                              <b class="vimtag">*<a name="c_digraph">c_digraph</a>*</b>
+<code class="keystroke">CTRL-K</code> <code class="special">{char1}</code> <code class="special">{char2}</code>                                  <b class="vimtag">*<a name="c_CTRL-K">c_CTRL-K</a>*</b>
+                输入二合字母 (见 |<a href="digraph.html#digraphs">digraphs</a>|)。如果 <code class="special">{char1}</code> 是一个特殊键，插入
+                该键 <code class="special">&lt;&gt;</code> 形式的编码。<code class="notvi">{Vi 没有该功能}</code>
+
+<code class="keystroke">CTRL-R</code> {0-9a-z"%#:-=.}                                  <b class="vimtag">*<a name="c_CTRL-R">c_CTRL-R</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E">c_&lt;C-R&gt;</a>*</b>
+                插入寄存器里的内容。当按下 <code class="keystroke">CTRL-R</code> 时，屏幕会显示一个 '"' 字
+                符，提示你输入一个寄存器的名字。
+                插入的文字就像是你自己输入的，但是映射和缩写不会生效。同样也不
+                会触发 <a href="options.html#'wildchar'">'wildchar'</a> 的补全功能。并且那些可以结束命令的字符会被按
+                字面插入 (<code class="special">&lt;Esc&gt;</code>，<code class="special">&lt;CR&gt;</code>，<code class="special">&lt;NL&gt;</code>，<code class="special">&lt;C-C&gt;</code>)。但 <code class="special">&lt;BS&gt;</code> 或 <code class="keystroke">CTRL-W</code> 仍旧可
+                能结束命令行模式，并使剩余的字符被接下来其他的模式解释，这可能
+                并非你的本意。
+                特殊寄存器:
+
+                        '"'     无名寄存器，包含最近一次删除或复制的内容
+                        '%'     当前文件名
+                        '#'     轮换文件名
+                        '*'     剪贴板的内容 (X11: 主选择区)
+                        '+'     剪贴板的内容
+                        '/'     最近一次的查找模式
+                        ':'     最近一次在命令行输入的命令
+                        '-'     最近一次小的 (少于一行) 删除
+                        '.'     最近插入的文本
+                                                        <b class="vimtag">*<a name="c_CTRL-R_%20">c_CTRL-R_=</a>*</b>
+                        '='     表达式寄存器: 会提示你输入一个表达式。
+                                (见 |<a href="eval.html#expression">expression</a>|)
+                                (在表达式提示中无效；不允许改变缓冲区或者当前
+                                窗口这样的操作，以避免副作用)
+                                如果结果为 |<a href="eval.html#List">List</a>| 列表，其中的每一项当作一行。
+                                当然其中内容也可包含换行符。
+                                如果结果为浮点数，自动转换为字符串。
+                与寄存器相关的内容请参见 |<a href="change.html#registers">registers</a>|。<code class="notvi">{Vi 无此功能}</code>
+                实现细节: 如果使用 |<a href="eval.html#expression">expression</a>| 寄存器并且调用 setcmdpos()，那
+                么在插入返回的文本之前设置光标位置。使用 <code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-R</code> 在插入
+                返回的文本之后设置光标位置。
+
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-F</code>                           <b class="vimtag">*<a name="c_CTRL-R_CTRL-F">c_CTRL-R_CTRL-F</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-F%3E">c_&lt;C-R&gt;_&lt;C-F&gt;</a>*</b>
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-P</code>                           <b class="vimtag">*<a name="c_CTRL-R_CTRL-P">c_CTRL-R_CTRL-P</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-P%3E">c_&lt;C-R&gt;_&lt;C-P&gt;</a>*</b>
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-W</code>                           <b class="vimtag">*<a name="c_CTRL-R_CTRL-W">c_CTRL-R_CTRL-W</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-W%3E">c_&lt;C-R&gt;_&lt;C-W&gt;</a>*</b>
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-A</code>                           <b class="vimtag">*<a name="c_CTRL-R_CTRL-A">c_CTRL-R_CTRL-A</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-A%3E">c_&lt;C-R&gt;_&lt;C-A&gt;</a>*</b>
+                插入光标下的对象:
+                        <code class="keystroke">CTRL-F</code>  光标下的文件名
+                        <code class="keystroke">CTRL-P</code>  用 <a href="options.html#'path'">'path'</a> 扩展的光标下的文件名。与 |<a href="editing.html#gf">gf</a>|
+                                中的类似。
+                        <code class="keystroke">CTRL-W</code>  光标下的单词
+                        <code class="keystroke">CTRL-A</code>  光标下的字串；参见: |<a href="motion.html#WORD">WORD</a>|
+
+                如果置位 <a href="options.html#'incsearch'">'incsearch'</a>，使用当前显示匹配文本的末尾作为光标位置。
+                使用 <code class="keystroke">CTRL-W</code> 时，已经录入的单词部分不再重复插入。
+
+                <code class="notvi">{Vi 无此功能}</code>
+                <code class="keystroke">CTRL-F</code> 和 <code class="keystroke">CTRL-P</code>: <code class="notvi">{仅当包含 |<a href="various.html#+file_in_path">+file_in_path</a>| 特性才可用}</code>
+
+                                        <b class="vimtag">*<a name="c_CTRL-R_CTRL-R">c_CTRL-R_CTRL-R</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-R%3E">c_&lt;C-R&gt;_&lt;C-R&gt;</a>*</b>
+                                        <b class="vimtag">*<a name="c_CTRL-R_CTRL-O">c_CTRL-R_CTRL-O</a>*</b> <b class="vimtag">*<a name="c_%3CC-R%3E_%3CC-O%3E">c_&lt;C-R&gt;_&lt;C-O&gt;</a>*</b>
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-R</code> {0-9a-z"%#:-=. <code class="keystroke">CTRL-F</code> <code class="keystroke">CTRL-P</code> <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-A</code>}
+<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-O</code> {0-9a-z"%#:-=. <code class="keystroke">CTRL-F</code> <code class="keystroke">CTRL-P</code> <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-A</code>}
+                插入寄存器或光标下的对象。类似于 |<a href="cmdline.html#c_CTRL-R">c_CTRL-R</a>|，但是该命令按字面
+                插入文本。例如，如果寄存器 a 的内容为 "xy^Hz" (^H 是退格键)，
+                那么 "<code class="keystroke">CTRL-R</code> a" 会插入 "xz"，而 "<code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-R</code> a" 会插入
+                "xy^Hz"。
+
+<code class="keystroke">CTRL-\</code> e <code class="special">{expr}</code>                                         <b class="vimtag">*<a name="c_CTRL-\_e">c_CTRL-\_e</a>*</b>
+                计算表达式 <code class="special">{expr}</code> 并用结果替换整个命令行。程序会提示你输入表达
+                式，用 <code class="special">&lt;Enter&gt;</code> 键提交表达式。这项功能在映射里十分有用。参见
+                |<a href="eval.html#expression">expression</a>|。
+                欲了解插入表达式结果的相关信息，请参阅 |<a href="cmdline.html#c_CTRL-R_%20">c_CTRL-R_=</a>|。
+                |<a href="eval.html#getcmdline()">getcmdline()</a>|、|<a href="eval.html#getcmdline()">getcmdline()</a>| 和 |<a href="eval.html#getcmdpos()">getcmdpos()</a>| 函数在这里很有
+                用。
+                缺省，光标的位置不会改变，除非光标正位于行末，那么它还会停留在
+                行末。
+                不过，可以用 |<a href="eval.html#setcmdpos()">setcmdpos()</a>| 来自行设置光标的位置。
+                使用沙盘 |<a href="eval.html#sandbox">sandbox</a>| 计算表达式以避免讨厌的副作用。
+                例如:
+<code class="example">                        :cmap &lt;F7&gt; &lt;C-\&gt;eAppendSome()&lt;CR&gt;</code>
+<code class="example">                        :func AppendSome()</code>
+<code class="example">                           :let cmd = getcmdline() . " Some()"</code>
+<code class="example">                           :" place the cursor on the )</code>
+<code class="example">                           :call setcmdpos(strlen(cmd))</code>
+<code class="example">                           :return cmd</code>
+<code class="example">                        :endfunc</code>
+                它无法递归操作，所以如果正在编辑一个表达式，它将无效。但可在映
+                射中使用。
+
+                                                        <b class="vimtag">*<a name="c_CTRL-Y">c_CTRL-Y</a>*</b>
+<code class="keystroke">CTRL-Y</code>          当存在无模式选择时，复制该选择区域的内容至剪贴板。
+                参考 无模式选择 |<a href="gui.html#modeless-selection">modeless-selection</a>|。
+                如果没有选择，那么 <code class="keystroke">CTRL-Y</code> 会被当作字符直接插入。
+
+<code class="keystroke">CTRL-J</code>                                  <b class="vimtag">*<a name="c_CTRL-J">c_CTRL-J</a>*</b> <b class="vimtag">*<a name="c_%3CNL%3E">c_&lt;NL&gt;</a>*</b> <b class="vimtag">*<a name="c_%3CCR%3E">c_&lt;CR&gt;</a>*</b> <b class="vimtag">*<a name="c_CR">c_CR</a>*</b>
+<code class="special">&lt;CR&gt;</code> 或 <code class="special">&lt;NL&gt;</code>    执行输入的命令
+                                                        <b class="vimtag">*<a name="c_%3CEsc%3E">c_&lt;Esc&gt;</a>*</b> <b class="vimtag">*<a name="c_Esc">c_Esc</a>*</b>
+<code class="special">&lt;Esc&gt;</code>           如果 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项中不包括 'x'，那么输入该键会退出命令行模
+                式，而不执行命令。若 <a href="options.html#'cpoptions'">'cpoptions'</a> 里包含 'x'，或者该键出现在宏
+                命令里，则执行输入的命令。
+                <code class="note">注意</code>: 如果键盘上输入 <code class="special">&lt;Esc&gt;</code> 不方便，请训练一下用 <code class="keystroke">CTRL-[</code> 吧。
+                                                        <b class="vimtag">*<a name="c_CTRL-C">c_CTRL-C</a>*</b>
+<code class="keystroke">CTRL-C</code>          不执行命令，退出命令行模式
+
+                                                        <b class="vimtag">*<a name="c_%3CUp%3E">c_&lt;Up&gt;</a>*</b> <b class="vimtag">*<a name="c_Up">c_Up</a>*</b>
+<code class="special">&lt;Up&gt;</code>            在历史记录中查找开始部分与当前输入匹配的前一条命令。(见下面)
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+                                                        <b class="vimtag">*<a name="c_%3CDown%3E">c_&lt;Down&gt;</a>*</b> <b class="vimtag">*<a name="c_Down">c_Down</a>*</b>
+<code class="special">&lt;Down&gt;</code>          在历史记录中查找开始部分与当前输入匹配的下一条命令。(见下面)
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+
+                                                <b class="vimtag">*<a name="c_%3CS-Up%3E">c_&lt;S-Up&gt;</a>*</b> <b class="vimtag">*<a name="c_%3CPageUp%3E">c_&lt;PageUp&gt;</a>*</b>
+<code class="special">&lt;S-Up&gt;</code> 或 <code class="special">&lt;PageUp&gt;</code>
+                取回历史记录中的上一条命令
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+                                                <b class="vimtag">*<a name="c_%3CS-Down%3E">c_&lt;S-Down&gt;</a>*</b> <b class="vimtag">*<a name="c_%3CPageDown%3E">c_&lt;PageDown&gt;</a>*</b>
+<code class="special">&lt;S-Down&gt;</code> 或 <code class="special">&lt;PageDown&gt;</code>
+                取回历史记录中的下一条命令
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+
+<code class="keystroke">CTRL-D</code>          命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+<a href="options.html#'wildchar'">'wildchar'</a> 选项
+                命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+<code class="keystroke">CTRL-N</code>          命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+<code class="keystroke">CTRL-P</code>          命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+<code class="keystroke">CTRL-A</code>          命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+<code class="keystroke">CTRL-L</code>          命令行补全 (见 |<a href="cmdline.html#cmdline-completion">cmdline-completion</a>|)
+
+                                                        <b class="vimtag">*<a name="c_CTRL-_">c_CTRL-_</a>*</b>
+<code class="keystroke">CTRL-_</code>          a - 在希伯来语和英语的键盘模式之间切换，这只是针对命令行模式，
+                与 hkmap 无关。如果命令行、搜索、缩写，等等需要输入希伯来文的
+                话，这一功能就很有用了。只有在 Vim 编译时加入了 |<a href="various.html#+rightleft">+rightleft</a>|，
+                并且置位了 <a href="options.html#'allowrevins'">'allowrevins'</a> 选项后，该功能才可用。
+                参见 |<a href="rileft.html#rileft.txt">rileft.txt</a>|。
+
+                b - 在波斯语和英语的键盘模式之间切换，这只是针对命令行模式，与
+                fkmap 无关。在波斯语键盘模式下，字符的插入方式与平时相反 (即从
+                右至左)。如果命令行、搜索、缩写，等等需要输入波斯语的话，这一
+                功能就很有用了。只有在 Vim 编译时加入了 |<a href="various.html#+farsi">+farsi</a>|，该功能才可
+                用。
+                参见 |<a href="farsi.html#farsi.txt">farsi.txt</a>|。
+
+                                                        <b class="vimtag">*<a name="c_CTRL-^">c_CTRL-^</a>*</b>
+<code class="keystroke">CTRL-^</code>          语言映射 |<a href="map.html#:lmap">:lmap</a>| 和/或 输入法的开关。
+                如果输入搜索模式且 <a href="options.html#'imsearch'">'imsearch'</a> 的值不是 -1 ，VAL 是 <a href="options.html#'imsearch'">'imsearch'</a>
+                的值，否则，VAL 是 <a href="options.html#'iminsert'">'iminsert'</a> 的值。
+                如果定义了语言映射:
+                - 如果 VAL 为 1 (使用 langmap 映射)，那么变为 0 (不使用
+                langmap 映射)。
+                - 如果 VAL 不是 1，那么会变为 1，这样 langmap 映射被启用。
+                如果没有定义语言映射:
+                - 如果 VAL 是 2 (使用输入法)，那么变为 0 (不使用输入法)
+                - 如果 VAL 是其它值，那么变为 2，这样输入法被启用。
+                这些语言映射通常被用来输入和键盘产生的不同的字符。可以用
+                <a href="options.html#'keymap'">'keymap'</a> 选项安装一整套这样的映射。
+                命令行输入时，langmap 映射关闭，因为假定你想输入命令。即使你用
+                <code class="keystroke">CTRL-^</code> 打开了映射，新的状态也不会被下一条命令或搜索模式再次使
+                用。
+                <code class="notvi">{Vi 无此功能}</code>
+                (<code class="vim">译者注</code>: 此处的语言映射或 langmap 映射与 |<a href="options.html#'langmap'">'langmap'</a>| 选项是不
+                同的概念，后者只适用于普通模式。)
+
+                                                <b class="vimtag">*<a name="c_CTRL-]">c_CTRL-]</a>*</b>
+<code class="keystroke">CTRL-]</code>          激活缩写，但不插入任何字符。<code class="notvi">{Vi 无此功能}</code>
+
+对于 Emacs 风格的命令行编辑请参阅 |<a href="tips.html#emacs-keys">emacs-keys</a>|。
+
+<code class="special">&lt;Up&gt;</code> 和 <code class="special">&lt;Down&gt;</code> 键使用当前的命令行作为搜索的字符串。前面或后面的命令的起始部分
+与该字符串做比较。最先匹配的作为新的命令。若连续重复这两个键，则使用同一字符串
+进行再次匹配。例如，寻找前一个替换命令: 输入 ":s" 然后 <code class="special">&lt;Up&gt;</code>。同样的效果也可以
+用重复输入一连串 <code class="special">&lt;S-Up&gt;</code> 直至找到你需要的命令为止达成。(<code class="note">注意</code>: Shift+箭头键在某
+些终端里不可用)
+
+                                                        <b class="vimtag">*<a name=":his">:his</a>*</b> <b class="vimtag">*<a name=":history">:history</a>*</b>
+:his[tory]      列出最近执行的命令。
+                <code class="notvi">{Vi 无此功能}</code>
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 特性才可用}</code>
+
+:his[tory] [<code class="special">{name}</code>] [<code class="special">{first}</code>][, [<code class="special">{last}</code>]]
+                列出 <code class="special">{name}</code> 历史记录的内容，<code class="special">{name}</code> 可以是:
+                c[md]    或 :           命令行的历史记录
+                s[earch] 或 / 或 ?      查找字符串的历史记录
+                e[xpr]   或 =           表达式寄存器的历史记录
+                i[nput]  或 @           输入行的历史记录
+                d[ebug]  或 &gt;           调试命令的历史记录
+                a[ll]                   所有上述记录
+                <code class="notvi">{Vi 无此功能}</code>
+
+                如果给定了数字 <code class="special">{first}</code> 和 <code class="special">{last}</code>，那么就会列出指定范围内的历史
+                记录条目。这些数字可以是下面的格式:
+                                                        <b class="vimtag">*<a name=":history-indexing">:history-indexing</a>*</b>
+                正数表示历史记录的绝对索引，也就是 :history 命令列出的第一列数
+                字。即使历史记录中的其它条目被删除了，该数字也会保持不变。
+
+                负数表示与某一记录的相对位置。以最新的一条记录 (索引号为 -1)
+                为基准向后算起。
+
+                例子:
+                列出搜索历史记录中的第 6 到第 12 条记录:
+<code class="example">                        :history / 6,12</code>
+
+                列出所有历史记录中最近的 5 条记录:
+<code class="example">                        :history all -5,</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>2. 命令行补全                                           <b class="vimtag">*<a name="cmdline-completion">cmdline-completion</a>*</b></h4>
+在编辑命令行的时候，有一些命令可以用来补全光标前面的单词。此功能可用于下述情
+况:
+
+- 命令名称: 在命令行的起始处。
+- 标签: 只在 ":tag" 命令后。
+- 文件名: 只在可以接受文件名的命令或可以接受文件名的选项之后。也被称作文件名补
+  全。
+- shell 命令名: 在 ":!cmd"、":r !cmd" 和 ":w !cmd" 之后。使用 $PATH。
+- 选项: 仅在 ":set" 命令之后。
+- 映射: 仅在 ":map" 或与之类似的命令之后。
+- 变量和函数名: 仅在 ":if"，":call" 或类似的命令之后。
+
+如果在编译 Vim 时没有加入 |<a href="various.html#+cmdline_compl">+cmdline_compl</a>| 特性，则只有文件名、目录、和帮助条
+目可以补全。帮助条目的匹配数目有上限 (目前是 300 个)，以避免过多匹配造成的延迟
+问题。
+
+以下是可以使用的命令:
+
+                                                        <b class="vimtag">*<a name="c_CTRL-D">c_CTRL-D</a>*</b>
+<code class="keystroke">CTRL-D</code>          列出与光标前面的模式所匹配的名字。
+                在列文件名的时候，目录名会被高亮 (见 <a href="options.html#'highlight'">'highlight'</a> 选项)。扩展名
+                与 <a href="options.html#'suffixes'">'suffixes'</a> 匹配的文件名放到列表的最后。
+                要列出匹配标签所在的文件，可以设置选项 <a href="options.html#'wildoptions'">'wildoptions'</a> 为
+                "tagfile"。
+
+                                        <b class="vimtag">*<a name="c_CTRL-I">c_CTRL-I</a>*</b> <b class="vimtag">*<a name="c_wildchar">c_wildchar</a>*</b> <b class="vimtag">*<a name="c_%3CTab%3E">c_&lt;Tab&gt;</a>*</b>
+<a href="options.html#'wildchar'">'wildchar'</a> 选项
+                用光标前的模式完成匹配。匹配的项目 (如果有多项匹配，则选第一
+                项) 会插入并取代模式。(<code class="note">注意</code>: 该功能不能用于宏，因为在大多数情
+                况下 <code class="special">&lt;Tab&gt;</code> 或 <code class="special">&lt;Esc&gt;</code> 被用做 <a href="options.html#'wildchar'">'wildchar'</a>，而这些键在某些宏里面有
+                特殊的意义。) 如果再次输入，并且有多项匹配时，则插入下一项匹
+                配。在最后一项匹配之后，会再次匹配第一项 (循环使用)。
+                该行为可以通过设置 <a href="options.html#'wildmode'">'wildmode'</a> 选项来改变。
+                                                        <b class="vimtag">*<a name="c_CTRL-N">c_CTRL-N</a>*</b>
+<code class="keystroke">CTRL-N</code>          在使用 <a href="options.html#'wildchar'">'wildchar'</a> 之后，如果得到了多项匹配，则选择下一项匹配。
+                否则选择命令历史列表中的下一条命令。
+<code class="special">&lt;S-Tab&gt;</code>                                                 <b class="vimtag">*<a name="c_CTRL-P">c_CTRL-P</a>*</b> <b class="vimtag">*<a name="c_%3CS-Tab%3E">c_&lt;S-Tab&gt;</a>*</b>
+<code class="keystroke">CTRL-P</code>          在使用 <a href="options.html#'wildchar'">'wildchar'</a> 之后，如果得到了多项匹配，则选择前一项匹配。
+                否则选择命令历史列表中的上一条命令。<code class="special">&lt;S-Tab&gt;</code> 只在 Amiga 的 GUI
+                和 MS-DOS 上可以用。
+                                                        <b class="vimtag">*<a name="c_CTRL-A">c_CTRL-A</a>*</b>
+<code class="keystroke">CTRL-A</code>          将所有与模式匹配的项全部插入到光标前面。
+                                                        <b class="vimtag">*<a name="c_CTRL-L">c_CTRL-L</a>*</b>
+<code class="keystroke">CTRL-L</code>          用光标前的模式完成匹配。如果有匹配的项目，则插入并取代当前的模
+                式。如果有多个项目匹配，那么取这些项目中尽可能长的共同部分插
+                入以取代模式。若结果比模式短，则匹配不成功。
+                如果置位 <a href="options.html#'incsearch'">'incsearch'</a>，用 "/" 或 "?" 录入搜索模式而显示当前的匹
+                配时，<code class="keystroke">CTRL-L</code> 会从当前匹配的末尾一次加一个字符。如果置位了
+                <a href="options.html#'ignorecase'">'ignorecase'</a> 和 <a href="options.html#'smartcase'">'smartcase'</a> 而命令行没有大写字符，加入的字符会
+                转换为小写。
+
+选项 <a href="options.html#'wildchar'">'wildchar'</a> 的默认值是 <code class="special">&lt;Tab&gt;</code> (在 Vi 兼容模式里用的是 <code class="keystroke">CTRL-E</code>；在以前的版本
+里用的是 <code class="special">&lt;Esc&gt;</code>)。 如果用来匹配文件名，在匹配模式里可以使用标准的通配符 '*' 和
+'?'。'*' 匹配任意字符串，'?' 匹配一个字符。
+
+置位选项 <a href="options.html#'wildignorecase'">'wildignorecase'</a> 可用于忽略文件名的大小写。
+
+如果你喜欢 tcsh 的自动列表匹配，可以使用这个映射:
+<code class="example">        :cnoremap X &lt;C-L&gt;&lt;C-D&gt;</code>
+(X 是命令键，<code class="special">&lt;C-L&gt;</code> 是 <code class="keystroke">CTRL-L</code>，<code class="special">&lt;C-D&gt;</code> 是 <code class="keystroke">CTRL-D</code>) 这样就可以找到最长的匹配并列出
+所有匹配的文件。
+
+如果你喜欢 tcsh 的自动列表匹配，你可以使用 <a href="options.html#'wildmode'">'wildmode'</a> 选项来模拟它。例如，这与
+autolist=ambiguous 极其类似:
+<code class="example">        :set wildmode=longest,list</code>
+这将在你输入第一个 <a href="options.html#'wildchar'">'wildchar'</a> 之后，找到最长的匹配，接着列出所有匹配的文件。
+
+                                                        <b class="vimtag">*<a name="suffixes">suffixes</a>*</b>
+对于文件名的匹配你可以用 <a href="options.html#'suffixes'">'suffixes'</a> 选项在相似的文件名之间设定优先级。如果有多
+个文件匹配，并且 <a href="options.html#'suffixes'">'suffixes'</a> 选项中包含这些文件的扩展名，那么这些文件会被忽略。
+<a href="options.html#'suffixes'">'suffixes'</a> 的默认值是 ".bak,~,.o,.h,.info,.swp,.obj"。其含义是: 以
+".bak"，"~"，".o"，".h"，".info"，".swp" 和 ".obj" 结尾的文件名有时被忽略。
+
+空项目，即两个连续的逗号，匹配不包含 "." 的文件名，因为它们没有扩展名。可用来
+忽略 "prog" 而选择 "prog.c"。
+
+例如:
+
+<code class="section">   模式:        文件:                           匹配:   </code>
+   test*        test.c test.h test.o            test.c
+   test*        test.h test.o                   test.h and test.o
+   test*        test.i test.h test.c            test.i and test.c
+
+无法忽略包括两个句号的后缀名。
+
+如果有多个文件匹配 (在忽略了与 <a href="options.html#'suffixes'">'suffixes'</a> 匹配的扩展名之后)，则第一个匹配的文
+件名被插入。当你按两次 <a href="options.html#'wildchar'">'wildchar'</a> 时，你可以看到只有一个匹配并且完整的匹配保持
+不变。你可以再输入一次 <a href="options.html#'wildchar'">'wildchar'</a>，<code class="keystroke">CTRL-N</code>，或 <code class="keystroke">CTRL-P</code> 得到另一个匹配。包括所有
+的文件，也包括扩展名与 <a href="options.html#'suffixes'">'suffixes'</a> 匹配的文件。
+
+要完全忽略有某些扩展名的文件，请使用 <a href="options.html#'wildignore'">'wildignore'</a> 选项。
+
+要只匹配以输入文本结尾的文件，附加 "$" 即可。例如，要匹配 ".c" 结尾的文件:
+<code class="example">        :e *.c$</code>
+这样就不会匹配 ".cpp" 结尾的文件。如果没有 "$" 就会。
+
+一个选项的旧值可以通过在 '=' 后面输入 <a href="options.html#'wildchar'">'wildchar'</a> 来获得。例如，在 ":set dir="
+后输入 <a href="options.html#'wildchar'">'wildchar'</a>，就会插入当前 <a href="options.html#'dir'">'dir'</a> 的值。对于选项值是文件名的选项，这一行为
+优先于文件名匹配。
+
+若你喜欢在 xterm 里使用 <code class="special">&lt;S-Tab&gt;</code> 代替 <code class="keystroke">CTRL-P</code>，把这条命令放到你的 .cshrc 里:
+<code class="example">        xmodmap -e "keysym Tab = Tab Find"</code>
+把这条命令放到你的 .vimrc 里:
+<code class="example">        :cmap &lt;Esc&gt;[1~ &lt;C-P&gt;</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>3. Ex 命令行                                            <b class="vimtag">*<a name="cmdline-lines">cmdline-lines</a>*</b></h4>
+Ex 命令有几个特别的地方:
+
+                                                        <b class="vimtag">*<a name=":quote">:quote</a>*</b> <b class="vimtag">*<a name=":comment">:comment</a>*</b>
+如果 '"' 出现在一行的开始，那么该行被忽略。如果 '"' 出现在命令之后，则使得该行
+的剩余部分被忽略。这可以被用于添加注释。例如:
+<code class="example">        :set ai         "set 'autoindent' option</code>
+不能给 shell 命令 (":!cmd") 或 ":map" 和其它的一些的命令添加注释，因为它们把
+'"' 视为命令的一部分。解释具体命令时会提到这一点。
+
+                                                        <b class="vimtag">*<a name=":bar">:bar</a>*</b> <b class="vimtag">*<a name=":\bar">:\bar</a>*</b>
+'|' 可以用来分割命令，所以你可以在一行里输入多个命令。如果你想在参数里使用
+'|' ，应该在前面加上 '\'。
+
+下面这些命令把 '|' 当作它们的参数，所以后面不能跟别的 Vim 命令:
+    :argdo
+    :autocmd
+    :bufdo
+    :command
+    :cscope
+    :debug
+    :folddoopen
+    :folddoclosed
+    :function
+    :global
+    :help
+    :helpfind
+    :lcscope
+    :make
+    :normal
+    :perl
+    :perldo
+    :promptfind
+    :promptrepl
+    :pyfile
+    :python
+    :registers
+    :read !
+    :scscope
+    :sign
+    :tcl
+    :tcldo
+    :tclfile
+    :vglobal
+    :windo
+    :write !
+    :<code class="special">[range]</code>!
+    没有参数 "-bar" 的用户自定义命令 |<a href="map.html#:command">:command</a>|
+
+<code class="note">注意</code>: 在 ":g" 中 '|' 包含在命令里 (作为参数)，但 ":s" 却不是。这的确有点乱
+(继承于 Vi)。
+
+为确保总能执行另一个命令，请使用 ":execute" 命令。
+例如 (读入 "ls" 的输出，并且跳到第一行):
+<code class="example">        :execute 'r !ls' | '[</code>
+<code class="example"></code>
+有一个例外: 如果 'b' 出现在 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项中，那么在 ":map" 和 ":abbr" 之类
+的命令里需要用 <code class="keystroke">CTRL-V</code> 代替 '\'。你也可以用 "<code class="special">&lt;Bar&gt;</code>" 来代替。参见 |<a href="map.html#map_bar">map_bar</a>|。
+
+例如:
+<code class="example">        :!ls | wc               查看两个命令的输出</code>
+<code class="example">        :r !ls | wc             将相同的输出插入文本</code>
+<code class="example">        :%g/foo/p|&gt;             将所有匹配的行移动一个 shiftwidth</code>
+<code class="example">        :%s/foo/bar/|&gt;          将一行移动一个 shiftwidth</code>
+<code class="example">        :map q 10^V|            将 "q" 映射为 "10|"</code>
+<code class="example">        :map q 10\| map \ l     将 "q" 映射为 "10\" 和将 "\" 映射为 "l"</code>
+<code class="example">                                        (如果 'cpoptions' 选项中包含 'b')</code>
+<code class="example"></code>
+用与 '|' 相同的方法，你也可以用 <code class="special">&lt;NL&gt;</code> 分割多个命令。用 <code class="keystroke">CTRL-V</code> <code class="keystroke">CTRL-J</code> 插入一个
+<code class="special">&lt;NL&gt;</code>。Vim 会显示一个 "^@"。应该说，使用 '|' 是一个更好的方法。但是对于外部命
+令，就必须使用 <code class="special">&lt;NL&gt;</code>，因为外部命令会包含 '|'。如果要避免 <code class="special">&lt;NL&gt;</code> 的特殊含义，就必
+须在它前面加反斜杠。例如:
+<code class="example">        :r !date&lt;NL&gt;-join</code>
+将当前时间读入文件，并且与上一行文本衔接。
+
+<code class="note">注意</code>: 如果 '|' 前面的命令产生了错误，那么其后面的命令不会执行。
+
+
+为了兼容 Vi，下面几个奇怪的命令 Vim 也支持:
+<code class="example">        :|                      打印当前行 (同 ":p")</code>
+<code class="example">        :3|                     打印第 3 行 (同 ":3p")</code>
+<code class="example">        :3                      前进至第 3 行</code>
+<code class="example"></code>
+在范围与命令之间允许有一个冒号。这个冒号被忽略 (与 Vi 兼容)。例如:
+<code class="example">        :1,$:s/pat/string</code>
+<code class="example"></code>
+当字符 '%' 或 '#' 被用在一个需要文件名的地方时，会被扩展为当前的文件名或轮换文
+件名 (参见 "编辑文件" 的章节 |<a href="cmdline.html#:_%">:_%</a>| |<a href="cmdline.html#:_%23">:_#</a>|)。
+
+在 Amiga 系统上，如果文件名要作为参数使用，那么文件名里是允许包含空格符的。通
+常末尾的空格符会被忽略，除非使用转义字符反斜杠或 <code class="keystroke">CTRL-V</code> 使它转义。<code class="note">注意</code>，
+":next" 命令使用空格符分割文件名。所以要在该命令里使用带空格符的文件名，就需要
+将空格符转义。例如:
+<code class="example">        :next foo\ bar goes\ to school\</code>
+开始编辑 "foo bar"，"goes to" 和 "school " 三个文件。
+
+当你想在命令里使用特殊字符 '"' 或 '|'，或者想在文件名里使用 '%' 或 '#'，就需要
+在这些字符前加一个反斜杠。在范围和 ":substitute" 命令里不需要使用反斜杠。
+
+                                                        <b class="vimtag">*<a name=":_!">:_!</a>*</b>
+在 Ex 命令之后的 '!' (叹号) 使得命令以不同的方式执行。'!' 应该紧跟在命令之后，
+中间没有任何空白字符。如果插入了空白字符，'!' 则被视为该命令的参数，其含义是不
+同的。例如:
+<code class="example">        :w! name        将当前缓冲区内容写入文件 "name"。若该文件存在，则覆盖</code>
+<code class="example">                        之。</code>
+<code class="example">        :w !name        将当前缓冲区内容作为标准输入发送给 "name" 命令。</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>4. Ex 命令行的范围              <b class="vimtag">*<a name="cmdline-ranges">cmdline-ranges</a>*</b> <b class="vimtag">*<a name="[range]">[range]</a>*</b> <b class="vimtag">*<a name="E16">E16</a>*</b></h4>
+有些 Ex 命令前面可以接受一个范围限定，这被称作 <code class="special">[range]</code> (范围)。它由一个或多个
+被 ',' 或 ';' 分割的行限定符组成。
+
+一些基本的内容在用户手册的 |<a href="usr_10.html#10.3">10.3</a>| 里解释过。
+
+                                                <b class="vimtag">*<a name=":,">:,</a>*</b> <b class="vimtag">*<a name=":;">:;</a>*</b>
+当范围被 ';' 分割时，在解释下一个行限定符之前，光标的位置会被设置为前一个行限
+定符确定的行值。这种情况不会发生在 ',' 上。例如:
+<code class="example">   4,/this line/</code>
+        从第 4 行到匹配当前光标后的一个 "this line" 为止的范围。
+<code class="example">   5;/that line/</code>
+        从第 5 行到匹配第 5 行之后的一个 "that line" 为止的范围。
+
+对大多数命令而言，默认的行限定符就是光标的位置，但是 ":write" 和 ":global" 命
+令的默认值是整个文件 (1,$)。
+
+若行限定符的个数多于命令需要的数量，则第一个 (或前几个) 限定符被忽略。
+
+行号可以用下列符号限定:                         <b class="vimtag">*<a name=":range">:range</a>*</b> <b class="vimtag">*<a name="E14">E14</a>*</b> <b class="vimtag">*<a name="{address}">{address}</a>*</b>
+        <code class="special">{number}</code>        行号
+        .               当前行                                    <b class="vimtag">*<a name=":.">:.</a>*</b>
+        $               文件的最后一行                            <b class="vimtag">*<a name=":$">:$</a>*</b>
+        %               相当于 1,$ (整个文件)                     <b class="vimtag">*<a name=":%">:%</a>*</b>
+        't              标记 t 的位置 (小写)                      <b class="vimtag">*<a name=":'">:'</a>*</b>
+        'T              标记 T 的位置 (大写)；如果标记存在于另一个文件中，则不
+                        能在范围里应用。
+        /<code class="special">{pattern}</code>[/]   下一个 匹配 <code class="special">{pattern}</code> 的行                <b class="vimtag">*<a name=":%2F">:/</a>*</b>
+        ?<code class="special">{pattern}</code>[?]   前一个 匹配 <code class="special">{pattern}</code> 的行                <b class="vimtag">*<a name=":?">:?</a>*</b>
+        \/              下一个 与前次搜索模式匹配的行
+        \?              前一个 与前次搜索模式匹配的行
+        \&amp;              下一个 与前次替代模式匹配的行
+
+这些符号后面可以跟 (一个或多个) '+' 或 '-' 和一个可选的数字。该数字会与前面的
+行号相加或相减。若该数字省略，则认为是 1。
+
+在 <code class="special">{pattern}</code> 之后需要由 "/" 或 "?" 来分隔匹配模式与其之后的内容。
+
+"/" 和 "?" 前面可能有另一个地址。查找就从那里开始。和使用分号的方式不同之处
+是: 光标不会被移动。例如:
+<code class="example">        /pat1//pat2/    从包含 "pat1" 的行开始，向后寻找直至找到包含 "pat2" 的</code>
+<code class="example">                        行为止，不移动光标位置。</code>
+<code class="example">        7;/pat2/        从第 7 行开始，向后寻找直至找到包含 "pat2" 的行为止。</code>
+<code class="example">                        光标留在第 7 行。</code>
+<code class="example"></code>
+<code class="special">{number}</code> 必须在 0 和文件的总行数之间。当使用 0 (零) 的时候，大多数命令会把它解
+释成 1 。把它用作计数器的命令会将它解释为零 (|<a href="tagsrch.html#:tag">:tag</a>|，|<a href="tagsrch.html#:pop">:pop</a>| 等)。有些命令会把
+零解释为 "在第一行之前" (|<a href="insert.html#:read">:read</a>|，搜索模式等)。
+
+例如:
+<code class="example">        .+3             光标下面三行</code>
+<code class="example">        /that/+1        下一个包含 "that" 的行的下一行</code>
+<code class="example">        .,$             从当前行直至文件末尾</code>
+<code class="example">        0;/that         第一个包含 "that" 的行，也能匹配第一行</code>
+<code class="example">        1;/that         第一行之后 (从第二行开始) 包含 "that" 的那一行</code>
+<code class="example"></code>
+有些命令后面可以跟一个数量。这个数量被用作从上一个行限定符 (默认值是当前光标所
+在的行) 开始计算的行数。可以使用范围但是不使用文件名作为参数的命令可以接受这种
+数量参数 (因为文件名也可能是一个数字)。
+
+例如:
+<code class="example">        :s/x/X/g 5      用 'X' 替换当前行和下面四行里的 'x'。</code>
+<code class="example">        :23d 4          删除 23，24，25 和 26 行。</code>
+<code class="example"></code>
+<code class="example"></code>
+折叠和范围
+
+如果激活了折叠功能，行号会被取整以包括整个折叠。见 |<a href="fold.html#fold-behavior">fold-behavior</a>|。
+
+
+反向范围                                                <b class="vimtag">*<a name="E493">E493</a>*</b>
+
+在范围里，小的数字应该出现在前面。如果不是这样，Vim 会询问你是否交换。
+<code class="section">        Backwards range given, OK to swap </code>
+但全局命令 ":g" 里不会这么做。
+
+在命令前用 ":silent" 可以避免此问题，这时范围总是进行交换。
+
+
+计数和范围                                              <b class="vimtag">*<a name="N:">N:</a>*</b>
+
+如果在进入 ":" 之前输入了计数前缀，这种情况会被解释成:
+                :.,.+(count - 1)
+简单来说就是: 包括当前行，向后共计 <code class="badlink">'count'</code> 行。例如，删除三行:
+<code class="example">                3:d&lt;CR&gt;         被翻译成: .,.+2d&lt;CR&gt;</code>
+
+
+可视模式和范围                                          <b class="vimtag">*<a name="v_:">v_:</a>*</b>
+
+<code class="special">{Visual}</code>:       将可视模式中选择的区域用作命令行模式的范围。`:'&lt;,'&gt;` 被用来表
+                示这种范围。这样就可以在不同的选择区域上，从命令历史列表里选择
+                相似的命令来重复执行操作。
+                如果已经退出可视模式，更简短的方法是用 `:*` 来得到可视区域的范
+                围。需要 <a href="options.html#'cpo'">'cpo'</a> 里不出现 "*"，参见 |<a href="options.html#cpo-star">cpo-star</a>|。否则，只能通过输
+                入 `:'&lt;,'&gt;` 得到。
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>5. Ex 命令行的标志位                                    <b class="vimtag">*<a name="ex-flags">ex-flags</a>*</b></h4>
+部分 Ex 命令支持以下标志位。它们显示光标在执行完命令之后所在的行:
+
+        l       像 |<a href="various.html#:list">:list</a>| 那样输出
+        #       加上行号
+        p       像 |<a href="various.html#:print">:print</a>| 那样输出
+
+可以联合使用这些标志位，这样 "l#" 表示使用行号并且使用 |<a href="various.html#:list">:list</a>| 风格输出。
+
+</pre><hr class="doubleline" /><pre>
+<h4>6. Ex 里的特殊字符                                      <b class="vimtag">*<a name="cmdline-special">cmdline-special</a>*</b></h4>
+<code class="note">注意</code>: 这些是要执行的 Ex 命令行中的特殊字符。如果你想要在录入时插入特殊的内容，
+可以使用 <code class="keystroke">CTRL-R</code> 命令。例如，"%" 表示当前文件名，而 <code class="keystroke">CTRL-R</code> % 则立即插入当前文件
+名。见 |<a href="cmdline.html#c_CTRL-R">c_CTRL-R</a>|。
+
+<code class="note">备注</code>: 在 Vim 脚本中要避免特殊字符，可用 |<a href="eval.html#fnameescape()">fnameescape()</a>|。
+
+
+在 Ex 命令中，下列字符在可以使用文件名的地方有特殊的意义。它们同样可以用到表达
+式函数 expand() 中 |<a href="eval.html#expand()">expand()</a>|。
+        %       被当前文件名取代。                              <b class="vimtag">*<a name=":_%">:_%</a>*</b> <b class="vimtag">*<a name="c_%">c_%</a>*</b>
+        #       被轮换文件名取代。                              <b class="vimtag">*<a name=":_%23">:_#</a>*</b> <b class="vimtag">*<a name="c_%23">c_#</a>*</b>
+        #n      (n 是一个数字) 被第 n 个缓冲区的文件名取代。    <b class="vimtag">*<a name=":_%230">:_#0</a>*</b> <b class="vimtag">*<a name=":_%23n">:_#n</a>*</b>
+                "#0" 与 "#" 相同。                                     <b class="vimtag">*<a name="c_%23n">c_#n</a>*</b>
+        ##      被参数列表里的所有文件名 (使用空格符分隔) 取代。 <b class="vimtag">*<a name=":_%23%23">:_##</a>*</b> <b class="vimtag">*<a name="c_%23%23">c_##</a>*</b>
+                文件名中的空格符前面会加一个反斜杠。
+        #&lt;n     (n 是一个正数) 被第 n 个旧文件名取代。          <b class="vimtag">*<a name=":_%23%3C">:_#&lt;</a>*</b> <b class="vimtag">*<a name="c_%23%3C">c_#&lt;</a>*</b>
+                要得到这个数值，见 |<a href="starting.html#:oldfiles">:oldfiles</a>| 或 |<a href="eval.html#v:oldfiles">v:oldfiles</a>|。        <b class="vimtag">*<a name="E809">E809</a>*</b>
+                <code class="notvi">{仅当编译时加入 |<a href="various.html#+eval">+eval</a>| 和 |<a href="various.html#+viminfo">+viminfo</a>| 特性才可用}</code>
+
+<code class="note">注意</code>: 除了 "#&lt;n" 以外，它们只给出输入时使用的文件名。如果需要绝对路径 (当从另
+一个目录使用文件名的时候)，你需要加 ":p"。见 |<a href="cmdline.html#filename-modifiers">filename-modifiers</a>|。
+
+"#&lt;n" 项返回绝对路径，但在主目录下的文件名会以 "~/" 开始。
+
+<code class="note">注意</code>: 空格符前面会插入反斜杠，以便 Vim 命令会正确地解释文件名。但是 shell 命令
+不会如此。为此，你可以使用引号 (但对包含引号和通配符的文件名会有问题):
+<code class="example">        :!ls "%"</code>
+<code class="example">        :r !spell "%"</code>
+<code class="example"></code>
+要避免 '%' 和 '#' 的特殊含义，可以在它前面插入一个反斜杠。细节: 只要有反斜杠在
+这些字符前面，它们就不具备特殊含义，不管有多少个反斜杠。
+<code class="section">        你输入:                 结果    </code>
+           #                    轮换文件名
+           \#                   #
+           \\#                  \#
+
+                               <b class="vimtag">*<a name=":%3Ccword%3E">:&lt;cword&gt;</a>*</b> <b class="vimtag">*<a name=":%3CcWORD%3E">:&lt;cWORD&gt;</a>*</b> <b class="vimtag">*<a name=":%3Ccfile%3E">:&lt;cfile&gt;</a>*</b> <b class="vimtag">*<a name="%3Ccfile%3E">&lt;cfile&gt;</a>*</b>
+                               <b class="vimtag">*<a name=":%3Csfile%3E">:&lt;sfile&gt;</a>*</b> <b class="vimtag">*<a name="%3Csfile%3E">&lt;sfile&gt;</a>*</b> <b class="vimtag">*<a name=":%3Cafile%3E">:&lt;afile&gt;</a>*</b> <b class="vimtag">*<a name="%3Cafile%3E">&lt;afile&gt;</a>*</b>
+                               <b class="vimtag">*<a name=":%3Cabuf%3E">:&lt;abuf&gt;</a>*</b> <b class="vimtag">*<a name="%3Cabuf%3E">&lt;abuf&gt;</a>*</b> <b class="vimtag">*<a name=":%3Camatch%3E">:&lt;amatch&gt;</a>*</b> <b class="vimtag">*<a name="%3Camatch%3E">&lt;amatch&gt;</a>*</b>
+                               <b class="vimtag">*<a name="%3Cslnum%3E">&lt;slnum&gt;</a>*</b> <b class="vimtag">*<a name="E495">E495</a>*</b> <b class="vimtag">*<a name="E496">E496</a>*</b> <b class="vimtag">*<a name="E497">E497</a>*</b> <b class="vimtag">*<a name="E499">E499</a>*</b> <b class="vimtag">*<a name="E500">E500</a>*</b>
+<code class="note">注意</code>: 下面这些不是特殊键，需要逐个字符输入！
+        <code class="special">&lt;cword&gt;</code>    被当前光标下的单词代替 (类似于 |<a href="pattern.html#star">star</a>|)
+        <code class="special">&lt;cWORD&gt;</code>    被当前光标下的字串代替 (见 |<a href="motion.html#WORD">WORD</a>|)
+        <code class="special">&lt;cfile&gt;</code>    被当前光标下的路径名代替 (类似于 |<a href="editing.html#gf">gf</a>| 用的方法)
+        <code class="special">&lt;afile&gt;</code>    在执行自动命令时，被用来读或写的文件的文件名取代。
+        <code class="special">&lt;abuf&gt;</code>     在执行自动命令时，被当前有效的缓冲区序号取代 (对于
+                   ":r file" 和 ":so file" 来说是当前的缓冲区，因为被读取/执行
+                   的文件不在缓冲区里)。
+        <code class="special">&lt;amatch&gt;</code>   在执行自动命令时，被激发自动命令的实际匹配代替。只有在文件
+                   名不用于匹配 (对于 FileType、Syntax 和 SpellFileMissing 事
+                   件) 时，才与 <code class="special">&lt;afile&gt;</code> 不同。
+        <code class="special">&lt;sfile&gt;</code>    执行 ":source" 命令时，替换为正在被 "source" 执行的文件名。
+                   <b class="vimtag">*<a name="E498">E498</a>*</b>
+                   执行函数时，替换为 "function <code class="special">{function-name}</code>"；其中，函数嵌
+                   套调用表示为:
+                   "function <code class="special">{function-name1}</code>..<code class="special">{function-name2}</code>"。<code class="note">注意</code>，如果
+                   <code class="special">&lt;sfile&gt;</code> 用在函数里，那么文件名修饰符 (filename-modifiers)
+                   就没用了。
+        <code class="special">&lt;slnum&gt;</code>    执行 ":source" 命令时，替换为行号。 <b class="vimtag">*<a name="E842">E842</a>*</b>
+                   执行函数时，替换为相对函数开始处的行号。
+
+                                                         <b class="vimtag">*<a name="filename-modifiers">filename-modifiers</a>*</b>
+         <b class="vimtag">*<a name=":_%:">:_%:</a>*</b> <b class="vimtag">*<a name="::8">::8</a>*</b> <b class="vimtag">*<a name="::p">::p</a>*</b> <b class="vimtag">*<a name="::.">::.</a>*</b> <b class="vimtag">*<a name="::%7E">::~</a>*</b> <b class="vimtag">*<a name="::h">::h</a>*</b> <b class="vimtag">*<a name="::t">::t</a>*</b> <b class="vimtag">*<a name="::r">::r</a>*</b> <b class="vimtag">*<a name="::e">::e</a>*</b> <b class="vimtag">*<a name="::s">::s</a>*</b> <b class="vimtag">*<a name="::gs">::gs</a>*</b>
+                <b class="vimtag">*<a name="%:8">%:8</a>*</b> <b class="vimtag">*<a name="%:p">%:p</a>*</b> <b class="vimtag">*<a name="%:.">%:.</a>*</b> <b class="vimtag">*<a name="%:%7E">%:~</a>*</b> <b class="vimtag">*<a name="%:h">%:h</a>*</b> <b class="vimtag">*<a name="%:t">%:t</a>*</b> <b class="vimtag">*<a name="%:r">%:r</a>*</b> <b class="vimtag">*<a name="%:e">%:e</a>*</b> <b class="vimtag">*<a name="%:s">%:s</a>*</b> <b class="vimtag">*<a name="%:gs">%:gs</a>*</b>
+可以在 "%"，"#"，"#n"，"<code class="special">&lt;cfile&gt;</code>"，"<code class="special">&lt;sfile&gt;</code>"，"<code class="special">&lt;afile&gt;</code>" 或 "<code class="special">&lt;abuf&gt;</code>" 之后使用文
+件名修饰符。这些修饰符也可以和 |<a href="eval.html#fnamemodify()">fnamemodify()</a>| 函数一起用。
+如果 Vim 编译的时候没有加入 |<a href="various.html#+modify_fname">+modify_fname</a>| 特性，则不可用。
+
+此类修饰符必须按如下顺序给出:
+        :p      给出文件名的全路径。必须是第一个修饰符。也会将 "~/" (Unix 和
+                VMS 系统里的 "~user/") 变成指向用户主目录的路径。若被修饰的名
+                字是一个目录，则在后面加一个路径分隔符。如果文件名不存在，或
+                其绝对路径不存在，那么结果不可预料。MS-Windows 上 8.3 文件名被
+                扩展为长文件名。
+        :8      将路径转换为 8.3 短格式 (目前仅适用于 MS-Windows)。转换的结果
+                尽可能与现存路径一致。
+        :~      如果可能，路径名缩减为基于主目录的相对路径。若文件不在主目录
+                下，则文件名不会被改变。
+        :.      如果可能，路径名缩减为基于当前目录的相对路径。若文件不在当前目
+                录下，则文件名不会被改变。
+                要想尽可能缩减，可使用 ":~:." 。
+        :h      文件名的头部 (除去文件名的最后一部分以及路径分隔符)。
+                不能与 :e，:r 或 :t 一起使用。
+                可以被重复使用来删除后面的多个部分。
+                如果文件名以一个路径分隔符结尾，仅删除该分隔符。这样一个目录
+                名的 ":p:h" 结果是目录名本身 (没有后面的斜杠)。
+                如果文件名是一个绝对路径 (Unix 上以 "/" 开始；MS-DOS，WIN32，
+                OS/2 以 "x:\" 开始；Amiga 以 "drive:" 开始)，这些部分不会被删
+                除。如果没有文件头 (路径是相对于当前目录的)，则结果为空。
+        :t      文件名的尾部 (文件名的最后一部分)。必须在 :r 或 :e 之前。
+        :r      文件名的根部 (除去最后的扩展名)。如果只有扩展名 (文件名以 '.'
+                开始，例如，".vimrc")，则不会被删除。可以重复使用，以删除多个
+                扩展名 (最后一个先被删除)。
+        :e      扩展名。只有单独使用时才有意义。
+                如果没有扩展名，那结果为空。
+                如果文件名只是一个扩展名 (以 '.' 开始的文件名)，则结果为空。
+                可以重复使用来包含更多的扩展名。如果没有足够的扩展名 (但是至少
+                有一个)，那么就尽可能多的包含。
+        :s?pat?sub?
+                用 "sub" 代替第一次出现的 "pat"。这类似于 |<a href="change.html#:s">:s</a>| 命令。"pat" 是
+                一个正则表达式。
+                可以用其它字符代替 '?'，只要该字符不出现在 "pat" 或 "sub" 里。
+                在此之后，上述的修饰符可以再次使用。例如 ":p"，是替换之后的完
+                整路径。
+        :gs?pat?sub?
+                用 "sub" 替换所有的 "pat"。其余和 ":s" 一样。
+
+例如，如果文件名是 "src/version.c"，当前目录是 "/home/mool/vim":
+<code class="example">  :p                    /home/mool/vim/src/version.c</code>
+<code class="example">  :p:.                                 src/version.c</code>
+<code class="example">  :p:~                           ~/vim/src/version.c</code>
+<code class="example">  :h                                   src</code>
+<code class="example">  :p:h                  /home/mool/vim/src</code>
+<code class="example">  :p:h:h                /home/mool/vim</code>
+<code class="example">  :t                                       version.c</code>
+<code class="example">  :p:t                                     version.c</code>
+<code class="example">  :r                                   src/version</code>
+<code class="example">  :p:r                  /home/mool/vim/src/version</code>
+<code class="example">  :t:r                                     version</code>
+<code class="example">  :e                                               c</code>
+<code class="example">  :s?version?main?                     src/main.c</code>
+<code class="example">  :s?version?main?:p    /home/mool/vim/src/main.c</code>
+<code class="example">  :p:gs?/?\\?           \home\mool\vim\src\version.c</code>
+<code class="example"></code>
+又例，如果文件名是 "src/version.c.gz":
+<code class="example">  :p                    /home/mool/vim/src/version.c.gz</code>
+<code class="example">  :e                                                 gz</code>
+<code class="example">  :e:e                                             c.gz</code>
+<code class="example">  :e:e:e                                           c.gz</code>
+<code class="example">  :e:e:r                                           c</code>
+<code class="example">  :r                                   src/version.c</code>
+<code class="example">  :r:e                                             c</code>
+<code class="example">  :r:r                                 src/version</code>
+<code class="example">  :r:r:r                               src/version</code>
+
+                                        <b class="vimtag">*<a name="extension-removal">extension-removal</a>*</b> <b class="vimtag">*<a name=":_%%3C">:_%&lt;</a>*</b>
+如果 "&lt;" 跟在 "%"，"#"，"#n" 或 "<code class="keystroke">CTRL-V</code> p" 后面，那么文件的扩展名 ('.' 之后的
+内容，包括 '.') 会被删除。包含这样的功能是为了与 3.0 版本兼容，现在推荐使用
+":r" 的形式。例如:
+<code class="example"></code>
+<code class="example">        %               当前文件名</code>
+<code class="example">        %&lt;              当前主文件名 (无扩展名)</code>
+<code class="example">        #               当前窗口的轮换文件名</code>
+<code class="example">        #&lt;              同上，但无扩展名</code>
+<code class="example">        #31             序号为 31 的轮换文件名</code>
+<code class="example">        #31&lt;            同上，但无扩展名</code>
+<code class="example">        &lt;cword&gt;         光标下的单词</code>
+<code class="example">        &lt;cWORD&gt;         光标下的字串 (见 |WORD|)</code>
+<code class="example">        &lt;cfile&gt;         光标下的路径名</code>
+<code class="example">        &lt;cfile&gt;&lt;        同上，但无扩展名</code>
+
+<code class="note">注意</code>: 在需要文件名的地方，就会完成文件名的通配符扩展。在 Unix 上，除非可以在内
+部实现 (为了运行速度考虑)，此功能会通过 shell 来完成。
+也可以使用反引号，比如在
+<code class="example">        :n `echo *.c`</code>
+(在 |<a href="starting.html#restricted-mode">restricted-mode</a>| 里反引号扩展不可用)
+
+但是扩展仅在 '%'，'#' 等字符扩展之前就出现通配符的时候发生。这可以避免对文件名
+中的通配符字符进行扩展。如果你想扩展 <code class="special">&lt;cfile&gt;</code> 的结果，可以给它加一个通配字符。
+例如: (轮换文件名是 "?readme?")
+<code class="section">        命令            扩展为  </code>
+        :e #            :e ?readme?
+        :e `ls #`       :e {匹配 "?readme?" 的文件}
+        :e #.*          :e {匹配 "?readme?.*" 的文件}
+        :cd <code class="special">&lt;cfile&gt;</code>     :cd <code class="special">{光标下的文件}</code>
+        :cd <code class="special">&lt;cfile&gt;</code>*    :cd {光标下的文件名加上 "*" 然后进行扩展}
+
+当被扩展的参数包含一个 "!" 并且在 shell 命令里 (":!cmd"，":r !cmd" 或
+":w !cmd") 使用时，"!" 被反斜杠转义，以免扩展为前次使用的命令。如果 <a href="options.html#'shell'">'shell'</a> 选
+项包含 "sh"，会执行两次转义，以避免 shell 扩展 "!"。
+
+                                                        <b class="vimtag">*<a name="filename-backslash">filename-backslash</a>*</b>
+对于文件系统使用反斜杠作为目录分隔符的操作系统 (MS-DOS，Windows，OS/2) 来说，
+确认反斜杠是否为转义字符就有点儿困难了。一般来说: 如果反斜杠后面跟一个普通的
+字符，那么就没有特殊意义。因此 "\file\foo" 是合法文件名，没有必要输入两次反斜
+杠。
+
+一个例外是 '$' 符号。在文件名里它是一个合法的字符。但是为了避免像 "$home" 这
+样的文件名被当作环境变量解释，则需要在前面加一个反斜杠。因此你需要用 "/\$home"
+表示根目录下的 "$home" 文件。几个例子:
+
+<code class="section">        文件名          被解释为        </code>
+        $home           扩展为环境变量 $home 的值
+        \$home          当前目录里的 "$home" 文件
+        /\$home         根目录下的 "$home" 文件
+        \\$home         名为 "\\" 加上扩展后的 $home 的文件
+
+</pre><hr class="doubleline" /><pre>
+<h4>7. 命令行窗口                                   <b class="vimtag">*<a name="cmdline-window">cmdline-window</a>*</b> <b class="vimtag">*<a name="cmdwin">cmdwin</a>*</b></h4>                                                        <b class="vimtag">*<a name="command-line-window">command-line-window</a>*</b>
+在命令行窗口里，可以像编辑文本一样来编辑命令。这是一类特殊的窗口，你不能把它当
+作普通窗口使用。
+<code class="notvi">{仅当编译时加入 |<a href="various.html#+cmdline_hist">+cmdline_hist</a>| 和 |<a href="various.html#+vertsplit">+vertsplit</a>| 特性才可用}</code>
+
+
+开 启                                           <b class="vimtag">*<a name="c_CTRL-F">c_CTRL-F</a>*</b> <b class="vimtag">*<a name="q:">q:</a>*</b> <b class="vimtag">*<a name="q%2F">q/</a>*</b> <b class="vimtag">*<a name="q?">q?</a>*</b>
+
+有两种方法可以打开命令行窗口:
+1. 在命令行模式里，用 <a href="options.html#'cedit'">'cedit'</a> 选项所指定的键。
+   在没有置位 <a href="options.html#'compatible'">'compatible'</a> 的情况下，默认值是 <code class="keystroke">CTRL-F</code> 。
+2. 在普通模式里，用 "q:"，"q/" 或 "q?" 命令。
+   它们分别开始编辑 Ex 命令 ("q:") 或搜索字符串 ("q/" 或 "q?")。 <code class="note">注意</code>，处于记
+   录状态时不能使用 ("q" 会结束记录)。
+
+窗口里的内容是命令行的历史记录。最后一行是最近输入的命令。左面一列字符表示命令
+行的类型。见: |<a href="cmdline.html#cmdwin-char">cmdwin-char</a>|。
+
+如果没有置位 <a href="options.html#'insertmode'">'insertmode'</a> 选项，Vim 在打开之后会进入普通模式。
+
+窗口的高度可以通过 <a href="options.html#'cmdwinheight'">'cmdwinheight'</a> 选项设定 (如果没有足够的空间，窗口会缩小一
+点)。窗口永远都是以最大宽度出现，并且被放在命令行的上面 (紧靠命令行)。
+
+
+编 辑
+
+现在你可以在窗口里移动或者编辑里面的文本了。可以在普通模式和插入模式中进行这些
+操作。
+
+可以用 ":"，"/" 和其他命令使用命令行，但却不能再打开另一个命令行窗口。这里不允
+许嵌套。
+                                                        <b class="vimtag">*<a name="E11">E11</a>*</b>
+命令行窗口不是普通的窗口。你不能移动到别的窗口或编辑别的缓冲区。在命令行窗口
+里，所有此类操作都被禁止。当然你_可以_执行在命令行窗口里输入的任何命令。关闭窗
+口时，其它的文本编辑都被舍弃。
+
+
+关 闭                                                   <b class="vimtag">*<a name="E199">E199</a>*</b>
+
+有很多方法可以退出命令行窗口:
+
+<code class="special">&lt;CR&gt;</code>            执行光标下的命令。插入和普通模式里都可以。
+<code class="keystroke">CTRL-C</code>          继续回到命令行模式。光标下的命令被用做命令行的命令。插入和普通
+                模式里都可以。也可以使用 ":close" 命令。不会重画窗口，这样命令
+                行窗口仍然可见。
+:quit           放弃命令行，回到普通模式。也可以使用 ":exit"，":xit" 和
+                <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 命令。
+:qall           除非改动了某些缓冲区，否则退出 Vim。
+:qall!          退出 Vim，放弃所做的改动。
+
+一旦命令行窗口关闭，旧的窗口就会立刻恢复原先的大小。待执行的命令会作用于调用该
+命令行窗口或缓冲区，就好像没有没有用过命令行窗口一样 (除了会有一次额外的屏幕刷
+新以外)。命令行窗口用过的缓冲区会被删除。对其中的命令所做的改动 (如果没有用
+<code class="special">&lt;CR&gt;</code> 执行过) 会全部丢失。
+
+如果你想执行光标所在的命令后再次打开命令行窗口，可用以下映射:
+<code class="example"></code>
+<code class="example">        :autocmd CmdwinEnter * map &lt;buffer&gt; &lt;F5&gt; &lt;CR&gt;q:</code>
+<code class="example"></code>
+<code class="example"></code>
+其 它
+
+命令行窗口不能用在:
+- 已经存在一个命令行窗口的时候 (不能嵌套)
+- 输入密钥或使用 inputsecret() 函数的时候
+- Vim 编译时没有加入 |<a href="various.html#+vertsplit">+vertsplit</a>| 特性的时候
+
+打开命令行窗口的时候，会自动设置下面的选项:
+<a href="options.html#'filetype'">'filetype'</a>      当编辑 Ex 命令时，会设置为 "vim"；如果打开高亮的话，这样就会启
+                用对 Vim 脚本的语法高亮。
+<a href="options.html#'rightleft'">'rightleft'</a>     关
+<a href="options.html#'modifiable'">'modifiable'</a>    开
+<a href="options.html#'buftype'">'buftype'</a>       "nofile"
+<a href="options.html#'swapfile'">'swapfile'</a>      关
+
+将命令窗口缓冲区的内容写到文件是允许的。这也是一个保存命令历史记录以便日后取回
+的好办法。
+
+如果 <a href="options.html#'wildchar'">'wildchar'</a> 选项设置为 <code class="special">&lt;Tab&gt;</code>，并且命令行窗口用于 Ex 命令，那么会在命令行窗
+口里加入两个映射用于命令补全，如下:
+<code class="example">        :imap &lt;buffer&gt; &lt;Tab&gt; &lt;C-X&gt;&lt;C-V&gt;</code>
+<code class="example">        :nmap &lt;buffer&gt; &lt;Tab&gt; a&lt;C-X&gt;&lt;C-V&gt;</code>
+<code class="note">注意</code>，在普通模式里敲 <code class="special">&lt;Tab&gt;</code> 键会在下一个字符上补全。这样的话，就可以在行尾进行
+补全了。
+如果你不想要这些映射，可用下面的命令将它们禁用:
+<code class="example">        au CmdwinEnter [:&gt;] iunmap &lt;Tab&gt;</code>
+<code class="example">        au CmdwinEnter [:&gt;] nunmap &lt;Tab&gt;</code>
+你可以把这几行命令放到你的 vimrc 文件中。
+
+在命令行窗口里，你不能用鼠标把光标放到另一个窗口里，或者拽动其它窗口的状态栏。
+你可以拽动命令行窗口自己的状态栏以及命令行窗口之上的状态栏来改变命令行窗口的大
+小，但对其它窗口无效。
+
+
+自 动 命 令
+
+使用两种自动命令事件: |<a href="autocmd.html#CmdwinEnter">CmdwinEnter</a>| 和 |<a href="autocmd.html#CmdwinLeave">CmdwinLeave</a>|。因为此窗口的类型特殊，
+WinEnter，WinLeave，BufEnter 和 BufLeave 事件不会被触发。你可以使用这些 Cmdwin
+事件对命令行窗口进行特殊的设置。小心不要引起副作用！
+例如:
+<code class="example">        :au CmdwinEnter :  let b:cpt_save = &amp;cpt | set cpt=.</code>
+<code class="example">        :au CmdwinLeave :  let &amp;cpt = b:cpt_save</code>
+设置 <a href="options.html#'complete'">'complete'</a> 选项，以便在当前窗口用 |<a href="insert.html#i_CTRL-N">i_CTRL-N</a>| 进行匹配。
+另一个例子:
+<code class="example">        :au CmdwinEnter [/?]  startinsert</code>
+将使 Vim 在打开命令行窗口时切换到插入模式。
+
+                                                <b class="vimtag">*<a name="cmdwin-char">cmdwin-char</a>*</b>
+模式使用的下列字符用于指示命令行的种类:
+        :       普通的 Ex 命令
+        &gt;       调试模式的命令 |<a href="repeat.html#debug-mode">debug-mode</a>|
+        /       正向查找字符串
+        ?       反向查找字符串
+        =       "= 表达式 |<a href="eval.html#expr-register">expr-register</a>|
+        @       |<a href="eval.html#input()">input()</a>| 字符串
+        -       |<a href="insert.html#:insert">:insert</a>| 或 |<a href="insert.html#:append">:append</a>| 的文本
+
+ vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>

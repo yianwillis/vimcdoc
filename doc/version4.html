@@ -1,0 +1,342 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: version4</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<h2>VERSION4</h2>
+<pre>
+<b class="vimtag">*<a name="version4.txt">version4.txt</a>*</b>  For Vim version 7.4.  最近改变: 2006年2月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+                                http://vimcdoc.sf.net
+
+
+本文档列出 Vim 3.0 和 Vim 4.0 不兼容的不同之处。尽管这里提到 4.0，但也适用于
+4.1，4.2 版本等。
+
+本文件对所有从 Vim 3.0 升级的用户很重要。仔细阅读以避免意想不到的问题。
+
+<a href="options.html#'backup'">'backup'</a> 选项改变缺省值                         |<a href="version4.html#backup-changed">backup-changed</a>|
+备份文件扩展名改变                              |<a href="version4.html#backup-extension">backup-extension</a>|
+交换文件结构改变                                |<a href="version4.html#swapfile-changed">swapfile-changed</a>|
+"-w scriptout" 参数改变                         |<a href="version4.html#scriptout-changed">scriptout-changed</a>|
+退格和删除键                                    |<a href="version4.html#backspace-delete">backspace-delete</a>|
+| 转义键改变                                    |<a href="version4.html#escape-bar">escape-bar</a>|
+键码改变                                        |<a href="version4.html#key-codes-changed">key-codes-changed</a>|
+终端选项改变                                    |<a href="version4.html#termcap-changed">termcap-changed</a>|
+<a href="options.html#'errorformat'">'errorformat'</a> 选项改变                          |<a href="version4.html#errorformat-changed">errorformat-changed</a>|
+不再有 <a href="vi_diff.html#'graphic'">'graphic'</a> 选项                           |<a href="version4.html#graphic-option-gone">graphic-option-gone</a>|
+不再有 <code class="badlink">'yankendofline'</code> 选项                     |<a href="version4.html#ye-option-gone">ye-option-gone</a>|
+<a href="options.html#'icon'">'icon'</a> 和 <a href="options.html#'title'">'title'</a> 缺省值改变                    |<a href="version4.html#icon-changed">icon-changed</a>|
+<a href="options.html#'highlight'">'highlight'</a> 选项改变                            |<a href="version4.html#highlight-changed">highlight-changed</a>|
+<a href="options.html#'tildeop'">'tildeop'</a> 和 <a href="options.html#'weirdinvert'">'weirdinvert'</a> 缩写改变             |<a href="version4.html#short-name-changed">short-name-changed</a>|
+"v"、"V" 和 "<code class="keystroke">CTRL-V</code>" 在可视模式的改变           |<a href="version4.html#use-visual-cmds">use-visual-cmds</a>|
+删除插入模式的 <code class="keystroke">CTRL-B</code> 功能                      |<a href="version4.html#toggle-revins">toggle-revins</a>|
+
+
+<a href="options.html#'backup'">'backup'</a> 选项改变缺省值                                 <b class="vimtag">*<a name="backup-changed">backup-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+过去 <a href="options.html#'backup'">'backup'</a> 缺省值是打开的。结果是在原来文件被覆盖的时候备份文件建立起来。
+
+现在 <a href="options.html#'backup'">'backup'</a> 的缺省值是关闭。一旦文件成功的写入，备份文件就删除了。如果你想保
+留备份文件，在你的 vimrc 文件里置位 <a href="options.html#'backup'">'backup'</a>。这个改变的原因是许多人抱怨留下备
+份文件和 Vi 不兼容。                                    |<a href="options.html#'backup'">'backup'</a>|
+
+
+备份文件扩展名改变                                      <b class="vimtag">*<a name="backup-extension">backup-extension</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+过去备份文件的扩展名是 '.bak'。因为别的程序也用这个扩展名，而且有的用户也自己
+建立用这个扩展名的备份，现在换成了不太明显的 "~"。另外一个好处是这样使用较少的
+空间，尤其是对短文件名的系统很有效。比如，在 MS-DOS 上 "longfile.c" 和
+"longfile.h" 用的备份文件名本来都是 "longfile.bak"；现在他们分别成为
+"longfile.c~" 和 "longfile.h~"。
+
+如果你宁可还是使用 ".bak"，你可以设置 <a href="options.html#'backupext'">'backupext'</a> 选项:
+<code class="example">        :set bex=.bak</code>
+<code class="example"></code>
+<code class="example"></code>
+交换文件结构改变                                        <b class="vimtag">*<a name="swapfile-changed">swapfile-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+交换文件的内容增加了若干参数。Vim 保存用户名字和被编辑文件的其它信息，使得恢复
+更加容易，而且能知道交换文件是从哪里来的。交换文件的第一部分可以识别字节顺序或
+者 sizeof(int) 不同的机器，当你在这样的机器上试图恢复时，你会得到错误信息，提
+示这不可能。
+
+因为这个改变，3.0 和 4.0 的交换文件不能互换。如果你有一个 3.0 的崩溃对话的交换
+文件，用 Vim 3.0 恢复之---不要用 4.0。                  |<a href="recover.html#swap-file">swap-file</a>|
+
+
+"-w scriptout" 参数改变                                 <b class="vimtag">*<a name="scriptout-changed">scriptout-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+"vim -w scriptout" 过去用来附加到 scriptout 文件。因为这不合逻辑，现在它用来建
+立新文件。已有的文件不会被覆盖 (为了避免破坏期待这个附加功能的人不小心删除已有
+的文件)。
+[后来这个也删除了]                                              |<a href="starting.html#-w">-w</a>|
+
+
+退格和删除键                                            <b class="vimtag">*<a name="backspace-delete">backspace-delete</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+3.0 里，删除和退格键在插入模式里都起到退格的功能；它们删除光标左面的字符。在
+4.0 里，删除键有了新功能: 他删除光标所在的字符，就像在命令行上那样。如果光标在
+行尾之后并且置位了 <a href="options.html#'bs'">'bs'</a>，两行会连接起来。               |<a href="change.html#%3CDel%3E">&lt;Del&gt;</a>| |<a href="insert.html#i_%3CDel%3E">i_&lt;Del&gt;</a>|
+
+3.0 里退格键总是定义为 <code class="keystroke">CTRL-H</code>，而删除键定义为 <code class="keystroke">CTRL-?</code>。4.0 里退格和删除键的代码
+通过 termcap 和 termlib 定义，而且可以通过 Unix 的 "stty erase" 调整。这使得用
+户可以根据他们的键盘重新定义这些键。                     |<a href="motion.html#%3CBS%3E">&lt;BS&gt;</a>| |<a href="insert.html#i_%3CBS%3E">i_&lt;BS&gt;</a>|
+
+如果你喜欢插入模式下的退格和删除键的旧行为，在你的 vimrc 里加入一行:
+<code class="example"></code>
+<code class="example">        inoremap ^? ^H</code>
+<code class="example"></code>
+你也许想加上这些行来调整 <code class="special">&lt;BS&gt;</code> 和 <code class="special">&lt;Del&gt;</code> 的代码:
+
+        set t_kb=^H
+        set t_kD=^?
+
+(用 <code class="keystroke">CTRL-V</code> <code class="keystroke">CTRL-H</code> 输入 ^H，用 <code class="keystroke">CTRL-V</code> <code class="keystroke">CTRL-?</code> 或者 <code class="special">&lt;Del&gt;</code> 输入 ^?。)
+
+如果 t_kb 的值正确，但是 t_kD 的值不对，使用 ":fixdel" 命令。它会根据 t_kb 的
+值设置 t_kD 的值。这可用于使用不同终端的场合。          |<a href="options.html#:fixdel">:fixdel</a>|
+
+如果 ^H 不是识别成 <code class="special">&lt;BS&gt;</code> 或者 <code class="special">&lt;Del&gt;</code>，它的用法类似于退格键。
+
+
+| 转义键改变                                            <b class="vimtag">*<a name="escape-bar">escape-bar</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+如果 <a href="options.html#'cpoptions'">'cpoptions'</a> 里有 'b' 标志位，反斜杠不能用于在映射和缩写命令里转义 '|'。只
+有 <code class="keystroke">CTRL-V</code> 可以。这是 Vi 兼容的。如果工作在 Vi 兼容模式下，而在映射里为了加入竖
+杠而包含 "\|"，必须把它改成 "^V|"。参见 |<a href="cmdline.html#:bar">:bar</a>|。
+
+
+键码改变                                                <b class="vimtag">*<a name="key-codes-changed">key-codes-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+键码的内部表示发生了很大的改变。3.0 里每个键用单字节代码表示。这导致了不同字符
+集使用相同的代码时的很多问题。4.0 里，用三字节的代码来表示。这样不会和一个字符
+发生混淆。                                              |<a href="intro.html#key-notation">key-notation</a>|
+
+如果你在 vimrc 里用单字节键码定义映射，你需要把他们换成 4.0 的代码。你不需要把
+它们直接写成三字节的代码，而应该用 <code class="special">&lt;&gt;</code> 括起来的符号表示形式。见下表。该表也列出
+来 3.0 文档使用的旧名字。
+
+<code class="special">&lt;&gt;</code> 内的键码可以用来直接定义映射。这样，你可以直接复制/粘贴例子或者输入。<code class="special">&lt;&gt;</code> 的
+表示方法在这里有介绍 |<a href="intro.html#%3C%3E">&lt;&gt;</a>|。要使之工作，<a href="options.html#'cpoptions'">'cpoptions'</a> 里必须不能用 'B' 和 '&lt;' 标
+志位 |<a href="options.html#'cpoptions'">'cpoptions'</a>|。
+
+<code class="section">旧名字          新名字            旧代码        旧的 MS-DOS 代码        </code>
+<code class="section">                                十六进  十进制  十六进  十进制  </code>
+<code class="special">&lt;ESC&gt;</code>           <code class="special">&lt;Esc&gt;</code>
+<code class="special">&lt;TAB&gt;</code>           <code class="special">&lt;Tab&gt;</code>
+<code class="special">&lt;LF&gt;</code>            <code class="special">&lt;NL&gt;</code> <code class="special">&lt;NewLine&gt;</code> <code class="special">&lt;LineFeed&gt;</code>
+<code class="special">&lt;SPACE&gt;</code>         <code class="special">&lt;Space&gt;</code>
+<code class="special">&lt;NUL&gt;</code>           <code class="special">&lt;Nul&gt;</code>
+<code class="special">&lt;BELL&gt;</code>          <code class="special">&lt;Bell&gt;</code>
+<code class="special">&lt;BS&gt;</code>            <code class="special">&lt;BS&gt;</code> <code class="special">&lt;BackSpace&gt;</code>
+<code class="special">&lt;INSERT&gt;</code>        <code class="special">&lt;Insert&gt;</code>
+<code class="special">&lt;DEL&gt;</code>           <code class="special">&lt;Del&gt;</code> <code class="special">&lt;Delete&gt;</code>
+<code class="special">&lt;HOME&gt;</code>          <code class="special">&lt;Home&gt;</code>
+<code class="special">&lt;END&gt;</code>           <code class="special">&lt;End&gt;</code>
+<code class="special">&lt;PAGE_UP&gt;</code>       <code class="special">&lt;PageUp&gt;</code>
+<code class="special">&lt;PAGE_DOWN&gt;</code>     <code class="special">&lt;PageDown&gt;</code>
+
+<code class="special">&lt;C_UP&gt;</code>          <code class="special">&lt;Up&gt;</code>            0x80    128     0xb0    176
+<code class="special">&lt;C_DOWN&gt;</code>        <code class="special">&lt;Down&gt;</code>          0x81    129     0xb1    177
+<code class="special">&lt;C_LEFT&gt;</code>        <code class="special">&lt;Left&gt;</code>          0x82    130     0xb2    178
+<code class="special">&lt;C_RIGHT&gt;</code>       <code class="special">&lt;Right&gt;</code>         0x83    131     0xb3    179
+<code class="special">&lt;SC_UP&gt;</code>         <code class="special">&lt;S-Up&gt;</code>          0x84    132     0xb4    180
+<code class="special">&lt;SC_DOWN&gt;</code>       <code class="special">&lt;S-Down&gt;</code>        0x85    133     0xb5    181
+<code class="special">&lt;SC_LEFT&gt;</code>       <code class="special">&lt;S-Left&gt;</code>        0x86    134     0xb6    182
+<code class="special">&lt;SC_RIGHT&gt;</code>      <code class="special">&lt;S-Right&gt;</code>       0x87    135     0xb7    183
+
+<code class="special">&lt;F1&gt;</code>            <code class="special">&lt;F1&gt;</code>            0x88    136     0xb8    184
+<code class="special">&lt;F2&gt;</code>            <code class="special">&lt;F2&gt;</code>            0x89    137     0xb9    185
+<code class="special">&lt;F3&gt;</code>            <code class="special">&lt;F3&gt;</code>            0x8a    138     0xba    186
+<code class="special">&lt;F4&gt;</code>            <code class="special">&lt;F4&gt;</code>            0x8b    139     0xbb    187
+<code class="special">&lt;F5&gt;</code>            <code class="special">&lt;F5&gt;</code>            0x8c    140     0xbc    188
+<code class="special">&lt;F6&gt;</code>            <code class="special">&lt;F6&gt;</code>            0x8d    141     0xbd    189
+<code class="special">&lt;F7&gt;</code>            <code class="special">&lt;F7&gt;</code>            0x8e    142     0xbe    190
+<code class="special">&lt;F8&gt;</code>            <code class="special">&lt;F8&gt;</code>            0x8f    143     0xbf    191
+<code class="special">&lt;F9&gt;</code>            <code class="special">&lt;F9&gt;</code>            0x90    144     0xc0    192
+<code class="special">&lt;F10&gt;</code>           <code class="special">&lt;F10&gt;</code>           0x91    145     0xc1    193
+
+<code class="special">&lt;SF1&gt;</code>           <code class="special">&lt;S-F1&gt;</code>          0x92    146     0xc2    194
+<code class="special">&lt;SF2&gt;</code>           <code class="special">&lt;S-F2&gt;</code>          0x93    147     0xc3    195
+<code class="special">&lt;SF3&gt;</code>           <code class="special">&lt;S-F3&gt;</code>          0x94    148     0xc4    196
+<code class="special">&lt;SF4&gt;</code>           <code class="special">&lt;S-F4&gt;</code>          0x95    149     0xc5    197
+<code class="special">&lt;SF5&gt;</code>           <code class="special">&lt;S-F5&gt;</code>          0x96    150     0xc6    198
+<code class="special">&lt;SF6&gt;</code>           <code class="special">&lt;S-F6&gt;</code>          0x97    151     0xc7    199
+<code class="special">&lt;SF7&gt;</code>           <code class="special">&lt;S-F7&gt;</code>          0x98    152     0xc8    200
+<code class="special">&lt;SF8&gt;</code>           <code class="special">&lt;S-F8&gt;</code>          0x99    153     0xc9    201
+<code class="special">&lt;SF9&gt;</code>           <code class="special">&lt;S-F9&gt;</code>          0x9a    154     0xca    202
+<code class="special">&lt;SF10&gt;</code>          <code class="special">&lt;S-F10&gt;</code>         0x9b    155     0xcb    203
+
+<code class="special">&lt;HELP&gt;</code>          <code class="special">&lt;Help&gt;</code>          0x9c    156     0xcc    204
+<code class="special">&lt;UNDO&gt;</code>          <code class="special">&lt;Undo&gt;</code>          0x9d    157     0xcd    205
+
+                (没用到)        0x9e    158     0xce    206
+                (没用到)        0x9f    159     0xcf    207
+
+
+终端选项改变                                    <b class="vimtag">*<a name="termcap-changed">termcap-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+终端选项的名字改成了 termcap 定义的这些选项的名字。所有的终端选项现在都有 t_xx
+这样的名字，其中 xx 是 termcap 的名字。通常这些选项都用不到。除非你有一个错误
+或者不完整的 termcap 名字，或者你设置不同的光亮选项的值。|<a href="term.html#terminal-options">terminal-options</a>|
+
+<code class="note">注意</code> 有些键没有 termcap 的名字。应该用 <code class="special">&lt;&gt;</code> 形式的名字，不管这么说，这总是一个好
+主意。
+
+<code class="note">注意</code> "t_ti" 变成了 "t_mr" (反转输出) 而 "t_ts" 变成了 "t_ti" (初始终端模式)。
+用 "t_ti" 的时候要小心！
+
+<code class="section">旧名字          新名字          含义            </code>
+t_cdl           t_DL            删除行数                        <b class="vimtag">*<a name="t_cdl">t_cdl</a>*</b>
+t_ci            t_vi            光标不可见                      <b class="vimtag">*<a name="t_ci">t_ci</a>*</b>
+t_cil           t_AL            插入行数                        <b class="vimtag">*<a name="t_cil">t_cil</a>*</b>
+t_cm            t_cm            移动光标
+t_cri           t_RI            光标右侧字符数                  <b class="vimtag">*<a name="t_cri">t_cri</a>*</b>
+t_cv            t_ve            光标可见                        <b class="vimtag">*<a name="t_cv">t_cv</a>*</b>
+t_cvv           t_vs            光标非常可见                    <b class="vimtag">*<a name="t_cvv">t_cvv</a>*</b>
+t_dl            t_dl            删除行
+t_cs            t_cs            滚动区域
+t_ed            t_cl            清除显示                        <b class="vimtag">*<a name="t_ed">t_ed</a>*</b>
+t_el            t_ce            清除行                          <b class="vimtag">*<a name="t_el">t_el</a>*</b>
+t_il            t_al            插入行                          <b class="vimtag">*<a name="t_il">t_il</a>*</b>
+                t_da            屏幕上方保留显示
+                t_db            屏幕下方保留显示
+t_ke            t_ke            设置终端离开 keypad 传输模式
+t_ks            t_ks            设置终端进入 keypad 传输模式
+t_ms            t_ms            保存以便在高亮模式里移动光标
+t_se            t_se            正常模式 (撤销 t_so)
+t_so            t_so            突出 (standout) 模式
+t_ti            t_mr            反转高亮
+t_tb            t_md            粗体模式                        <b class="vimtag">*<a name="t_tb">t_tb</a>*</b>
+t_tp            t_me            结束高亮                        <b class="vimtag">*<a name="t_tp">t_tp</a>*</b>
+t_sr            t_sr            反转滚动
+t_te            t_te            结束 termcap 模式
+t_ts            t_ti            进入 termcap 模式               <b class="vimtag">*<a name="t_ts_old">t_ts_old</a>*</b>
+t_vb            t_vb            可视响铃
+t_csc           t_CS            光标相对滚动区域                <b class="vimtag">*<a name="t_csc">t_csc</a>*</b>
+
+t_ku    t_ku    <code class="special">&lt;Up&gt;</code>            向上光标键
+t_kd    t_kd    <code class="special">&lt;Down&gt;</code>          向下光标键
+t_kr    t_kr    <code class="special">&lt;Right&gt;</code>         向右光标键
+t_kl    t_kl    <code class="special">&lt;Left&gt;</code>          向左光标键
+t_sku           <code class="special">&lt;S-Up&gt;</code>          shifted 向上光标键              <b class="vimtag">*<a name="t_sku">t_sku</a>*</b>
+t_skd           <code class="special">&lt;S-Down&gt;</code>        shifted 向下光标键              <b class="vimtag">*<a name="t_skd">t_skd</a>*</b>
+t_skr   t_%i    <code class="special">&lt;S-Right&gt;</code>       shifted 向右光标键              <b class="vimtag">*<a name="t_skr">t_skr</a>*</b>
+t_skl   t_#4    <code class="special">&lt;S-Left&gt;</code>        shifted 向左光标键              <b class="vimtag">*<a name="t_skl">t_skl</a>*</b>
+t_f1    t_k1    <code class="special">&lt;F1&gt;</code>            功能键 1                        <b class="vimtag">*<a name="t_f1">t_f1</a>*</b>
+t_f2    t_k2    <code class="special">&lt;F2&gt;</code>            功能键 2                        <b class="vimtag">*<a name="t_f2">t_f2</a>*</b>
+t_f3    t_k3    <code class="special">&lt;F3&gt;</code>            功能键 3                        <b class="vimtag">*<a name="t_f3">t_f3</a>*</b>
+t_f4    t_k4    <code class="special">&lt;F4&gt;</code>            功能键 4                        <b class="vimtag">*<a name="t_f4">t_f4</a>*</b>
+t_f5    t_k5    <code class="special">&lt;F5&gt;</code>            功能键 5                        <b class="vimtag">*<a name="t_f5">t_f5</a>*</b>
+t_f6    t_k6    <code class="special">&lt;F6&gt;</code>            功能键 6                        <b class="vimtag">*<a name="t_f6">t_f6</a>*</b>
+t_f7    t_k7    <code class="special">&lt;F7&gt;</code>            功能键 7                        <b class="vimtag">*<a name="t_f7">t_f7</a>*</b>
+t_f8    t_k8    <code class="special">&lt;F8&gt;</code>            功能键 8                        <b class="vimtag">*<a name="t_f8">t_f8</a>*</b>
+t_f9    t_k9    <code class="special">&lt;F9&gt;</code>            功能键 9                        <b class="vimtag">*<a name="t_f9">t_f9</a>*</b>
+t_f10   t_k;    <code class="special">&lt;F10&gt;</code>           功能键 10                       <b class="vimtag">*<a name="t_f10">t_f10</a>*</b>
+t_sf1           <code class="special">&lt;S-F1&gt;</code>          shifted 功能键 1                <b class="vimtag">*<a name="t_sf1">t_sf1</a>*</b>
+t_sf2           <code class="special">&lt;S-F2&gt;</code>          shifted 功能键 2                <b class="vimtag">*<a name="t_sf2">t_sf2</a>*</b>
+t_sf3           <code class="special">&lt;S-F3&gt;</code>          shifted 功能键 3                <b class="vimtag">*<a name="t_sf3">t_sf3</a>*</b>
+t_sf4           <code class="special">&lt;S-F4&gt;</code>          shifted 功能键 4                <b class="vimtag">*<a name="t_sf4">t_sf4</a>*</b>
+t_sf5           <code class="special">&lt;S-F5&gt;</code>          shifted 功能键 5                <b class="vimtag">*<a name="t_sf5">t_sf5</a>*</b>
+t_sf6           <code class="special">&lt;S-F6&gt;</code>          shifted 功能键 6                <b class="vimtag">*<a name="t_sf6">t_sf6</a>*</b>
+t_sf7           <code class="special">&lt;S-F7&gt;</code>          shifted 功能键 7                <b class="vimtag">*<a name="t_sf7">t_sf7</a>*</b>
+t_sf8           <code class="special">&lt;S-F8&gt;</code>          shifted 功能键 8                <b class="vimtag">*<a name="t_sf8">t_sf8</a>*</b>
+t_sf9           <code class="special">&lt;S-F9&gt;</code>          shifted 功能键 9                <b class="vimtag">*<a name="t_sf9">t_sf9</a>*</b>
+t_sf10          <code class="special">&lt;S-F10&gt;</code>         shifted 功能键 10               <b class="vimtag">*<a name="t_sf10">t_sf10</a>*</b>
+t_help  t_%1    <code class="special">&lt;Help&gt;</code>          help 键                         <b class="vimtag">*<a name="t_help">t_help</a>*</b>
+t_undo  t_&amp;8    <code class="special">&lt;Undo&gt;</code>          undo 键                         <b class="vimtag">*<a name="t_undo">t_undo</a>*</b>
+
+
+<a href="options.html#'errorformat'">'errorformat'</a> 选项改变                                  <b class="vimtag">*<a name="errorformat-changed">errorformat-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+<a href="options.html#'errorformat'">'errorformat'</a> 现在包含多种格式，以逗号分隔。第一个匹配的格式被使用。缺省值现在
+能捕获许多常见格式。                                    |<a href="quickfix.html#errorformat">errorformat</a>|
+
+如果你有一种格式包含逗号，前面需要加上反斜杠转义。输入两个反斜杠，因为 ":set"
+会吃掉一个。
+
+
+不再有 <a href="vi_diff.html#'graphic'">'graphic'</a> 选项                                   <b class="vimtag">*<a name="graphic-option-gone">graphic-option-gone</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+<a href="vi_diff.html#'graphic'">'graphic'</a> 选项过去使得 &lt;~&gt; 和 0xa0 之间的字符在屏幕上直接显示。现在 <a href="options.html#'isprint'">'isprint'</a>
+选项替代了它，而且增加了很多可能性。缺省的设置一样；如果你以前在 vimrc 置位了
+<a href="vi_diff.html#'graphic'">'graphic'</a> 选项，你只需要看到这一点就行了。
+                                                        |<a href="options.html#'isprint'">'isprint'</a>|
+
+
+不再有 <code class="badlink">'yankendofline'</code> 选项                             <b class="vimtag">*<a name="ye-option-gone">ye-option-gone</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+<code class="badlink">'yankendofline'</code> 选项被删除了。你可以用
+<code class="example">        :map Y y$</code>
+<code class="example"></code>
+<code class="example"></code>
+<a href="options.html#'icon'">'icon'</a> 和 <a href="options.html#'title'">'title'</a> 缺省值改变                            <b class="vimtag">*<a name="icon-changed">icon-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+<a href="options.html#'title'">'title'</a> 选项现在缺省只有在原来的标题恢复的时候才设置。不再有 "Thanks for
+flying Vim" 标题。如果你还是想要，在你的 vimrc 文件加上 ":set title"。
+                                                        |<a href="options.html#'title'">'title'</a>|
+
+<a href="options.html#'icon'">'icon'</a> 的缺省值现在决定于原来的值是否恢复，和 <a href="options.html#'title'">'title'</a> 类似。如果你不喜欢你的
+icon 标题被改变，在 vim 里设置这一行:                   |<a href="options.html#'icon'">'icon'</a>|
+        :set noicon
+
+
+<a href="options.html#'highlight'">'highlight'</a> 选项改变                                    <b class="vimtag">*<a name="highlight-changed">highlight-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+'i' 标志位现在意味着斜体高亮，而不是反转。'r' 标志位现在用来代表反转高亮，也就
+是 'i' 过去的含义。通常你看不到区别，因为多数终端不支持斜体模式，而用反转模式
+作为替代。                                              |<a href="options.html#'highlight'">'highlight'</a>|
+
+如果 <a href="options.html#'highlight'">'highlight'</a> 的一种场合不存在，使用 <a href="options.html#'highlight'">'highlight'</a> 的缺省值，而不是反转模式。
+
+
+<a href="options.html#'tildeop'">'tildeop'</a> 和 <a href="options.html#'weirdinvert'">'weirdinvert'</a> 缩写改变                     <b class="vimtag">*<a name="short-name-changed">short-name-changed</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+<a href="options.html#'to'">'to'</a> 换名成 (<a href="options.html#'tildeop'">'tildeop'</a> 的缩写) <a href="options.html#'top'">'top'</a>。                  |<a href="options.html#'tildeop'">'tildeop'</a>|
+<a href="options.html#'wi'">'wi'</a> 换名成 (<a href="options.html#'weirdinvert'">'weirdinvert'</a> 的缩写) <a href="options.html#'wiv'">'wiv'</a>。              |<a href="options.html#'weirdinvert'">'weirdinvert'</a>|
+
+之所以这么做，是因为 Vi 使用 "wi" 作为 <a href="options.html#'window'">'window'</a> 的缩写，而 <a href="options.html#'to'">'to'</a> 作为 <a href="options.html#'timeout'">'timeout'</a>
+的缩写。这意味着你如果试图设置这些选项，你不会得到错误信息，但是效果不同。
+
+
+"v"、"V" 和 "<code class="keystroke">CTRL-V</code>" 在可视模式的改变                   <b class="vimtag">*<a name="use-visual-cmds">use-visual-cmds</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+在可视模式下，"v"、"V" 和 "<code class="keystroke">CTRL-V</code>" 用来终止可视模式。现在这只有在可视模式处于
+相应的类型时才会，不然可视模式的类型发生相应的改变。现在只有 ESC 用来在所有情
+况下不做别的，只终止可视模式。                          |<a href="visual.html#v_V">v_V</a>|
+
+
+删除插入模式的 <code class="keystroke">CTRL-B</code> 功能                              <b class="vimtag">*<a name="toggle-revins">toggle-revins</a>*</b>
+</pre><hr class="singleline" /><pre>
+
+插入模式下的 <code class="keystroke">CTRL-B</code> 原来用来切换 <a href="options.html#'revins'">'revins'</a> 选项。如果你不知道这一点而不小心按了
+<code class="keystroke">CTRL-B</code>，要发现怎么撤销这一点很困难。因为几乎没人用到这一功能，缺省这个功能被关
+闭了。如果需要，编译前在 feature.h 里定义 RIGHTLEFT。    |<a href="options.html#'revins'">'revins'</a>|
+
+ vim:tw=78:ts=8:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html on Mon Aug 26 07:43:46 UTC 2013</i></p>
+</body>
+</html>
