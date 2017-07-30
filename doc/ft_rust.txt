@@ -1,0 +1,216 @@
+*ft_rust.txt*      Rust 文件类型插件
+
+				译者: Willis
+				http://vimcdoc.sf.net
+
+==============================================================================
+内容                                                          *rust*
+
+1. 简介                                                        |rust-intro|
+2. 设置                                                        |rust-settings|
+3. 命令                                                        |rust-commands|
+4. 映射                                                        |rust-mappings|
+
+==============================================================================
+简介                                                              *rust-intro*
+
+本插件提供 Rust 文件类型的语法和支持功能。
+
+==============================================================================
+设置                                                           *rust-settings*
+
+本插件有若干可在 vimrc 中定义的变量，用来改变插件的行为。
+
+                                                                *g:rustc_path*
+g:rustc_path~
+	此选项设置 rustc  的路径，用于 |:RustRun| 和 |:RustExpand| 命令。如果
+	不设，"rustc" 会从 $PATH 中寻找: >
+	    let g:rustc_path = $HOME."/bin/rustc"
+<
+
+                                                  *g:rustc_makeprg_no_percent*
+g:rustc_makeprg_no_percent~
+	此选项如设为 1，'makeprg' 缺省为 "rustc" 而不是 "rustc %": >
+	    let g:rustc_makeprg_no_percent = 1
+<
+
+                                                              *g:rust_conceal*
+g:rust_conceal~
+	置位此选项打开基本 |conceal| 支持: >
+	    let g:rust_conceal = 1
+<
+
+                                                     *g:rust_conceal_mod_path*
+g:rust_conceal_mod_path~
+	置位此选项隐藏 |conceal| 路径连接符 "::": >
+	    let g:rust_conceal_mod_path = 1
+<
+
+                                                          *g:rust_conceal_pub*
+g:rust_conceal_pub~
+	置位此选项隐藏 |conceal| "pub" 符: >
+	    let g:rust_conceal_pub = 1
+<
+
+                                                     *g:rust_recommended_style*
+g:rust_recommended_style~
+	置位此选项设置 vim 缩进和 textwidth 以遵循 rust 标准库的风格惯例 (即，
+	缩进为 4 个空格，'textwidth' 设为 99)。缺省打开此选项。要关闭之: >
+	    let g:rust_recommended_style = 0
+<
+
+                                                                 *g:rust_fold*
+g:rust_fold~
+	置位此选项打开 |folding|: >
+	    let g:rust_fold = 1
+<
+	值		效果 ~
+	0		无折叠
+	1		折叠花括号块。缺省打开全部折叠。
+	2		折叠花括号块。'foldlevel' 仍用其全局值 (缺省关闭全部折
+			叠)。
+
+                                                  *g:rust_bang_comment_leader*
+g:rust_bang_comment_leader~
+	设置此选项为 1 以保留使用 /*! 语法的多行文档注释的中间注释字符串: >
+	    let g:rust_bang_comment_leader = 1
+<
+
+                                                 *g:ftplugin_rust_source_path*
+g:ftplugin_rust_source_path~
+	此选项设置加到 'path' 前部的路径，用于 Rust 源文件: >
+	    let g:ftplugin_rust_source_path = $HOME.'/dev/rust'
+<
+
+                                                       *g:rustfmt_command*
+g:rustfmt_command~
+	此选项设置 $PATH 里 'rustfmt' 可执行文件的名字。如果不设，缺省为
+	'rustfmt' : >
+	    let g:rustfmt_command = 'rustfmt'
+<
+                                                       *g:rustfmt_autosave*
+g:rustfmt_autosave~
+	设置此选项为 1 使缓冲区保存时自动执行 |:RustFmt|。如果不设，缺省为
+	0: >
+	    let g:rustfmt_autosave = 0
+<
+                                                       *g:rustfmt_fail_silently*
+g:rustfmt_fail_silently~
+	设置此选项为 1 则 'rustfmt' 不在 |location-list| 中保存错误。如果不
+	设，缺省为 0: >
+	    let g:rustfmt_fail_silently = 0
+<
+                                                       *g:rustfmt_options*
+g:rustfmt_options~
+	此选项设置传递给 'rustfmt' 的选项字符串。write-mode 已经设为
+	'overwrite'。如果不设，缺省为 '' : >
+	    let g:rustfmt_options = ''
+<
+
+                                                          *g:rust_playpen_url*
+g:rust_playpen_url~
+	此选项覆盖 playpen 使用的 url: >
+	    let g:rust_playpen_url = 'https://play.rust-lang.org/'
+<
+
+                                                        *g:rust_shortener_url*
+g:rust_shortener_url~
+	此选项覆盖短 url 生成器使用的 url: >
+	    let g:rust_shortener_url = 'https://is.gd/'
+<
+
+
+==============================================================================
+命令                                                           *rust-commands*
+
+:RustRun  [args]                                                    *:RustRun*
+:RustRun! [rustc-args] [--] [args]
+		编译并运行当前文件。如果有未保存的改动，先用 |:update| 保存。
+		如果当前文件为无名缓冲区，先写入一个临时文件。编译后的程序总是
+		放在一个临时目录里，但从当前目录处执行。
+
+		|:RustRun| 接受的参数传递给编译后的程序。
+
+		如果指定 !，取而代之的是参数会传递给 rustc。"--" 参数可用来分
+		隔 rustc 的参数和传递给执行程序的参数。
+
+		|g:rustc_path| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+		中找到 rustc。
+
+:RustExpand  [args]                                              *:RustExpand*
+:RustExpand! [TYPE] [args]
+		使用 --pretty 扩展当前文件，并在新分割中显示结果。如果当前文件
+		有未保存的改动，先用 |:update| 保存。如果当前文件为无名缓冲
+		区，先写入一个临时文件。
+
+		|:RustExpand| 接受的参数传递给 rustc。主要用来指定各种 --cfg
+		配置。
+
+		如果指定 !，首个参数是传给 rustc --pretty 的扩展类型。否则缺省
+		为 "expanded"。
+
+		|g:rustc_path| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+		中找到 rustc。
+
+:RustEmitIr [args]                                               *:RustEmitIr*
+		编译当前文件到 LLVM IR 并在新分割中显示结果。如果当前文件有未
+		保存的改动，先用 |:update| 保存。如果当前文件为无名缓冲区，先
+		写入一个临时文件。
+
+		|:RustEmitIr| 接受的参数传递给 rustc。
+
+		|g:rustc_path| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+		中找到 rustc。
+
+:RustEmitAsm [args]                                             *:RustEmitAsm*
+		编译当前文件到汇编程序，并在新分割中显示结果。如果当前文件有未
+		保存的改动，先用 |:update| 保存。如果当前文件为无名缓冲区，先
+		写入一个临时文件。
+
+		|:RustEmitAsm| 接受的参数传递给 rustc。
+
+		|g:rustc_path| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+		中找到 rustc。
+
+:RustPlay                                                          *:RustPlay*
+		此命令只有在安装了 web-api.vim 后才能工作 (可从这里找到
+		https://github.com/mattn/webapi-vim)。发送当前选择区，如果没有
+		选择过的话，则发送整个缓冲区到 Rust playpen，并发送短 URL 到
+		playpen。
+
+		|g:rust_playpen_url| 是 playpen 的基准 URL，缺省是
+		"https://play.rust-lang.org/"。
+
+		|g:rust_shortener_url| 是短 URL 生成器的基准 URL，缺省是
+		"https://is.gd/"
+
+:RustFmt                                                       *:RustFmt*
+		在当前缓冲区上执行 |g:rustfmt_command|。如果设置了
+		|g:rustfmt_options|，传递给该程序。
+
+		如果 |g:rustfmt_fail_silently| 为 0 (缺省)，则
+		|g:rustfmt_command| 的错误会添加到 |location-list| 里。
+		如果 |g:rustfmt_fail_silently| 设为 1，则不会写入错误到
+		|location-list|。
+
+:RustFmtRange                                                  *:RustFmtRange*
+		在指定范围上执行 |g:rustfmt_command|。其它信息见 |:RustFmt|
+
+==============================================================================
+映射                                                           *rust-mappings*
+
+此插件定义了 |[[| 和 |]]| 的映射以支持悬挂缩进。
+
+还定义了一些其它映射:
+
+							*rust_<D-r>*
+<D-r>			执行 |:RustRun|，不带参数。
+			备注: 此绑定只适用于 MacVim。
+
+							*rust_<D-R>*
+<D-R>			重用上次调用使用的参数来生成 |:RustRun|! 命令行，但先
+			不执行。
+			备注: 此绑定只适用于 MacVim。
+
+==============================================================================
+ vim:tw=78:sw=4:noet:ts=8:ft=help:norl:
