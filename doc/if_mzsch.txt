@@ -1,4 +1,4 @@
-*if_mzsch.txt*  For Vim version 7.4.  最近更新: 2013年8月
+*if_mzsch.txt*  For Vim version 8.0.  最近更新: 2017年7月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -15,6 +15,7 @@ Vim 的 MzScheme 接口					*mzscheme* *MzScheme*
 5. mzeval() Vim 函数			|mzscheme-mzeval|
 6. 使用函数引用				|mzscheme-funcref|
 7. 动态调入				|mzscheme-dynamic|
+8. MzScheme 设置			|mzscheme-setup|
 
 {Vi 无此功能}
 
@@ -90,6 +91,9 @@ exn:vim 无需显式导入 (import)。
 	:mzscheme (require (prefix vim- vimext)) ; 用于 MzScheme < 4.x
 	:mzscheme (require (prefix-in vim- 'vimext)) ; MzScheme 4.x
 	:mzscheme (vim-set-buff-line 10 "This is line #10")
+
+要看运行的 MzScheme 版本: >
+	:mzscheme (display (version))
 <
 内含脚本的使用: >
 	function! <SID>SetFirstLine()
@@ -228,7 +232,7 @@ Vim 控制台版本的线程调度不如 GUI 版本的可靠。
 5. mzeval() Vim 函数					    *mzscheme-mzeval*
 
 使用 |mzeval()| 函数可以提供另一方向的接口，它计算 MzScheme 表达式并把结果赋给
-Vim。
+Vim 脚本。
 
 ==============================================================================
 6. 使用函数引用						    *mzscheme-funcref*
@@ -246,13 +250,15 @@ MzScheme 接口允许使用 |Funcref| 来从 Scheme 里直接调用 Vim 的函�
 <
 
 ==============================================================================
-7. 动态调入					    *mzscheme-dynamic* *E815*
+7. 动态调入					*mzscheme-dynamic* *E815*
 
 MS-Windows 上，可以动态调入 MzScheme 库。|:version| 输出这时应包括
 |+mzscheme/dyn|。
 
 这意味着 Vim 只有在必要时才寻找 MzScheme DLL 文件。如果不使用 MzScheme 接口，
 你就不需要它们。这样，即使没有这些 DLL 文件，你也可使用 Vim。
+注意 新版的 MzScheme (Racket) 需要通过 scheme_main_setup 进行早期 (蹦床式的)
+的初始化。这样如果可能的话 Vim 总能在启动时载入 MzScheme DLL。
 
 要使用 MzScheme 接口，MzScheme DLL 必须在搜索路径上。控制台窗口里输入 "path"
 可以看到 (搜索路径) 当前使用的目录。
@@ -262,5 +268,22 @@ DLL 的名字必须匹配 Vim 编译时所使用的 MzScheme 版本。对于 MzS
 察看 ":version" 命令的输出，注意 "Compilation" 信息中的 -DDYNAMIC_MZSCH_DLL=
 "内容" 和 -DDYNAMIC_MZGC_DLL="内容"。
 
+例如，如果 MzScheme (Racket) 安装在 C:\Racket63，可能需要以下的环境变量设置: >
+
+  PATH=%PATH%;C:\Racket63\lib
+  PLTCOLLECTS=C:\Racket63\collects
+  PLTCONFIGDIR=C:\Racket63\etc
+<
+==============================================================================
+8. MzScheme 设置				    *mzscheme-setup* *E895*
+
+Vim 的 if_mzsch 核心部分需要 "racket/base" 模块 (如果不存在，"scheme/base" 作
+作为后备)，测试需要 "r5rs" 模块，Vim 编译时需要 "raco ctool" 命令。如果
+MzScheme 没有这些，可以通过 MzScheme 的 raco 命令安装:
+>
+  raco pkg install scheme-lib       # scheme/base 模块
+  raco pkg install r5rs-lib         # r5rs 模块
+  raco pkg install cext-lib         # raco ctool 命令
+<
 ======================================================================
   vim:tw=78:ts=8:sts=4:ft=help:norl:

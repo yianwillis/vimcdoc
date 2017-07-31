@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 7.4.  最近更新: 2013年8月
+*if_pyth.txt*   For Vim version 8.0.  最近更新: 2017年7月
 
 
 		  VIM REFERENCE MANUAL    by Paul Moore
@@ -17,6 +17,8 @@ Vim 的 Python 编程接口					*python* *Python*
 8. pyeval()、py3eval() Vim 函数			|python-pyeval|
 9. 动态调入					|python-dynamic|
 10. Python 3					|python3|
+11. Python X					|python_x|
+12. 编译时带 Python 支持			|python-building|
 
 {Vi 无此功能}
 
@@ -27,7 +29,7 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 ==============================================================================
 1. 命令							*python-commands*
 
-					*:python* *:py* *E205* *E263* *E264*
+					*:python* *:py* *E263* *E264* *E887*
 :[range]py[thon] {stmt}
 			执行 Python 语句 {stmt}。一个判断 ":python" 命令是否可
 			用的简单检查: >
@@ -52,7 +54,11 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 			print 'EAT ME'
 	EOF
 	endfunction
-<
+
+要看运行的 Python 版本: >
+	:python import sys
+	:python print(sys.version)
+
 备注: Python 对于缩进是非常敏感的。要确保 "class" 所在行及 "EOF" 没有任何缩
 进。
 
@@ -158,8 +164,8 @@ vim.eval(str)						*python-eval*
 
 	    :py tagList = vim.eval('taglist("eval_expr")')
 <	后一个将返回一个 python 类型的字典列表，例如:
-	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name':
-	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}]
+	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name': ~
+	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}] ~
 
 vim.bindeval(str)					*python-bindeval*
 	类似于 |python-eval|，但返回 |python-bindeval-objects| 中描述的特殊
@@ -585,10 +591,29 @@ vim.List 对象					*python-List*
         class List(vim.List):		# 子类
 
 vim.Function 对象				*python-Function*
-    类函数对象，相当于 vim |Funcref| 对象。支持 `.name`  属性。可以进行调用。
-    接受特殊的关键字参数 `self`，见 |Dictionary-function|。还可用
-    `vim.Function(name)` 构造函数，等价于
+    类函数对象，相当于 vim |Funcref| 对象。接受特殊关键字参数 `self`，见
+    |Dictionary-function|。也可用 `vim.Function(name)` 构造函数，等价于
     `vim.bindeval('function(%s)'%json.dumps(name))`。
+
+    属性 (只读):
+        属性         描述 ~
+        name         函数名。
+	args         `None` 或用作参数的 |python-List| 对象。注意 这是参数列表
+		     的备份，每次请求参属性时都会重新构建。列表的修改被忽略 (
+		     但不适用于参数列表里的容器: 类似于 |copy()| 而不是
+		     |deepcopy()|)。
+        self         `None` 或用作 self 字典的 |python-Dictionary| 对象。注意
+                     调用函数对象时显式的 `self` 参数覆盖此属性。
+        auto_rebind  布尔值。如果为真，此 Python 对象建立和在 Vim 脚本里存贮的
+		     字典里的的偏函数会在此字典被访问时自动重新绑定此字典。这
+		     体现了 Vim 内部 `dict.func` (auto_rebind=True) 和
+		     `function(dict.func,dict)` (auto_rebind=False) 的差异。
+		     如果 `self` 属性为 `None`，此属性无意义。
+
+    构造函数额外接受 `args`、`self` 和 `auto_rebind` 关键字。如果给出 `args`
+    和/或 `self` 参数，构造偏函数，见 |function()|。只有给定 `self` 时才使用
+    `auto_rebind`，否则无论是否给出，总是假定为 `True`。如果给出 `self`，缺省
+    为 `False`。
 
     示例: >
         f = vim.Function('tr')			# 构造函数
@@ -602,27 +627,43 @@ vim.Function 对象				*python-Function*
         print f(self={})			# 相当于 call('DictFun', [], {})
         print isinstance(f, vim.Function)	# True
 
+        p = vim.Function('DictFun', self={})
+        print f()
+        p = vim.Function('tr', args=['abc', 'a'])
+        print f('b')
+
 ==============================================================================
 8. pyeval() 和 py3eval() Vim 函数			*python-pyeval*
 
 为了访问双向接口的方便，可用 |pyeval()| 和 |py3eval()| 函数来计算 Python 表达
-式然后返回计算结果给 Vim。
+式然后返回计算结果给 Vim 脚本。也可用 |pyxeval()|。
 
 ==============================================================================
 9. 动态调入						*python-dynamic*
 
-MS-Windows 上，可以动态调入 Python 库。|:version| 输出这时应包括
-|+python/dyn|。
+MS-Windows 和 Unix 上，可以动态调入 Python 库。|:version| 输出这时应包括
+|+python/dyn| 或 |+python3/dyn|。
 
-这意味着 Vim 只有在必要时才寻找 Python DLL 文件。如果不使用 Python 接口，你就
-不需要它。这样，即使没有该 DLL 文件，你也可使用 Vim。
+这意味着 Vim 只有在必要时才寻找 Python DLL 文件或共享库。如果不使用 Python 接
+口，你就不需要它。这样，即使没有该文件，你也可使用 Vim。
+
+
+MS-Windows ~
 
 要使用 Python 接口，Python DLL 必须在搜索路径上。控制台窗口里输入 "path" 可以
-看到 (搜索路径) 当前使用的目录。
+看到 (搜索路径) 当前使用的目录。也可用 'pythondll' 或 'pythonthreedll' 选项来
+指定 Python DLL。
 
-DLL 的名字必须匹配 Vim 编译时所使用的 Python 版本。目前，该名字为
-"python24.dll"，也就是 Python 2.4。要确信这一点，编辑 "gvim.exe" 文件并查找
-"python\d*.dll\c"。
+DLL 的名字应该匹配 Vim 编译时所使用的 Python 版本。目前，用于 Python 2 的名字
+为 "python27.dll"，也就是 Python 2.7。用于 Python 3 的是 python35.dll (Python
+3.5)。要确信这一点，编辑 "gvim.exe" 文件并查找 "python\d*.dll\c"。
+
+
+Unix ~
+
+'pythondll' 或 'pythonthreedll' 选项可用来指定 Python 共享库文件，而不用编译时
+指定的 DYNAMIC_PYTHON_DLL 或 DYNAMIC_PYTHON3_DLL 文件。共享库的版本必须和 Vim
+编译使用的 Python 2.x 或 Python 3 版本保持一致。
 
 ==============================================================================
 10. Python 3						*python3*
@@ -631,9 +672,13 @@ DLL 的名字必须匹配 Vim 编译时所使用的 Python 版本。目前，该
 `:py3` 和 `:python3` 命令和 `:python` 类似。判断 `:py3` 命令是否可用的一个简单
 检查: >
 	:py3 print("Hello")
+
+要看运行的 Python 版本: >
+	:py3 import sys
+	:py3 print(sys.version)
 <							*:py3file*
 `:py3file` 命令和 `:pyfile` 类似。
-							*:py3do* *E863*
+							*:py3do*
 `:py3do` 命令和 `:pydo` 类似。
 
 
@@ -682,6 +727,86 @@ Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的
 注意 不过，当 Python 2 和 3 同时存在且都是动态载入，这些 has() 调用会试图载入
 它们。如果两个版本不能同时载入，单单对 Python 2 或 3 是否可用的检查就会导致另
 一个版本不能调入。
+
+==============================================================================
+11. Python X						*python_x* *pythonx*
+
+大多数 python 代码可以用 python 2.6+ 和 python 3 兼容的方式编写，因而我们提供
+了 pyx+ 函数和命令。其工作方式和 Python 2 和 3 变种完全相同，但根据
+'pyxversion' 设置选择 Python 版本。
+
+应在 |.vimrc| 中设置 'pyxversion'，可为 Python 命令选择 Python 2 或 Python 3。
+如果在运行时改变此设置，可能会冒丢失插件状态 (如初始化) 的风险。
+
+要用的模块可放在 {rtp}/pythonx 目录里。见 |pythonx-directory|。
+
+							*:pyx* *:pythonx*
+`:pyx` 和 `:pythonx` 命令的工作方式类似于 `:python`。要看 `:pyx` 命令是否可用
+的简单检查: >
+	:pyx print("Hello")
+
+要看运行的 Python 版本: >
+	:pyx import sys
+	:pyx print(sys.version)
+<
+					*:pyxfile* *python_x-special-comments*
+`:pyxfile` 命令的工作方式类似于 `:pyfile`。不过你可以加上以下注释之一强制 Vim
+使用 `:pyfile` 或 `:py3file`: >
+  #!/任何字符串/python2		" Shebang。必须是文件的首行。
+  #!/任何字符串/python3		" Shebang。必须是文件的首行。
+  # requires python 2.x		" 最大行数取决于 'modelines'。
+  # requires python 3.x		" 最大行数取决于 'modelines'。
+和普通模式行不同，不检查文件尾部。如果找不到这样注释，使用 'pyxversion' 设置。
+							*W20* *W21*
+如果 Vim 不支持所选的 Python 版本，安静地打印一行消息。用 `:messages` 可读该消
+息。
+
+							*:pyxdo*
+`:pyxdo` 命令的工作方式类似于 `:pydo`。
+
+							*has-pythonx*
+可以这样测试 pyx* 系列命令是否可用: >
+	if has('pythonx')
+	  echo 'pyx* 命令可用. (Python ' . &pyx . ')'
+	endif
+
+如果编译时只有 |+python| 或 |+python3| 之一，has() 返回 1。
+如果编译时 |+python| 和 |+python3| 两者兼有，测试结果取决于 'pyxversion' 设
+置。如果 'pyxversion' 为 0，先测试 Python 3，如果不可用再测试 Python 2。如果
+'pyxversion' 为 2 或 3，只测试对应的 Python 2 或 3。
+
+注意 为了使 `has('pythonx')` 能工作，可能会试图动态载入 Python 3 或 2。这可能
+有副作用，尤其是 Vim 只能载入两者之一的时候。
+
+如果用户希望首选 Python 2 而使用 Python 3 作后备，需要在 |.vimrc| 里显式设置
+'pyxversion'。例如: >
+	if has('python')
+	  set pyx=2
+	elseif has('python3')
+	  set pyx=3
+	endif
+
+==============================================================================
+12. 编译时带 Python 支持				*python-building*
+
+编译时带 Python 2 或 3 支持的若干提示。
+
+UNIX
+
+关于如何打开 Python 接口的支持，见 src/Makefile。
+
+Ubuntu 上需要为 Python 2 安装以下包:
+	python
+	python-dev
+Python 3:
+	python3
+	pytyon3-dev
+Python 3.6:
+	python3.6
+	pytyon3.6-dev
+
+如果有多于一个 Python 3 版本，在运行 configure 前链接 python3 到你选择的那
+个版本。
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:
