@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  最近更新: 2013年8月
+*insert.txt*    For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -44,6 +44,8 @@ CTRL-V 被映射，你也许会经常使用 CTRL-Q 来代替 |i_CTRL-Q|。
 						*i_CTRL-[* *i_<Esc>*
 <Esc> 或 CTRL-[	结束插入或替换模式，回到普通模式。结束缩写。
 		注意: 如果你很难在键盘上敲上 <Esc> 键，训练自己使用 CTRL-[。
+		如果 Esc 不能用而你使用的是 Mac，试试 CTRL-Esc。或者在辅助功能
+		里关闭收听。
 						*i_CTRL-C*
 CTRL-C		退出插入模式，回到普通模式。不检查缩写。不激活 |InsertLeave|
 		自动命令事件。
@@ -66,7 +68,9 @@ CTRL-A		插入最近插入的文本。{Vi 无此功能}
 CTRL-W		删除光标前的单词 (关于连接行，见 |i_backspacing|)。关于单词的
 		定义，见 |word-motions| 关于 "单词动作" 的定义。
 						*i_CTRL-U*
-CTRL-U		删除光标所有输入的字符 (关于连接行，见 |i_backspacing|)。
+CTRL-U		删除当前行上光标前的所有输入字符。如果没有新输入的字符而
+		'backspace' 不为空，删除当前行上光标前的所有字符。
+		关于连接行，见 |i_backspacing|。
 
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> 或 CTRL-I 插入制表。如果打开 'expandtab' 选项，等价数目的空格被插入 (使
@@ -122,13 +126,14 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 	CTRL-R a		产生 "ac"。
 	CTRL-R CTRL-R a		产生 "ab^Hc"。
 <		'textwidth'、'formatoptions' 等等选项仍然适用。如果你连这些都
-		想避免，使用 "<C-R><C-O>r"，见下。
+		想避免，使用 CTRL-R CTRL-O，见下。
 		'.' 寄存器 (最近插入的文本) 依然如同键盘输入那样的方式插入。
 		{Vi 无此功能}
 
 CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		按本义插入寄存器内容，并且不进行自动缩进。和鼠标粘贴文本相同
-		|<MiddleMouse>|。
+		|<MiddleMouse>|。如果寄存器是面向行的，在当前行之上插入文本，
+		类似于 P。
 		不会替换字符！
 		'.' 寄存器 (最近插入的文本) 依然如同键盘输入那样的方式插入。
 		{Vi 无此功能}
@@ -320,6 +325,8 @@ CTRL-O		执行命令，然后返回到插入模式		     *i_CTRL-O*
 CTRL-\ CTRL-O	类似于 CTRL-O，但不移动光标		     *i_CTRL-\_CTRL-O*
 CTRL-L		置位 'insertmode' 时: 转到普通模式	     *i_CTRL-L*
 CTRL-G u	打断撤销序列，开始新的改变		     *i_CTRL-G_u*
+CTRL-G U	下个左/右光标移动不打断撤销 (但只在光标停在  *i_CTRL-G_U*
+		同一行上才是如此)
 -----------------------------------------------------------------------
 
 注意: 如果光标键把你带出插入模式，查查 'noesckeys' 选项。
@@ -350,6 +357,28 @@ CTRL-O 命令带你到普通模式，此时你如使用进入插入模式的命�
 	:inoremap <CR> <C-]><C-G>u<CR>
 
 这样，每行之后就不能撤销。在此之前也进行缩写的扩展。
+
+一个使用 CTRL-G U 的例子: >
+
+	inoremap <Left>  <C-G>U<Left>
+	inoremap <Right> <C-G>U<Right>
+	inoremap <expr> <Home> col('.') == match(getline('.'), '\S') + 1 ?
+	 \ repeat('<C-G>U<Left>', col('.') - 1) :
+	 \ (col('.') < match(getline('.'), '\S') ?
+	 \     repeat('<C-G>U<Right>', match(getline('.'), '\S') + 0) :
+	 \     repeat('<C-G>U<Left>', col('.') - 1 - match(getline('.'), '\S')))
+	inoremap <expr> <End> repeat('<C-G>U<Right>', col('$') - col('.'))
+	inoremap ( ()<C-G>U<Left>
+
+这样，可以在插入模式下使用光标键而不会打断撤销序列，从而 . (重做) 命令就能正常
+工作。
+另外，输入以下的文本 (使用上述的 "(" 映射): >
+
+   Lorem ipsum (dolor
+
+可以用 . 重复直到出现期待结果为止
+
+   Lorem ipsum (dolor)
 
 CTRL-O 的使用分割撤销: 之前输入的文本和之后的被分别撤销。如果不想如此 (比如用
 在映射里)，你可以用 CTRL-R = |i_CTRL-R|。例如，要调用函数: >
@@ -502,9 +531,9 @@ CTRL-G j 和 CTRL-G k 命令可以用来在某一列前插入文本。例如: >
 10. 用户定义的补全					|i_CTRL-X_CTRL-U|
 11. 全能 (omni) 补全					|i_CTRL-X_CTRL-O|
 12. 拼写建议						|i_CTRL-X_s|
-13. 'complete' 的关键字					|i_CTRL-N|
+13. 'complete' 的关键字					|i_CTRL-N| |i_CTRL-P|
 
-所有这些 (除了 2 以外 (译者注: 原文如此)) 都通过 CTRL-X 模式完成。这是插入和替
+所有这些，除了 CTRL-N 和 CTRL-P 以外，都通过 CTRL-X 模式完成。这是插入和替
 换模式的一个子模式。你可以键入 CTRL-X 和一个 CTRL-X 命令进入 CTRL-X 模式。要退
 出，输入不合法的 CTRL-X 模式的命令。合法的键包括 CTRL-X 命令本身，CTRL-N (下一
 个) 和 CTRL-P (前一个)。
@@ -870,7 +899,7 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
 			也无妨。
 	empty		如果非零，匹配项即使是空字符串也会加入
 
-除了 'icase'、'dup' 和 'empty' 以外，其它各项必须是字符串。如果有一项不合要
+除了 "icase"、"dup" 和 "empty" 以外，其它各项必须是字符串。如果有一项不合要
 求，报错，而列表的其余项目也不再使用。你可以在返回列表中混用字符串和字典项目。
 
 "menu" 项目用于弹出菜单且可能被截短，所以它应该尽量简短。"info" 项目可以稍长。
@@ -1526,7 +1555,6 @@ Ex 模式 (见 |-e|) 下，行尾的反斜杠可用来插入 NUL 字符。所以
 			本结束的时候才会开始。
 			此命令不能在 |:normal| 里使用。
 			{Vi 无此功能}
-			{仅当编译时带 |+ex_extra| 特性时才可用}
 
 							*:stopi* *:stopinsert*
 :stopi[nsert]		尽快停止插入模式。和在插入模式时输入 <Esc> 类似。可以
@@ -1540,13 +1568,11 @@ Ex 模式 (见 |-e|) 下，行尾的反斜杠可用来插入 NUL 字符。所以
 			注意 在函数或者脚本里使用本命令时，替换只会在函数和脚
 			本结束的时候才会开始。
 			{Vi 无此功能}
-			{仅当编译时带 |+ex_extra| 特性时才可用}
 
 							*:startgreplace*
 :startg[replace][!]	和 |:startreplace| 完全类似，用虚拟替换模式，和使用
 			|gR| 类似。
 			{Vi 无此功能}
-			{仅当编译时带 |+ex_extra| 特性时才可用}
 
 ==============================================================================
 10. 插入文件						*inserting-file*

@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 7.4.  最近更新: 2013年8月
+*index.txt*     For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -47,7 +47,8 @@ Vim 变量的列表可见 |vim-variable|。
 |i_CTRL-G_k|	CTRL-G CTRL-K	往上一行，到插入开始的列
 |i_CTRL-G_k|	CTRL-G k	往上一行，到插入开始的列
 |i_CTRL-G_k|	CTRL-G <Up>	往上一行，到插入开始的列
-|i_CTRL-G_u|	CTRL-G u	开始新的不可撤消的编辑
+|i_CTRL-G_u|	CTRL-G u	开始新的可撤销的编辑
+|i_CTRL-G_U|	CTRL-G U	下一个光标移动不破坏撤销
 |i_<BS>|	<BS>		删除光标前的字符
 |i_digraph|	{char1}<BS>{char2}
 				输入二合字母 (只有打开了 'digraph' 选项才有效)
@@ -278,10 +279,9 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |A|		A		2  在行尾附加文本 N 次
 |B|		B		1  光标反向移动 N 个 WORD (字串)
 |C|		["x]C		2  从光标位置到行尾部分，再加上 N-1 行进行修改
-				   [到缓冲区 (译者注: 应为寄存器，下同) x]；等
-				   价于 "c$"
+				   [到寄存器 x]；等价于 "c$"
 |D|		["x]D		2  删除位置到行尾部分，再加上 N-1 行的字符 [到
-				   缓冲区 (见上) x]；等价于 "d$"
+				   寄存器 x]；等价于 "d$"
 |E|		E		1  光标正向移动到第 N 个 WORD 的结束处
 |F|		F{char}		1  光标左移到第 N 次出现的 {char} 上
 |G|		G		1  光标移动到第 N 行，缺省是最后一行
@@ -295,18 +295,18 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |N|		N		1  反方向重复最近的 '/' 或 '?' N 次
 |O|		O		2  在光标上方开始一个新行，并插入文本，重复 N
 				   次
-|P|		["x]P		2  在光标放置文本 [到缓冲区 (见上) x] N 次
+|P|		["x]P		2  在光标放置文本 [到寄存器 x] N 次
 |Q|		Q		   切换到 "Ex" 模式
 |R|		R		2  进入替换模式: 覆盖存在的字符，重复输入文本
 				   N-1 次
-|S|		["x]S		2  删除 N 行 [到缓冲区 (见上) x]] 并开始输入；
-				   等价于 "cc"
+|S|		["x]S		2  删除 N 行 [到寄存器 x] 并开始输入；等价于
+				   "cc"
 |T|		T{char}		1  光标移动到左侧第 N 次出现的 {char} 之前
 |U|		U		2  撤消一行内所有最近的改变
 |V|		V		   进入面向行的可视 (Visual) 模式
 |W|		W		1  光标前移 N 个 WORD
-|X|		["x]X		2  删除光标前的 N 个字符 [到缓冲区 (见上) x]
-|Y|		["x]Y		   抽出 N 行 [到缓冲区 (见上) x]；等价于 "yy"
+|X|		["x]X		2  删除光标前的 N 个字符 [到寄存器 x]
+|Y|		["x]Y		   抽出 N 行 [到寄存器 x]；等价于 "yy"
 |ZZ|		ZZ		   如果修改过，保存当前文件，然后退出
 |ZQ|		ZQ		   无论如何退出当前文件
 |[|		[{char}		   方括号命令 (见下 |[|)
@@ -326,11 +326,10 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |`}|		`}		1  光标移动当前段落的结束处
 |a|		a		2  在光标处附加文本 N 次
 |b|		b		1  光标反向移动 N 个单词
-|c|		["x]c{motion}	2  删除 Nmove 文本 [到缓冲区 (见上) x] 并开始
-				   编辑
-|cc|		["x]cc		2  删除 N 行 [到缓冲区 (见上) x] 并开始编辑
-|d|		["x]d{motion}	2  删除 Nmove 文本 [到缓冲区 (见上) x]
-|dd|		["x]dd		2  删除 N 行 [到缓冲区 (见上) x]]
+|c|		["x]c{motion}	2  删除 Nmove 文本 [到寄存器 x] 并开始编辑
+|cc|		["x]cc		2  删除 N 行 [到寄存器 x] 并开始编辑
+|d|		["x]d{motion}	2  删除 Nmove 文本 [到寄存器 x]
+|dd|		["x]dd		2  删除 N 行 [到寄存器 x]
 |do|		do		2  等同于 ":diffget"
 |dp|		dp		2  等同于 ":diffput"
 |e|		e		1  光标正向移动到第 N 个单词的结束处
@@ -353,15 +352,15 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |q/|		q/		   在命令行窗口里编辑 / 命令行
 |q?|		q?		   在命令行窗口里编辑 ? 命令行
 |r|		r{char}		2  用 {char} 替换 N 个字符
-|s|		["x]s		2  (替换) 删除 N 个字符 [到缓冲区 (见上) x] 并
-				   开始输入
+|s|		["x]s		2  (替换) 删除 N 个字符 [到寄存器 x] 并开始输
+				   入
 |t|		t{char}		1  光标移动到右侧第 N 次出现的 {char} 之前
 |u|		u		2  撤消改变
 |v|		v		   开始面向字符的可视 (Visual) 模式
 |w|		w		1  光标前移 N 个单词
-|x|		["x]x		2  删除光标开始的 N 个字符 [到缓冲区 (见上) x]
-|y|		["x]y{motion}	   抽出 Nmove 文本 [到缓冲区 (见上) x]
-|yy|		["x]yy		   抽出 N 行 [到缓冲区 (见上) x]
+|x|		["x]x		2  删除光标开始的 N 个字符 [到寄存器 x]
+|y|		["x]y{motion}	   抽出 Nmove 文本 [到寄存器 x]
+|yy|		["x]yy		   抽出 N 行 [到寄存器 x]
 |z|		z{char}		   'z' 开始的命令，见下 |z|
 |{|		{		1  光标反向移动 N 个段落
 |bar|		|		1  光标移到第 N 列
@@ -622,10 +621,14 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |g'|		g'{mark}	1  类似于 |'|，但不改变跳转表
 |g`|		g`{mark}	1  类似于 |`|，但不改表跳转表
 |gstar|		g*		1  类似于 "*"，但不使用 "\<" 和 "\>"
+|g+|		g+		   转到第 N 个更新的文本状态
+|g,|		g,		1  转到改变表第 N 个更新的位置
+|g-|		g-		   转到第 N 个更旧的文本状态
 |g0|		g0		1  'wrap' 关闭时转到当前行最左侧屏幕上可见的字
 				   符
 				   'wrap' 打开时转到当前屏幕行最左侧的字符
 |g8|		g8		   显示光标所在的 UTF-8 字符的十六进制字节码
+|g;|		g;		1  转到改变表第 N 个更旧的位置
 |g<|		g<		   显示上次的命令输出
 |g?|		g?		2  Rot13 编码操作符
 |g?g?|		g??		2  Rot13 编码当前行
@@ -650,6 +653,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 				   空白字符
 				   'wrap' 打开时转到当前屏幕行最左侧的非空白字
 				   符
+|g_|		g_		1  移动光标到下方 N - 1 行的最后 CHAR
 |ga|		ga		   打印光标所在处的字符的 ascii 值
 |gd|		gd		1  转到当前函数里当前光标所在的单词的定义
 |ge|		ge		1  反向转到前一个单词的结尾处
@@ -752,12 +756,14 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 ------------------------------------------------------------------------------
 |v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   结束可视模式
 |v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   转到 'insertmode' 指定的模式
+|v_CTRL-A|	CTRL-A		2  给高亮文本中的数值加上 N
 |v_CTRL-C|	CTRL-C		   结束可视模式
 |v_CTRL-G|	CTRL-G		   在可视模式和选择模式间切换
 |v_<BS>|	<BS>		2  选择模式: 删除高亮区域
 |v_CTRL-H|	CTRL-H		2  等同于 <BS>
 |v_CTRL-O|	CTRL-O		   从选择模式切换到可视模式，只限于下个命令
 |v_CTRL-V|	CTRL-V		   使得可视模式面向列块，或者退出可视模式
+|v_CTRL-X|	CTRL-X		2  给高亮文本中的数值减去 N
 |v_<Esc>|	<Esc>		   结束可视模式
 |v_CTRL-]|	CTRL-]		   跳转到高亮的标签上
 |v_!|		!{filter}	2  通过外部命令 {filter} 过滤高亮行
@@ -800,6 +806,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |v_a}|		a}		   等同于 aB
 |v_c|		c		2  删除高亮区域，并开始插入
 |v_d|		d		2  删除高亮区域
+|v_g_CTRL-A|	g CTRL-A	2  给高亮文本中的数值加上 N
+|v_g_CTRL-X|	g CTRL-X	2  给高亮文本中的数值减去 N
 |v_gJ|		gJ		2  连接高亮行，不插入空格
 |v_gq|		gq		2  排版高亮行
 |v_gv|		gv		   交换现在和以前的高亮区域
@@ -849,7 +857,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |c_CTRL-D|	CTRL-D		列出光标前面模式的所有补全
 |c_CTRL-E|	CTRL-E		光标移动到命令行结束的地方
 |'cedit'|	CTRL-F		'cedit' 的缺省值: 打开命令行窗口；否则不用
-		CTRL-G		不用
+|c_CTRL-G|	CTRL-G		'incsearch' 激活时，下个匹配
 |c_<BS>|	<BS>		删除光标前面的字符
 |c_digraph|	{char1} <BS> {char2}
 				'digraph' 打开时，输入二合字母
@@ -864,12 +872,12 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 				输入二合字母
 |c_CTRL-L|	CTRL-L		补全光标前的模式，并插入最长的公共子串
 |c_<CR>|	<CR>		执行输入的命令
-|c_<CR>|	CTRL-M		等同于 <CR>
+|c_CTRL-M|	CTRL-M		等同于 <CR>
 |c_CTRL-N|	CTRL-N		使用 'wildchar' 并有多个匹配: 转到下一个匹配，
-				不然: 等同于 <Down>
+				不然: 从历史中调入后一个命令行
 		CTRL-O		不同
 |c_CTRL-P|	CTRL-P		使用 'wildchar' 并有多个匹配: 转到上一个匹配，
-				不然: 等同于 <Up>
+				不然: 从历史中调入前一个命令行
 |c_CTRL-Q|	CTRL-Q		等同于 CTRL-V，除非用于终端控制流
 |c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
 				插入寄存器的内容或特殊对象到光标所在的地方，如
@@ -878,7 +886,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 				按本义插入寄存器的内容或特殊对象到光标所在的地
 				方
 		CTRL-S		(用于终端控制流)
-		CTRL-T		不用
+|c_CTRL-T|	CTRL-T		'incsearch' 激活时，前个匹配
 |c_CTRL-U|	CTRL-U		删除所有字符
 |c_CTRL-V|	CTRL-V		按本义插入下一个非数字字符，或者插入其后三位数
 				字所代表的单个字节。
@@ -887,7 +895,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 		CTRL-Y		复制 (抽出) 无模式的选择
 		CTRL-Z		不用 (保留作暂停用)
 |c_<Esc>|	<Esc>		放弃命令行，不执行
-|c_<Esc>|	CTRL-[		等同于 <Esc>
+|c_CTRL-[|	CTRL-[		等同于 <Esc>
 |c_CTRL-\_CTRL-N| CTRL-\ CTRL-N	转到普通模式，放弃命令行
 |c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	转到 'insertmode' 指定的模式，放弃命令行
 		CTRL-\ a - d	保留给扩展用
@@ -916,7 +924,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |c_<Insert>|	<Insert>	切换插入/替换模式
 |c_<LeftMouse>|	<LeftMouse>	光标移动到鼠标点击的地方
 
-亚瑟王，你找到 (圣杯) 了！			*holy-grail*
+亚瑟王，你找到 (圣杯) 了！			*holy-grail* *:smile*
 
 ==============================================================================
 5. EX 命令					*ex-cmd-index* *:index*
@@ -977,7 +985,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:breakdel|	:breakd[el]	删除调试器断点
 |:breaklist|	:breakl[ist]	列出调试器断点
 |:browse|	:bro[wse]	使用文件选择对话框
-|:bufdo|	:bufdo		为所有列表内缓冲区执行命令
+|:bufdo|	:bufdo		为每个列表内缓冲区执行命令
 |:buffers|	:buffers	列出缓冲区列表里的所有文件
 |:bunload|	:bun[load]	卸载指定的缓冲区
 |:bwipeout|	:bw[ipeout]	真正删除一个缓冲区
@@ -986,15 +994,18 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:cNfile|	:cNf[ile]	跳转到前一个文件的最后一个错误
 |:cabbrev|	:ca[bbrev]	类似于 ":abbreviate"，但用于命令行模式
 |:cabclear|	:cabc[lear]	清除所有缩写，用于命令行模式
-|:caddbuffer|	:caddb[uffer]	通过缓冲区补充错误
-|:caddexpr|	:cad[dexpr]	通过表达式补充错误
+|:caddbuffer|	:cad[dbuffer]	通过缓冲区补充错误
+|:caddexpr|	:cadde[xpr]	通过表达式补充错误
 |:caddfile|	:caddf[ile]	加入错误信息到当前 quickfix 列表
 |:call|		:cal[l]		调用函数
 |:catch|	:cat[ch]	:try 命令的一部分
+|:cbottom|	:cbo[ttom]	滚动到 quickfox 窗口底部
 |:cbuffer|	:cb[uffer]	分析错误信息并跳转到第一个
 |:cc|		:cc		跳转到特定的错误
 |:cclose|	:ccl[ose]	关闭 quickfix 窗口
 |:cd|		:cd		改变目录
+|:cdo|		:cdo		为每个合法的错误列表项目执行命令
+|:cfdo|		:cfd[o]		为每个错误列表的文件执行命令
 |:center|	:ce[nter]	排版行，使其居中对齐
 |:cexpr|	:cex[pr]	从表达式里读取错误并跳转到第一个
 |:cfile|	:cf[ile]	读入含有错误信息的文件，并跳转到第一个
@@ -1006,8 +1017,10 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:chdir|	:chd[ir]	改变当前目录
 |:checkpath|	:che[ckpath]	列出包含的头文件
 |:checktime|	:checkt[ime]	检查载入缓冲区的时间标签
-|:clist|	:cl[ist]	列出所有错误
+|:chistory|	:chi[story]	列出所有的错误列表
 |:clast|	:cla[st]	跳转到指定的错误上，缺省为最后一个
+|:clearjumps|	:cle[arjumps	清除跳转列表	
+|:clist|	:cl[ist]	列出所有错误
 |:close|	:clo[se]	改变当前窗口
 |:cmap|		:cm[ap]		类似于 ":map"，但用于命令行模式
 |:cmapclear|	:cmapc[lear]	清除所有映射，用于命令行模式
@@ -1031,7 +1044,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:cpfile|	:cpf[ile]	跳转到上一个文件的最后一个错误
 |:cquit|	:cq[uit]	退出 Vim，带错误码
 |:crewind|	:cr[ewind]	跳到指定的错误，缺省为第一个
-|:cscope|	:cs[cope]       执行 cscope 命令
+|:cscope|	:cs[cope]	执行 cscope 命令
 |:cstag|	:cst[ag]	使用 cscope 来跳转到标签上
 |:cunmap|	:cu[nmap]	类似于 ":unmap"，但用于命令行模式
 |:cunabbrev|	:cuna[bbrev]	类似于 ":unabbrev"，但用于命令行模式
@@ -1052,13 +1065,13 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:diffthis|	:diffthis	使得当前窗口成为 diff 窗口
 |:digraphs|	:dig[raphs]	显示或者输入二合字母
 |:display|	:di[splay]	显示寄存器
-|:dl|		:dl		|:delete| 的简写
-|:dl|		:del[ete]l	|:delete| 的简写
+|:dl|		:dl		带 'l' 标志位 |:delete| 的简写
+|:del|		:del[ete]l	带 'l' 标志位 |:delete| 的简写
 |:djump|	:dj[ump]	跳转到 #define
 |:dlist|	:dli[st]	列出所有的 #define
 |:doautocmd|	:do[autocmd]	在当前缓冲区应用自动命令
 |:doautoall|	:doautoa[ll]	在所有载入的缓冲区上应用自动命令
-|:dp|		:d[elete]p	|:delete| 的简写
+|:dp|		:d[elete]p	带 'p' 标志位 |:delete| 的简写
 |:drop|		:dr[op]		跳到编辑某文件的窗口，不成功则在当前窗口编辑之
 |:dsearch|	:ds[earch]	列出一个 #define
 |:dsplit|	:dsp[lit]	分割窗口并跳转到 #define
@@ -1085,6 +1098,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:file|		:f[ile]		显示或者设置当前文件名
 |:files|	:files		列出缓冲区列表的所有文件
 |:filetype|	:filet[ype]	切换文件类型检测的打开/关闭
+|:filter|	:filt[er]	过滤跟随的命令的输出结果
 |:find|		:fin[d]		在 'path' 里找寻文件并编辑之
 |:finally|	:fina[lly]	:try 命令的一部分
 |:finish|	:fini[sh]	退出 Vim 脚本的执行
@@ -1105,6 +1119,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:gvim|		:gv[im]		启动 GUI
 |:hardcopy|	:ha[rdcopy]	发送文本到打印机
 |:help|		:h[elp]		打开帮助窗口
+|:helpclose|	:helpc[lose]	关闭帮助窗口
 |:helpfind|	:helpf[ind]	打开显示帮助窗口的对话框
 |:helpgrep|	:helpg[rep]	类似于 ":grep"，但搜索帮助文件
 |:helptags|	:helpt[ags]	为一个目录产生帮助标签
@@ -1135,6 +1150,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:keepalt|	:keepa[lt]	跟随的命令保持轮换文件不变
 |:keepmarks|	:kee[pmarks]	跟随的命令保持位置标记不变
 |:keepjumps|	:keepj[umps]	跟随的命令保持跳转表和位置标记不变
+|:keeppatterns|	:keepp[atterns]	跟随的命令保持搜索模式历史不变
 |:lNext|	:lN[ext]	转到位置列表的上一个位置
 |:lNfile|	:lNf[ile]	转到上个文件的最近一个位置
 |:list|		:l[ist]		显示行
@@ -1144,11 +1160,14 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:last|		:la[st]		转到参数列表的最后一个文件
 |:language|	:lan[guage]	设置语言 (locale)
 |:later|	:lat[er]	转到新的改变，重做
+|:lbottom|	:lbo[ttom]	滚动到位置窗口的底部
 |:lbuffer|	:lb[uffer]	分析位置并跳转到第一个位置
 |:lcd|		:lc[d]		改变本地的目录
 |:lchdir|	:lch[dir]	改变本地的目录
 |:lclose|	:lcl[ose]	关闭位置窗口
-|:lcscope|	:lcs[cope]      类似于 ":cscope"，但使用位置列表
+|:lcscope|	:lcs[cope]	类似于 ":cscope"，但使用位置列表
+|:ldo|		:ld[o]		为每个合法位置列表项目执行命令
+|:lfdo|		:lfd[o]		为每个位置列表的文件执行命令
 |:left|		:le[ft]		左对齐行
 |:leftabove|	:lefta[bove]	使得分割的窗口出现在左侧或者上方
 |:let|		:let		给变量或选项赋值
@@ -1161,6 +1180,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:lgrep|	:lgr[ep]	运行 'grepprg' 并跳转到第一个匹配
 |:lgrepadd|	:lgrepa[dd]	类似于 :grep，但附加到当前列表上
 |:lhelpgrep|	:lh[elpgrep]	类似于 ":helpgrep"，但使用位置列表
+|:lhistory|	:lhi[story]	列出所有位置列表
 |:ll|		:ll		转到指定位置
 |:llast|	:lla[st]	转到指定位置，缺省最后一个
 |:llist|	:lli[st]	列出所有的位置
@@ -1197,7 +1217,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:marks|	:marks		列出所有的位置标记
 |:match|	:mat[ch]	定义要高亮显示的匹配的模式
 |:menu|		:me[nu]		输入新的菜单项
-|:menutranslate| :menut[ranslate] 增加菜单翻译项目
+|:menutranslate|  :menut[ranslate] 增加菜单翻译项目
 |:messages|	:mes[sages]	显示以前显示的消息
 |:mkexrc|	:mk[exrc]	写入当前映射和设置到文件
 |:mksession|	:mks[ession]	写入会话信息到文件
@@ -1217,12 +1237,13 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:nmenu|	:nme[nu]	为普通模式增加菜单
 |:nnoremap|	:nn[oremap]	类似于 ":noremap"，但使用普通模式
 |:nnoremenu|	:nnoreme[nu]	类似于 ":noremenu"，但使用普通模式
-|:noautocmd|	:noa[utocmd]	跟随的命令不激活自动命令
+|:noautocmd|	:noa[utocmd]	跟随的若干命令不激活自动命令
 |:noremap|	:no[remap]	输入不会被重新映射的映射
 |:nohlsearch|	:noh[lsearch]	暂停 'hlsearch' 高亮
 |:noreabbrev|	:norea[bbrev]	输入不会被重新映射的缩写
 |:noremenu|	:noreme[nu]	输入不会被重新映射的菜单
 |:normal|	:norm[al]	执行普通模式的命令
+|:noswapfile|	:nos[wapfile]	跟随的若干命令不创建交换文件
 |:number|	:nu[mber]	显示文本行时给出行号
 |:nunmap|	:nun[map]	类似于 ":unmap"，但使用普通模式
 |:nunmenu|	:nunme[nu]	删除普通模式的菜单
@@ -1238,14 +1259,16 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:ounmap|	:ou[nmap]	类似于 ":unmap"，但使用操作符等待模式
 |:ounmenu|	:ounme[nu]	删除操作符等待模式的菜单
 |:ownsyntax|	:ow[nsyntax]	为本窗口设置新的局部语法高亮
+|:packadd|	:pa[ckadd]	从 'packpath' 载入插件
+|:packloadall|	:packl[oadall]	从 'packpath' 载入所有包
+|:pclose|	:pc[lose]	关闭预览窗口
+|:pedit|	:ped[it]	在预览窗口编辑文件
+|:perl|		:pe[rl]		执行 Perl 命令
 |:print|	:p[rint]	显示行
 |:profdel|	:profd[el]	停止剖视 (profile) 函数或脚本
 |:profile|	:prof[ile]	剖视 (profile) 函数或脚本
 |:promptfind|	:pro[mptfind]	打开 GUI 对话框进行搜索
 |:promptrepl|	:promptr[epl]	打开 GUI 对话框进行搜索/替代
-|:pclose|	:pc[lose]	关闭预览窗口
-|:pedit|	:ped[it]	在预览窗口编辑文件
-|:perl|		:pe[rl]		执行 Perl 命令
 |:perldo|	:perld[o]	对每行都执行 Perl 命令
 |:pop|		:po[p]		跳转到标签栈较旧的项目上
 |:popup|	:popu[p]	根据名字弹出菜单
@@ -1271,6 +1294,10 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:python|	:py[thon]	执行 Python 命令
 |:pydo|		:pyd[o]		对每行都执行 Python 命令
 |:pyfile|	:pyf[ile]	执行 Python 脚本文件
+|:pyx|		:pyx		执行 |python_x| 命令
+|:pythonx|	:pythonx	等同于 :pyx
+|:pyxdo|	:pyxd[o]	对每行都执行 |python_x| 命令
+|:pyxfile|	:pyxf[ile]	执行 |python_x| 脚本文件
 |:quit|		:q[uit]		退出当前窗口 (如果只有一窗口，则退出 Vim)
 |:quitall|	:quita[ll]	退出 Vim
 |:qall|		:qa[ll]		退出 Vim
@@ -1308,7 +1335,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:sbnext|	:sbn[ext]	分割窗口并转到缓冲区列表的后一个文件
 |:sbprevious|	:sbp[revious]	分割窗口并转到缓冲区列表的前一个文件
 |:sbrewind|	:sbr[ewind]	分割窗口并转到缓冲区列表的第一个文件
-|:scriptnames|	:scrip[tnames]	列出所有执行过的 Vim 脚本的名字
+|:scriptnames|	:scr[iptnames]	列出所有执行过的 Vim 脚本的名字
 |:scriptencoding| :scripte[ncoding]	执行过的 Vim 脚本使用的编码
 |:scscope|	:scs[cope]	分割窗口并执行 cscope 命令
 |:set|		:se[t]		显示或设置选项
@@ -1327,8 +1354,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:smap|		:smap		类似于 ":map"，但用于选择模式
 |:smapclear|	:smapc[lear]	删除选择模式所有的映射
 |:smenu|	:sme[nu]	增加选择模式菜单
+|:smile|	:smi[le]	让用户高兴一下
 |:snext|	:sn[ext]	分割窗口并转到参数列表的下一个文件
-|:sniff|	:sni[ff]	发送请求到 sniff
 |:snomagic|	:sno[magic]	带 'nomagic' 的 :substitute
 |:snoremap|	:snor[emap]	类似于 ":noremap"，但用于选择模式
 |:snoremenu|	:snoreme[nu]	类似于 ":noremenu"，但用于选择模式
@@ -1345,7 +1372,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:srewind|	:sre[wind]	分割窗口并转到参数列表的第一个文件
 |:stop|		:st[op]		暂停编辑器并退回外壳
 |:stag|		:sta[g]		分割窗口并跳转到标签上
-|:startgreplace| :startg[replace] 开始虚拟替换模式
+|:startgreplace|  :startg[replace] 开始虚拟替换模式
 |:startreplace|	:startr[eplace]	开始替换模式
 |:startinsert|	:star[tinsert]	开始插入模式
 |:stopinsert|	:stopi[nsert]	退出插入模式
