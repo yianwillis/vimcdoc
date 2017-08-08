@@ -1,4 +1,4 @@
-*os_mac.txt*	For Vim version 7.4.  最近更新: 2006年7月
+*os_mac.txt*	For Vim version 8.0.  最近更新: 2017年8月
 
 
 		     Vim 参考手册    作者: Bram Moolenaar
@@ -15,10 +15,12 @@
 
 1. 文件名约定			|mac-filename|
 2. .vimrc 和 .vim 文件		|mac-vimfile|
-3. FAQ				|mac-faq|
-4. 已知的不足之处		|mac-lack|
-5. Mac 错误报告			|mac-bug|
-6. 编译 Vim			|mac-compile|
+3. 标准映射			|mac-standard-mappings|
+4. FAQ				|mac-faq|
+5. 已知的不足之处		|mac-lack|
+6. Mac 错误报告			|mac-bug|
+7. 编译 Vim			|mac-compile|
+8. Darwin 特性			|mac-darwin-feature|
 
 Vim 的 3.0 版有一个移植到 Mac 的版本。这是当时文档中开始的几句话:
 
@@ -68,7 +70,18 @@ dos 或 unix)。如果 |'nocompatible'| 选项打开，Vim 可以处理任何文
 只能处理 mac 格式的文件。
 
 ==============================================================================
-3. Mac FAQ						*mac-faq*
+3.  标准映射					*mac-standard-mappings*
+
+以下映射可用于剪切/复制/粘贴到剪贴板。
+
+键		普通	可视	  插入		描述 ~
+Command-v	"*P	"-d"*P    <C-R>*	粘贴文本         *<D-v>*
+Command-c		"*y			复制可视文本     *<D-c>*
+Command-x		"*d			剪切可视文本     *<D-x>*
+Backspace		"*d			剪切可视文本
+
+==============================================================================
+4. Mac FAQ						*mac-faq*
 
 在互联网上:  http://macvim.org/OSX/index.php#FAQ
 
@@ -89,13 +102,13 @@ dos 或 unix)。如果 |'nocompatible'| 选项打开，Vim 可以处理任何文
 	let $PATH = matchstr(s:path, 'VIMPATH\zs.\{-}\ze\n')
 
 ==============================================================================
-4. 已知的不足之处					*mac-lack*
+5. 已知的不足之处					*mac-lack*
 
 在终端中，CTRL-^ 需要用 Shift-Control-6 来输入。而 CTRL-@ 则用 Shift-Control-2
 输入。
 
 ==============================================================================
-5. Mac 错误报告						*mac-bug*
+6. Mac 错误报告						*mac-bug*
 
 当报告任何与 Mac 平台相关的 bug 或特性时，请使用 vim-mac 邮件列表 |vim-mac|。
 然而，您必须先订阅它。另一个办法就是发邮件给当前的 MacVim 维护者:
@@ -103,8 +116,51 @@ dos 或 unix)。如果 |'nocompatible'| 选项打开，Vim 可以处理任何文
 	mac@vim.org
 
 ==============================================================================
-6. 编译 Vim						*mac-compile*
+7. 编译 Vim						*mac-compile*
 
 见伴随源程序的文件 "src/INSTALLmac.txt"。
+
+==============================================================================
+8. Darwin 特性						*mac-darwin-feature*
+
+如果你的 Mac 不是太老，你运行的会是 OS X，也叫 Darwin。Darwin 之前的最后的 OS
+版本是 Mac OS 9。Darwin 特性意味着 Vim 能使用 Darwin 特定的属性。
+
+此特性可以完成两重目的:
+
+- Vim 可以和系统剪贴板互动。
+- 给 Vim 引入转换模块，为一些平台特定的字符编码和 Vim 所知编码之间弥合差异。
+
+不需要讲，任何像样的文本编辑器要在同一桌面环境下和其它应用友好互动，没有这两条
+是不行的。
+
+Vim 不是专为 macOS 设计的应用，需要额外的特性来使 macOS 的用户享受其它平台用户
+相同的用户体验。
+
+为简明起见，此特性称为 "darwin"，用来表示它是专为此特定平台提供的 Vim 特性。
+
+此特性是个配置选项。亦即，它的打开与否是在编译时间决定的；一旦选择打开，编译时
+带入就不能在运行时关闭。
+
+缺省打开此特性。对于多数 macOS 用户，这就足够了，除非他们有以下简要说明的特殊
+需要。
+
+要关闭此特性，给 configure 脚本传递 `--disable-darwin`: >
+
+    ./configure --disable-darwin <other options>
+
+然后运行 `make` 来编译 Vim。选项的顺序无关紧要。
+
+要在运行时确定是否编译进 darwin 特性，可用 `has('macunix')`，如果编译时有此特
+性，返回 1；否则返回 0。 
+
+值得提出的 `--disable-darwin` 实际有用的用例包括:
+
+- 想用 |x11-selection| 而不是系统剪贴板。
+- 想用 |x11-clientserver|。
+
+因为两者都需要 X11 客户间通信才能正常工作，而该通信机制和系统剪贴板时有冲突，
+可以通过关闭 darwin 特性以防止 Vim 运行时挂起。
+
 
  vim:tw=78:ts=8:ft=help:norl:
