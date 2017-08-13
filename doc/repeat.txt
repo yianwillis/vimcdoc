@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  最近更新: 2013年8月
+*repeat.txt*    For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -10,12 +10,14 @@
 
 用户手册第 26 章 |usr_26.txt| 介绍了重复命令。
 
-1. 单次重复		|single-repeat|
-2. 多次重复		|multi-repeat|
-3. 重复组合操作		|complex-repeat|
-4. 使用 Vim 脚本	|using-scripts|
-5. 调试脚本		|debug-scripts|
-6. 刨视			|profiling|
+1. 单次重复			|single-repeat|
+2. 多次重复			|multi-repeat|
+3. 重复组合操作			|complex-repeat|
+4. 使用 Vim 脚本		|using-scripts|
+5. 使用 Vim 软件包		|packages|
+6. 创建 Vim 软件包		|package-create|
+7. 调试脚本			|debug-scripts|
+8. 刨视				|profiling|
 
 ==============================================================================
 1. 单次重复						*single-repeat*
@@ -26,9 +28,13 @@
 			出 (yank) 操作。不能重复命令行命令。
 
 简单的改变操作可以用 "." 重复。如果没有数字前缀，使用上次的改变的重复次数。如
-果输入一个重复次数，就用它取代上次的计数。如果上次改变的操作使用数字编号的寄存
-器，则逐次递增使用寄存器的序号。一个使用的示例可以参见 |redo-register|。注意，
-如果重复的命令涉及可视的选择区域，使用相同_大小_的区域。参见 |visual-repeat|。
+果输入一个重复次数，就用它取代上次的计数。设置 v:count 和 v:count1。
+
+如果上次改变的操作使用数字编号的寄存器，则逐次递增使用寄存器的序号。一个使用的
+示例可以参见 |redo-register|。
+
+注意，如果重复的命令涉及可视的选择区域，使用相同_大小_的区域。参见
+|visual-repeat|。
 
 							*@:*
 @:			重复上次命令行 [count] 次。
@@ -38,7 +44,7 @@
 ==============================================================================
 2. 多次重复					*multi-repeat*
 
-						*:g* *:global* *E147* *E148*
+						*:g* *:global* *E148*
 :[range]g[lobal]/{pattern}/[cmd]
 			在 [range] 界定的匹配模式 {pattern} 的文本行上执行
 			Ex 命令 [cmd] (缺省是 ":p")。
@@ -56,14 +62,21 @@
 
 模式的定义见 |pattern|。
 
+注意 [cmd] 可能包含范围；示例见 collapse 和 edit-paragraph-join。
+
 global 命令先扫描 [range] 界定的行，然后对每个匹配的行进行标记 (对于一个跨行的
 匹配，则只针对开始的一行)。
-第二次扫描对每个标记的行，并在其之前附加上行号，执行指定的 [cmd] 命令。 ":v"
-和 ":g!" 命令针对未标记的行进行。如果一行被删除，其标记也自动消失。
+第二次扫描对每个标记的行，就像光标在那行那样，执行指定的 [cmd] 命令。 ":v" 和
+":g!" 命令针对未标记的行进行。如果一行被删除，其标记也自动消失。
 缺省的 [range] 是整个缓冲区 (1,$)。用 "CTRL-C" 中断该命令。如果某行的执行给
 出错误，该行的执行被中断，但 global 命令仍从下一个被标记或未被标记的行继续。
+								*E147*
+命令递归使用时，只能作用于一行。此时不能给出范围。可用于找到所有匹配某模式，但
+不匹配另一模式的行: >
+	:g/found/v/notfound/{cmd}
+这会先找到所有包含 "found" 的行，但只当不匹配 "notfound" 时才执行 {cmd}。
 
-要重复一个非 Ex 的命令， 你可以使用 ":normal" 命令:
+要执行一个非 Ex 的命令， 你可以使用 ":normal" 命令:
 	:g/pat/normal {commands}
 要确保 {commands} 以完整的命令结束，不然 Vim 会等待你输入该命令余下的部分，对
 每次匹配都将如此。由于屏幕此时还未更新，你恐怕会因此不知所措。参见 |:normal|。
@@ -89,6 +102,9 @@ Ex 模式下执行 "global" 时，使用 ":visual" 命令是特例。该命令�
 q{0-9a-zA-Z"}		在寄存器 {0-9a-zA-Z"} 里记录键入的字符 (大写名字的寄存
 			器表示附加键入的内容)。'q' 命令不能在执行寄存器时使
 			用。同样，在映射和 |:normal| 里也不能。
+
+			注意: 如果用作记录的寄存器用于 y 和 p，其结果多数不如
+			你的预想，因为 p 会粘贴记录的宏，而 y 会覆盖记录的宏。
 			{Vi: 没有记录功能}
 
 q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
@@ -123,7 +139,7 @@ q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
 :[addr]@:		先把光标放在 [addr] 行 (缺省是当前行) 上，然后重复上次
 			的命令行。 {Vi 无此功能}
 
-							*:@@*
+:[addr]@							*:@@*
 :[addr]@@		先把光标放在 [addr] 行 (缺省是当前行) 上，然后重复上次
 			的 :@{0-9a-z"}。 {Vi 只有某些版本有此功能}
 
@@ -144,9 +160,12 @@ q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
 			{Vi 无此功能}
 
 							*:ru* *:runtime*
-:ru[ntime][!] {file} ..
-			从 'runtimepath' 指定的目录里查找 {file}。从匹配的文件
-			里读取 Ex 命令。如果没有匹配的文件，不报错。例如: >
+:ru[ntime][!] [where] {file} ..
+			从 'runtimepath' 和/或 'packpath' 指定的目录里查找
+			{file}。从匹配的文件里读取 Ex 命令。如果没有匹配的文
+			件，不报错。
+
+			例如: >
 				:runtime syntax/c.vim
 
 <			可以指定多个以空格分隔的 {file} 参数。每个 {file} 都从
@@ -156,6 +175,13 @@ q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
 
 			如果使用了 [!]，所有找到的文件都被执行。否则，只执行第
 			一个找到的文件。
+
+			如果 [where] 省略，只使用 'runtimepath'。其它可用值是:
+				START	搜索 'packpath' 里的 "start"
+				OPT 	搜索 'packpath' 里的 "opt"
+				PACK	搜索 'packpath' 里的 "start" 和 "opt"
+				ALL	先用 'runtimepath'，然后搜索
+					'packpath' 里的 "start" 和 "opt"
 
 			如果 {file} 包含通配符，它被扩展为所有的匹配文件名。例
 			如: >
@@ -169,6 +195,47 @@ q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
 			当 'verbose' 至少为二时，对每个搜索到的文件都会提示信
 			息。
 			{Vi 无此功能}
+
+							*:pa* *:packadd* *E919*
+:pa[ckadd][!] {name}	在 'packpath' 里搜索可选的插件目录，然后执行找到的插件
+			文件。目录必须匹配:
+				pack/*/opt/{name} ~
+			如果目录还不在 'runtimepath'，加入之。
+			如果目录 pack/*/opt/{name}/after 存在，在
+			'runtimepath' 的尾部加入之。
+
+			注意 {name} 是目录名，而不是 .vim 文件名。所有匹配模式
+			的
+				pack/*/opt/{name}/plugin/**/*.vim ~
+			文件都被执行。这样可以允许 "plugin" 下使用子目录，就像
+			'runtimepath' 里的插件一样。
+
+			如果还未打开文件类型检测 (这通常是在 .vimrc 里的
+			"syntax enable" 或 "filetype on" 命令完成的)，也会寻找
+			"{name}/ftdetect/*.vim" 这样的文件。
+
+			如果加入可选的 !，不载入插件文件或 ftdetect 脚本，只把
+			匹配的目录加入 'runtimepath'。这可用于 .vimrc。插件会
+			随后在初始化时载入，见 |load-plugins|。
+
+			另见 |pack-add|。
+
+						*:packl* *:packloadall*
+:packl[oadall][!]	载入 'packpath' 每个项目的 "start" 目录的所有软件包。
+
+			首先把所有找到的目录加入 'runtimepath'，然后执行所有目
+			录里找到的插件。这允许插件依赖于另一个插件的某个部分，
+			例如 "autoload" 目录。|packload-two-steps| 说明此功能
+			如何有用。
+
+			这一步通常在启动时在载入 .vimrc 文件后自动完成。用此命
+			令，可以在更早时执行这一步。
+
+			软件包只载入一次。此命令后不会再发生。但如果加入可选的
+			!，即使已经载入过，此命令还会再次载入软件包。
+
+			执行脚本发生错误时终止该脚本，后续的插件继续载入。
+			见 |packages|。
 
 :scripte[ncoding] [encoding]		*:scripte* *:scriptencoding* *E167*
 			指定脚本使用的字符编码。后续以 [encoding] 编码的脚本行
@@ -185,19 +252,24 @@ q			停止记录。(注意 实现细节: 停止记录的 'q' 不会被保存在
 				... 不被转换的行 ...
 
 <			如果系统不支持所需的转换，不会有错误信息，但转换也不会
-			发生。
+			发生。如果不能转换某一行，不报错，保留原来的行。
 
 			不要用 "ucs-2" 或者 "ucs-4"。Vim 不能用这些编码的脚本
 			(因为其中会有 NUL 字节)。如果一个待执行的脚本以一个
 			BOM (Byte Order Mark 字节顺序标记) 开头，Vim 会识别其
 			为 utf-8 编码，从而无须指定 ":scriptencoding utf-8"。
 
+			如果在 |.vimrc| 里设置 'encoding' 选项，
+			`:scriptencoding` 必须在放在它后面。例如: >
+				set encoding=utf-8
+				scriptencoding utf-8
+<
 			如果编译时没有指定 |+multi_byte| 特性，这个命令会被忽
 			略。
 			{Vi 无此命令}
 
-						*:scrip* *:scriptnames*
-:scrip[tnames]		列出所有执行过的脚本名字，以它们初次执行之顺序排列。排
+						*:scr* *:scriptnames*
+:scr[iptnames]		列出所有执行过的脚本名字，以它们初次执行之顺序排列。排
 			列的次序号码被用作相应的脚本 ID |<SID>|。
 			{Vi 无此功能} {仅当编译时加入 |+eval| 特性才有功能}
 
@@ -315,7 +387,162 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 <	因此，只能用特殊形式的出现在行首的反斜杠。
 
 ==============================================================================
-5. 调试脚本						*debug-scripts*
+5. 使用 Vim 软件包					*packages*
+
+Vim 软件包是包含一个或多个插件的目录。和普通插件相比，它的优点是:
+- 软件包可作为归档下载，并可解压到单独的目录。这样文件就不会和其它插件的文件混
+  杂。这样方便更新和删除。
+- 软件包可以用 git、mercurial 等版本库。这样更新尤其方便。
+- 软件包可包含相互依赖的多个插件。
+- 软件包可包含启动时自动载入的插件和通过 :packadd 加入仅当需要时才载入的插件。
+
+使用软件包并自动载入 ~
+
+让我们假定，你的 Vim 文件在 "~/.vim" 目录里，而你想加入来自 zip 归档
+"/tmp/foopack.zip" 的软件包:
+	% mkdir -p ~/.vim/pack/foo
+	% cd ~/.vim/pack/foo
+	% unzip /tmp/foopack.zip
+
+目录名 "foo" 是任意的，可以选任何名字。
+
+现在在 ~/.vim 里就有这些文件:
+	pack/foo/README.txt
+	pack/foo/start/foobar/plugin/foo.vim
+	pack/foo/start/foobar/syntax/some.vim
+	pack/foo/opt/foodebug/plugin/debugger.vim
+
+Vim 启动时，处理完 .vimrc 后，扫描 'packpath' 里的所有目录，寻找
+"pack/*/start" 目录里的插件。首先这些目录被加到 'runtimepath' 里。然后载入所有
+插。|packload-two-steps| 说明此功能如何有用。
+
+此例中，Vim 会找到 "pack/foo/start/foobar/plugin/foo.vim" 并把
+"~/.vim/pack/foo/start/foobar" 加入 'runtimepath'。
+
+如果 "foobar" 插件把 'filetype' 设为 "some"，Vim 会找到 syntax/some.vim
+文件，因为此目录在 'runtimepath' 里。
+
+如果有的话，Vim 也会载入 ftdetect 文件。
+
+注意 不自动载入 "pack/foo/opt" 里的文件，只载入 "pack/foo/start" 里的。下面的
+|pack-add| 说明 "opt" 目录的用法。
+
+如果关闭了插件的载入，不会自动载入软件包，见 |load-plugins|。
+
+要再早些载入软件包，以便更新 'runtimepath': >
+	:packloadall
+这里即使关闭了插件载入也可以。自动载入只会发生一次。
+
+如果软件包有 "after" 目录，此目录加入 'runtimepath' 的尾部，这样那里的内容会较
+后载入。
+
+
+使用单个插件并自动载入 ~
+
+如果没有软件包但有单个插件，需要建立额外的目录结构:
+	% mkdir -p ~/.vim/pack/foo/start/foobar
+	% cd ~/.vim/pack/foo/start/foobar
+	% unzip /tmp/someplugin.zip
+
+现在有这些文件:
+	pack/foo/start/foobar/plugin/foo.vim
+	pack/foo/start/foobar/syntax/some.vim
+
+此后，工作方式就和上面一样。
+
+
+可选插件 ~
+							*pack-add*
+要从软件包里载入可选插件，用 `:packadd` 命令: >
+	:packadd foodebug
+从 'packpath' 里搜索 "pack/*/opt/foodebug"，找到
+~/.vim/pack/foo/opt/foodebug/plugin/debugger.vim 并执行之。
+
+可以只在满足某些条件时才这样做。例如，取决于 Vim 是否支持某特性或缺少某依赖关
+系。
+
+也可以在启动时载入可选插件，在 |.vimrc| 里放上: >
+	:packadd! foodebug
+额外的 "!" 确保 Vim 以 |--noplugin| 启动时不载入插件。
+
+软件包只包含 "opt" 目录的文件是完全正常的。每个插件只有在需要用的时候才载入。
+
+
+什么放在哪里 ~
+
+因为通过 `:colorscheme` 载入的色彩方案可在 "pack/*/start" 和 "pack/*/opt" 下找
+到，你可以把它们放在任何地方。我们建议你放在 "pack/*/opt" 底下，例如
+".vim/pack/mycolors/opt/dark/colors/very_dark.vim"。
+
+文件类型插件应该在 "pack/*/start" 下，这样总能找到它们。除非某个文件类型有多于
+一个插件，而你想用 `:packadd` 选择载入哪个。例如，取决于编译器版本: >
+	if foo_compiler_version > 34
+	  packadd foo_new
+	else
+	  packadd foo_old
+	endif
+
+软件包内最没用的是 "after" 目录。但不禁止。
+
+==============================================================================
+6. 建立 Vim 软件包					*package-create*
+
+这里假定你在编写一个或多个插件，并想以软件包形式分发。
+
+两个无关的插件要用两个软件包，这样 Vim 用户可以选择要装什么。也可以决定用带可
+选插件的软件包，然后告知用户用 `:packadd` 加入他们想要的.
+
+你要决定你如何分发软件包。可以建立一个归档或使用版本库。归档可以被更多的用户使
+用，但更新版本要困难一些。版本库可以方便的保持更新，但需要 "git" 之类的程序。
+也可以两者都用，github 可以自动为发布版建立归档。
+
+目录布局应该是这样:
+   start/foobar/plugin/foo.vim    	" 总是载入，定义命令
+   start/foobar/plugin/bar.vim    	" 总是载入，定义命令
+   start/foobar/autoload/foo.vim  	" 使用 foo 命令时载入
+   start/foobar/doc/foo.txt       	" foo.vim 的帮助
+   start/foobar/doc/tags          	" 帮助标签
+   opt/fooextra/plugin/extra.vim  	" 可选插件，定义命令
+   opt/fooextra/autoload/extra.vim  	" 使用 extra 命令时载入
+   opt/fooextra/doc/extra.txt  	        " extra.vim 的帮助
+   opt/fooextra/doc/tags  	        " 帮助标签
+
+这样用户就可以: >
+	mkdir ~/.vim/pack/myfoobar
+	cd ~/.vim/pack/myfoobar
+	git clone https://github.com/you/foobar.git
+
+这里 "myfoobar" 是用户可选的名字，唯一的条件是和其它软件包的名字不同。
+
+在你的文档里，你要解释插件的用途，并告知用户如何载入可选插件: >
+	:packadd! fooextra
+
+可以在你提供的插件之一加入此 packadd 命令，在需要可选插件时执行。
+
+运行 `:helptags` 命令生成文档/标签文件。把此生成文件包含在软件包内，用户就可以
+把软件包放在自己的 pack 目录里，立即可以使用 help 命令。不要忘记改变插件帮助后
+重新运行此命令: >
+	:helptags path/start/foobar/doc
+	:helptags path/opt/fooextra/doc
+
+
+插件间的依赖关系 ~
+							*packload-two-steps*
+假定你有两个插件，它们都依赖于同一个功能。可以把公共的功能放在 autoload 目录
+里，以便自动找到。你的软件包里有以下文件:
+
+	pack/foo/start/one/plugin/one.vim  >
+		call foolib#getit()
+<	pack/foo/start/two/plugin/two.vim >
+		call foolib#getit()
+<	pack/foo/start/lib/autoload/foolib.vim >
+		func foolib#getit()
+
+这样可行，因为软件包在载入时先把所有找到的目录加入 'runtimepath'，然后再执行这
+些插件。
+
+==============================================================================
+7. 调试脚本						*debug-scripts*
 
 除了在自己的脚本里提示明显的消息，Vim 提供了调试模式来让你了解自己的代码在做什
 么。你可以单步执行脚本文件和函数和设置断点。
@@ -328,7 +555,7 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 的更详尽的信息。
 
 
-启 动 调 试 模  式						*debug-mode*
+启 动 调 试 模 式						*debug-mode*
 
 以下方法可以进入调试模式:
 1. 用 |-D| 参数启动 Vim: >
@@ -393,14 +620,40 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 							*>finish*
 	finish		结束当前的脚本或者用户函数，并在调用该脚本或函数的行的
 			下一行之前返回到调试模式。
+							*>bt*
+							*>backtrace*
+							*>where*
+	backtrace	显示当前调试会话的调用堆栈回溯。
+	bt
+	where
+							*>frame*
+	frame N		转到 N 层堆栈回溯。+ 和 - 标记进行相对移动。例如，
+			":frame +3" 往上三层堆栈。
+							*>up*
+	up		向上一层调用堆栈回溯。
+							*>down*
+	down		向下一层调用堆栈回溯。
 
 关于调试模式下的附加命令:
 - 没有它们的命令行自动补全。补全只对一般的 Ex 命令有效。
-- 可以用一个字符来简写，即: "c"、"n"、"s" 和 "f"。
+- 除非有多于一个命令以相同字母开始，可以用一个字符来简写。"f" 代表 "finish"，
+  "fr" 代表 "frame"。
 - 按 <CR> 会重复上一个调试命令。在执行另一个命令之后，这个功能会被关掉 (因为不
   知道你要重复什么)。
 - 如果你想调用相同的名字的 Ex 命令，在前面附加一个冒号: ":cont"、":next"、
   ":finish" (或者它们的缩写)。
+
+堆栈回溯显示函数调用的层级，例如:
+	>bt ~
+	  3 function One[3] ~
+	  2 Two[3] ~
+	->1 Three[3] ~
+	  0 Four ~
+	line 1: let four = 4 ~
+
+"->" 指向当前堆栈。用 "up"、"down" 和 "frame N" 可选择另一层堆栈。
+
+在当前栈中可以计算本地函数变量。还没有办法看到当前行所在的命令。
 
 
 定 义 断 点
@@ -485,7 +738,7 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 		试命令预读取。
 
 ==============================================================================
-6. 刨视							*profile* *profiling*
+8. 刨视							*profile* *profiling*
 
 进行刨视意味着 Vim 测量执行函数和/或脚本时使用的时间。为此，需要 |+profile| 特
 性。只有 Vim 编译时使用了 "huge" (巨大) 特性包才会包含此特性。
@@ -495,9 +748,18 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 
 关于语法高亮的刨视可见 |:syntime|。
 
+例如，要刨视 one_script.vim 脚本文件: >
+	:profile start /tmp/one_script_profile
+	:profile file one_script.vim
+	:source one_script.vim
+	:exit
+
+
 :prof[ile] start {fname}			*:prof* *:profile* *E750*
-		启动刨视，退出时把结果写到 {fname} 文件。如果 {fname} 已存在，
-		安静地覆盖它。变量 |v:profiling| 设为一。
+		启动刨视，退出时把结果写到 {fname} 文件。
+		扩展 {fname} 中的 "~/" 和环境变量。
+		如果 {fname} 已存在，安静地覆盖它。
+		变量 |v:profiling| 设为一。
 
 :prof[ile] pause
 		直到下个 ":profile continue" 为止，停止刨视。可用来执行一些不
@@ -514,8 +776,9 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <CR> 结尾。这没�
 		刨视匹配模式 {pattern} 的脚本。
 		|:debug-name| 说明如何使用 {pattern}。
 		只刨视脚本自身，不包括其中定义的函数。
-		如果加入 [!]，同时刨视脚本里定义的所有函数。但只有在此命令后载
-		入脚本才会有效。
+		如果加入 [!]，同时刨视脚本里定义的所有函数。
+		注意 只有在此命令后载入脚本完成时才会开始刨视。脚本自身不可以
+		启动 :profile 命令。
 
 
 :profd[el] ...						*:profd* *:profdel*
