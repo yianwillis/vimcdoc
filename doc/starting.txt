@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 7.4.  最近更新: 2013年8月
+*starting.txt*  For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -14,9 +14,10 @@
 4. 初始化			|initialization|
 5. $VIM 和 $VIMRUNTIME		|$VIM|
 6. 暂停				|suspend|
-7. 保存设置			|save-settings|
-8. 视图和会话			|views-sessions|
-9. viminfo 文件			|viminfo-file|
+7. 退出				|exiting|
+8. 保存设置			|save-settings|
+9. 视图和会话			|views-sessions|
+10. viminfo 文件		|viminfo-file|
 
 ==============================================================================
 1. Vim 参数						*vim-arguments*
@@ -44,6 +45,7 @@
 			vim -- -filename
 <		在 "--" 之后的所有参数被解释为文件名。也就是说，后面不能再跟选
 		项或者 "+command" 参数。
+		关于 MS-Windows 上引号的行为，见 |win32-quotes|。
 
 							*--*
 -		该参数有两个含义，取决于是否使用 Ex 模式。
@@ -152,7 +154,9 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 
 							*-+/*
 +/{pat}		光标在编辑第一个文件时会定位在第一个包含 "pat" 模式的行 (可用
-		的搜索模式可见 |pattern| )。
+		的搜索模式可见 |pattern|)。搜索从光标位置开始，这可以是第一行
+		或者来自 |viminfo| 的上次使用的光标位置。要强制从第一行开始搜
+		索，用 "+1 +/pat"。
 
 +{command}						*-+c* *-c*
 -c {command}	在读入第一个文件后执行命令 {command} (在自动命令和文件的模式行
@@ -205,6 +209,7 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		-R 参数有相同的效果。
 		'updatecount' 选项设为 10000，意味着交换文件不会很经常的自动更
 		新。
+		|-M| 可用来禁止修改。
 
 							*-m*
 -m		不允许写入修改的部分。复位 'write' 选项，从而屏蔽了文件的写
@@ -220,7 +225,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 						*-Z* *restricted-mode* *E145*
 -Z		受限模式。使用外部外壳的任何命令都被禁止。这包括使用 CTRL-Z 暂
 		停、":sh"、过滤程序，system() 函数，反引号扩展，
-		delete()、rename()、mkdir()、writefile()、libcall() 等等。
+		delete()、rename()、mkdir()、writefile()、libcall()、
+		job_start() 等等。
 		{Vi 无此功能}
 
 							*-g*
@@ -361,6 +367,14 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 -T {terminal}	设置终端名为 "terminal"。这影响 Vim 发送给你终端的代码。通常不
 		需要，因为 Vim 能够找到你使用的终端类型 (见 |terminal-info|)。
 		{Vi 无此功能}
+
+							*--not-a-term*
+--not-a-term	告知 Vim 用户确定输入和/或输出不连接到终端。可用于避免相关警告
+		和因此发生的两秒延迟。
+		{Vi 无此功能}
+
+							*--ttyfail*
+--ttyfail	标准输入或标准输出不是终端 (tty) 时立即退出。
 
 							*-d*
 -d		以 diff 模式启动，和 |vimdiff| 类似。
@@ -689,13 +703,13 @@ Evim 里，以下选项被改变，不同于缺省值:
 	对 Macintosh，读入 $VIMRUNTIME/macmap.vim。
 
 	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
-     c. 在四个地方依次搜索初始化命令。第一个找到的地方被使用，余者被忽略。
+     c. 在五个地方依次搜索初始化命令。第一个找到的地方被使用，余者被忽略。
 	$MYVIMRC 环境变量被设为最先找到的文件，除非 $MYVIMRC 已经被设置和
 	(译者注: 或？) 使用 VIMINIT。
 
-	-  环境变量 VIMINIT (另见 |compatible-default|) (*)
-	   $VIMINIT 的值作为 Ex 命令行来使用。
-	-  用户 vimrc 文件:
+	I   环境变量 VIMINIT (另见 |compatible-default|) (*)
+	    $VIMINIT 的值作为 Ex 命令行来使用。
+	II  用户 vimrc 文件:
 		    "$HOME/.vimrc"	   (用于 Unix 和 OS/2) (*)
 		    "$HOME/.vim/vimrc"	   (用于 Unix 和 OS/2) (*)
 		    "s:.vimrc		   (用于 Amiga) (*)
@@ -712,13 +726,16 @@ Evim 里，以下选项被改变，不同于缺省值:
 		注意: 对 MS-DOS 和 Win32 而言，先检查 "$HOME"。如果那里没有
 		"_vimrc" 或 ".vimrc"，再找 "$VIM"。
 		如果 $VIM 没有设置，见 |$VIM|。
-	-  环境变量 EXINIT。
-	   $EXINIT 的值作为 Ex 命令行来使用。
-	-  用户 exrc 文件。和用户 vimrc 文件一样，只不过 "vimrc" 被 "exrc" 代
-	   替而已。但只会使用 ".exrc" 或 "_exec" 两者之一，取决于不同系统。而
-	   且不适用 (*)！
+	III 环境变量 EXINIT。
+	    $EXINIT 的值作为 Ex 命令行来使用。
+	IV  用户 exrc 文件。和用户 vimrc 文件一样，只不过 "vimrc" 被 "exrc" 代
+	    替而已。但只会使用 ".exrc" 或 "_exec" 两者之一，取决于不同系统。而
+	    且不适用 (*)！
+	V   缺省 vimrc 文件，$VIMRUNTIME/defaults.vim。它设置选项值，并执行
+	    "syntax on" 和 "filetype on" 命令，这是绝大多数新用户所需要的。见
+	    |defaults.vim|。
 
-     d. 如果打开 'exrc' 选项 (并非缺省)，在当前目录搜索三个文件。最先找到的
+     d. 如果打开 'exrc' 选项 (_并非_缺省)，在当前目录搜索三个文件。最先找到的
 	被使用，其余的忽略。
 	-  文件 ".vimrc" (用于 Unix、Amiga 和 OS/2) (*)
 		"_vimrc" (用于 MS-DOS 和 Win32) (*)
@@ -736,13 +753,23 @@ Evim 里，以下选项被改变，不同于缺省值:
 <	结果是，'runtimepath' 选项下的所有目录会搜索 "plugin" 子目录，而其中所
 	有 ".vim" 结尾的文件会被执行 (每个目录下，按字母顺序依次执行)，包括所
 	有子目录的子目录 (依此类推)。
+	不过，这里跳过 'runtimepath' 里以 "after" 结尾的目录，它们只在软件包之
+	后载入，详情下述。
 	以下情况下，不载入插件:
 	- vimrc 文件里复位 'loadplugins' 选项。
 	- 使用 |--noplugin| 命令化参数。
 	- 使用 "-u NONE" 命令化参数 |-u|。
 	- 编译 Vim 时不带 |+eval| 特性。
 	注意 使用 "-c set noloadplugins" 没有用，因为命令行的命令这时还没有执
-	行。可以用 "--cmd 'set noloadplugins'" |--cmd|。
+	行。可以用 "--cmd 'set noloadplugins'"  或 "--cmd 'set loadplugins'"
+	|--cmd|。
+
+	载入软件包。如上所述找到插件，但在 'packpath' 的每个项目的 "start" 目
+	录里寻找。每个找到的插件目录被加入 'runtimepath' 并执行找到的插件。见
+	|packages|。
+
+	如上所述载入插件脚本，但现在只使用 "after" 结尾的目录。注意 如果找到软
+	件包，'runtimepath' 会被改变，但不会加入 "after" 结尾的目录。
 
 5. 设置 'shellpipe' 和 'shellredir'
 	除非已经设置过，'shellpipe' 和 'shellredir' 选项根据 'shell' 选项的值
@@ -773,11 +800,16 @@ Evim 里，以下选项被改变，不同于缺省值:
 12. 执行启动命令
 	如果给 Vim "-t" 标志，跳转到标签处。
 	|-c| 和 |+cmd| 参数给出的命令现在执行。
-	复位启动标志位，has("vim_starting") 现在返回零。
 	如果置位了 'insertmode' 选项，进入插入模式。
+	复位启动标志位，has("vim_starting") 现在返回零。
+	|v:vim_did_enter| 变量被设为 1。
 	执行 |VimEnter| 自动命令。
 
-初始化过程的一些提示:
+$MYVIMRC 或 $MYGVIMRC 文件 (译者注: 应为变量) 会被设为首个找到的 vimrc 和/或
+gvimrc 文件。
+
+
+初始化过程的一些提示 ~
 
 标准安装:
 创建 vimrc 文件，为你所有的编辑会话建立缺省的设置和映射。把它放到 3b 指出的地
@@ -798,46 +830,84 @@ Evim 里，以下选项被改变，不同于缺省值:
 立建立缺省设置和映射的命令的 vimrc 文件，并把它放在 ":version" 命令指定的目录
 下。
 
-保存当前 Vim 的状态到文件:
+
+保存当前 Vim 的状态到文件 ~
+
 无论你何时改变选项的值或者建立新映射，你都可能想保存它们到 vimrc 文件里以备后
 用。关于如何保存当前设置的状态到文件，见 |save-settings|。
 
-Vi 用户如何避免安装问题:
+
+Vi 用户如何避免安装问题 ~
+
 Vi 使用 EXINIT 变量和 "~/.exrc" 文件。所以，如果你不想影响 Vi，使用 VIMINIT 变
 量和 "vimrc" 文件。
 
-Amiga 环境变量:
+
+Amiga 环境变量 ~
+
 Amiga 上，有两种环境变量。使用 DOS 1.3 (或以后版本) setenv 命令设置的那些可以
 识别。见 AmigaDos 1.3 手册。使用旧的 Manx Set 命令设置的环境变量 (5.0 版本以
 前) 不能识别。
 
-MS-DOS 行分隔符:
+
+MS-DOS 行分隔符 ~
+
 在 MS-DOS 类型的系统上 (MS-DOS 自己、Win32 和 OS/2)，Vim 假设所有的 vimrc 文件
 使用 <CR> <NL> 分隔行。如果你使用只用 <NL> 的文件，而且有类似于 ":map xx yy^M"
 的行，会有问题。因为结尾的 ^M 被忽略。
 
+
+Vi 兼容缺省值 ~
 						     *compatible-default*
 Vim 启动时，'compatible' 选项是打开的。Vim 开始初始化的时候使用该设置。不过一
-旦找到用户 vimrc 文件，或者找到当前目录下的 vimrc 文件，或者 "VIMINIT" 环境变
-量被设置，就会设置 'nocompatible'。这么做的副作用是会置位或复位其它选项 (见
-'compatible')，但只限于那些还没有设置或复位过的选项。这和启动 Vim 时采用
-'compatible' 的新设置效果相同。注意 这里的讨论不适用于系统范围的 vimrc 文件，
-也不适用于 Vim 启动时用 |-u| 命令行参数的情形，但适用于 gvimrc 文件。$MYVIMRC
-或 $MYGVIMRC 文件会被设置为第一个找到的 vimrc 和/或 gvimrc 文件。
+旦:
+- 找到用户 vimrc 文件，或者
+- 找到当前目录下的 vimrc 文件，或者
+- 设置 "VIMINIT" 环境变量，或者
+- 给出 "-N" 命令行参数，即使 vimrc 文件不存在亦然，或者
+- 载入了 |defaults.vim| 脚本，或者
+- 找到 gvimrc 文件，
+就会设为 'nocompatible'。
+
+注意 这并_不_适用于找到系统范围的 vimrc 文件。
+
+这么做的副作用是会置位或复位其它选项 (见 'compatible')，但只限于那些还没有设置
+或复位过的选项。这和启动 Vim 时采用 'compatible' 的新设置效果相同。
+
+下述情况下_不_复位 'compatible' 也不载入 |defaults.vim|:
+- Vim 启动时用 |-u| 命令行参数，尤其是 "-u NONE"，或者
+- 启动时用 |-C| 命令行参数，或者
+- 可执行文件的名字以 "ex" 结尾时 (这使得 Vim 以 "ex" 的名字启动的时候，其行为
+  和 "ex" 类同)
 
 在找到 .vimrc 文件的这一刻置位或复位 'compatible' 有副作用: 映射在遭遇的时候就
 被解释。因此，使用像 "<CR>" 这样的值就会受到此影响。如果映射依赖于使用
 'compatible' 某个特定值，在给出映射前先置位或复位它。
 
-上述行为可以用如下方式改变之:
-- 如果给出 "-N" 命令行参数，使用 'nocompatible'，即使 vimrc 文件不存在亦然。
-- 如果给出 "-C" 命令行参数，使用 'compatible'，即使 vimrc 文件存在也不例外。
-- 如果使用 "-u {vimrc}" 参数，使用 'compatible'。
-- 如果可执行文件的名字以 "ex" 结尾，则和给出 "-C" 参数类似: 使用
-  'compatible'，即使 vimrc 文件存在也不例外。这使得 Vim 以 "ex" 的名字启动的时
-  候，其行为和 "ex" 类同。
 
-避免特洛伊木马:						*trojan-horse*
+没有 .vimrc 文件里的缺省值 ~
+							*defaults.vim*
+如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUTIME/defaults.vim 脚本。
+这会关闭 'compatible'，打开语法高亮和一些更多的设置。详见该脚本。注意: 这从
+Vim 8.0 开始，不是 Vim 7.4。(准确地说，在 7.4.2111 补丁加入)。
+
+这方便了新 Vim 用户。如果创建了自己 .vimrc，建议在顶部附近加入此行: >
+	unlet! skip_defaults_vim
+	source $VIMRUNTIME/defaults.vim
+这样 Vim 就像之前你有 .vimrc 一样的工作了。一个方法是复制
+$VIMRUNTIME/vimrc_example。此外，也可以复制 defaults.vim 到 .vimrc 并自行修改
+(但下次它更动时，你不会得到更新)。
+
+如果你不喜欢部分缺省设置，仍然可以先执行 defaults.vim 然后回滚个别设置。参见
+defaults.vim 文件中关于如何回滚每个项目的提示。
+						*skip_defaults_vim*
+如果使用系统范围的 vimrc 但不想用 defaults.vim 来改变设置，置位
+"skip_defaults_vim" 变量。如果它已经置位，而从 .vimrc 里想载入 defaults.vim，
+先 unlet skip_defaults_vim，如上例所示。
+
+
+避免特洛伊木马 ~
+							*trojan-horse*
 读入当前目录下的 "vimrc" 或 "exrc" 文件时，为了安全原因，通过置位 'secure' 选
 项可以屏蔽某些命令。执行标签文件里的命令的时候，则总是如此。否则，你可能会不小
 心使用别人创建的 vimrc 或者标签文件，从而执行了可怕的命令。屏蔽的包括那些需要
@@ -854,6 +924,8 @@ VIMINIT 环境变量或者在全局 "exec" 或 "vimrc" 文件里屏蔽 'secure' 
 	使用标签搜索命令的时候，搜索命令的执行 (标签文件行里最后一部分) 总是在
 安全模式下执行的。这和在当前目录执行 vimrc/exrc 的命令的情况完全类似。
 
+
+如果 Vim 启动太慢 ~
 							*slow-start*
 如果 Vim 启动时间过长，用 |--startuptime| 参数可以知道为什么。可能有几个原因:
 - 如果 Unix 版本编译时加入 GUI 和/或 X11 (检查 ":version" 的输出是否含有
@@ -870,6 +942,8 @@ Vim 是什么的人)。一旦因为任何原因显示重画，它就被删除了
 使用 ":intro" 命令 (如果空间不够，你只会看到部分内容)。
    要避免启动时的介绍文字，在 'shortmess' 里加上 'I' 标志位。
 
+
+简介消息 ~
 							*info-message*
 |--help| 和 |--version| 参数使得 Vim 显示消息，并退出。通常，该消息发送到标准
 输出上。因此，它可以这样被重定向到文件里: >
@@ -969,7 +1043,20 @@ CTRL-Z			暂停 Vim，和 ":stop" 类似。
 为 Vim 进入睡眠，试图得到选择区会使得程序挂起)。
 
 ==============================================================================
-7. 保存设置						*save-settings*
+7. 退出							*exiting*
+
+有几种方式可退出 Vim:
+- 用 `:quit` 关闭最后一个窗口。仅当没有改动时有效。
+- 用 `:quit!` 关闭最后一个窗口。即使有改动也可。
+- 用 `:qall` 关闭所有窗口。仅当没有改动时有效。
+- 用 `:qall!` 关闭所有窗口。即使有改动也可。
+- 用 `:cquit`。即使有改动也可。
+
+使用 `:cquit` 或有错误信息时，Vim 退出时退出代码为 1。用 `:silent!` 或
+`:catch` 可避免错误。
+
+==============================================================================
+8. 保存设置						*save-settings*
 
 多数情况下，你会手动编辑你的 vimrc 文件。这给你最大程度的灵活性。有一些命令可
 以自动产生 vimrc 文件。你可以直接使用生成的文件，也可以复制/粘贴其中的一些行到
@@ -1019,7 +1106,7 @@ $VIM 目录 (MS-DOS)。你也可以使用自动命令 |autocommand| 和/或模�
 'compatible' 选项的命令到输出文件里，就是因为有这些副作用的存在。
 
 ==============================================================================
-8. 视图和会话					*views-sessions*
+9. 视图和会话					*views-sessions*
 
 在用户手册的 |21.4| 和 |21.5| 两节已有相关介绍。
 
@@ -1086,9 +1173,11 @@ $VIM 目录 (MS-DOS)。你也可以使用自动命令 |autocommand| 和/或模�
 							*:mkvie* *:mkview*
 :mkvie[w][!] [file]	写入一个 Vim 脚本，该脚本能够恢复当前的窗口内容。
 			如果包含 [!]，已有的文件会被覆盖。如果不提供 [file] 或
-                        者它是从 1 到 9 的数字，则生成一个名字并在前面加上
-			'viewdir' 的值。如果 'viewdir' 的最后一个目录名不存
-			在，则顺便也建立该目录。
+			者它是从 1 到 9 的数字，则生成一个名字并在前面加上
+			'viewdir' 的值。如果 'viewdir' 的最后一个路径部分不存
+			在，则顺便建立该目录。例如 'viewdir' 为
+			"$VIM/vimfiles/view" 时，在 "$VIM/vimfiles" 下建立
+			"view"。
 			如果该文件已存在，这时它总会被覆盖。使用 |:loadview|
 			来重新载入该视图。
 			如果 [file] 是文件名 (不考虑 'viewdir')，则编辑该文件
@@ -1133,7 +1222,7 @@ $VIM 目录 (MS-DOS)。你也可以使用自动命令 |autocommand| 和/或模�
 	au BufWinEnter *.c silent loadview
 
 ==============================================================================
-9. viminfo 文件					*viminfo* *viminfo-file* *E136*
+10. viminfo 文件				*viminfo* *viminfo-file* *E136*
 						*E575* *E576* *E577*
 如果你退出 Vim 以后又再次启动，通常你会丢失许多信息。viminfo 文件可以用来记住
 这些信息，从而允许你继续上次退出的编辑。
@@ -1167,6 +1256,30 @@ Vim 并直接从你希望的设置开始工作。|session-file|
 如果 Vim 退出时 'viminfo' 非空，相关信息被保存在 viminfo 文件里 (实际上，如果
 该文件存在的话，和已有的内容合并)。'viminfo' 选项是一个定义需要保存什么信息的
 字符串，也包含这些信息需要保存多少的数量限制 (见 'viminfo')。
+
+合并以两种方式发生。多数项目保存当前 Vim 会话中被改变或设置的值，没有变动的则
+从原先的 viminfo 文件里的值填充。例如:
+- Vim 会话 A 读入 viminfo，其中包含变量 START。
+- Vim 会话 B 做同样的事
+- Vim 会话 A 设置变量 AAA 和 BOTH 然后退出
+- Vim 会话 B 设置变量 BBB 和 BOTH 然后退出
+现在 viminfo 将会包含:
+   START - 原先在 viminfo 里，会话 A 或 B 都未改变
+   AAA   - 来自会话 A，会话 B 保留
+   BBB   - 来自会话 B
+   BOTH  - 来自会话 B，会话 A 的值丢失
+
+							*viminfo-timestamp*
+有些项目使用时间戳来保留最近改动的版本。这和 Vim 会话退出的顺序无关，总是保存
+最新的项目 (可有多项)。用于:
+- 命令行历史。
+- 搜索字符串历史。
+- 输入行历史。
+- 非空寄存器内容。
+- 跳转表
+- 文件标记
+时间戳功能在 Vim 8.0 之前被加入。从 7.4.1131 开始的稍老的 Vim 版本，保存项目时
+记录时间戳，但不使用。因此使用旧版本和新版本的 Vim 时都会保存最近的数据。
 
 Unix 上的 注意 事项:
 - viminfo 的文件保护会被设置，使得其它用户不能够读取。因为它可能包含任何文本或
@@ -1263,22 +1376,26 @@ viminfo 文件，或者修正这个错误，或者先删除这个文件 (在 Vim
 			如果给出 [!]，那么任何已经给出的信息 (寄存器、位置标
 			记、|v:oldfiles|，等等) 都会被覆盖。{Vi 无此功能}
 
-					*:wv* *:wviminfo* *E137* *E138* *E574*
+			*:wv* *:wviminfo* *E137* *E138* *E574* *E886* *E929*
 :wv[iminfo][!] [file]	写到 viminfo 文件 [file] (缺省: 见上)。
 			该文件的信息先被读入，以合并原有和新的信息。如果使用
 			[!]，旧的信息不会先读取，而是只写入系统自己内部的信
 			息。如果 'viminfo' 为空，会写入不超过 100 个文件的位置
 			标记。
-			如果你得到错误 "E138: Can't write viminfo file"，检查
+			如果你得到错误 "E929: Too many viminfo temp files"，
+			检查
 			有没有旧的临时文件没删除 (比如 ~/.viminf*) 还有你是否
 			可以写入 .viminfo 文件所在的目录。
 			{Vi 无此功能}
 
 						*:ol* *:oldfiles*
 :ol[dfiles]		列出 viminfo 文件中存储位置标记的文件。该列表在启动时
-			读入，其后只有 ":rviminfo!" 能改变它。另见
+			读入，其后只有 `:rviminfo`` 能改变它。另见
 			|v:oldfiles|。
 			其中的编号可用于 |c_#<|。
+			输出结果可用 |:filter| 过滤，例如: >
+				filter /\.vim/ oldfiles
+<			过滤作用于文件名。
 			{Vi 无此功能，仅当编译时加入 |+eval| 特性才有效}
 
 :bro[wse] ol[dfiles][!]
