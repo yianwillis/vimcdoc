@@ -1,4 +1,4 @@
-*term.txt*      For Vim version 7.4.  最近更新: 2011年5月
+*term.txt*      For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -77,6 +77,21 @@ ALL_BUILTIN_TCAPS	++builtin_terms		全部
 活光标和功能键。Vim 退出终端时，它会回到 Vim 启动前的模式。't_te' 和 't_ke' 定
 义的字符串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂
 时置回普通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <BS> 时继续。
+
+						*xterm-bracketed-paste*
+如果设置了 't_BE' 选项，进入 "raw" 模式时会发送 't_BE' 到终端，退出 "raw" 模式
+时则发送 't_BD'。终端应在粘贴文本之前发送 't_PS'，而粘贴文本之后发送 't_PE'。
+这样 Vim 就能区隔粘贴的文本和键入的字符。粘贴文本的处理就像使用了鼠标中键，按
+本义插入而不作命令解释。
+
+光标在首列时，在光标前插入粘贴文本。否则在光标位置之后附加粘贴文本。这意味着你
+不能在首列之后粘贴。不幸的是 Vim 没有办法知道鼠标指针在哪里。
+
+注意 有些情况下 Vim 不能识别这种括号内的粘贴，而只能得到原始的文本。在其它一些
+情况下，Vim 只能得到首个粘贴的字符而丢失其余的部分，例如在使用 "r" 命令时。如
+果你对此不满意，在 .vimrc 这样关闭带括号的粘贴: >
+	set t_BE=
+如果这样做，Vim 运行时发送 't_BD' 给终端以关闭括号内的粘贴。
 
 							*cs7-problem*
 注意: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
@@ -183,11 +198,11 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
 个 termcap 代码是必须的: 光标移动，'t_cm'。
 
-选项 't_da'、't_db'、't_ms'、't_xs' 代表 termcap 的标志位。termcap 标志位存在
-时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经设置。而空字符串代表
-该标志位没有设置。't_CS' 也是这样的，虽然它不是 termcap 的标志位。
+选项 't_da'、't_db'、't_ms'、't_xs'、't_xn' 代表 termcap 里的标志位。termcap
+标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置位。而空
+字符串代表该标志位没有置位。't_CS' 也是这样的，虽然它不是 termcap 的标志位。
 
-输 出 代 码
+输 出 代 码 						*terminal-output-codes*
 	选项	含义	~
 
 	t_AB	设置背景色 (ANSI)				*t_AB* *'t_AB'*
@@ -237,6 +252,7 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 	t_vi	光标不可见					*t_vi* *'t_vi'*
 	t_vs	光标 "非常" 可见				*t_vs* *'t_vs'*
 	t_xs	如果非空，突出部分不能通过覆盖删除 (hpterm)	*t_xs* *'t_xs'*
+	t_xn	如果非空，在屏幕最后单元里写入字符不导致滚动	*t_xn* *'t_xn'*
 	t_ZH	斜体模式					*t_ZH* *'t_ZH'*
 	t_ZR	斜体结束					*t_ZR* *'t_ZR'*
 
@@ -244,17 +260,28 @@ Vim 增加的 (它们没有标准代码):
 	t_IS	开始设置图标文本				*t_IS* *'t_IS'*
 	t_IE	结束设置图标文本				*t_IE* *'t_IE'*
 	t_WP	设置窗口位置 (Y，X)，以像素计算			*t_WP* *'t_WP'*
+	t_GP	获取窗口位置 (Y，X)，以像素计算			*t_GP* *'t_GP'*
 	t_WS	设置窗口大小 (高度，宽度) 以字符数计算		*t_WS* *'t_WS'*
 	t_SI    开始插入模式 (条形光标)				*t_SI* *'t_SI'*
-	t_EI    结束插入模式 (块形光标)				*t_EI* *'t_EI'*
+	t_SR	开始替换模式 (下划线光标)			*t_SR* *'t_SR'*
+	t_EI    结束插入或替换模式 (块形光标)			*t_EI* *'t_EI'*
 		|termcap-cursor-shape|
 	t_RV	请求终端版本字符串 (适用于 xterm)		*t_RV* *'t_RV'*
 		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
 	t_u7	请求光标位置 (适用于 xterm)			*t_u7* *'t_u7'*
 		见 |'ambiwidth'|
+	t_RB	请求终端背景色 					*t_RB* *'t_RB'*
+	t_8f	设置终端前景色 (R, G, B)			*t_8f* *'t_8f'*
+		|xterm-true-color|
+	t_8b	设置终端背景色 (R, G, B)			*t_8b* *'t_8b'*
+		|xterm-true-color|
+	t_BE	打开括号内粘贴模式				*t_BE* *'t_BE'*
+		|xterm-bracketed-paste|
+	t_BD	关闭括号内粘贴模式				*t_BD* *'t_BD'*
+		|xterm-bracketed-paste|
 
-键 代 码
-注意: 尽量使用 <> 形式
+键 代 码						*terminal-key-codes*
+备注: 尽量使用 <> 形式
 
 	选项	名字		含义	~
 
@@ -344,6 +371,8 @@ Vim 增加的 (它们没有标准代码):
 	t_KK	<k8>		keypad 8		 *<k8>*	*t_KK* *'t_KK'*
 	t_KL	<k9>		keypad 9		 *<k9>*	*t_KL* *'t_KL'*
 		<Mouse>		鼠标代码的引导键		*<Mouse>*
+	t_PS	括号内粘贴的开始 |xterm-bracketed-paste|	*t_PS* *'t_PS'*
+	t_PE	括号内粘贴的结束 |xterm-bracketed-paste|	*t_PE* *'t_PE'*
 
 关于 t_so 和 t_mr 的 注意 事项: 如果 termcap 项目 "so" 不存在，则使用 "mr" 的
 项目。反之亦然。"se" 和 "me" 也是一样。如果你的终端同时支持反转和突出模式，你
@@ -363,6 +392,22 @@ xterm 里直接取得键码。响应的内容用于调整各种 t_ 代码。这�
 注意: 这只能在启动时完成。如果 xterm 选项在 Vim 启动以后被改变，这些转义序列就
 不再能识别了。
 
+							*xterm-true-color*
+只要终端支持，Vim 支持终端真彩 (使用 |highlight-guifg| 和 |highlight-guibg|)。
+为此，置位 'termguicolors' 选项。
+https://gist.github.com/XVilka/8346728 有支持真彩的终端列表。
+
+有时置位 'termguicolors' 还不够，还需要显式设置 |t_8f| 和 |t_8b| 选项。这些选
+项的缺省值分别是 "^[[38;2;%lu;%lu;%lum" 和 "^[[48;2;%lu;%lu;%lum"，但只当
+`$TERM` 为 `xterm` 时才设置。有些终端也接受相同的序列，但把所有的分号替换为冒
+号 (这样实际更兼容，但支持不是那么广泛): >
+	 let &t_8f = "\<Esc>[38:2:%lu:%lu:%lum"
+	 let &t_8b = "\<Esc>[48:2:%lu:%lu:%lum"
+
+这些选项包含 printf 字符串，调用 |printf()| (实际上，它的 C 等价函数，因此带有
+`l` 修饰符) 时带上 t_ 选项值和三个无符号长整数，分别代表红、绿和蓝色的 0 到
+255 (包含) 之间的任意值。
+
 							*xterm-resize*
 xterm 改变窗口大小的功能只用在 allowWindowOps 资源打开时才可用。有些系统或有些
 版本的 xterm 缺省该值是关闭的，因为有安全上的考虑。我们不肯定是否真有此必要。
@@ -380,12 +425,14 @@ CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾�
 用来复位到缺省的颜色设置。
 
 				*termcap-cursor-shape* *termcap-cursor-color*
-当 Vim 进入插入模式，它将发送 't_SI' 转义序列。当离开插入模式时，发送 't_EI'。
-但只有两者都有定义的情况下这才会发生。这可以用来改变插入模式下光标的形状或颜
-色。它们不是标准的 termcap/terminfo 项目，你需要自己设定。
+Vim 进入插入模式时，发送 't_SI' 转义序列。Vim 进入替换模式而 't_SR' 已设置时，
+发送 't_SR' 转义序列，否则发送 't_SI'。当离开插入或替换模式时，发送 't_EI'。
+这可以用来改变插入模式下光标的形状或颜色。它们不是标准的 termcap/terminfo 项
+目，你需要自己设定。
 一个 xterm 的例子，改变光标颜色: >
     if &term =~ "xterm"
 	let &t_SI = "\<Esc>]12;purple\x7"
+	let &t_SR = "\<Esc>]12;red\x7"
 	let &t_EI = "\<Esc>]12;blue\x7"
     endif
 <
@@ -464,7 +511,7 @@ xterm 用户 注意: shift + 光标键一般不工作。要使用 xmodmap 命令
 
 这个命令可以设置屏幕大小:
 
-						*:mod* *:mode* *E359* *E362*
+						*:mod* *:mode* *E359*
 :mod[e] [mode]
 
 如果不带参数，该命令检测屏幕大小并重画屏幕。在 MS-DOS 上，可以切换屏幕模式。
@@ -572,9 +619,9 @@ DISPLAY)，那么复制和粘贴和 GUI 上的行为相似。如果不是，那�
 --servername 打开。
 
 							*xterm-copy-paste*
-注意: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 列。这是 xterm 的问
-题，不是 Vim 的。用新一点的 xterm 吧 |color-xterm|。
-目前该限制是 223 列。
+注意: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 或 223 列。这是
+xterm 的问题，不是 Vim 的。用新一点的 xterm 吧 |color-xterm|。另见
+'ttymouse'。
 
 使用 xterm 粘贴/复制 (当前模式_不_包括在 'mouse' 里):
 1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放。
@@ -721,7 +768,7 @@ GPM 鼠标只有在编译时打开 |+mouse_gpm| 特性才有效。GPM 鼠标驱�
  <X2Release>	 释放 X2 键	    -			*X2Release*
 
 X1 和 X2 按钮指一些鼠标上的附加按钮。'Microsoft Explorer' 鼠标在右拇指位置有这
-些键。目前 X1 和 X2 只能用于 Win32 环境。
+些键。目前 X1 和 X2 只能用于 Win32 和 X11 环境。
 
 示例: >
 	:noremap <MiddleMouse> <LeftMouse><MiddleMouse>

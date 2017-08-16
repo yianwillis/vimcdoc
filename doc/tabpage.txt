@@ -1,4 +1,4 @@
-*tabpage.txt*   For Vim version 7.4.  最近更新: 2013年8月
+*tabpage.txt*   For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -52,30 +52,44 @@
 
 GUI 标签页行可以用鼠标右键打开菜单。|tabline-menu|。
 
+相关的自动命令可见 |tabnew-autocmd|。
+
 :[count]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
 :[count]tabnew
-		在当前标签页之后打开带空窗口的新标签页。关于 [count] 见下面的
-		|:tab|。
+		在当前标签页之后打开带空窗口的新标签页。
+		如果给出 [count]，新标签页出现在第 [count] 个标签页之后，否则
+		新标签页出现在当前页之后。 >
+		    :tabnew	" 在当前页之后打开标签页
+		    :.tabnew	" 同上
+		    :+tabnew	" 在下页之后打开标签页
+				" 备注: 这比 :tabnew 要后一个位置
+		    :-tabnew	" 在当前页之前打开标签页
+		    :0tabnew	" 在首页之前打开标签页
+		    :$tabnew	" 在末页之后打开标签页
 
 :[count]tabe[dit] [++opt] [+cmd] {file}
 :[count]tabnew [++opt] [+cmd] {file}
 		打开新标签页并编辑 {file}，其余和 |:edit| 类同。关于 [count]
-		见下面的 |:tab|。
+		见上面的 |:tabnew|。
 
 :[count]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
 		打开新标签页并编辑 'path' 里的 {file}，其余和 |:find| 类同。关
-		于 [count] 见下面的 |:tab|。
+		于 [count] 见上面的 |:tabnew|。
 		{仅当编译时加入 |+file_in_path| 特性才有效}
 
 :[count]tab {cmd}					*:tab*
 		执行 {cmd}，如果它打开新窗口，使用新标签页代替。不能用于
 		|:diffsplit|、|:diffpatch|、|:execute| 和 |:normal|。
-		如果省略 [count]，标签页出现在当前标签页之后。
-		如果指定 [count]，新标签页出现在第 [count] 个标签页之后。
-		":0tab cmd" 使新标签页出现在第一个位置。
+		如果给出 [count]，新标签页出现在第 [count] 个标签页之后，否则
+		新标签页出现在当前页之后。
 		例如: >
-			:tab split	" 在新标签页上打开当前缓冲区
-			:tab help gt	" 打开标签页显示 "gt" 的帮助
+		    :tab split	    " 在新标签页上打开当前缓冲区
+		    :tab help gt    " 打开标签页显示 "gt" 的帮助
+		    :.tab help gt   " 同上
+		    :+tab help	    " 在下页之后打开标签页显示帮助
+		    :-tab help	    " 在当前页之前打开标签页显示帮助
+		    :0tab help	    " 在首页之前打开标签页显示帮助
+		    :$tab help	    " 在末页之后打开标签页显示帮助
 
 CTRL-W gf	打开新标签页并编辑光标所在的文件名。见 |CTRL-W_gf|。
 
@@ -96,10 +110,20 @@ CTRL-W gF	打开新标签页，编辑光标所在的文件名并转到文件名�
 		- 如果 'hidden' 没有置位，没有 [!]，缓冲区有修改，而且该缓冲区
 		  没有其它窗口。
 		缓冲区的修改不会被写入，也不会丢失。所以这可以说是个 "安全的"
-		命令。
+		命令。 >
+		    :tabclose	    " 关闭当前标签页
 
 :tabc[lose][!] {count}
-		关闭第 {count} 个标签页。失败条件和上面的 `:tabclose` 相同。
+		关闭第 {count} 个标签页。失败条件和上面的 `:tabclose` 相同。 >
+		    :-tabclose	    " 关闭上个标签页
+		    :+tabclose	    " 关闭下个标签页
+		    :1tabclose	    " 关闭首个标签页
+		    :$tabclose	    " 关闭末个标签页
+		    :tabclose -2    " 关闭往前第二个标签页
+		    :tabclose +	    " 关闭下个标签页
+		    :tabclose 3	    " 关闭第三个标签页
+		    :tabclose $	    " 关闭末个标签页
+<
 
 							*:tabo* *:tabonly*
 :tabo[nly][!]	关闭所有其它的标签页。
@@ -107,7 +131,21 @@ CTRL-W gF	打开新标签页，编辑光标所在的文件名并转到文件名�
 		如果没有置位 'hidden' 但置位 'autowrite' 选项，写回修改过的缓
 		冲区。否则，包含修改过的缓冲区的窗口不会被删除。但如果给出
 		[!]，这些窗口成为隐藏。修改过的缓冲区永远不会被放弃，所以永远
-		不被丢失这些改动。
+		不被丢失这些改动。 >
+		    :tabonly	    " 关闭除了当前页的所有标签页
+
+:{count}tabo[nly][!]
+:tabo[nly][!] {count}
+		关闭除了 {count} 以外的所有的标签页。 >
+		    :.tabonly	    " 同上
+		    :-tabonly	    " 关闭除了上一页之外的所有标签页
+		    :+tabonly	    " 关闭除了下一页之外的所有标签页
+		    :1tabonly	    " 关闭除了首页之外的所有标签页
+		    :$tabonly	    " 关闭除了末页之外的所有标签页
+		    :tabonly -	    " 关闭除了上一页之外的所有标签页
+		    :tabonly +2     " 关闭除了往后第二页之外的所有标签页
+		    :tabonly 1	    " 关闭除了首页之外的所有标签页
+		    :tabonly $	    " 关闭除了末页之外的所有标签页
 
 
 切 换 到 另 一 个 标 签 页:
@@ -120,9 +158,22 @@ CTRL-W gF	打开新标签页，编辑光标所在的文件名并转到文件名�
 gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		转到下一个标签页。最后一个标签页则回绕到第一个。
 
+:{count}tabn[ext]
 :tabn[ext] {count}
+		转到第 {count} 个标签页。首个标签页编号为一。 >
+		    :-tabnext	" 转到上个标签页
+		    :+tabnext	" 转到下个标签页
+		    :+2tabnext	" 转到往后第二个标签页
+		    :1tabnext	" 转到首个标签页
+		    :$tabnext	" 转到末个标签页
+		    :tabnext $	" 同上
+		    :tabnext -	" 转到上个标签页
+		    :tabnext -1	" 同上
+		    :tabnext +	" 转到下个标签页
+		    :tabnext +1	" 同上
+
 {count}<C-PageDown>
-{count}gt	转到第 {count} 个标签页。首个标签页编号为 1。
+{count}gt	转到第 {count} 个标签页。首个标签页编号为一。
 
 
 :tabp[revious]				*:tabp* *:tabprevious* *gT* *:tabN*
@@ -147,6 +198,13 @@ gT		转到前一个标签页。首个标签页则回绕到最后一个。
 :tabs		列出标签页和它们包含的窗口。
 		当前窗口显示 ">"。
 		修改过的缓冲区显示 "+"。
+		例如:
+			Tab page 1 ~
+			  + tabpage.txt ~
+			    ex_docmd.c ~
+			Tab page 2 ~
+			>   main.c ~
+
 
 
 重 新 排 列 标 签 页:
@@ -154,20 +212,34 @@ gT		转到前一个标签页。首个标签页则回绕到最后一个。
 :tabm[ove] [N]						*:tabm* *:tabmove*
 :[N]tabm[ove]
 		把当前标签页移到第 N 个标签页之后。用 0 使当前标签页成为首个标
-		签页。如果没有 N，当前标签页成为最后一个。
+		签页。如果没有 N，当前标签页成为最后一个。 >
+		    :.tabmove	" 什么都不做
+		    :-tabmove	" 往左移动当前标签页
+		    :+tabmove	" 往右移动当前标签页
+		    :0tabmove	" 移动当前标签页到标签页之首
+		    :tabmove 0	" 同上
+		    :tabmove	" 移动当前标签页到标签页之末
+		    :$tabmove	" 同上
+		    :tabmove $	" 同上
 
 :tabm[ove] +[N]
 :tabm[ove] -[N]
-		移动当前标签页向右 (用 + 的话) 或向左 (用 - 的话) N 个位置。
+		移动当前标签页向右 (用 + 的话) 或向左 (用 - 的话) N 个位置。 >
+		    :tabmove -	" 往左移动当前标签页
+		    :tabmove -1	" 同上
+		    :tabmove +	" 往右移动当前标签页
+		    :tabmove +1	" 同上
 
-注意 尽管可以用 :Ntabmove 来移动标签页到第 N 个标签页之后，不能用 :+Ntabmove
-来移动 N 个位置。在此情形下 +N 的实际含义可见 |[range]| 处的解释。
+注意 可以用 :Ntabmove 来移动标签页到第 N 个标签页之后，也可用 :+Ntabmove 来移
+动 N 个位置。在此情形下 +N 的实际含义可见 |[range]| 处的解释。
 
 
 循 环 遍 历 所 有 标 签 页:
 
 							*:tabd* *:tabdo*
-:tabd[o] {cmd}	对每个标签页执行 {cmd}。
+:[range]tabd[o] {cmd}
+		对每个标签页执行 {cmd}，如果给出 [range]，只对页号在 [range]
+		内的标签页执行。
 		大致相当于: >
 			:tabfirst
 			:{cmd}
@@ -180,7 +252,8 @@ gT		转到前一个标签页。首个标签页则回绕到最后一个。
 		{cmd} 可以包含 '|' 以连接多个命令。
 		{cmd} 不能打开标签页、关闭标签页或重排标签页。
 		{Vi 无此功能} {仅当编译时加入 |+listcmds| 特性才有效}
-		另见 |:windo|、|:argdo| 和 |:bufdo|。
+		另见 |:windo|、|:argdo|、|:bufdo|、|:cdo|、|:ldo|、|:cfdo| 和
+		|:lfdo|
 
 ==============================================================================
 3. 其它项目						*tab-page-other*
@@ -201,13 +274,14 @@ GUI 标签页行提供弹出菜单。用右键点击可以访问。它包含的�
 
 目前只有一个局部于标签页的选项: 'cmdheight'。
 
+						*tabnew-autocmd*
 TabLeave 和 TabEnter 自动命令事件可以在标签页切换时执行任务。准确的顺序取决于
 你做的事情。建立新标签页相当于先建立工作于同一缓冲区的新窗口，再在其上编辑别的
 缓冲区。所以，":tabnew" 依次激活:
 	WinLeave		离开当前窗口
 	TabLeave		离开当前标签页
-	TabEnter		进入新标签页
 	WinEnter		进入新标签页的窗口
+	TabEnter		进入新标签页
 	BufLeave		离开当前缓冲区
 	BufEnter		进入新的空白缓冲区
 
