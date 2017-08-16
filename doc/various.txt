@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  最近更新: 2013年8月
+*various.txt*   For Vim version 8.0.  最近更新: 2017年8月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -77,6 +77,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			注意: 如果你要打印你的文本到纸张上，见 |:hardcopy|。
 			GUI 上可以使用 File.Print 菜单项。
 			|ex-flags| 说明 [flags]。
+			|:filter| 命令可用来只显示匹配模式的行。
 
 :[range]p[rint] {count} [flags]
 			显示 {count} 行，从 [range] 指定的范围开始 (缺省是当前
@@ -182,7 +183,6 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			例如: >
 				:exe "normal \<c-w>\<c-w>"
 <			{Vi 当然无此功能}
-			{仅当编译时加入 |+ex_extra| 特性才可用}
 
 :{range}norm[al][!] {commands}				*:normal-range*
 			在 {range} 指定的范围中的每行执行若干普通模式命令
@@ -190,7 +190,6 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			第一列。除此以外，和没有给出范围的 ":normal" 命令并无
 			差别。
 			{Vi 无此功能}
-			{仅当编译时加入 |+ex_extra| 特性才可用}
 
 							*:sh* *:shell* *E371*
 :sh[ell]		该命令启动一个外壳。外壳退出后 (执行完 "exit" 命令)，
@@ -203,20 +202,36 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 							*:!cmd* *:!* *E34*
 :!{cmd}			在外壳里执行 {cmd} 命令。也可参见 'shell' 和
 			'shelltype' 选项。
+
 			{cmd} 里的任何 '!' 都被前一个外部命令所取代 (参见
 			'cpoptions')，除非之前有反斜杠。这时反斜杠被去掉。例
 			如: "!ls" 之后的 "!echo ! \! \\!" 实际执行
 			"echo ls ! \!"。
+
 			命令执行之后，检查当前文件的修改时间 |timestamp|。
 			{cmd} 里的 '|' 会传给外壳，你不能用来附加 Vim 命令。
 			见 |:bar|。
+
+			如果 {cmd} 里包含 "%"，被扩展为当前文件名。不转义特殊
+			字符，用引号以避免特殊含义: >
+				:!ls "%"
+<			如果文件名包含 "$"，用单引号较好 (但一个单引号会有麻
+			烦): >
+				:!ls '%'
+<			总是可以这样做，但要多打点字: >
+				:exe "!ls " . shellescape(expand("%"))
+<
 			{cmd} 以换行符结尾，其后的内容被理解为另外一个 ":" 命
 			令。不过，如果换行之前有反斜杠，该反斜杠被去掉，{cmd}
 			继续接受参数。无论之前有多少个反斜杠都是如此。只有一个
 			会被去掉。
+
 			Unix 上命令通常在非交互的外壳里运行。如果你希望用交互
 			外壳 (比如要用别名机制 aliases)，设置 'shellcmdflags'
 			为 "-ic"。Win32 上可参见 |:!start|。
+
+			命令执行后，检查当前文件的时间戮和大小 |timestamp|。
+
 			Vim 在命令结束以后重画屏幕，因为命令可能显示任何文本。
 			因此，你会有一个按回车的提示，以便你看到执行结果。要避
 			免这一点: >
@@ -248,6 +263,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			big 和 huge 版本里。
 
 							*+feature-list*
+   *+acl*		包含 |ACL| 支持
    *+ARP*		仅对 Amiga 有效: 支持 ARP
 B  *+arabic*		支持阿拉伯语 |Arabic|
 N  *+autocmd*		|:autocmd|，自动命令
@@ -259,6 +275,7 @@ N  *+builtin_terms*	一些内建终端项 |builtin-terms|
 B  *++builtin_terms*	最大内建终端项支持 |builtin-terms|
 N  *+byte_offset*	支持 'statusline' 选项的 'o' 标志位、"go" 和 ":goto"
 			命令。
+m  *+channel*		进程间通信 |channel|
 N  *+cindent*		|'cindent'|，C 缩进
 N  *+clientserver*	Unix 和 Win32: 远程调用 |clientserver|
    *+clipboard*		剪贴板支持 |clipboard|
@@ -277,11 +294,11 @@ N  *+dialog_con*	支持 |:confirm| 显示控制台对话框。
 N  *+dialog_con_gui*	支持 |:confirm| 显示 GUI 或控制台对话框。
 N  *+diff*		|vimdiff| 和 'diff'
 N  *+digraphs*		|digraphs| *E196*
+m  *+directx*		只对 Win32 GUI 有效: DirectX 和 |'renderoptions'|
    *+dnd*		"~ 寄存器的拖放支持 |quote_~|。
 B  *+emacs_tags*	|emacs-tags| 文件
 N  *+eval*		表达式计算 |eval.txt|
-N  *+ex_extra*		Vim 附加的 Ex 命令: |:center|、|:left|、|:normal|、
-			|:retab| 和 |:right|
+N  *+ex_extra*		现在总是打开，用于 Vim 附加的 Ex 命令
 N  *+extra_search*	|'hlsearch'| 和 |'incsearch'| 选项。
 B  *+farsi*		|farsi| 波斯语言
 N  *+file_in_path*	|gf|、|CTRL-W_f| 和 |<cfile>|
@@ -301,8 +318,10 @@ m  *+hangul_input*	韩语 (Hangul) 输入支持 |hangul|
    *+iconv*		编译时有 |iconv()| 函数
    *+iconv/dyn*		类似 |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| 插入模式补全
+m  *+job*		启动和终止作业 |job|
 N  *+jumplist*		跳转表 |jumplist|
 B  *+keymap*		键盘映射表 |'keymap'|
+N  *+lambda*		|lambda| 和 |closure|
 B  *+langmap*		语言映射表 |'langmap'|
 N  *+libcall*		函数库调用 |libcall()|
 N  *+linebreak*		|'linebreak'|、|'breakat'| 和 |'showbreak'|
@@ -319,6 +338,7 @@ N  *+mouse*		鼠标处理 |mouse-using|
 N  *+mouseshape*	鼠标形状 |'mouseshape'|
 B  *+mouse_dec*		只对 Unix 有效: Dec 终端鼠标处理 |dec-mouse|
 N  *+mouse_gpm*		只对 Unix 有效: Linux 终端鼠标处理 |gpm-mouse|
+N  *+mouse_jsbterm*	JSB 鼠标处理 |jsbterm-mouse|
 B  *+mouse_netterm*	只对 Unix 有效: netterm 终端鼠标处理 |netterm-mouse|
 N  *+mouse_pterm*	只对 QNX 有效: pterm 终端鼠标处理 |qnx-terminal|
 N  *+mouse_sysmouse*	只对 Unix 有效: *BSD 控制台鼠标处理 |sysmouse|
@@ -331,7 +351,9 @@ N  *+multi_lang*	非英语语言支持 |multi-lang|
 m  *+mzscheme*		Mzscheme 接口 |mzscheme|
 m  *+mzscheme/dyn*	Mzscheme 接口 |mzscheme-dynamic| |/dyn|
 m  *+netbeans_intg*	|netbeans|
+   *+num64*		64-位数值支持 |Number|
 m  *+ole*		只对 Win32 GUI 有效: |ole-interface|
+N  *+packages*		载入 |packages|
 N  *+path_extra*	'path' 和 'tags' 的向上和向下搜索
 m  *+perl*		Perl 接口 |perl|
 m  *+perl/dyn*		Perl 接口 |perl-dynamic| |/dyn|
@@ -352,29 +374,30 @@ m  *+ruby/dyn*		Ruby 接口 |ruby-dynamic| |/dyn|
 N  *+scrollbind*	滚动绑定 |'scrollbind'|
 B  *+signs*		标号 |:sign|
 N  *+smartindent*	|'smartindent'|
-m  *+sniff*		SniFF 接口 |sniff|
 N  *+startuptime*	|--startuptime| 参数
 N  *+statusline*	'statusline'、'rulerformat' 选项和
 			'titlestring' 和 'iconstring' 的特殊格式
 m  *+sun_workshop*	|workshop|
 N  *+syntax*		语法高亮 |syntax|
    *+system()*		只对 Unix 有效: |+fork| 的相反特性
-N  *+tag_binary*	标签文件的二分查找 |tag-binary-search|
+T  *+tag_binary*	标签文件的二分查找 |tag-binary-search|
 N  *+tag_old_static*	支持静态标签的旧方法 |tag-old-static|
 m  *+tag_any_white*	标签文件里允许空白 |tag-any-white|
 m  *+tcl*		Tcl 接口 |tcl|
 m  *+tcl/dyn*		Tcl 接口 |tcl-dynamic| |/dyn|
    *+terminfo*		用 |terminfo| 代替 termcap
 N  *+termresponse*	支持 |t_RV| 和 |v:termresponse|
+B  *+termguicolors*	xterm 兼容的终端 24 位色彩支持
 N  *+textobjects*	文本对象 |text-objects| 选择
    *+tgetent*		只对非 Unix 有效: 可以使用外部 termcap
+N  *+timers*		|timer_start()| 函数
 N  *+title*		设置窗口 |'title'| 和 'icon'
 N  *+toolbar*		GUI 工具栏 |gui-toolbar|
 N  *+user_commands*	用户定义命令。|user-commands|
 N  *+viminfo*		|'viminfo'|
 N  *+vertsplit*			垂直分割窗口 |:vsplit|
 N  *+virtualedit*	|'virtualedit'|
-S  *+visual*		可视模式 |Visual-mode|
+S  *+visual*		可视模式 |Visual-mode| 7.4.200 开始总是打开
 N  *+visualextra*	额外的可视模式命令 |blockwise-operators|
 N  *+vreplace*		|gR| 和 |gr|
 N  *+wildignore*	忽略文件通配 |'wildignore'|
@@ -383,6 +406,7 @@ S  *+windows*		多于一个窗口
 m  *+writebackup*	|'writebackup'| 缺省打开
 m  *+xim*		X 输入法 |xim|
    *+xfontset*		X 字体集支持 |xfontset|
+   *+xpm*		pixmap 支持
 m  *+xpm_w32*		只对 Win32 GUI 有效: pixmap 支持 |w32-xpm-support|
    *+xsmp*		XSMP (X 会话管理) 支持
    *+xsmp_interact*	交互 XSMP (X 会话管理) 支持
@@ -403,8 +427,11 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 			直到重定向结束。消息也同时显示在屏幕上。如果有 [!]，覆
 			盖已存在的文件。如果没有但文件 {file} 存在，该命令会失
 			败。
+
 			一次只能激活一个 ":redir"。也就是，调用 ":redir" 开始
-			重定向到新的目标之前，任何已激活的重定向都会被关闭。
+			重定向到新的目标之前，任何已激活的重定向都会被关闭。要
+			递归调用，请查看 |execute()|。
+
 			如果不想在屏幕上显示消息或者命令的回显，在函数里调用命
 			令，以 ":silent call Function()" 方式调用该函数。
 			一个替代方案是使用 'verbosefile' 选项，它也可以和
@@ -436,13 +463,32 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 			束为止。只能使用字符串变量。重定向开始后，如果变量被删
 			除或加锁或类型被改变，那么将来的命令输出消息会报错。
 			{Vi 无此功能}
+			要得到一个命令的输出，可用 |execute()| 函数。
 
 :redi[r] =>> {var}	附加消息到已有的变量。只能使用字符串变量。
 			{Vi 无此功能}
 
 :redi[r] END		结束消息的重定向。{Vi 无此功能}
 
-						*:sil* *:silent*
+							*:filt* *:filter*
+:filt[er][!] {pat} {command}
+:filt[er][!] /{pat}/ {command}
+			找到 {command} 的输出里匹配 {pat} 的行。例如，要只列出
+			xml 文件: >
+				:filter /\.xml$/ oldfiles
+<			如果给出 [!]，只限 {command} 的输出里_不_匹配 {pat} 的
+			行。
+
+			{pat} 是 Vim 搜索模式。不一定要用 / 包围，可以用任何非
+			ID 字符 (见 |'isident'|)，只要不在 {pat} 里出现。如果
+			不使用包围字符，模式里不能包含竖杠字符。
+
+			模式匹配输出的相关部分，不一定是整行。只有部分命令支持
+			过滤，先试试看能不能用。
+
+			只过滤正常信息，不过滤错误信息。
+
+						*:sil* *:silent* *:silent!*
 :sil[ent][!] {command}	安静地执行命令 {command}。不显示正常的消息，也不会把它
 			加进消息历史。
 			如果有 [!]，同时跳过错误消息，检测到错误时，命令和映射
@@ -513,15 +559,17 @@ K			运行程序，查找光标下的关键字。该程序的名字由
 			字母、数值和 'iskeyword' 里的字符组成，它出现在光标所
 			在或右侧的位置。以下命令可以达到同样的效果 >
 				:!{program} {keyword}
-<			在 Vim 的 tools 目录下有一个示例程序。它叫作 'ref'，做
+<			在 Vim 的 tools 目录下有一个示例程序。它叫作 "ref"，做
 			简单的拼写检查。
 			特例:
+			- 如果 'keywordprg' 以 ":" 开始，作为带 [count] 的 Vim
+			  Ex 命令进行调用。
 			- 如果 'keywordprg' 为空，使用 ":help" 命令。此时，如
 			  果要找到更多帮助，应该在 'iskeyword' 里加入更多的字
 			  符。
-			- 如果 'keywordprg' 是 "man"，K 之前的计数会被插在
-			  "man" 命令之后和关键字之前。例如，如果光标在 "mkdir"
-			  之上用 "2K"，结果是: >
+			- 如果 'keywordprg' 是 "man" 或以 ":" 开始，K 之前的
+			  [count] 会被插在 keywordprg 之后和关键字之前。例如，
+			  如果光标在 "mkdir" 之上用 "2K"，结果是: >
 				!man 2 mkdir
 <			- 如果 'keywordprg' 是 "man -s"，K 之前的计数会插在
 			  "-s" 之后。如果没有计数，则去掉 "-s"。
@@ -546,6 +594,7 @@ K			运行程序，查找光标下的关键字。该程序的名字由
 							*g_CTRL-A*
 g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 			见): 显示内存用量的统计。只对调试 Vim 有用。
+			关于可视模式下的增量，见 |v_g_CTRL-A|。
 
 ==============================================================================
 2. 用 Vim 代替 less 或 more					*less*
@@ -560,5 +609,12 @@ g CTRL-A		只有在 Vim 编译时定义了 MEM_PROFILING 才有效 (这很少
 言，这已经足够好了。何况你还有语法高亮呢。
 
 "h" 键给你一个可用命令的简短小结。
+
+如果你想设置和 less 不同的选项，在 vimrc 里定义 LessInitFunc，例如: >
+
+	func LessInitFunc()
+	  set nocursorcolumn nocursorline
+	endfunc
+<
 
  vim:tw=78:ts=8:ft=help:norl:
