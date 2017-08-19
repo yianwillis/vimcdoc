@@ -27,7 +27,7 @@ fi
 VIMCDOC_PATH_LINK=`echo $VIM_PATH|sed 's:vim.*$:doc/vimcdoc:'`
 VIMCDOC_PATH=$VIMCDOC_PATH_LINK-`cat VERSION`
 CNTAGS=tags-cn
-DIST_FILES="README
+DIST_FILES="README.md
 guides.txt
 LICENSE
 TODO
@@ -75,15 +75,15 @@ case $1 in
 		rm -f $VIM_PATH/syntax
 		mkdir -p $VIM_PATH/syntax
     fi
-    echo "install -m 644 help_cn.vim $VIM_PATH/syntax/help_cn.vim"
-    install -m 644 help_cn.vim $VIM_PATH/syntax/help_cn.vim
+    echo "install -m 644 syntax/help_cn.vim $VIM_PATH/syntax/help_cn.vim"
+    install -m 644 syntax/help_cn.vim $VIM_PATH/syntax/help_cn.vim
     if [ $1 = "-i" ]; then
         if [ ! -d $VIM_PATH/plugin ]; then
             rm -f $VIM_PATH/plugin
             mkdir -p $VIM_PATH/plugin
         fi
-        echo "install -m 644 vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim"
-        install -m 644 vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim
+        echo "install -m 644 plugin/vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim"
+        install -m 644 plugin/vimcdoc.vim $VIM_PATH/plugin/vimcdoc.vim
     fi
 	echo 'Done.'
 	;;

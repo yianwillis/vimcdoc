@@ -124,10 +124,10 @@ Section - DoStuff
   File /r "doc\*.cnx"
   File "doc\tags-cn"
   SetOutPath $INSTDIR\..\vimfiles\syntax
-  File "help_cn.vim"
+  File "syntax\help_cn.vim"
   StrCmp $R2 'yes' 0 +3
     SetOutPath $INSTDIR\..\vimfiles\plugin
-    File "vimcdoc.vim"
+    File "plugin\vimcdoc.vim"
   SetOutPath $PROGRAMFILES\vimcdoc
   File "README.md"
   File "INSTALL"

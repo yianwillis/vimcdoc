@@ -12,7 +12,7 @@
 #   aap -f www/htdocs/main.aap publish (vimcdoc homepage)
 #
 # External tools we would need:
-#   nsis, ANSI (standard) and unicode (3.0 alpha needed)
+#   nsis, ANSI (2.x standard) and unicode (3.0 alpha needed)
 #	wine, if running from non-windows environment
 #   latex, latexmk
 #   latex packages: CJK, alltt, color, verbatim, hyperref, url
@@ -28,21 +28,20 @@ NSISFILE     = vcd-setup.nsi
 NSISFILE_UNI = vcd-setup-unicode.nsi
 NSISZIP      = /X"SetCompressor bzip2"
 NSISOUTPUT   = /V0
-@Vimcdoc_txt = TOPLEVELDIR + '/doc/*.txt'
+@Vimcdoc_txt = TOPLEVELDIR + '/doc/*.cnx'
 EXCLUDES     = ''
-EXTRA_FILES  = help_cn.vim vimcdoc.vim
+EXTRA_FILES  = syntax/help_cn.vim plugin/vimcdoc.vim
 #@Vimcdoc_txt = expand2string(glob( Vimcdoc_txt ))
 
 release {virtual}: $RELEASE_NAME
 	:print 'Making release files....'
 	#Building Linux release.
-	@for doc in glob('doc/*.txt'):
+	@for doc in glob('doc/*.cnx'):
 		@target_name = os.path.splitext( doc )[0]
-		@if not target_name in ['doc/uganda.nsis']:
-			:copy $(target_name).txt $RELEASE_NAME/$(target_name).cnx
+		:copy {m} $(target_name).cnx $RELEASE_NAME/$(target_name).cnx
 	extra_files = $EXTRA_FILES
-	@for doc in var2list( extra_files ):
-		:copy $(doc) $RELEASE_NAME/
+	@for script in var2list( extra_files ):
+		:copy {m} $(script) $RELEASE_NAME/$(script)
 	:cd $RELEASE_NAME
 	:chmod 755 vimcdoc.sh
 	@gentag_cmd = "vim -e -s +'helptags ++t ./doc' +q"
@@ -53,14 +52,6 @@ release {virtual}: $RELEASE_NAME
 									 # but the zip file is good .
 									 # I don't know why.
 	:move $(TARGZ) $(RELEASE_DIR)
-	#replace with proper operation to generate a cntags file
-	#Building win32 binary
-	#@for doc in glob('doc/*.txt'):
-	#@target_name = os.path.basename( doc )
-	#:cat $doc
-	#| :eval re.sub( 'ft=help:norl:', 'ft=help:norl:enc=cp936:', stdin )
-	#>! $target_name
-	#:move $target_name $RELEASE_NAME/doc
 	:copy $NSISFILE $NSISFILE_UNI $RELEASE_NAME
 	:cd $RELEASE_NAME
 	os = $OSTYPE
@@ -81,7 +72,6 @@ release {virtual}: $RELEASE_NAME
 
 $RELEASE_NAME: VERSION
 	:mkdir $RELEASE_NAME
-	:mkdir $RELEASE_NAME/doc
 	:copy $(MISC_FILES) $(RELEASE_NAME)
 
 ChangeLog: $Vimcdoc_txt
