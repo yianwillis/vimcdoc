@@ -129,7 +129,7 @@ Section - DoStuff
     SetOutPath $INSTDIR\..\vimfiles\plugin
     File "vimcdoc.vim"
   SetOutPath $PROGRAMFILES\vimcdoc
-  File "README"
+  File "README.md"
   File "INSTALL"
   File "LICENSE"
   File "AUTHORS"

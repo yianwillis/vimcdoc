@@ -1382,7 +1382,9 @@ bool norm_URL(origin, file) char *origin, *file;
             && s[0] == '.' && s[1] == '.' /* && s[2] == '/'*/)
             return FALSE;
         else if (i == 0)
-            strcpy(file, s);
+	{
+	    if (file != s) strcpy(file, s);
+	}
         else if(i + strlen(s) < MAX_DF)
         {   memcpy(df_buffer, origin, i); 
             strcpy(df_buffer + i, s);
@@ -4253,7 +4255,7 @@ bool included;    /* Included in output (or only checking) */
                     {    if(attr_name)
                             fprintf(fout, "\n%% <%s %s=\"%s\">\n", html_com, attr_name, attr_val); 
                         else
-                            fprintf(fout, "\n%%>\n", html_com); 
+                            fprintf(fout, "\n%% <%s>\n", html_com);
                     }
             }
             else if (OPEN_TAG(T_HTML))
@@ -4801,12 +4803,12 @@ char *fn;
                     bool is_link_mapping = ch == 'l';
 
                     ch = (char)fgetc(fin);
-                    parse_URL(fin, &ch, buffer, MAX_SF);
+                    parse_URL(fin, &ch, buffer);
                     
                     new->prefix = SALLOC(buffer);
                     strcpy(new->prefix, buffer);
 
-                    parse_URL(fin, &ch, buffer, MAX_SF);
+                    parse_URL(fin, &ch, buffer);
 
                     new->replace = SALLOC(buffer);
                     strcpy(new->replace, buffer);
@@ -4867,7 +4869,7 @@ char *fn;
                 {   file_t *tfile;
 
                     ch = (char)fgetc(fin);
-                    parse_URL(fin, &ch, html_file, MAX_SF);
+                    parse_URL(fin, &ch, html_file);
 
                     tfile = find_file(html_file);
                     tfile->ignore = TRUE;
@@ -4881,7 +4883,7 @@ char *fn;
             }
             else
             {
-                parse_URL(fin, &ch, html_file, MAX_SF);
+                parse_URL(fin, &ch, html_file);
 
                 while (!feof(fin) && ch == ' ')
                     ch = (char)fgetc(fin);

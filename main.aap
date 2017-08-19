@@ -12,7 +12,6 @@
 #   aap -f www/htdocs/main.aap publish (vimcdoc homepage)
 #
 # External tools we would need:
-#   svn2cl (needed for ChangeLog)
 #   nsis, ANSI (standard) and unicode (3.0 alpha needed)
 #	wine, if running from non-windows environment
 #   latex, latexmk
@@ -22,7 +21,7 @@ TOPLEVELDIR=.
 :include $TOPLEVELDIR/common.aap
 
 # ANSI NSIS, available from nsis.sourceforge.net/.
-MAKENSIS     = makensis
+MAKENSIS     = "c:\Program Files\NSIS2\makensis"
 # Unicode NSIS, available from offical NSIS 3.0a1 
 MAKENSIS_UNI = "c:\Program Files\NSIS\makensis"
 NSISFILE     = vcd-setup.nsi
@@ -64,11 +63,12 @@ release {virtual}: $RELEASE_NAME
 	#:move $target_name $RELEASE_NAME/doc
 	:copy $NSISFILE $NSISFILE_UNI $RELEASE_NAME
 	:cd $RELEASE_NAME
-	:sys $(MAKENSIS) $(NSISFILE)
 	os = $OSTYPE
 	@if os == "mswin":
+		:sys $(MAKENSIS) $(NSISFILE)
 		:sys $(MAKENSIS_UNI) $(NSISFILE_UNI)
 	@else:
+		:sys wine $(MAKENSIS) $(NSISFILE)
 		:sys wine $(MAKENSIS_UNI) $(NSISFILE_UNI)
 	:cd -
 	:move $RELEASE_NAME/$(VCD)-setup.exe $(RELEASE_DIR)/$(RELEASE_NAME)-setup.exe
@@ -84,8 +84,8 @@ $RELEASE_NAME: VERSION
 	:mkdir $RELEASE_NAME/doc
 	:copy $(MISC_FILES) $(RELEASE_NAME)
 
-ChangeLog: $Vimcdoc_txt 
-	:sys svn2cl --strip-prefix=/
+ChangeLog: $Vimcdoc_txt
+	:sys git log --date=short --pretty="format:%ad %aE %s%n" --name-only > ChangeLog
 
 all:
 	:print Use 'aap clean' to clean up.
