@@ -8,7 +8,7 @@
 <body>
 <h2>TAGSRCH</h2>
 <pre>
-<b class="vimtag">*<a name="tagsrch.txt">tagsrch.txt</a>*</b>   For Vim version 7.4.  最近更新: 2013年8月
+<b class="vimtag">*<a name="tagsrch.txt">tagsrch.txt</a>*</b>   For Vim version 8.0.  最近更新: 2017年8月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -84,10 +84,21 @@ telnet 的提示符。许多版本的 telnet 允许你改变或者屏蔽缺省�
 <code class="note">注意</code> 当前文件改变时，优先顺序多数情况下不会改变，以免使 ":tnext" 的使用引起混
 淆。在使用 ":tag <code class="special">{ident}</code>" 时，优先顺序才会改变。
 
-如果 <a href="options.html#'ignorecase'">'ignorecase'</a> 选项关闭，":tag" 命令不会查找忽略大小写的匹配。不过即使如
-此，模式 (以 "/" 开始) 的匹配和 ":tselect" 还会查找这些匹配。<code class="note">注意</code> 使用忽略大小
-写查找就无法应用 tags 文件的二分法查找，从而减慢了查找速度。这可以用大小写合并
-排序的标签文件来解决。具体解释见 <a href="options.html#'tagbsearch'">'tagbsearch'</a> 选项。
+以下情况下，":tag" 命令不会查找忽略大小写的匹配:
+- <a href="options.html#'ignorecase'">'ignorecase'</a> 选项关闭 且 <a href="options.html#'tagcase'">'tagcase'</a> 为 "followic"
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "match"
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "smart" 且模式包含大写字符。
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "followscs" 且 <a href="options.html#'smartcase'">'smartcase'</a> 选项打开，且模式包含大写字符。
+
+以下情况下，查找忽略大小写的匹配:
+- 使用模式 (以 "/" 开始)
+- ":tselect"
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "followic" 且 <a href="options.html#'ignorecase'">'ignorecase'</a> 关闭 (<code class="vim">译者注</code>: 应为打开)
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "match" (<code class="vim">译者注</code>: 应为 "ignore")
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "followscs" 且 <a href="options.html#'smartcase'">'smartcase'</a> 选项关闭
+
+<code class="note">注意</code> 使用忽略大小写查找就无法应用 tags 文件的二分法查找，从而减慢了查找速度。
+这可以用大小写合并排序的标签文件来解决。具体解释见 <a href="options.html#'tagbsearch'">'tagbsearch'</a> 选项。
 
 </pre><hr class="doubleline" /><pre>
 <h4>2. 标签栈                               <b class="vimtag">*<a name="tag-stack">tag-stack</a>*</b> <b class="vimtag">*<a name="tagstack">tagstack</a>*</b> <b class="vimtag">*<a name="E425">E425</a>*</b></h4>
@@ -389,10 +400,14 @@ Emacs 标签文件的行可能很长。Vim 只处理不超过 510 字节的行�
 下列情况下，不再查找列表中的下个文件:
 - 找到了当前缓冲区的匹配的静态标签。
 - 找到了全局标签。
-同时也取决于 <a href="options.html#'ignorecase'">'ignorecase'</a> 选项。如果关闭了，而当前标签文件找到大小写不符合的匹
-配，那么就会查找下一个文件。如果没有匹配大小写的标签，则使用第一个大小写不符合
-的匹配。如果 <a href="options.html#'ignorecase'">'ignorecase'</a> 打开，而找到全局的匹配 (不论大小写)，则立即使用之，
-而无须继续查找下一个文件。
+同时也取决于是否忽略大小写。以下条件下忽略大小写:
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 ”followic" 并且置位 <a href="options.html#'ignorecase'">'ignorecase'</a>
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "ignore"
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "smart" 且模式只包含小写字符。
+- <a href="options.html#'tagcase'">'tagcase'</a> 为 "followscs" 且置位 <a href="options.html#'smartcase'">'smartcase'</a> 且模式只包含小写字符。
+如果不忽略大小写，而当前标签文件找到大小写不符合的匹配，那么就会查找下一个文
+件。如果没有匹配大小写的标签，则使用第一个大小写不符合的匹配。如果忽略大小写，
+而找到全局的匹配 (不论大小写)，则立即使用之，而无须继续查找下一个文件。
 
 如果标签文件以 "./" 开始，则 '.' 会被替代成当前的文件所在的路径。这样，你可以
 使用当前文件所在的目录下的标签文件 (无论当前目录在哪里)。使用 "./" 的逻辑是，
@@ -503,7 +518,8 @@ gnatxref                为 Ada 而设计。见 http://www.gnuada.org/。gnatxre
 标签文件:
 <code class="section">        !_TAG_FILE_SORTED<code class="special">&lt;Tab&gt;</code>1<code class="special">&lt;Tab&gt;</code><code class="special">{anything}</code> </code>
 
-标签文件可以按大小写合并排序，以免 <a href="options.html#'ignorecase'">'ignorecase'</a> 打开时只能进行线性查找。详情见
+标签文件可以按大小写合并排序，以免忽略大小写时只能进行线性查找 (<a href="options.html#'ignorecase'">'ignorecase'</a>
+置位且 <a href="options.html#'tagcase'">'tagcase'</a> 为 "followic" 或 <a href="options.html#'tagcase'">'tagcase'</a> 为 "ignore" 时忽略大小写)。详情见
 <a href="options.html#'tagbsearch'">'tagbsearch'</a>。这时可以用值 2:
 <code class="section">        !_TAG_FILE_SORTED<code class="special">&lt;Tab&gt;</code>2<code class="special">&lt;Tab&gt;</code><code class="special">{anything}</code> </code>
 
@@ -663,10 +679,12 @@ C 程序。<code class="note">注意</code>: Vim 并不试图识别 C 语法。�
 
                                                         <b class="vimtag">*<a name=":dli">:dli</a>*</b> <b class="vimtag">*<a name=":dlist">:dlist</a>*</b>
 :<code class="special">[range]</code>dli[st][!] [/]string[/]
-                        类似于 "[D" 和 "]D"，但在 <code class="special">[range]</code> 行范围搜索 (缺省: 整
+                        类似于 `[D` 和 `]D`，但在 <code class="special">[range]</code> 行范围搜索 (缺省: 整
                         个文件)。
                         关于 [/] 和 [!] 见 |<a href="tagsrch.html#:search-args">:search-args</a>|。<code class="notvi">{Vi 无此功能}</code>
-                        <code class="note">注意</code> ":dl" 功能等同带 "l" 寄存器的 ":delete"。
+                        <code class="note">注意</code> `:dl` 功能等同带 "l" 标志位的 `:delete`，而不是
+                        `:dlist`。
+
 
                                                         <b class="vimtag">*<a name="[_CTRL-D">[_CTRL-D</a>*</b>
 [ <code class="keystroke">CTRL-D</code>                跳转到第一个包含光标所在的关键字的宏定义。搜索从文件头
@@ -701,26 +719,26 @@ C 程序。<code class="note">注意</code>: Vim 并不试图识别 C 语法。�
 
                                                                 <b class="vimtag">*<a name=":search-args">:search-args</a>*</b>
 以上命令通用的参数:
-[!]   如果包含，查找包括识别为注释的匹配。如果不包含，则被识别为注释 (根
-      据 <a href="options.html#'comments'">'comments'</a> ) 或者是一个 C 注释 ("//" 之后或者 /* */ 之间) 的行不参加
-      匹配。<code class="note">注意</code> 如果一行被识别为注释，但是注释在行中间结束，匹配可能丢失。另
-      外，如果一行是注释，但是没有被识别 (根据 <a href="options.html#'comments'">'comments'</a>)，还是可能从中找到匹
-      配。例子:
+[!]     如果包含，查找包括识别为注释的匹配。如果不包含，则被识别为注释 (根据
+        <a href="options.html#'comments'">'comments'</a> ) 或者是一个 C 注释 ("//" 之后或者 /* */ 之间) 的行不参加匹
+        配。<code class="note">注意</code> 如果一行被识别为注释，但是注释在行中间结束，匹配可能丢失。另
+        外，如果一行是注释，但是没有被识别 (根据 <a href="options.html#'comments'">'comments'</a>)，还是可能从中找到
+        匹配。例子:
 <code class="example">                /* comment</code>
 <code class="example">                   foobar */</code>
-      还是可以找到 "foobar" 的匹配，因为该行没有被识别为注释 (即使语法高亮能够
-      识别)。
-      <code class="note">注意</code>: 因为宏定义一般看起来不像注释，[!] 对 ":dlist"、":dsearch" 和
-      ":djump" 没有影响。
-[/]   模式可以被 '/' 包围。没有 '/' 的话，只有完整单词的匹配，就像使用模式
-      "\&lt;pattern\&gt;" 那样。只有在第二个 '/' 之后，下一个命令才可以通过 '|' 附加
-      在后。例如:
+        还是可以找到 "foobar" 的匹配，因为该行没有被识别为注释 (即使语法高亮能
+        够识别)。
+        <code class="note">注意</code>: 因为宏定义一般看起来不像注释，[!] 对 ":dlist"、":dsearch" 和
+        ":djump" 没有影响。
+[/]     模式可以被 '/' 包围。没有 '/' 的话，只有完整单词的匹配，就像使用模式
+        "\&lt;pattern\&gt;" 那样。只有在第二个 '/' 之后，下一个命令才可以通过 '|' 附
+        加在后。例如:
 <code class="example">        :isearch /string/ | echo "the last one"</code>
-      对于 ":djump"、":dsplit"、":dlist" 和 ":dsearch" 命令，模式是按本义理解
-      的字符串，而不是搜索模式。
+        对于 ":djump"、":dsplit"、":dlist" 和 ":dsearch" 命令，模式是按本义理
+        解的字符串，而不是搜索模式。
 
  vim:tw=78:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

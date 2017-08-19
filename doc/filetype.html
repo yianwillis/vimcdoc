@@ -8,7 +8,7 @@
 <body>
 <h2>FILETYPE</h2>
 <pre>
-<b class="vimtag">*<a name="filetype.txt">filetype.txt</a>*</b>  For Vim version 7.4.  最近更新: 2013年8月
+<b class="vimtag">*<a name="filetype.txt">filetype.txt</a>*</b>  For Vim version 8.0.  最近更新: 2017年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -321,11 +321,11 @@ filetype.vim 和 scripts.vim 写到一个大家都能用的运行时目录里。
    你需要检查下面给出的插件文件的描述，以了解它们的功能和映射到的字符串。
    你需要在插件载入之前定义自己的映射。 (在编辑该类型的文件之前)。该插件就可以
    跳过缺省映射的安装了。
-
+                                                <b class="vimtag">*<a name="no_mail_maps">no_mail_maps</a>*</b>
 3. 屏蔽特定文件类型的映射可以通过设置一个变量进行。该变量包含文件类型的名字。
    对于 "mail" 文件类型它可能是:
 <code class="example">        :let no_mail_maps = 1</code>
-<code class="example"></code>
+                                                <b class="vimtag">*<a name="no_plugin_maps">no_plugin_maps</a>*</b>
 4. 通过设置变量屏蔽所有文件类型的映射:
 <code class="example">        :let no_plugin_maps = 1</code>
 
@@ -400,19 +400,21 @@ g:changelog_new_date_format
                                 %%      插入单个 '%' 号
                                 %d      插入上述的日期
                                 %u      插入上述的用户
+                                %p      插入 b:changelog_entry_prefix 的值
                                 %c      完成时光标的位置
-                        缺省值是 "%d  %u\n\n\t* %c\n\n"，它会产生如下的结果
+                        缺省值是 "%d  %u\n\n\t* %p%c\n\n"，它会产生如下的结果
                          (| 是光标键要到的位置，除非出现在行首。那里它就是意味
                         着一行的开始)
 <code class="example">                                |2003-01-14  Full Name  &lt;user@host&gt;</code>
 <code class="example">                                |</code>
-<code class="example">                                |        * |</code>
+<code class="example">                                |        * prefix|</code>
 
 g:changelog_new_entry_format
                         建立新段所用的格式。下表描述字符串里的特殊记号:
+                                %p      插入 b:changelog_entry_prefix 的值
                                 %c      完成时光标的位置
                         缺省值是 "\t*%c"，产生的结果如下
-<code class="example">                                |        * |</code>
+<code class="example">                                |        * prefix|</code>
 
 g:changelog_date_entry_search
                         搜索日期项所用的搜索模式。
@@ -481,7 +483,7 @@ MAIL                                                    <b class="vimtag">*<a na
         引用可视模式下的选择文本，或者在普通模式下从光标位置到文件末的文本。这
         意味着 "&gt; " 会插到每行的开始。
 
-MAN                                                     <b class="vimtag">*<a name="ft-man-plugin">ft-man-plugin</a>*</b> <b class="vimtag">*<a name=":Man">:Man</a>*</b>
+MAN                                     <b class="vimtag">*<a name="ft-man-plugin">ft-man-plugin</a>*</b> <b class="vimtag">*<a name=":Man">:Man</a>*</b> <b class="vimtag">*<a name="man.vim">man.vim</a>*</b>
 
 较好地显示手册页。另见用户手册中的 |<a href="usr_12.html#find-manpage">find-manpage</a>|。
 
@@ -500,11 +502,61 @@ Man <code class="special">{number}</code> <code class="special">{name}</code>
 
 全局映射:
 <code class="special">&lt;Leader&gt;</code>K       显示当前光标下的单词的相应手册页。
-
+<code class="special">&lt;Plug&gt;</code>ManPreGetPage  同上，可用于映射:
+<code class="example">                        nmap &lt;F1&gt; &lt;Plug&gt;ManPreGetPage&lt;CR&gt;</code>
+<code class="example"></code>
 局部映射:
 <code class="keystroke">CTRL-]</code>          跳到当前光标下的单词的相应手册页。
 <code class="keystroke">CTRL-T</code>          跳回前一次的手册页。
+q               同 ":quit"
 
+要使用垂直映射而不是水平映射：
+<code class="example">        let g:ft_man_open_mode = 'vert'</code>
+要用新标签页:
+<code class="example">        let g:ft_man_open_mode = 'tab'</code>
+<code class="example"></code>
+要打开折叠:
+<code class="example">        let g:ft_man_folding_enable = 1</code>
+如果不喜欢缺省的折叠方式，使用自动命令加入你喜欢和折叠风格。例如:
+<code class="example">        autocmd FileType man setlocal foldmethod=indent foldenable</code>
+<code class="example"></code>
+你可能还想设置 <a href="options.html#'keywordprg'">'keywordprg'</a>，使 |<a href="various.html#K">K</a>| 命令在 Vim 窗口打开手册页:
+<code class="example">        set keywordprg=:Man</code>
+<code class="example"></code>
+<code class="example"></code>
+MANPAGER                                      <b class="vimtag">*<a name="manpager.vim">manpager.vim</a>*</b>
+
+:Man 命令把 Vim 变成手册浏览器 (语法高亮手册页，按 <code class="keystroke">CTRL-]</code> 时点击相连的手册
+页)。
+
+可用于:
+
+  - Linux
+  - Mac OS
+  - FreeBSD
+  - Cygwin
+  - Win 10 的 Bash
+
+未经测试:
+
+  - Amiga OS
+  - BeOS
+  - OS/2
+
+对 bash、zsh、ksh 或 dash，加入对应的配置文件 (.bashrc、.zshrc、...)
+
+        export MANPAGER="env MAN_PN=1 vim -M +MANPAGER -"
+
+对 (t)csh，加入配置文件
+
+        setenv MANPAGER "env MAN_PN=1 vim -M +MANPAGER -"
+
+对 fish，加入配置文件
+
+        set -x MANPAGER "env MAN_PN=1 vim -M +MANPAGER -"
+
+如果 man 设置了 $MAN_PN 环境变量，象 Linux 和 Mac OS 最常见的实现 man-db 那
+样，那么上述 "env MAN_PN=1 " 部分就是多余的。
 
 PDF                                                     <b class="vimtag">*<a name="ft-pdf-plugin">ft-pdf-plugin</a>*</b>
 
@@ -519,9 +571,25 @@ PDF                                                     <b class="vimtag">*<a na
 <code class="example">        :let g:no_pdf_maps = 1</code>
 
 
+PYTHON                                          <b class="vimtag">*<a name="ft-python-plugin">ft-python-plugin</a>*</b> <b class="vimtag">*<a name="PEP8">PEP8</a>*</b>
+
+缺省设置以下选项，根据 PEPB:
+<code class="example"></code>
+<code class="example">        setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8</code>
+<code class="example"></code>
+要关闭此行为，在 vimrc 里设置变量:
+<code class="example"></code>
+<code class="example">        let g:python_recommended_style = 0</code>
+<code class="example"></code>
+<code class="example"></code>
 RPM SPEC                                                <b class="vimtag">*<a name="ft-spec-plugin">ft-spec-plugin</a>*</b>
 
 因为这个插件的文本相当长，它被单独列出: |<a href="pi_spec.html#pi_spec.txt">pi_spec.txt</a>|。
+
+
+RUST                                                    <b class="vimtag">*<a name="ft-rust">ft-rust</a>*</b>
+
+因为这个插件的文本相当长，它被单独列出: |<a href="ft_rust.html#ft_rust.txt">ft_rust.txt</a>|。
 
 
 SQL                                                     <b class="vimtag">*<a name="ft-sql">ft-sql</a>*</b>
@@ -545,6 +613,6 @@ TEX                                             <b class="vimtag">*<a name="ft-t
 
  vim:tw=78:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

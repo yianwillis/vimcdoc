@@ -8,10 +8,10 @@
 <body>
 <h2>QUICKFIX</h2>
 <pre>
-<b class="vimtag">*<a name="quickfix.txt">quickfix.txt</a>*</b>  For Vim version 7.4.  最近更新: 2013年8月
+<b class="vimtag">*<a name="quickfix.txt">quickfix.txt</a>*</b>  For Vim version 8.0.  最近更新: 2017年8月
 
 
-                  VIM REFERENCE MANUAL    by Bram Moolenaar
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
 
                   <code class="vim">译者</code>: wandys、Willis  http://vimcdoc.sf.net
 
@@ -43,21 +43,33 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 |<a href="quickfix.html#:vimgrep">:vimgrep</a>| 寻找模式的匹配。在脚本里，用 |<a href="eval.html#getqflist()">getqflist()</a>| 函数可以得到这些位置。这
 样你可以比编辑/编译/修正循环做更多的事情！
 
-如果你是在 Amiga 系统上使用 Manx 的 Aztec C 编译器，参考 |<a href="quickfix.html#quickfix-manx">quickfix-manx</a>| 以配
-合 Vim 使用。如果使用其它的编译器，你需要将出错信息保存到一个文件中然后用
-"Vim -q filename" 启动 Vim。一个简便的方法是使用 |<a href="quickfix.html#:make">:make</a>| 命令 (见下)。你需要设
-定 <a href="options.html#'errorformat'">'errorformat'</a>，使其和编译器产生的出错信息格式一致 (见 |<a href="quickfix.html#errorformat">errorformat</a>|)。
+如果有保存在文件里的出错信息，这样启动 Vim:
+<code class="example">        vim -q filename</code>
+<code class="example"></code>
+从 Vim 里，一个简便的运行命令并处理输出的方法是使用 |<a href="quickfix.html#:make">:make</a>| 命令 (见下)。
+
+你需要设定 <a href="options.html#'errorformat'">'errorformat'</a>，使其和编译器产生的出错信息格式一致 (见
+|<a href="quickfix.html#errorformat">errorformat</a>|)。
 
                                                 <b class="vimtag">*<a name="location-list">location-list</a>*</b> <b class="vimtag">*<a name="E776">E776</a>*</b>
-位置列表和 quickfix 列表类似，包含了文件中各种位置的列表。位置列表和窗口相关
-联，而每个窗口都要单独的位置列表。一个位置列表只能和一个窗口相关联。位置列表和
-quickfix 列表相互独立。
+位置列表是一个窗口局部的 quickfix 列表。由 `:lvimgrep`、`:lgrep`、
+`:lhelpgrep`、`:lmake` 等命令产生，它们生成位置列表而不是对应的 `:vimgrep`、
+`:grep`、 `:helpgrep`、`:make` 生成的 quickfix 列表。
+位置列表和窗口相关联，而每个窗口都要单独的位置列表。一个位置列表只能和一个窗口
+相关联。位置列表和 quickfix 列表相互独立。
 
 如果包含位置列表的窗口被分割，新窗口得到该位置列表的一个备份。如果一个位置列表
 不再被引用，该位置列表被删除。
 
 以下 quickfix 命令可供使用。位置列表命令和 quickfix 命令类似，把 quickfix 命令
 里的 'c' 前缀换成 'l' 就行了。
+
+                                                        <b class="vimtag">*<a name="E924">E924</a>*</b>
+如果 |<a href="autocmd.html#autocommand">autocommand</a>| 关闭当前窗口的同时正在处理位置列表命令，中止该命令。
+
+                                                        <b class="vimtag">*<a name="E925">E925</a>*</b> <b class="vimtag">*<a name="E926">E926</a>*</b>
+如果 |<a href="autocmd.html#autocommand">autocommand</a>| 改变当前 quickfix 或位置列表的同时正在处理 quickfix 或位置
+列表命令，中止该命令。
 
                                                         <b class="vimtag">*<a name=":cc">:cc</a>*</b>
 :cc[!] <code class="special">[nr]</code>             显示错误 <code class="special">[nr]</code>。如果不指定 <code class="special">[nr]</code>，将再次显示相同的错误。
@@ -146,6 +158,8 @@ quickfix 列表相互独立。
                         自动这样处理。用这个命令，你就可以在编译的同时继续用
                         Vim 编辑。如果你指定错误文件名，那么 <a href="options.html#'errorfile'">'errorfile'</a> 选择
                         将被设定为 <code class="special">[errorfile]</code>。有关 [!]，参见 |<a href="quickfix.html#:cc">:cc</a>|。
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
                                                         <b class="vimtag">*<a name=":lf">:lf</a>*</b> <b class="vimtag">*<a name=":lfile">:lfile</a>*</b>
 :lf[ile][!] <code class="special">[errorfile]</code> 和 ":cfile" 类似，但使用当前窗口的位置列表而不是
@@ -155,6 +169,8 @@ quickfix 列表相互独立。
 
 :cg[etfile] <code class="special">[errorfile]</code>                                 <b class="vimtag">*<a name=":cg">:cg</a>*</b> <b class="vimtag">*<a name=":cgetfile">:cgetfile</a>*</b>
                         读入错误文件。和 ":cfile" 类似，只是不跳转到首个错误。
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
 
 :lg[etfile] <code class="special">[errorfile]</code>                                 <b class="vimtag">*<a name=":lg">:lg</a>*</b> <b class="vimtag">*<a name=":lgetfile">:lgetfile</a>*</b>
@@ -164,6 +180,8 @@ quickfix 列表相互独立。
                                                         <b class="vimtag">*<a name=":caddf">:caddf</a>*</b> <b class="vimtag">*<a name=":caddfile">:caddfile</a>*</b>
 :caddf[ile] <code class="special">[errorfile]</code> 读入错误文件，把错误文件里的错误加到当前 quickfix 列表
                         中。如果 quickfix 列表不存在，建立新的列表。
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
                                                         <b class="vimtag">*<a name=":laddf">:laddf</a>*</b> <b class="vimtag">*<a name=":laddfile">:laddfile</a>*</b>
 :laddf[ile] <code class="special">[errorfile]</code> 和 ":caddfile" 类似，但使用当前窗口的位置列表而不是
@@ -187,8 +205,8 @@ quickfix 列表相互独立。
 :lgetb[uffer] <code class="special">[bufnr]</code>   和 ":cgetbuffer" 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
 
-                                                        <b class="vimtag">*<a name=":caddb">:caddb</a>*</b> <b class="vimtag">*<a name=":caddbuffer">:caddbuffer</a>*</b>
-:caddb[uffer] <code class="special">[bufnr]</code>   读入当前缓冲区的错误列表，把这些错误加到当前 quickfix
+                                                        <b class="vimtag">*<a name=":cad">:cad</a>*</b> <b class="vimtag">*<a name=":caddbuffer">:caddbuffer</a>*</b>
+:cad[dbuffer] <code class="special">[bufnr]</code>   读入当前缓冲区的错误列表，把这些错误加到当前 quickfix
                         列表中。如果 quickfix 列表不存在，建立新的列表。其它部
                         分和 ":cbuffer" 相同。
 
@@ -221,8 +239,8 @@ quickfix 列表相互独立。
 :lgete[xpr] <code class="special">{expr}</code>      和 |<a href="quickfix.html#:cgetexpr">:cgetexpr</a>| 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
 
-                                                        <b class="vimtag">*<a name=":cad">:cad</a>*</b> <b class="vimtag">*<a name=":caddexpr">:caddexpr</a>*</b>
-:cad[dexpr] <code class="special">{expr}</code>      把 <code class="special">{expr}</code> 的计算结果行加到当前 quickfix 列表中。如果
+                                                        <b class="vimtag">*<a name=":cadde">:cadde</a>*</b> <b class="vimtag">*<a name=":caddexpr">:caddexpr</a>*</b>
+:cadde[xpr] <code class="special">{expr}</code>      把 <code class="special">{expr}</code> 的计算结果行加到当前 quickfix 列表中。如果
                         quickfix 列表不存在，建立新的列表。不改变当前的光标位
                         置。详情见 |<a href="quickfix.html#:cexpr">:cexpr</a>|。
                         示例:
@@ -240,11 +258,22 @@ quickfix 列表相互独立。
                         跳转到另一个缓冲区时，会受到 <a href="options.html#'switchbuf'">'switchbuf'</a> 有关设定的影
                         响。
 
+:cl[ist] +<code class="special">{count}</code>       列出当前和下面 <code class="special">{count}</code> 个有效的错误。类似于 ":clist
+                        from from+count"，这里 "from" 是当前的错误位置。
+
 :cl[ist]! <code class="special">[from]</code> [, <code class="special">[to]</code>]
                         显示所有的错误。
 
-                                                        <b class="vimtag">*<a name=":lli">:lli</a>*</b> <b class="vimtag">*<a name=":llist">:llist</a>*</b>
-:lli[st] <code class="special">[from]</code> [, <code class="special">[to]</code>]
+:cl[ist]! +<code class="special">{count}</code>      列出当前和下面 <code class="special">{count}</code> 个错误行。可用于看见当前行后未
+                        识别的行。例如，如果 ":clist" 给出:
+<code class="section">        8384 testje.java:252: error: cannot find symbol </code>
+                        然后，用 ":cl! +3" 显示原因:
+<code class="section">        8384 testje.java:252: error: cannot find symbol </code>
+<code class="section">        8385:   ZexitCode = Fmainx(); </code>
+<code class="section">        8386:               ^ </code>
+<code class="section">        8387:   symbol:   method Fmainx() </code>
+
+:lli[st] <code class="special">[from]</code> [, <code class="special">[to]</code>]                                <b class="vimtag">*<a name=":lli">:lli</a>*</b> <b class="vimtag">*<a name=":llist">:llist</a>*</b>
                         和 ":clist" 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
 
@@ -270,19 +299,83 @@ quickfix 列表相互独立。
 <code class="example">        endfunction</code>
 <code class="example"></code>
 <code class="example">        au QuickfixCmdPost make call QfMakeConv()</code>
-<code class="example"></code>
-<code class="example"></code>
+另一个选项是用 <a href="options.html#'makeencoding'">'makeencoding'</a>。
+
+
+在 所 有 QUICKFIX 或 位 置 列 表 的 缓 冲 区 中 执 行 一 个 命 令:
+                                                        <b class="vimtag">*<a name=":cdo">:cdo</a>*</b>
+:cdo[!] <code class="special">{cmd}</code>           在 quickfix 列表的每个有效的项目上执行 <code class="special">{cmd}</code>。
+                        工作方式相当于:
+<code class="example">                                :cfirst</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                :cnext</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                等等</code>
+                        如果当前文件不能 |<a href="editing.html#abandon">abandon</a>| 且没给出 [!] 时，命令失败。
+                        检测到错误时，执行中止。
+                        最后一个缓冲区 (或错误发生所在的那个) 成为当前缓冲区。
+                        <code class="special">{cmd}</code> 可包含 '|' 以连接几个命令。
+
+                        只使用 quickfix 列表里的有效的项目。可使用范围来选择项
+                        目，例如:
+<code class="example">                                :10,$cdo cmd</code>
+                        来跳过 1-9 个项目。
+
+                        <code class="note">备注</code>: 此命令执行时，把它加到 <a href="options.html#'eventignore'">'eventignore'</a> 以关闭语法
+                        自动命令事件。这样显著地提高了缓冲区编辑的速度。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+                        另见 |<a href="windows.html#:bufdo">:bufdo</a>|、|<a href="tabpage.html#:tabdo">:tabdo</a>|、|<a href="editing.html#:argdo">:argdo</a>|、|<a href="windows.html#:windo">:windo</a>|、
+                        |<a href="quickfix.html#:ldo">:ldo</a>|、|<a href="quickfix.html#:cfdo">:cfdo</a>| 和 |<a href="quickfix.html#:lfdo">:lfdo</a>|。
+
+                                                        <b class="vimtag">*<a name=":cfdo">:cfdo</a>*</b>
+:cfdo[!] <code class="special">{cmd}</code>          在 quickfix 列表的每个文件上执行 <code class="special">{cmd}</code>。
+                        工作方式相当于:
+<code class="example">                                :cfirst</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                :cnfile</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                等等</code>
+                        此外，和 `:cdo` 相同。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+
+                                                        <b class="vimtag">*<a name=":ldo">:ldo</a>*</b>
+:ld[o][!] <code class="special">{cmd}</code>         在当前窗口位置列表的每个有效的项目上执行 <code class="special">{cmd}</code>。
+                        工作方式相当于:
+<code class="example">                                :lfirst</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                :lnext</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                etc.</code>
+                        只使用位置列表里的有效的项目，此外，和 `:cdo` 相同。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+
+                                                        <b class="vimtag">*<a name=":lfdo">:lfdo</a>*</b>
+:lfdo[!] <code class="special">{cmd}</code>          在当前窗口位置列表的每个文件上执行 <code class="special">{cmd}</code>。
+                        工作方式相当于:
+<code class="example">                                :lfirst</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                :lnfile</code>
+<code class="example">                                :{cmd}</code>
+<code class="example">                                etc.</code>
+                        此外，和 `:ldo` 相同。
+                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
+
 </pre><hr class="doubleline" /><pre>
 <h4>2. 出错窗口                                     <b class="vimtag">*<a name="quickfix-window">quickfix-window</a>*</b></h4>
                                             <b class="vimtag">*<a name=":cope">:cope</a>*</b> <b class="vimtag">*<a name=":copen">:copen</a>*</b> <b class="vimtag">*<a name="w:quickfix_title">w:quickfix_title</a>*</b>
 :cope[n] <code class="special">[height]</code>       打开一个窗口显示当前的错误列表。
+
                         如果指定 <code class="special">[height]</code>，窗口设为指定高度 (如果有空间的话)，
-                        否则窗口为 10 行高。
+                        如果省略 <code class="special">[height]</code>，窗口为 10 行高。
+
+                        如果已有了一个 quickfix 窗口，它将成为当前窗口。不可能
+                        再打开第二个 quickfix 窗口。如果指定 <code class="special">[height]</code>，用来调
+                        整己有的窗口的大小。
+
                         该窗口含有一个特殊的缓冲区，<a href="options.html#'buftype'">'buftype'</a> 为 "quickfix"。
-                        不要修改此选项！如果已有了一个 quickfix 窗口，它将成为
-                        当前窗口。不可能再打开第二个 quickfix 窗口。该窗口会设
-                        置 w:quickfix_title 变量为生成 quickfix 列表的命令。
-                        可用于通过适当地调整 <a href="options.html#'statusline'">'statusline'</a> 来定制状态行。
+                        不要修改此选项！该窗口会设置 w:quickfix_title 变量为生
+                        成 quickfix 列表的命令。可用于通过适当地调整
+                        <a href="options.html#'statusline'">'statusline'</a> 来定制状态行。
 
                                                         <b class="vimtag">*<a name=":lop">:lop</a>*</b> <b class="vimtag">*<a name=":lopen">:lopen</a>*</b>
 :lop[en] <code class="special">[height]</code>       打开一个窗口显示当前窗口的位置列表。只有当前窗口有位置
@@ -303,6 +396,14 @@ quickfix 列表相互独立。
 :lw[indow] <code class="special">[height]</code>     和 ":cwindow" 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
 
+                                                        <b class="vimtag">*<a name=":cbo">:cbo</a>*</b> <b class="vimtag">*<a name=":cbottom">:cbottom</a>*</b>
+:cbo[ttom]              光标放在 quickfix 窗口的末行并滚动使其可见。可用于异步
+                        地加入错误。如果有很多更新，不要太频繁调用此命令，以避
+                        免过多的重画。
+
+                                                        <b class="vimtag">*<a name=":lbo">:lbo</a>*</b> <b class="vimtag">*<a name=":lbottom">:lbottom</a>*</b>
+:lbo[ttom]              同 ":cbottom"，但使用当前窗口的位置列表。
+
 quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在最右边窗口的底端。
 要使其获得最大宽度:
 <code class="example">        :botright cwindow</code>
@@ -312,11 +413,15 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 <a href="options.html#'winheight'">'winheight'</a> 和 <a href="options.html#'equalalways'">'equalalways'</a> 选项。你可以手动改变其高度 (例如，用鼠标拖动它上
 方的状态行)。
 
-在 quickfix 窗口中，每一行是一个错误。行号和错误号相等。你可以用 ":.cc" 跳转到
-当前光标处的错误，按 <code class="special">&lt;Enter&gt;</code> 键或是双击鼠标有同样的效果。在 quickfix 窗口上方
-会开一窗口显示含有错误的文件。如果已有为该文件打开的窗口，则使用该窗口。如果已
-打开窗口的缓冲区已被修改，而错误出在另一个文件中，则不能完成向出错处的跳转。你
-需要首先确定窗口含有一个可被放弃的缓冲区。
+在 quickfix 窗口中，每一行是一个错误。行号和错误号相等。用 QuickFixLine 高亮来
+高亮当前项目。可以按你喜欢的改变，例如:
+<code class="example">        :hi QuickFixLine ctermbg=Yellow guibg=Yellow</code>
+<code class="example"></code>
+你可以用 ":.cc" 跳转到当前光标处的错误。
+按 <code class="special">&lt;Enter&gt;</code> 键或是双击鼠标有同样的效果。在 quickfix 窗口上方会开一窗口显示含有
+错误的文件。如果已有为该文件打开的窗口，则使用该窗口。如果已打开窗口的缓冲区已
+被修改，而错误出在另一个文件中，则不能完成向出错处的跳转。你需要首先确定窗口含
+有一个可被放弃的缓冲区。
                                         <b class="vimtag">*<a name="CTRL-W_%3CEnter%3E">CTRL-W_&lt;Enter&gt;</a>*</b> <b class="vimtag">*<a name="CTRL-W_%3CCR%3E">CTRL-W_&lt;CR&gt;</a>*</b>
 你可以用 <code class="keystroke">CTRL-W</code> <code class="special">&lt;Enter&gt;</code> 来打开新窗口并在那里跳转到错误。
 
@@ -328,6 +433,8 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 <code class="example">                \ | setlocal nomodifiable</code>
 这会在每行开始添加行号。<code class="note">注意</code> ":s" 命令中 "\=" 的使用，它是为了计算表达式。
 同时激活 BufWinEnter 事件，还是用 "quickfix" 作为缓冲区名。
+
+<code class="note">注意</code>: 加入到已有的 quickfix 列表时，不激活自动命令。
 
 <code class="note">备注</code>: 在 quickfix 窗口中作更改对出错列表不起作用。<a href="options.html#'modifiable'">'modifiable'</a> 选项关闭以免作
 出更改。如果你坚持还是要删除或是插入行，文本和错误号的关系就会混乱。如果真的想
@@ -361,7 +468,7 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
                         次。如果已经到达最旧的列表，则报错。
 
                                                 <b class="vimtag">*<a name=":lolder">:lolder</a>*</b> <b class="vimtag">*<a name=":lol">:lol</a>*</b>
-:lol[der] <code class="special">[count]</code>       和 ":colder" 类似，但使用当前窗口的位置列表而不是
+:lol[der] <code class="special">[count]</code>       和 `:colder` 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
 
                                                 <b class="vimtag">*<a name=":cnewer">:cnewer</a>*</b> <b class="vimtag">*<a name=":cnew">:cnew</a>*</b> <b class="vimtag">*<a name="E381">E381</a>*</b>
@@ -369,8 +476,17 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
                         次。如果已经到达最新的列表，则报错。
 
                                                 <b class="vimtag">*<a name=":lnewer">:lnewer</a>*</b> <b class="vimtag">*<a name=":lnew">:lnew</a>*</b>
-:lnew[er] <code class="special">[count]</code>       和 ":cnewer" 类似，但使用当前窗口的位置列表而不是
+:lnew[er] <code class="special">[count]</code>       和 `:cnewer` 类似，但使用当前窗口的位置列表而不是
                         quickfix 列表。
+
+                                                <b class="vimtag">*<a name=":chistory">:chistory</a>*</b> <b class="vimtag">*<a name=":chi">:chi</a>*</b>
+:chi[story]             显示错误列表的列表。当前列表以 ”&gt;" 标记。结果类似于:
+<code class="section">                                  error list 1 of 3; 43 errors </code>
+<code class="section">                                &gt; error list 2 of 3; 0 errors </code>
+<code class="section">                                  error list 3 of 3; 15 errors </code>
+
+                                                <b class="vimtag">*<a name=":lhistory">:lhistory</a>*</b> <b class="vimtag">*<a name=":lhi">:lhi</a>*</b>
+:lhi[story]             显示位置列表的列表，此外类似于 `:chistory`。
 
 当增加一个新的错误列表时，它会成为当前列表。
 
@@ -398,6 +514,8 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
                         9. 你现在可以用 |<a href="quickfix.html#:cnext">:cnext</a>|，|<a href="quickfix.html#:cprevious">:cprevious</a>| 等命令在错误间
                            移动。见上。
                         本命令不接受注释，所有的 " 将被视为参数的一部分。
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
                                                         <b class="vimtag">*<a name=":lmak">:lmak</a>*</b> <b class="vimtag">*<a name=":lmake">:lmake</a>*</b>
 :lmak[e][!] <code class="special">[arguments]</code>
@@ -451,6 +569,7 @@ shell 完成。基本就像输入下面的命令一样:
 <code class="example">        au QuickfixCmdPost make call QfMakeConv()</code>
 <code class="example"></code>
 (Faque Cheng 提供示例)
+另一个选项是用 <a href="options.html#'makeencoding'">'makeencoding'</a>。
 
 </pre><hr class="doubleline" /><pre>
 <h4>5. 使用 :vimgrep 和 :grep                               <b class="vimtag">*<a name="grep">grep</a>*</b> <b class="vimtag">*<a name="lid">lid</a>*</b></h4>
@@ -548,6 +667,8 @@ Vim 可以和 "grep" 或类似 grep 的程序 (比如 GNU id-utils) 交互，其
                         <a href="options.html#'grepformat'">'grepformat'</a> 替代 <a href="options.html#'errorformat'">'errorformat'</a>。
                         如果 <a href="options.html#'grepprg'">'grepprg'</a> 是 "internal"，这等价于 |<a href="quickfix.html#:vimgrep">:vimgrep</a>|。
                         <code class="note">注意</code> 这时模式必须用分隔字符包围。
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
                                                             <b class="vimtag">*<a name=":lgr">:lgr</a>*</b> <b class="vimtag">*<a name=":lgrep">:lgrep</a>*</b>
 
@@ -569,6 +690,9 @@ Vim 可以和 "grep" 或类似 grep 的程序 (比如 GNU id-utils) 交互，其
 <code class="example">                                  \ | grepadd! something %</code>
 <code class="example">                                  \ | catch /E480:/</code>
 <code class="example">                                  \ | endtry"</code>
+
+                        如果错误文件的编码和 <a href="options.html#'encoding'">'encoding'</a> 选项不同，可用
+                        <a href="options.html#'makeencoding'">'makeencoding'</a> 选项来指定编码。
 
                                                         <b class="vimtag">*<a name=":lgrepa">:lgrepa</a>*</b> <b class="vimtag">*<a name=":lgrepadd">:lgrepadd</a>*</b>
 :lgrepa[dd][!] <code class="special">[arguments]</code>
@@ -651,7 +775,7 @@ c)      你想自动传递某些参数 (比如，忽略大小写)。
 
 
 在 "compiler" 目录中的 Vim 插件被用来为选择的编译器设定各种选项。对
-":compiler" 设定局部选项，对 ":compiler!" 设定全局选项。
+`:compiler` 设定局部选项，对 `:compiler!` 设定全局选项。
 
                                                         <b class="vimtag">*<a name="current_compiler">current_compiler</a>*</b>
 为了支持老版本的 Vim，这些插件总使用 "current_compiler" 而不是
@@ -719,7 +843,7 @@ http://pyunit.sourceforge.net。
 一般都会用使用 alltest.py。我们就知道这么多。
 有关 <a href="options.html#'makeprg'">'makeprg'</a> 选项就可以这样设定:
  setlocal makeprg=./alltests.py " 执行全套测试
- setlocal makeprg=python %      " 执行单个测试用例
+ setlocal makeprg=python\ %:S   " 执行单个测试用例
 
 另外，参考 http://vim.sourceforge.net/tip_view.php?tip_id=280。
 
@@ -1135,7 +1259,7 @@ Jikes(TM) 是 IBM Research 发布的一个源码到字节码的 Java 编译器�
 
 这里还有一个用于 Unix 的替代方法，由 Michael F. Lamb 提供。首先过滤错误:
 <code class="example">  :setl errorformat=%Z%f:%l:\ %m,%A%p^,%-G%*[^sl]%.%#</code>
-<code class="example">  :setl makeprg=javac\ %\ 2&gt;&amp;1\ \\\|\ vim-javac-filter</code>
+<code class="example">  :setl makeprg=javac\ %:S\ 2&gt;&amp;1\ \\\|\ vim-javac-filter</code>
 <code class="example"></code>
 然后，你需要在路径的某处 (如 ~/bin) 加入 "vim-javac-filter" 并使之可执行。它包
 含如下内容:
@@ -1241,6 +1365,6 @@ quickfix 模式可以理解的格式。使用方法可以查看该文件的开�
 
  vim:tw=78:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

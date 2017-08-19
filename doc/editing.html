@@ -8,7 +8,7 @@
 <body>
 <h2>EDITING</h2>
 <pre>
-<b class="vimtag">*<a name="editing.txt">editing.txt</a>*</b>   For Vim version 7.4.  最新修改: 2013年8月
+<b class="vimtag">*<a name="editing.txt">editing.txt</a>*</b>   For Vim version 8.0.  最近更新: 2017年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -47,6 +47,7 @@
 如果已经有了另外一个当前文件名，它会成为轮换文件名。命令行上，可以用 "#" 引用
 它 |<a href="cmdline.html#:_%23">:_#</a>|。你还可以用 |<a href="editing.html#CTRL-^">CTRL-^</a>| 命令在当前和轮换文件之间切换。不过，轮换文件名在
 使用 |<a href="editing.html#:keepalt">:keepalt</a>| 期间不予改变。
+每个窗口分别记住自己的轮换文件名。
 
                                                         <b class="vimtag">*<a name=":keepalt">:keepalt</a>*</b> <b class="vimtag">*<a name=":keepa">:keepa</a>*</b>
 :keepalt <code class="special">{cmd}</code>          执行 <code class="special">{cmd}</code>，在此期间保持当前轮换文件名不变。<code class="note">注意</code> 间接
@@ -75,7 +76,8 @@ g <code class="keystroke">CTRL-G</code>                显示当前光标位置�
                         字节计数。如果字符数和字节数相同，省略字符位置。
                         如果当前行有字符占据多于一个位置 (<code class="special">&lt;Tab&gt;</code> 或其他特殊字
                         符)，"实际" 列和屏幕列同时显示，以连字号分隔。参见
-                        <a href="options.html#'ruler'">'ruler'</a> 选项。<code class="notvi">{Vi 无此功能}</code>
+                        <a href="options.html#'ruler'">'ruler'</a> 选项和 |<a href="eval.html#wordcount()">wordcount()</a>| 函数。
+                        <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag">*<a name="v_g_CTRL-G">v_g_CTRL-G</a>*</b>
 <code class="special">{Visual}</code>g <code class="keystroke">CTRL-G</code>        和 "g <code class="keystroke">CTRL-G</code>" 类似，但显示可视选择区域的单词、字符、行
@@ -149,7 +151,8 @@ messydos 或者 crossdos) 或者打开了 <a href="options.html#'shortname'">'sh
 Vim 记住你是否修改了缓冲区。你所作的修改不会不小心丢失。如果试图不写回而退出，
 或开始编辑别的文件，Vim 会拒绝。要绕过这重保护，在命令后加上 '!'。这样，修改就
 会丢失。例如: ":q" 在缓冲区修改后不会工作，但 ":q!" 会。要知道缓冲区是否修改，
-用 "<code class="keystroke">CTRL-G</code>" 命令。如果缓冲区被修改，消息里会有字符串 "[Modified]"。
+用 "<code class="keystroke">CTRL-G</code>" 命令。如果缓冲区被修改，消息里会有字符串 "[Modified]" 或者 "+"，
+后者如果 <a href="options.html#'shortmess'">'shortmess'</a> 有 'm' 标志位。
 
 如果你想不经提示而自动写回改动，打开 <a href="options.html#'autowriteall'">'autowriteall'</a> 选项。<a href="options.html#'autowrite'">'autowrite'</a> 是相关的
 Vi-兼容选项，它并非对所有命令有效。
@@ -258,7 +261,7 @@ Vi-兼容选项，它并非对所有命令有效。
                                                         <b class="vimtag">*<a name="gf">gf</a>*</b> <b class="vimtag">*<a name="E446">E446</a>*</b> <b class="vimtag">*<a name="E447">E447</a>*</b>
 <code class="special">[count]</code>gf               编辑光标之上或之后的文件名。助记: "goto file"。
                         使用 <a href="options.html#'isfname'">'isfname'</a> 选项来决定组成文件名的字符。拖尾的标点
-                        符号 ".,:;!" 被忽略。
+                        符号 ".,:;!" 被忽略。空格的转义 "\ " 缩为一个空格。
                         在 <a href="options.html#'path'">'path'</a> 选项组成的目录名列表查找文件。关于相对路径和
                         通配符，可见 <a href="options.html#'path'">'path'</a> 选项。
                         设置 <a href="options.html#'suffixesadd'">'suffixesadd'</a> 选项可以用来查找文件所要附加的后
@@ -328,7 +331,7 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 
 要避免通配符的特殊含义，在前面加上反斜杠。不过，在 MS-Windows 上，反斜杠是路径
 分隔符，"path\[abc]" 在 <a href="options.html#'isfname'">'isfname'</a> 选项里有 "[" 的时候还是被看作通配符。一个简
-单避免该问题的方法是用 "path\[[]abc]"。这样文件名变成 "path[abc]"。
+单避免该问题的方法是用 "path\[[]abc]"。这样这匹配文件名 "path[abc]"。
 
                                         <b class="vimtag">*<a name="starstar-wildcard">starstar-wildcard</a>*</b>
 在 Unix、Win32、Mac OS/X 和一些其它系统上，可以扩展 "**"。它允许你在目录树里搜
@@ -337,30 +340,43 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 例如:
 <code class="example">        :n **/*.txt</code>
 找到文件:
-        ttt.txt
-        subdir/ttt.txt
-        a/b/c/d/ttt.txt
-如果使用了非通配字符，只匹配第一层目录。例如:
-<code class="example">        :n /usr/inc**/*.h</code>
+<code class="section">        aaa.txt </code>
+<code class="section">        subdir/bbb.txt </code>
+<code class="section">        a/b/c/d/ccc.txt </code>
+紧接着 "**" 之前或之后使用的非通配字符，只匹配第一层目录，而不用于匹配树结构其
+下的目录。例如:
+<code class="example">        :n /usr/inc**/types.h</code>
 找到文件:
-        /usr/include/types.h
-        /usr/include/sys/types.h
-        /usr/inc_old/types.h
+<code class="section">        /usr/include/types.h </code>
+<code class="section">        /usr/include/sys/types.h </code>
+<code class="section">        /usr/inc/old/types.h </code>
+<code class="note">注意</code> 之所以带 "/sys" 的路径，是因为那一层的名字不需要匹配 "/inc"。也就是说，
+这相当于匹配 "/usr/inc*/*/*..."，而不是 "/usr/inc*/inc*/inc*"。
 
                                         <b class="vimtag">*<a name="backtick-expansion">backtick-expansion</a>*</b> <b class="vimtag">*<a name="`-expansion">`-expansion</a>*</b>
-在 Unix 和一些其它系统上你可以在文件名里用反引号。例如:
-<code class="example">        :e `find . -name ver\\*.c -print`</code>
-星号之前需要有反斜杠，以防 "ver*.c" 在执行 find 程序之前被外壳先扩展。
+在 Unix 和一些其它系统上你可以用反引号代替文件名参数。例如:
+<code class="example">        :next `find . -name ver\\*.c -print`</code>
+<code class="example">        :view `ls -t *.patch  \| head -n1`</code>
+星号之前需要有反斜杠，以防 "ver*.c" 在执行 find 程序之前被外壳先扩展。在外壳管
+道符号 "|" 之前的反斜杠使 Vim 不会把它解析为命令的终止。
 该功能对于多数其他系统也使用，但要求反引号必须包围整个项目。你不能在第一个之前
 和最后一个反引号之后有别的文本。
 
                                                         <b class="vimtag">*<a name="`%20">`=</a>*</b>
-你可以用 `=<code class="special">{expr}</code>` 的语法来使用反引号扩展 Vim 表达式，而非外部命令。例如
+在第一个反引号之后紧跟等号，可以使得反引号用来作 Vim 表达式，而非外部命令来扩
+展。例如
 <code class="example">        :e `=tempname()`</code>
 该表达式里可以包含任何东西，因而可以用来避免 '"'、'|'、'%' 和 '#' 的特殊含义。
 不过，和其它通配符一样，<a href="options.html#'wildignore'">'wildignore'</a> 也适用。
+
+表达式里的环境变量在执行表达式前先扩展，所以可以这样:
+<code class="example">        :e `=$HOME . '/.vimrc'`</code>
+此处 $HOME 如果在字符串里，会被按本义使用，所以不能这样:
+<code class="example">        :e `='$HOME' . '/.vimrc'`</code>
+<code class="example"></code>
 如果表达式结果为字符串，名字以换行符分隔。如果结果是 |<a href="eval.html#List">List</a>|，每个项目用作一个
 名字。换行符也分隔名字。
+<code class="note">注意</code> 这样的表达式只有在 Ex 命令期待文件名参数的地方才有效。
 
                                                         <b class="vimtag">*<a name="++opt">++opt</a>*</b> <b class="vimtag">*<a name="[++opt]">[++opt]</a>*</b>
 <code class="special">[++opt]</code> 参数可以用来为某个命令强制指定 <a href="options.html#'fileformat'">'fileformat'</a>、<a href="options.html#'fileencoding'">'fileencoding'</a> 或
@@ -512,7 +528,9 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                         <code class="notvi">{Vi: 无 ++opt}</code>
 
 :<code class="special">[count]</code>arga[dd] <code class="special">{name}</code> ..                      <b class="vimtag">*<a name=":arga">:arga</a>*</b> <b class="vimtag">*<a name=":argadd">:argadd</a>*</b> <b class="vimtag">*<a name="E479">E479</a>*</b>
-                        将若干文件名 <code class="special">{name}</code> 等加到参数列表里。
+:<code class="special">[count]</code>arga[dd]
+                        将若干文件名 <code class="special">{name}</code> 等加到参数列表里。如果 <code class="special">{name}</code> 省
+                        略，把当前缓冲区名字加入参数列表。
                         如果忽略 <code class="special">[count]</code>， <code class="special">{name}</code> 等加入到参数列表的当前项之
                         后。不然，加到第 <code class="special">[count]</code> 个文件之后。如果参数列表是
                         "a b c"，而 "b" 是当前参数，那么以下命令会导致:
@@ -520,7 +538,9 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                                 :argadd x       a b x c
                                 :0argadd x      x a b c
                                 :1argadd x      a x b c
-                                :99argadd x     a b c x
+                                :$argadd x      a b c x
+                        在末项之后:
+                                :+2argadd y     a b c x y
                         这里不会检查重复项，因此一个文件可能加入参数列表两次。
                         不改变当前编辑的文件。
                         <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
@@ -538,10 +558,19 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 <code class="example">                                :argdel *.obj</code>
                         <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
 
-:<code class="special">{range}</code>argd[elete]     从参数列表里删除 <code class="special">{range}</code> 范围里的文件。如果该范围的最
-                        后一个数字过大，删除直到最后一个参数为止。例如:
-<code class="example">                                :10,1000argdel</code>
+:<code class="special">[range]</code>argd[elete]     从参数列表里删除 <code class="special">[range]</code> 范围里的文件。
+                        例如:
+<code class="example">                                :10,$argdel</code>
                         删除第 10 个和其后的参数，保留 1-9。
+<code class="example">                                :$argd</code>
+                        只删除最后一个。
+<code class="example">                                :argd</code>
+<code class="example">                                :.argd</code>
+                        删除当前参数。
+<code class="example">                                :%argd</code>
+                        删除参数列表里所有文件。
+                        如果该范围的最后一个数字过大，删除直到最后一个参数为
+                        止。
                         <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
 
                                                         <b class="vimtag">*<a name=":argu">:argu</a>*</b> <b class="vimtag">*<a name=":argument">:argument</a>*</b>
@@ -690,7 +719,8 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 使 用 参 数 列 表
 
                                                 <b class="vimtag">*<a name=":argdo">:argdo</a>*</b>
-:argdo[!] <code class="special">{cmd}</code>         对参数列表里的每个文件执行 <code class="special">{cmd}</code>。
+:<code class="special">[range]</code>argdo[!] <code class="special">{cmd}</code>  对参数列表里的每个文件执行 <code class="special">{cmd}</code>。如果给出 <code class="special">[range]</code>，只
+                        对给出范围内的参数执行。
                         它的工作方式大致如下:
 <code class="example">                                :rewind</code>
 <code class="example">                                :{cmd}</code>
@@ -709,7 +739,8 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
                         <a href="options.html#'eventignore'">'eventignore'</a> 里，从而被屏蔽。这样显著提高了编辑每个文
                         件的速度。
                         <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入 |<a href="various.html#+listcmds">+listcmds</a>| 特性才有效}</code>
-                        另见 |<a href="windows.html#:windo">:windo</a>|、|<a href="tabpage.html#:tabdo">:tabdo</a>| 和 |<a href="windows.html#:bufdo">:bufdo</a>|。
+                        另见 |<a href="windows.html#:windo">:windo</a>|、|<a href="tabpage.html#:tabdo">:tabdo</a>|、|<a href="windows.html#:bufdo">:bufdo</a>|、|<a href="quickfix.html#:cdo">:cdo</a>|、|<a href="quickfix.html#:ldo">:ldo</a>|、
+                        |<a href="quickfix.html#:cfdo">:cfdo</a>| 和 |<a href="quickfix.html#:lfdo">:lfdo</a>|
 
 示例:
 <code class="example">        :args *.c</code>
@@ -796,11 +827,11 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 写 入 多 个 缓 冲 区                                    <b class="vimtag">*<a name="buffer-write">buffer-write</a>*</b>
 
                                                         <b class="vimtag">*<a name=":wa">:wa</a>*</b> <b class="vimtag">*<a name=":wall">:wall</a>*</b>
-:wa[ll]                 保存所有已修改的缓冲区。没有文件名或者只读的缓冲区不在
-                        此列。<code class="notvi">{Vi 无此功能}</code>
+:wa[ll]                 保存所有已修改的缓冲区。没有文件名的缓冲区会报错。只读
+                        的缓冲区不会被写入。<code class="notvi">{Vi 无此功能}</code>
 
-:wa[ll]!                保存所有已修改的缓冲区。即使是只读的。但没有文件名的缓
-                        冲区仍不会写入。<code class="notvi">{Vi 无此功能}</code>
+:wa[ll]!                保存所有已修改的缓冲区，包括只读的。没有文件名的缓冲区
+                        不会写入并报错。<code class="notvi">{Vi 无此功能}</code>
 
 
 如果你试图覆盖在别的地方修改的文件，Vim 会警告你。参见 |<a href="editing.html#timestamp">timestamp</a>|。
@@ -900,14 +931,17 @@ Unix 上当文件名不引用一个普通文件或者目录时，检测为设备
                         如果参数列表的最后一个文件还没有被编辑，该操作失败。
                         如果有其它标签页，并且退出的是当前标签页的最后一个窗
                         口，关闭当前标签页 |<a href="tabpage.html#tab-page">tab-page</a>|。
-                        激活 |<a href="autocmd.html#QuitPre">QuitPre</a>|  自动命令事件。
+                        激活 |<a href="autocmd.html#QuitPre">QuitPre</a>| 自动命令事件。
 
 :conf[irm] q[uit]       退出，但如果已经有修改或者参数列表的最后一个文件还未被
                         编辑，给出提示。参见 |<a href="editing.html#:confirm">:confirm</a>| 和 <a href="options.html#'confirm'">'confirm'</a>。 {Vi 无
                         此功能}
 
-:q[uit]!                退出不保存，即使有可见的缓冲区发生了修改。不适用于隐
-                        藏的缓冲区。为了保证总能退出，用 ":qall!"。
+:q[uit]!                退出不保存，即使当前缓冲区发生了修改也是。缓冲区被卸
+                        载，包括置位 <a href="options.html#'hidden'">'hidden'</a> 了的。
+                        如果是最后一个窗口并有修改过的隐藏缓冲区，放弃当前缓冲
+                        区，第一个修改过的隐藏缓冲区成为当前缓冲区。
+                        为了保证总能退出，用 ":qall!"。
 
 :cq[uit]                在任何情形下，退出不保存，并返回一个错误代码。参见
                         |<a href="quickfix.html#:cq">:cq</a>|。此功能可用于 Manx 的 QuickFix 模式 (参见
@@ -998,7 +1032,7 @@ ZQ                      退出，不检查是否发生了修改 (等同于 ":q!"
 
 如果你希望总是用 ":confirm"，置位 <a href="options.html#'confirm'">'confirm'</a> 选项。
 
-                        <b class="vimtag">*<a name=":browse">:browse</a>*</b> <b class="vimtag">*<a name=":bro">:bro</a>*</b> <b class="vimtag">*<a name="E338">E338</a>*</b> <b class="vimtag">*<a name="E614">E614</a>*</b> <b class="vimtag">*<a name="E615">E615</a>*</b> <b class="vimtag">*<a name="E616">E616</a>*</b> <b class="vimtag">*<a name="E578">E578</a>*</b>
+                        <b class="vimtag">*<a name=":browse">:browse</a>*</b> <b class="vimtag">*<a name=":bro">:bro</a>*</b> <b class="vimtag">*<a name="E338">E338</a>*</b> <b class="vimtag">*<a name="E614">E614</a>*</b> <b class="vimtag">*<a name="E615">E615</a>*</b> <b class="vimtag">*<a name="E616">E616</a>*</b>
 :bro[wse] <code class="special">{command}</code>     为 {command| 的参数显示文件选择对话框。目前这可用于
                         |<a href="editing.html#:e">:e</a>|、|<a href="editing.html#:w">:w</a>|、|<a href="editing.html#:wall">:wall</a>|、|<a href="editing.html#:wq">:wq</a>|、|<a href="editing.html#:wqall">:wqall</a>|、|<a href="editing.html#:x">:x</a>|、|<a href="editing.html#:xall">:xall</a>|、
                         |<a href="editing.html#:exit">:exit</a>|、 |<a href="editing.html#:view">:view</a>|、|<a href="windows.html#:sview">:sview</a>|、|<a href="insert.html#:r">:r</a>|、|<a href="editing.html#:saveas">:saveas</a>|、|<a href="windows.html#:sp">:sp</a>|、
@@ -1137,11 +1171,19 @@ Vim 可用加密的方式写入文件并读回。没有正确的密钥，加密�
 <code class="notvi">{仅当编译时加入 |<a href="various.html#+cryptv">+cryptv</a>| 功能才有效}</code>  <b class="vimtag">*<a name="E833">E833</a>*</b>
 
 交换文件和撤销文件的文本也被加密。 <b class="vimtag">*<a name="E843">E843</a>*</b>
-
-<code class="note">注意</code>:
-内存里的文本是不加密的。系统管理员因此可以在你编辑时看到你的文本。用
+不过，这是分块进行的，这样可能缩短破解密钥的时间。可以关闭交换文件，但任何崩溃
+会丢失你之前的成果。关闭撤销文件但没有什么大损失。
+<code class="example">        :set noundofile</code>
+<code class="example">        :noswapfile edit secrets</code>
+<code class="example"></code>
+<code class="note">注意</code>: 内存里的文本是不加密的。系统管理员因此可以在你编辑时看到你的文本。用
 ":!filter" 或者 ":w !command" 过滤的文本也是不加密的，这些都可能造成文本泄露。
 <a href="options.html#'viminfo'">'viminfo'</a> 文件也不加密。
+
+要编辑极度机密的文本:
+<code class="example">        :set noundofile viminfo=</code>
+<code class="example">        :noswapfile edit secrets.txt</code>
+牢记没有交换文件意味着你冒崩溃、停电等事件时丢失工作成果的风险。
 
 _警告_: 如果在输入密钥时发生错误而且写入文件后退出，这些文本就永远丢失了。
 
@@ -1160,17 +1202,33 @@ _警告_: 如果在输入密钥时发生错误而且写入文件后退出，这�
 要关闭加密，复位 <a href="options.html#'key'">'key'</a> 选项为空值:
 <code class="example">        :set key=</code>
 <code class="example"></code>
-使用 <a href="options.html#'cryptmethod'">'cryptmethod'</a> 选项来选择加密方法为以下两者之一:
-<code class="example">        :setlocal cm=zip       " 较弱的加密方法，后向兼容</code>
-<code class="example">        :setlocal cm=blowfish  " 较强的加盟方法</code>
+使用 <a href="options.html#'cryptmethod'">'cryptmethod'</a> 选项来选择加密方法为以下之一:
+<code class="example">        :setlocal cm=zip        " 较弱的加密方法，后向兼容</code>
+<code class="example">        :setlocal cm=blowfish   " 有漏洞的方法</code>
+<code class="example">        :setlocal cm=blowfish2  " 中等强度的方法</code>
+<code class="example"></code>
 必须在写入文件前进行。读入加密文件时，自动设置该选项为文件写入时选择的方法。写
 入前改变 <a href="options.html#'cryptmethod'">'cryptmethod'</a> 就可以改变使用的加密方法。
-要设置用于新文件的缺省方法，在 |<a href="starting.html#vimrc">vimrc</a>| 文件中放入以下之一:
-<code class="example">        set cm=zip</code>
-<code class="example">        set cm=blowfish</code>
-读写文件给出的信息会显示 "[crypted]" 对应 zip，"[blowfish]" 对应 blowfish。
+
+要设置用于新文件的缺省方法，在 |<a href="starting.html#vimrc">vimrc</a>| 文件中放入:
+<code class="example">        set cm=blowfish2</code>
+强烈推荐使用 "blowfish2"。只有在不支持它的旧版本的 Vim 上才用其它方法。
+
+读写文件给出的信息会显示 "[crypted]" 对应 zip，"[blowfish]" 对应 blowfish，等
+等。
 
 写入撤销文件时，撤销文件的文本使用相同的密钥和方法。|<a href="undo.html#persistent-undo">persistent-undo</a>|。
+
+要测试有无 blowfish 支持，使用以下条件:
+<code class="example">        has('crypt-blowfish')</code>
+<code class="example">        has('crypt-blowfish2')</code>
+尽管更早时就有 blowfish 支持，这只可用于 Vim 7.4.1099 开始的版本。所以此条件的
+失败不意味着不支持 blowfish。可以这么测试 blowfish:
+<code class="example">        v:version &gt;= 703</code>
+对 blowfish2 则可以用:
+<code class="example">        v:version &gt; 704 || (v:version == 704 &amp;&amp; has('patch401'))</code>
+如果确信你的 Vim 包含了 patch 7.4.237，更简单的检查是:
+<code class="example">        has('patch-7.4.401')</code>
 
                                                 <b class="vimtag">*<a name="E817">E817</a>*</b> <b class="vimtag">*<a name="E818">E818</a>*</b> <b class="vimtag">*<a name="E819">E819</a>*</b> <b class="vimtag">*<a name="E820">E820</a>*</b>
 如果加密过程有错，文本可以写到文件里，但再不能正确读回来了。为此准备了一项测试
@@ -1193,7 +1251,7 @@ _警告_: 如果在输入密钥时发生错误而且写入文件后退出，这�
 <code class="example">     0  string  VimCrypt~       Vim encrypted file</code>
 <code class="example">     &gt;9 string  01      - "zip" cryptmethod</code>
 <code class="example">     &gt;9 string  02      - "blowfish" cryptmethod</code>
-<code class="example"></code>
+<code class="example">     &gt;9 string  03      - "blowfish2" cryptmethod</code>
 <code class="example"></code>
 <code class="note">注意</code>:
 - 如果用 <a href="options.html#'charconvert'">'charconvert'</a> 转换，不能实施加密。
@@ -1211,15 +1269,17 @@ _警告_: 如果在输入密钥时发生错误而且写入文件后退出，这�
   以相同密钥加密的文件也能被解出。
 - Pkzip 使用和 <a href="options.html#'cryptmethod'">'cryptmethod'</a> 的 "zip" 相同的加密方法，美国政府对其出口不持异
   议。Pkzip 的公共文件 APPNOTE.TXT 详细描述了这一算法。
+- <a href="options.html#'cryptmethod'">'cryptmethod'</a> 的 "blowfish" 实现有漏洞。可以破解文件的前 64 个字节，在有些情
+  况下，甚至更多。不推荐，但 Vim 7.3 和 7.4 里还是最强的方法。"zip" 方法更弱。
 - Vim 起源于荷兰。这是源代码的出处。因此，加密代码并非从美国出口。
 
 </pre><hr class="doubleline" /><pre>
 <h4>10. 修改时间                                    <b class="vimtag">*<a name="timestamp">timestamp</a>*</b> <b class="vimtag">*<a name="timestamps">timestamps</a>*</b></h4>
-Vim 记住文件开始编辑时的修改时间。这用来防止 (在你自己知道之前) 你有同一个文件
-的不同版本。
+Vim 记住文件开始编辑时的修改时间、模式和大小。这用来防止 (在你自己知道之前) 你
+有同一个文件的不同版本。
 
 在执行了外壳命令 (|<a href="various.html#:!cmd">:!cmd</a>| |<a href="starting.html#suspend">suspend</a>| |<a href="insert.html#:read!">:read!</a>| |<a href="various.html#K">K</a>|) 以后，Vim 会对窗口里的所有缓
-冲区的修改时间进行比较。Vim 会对在此期间被修改的文件执行相关的
+冲区的修改时间、模式和大小进行比较。Vim 会对在此期间被修改的文件执行相关的
 |<a href="autocmd.html#FileChangedShell">FileChangedShell</a>| 自动命令或者显示警告。GUI 上，在 Vim 取回输入焦点的时候也会
 发生。
 
@@ -1227,6 +1287,12 @@ Vim 记住文件开始编辑时的修改时间。这用来防止 (在你自己�
 如果你想自动重新载入在 Vim 之外被修改的文件的新内容，置位 <a href="options.html#'autoread'">'autoread'</a> 选项。如
 果你已经在 Vim 里修改过这个文件，这不会工作。
 
+如果你不想被询问，也不想自动载入文件，可以这样:
+<code class="example">        set buftype=nofile</code>
+<code class="example"></code>
+或者，从外壳启动 gvim:
+<code class="example">        gvim file.log -c "set buftype=nofile"</code>
+<code class="example"></code>
 <code class="note">注意</code> 如果定义了 FileChangedShell 自动命令，你不会得到警告信息或者提示。该自动
 命令应负责处理。
 
@@ -1371,6 +1437,6 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 
  vim:tw=78:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

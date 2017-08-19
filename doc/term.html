@@ -8,7 +8,7 @@
 <body>
 <h2>TERM</h2>
 <pre>
-<b class="vimtag">*<a name="term.txt">term.txt</a>*</b>      For Vim version 7.4.  最近更新: 2011年5月
+<b class="vimtag">*<a name="term.txt">term.txt</a>*</b>      For Vim version 8.0.  最近更新: 2017年8月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -86,6 +86,21 @@ ALL_BUILTIN_TCAPS       ++builtin_terms         全部
 活光标和功能键。Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'t_te'">'t_te'</a> 和 <a href="term.html#'t_ke'">'t_ke'</a> 定
 义的字符串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂
 时置回普通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <code class="special">&lt;BS&gt;</code> 时继续。
+
+                                                <b class="vimtag">*<a name="xterm-bracketed-paste">xterm-bracketed-paste</a>*</b>
+如果设置了 <a href="term.html#'t_BE'">'t_BE'</a> 选项，进入 "raw" 模式时会发送 <a href="term.html#'t_BE'">'t_BE'</a> 到终端，退出 "raw" 模式
+时则发送 <a href="term.html#'t_BD'">'t_BD'</a>。终端应在粘贴文本之前发送 <a href="term.html#'t_PS'">'t_PS'</a>，而粘贴文本之后发送 <a href="term.html#'t_PE'">'t_PE'</a>。
+这样 Vim 就能区隔粘贴的文本和键入的字符。粘贴文本的处理就像使用了鼠标中键，按
+本义插入而不作命令解释。
+
+光标在首列时，在光标前插入粘贴文本。否则在光标位置之后附加粘贴文本。这意味着你
+不能在首列之后粘贴。不幸的是 Vim 没有办法知道鼠标指针在哪里。
+
+<code class="note">注意</code> 有些情况下 Vim 不能识别这种括号内的粘贴，而只能得到原始的文本。在其它一些
+情况下，Vim 只能得到首个粘贴的字符而丢失其余的部分，例如在使用 "r" 命令时。如
+果你对此不满意，在 .vimrc 这样关闭带括号的粘贴:
+<code class="example">        set t_BE=</code>
+如果这样做，Vim 运行时发送 <a href="term.html#'t_BD'">'t_BD'</a> 给终端以关闭括号内的粘贴。
 
                                                         <b class="vimtag">*<a name="cs7-problem">cs7-problem</a>*</b>
 <code class="note">注意</code>: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
@@ -191,11 +206,11 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
 个 termcap 代码是必须的: 光标移动，<a href="term.html#'t_cm'">'t_cm'</a>。
 
-选项 <a href="term.html#'t_da'">'t_da'</a>、<a href="term.html#'t_db'">'t_db'</a>、<a href="term.html#'t_ms'">'t_ms'</a>、<a href="term.html#'t_xs'">'t_xs'</a> 代表 termcap 的标志位。termcap 标志位存在
-时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经设置。而空字符串代表
-该标志位没有设置。<a href="term.html#'t_CS'">'t_CS'</a> 也是这样的，虽然它不是 termcap 的标志位。
+选项 <a href="term.html#'t_da'">'t_da'</a>、<a href="term.html#'t_db'">'t_db'</a>、<a href="term.html#'t_ms'">'t_ms'</a>、<a href="term.html#'t_xs'">'t_xs'</a>、<a href="term.html#'t_xn'">'t_xn'</a> 代表 termcap 里的标志位。termcap
+标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置位。而空
+字符串代表该标志位没有置位。<a href="term.html#'t_CS'">'t_CS'</a> 也是这样的，虽然它不是 termcap 的标志位。
 
-输 出 代 码
+输 出 代 码                                             <b class="vimtag">*<a name="terminal-output-codes">terminal-output-codes</a>*</b>
 <code class="section">        选项    含义    </code>
 
         t_AB    设置背景色 (ANSI)                               <b class="vimtag">*<a name="t_AB">t_AB</a>*</b> <b class="vimtag">*<a name="'t_AB'">'t_AB'</a>*</b>
@@ -245,6 +260,7 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
         t_vi    光标不可见                                      <b class="vimtag">*<a name="t_vi">t_vi</a>*</b> <b class="vimtag">*<a name="'t_vi'">'t_vi'</a>*</b>
         t_vs    光标 "非常" 可见                                <b class="vimtag">*<a name="t_vs">t_vs</a>*</b> <b class="vimtag">*<a name="'t_vs'">'t_vs'</a>*</b>
         t_xs    如果非空，突出部分不能通过覆盖删除 (hpterm)     <b class="vimtag">*<a name="t_xs">t_xs</a>*</b> <b class="vimtag">*<a name="'t_xs'">'t_xs'</a>*</b>
+        t_xn    如果非空，在屏幕最后单元里写入字符不导致滚动    <b class="vimtag">*<a name="t_xn">t_xn</a>*</b> <b class="vimtag">*<a name="'t_xn'">'t_xn'</a>*</b>
         t_ZH    斜体模式                                        <b class="vimtag">*<a name="t_ZH">t_ZH</a>*</b> <b class="vimtag">*<a name="'t_ZH'">'t_ZH'</a>*</b>
         t_ZR    斜体结束                                        <b class="vimtag">*<a name="t_ZR">t_ZR</a>*</b> <b class="vimtag">*<a name="'t_ZR'">'t_ZR'</a>*</b>
 
@@ -252,17 +268,28 @@ Vim 增加的 (它们没有标准代码):
         t_IS    开始设置图标文本                                <b class="vimtag">*<a name="t_IS">t_IS</a>*</b> <b class="vimtag">*<a name="'t_IS'">'t_IS'</a>*</b>
         t_IE    结束设置图标文本                                <b class="vimtag">*<a name="t_IE">t_IE</a>*</b> <b class="vimtag">*<a name="'t_IE'">'t_IE'</a>*</b>
         t_WP    设置窗口位置 (Y，X)，以像素计算                 <b class="vimtag">*<a name="t_WP">t_WP</a>*</b> <b class="vimtag">*<a name="'t_WP'">'t_WP'</a>*</b>
+        t_GP    获取窗口位置 (Y，X)，以像素计算                 <b class="vimtag">*<a name="t_GP">t_GP</a>*</b> <b class="vimtag">*<a name="'t_GP'">'t_GP'</a>*</b>
         t_WS    设置窗口大小 (高度，宽度) 以字符数计算          <b class="vimtag">*<a name="t_WS">t_WS</a>*</b> <b class="vimtag">*<a name="'t_WS'">'t_WS'</a>*</b>
         t_SI    开始插入模式 (条形光标)                         <b class="vimtag">*<a name="t_SI">t_SI</a>*</b> <b class="vimtag">*<a name="'t_SI'">'t_SI'</a>*</b>
-        t_EI    结束插入模式 (块形光标)                         <b class="vimtag">*<a name="t_EI">t_EI</a>*</b> <b class="vimtag">*<a name="'t_EI'">'t_EI'</a>*</b>
+        t_SR    开始替换模式 (下划线光标)                       <b class="vimtag">*<a name="t_SR">t_SR</a>*</b> <b class="vimtag">*<a name="'t_SR'">'t_SR'</a>*</b>
+        t_EI    结束插入或替换模式 (块形光标)                   <b class="vimtag">*<a name="t_EI">t_EI</a>*</b> <b class="vimtag">*<a name="'t_EI'">'t_EI'</a>*</b>
                 |<a href="term.html#termcap-cursor-shape">termcap-cursor-shape</a>|
         t_RV    请求终端版本字符串 (适用于 xterm)               <b class="vimtag">*<a name="t_RV">t_RV</a>*</b> <b class="vimtag">*<a name="'t_RV'">'t_RV'</a>*</b>
                 |<a href="term.html#xterm-8bit">xterm-8bit</a>| |<a href="eval.html#v:termresponse">v:termresponse</a>| |<a href="options.html#'ttymouse'">'ttymouse'</a>| |<a href="term.html#xterm-codes">xterm-codes</a>|
         t_u7    请求光标位置 (适用于 xterm)                     <b class="vimtag">*<a name="t_u7">t_u7</a>*</b> <b class="vimtag">*<a name="'t_u7'">'t_u7'</a>*</b>
                 见 |<a href="options.html#'ambiwidth'">'ambiwidth'</a>|
+        t_RB    请求终端背景色                                  <b class="vimtag">*<a name="t_RB">t_RB</a>*</b> <b class="vimtag">*<a name="'t_RB'">'t_RB'</a>*</b>
+        t_8f    设置终端前景色 (R, G, B)                        <b class="vimtag">*<a name="t_8f">t_8f</a>*</b> <b class="vimtag">*<a name="'t_8f'">'t_8f'</a>*</b>
+                |<a href="term.html#xterm-true-color">xterm-true-color</a>|
+        t_8b    设置终端背景色 (R, G, B)                        <b class="vimtag">*<a name="t_8b">t_8b</a>*</b> <b class="vimtag">*<a name="'t_8b'">'t_8b'</a>*</b>
+                |<a href="term.html#xterm-true-color">xterm-true-color</a>|
+        t_BE    打开括号内粘贴模式                              <b class="vimtag">*<a name="t_BE">t_BE</a>*</b> <b class="vimtag">*<a name="'t_BE'">'t_BE'</a>*</b>
+                |<a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>|
+        t_BD    关闭括号内粘贴模式                              <b class="vimtag">*<a name="t_BD">t_BD</a>*</b> <b class="vimtag">*<a name="'t_BD'">'t_BD'</a>*</b>
+                |<a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>|
 
-键 代 码
-<code class="note">注意</code>: 尽量使用 <code class="special">&lt;&gt;</code> 形式
+键 代 码                                                <b class="vimtag">*<a name="terminal-key-codes">terminal-key-codes</a>*</b>
+<code class="note">备注</code>: 尽量使用 <code class="special">&lt;&gt;</code> 形式
 
 <code class="section">        选项    名字            含义    </code>
 
@@ -352,6 +379,8 @@ Vim 增加的 (它们没有标准代码):
         t_KK    <code class="special">&lt;k8&gt;</code>            keypad 8                 <b class="vimtag">*<a name="%3Ck8%3E">&lt;k8&gt;</a>*</b> <b class="vimtag">*<a name="t_KK">t_KK</a>*</b> <b class="vimtag">*<a name="'t_KK'">'t_KK'</a>*</b>
         t_KL    <code class="special">&lt;k9&gt;</code>            keypad 9                 <b class="vimtag">*<a name="%3Ck9%3E">&lt;k9&gt;</a>*</b> <b class="vimtag">*<a name="t_KL">t_KL</a>*</b> <b class="vimtag">*<a name="'t_KL'">'t_KL'</a>*</b>
                 <code class="special">&lt;Mouse&gt;</code>         鼠标代码的引导键                <b class="vimtag">*<a name="%3CMouse%3E">&lt;Mouse&gt;</a>*</b>
+        t_PS    括号内粘贴的开始 |<a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>|        <b class="vimtag">*<a name="t_PS">t_PS</a>*</b> <b class="vimtag">*<a name="'t_PS'">'t_PS'</a>*</b>
+        t_PE    括号内粘贴的结束 |<a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>|        <b class="vimtag">*<a name="t_PE">t_PE</a>*</b> <b class="vimtag">*<a name="'t_PE'">'t_PE'</a>*</b>
 
 关于 t_so 和 t_mr 的 <code class="note">注意</code> 事项: 如果 termcap 项目 "so" 不存在，则使用 "mr" 的
 项目。反之亦然。"se" 和 "me" 也是一样。如果你的终端同时支持反转和突出模式，你
@@ -371,6 +400,22 @@ xterm 里直接取得键码。响应的内容用于调整各种 t_ 代码。这�
 <code class="note">注意</code>: 这只能在启动时完成。如果 xterm 选项在 Vim 启动以后被改变，这些转义序列就
 不再能识别了。
 
+                                                        <b class="vimtag">*<a name="xterm-true-color">xterm-true-color</a>*</b>
+只要终端支持，Vim 支持终端真彩 (使用 |<a href="syntax.html#highlight-guifg">highlight-guifg</a>| 和 |<a href="syntax.html#highlight-guibg">highlight-guibg</a>|)。
+为此，置位 <a href="options.html#'termguicolors'">'termguicolors'</a> 选项。
+https://gist.github.com/XVilka/8346728 有支持真彩的终端列表。
+
+有时置位 <a href="options.html#'termguicolors'">'termguicolors'</a> 还不够，还需要显式设置 |<a href="term.html#t_8f">t_8f</a>| 和 |<a href="term.html#t_8b">t_8b</a>| 选项。这些选
+项的缺省值分别是 "^[[38;2;%lu;%lu;%lum" 和 "^[[48;2;%lu;%lu;%lum"，但只当
+`$TERM` 为 `xterm` 时才设置。有些终端也接受相同的序列，但把所有的分号替换为冒
+号 (这样实际更兼容，但支持不是那么广泛):
+<code class="example">         let &amp;t_8f = "\&lt;Esc&gt;[38:2:%lu:%lu:%lum"</code>
+<code class="example">         let &amp;t_8b = "\&lt;Esc&gt;[48:2:%lu:%lu:%lum"</code>
+<code class="example"></code>
+这些选项包含 printf 字符串，调用 |<a href="eval.html#printf()">printf()</a>| (实际上，它的 C 等价函数，因此带有
+`l` 修饰符) 时带上 t_ 选项值和三个无符号长整数，分别代表红、绿和蓝色的 0 到
+255 (包含) 之间的任意值。
+
                                                         <b class="vimtag">*<a name="xterm-resize">xterm-resize</a>*</b>
 xterm 改变窗口大小的功能只用在 allowWindowOps 资源打开时才可用。有些系统或有些
 版本的 xterm 缺省该值是关闭的，因为有安全上的考虑。我们不肯定是否真有此必要。
@@ -388,12 +433,14 @@ CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾�
 用来复位到缺省的颜色设置。
 
                                 <b class="vimtag">*<a name="termcap-cursor-shape">termcap-cursor-shape</a>*</b> <b class="vimtag">*<a name="termcap-cursor-color">termcap-cursor-color</a>*</b>
-当 Vim 进入插入模式，它将发送 <a href="term.html#'t_SI'">'t_SI'</a> 转义序列。当离开插入模式时，发送 <a href="term.html#'t_EI'">'t_EI'</a>。
-但只有两者都有定义的情况下这才会发生。这可以用来改变插入模式下光标的形状或颜
-色。它们不是标准的 termcap/terminfo 项目，你需要自己设定。
+Vim 进入插入模式时，发送 <a href="term.html#'t_SI'">'t_SI'</a> 转义序列。Vim 进入替换模式而 <a href="term.html#'t_SR'">'t_SR'</a> 已设置时，
+发送 <a href="term.html#'t_SR'">'t_SR'</a> 转义序列，否则发送 <a href="term.html#'t_SI'">'t_SI'</a>。当离开插入或替换模式时，发送 <a href="term.html#'t_EI'">'t_EI'</a>。
+这可以用来改变插入模式下光标的形状或颜色。它们不是标准的 termcap/terminfo 项
+目，你需要自己设定。
 一个 xterm 的例子，改变光标颜色:
 <code class="example">    if &amp;term =~ "xterm"</code>
 <code class="example">        let &amp;t_SI = "\&lt;Esc&gt;]12;purple\x7"</code>
+<code class="example">        let &amp;t_SR = "\&lt;Esc&gt;]12;red\x7"</code>
 <code class="example">        let &amp;t_EI = "\&lt;Esc&gt;]12;blue\x7"</code>
 <code class="example">    endif</code>
 
@@ -471,7 +518,7 @@ xterm 用户 <code class="note">注意</code>: shift + 光标键一般不工作�
 
 这个命令可以设置屏幕大小:
 
-                                                <b class="vimtag">*<a name=":mod">:mod</a>*</b> <b class="vimtag">*<a name=":mode">:mode</a>*</b> <b class="vimtag">*<a name="E359">E359</a>*</b> <b class="vimtag">*<a name="E362">E362</a>*</b>
+                                                <b class="vimtag">*<a name=":mod">:mod</a>*</b> <b class="vimtag">*<a name=":mode">:mode</a>*</b> <b class="vimtag">*<a name="E359">E359</a>*</b>
 :mod[e] <code class="special">[mode]</code>
 
 如果不带参数，该命令检测屏幕大小并重画屏幕。在 MS-DOS 上，可以切换屏幕模式。
@@ -577,9 +624,9 @@ DISPLAY)，那么复制和粘贴和 GUI 上的行为相似。如果不是，那�
 --servername 打开。
 
                                                         <b class="vimtag">*<a name="xterm-copy-paste">xterm-copy-paste</a>*</b>
-<code class="note">注意</code>: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 列。这是 xterm 的问
-题，不是 Vim 的。用新一点的 xterm 吧 |<a href="syntax.html#color-xterm">color-xterm</a>|。
-目前该限制是 223 列。
+<code class="note">注意</code>: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 或 223 列。这是
+xterm 的问题，不是 Vim 的。用新一点的 xterm 吧 |<a href="syntax.html#color-xterm">color-xterm</a>|。另见
+<a href="options.html#'ttymouse'">'ttymouse'</a>。
 
 使用 xterm 粘贴/复制 (当前模式_不_包括在 <a href="options.html#'mouse'">'mouse'</a> 里):
 1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放。
@@ -726,7 +773,7 @@ GPM 鼠标只有在编译时打开 |<a href="various.html#+mouse_gpm">+mouse_gpm
  <code class="special">&lt;X2Release&gt;</code>     释放 X2 键         -                   <b class="vimtag">*<a name="X2Release">X2Release</a>*</b>
 
 X1 和 X2 按钮指一些鼠标上的附加按钮。'Microsoft Explorer' 鼠标在右拇指位置有这
-些键。目前 X1 和 X2 只能用于 Win32 环境。
+些键。目前 X1 和 X2 只能用于 Win32 和 X11 环境。
 
 示例:
 <code class="example">        :noremap &lt;MiddleMouse&gt; &lt;LeftMouse&gt;&lt;MiddleMouse&gt;</code>
@@ -760,6 +807,6 @@ X1 和 X2 按钮指一些鼠标上的附加按钮。'Microsoft Explorer' 鼠标�
 
  vim:tw=78:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

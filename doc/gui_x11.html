@@ -8,10 +8,10 @@
 <body>
 <h2>GUI_X11</h2>
 <pre>
-<b class="vimtag">*<a name="gui_x11.txt">gui_x11.txt</a>*</b>   For Vim version 7.4.  最后修改: 2013年1月
+<b class="vimtag">*<a name="gui_x11.txt">gui_x11.txt</a>*</b>   For Vim version 8.0.  最近更新: 2017年7月
 
 
-                  VIM REFERENCE MANUAL    by Bram Moolenaar
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
                       <code class="vim">译者</code>: Zimin&lt;cranecai@users.sf.net&gt;，tocer
                       http://vimcdoc.sf.net
 
@@ -279,7 +279,7 @@ X11 中可用的鼠标指针                                    <b class="vimtag
 如果使用一个在其它系统有效，而在 X11 中无效的名字，使用默认的 "arrow"。
 
 </pre><hr class="doubleline" /><pre>
-<h4>5. GTK 版本                                             <b class="vimtag">*<a name="gui-gtk">gui-gtk</a>*</b> <b class="vimtag">*<a name="GTK+">GTK+</a>*</b> <b class="vimtag">*<a name="GTK">GTK</a>*</b></h4>
+<h4>5. GTK 版本                                     <b class="vimtag">*<a name="gui-gtk">gui-gtk</a>*</b> <b class="vimtag">*<a name="GTK+">GTK+</a>*</b> <b class="vimtag">*<a name="GTK">GTK</a>*</b> <b class="vimtag">*<a name="GTK3">GTK3</a>*</b></h4>
 GUI 的 GTK 版本的使用略有不同。
 
 GTK＿不＿使用传统的 X 资源设置。所以，你的 ~/.Xdefaults 或 app-defaults 文件不
@@ -336,6 +336,15 @@ GTK＿不＿使用传统的 X 资源设置。所以，你的 ~/.Xdefaults 或 ap
 写入文件 ~/.gtkrc，这些设置就会被 GTK+ 使用。对于 GTK+ 2 而言，可能要修改的文
 件是 ~/.gtkrc-2.0。但各个发行版本不一样。
 
+GTK+ 3 上，要达成类似的效果，可在 $XDG_HOME_DIR/gtk-3.0/gtk.css (通常是
+$HOME/.config/gtk-3.0/gtk.css) 中加入以下的 CSS 代码:
+
+<code class="example">        .tooltip {</code>
+<code class="example">                background-color: #ffffcc;</code>
+<code class="example">                color: #000000;</code>
+<code class="example">        }</code>
+
+
 使用 Vim 作为 GTK+ 的插件                               <b class="vimtag">*<a name="gui-gtk-socketid">gui-gtk-socketid</a>*</b>
 
 当 GTK+ 版本的 Vim 启动时，它会创建自己的顶层窗口 (技术上，<code class="badlink">'GtkWindow'</code>)。GTK+
@@ -371,6 +380,9 @@ Gnome GUI 就象 GTK 一样工作。有关细节可以参考 |<a href="gui_x11.h
 在 configure (配置) 阶段如果发现 GNOME 或者使用 --enable-gnome-check 参数，
 GNOME 将被编译进来。
 
+<code class="note">注意</code>: GTK+ 3 GUI 版本不要用 --enable-gnome-check。上述的功能已经整合进了 GTK+
+3。
+
 
 GNOME 会话支持                          <b class="vimtag">*<a name="gui-gnome-session">gui-gnome-session</a>*</b> <b class="vimtag">*<a name="gnome-session">gnome-session</a>*</b>
 
@@ -397,36 +409,47 @@ GTK+ 2 支持，Vim 会通过恢复窗口角色的方法 (用命令行参数 |<a
 <h4>7. KDE 版本                                     <b class="vimtag">*<a name="gui-kde">gui-kde</a>*</b> <b class="vimtag">*<a name="kde">kde</a>*</b> <b class="vimtag">*<a name="KDE">KDE</a>*</b> <b class="vimtag">*<a name="KVim">KVim</a>*</b></h4>                                                        <b class="vimtag">*<a name="gui-x11-kde">gui-x11-kde</a>*</b>
 
 现在没有 Vim 的 KDE 版本。曾有过基于 Qt 工具包的一些移植工作，但是一直不能正常
-运行，而该项工作也已放弃。在 Yzis: www.yzis.org 上，还在开发。
+运行，而该项工作也已放弃。在 Yzis 上，还在开发。
+https://github.com/chrizel/Yzis
 
 </pre><hr class="doubleline" /><pre>
 <h4>8. 编译                                                 <b class="vimtag">*<a name="gui-x11-compiling">gui-x11-compiling</a>*</b></h4>
-如果使用 X11，Vim 的 Makefile 将首先试着在你的系统里找到需要的 GTK+ 的文件。如
-果失败，就试着找 Motif 文件。如果还是找不到，就找 Athena 文件。如果全失败，
-GUI 会被禁用。
+如果使用 X11，Vim 的 configure 将首先试着在你的系统里找到需要的 GTK+ 的文件。
+如果同时有 GTK+ 2 和 GTK+ 3 可用，优先选择 GTK+ 2，除非给 configure 显式传入
+--enable-gui=gtk3。
 
-对于 GTK+，Vim 的配置过程需要 GTK+ 被正确安装。就是说，shell 脚本 'gtk-config'
-必须在你的 PATH 中，并且你已可以成功地编译，安装和执行 GTK+ 程序。这样做的原因
-是: 编译、连接选项 (CFLAGS 和 LDFLAGS) 是通过 'gtk-config' shell 脚本来确定
-的。
+如果找不到 GTK+ 文件，就试着找 Motif 文件。如果还是找不到，就找 Athena 文件。
+如果全失败， GUI 会被禁用。
 
-如果你想编译 GTK+ 2 版本，可以在运行 ./configure 时加入 --enable-gtk2-check 参
-数。另外，对 GNOME 2 的支持在加入 --enable-gnome-check 时也会被编译进来。
+对于 GTK+，Vim 的配置过程使用 pkg-config(1) 来确保特定版本的 GTK+ 被正确安装并
+可用。因此，最好在运行 configure 前确认系统的 pkg-config 可用，且有所需的 GTK+
+版本的 .pc 文件。为此，运行以下命令来检查 pkg-config 是否可用于 GTK+ 2:
+<code class="example"></code>
+<code class="example">    $ pkg-config --modversion gtk+-2.0</code>
+<code class="example"></code>
+对 GTK+ 3，把 gtk+-2.0 替换为 gtk+-3.0。如果你有正确的 GTK+ 版本号，可以继续；
+不然，你可能要做些系统维护的例行工作来正确设置 pkg-config 和 GTK+。
+
+缺省编译已经带了 GTK+ 2 GUI。所以，通常不需要传入 --enable-gui=gtk2 之类的选项
+来 configure 和编译。
+
+可选地，GTK+ 2 GUI 可以整合进 GNOME 2 的支持。给 configure 传入
+--enable-gnome-check 可以打开此项支持。
+
+如要你想编译 GTK+ 3 GUI，需要给 configure 显式传入 --enable-gui=gtk3，并避免传
+入 --enable-gnome-check，因为 GNOME 2 支持所需的功能已经整合进了 GTK+ 3 里。
 
 否则，如果你安装了 Motif 或 Athena，但配置程序无法找到它们所在的目录时，更改
 Makefile 使之含有它们所在的目录名称。如，查找 "GUI_INC_LOC" 来设置 Motif 的目
 录，或 "GUI_OPT_X" 来设置 Athena 的目录。
 
                                                         <b class="vimtag">*<a name="gui-x11-gtk">gui-x11-gtk</a>*</b>
-在写这篇文档时，GTK+ 1.0.6 或 1.2 版本已经过时。建议使用 GTK 2。GTK 1 的支持可
-能很快会被放弃。
+目前，Vim 支持 GTK+ 2 和 GTK+ 3。
 
-对于 GTK+ 2 GUI 版本，推荐使用最新的 GTK+ 2.0 或者 GTK+ 2.2。
+GTK+ 2 GUI 需要 GTK+ 2.2 或更新版本。
 
-最后，尽管 GTK+ 已被移植到 Win32 平台上，这还没有连同 Vim 测试过，所以也不支
-持。同时，由于 GTK+ GUI 使用了部分通用的 X11 代码，这很可能都无法编译。在较遥
-远的将来，这种情况也许会改变: 因为对 GTK+ 帧缓冲区的支持也要求去掉那些以 X11
-为中心的代码部分。
+尽管 GTK+ 3 GUI 源代码的编写方式使得 3.x 系列的所有版本都可以编译通过，我们建
+议 GTK+ 3.10 或更新版本，因为此版本在重画上有较大的实现改动。
 
                                                         <b class="vimtag">*<a name="gui-x11-motif">gui-x11-motif</a>*</b>
 对于 Motif，你需要至少 1.2 和/或 X11R5 版本。Motif 2.0 和 X11R6 也可以。Motif
@@ -509,6 +532,6 @@ CLIPBOARD ("+) 用作剪切、拷贝、粘贴操作。你可以通过选择 "* �
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:
 </pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>

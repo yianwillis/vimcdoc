@@ -8,10 +8,10 @@
 <body>
 <h2>FOLD</h2>
 <pre>
-<b class="vimtag">*<a name="fold.txt">fold.txt</a>*</b>      For Vim version 7.4.  最后修改: 2010年5月
+<b class="vimtag">*<a name="fold.txt">fold.txt</a>*</b>      For Vim version 8.0.  最近更新: 2017年7月
 
 
-                  VIM REFERENCE MANUAL    by Bram Moolenaar
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
                       <code class="vim">译者</code>: Zimin&lt;cranecai@users.sf.net&gt;，tocer
 
 
@@ -68,7 +68,7 @@
 么是空行，要么以 <a href="options.html#'foldignore'">'foldignore'</a> 选项里包含的字符开始。在查找 <a href="options.html#'foldignore'">'foldignore'</a> 里包含
 的字符时，空白字符会被忽略。对于 C，该选项使用 "#" 来略过要预处理的那些行。
 
-当你想用另一种方式来略过行时，使用 <code class="badlink">'expr'</code> 方法。在 <a href="options.html#'foldexpr'">'foldexpr'</a> 中 |<a href="eval.html#indent()">indent()</a>| 函
+当你想用另一种方式来略过行时，使用 "expr" 方法。在 <a href="options.html#'foldexpr'">'foldexpr'</a> 中 |<a href="eval.html#indent()">indent()</a>| 函
 数被用来取得一行的缩进。
 
 
@@ -97,8 +97,8 @@
   -1                    折叠级别没有定义，使用这行之前或之后一行的级别值，取其
                         中较小的一个。
   "="                   使用上一行的折叠级别。
-  "a1", "a2", ..        上一行的折叠级别加 1，2，..
-  "s1", "s2", ..        上一行的折叠级别减 1，2，..
+  "a1", "a2", ..        上一行的折叠级别加 1，2，..，结果适用于当前行
+  "s1", "s2", ..        上一行的折叠级别减 1，2，..，结果适用于当前行
   "&lt;1", "&lt;2", ..        此折叠级别在本行结束
   "&gt;1", "&gt;2", ..        此折叠级别在本行开始
 
@@ -115,6 +115,17 @@
 
 最好避免使用 "=" ， "a" 和 "s" 作为返回值，因为 Vim 不得不经常向后回溯以得到折
 叠级别。这会降低执行速度。
+
+使用 "a1" 和 "s1" 的一例: 用于多行 C 注释，以 "/*" 开始的行返回 "a1" 以开始折
+叠，包含 "*/" 的一行返回 "s1" 使该行之后结束折叠:
+<code class="example">  if match(thisline, '/\*') &gt;= 0</code>
+<code class="example">    return 'a1'</code>
+<code class="example">  elseif match(thisline, '\*/') &gt;= 0</code>
+<code class="example">    return 's1'</code>
+<code class="example">  else</code>
+<code class="example">    return '='</code>
+<code class="example">  endif</code>
+不过，此代码不适用于单行注释，字符串等。
 
 |<a href="eval.html#foldlevel()">foldlevel()</a>| 计算相对于上一折叠级别的折叠级别。但要<code class="note">注意</code>，如果该级别未知，
 foidlevel() 返回 -1。它返回的级别对应于该行开始的位置，尽管折叠本身可能在该行
@@ -248,8 +259,9 @@ zF              对 <code class="special">[count]</code> 行创建折叠。其�
 
                                                         <b class="vimtag">*<a name="zd">zd</a>*</b> <b class="vimtag">*<a name="E351">E351</a>*</b>
 zd              删除 (delete) 在光标下的折叠。当光标在被折叠的行上，该折叠被删
-                除。嵌套的折叠上移一级。在可视模式下所选区域 (部分) 涵盖的折叠
-                都被删除。<code class="note">注意</code>: 这种一次删除多个折叠的简单方法不可撤销。
+                除。嵌套的折叠上移一级。在可视模式下所选区域 (部分) 涵盖的一层
+                折叠被删除。
+                小心: 这很容易比你想象地要删得多，手动折叠不能撤销。
                 仅当 <a href="options.html#'foldmethod'">'foldmethod'</a> 设为 "manual" 或 "marker" 时有效。
                 参考 |<a href="fold.html#fold-delete-marker">fold-delete-marker</a>|。
 
@@ -314,8 +326,8 @@ zX              手工恢复被打开和关闭的折叠: 再次应用 <a href="o
                 也同时强制重新计算折叠，同 |<a href="fold.html#zx">zx</a>|。
 
                                                         <b class="vimtag">*<a name="zm">zm</a>*</b>
-zm              折起更多 (more): <a href="options.html#'foldlevel'">'foldlevel'</a> 减 1。如果 <a href="options.html#'foldlevel'">'foldlevel'</a> 已经为 0，
-                则不会被减小。
+zm              折起更多 (more): <a href="options.html#'foldlevel'">'foldlevel'</a> 减 v:count1。如果 <a href="options.html#'foldlevel'">'foldlevel'</a> 已
+                经为 0，则不会被减小。
                 <a href="options.html#'foldenable'">'foldenable'</a> 被设定。
 
                                                         <b class="vimtag">*<a name="zM">zM</a>*</b>
@@ -323,7 +335,7 @@ zM              关闭所有折叠: <a href="options.html#'foldlevel'">'foldleve
                 <a href="options.html#'foldenable'">'foldenable'</a> 被设定。
 
                                                         <b class="vimtag">*<a name="zr">zr</a>*</b>
-zr              减少 (reduce) 折叠: <a href="options.html#'foldlevel'">'foldlevel'</a> 加 1。
+zr              减少 (reduce) 折叠: <a href="options.html#'foldlevel'">'foldlevel'</a> 加 v:count1。
 
                                                         <b class="vimtag">*<a name="zR">zR</a>*</b>
 zR              打开所有的折叠。<a href="options.html#'foldlevel'">'foldlevel'</a> 设为最高级别。
@@ -414,7 +426,7 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 
 折 叠 文 本                                             <b class="vimtag">*<a name="fold-foldtext">fold-foldtext</a>*</b>
 
-<code class="badlink">'folftext'</code> 是个字符串选项，定义了一个表达式。这个表达式被用来求得关闭折叠所显
+<a href="options.html#'foldtext'">'foldtext'</a> 是个字符串选项，定义了一个表达式。这个表达式被用来求得关闭折叠所显
 示的文字。如:
 <code class="example"></code>
 <code class="example">    :set foldtext=v:folddashes.substitute(getline(v:foldstart),'/\\*\\\|\\*/\\\|{{{\\d\\=','','g')</code>
@@ -493,8 +505,8 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 当使用操作符时，一个关闭的行被作为整体处理。所以 "dl" 在光标下删除了整个关闭的
 折叠。
 
-对 Ex 命令的执行范围被调整，使得它总是从关闭折叠的第一行开始，在关闭折叠的最后
-一行结束。所以，命令:
+作用于缓冲区行的 Ex 命令的执行范围会被调整，使得它总是从关闭折叠的第一行开始，
+在关闭折叠的最后一行结束。所以，命令:
 <code class="example">        :s/foo/bar/g</code>
 当光标在关闭的折叠上时，它将在整个折叠里用 "bar" 替换 "foo"。
 不过 |<a href="fold.html#:folddoopen">:folddoopen</a>| 和 |<a href="fold.html#:folddoclosed">:folddoclosed</a>| 的操作并非如此。
@@ -506,6 +518,6 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 
 </pre><hr class="doubleline" /><pre>
 <h4> vim:tw=78:ts=8:ft=help:norl:</h4></pre>
-<p><i>Generated by vim2html on Thu Sep 19 06:21:44 UTC 2013</i></p>
+<p><i>Generated by vim2html on Sat Aug 19 03:17:47 UTC 2017</i></p>
 </body>
 </html>
