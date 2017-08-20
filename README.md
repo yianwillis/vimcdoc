@@ -64,6 +64,16 @@ $ git clone git://github.com/yianwillis/vimcdoc.git
 
 重启 Vim。
 
+## vim-plug
+
+.vimrc 中加入:
+
+```
+Plug 'yianwillis/vimcdoc'
+```
+
+重启 Vim 后执行命令 `:PlugInstall`。
+
 ## Linux 程序安装
 
 下载的 tar.gz 包括所有翻译过的 vim 文档 (.cnx 文件) 和相关的语法文件和插件。
