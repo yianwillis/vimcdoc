@@ -7,8 +7,8 @@ Vim 中文文档计划
 
 Vim (http://www.vim.org) 是一个功能非常强大，且具有很强扩展性的编辑器。而且 Vim
 本身带有一个完备的帮助系统。本项目的目的就是将 Vim 的这些文档翻译成中文，以便更
-多的人认识及更好地使用这个非常强大的编辑器。文档分成 用户手册 和 参考手册 两部
-分，你即可以象使用教程那样循序渐进，也可以快速地查阅来获取帮助。
+多的人认识及更好地使用这个非常强大的编辑器。文档分成用户手册和参考手册两部分，
+你既可以象使用教程那样循序渐进，也可以快速地查阅来获取帮助。
 
 # 下 载
 
@@ -64,7 +64,7 @@ $ git clone git://github.com/yianwillis/vimcdoc.git
 
 重启 Vim。
 
-### Linux 程序安装
+## Linux 程序安装
 
 下载的 tar.gz 包括所有翻译过的 vim 文档 (.cnx 文件) 和相关的语法文件和插件。
 先将其解压缩：
@@ -110,8 +110,8 @@ runtimepath 选项：
 ## 手动安装
 
 你也可以自己动手来安装：只要把所有的中文文档以及 tags-cn 文件拷贝到 runtimepath
-之一的 doc 子目录下就行了。runtimepath 可用在 vim 内用 :set rtp? 命令来得到。比
-如在 vimcdoc-<version> 目录中，可以执行以下命令：
+之一的 doc 子目录下就行了。runtimepath 可用在 vim 内用 `:set rtp?` 命令来得到。比
+如在 `vimcdoc-<version>` 目录中，可以执行以下命令：
 
 ```shell
 $ cp -R doc /usr/share/vim/vimfiles/doc
@@ -120,6 +120,7 @@ $ cp -R doc /usr/share/vim/vimfiles/doc
 这种方法对 Linux 和 Win32 都有效。
 
 现在启动 vim/gvim, 键入 :help 看看吧！
+
 
 # 卸 载
 
@@ -158,7 +159,7 @@ vimcdoc-Uninst.exe，只要执行它就可以了。
 如果使用 2 或 3，建议把 vim 设置写入你的个人 .vimrc 设置文件，避免每次都要输入
 命令的麻烦。
 
-备注：如果 set enc=utf-8 时，使用的中文消息出现乱码，可以同时设置
+备注：如果 `set enc=utf-8` 时，使用的中文消息出现乱码，可以同时设置
 
 ```vim
 :language message zh_CN.UTF-8
@@ -176,6 +177,7 @@ http://yianwillis.github.io/vimcdoc/
 与我们联系 (见下)，同时请先行阅读 guides.txt。
 
 AUTHORS 列出了翻译人员。
+
 LICENSE 包括版权信息。
 
 # 信 息
@@ -184,11 +186,8 @@ LICENSE 包括版权信息。
 
 https://github.com/yianwillis/vimcdoc
 
-这将是我们的新主页。原版本
-
-http://vimcdoc.sf.net (English)
-
-的内容已经完整导入。以后的更新也只会在 github 进行。
+这将是我们的新主页。原版本 http://vimcdoc.sf.net (English) 的内容已经完整导入。
+以后的更新也只会在 github 进行。
 
 
 # 联 系
