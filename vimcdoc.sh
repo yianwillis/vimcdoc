@@ -30,9 +30,7 @@ CNTAGS=tags-cn
 DIST_FILES="README.md
 guides.txt
 LICENSE
-TODO
 VERSION
-INSTALL
 AUTHORS
 dict.txt"
 VIMCDOC_INST='vimcdoc.sh'

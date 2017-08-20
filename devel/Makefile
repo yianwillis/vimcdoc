@@ -1,5 +1,5 @@
 all: 
-	@echo "For installation instruction, please read INSTALL."
+	@echo "For installation instruction, please read README.md."
 
 install:
-	@echo "Please read the INSTALL document"
+	@echo "Please read the README.md document"
