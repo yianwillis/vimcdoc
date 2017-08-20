@@ -9,8 +9,8 @@
 
 import re
 vimcdoc_ver = "" 
-data_dir_prefix = "../../"
-news_file = data_dir_prefix + "NEWS"
+data_dir_prefix = "../../../"
+news_file = data_dir_prefix + "devel/NEWS"
 author_file = data_dir_prefix + "AUTHORS"
 version_file = data_dir_prefix + "VERSION"
 index_file = "./index.html"

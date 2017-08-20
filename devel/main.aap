@@ -1,0 +1,38 @@
+# Following are steps for a new release:
+#   aap ChangeLog: update ChangeLog file
+#   VERSION, NEWS, INSTALL: to be updated manually
+#   aap -f release/main.aap release: release/vimcdoc-<ver>.tar.gz, release/vimcdoc-<ver>-setup.exe, release/vimcdoc-<ver>-setup-unicode.exe
+#   aap -f pdf_maker/main.aap release: release/reference-<ver>.pdf, pdf_maker/user_manual-<ver>.pdf
+#   aap -f doc/main.aap allhtml: docs/*.html
+#   aap -f www/htdocs/main.aap index.html: www/htdocs/index.html
+#
+# Steps to publish:
+#   aap -f release/main.aap publish   (release packages and pdf manuals)
+#   aap -f doc/main.aap publish       (vimcdoc.sf.net help files)
+#   aap -f www/htdocs/main.aap publish (vimcdoc homepage)
+#
+# External tools we would need:
+#   nsis, ANSI (2.x standard) and unicode (3.0 alpha needed)
+#	wine, if running from non-windows environment
+#   latex, latexmk
+#   latex packages: CJK, alltt, color, verbatim, hyperref, url
+
+TOPLEVELDIR=..
+:include common.aap
+
+ChangeLog: $DOC_FILES
+	:sys git log --date=short --pretty="format:%ad %aE %s%n" --name-only > $TOPLEVELDIR/ChangeLog
+
+all:
+	:print Use 'aap clean' to clean up.
+	:print Use 'aap ChangeLog' to update ChangeLog.
+
+clean:
+	:del {r}{force} *~ *.bak
+	:execute doc/main.aap clean
+	:execute tools/main.aap clean
+	:execute pdf_maker/main.aap clean
+	:execute release/main.aap clean
+	:execute www/htdocs/main.aap clean
+
+# vim:ts=4:noet:
