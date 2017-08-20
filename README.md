@@ -35,7 +35,7 @@ $ git clone git://github.com/yianwillis/vimcdoc.git
 当然，如果不想用 git，也可用解压下载的 tar.gz 包到 `~/.vim/pack/foo/start`。git
 方式的好处可以随时进行更新。
 
-## Vundle 方式
+## Vundle
 
 .vimrc 中加入：
 
