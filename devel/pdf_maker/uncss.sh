@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in ../doc/*.html; do
+for i in *.html; do
   cat $i |
   perl -np -e 's/<code class="note">((?:.(?!<\/?code))*.)<\/code>/<dfn>\1<\/dfn>/g' |
   perl -np -e 's/<code class="keystroke">((?:.(?!<\/?code))*.)<\/code>/<kbd>\1<\/kbd>/g' |

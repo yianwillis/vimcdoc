@@ -13,10 +13,13 @@ use utf8;
 use Text::Tabs; # Willis: expand replaced by myexpand. So no longer necessary.
 use Encode;
 use vars qw/%url $date/;
+use Getopt::Long qw(GetOptions);
 
 %url = ();
 $date = Encode::decode_utf8(`date -u`);
 chop $date;
+
+my $show_banner;
 
 sub maplink
 {
@@ -127,6 +130,15 @@ sub vim2html
 	my $head = uc( $outfile );
 
 	my $filler = ' ' x 80;
+	my $banner = $show_banner ? <<"EOF" : "";
+<div id=banner>
+<a href="help.html">帮助总览</a> &middot;
+<a href="quickref.html">快速参考</a> &middot;
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a>
+</div>
+EOF
+
 	print OUT<<EOF;
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
@@ -136,13 +148,7 @@ sub vim2html
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
 </head>
 <body>
-<h2></h2>
-<div id=banner>
-<a href="help.html">帮助总览</a> &middot;
-<a href="quickref.html">快速参考</a> &middot;
-<a href="usr_toc.html">用户手册</a> &middot;
-<a href="help.html#reference_toc">参考手册</a>
-</div>
+$banner
 <div id=outer><pre id=sp>$filler</pre><div id=inner>
 <pre>
 EOF
@@ -288,7 +294,9 @@ die<<EOF;
 vim2html.pl: converts vim documentation to HTML.
 usage:
 
-	vim2html.pl <tag file> <text files>
+	vim2html.pl [--banner] <tag file> <text files>
+	Parameters:
+	--banner: optional. Print banner line.
 EOF
 }
 
@@ -297,6 +305,10 @@ EOF
 # main
 #usage() if $#ARGV < 2;
 usage() if !defined $ARGV[1];
+
+GetOptions(
+    'banner' => \$show_banner,
+) or usage();
 
 print "Processing tags...\n";
 readTagFile( $ARGV[ 0 ] );
