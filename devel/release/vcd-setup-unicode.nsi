@@ -1,4 +1,4 @@
-﻿# vimcdoc (http://vimcdoc.sf.net) Win32 platform installation program
+﻿# vimcdoc (http://github.com/yianwillis/vimcdoc) Win32 platform installation program
 # NSIS source script
 # Compile this file with NSIS2!! available at http://nsis.sf.net
 # Author: lang2 (lang2_at_users.sf.net)
@@ -57,8 +57,8 @@ LangString StartVim ${LANG_ENGLISH} "View the Chinese help after installation"
 LangString SetupVim ${LANG_SIMPCHINESE} "设置中文为缺省帮助语言"
 LangString SetupVim ${LANG_ENGLISH} "Set Chinese as the default help language"
 
-LangString BrandingText ${LANG_SIMPCHINESE} "http://vimcdoc.sf.net"
-LangString BrandingText ${LANG_ENGLISH} "http://vimcdoc.sf.net"
+LangString BrandingText ${LANG_SIMPCHINESE} "http://github.com/yianwillis/vimcdoc"
+LangString BrandingText ${LANG_ENGLISH} "http://github.com/yianwillis/vimcdoc"
 BrandingText $(BrandingText)
 
 LangString LicenseText ${LANG_SIMPCHINESE} "版权信息"
