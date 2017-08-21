@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: ft_rust</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<div id=banner>
+<a href="help.html">帮助总览</a> &middot;
+<a href="quickref.html">快速参考</a> &middot;
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a>
+</div>
+
+<div id=outer><pre id=sp>                                                                                </pre><div id=inner>
+<pre>
+<b class="vimtag">*<a name="ft_rust.txt">ft_rust.txt</a>*</b>      Rust 文件类型插件
+
+                                <code class="vim">译者</code>: Willis
+                                http://vimcdoc.sf.net
+
+</pre><hr class="doubleline" /><pre>
+<h4>内容                                                          <b class="vimtag">*<a name="rust">rust</a>*</b></h4>
+1. 简介                                                        |<a href="ft_rust.html#rust-intro">rust-intro</a>|
+2. 设置                                                        |<a href="ft_rust.html#rust-settings">rust-settings</a>|
+3. 命令                                                        |<a href="ft_rust.html#rust-commands">rust-commands</a>|
+4. 映射                                                        |<a href="ft_rust.html#rust-mappings">rust-mappings</a>|
+
+</pre><hr class="doubleline" /><pre>
+<h4>简介                                                              <b class="vimtag">*<a name="rust-intro">rust-intro</a>*</b></h4>
+本插件提供 Rust 文件类型的语法和支持功能。
+
+</pre><hr class="doubleline" /><pre>
+<h4>设置                                                           <b class="vimtag">*<a name="rust-settings">rust-settings</a>*</b></h4>
+本插件有若干可在 vimrc 中定义的变量，用来改变插件的行为。
+
+                                                                <b class="vimtag">*<a name="g:rustc_path">g:rustc_path</a>*</b>
+<code class="section">g:rustc_path</code>
+        此选项设置 rustc  的路径，用于 |<a href="ft_rust.html#:RustRun">:RustRun</a>| 和 |<a href="ft_rust.html#:RustExpand">:RustExpand</a>| 命令。如果
+        不设，"rustc" 会从 $PATH 中寻找:
+<code class="example">            let g:rustc_path = $HOME."/bin/rustc"</code>
+
+
+                                                  <b class="vimtag">*<a name="g:rustc_makeprg_no_percent">g:rustc_makeprg_no_percent</a>*</b>
+<code class="section">g:rustc_makeprg_no_percent</code>
+        此选项如设为 1，<a href="options.html#'makeprg'">'makeprg'</a> 缺省为 "rustc" 而不是 "rustc %":
+<code class="example">            let g:rustc_makeprg_no_percent = 1</code>
+
+
+                                                              <b class="vimtag">*<a name="g:rust_conceal">g:rust_conceal</a>*</b>
+<code class="section">g:rust_conceal</code>
+        置位此选项打开基本 |<a href="syntax.html#conceal">conceal</a>| 支持:
+<code class="example">            let g:rust_conceal = 1</code>
+
+
+                                                     <b class="vimtag">*<a name="g:rust_conceal_mod_path">g:rust_conceal_mod_path</a>*</b>
+<code class="section">g:rust_conceal_mod_path</code>
+        置位此选项隐藏 |<a href="syntax.html#conceal">conceal</a>| 路径连接符 "::":
+<code class="example">            let g:rust_conceal_mod_path = 1</code>
+
+
+                                                          <b class="vimtag">*<a name="g:rust_conceal_pub">g:rust_conceal_pub</a>*</b>
+<code class="section">g:rust_conceal_pub</code>
+        置位此选项隐藏 |<a href="syntax.html#conceal">conceal</a>| "pub" 符:
+<code class="example">            let g:rust_conceal_pub = 1</code>
+
+
+                                                     <b class="vimtag">*<a name="g:rust_recommended_style">g:rust_recommended_style</a>*</b>
+<code class="section">g:rust_recommended_style</code>
+        置位此选项设置 vim 缩进和 textwidth 以遵循 rust 标准库的风格惯例 (即，
+        缩进为 4 个空格，<a href="options.html#'textwidth'">'textwidth'</a> 设为 99)。缺省打开此选项。要关闭之:
+<code class="example">            let g:rust_recommended_style = 0</code>
+
+
+                                                                 <b class="vimtag">*<a name="g:rust_fold">g:rust_fold</a>*</b>
+<code class="section">g:rust_fold</code>
+        置位此选项打开 |<a href="fold.html#folding">folding</a>|:
+<code class="example">            let g:rust_fold = 1</code>
+
+<code class="section">        值              效果 </code>
+        0               无折叠
+        1               折叠花括号块。缺省打开全部折叠。
+        2               折叠花括号块。<a href="options.html#'foldlevel'">'foldlevel'</a> 仍用其全局值 (缺省关闭全部折
+                        叠)。
+
+                                                  <b class="vimtag">*<a name="g:rust_bang_comment_leader">g:rust_bang_comment_leader</a>*</b>
+<code class="section">g:rust_bang_comment_leader</code>
+        设置此选项为 1 以保留使用 /*! 语法的多行文档注释的中间注释字符串:
+<code class="example">            let g:rust_bang_comment_leader = 1</code>
+
+
+                                                 <b class="vimtag">*<a name="g:ftplugin_rust_source_path">g:ftplugin_rust_source_path</a>*</b>
+<code class="section">g:ftplugin_rust_source_path</code>
+        此选项设置加到 <a href="options.html#'path'">'path'</a> 前部的路径，用于 Rust 源文件:
+<code class="example">            let g:ftplugin_rust_source_path = $HOME.'/dev/rust'</code>
+
+
+                                                       <b class="vimtag">*<a name="g:rustfmt_command">g:rustfmt_command</a>*</b>
+<code class="section">g:rustfmt_command</code>
+        此选项设置 $PATH 里 <code class="badlink">'rustfmt'</code> 可执行文件的名字。如果不设，缺省为
+        <code class="badlink">'rustfmt'</code> :
+<code class="example">            let g:rustfmt_command = 'rustfmt'</code>
+
+                                                       <b class="vimtag">*<a name="g:rustfmt_autosave">g:rustfmt_autosave</a>*</b>
+<code class="section">g:rustfmt_autosave</code>
+        设置此选项为 1 使缓冲区保存时自动执行 |<a href="ft_rust.html#:RustFmt">:RustFmt</a>|。如果不设，缺省为
+        0:
+<code class="example">            let g:rustfmt_autosave = 0</code>
+
+                                                       <b class="vimtag">*<a name="g:rustfmt_fail_silently">g:rustfmt_fail_silently</a>*</b>
+<code class="section">g:rustfmt_fail_silently</code>
+        设置此选项为 1 则 <code class="badlink">'rustfmt'</code> 不在 |<a href="quickfix.html#location-list">location-list</a>| 中保存错误。如果不
+        设，缺省为 0:
+<code class="example">            let g:rustfmt_fail_silently = 0</code>
+
+                                                       <b class="vimtag">*<a name="g:rustfmt_options">g:rustfmt_options</a>*</b>
+<code class="section">g:rustfmt_options</code>
+        此选项设置传递给 <code class="badlink">'rustfmt'</code> 的选项字符串。write-mode 已经设为
+        <code class="badlink">'overwrite'</code>。如果不设，缺省为 '' :
+<code class="example">            let g:rustfmt_options = ''</code>
+
+
+                                                          <b class="vimtag">*<a name="g:rust_playpen_url">g:rust_playpen_url</a>*</b>
+<code class="section">g:rust_playpen_url</code>
+        此选项覆盖 playpen 使用的 url:
+<code class="example">            let g:rust_playpen_url = 'https://play.rust-lang.org/'</code>
+
+
+                                                        <b class="vimtag">*<a name="g:rust_shortener_url">g:rust_shortener_url</a>*</b>
+<code class="section">g:rust_shortener_url</code>
+        此选项覆盖短 url 生成器使用的 url:
+<code class="example">            let g:rust_shortener_url = 'https://is.gd/'</code>
+
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>命令                                                           <b class="vimtag">*<a name="rust-commands">rust-commands</a>*</b></h4>
+:RustRun  <code class="special">[args]</code>                                                    <b class="vimtag">*<a name=":RustRun">:RustRun</a>*</b>
+:RustRun! [rustc-args] [--] <code class="special">[args]</code>
+                编译并运行当前文件。如果有未保存的改动，先用 |<a href="editing.html#:update">:update</a>| 保存。
+                如果当前文件为无名缓冲区，先写入一个临时文件。编译后的程序总是
+                放在一个临时目录里，但从当前目录处执行。
+
+                |<a href="ft_rust.html#:RustRun">:RustRun</a>| 接受的参数传递给编译后的程序。
+
+                如果指定 !，取而代之的是参数会传递给 rustc。"--" 参数可用来分
+                隔 rustc 的参数和传递给执行程序的参数。
+
+                |<a href="ft_rust.html#g:rustc_path">g:rustc_path</a>| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+                中找到 rustc。
+
+:RustExpand  <code class="special">[args]</code>                                              <b class="vimtag">*<a name=":RustExpand">:RustExpand</a>*</b>
+:RustExpand! <code class="special">[TYPE]</code> <code class="special">[args]</code>
+                使用 --pretty 扩展当前文件，并在新分割中显示结果。如果当前文件
+                有未保存的改动，先用 |<a href="editing.html#:update">:update</a>| 保存。如果当前文件为无名缓冲
+                区，先写入一个临时文件。
+
+                |<a href="ft_rust.html#:RustExpand">:RustExpand</a>| 接受的参数传递给 rustc。主要用来指定各种 --cfg
+                配置。
+
+                如果指定 !，首个参数是传给 rustc --pretty 的扩展类型。否则缺省
+                为 "expanded"。
+
+                |<a href="ft_rust.html#g:rustc_path">g:rustc_path</a>| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+                中找到 rustc。
+
+:RustEmitIr <code class="special">[args]</code>                                               <b class="vimtag">*<a name=":RustEmitIr">:RustEmitIr</a>*</b>
+                编译当前文件到 LLVM IR 并在新分割中显示结果。如果当前文件有未
+                保存的改动，先用 |<a href="editing.html#:update">:update</a>| 保存。如果当前文件为无名缓冲区，先
+                写入一个临时文件。
+
+                |<a href="ft_rust.html#:RustEmitIr">:RustEmitIr</a>| 接受的参数传递给 rustc。
+
+                |<a href="ft_rust.html#g:rustc_path">g:rustc_path</a>| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+                中找到 rustc。
+
+:RustEmitAsm <code class="special">[args]</code>                                             <b class="vimtag">*<a name=":RustEmitAsm">:RustEmitAsm</a>*</b>
+                编译当前文件到汇编程序，并在新分割中显示结果。如果当前文件有未
+                保存的改动，先用 |<a href="editing.html#:update">:update</a>| 保存。如果当前文件为无名缓冲区，先
+                写入一个临时文件。
+
+                |<a href="ft_rust.html#:RustEmitAsm">:RustEmitAsm</a>| 接受的参数传递给 rustc。
+
+                |<a href="ft_rust.html#g:rustc_path">g:rustc_path</a>| 如有定义，则用作 rustc 的路径。否则假定在 $PATH
+                中找到 rustc。
+
+:RustPlay                                                          <b class="vimtag">*<a name=":RustPlay">:RustPlay</a>*</b>
+                此命令只有在安装了 web-api.vim 后才能工作 (可从这里找到
+                https://github.com/mattn/webapi-vim)。发送当前选择区，如果没有
+                选择过的话，则发送整个缓冲区到 Rust playpen，并发送短 URL 到
+                playpen。
+
+                |<a href="ft_rust.html#g:rust_playpen_url">g:rust_playpen_url</a>| 是 playpen 的基准 URL，缺省是
+                "https://play.rust-lang.org/"。
+
+                |<a href="ft_rust.html#g:rust_shortener_url">g:rust_shortener_url</a>| 是短 URL 生成器的基准 URL，缺省是
+                "https://is.gd/"
+
+:RustFmt                                                       <b class="vimtag">*<a name=":RustFmt">:RustFmt</a>*</b>
+                在当前缓冲区上执行 |<a href="ft_rust.html#g:rustfmt_command">g:rustfmt_command</a>|。如果设置了
+                |<a href="ft_rust.html#g:rustfmt_options">g:rustfmt_options</a>|，传递给该程序。
+
+                如果 |<a href="ft_rust.html#g:rustfmt_fail_silently">g:rustfmt_fail_silently</a>| 为 0 (缺省)，则
+                |<a href="ft_rust.html#g:rustfmt_command">g:rustfmt_command</a>| 的错误会添加到 |<a href="quickfix.html#location-list">location-list</a>| 里。
+                如果 |<a href="ft_rust.html#g:rustfmt_fail_silently">g:rustfmt_fail_silently</a>| 设为 1，则不会写入错误到
+                |<a href="quickfix.html#location-list">location-list</a>|。
+
+:RustFmtRange                                                  <b class="vimtag">*<a name=":RustFmtRange">:RustFmtRange</a>*</b>
+                在指定范围上执行 |<a href="ft_rust.html#g:rustfmt_command">g:rustfmt_command</a>|。其它信息见 |<a href="ft_rust.html#:RustFmt">:RustFmt</a>|
+
+</pre><hr class="doubleline" /><pre>
+<h4>映射                                                           <b class="vimtag">*<a name="rust-mappings">rust-mappings</a>*</b></h4>
+此插件定义了 |<a href="motion.html#[[">[[</a>| 和 |<a href="motion.html#]]">]]</a>| 的映射以支持悬挂缩进。
+
+还定义了一些其它映射:
+
+                                                        <b class="vimtag">*<a name="rust_%3CD-r%3E">rust_&lt;D-r&gt;</a>*</b>
+<code class="special">&lt;D-r&gt;</code>                   执行 |<a href="ft_rust.html#:RustRun">:RustRun</a>|，不带参数。
+                        <code class="note">备注</code>: 此绑定只适用于 MacVim。
+
+                                                        <b class="vimtag">*<a name="rust_%3CD-R%3E">rust_&lt;D-R&gt;</a>*</b>
+<code class="special">&lt;D-R&gt;</code>                   重用上次调用使用的参数来生成 |<a href="ft_rust.html#:RustRun">:RustRun</a>|! 命令行，但先
+                        不执行。
+                        <code class="note">备注</code>: 此绑定只适用于 MacVim。
+
+</pre><hr class="doubleline" /><pre>
+<h4> vim:tw=78:sw=4:noet:ts=8:ft=help:norl:</h4></pre>
+<p><i>Generated by vim2html on Mon Aug 21 04:50:36 UTC 2017</i></p>
+</div>
+</div>
+</body>
+</html>
