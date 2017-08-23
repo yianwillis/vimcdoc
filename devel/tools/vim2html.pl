@@ -20,6 +20,7 @@ $date = Encode::decode_utf8(`date -u`);
 chop $date;
 
 my $show_banner;
+my $conceal=1;
 
 sub maplink
 {
@@ -203,8 +204,6 @@ EOF
 			$_ = " " . $_ if /^\s/;
 		}
 
-		s/\s+$//g;
-
 		if( $inexample == 2 ) {
 			print OUT "<code class=\"example\">" . esctext($_) . "</code>\n";
 			$inheader = 0;
@@ -221,13 +220,22 @@ EOF
 		foreach my $token ( split /((?:\|[^*"|[:space:]]+\|)|(?:\*[^*"|[:space:]]+\*(?=[[:space:]]|$)))/ ) {
 			if ( $token =~ /^\|([^*"|[:space:]]+)\|/ ) {
 				# link
-				push( @out, "|".maplink( $1 )."|" );
+				if ( $conceal ) {
+					push( @out, " ".maplink( $1 )." " );
+				} else {
+					push( @out, "|".maplink( $1 )."|" );
+				}
 				next LOOP;
 			}
 			elsif ( $token =~ /^\*([^*"|[:space:]]+)\*/ ) {
 				# target
-				push( @out,
-					"<b class=\"vimtag\">\*<a name=\"".escurl($1)."\">".esctext($1)."<\/a>\*<\/b>");
+				if ( $conceal ) {
+					push( @out,
+									"<b class=\"vimtag\"> <a name=\"".escurl($1)."\">".esctext($1)."<\/a> <\/b>");
+				} else {
+					push( @out,
+									"<b class=\"vimtag\">\*<a name=\"".escurl($1)."\">".esctext($1)."<\/a>\*<\/b>");
+				}
 				next LOOP;
 			}
 
@@ -237,6 +245,13 @@ EOF
 
 			# parameter '...'
 			s/'(\w{2,}|t_..)'/maplink($&)/ge;
+
+			# parameter `...`
+			if ( $conceal ) {
+				s/`([^` \t]+)`/" ".maplink($1)." "/ge;
+			} else {
+				s/`([^` \t]+)`/"`".maplink($1)."`"/ge;
+			}
 
 			# parameter <...>
 			s/&lt;([a-zA-Z0-9_-]*)&gt;/<code class="special">&lt;$1&gt;<\/code>/g;
@@ -295,9 +310,10 @@ die<<EOF;
 vim2html.pl: converts vim documentation to HTML.
 usage:
 
-	vim2html.pl [--banner] <tag file> <text files>
-	Parameters:
+	vim2html.pl [options] <tag file> <text files>
+  Options:
 	--banner: optional. Print banner line.
+	--conceal: optional. Conceal certain notations. Default is true.
 EOF
 }
 
@@ -309,6 +325,7 @@ usage() if !defined $ARGV[1];
 
 GetOptions(
     'banner' => \$show_banner,
+    'conceal!' => \$conceal,
 ) or usage();
 
 print "Processing tags...\n";
