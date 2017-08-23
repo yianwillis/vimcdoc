@@ -267,6 +267,9 @@ EOF
 			# parameter {...}
 			s/\{([^ {}'"|]*)\}/<code class="special">{$1}<\/code>/g;
 
+			# emphasis
+			s/_([^\p{Latin}]+)_/ <code class="emphasis">$1<\/code> /g;
+
 			# title
 			s/VIM (?:参考手册|用户手册).*|译者[注]?/<code class="vim">$&<\/code>/g;
 
