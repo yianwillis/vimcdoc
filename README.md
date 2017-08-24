@@ -181,8 +181,8 @@ vimcdoc-Uninst.exe，只要执行它就可以了。
 
 http://yianwillis.github.io/vimcdoc/
 
-为了最佳阅读效果，请确保你的系统安装了 NSimsun 字体，否则可能有字体不能完全对齐
-的情况。
+为了最佳阅读效果，请确保你的系统安装了 'Noto Sans Mono CJK SC' 或 NSimsun 字
+体，否则可能有字体不能完全对齐的情况。
 
 # 加 入
 
