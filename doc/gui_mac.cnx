@@ -1,0 +1,666 @@
+*gui_mac.txt*   For Vim version 8.0.  最近更新: 2017年8月
+
+
+	   VIM 参考手册    by Bjorn Winckler
+				译者: Willis
+				http://vimcdoc.sf.net
+
+
+MacVim 图形用户介面					*macvim* *gui-macvim*
+
+ 1. MacVim 的不同之处		|macvim-differences|
+ 2. 启动 MacVim			|macvim-start|
+ 3. 首选项			|macvim-preferences|
+ 4. 特殊颜色			|macvim-colors|
+ 5. 菜单			|macvim-menus|
+ 6. 工具栏			|macvim-toolbar|
+ 7. 对话框			|macvim-dialogs|
+ 8. 系统服务			|macvim-services|
+ 9. mvim:// URL 处理程序	|macvim-url-handler|
+10. 键盘快捷键			|macvim-shortcuts|
+11. 触控板手势			|macvim-gestures|
+12. 国际化			|macvim-international|
+13. 已知漏洞/缺失功能		|macvim-todo|
+14. 提示			|macvim-hints|
+
+其它相关的文档:
+|gui.txt|	用于 GUI 的通用条目。
+
+{Vi 没有 GUI}
+
+==============================================================================
+1. MacVim 的不同之处					*macvim-differences*
+
+MacVim 的目标之一是使 Vim 成为合乎规范的 Mac OS X 应用。为此，MacVim 和 Vim 的
+其它 GUI 移植版本的行为稍有不同。多数的修改由系统 gvimrc 文件提供；可以这样快
+速地打开此文件来自己看看: >
+	:tabe $VIM/gvimrc
+注意 每次更新 MacVim 时会覆盖此文件，最好把你自己的修改保存于 "~/.gvimrc" 中。
+
+							*macvim-windows*
+MacVim 里关于术语 "窗口" 有些混淆，因为 Vim 里的窗口意义和 MacVim 的不同。Vim
+里的窗口是键入 ":sp" 时打开的那个，而 MacVim 里的 "窗口" 是包含文本视图、滚动
+条、工具栏和标签页栏的 GUI 窗口。为了避免混淆，前者被称为 Vim 窗口，而后者被简
+单地称为窗口。
+
+							*macvim-encoding*
+MacVim 里不能修改 'termencoding'；此选项强制设为 "utf-8"。选项 'encoding' 缺省
+也设为 "utf-8" (而不是其它 GUI 移植版本的 "latin1")。
+
+备注: UTF-8 代表 Unicode 定义的所有字符，包含其它标准编码里的所有字符，所以
+'encoding' 设为 "utf-8" 时可以十分安全地编辑任何编码的文件。当然，可能需要设置
+'fileencodings' 来自动检测待编辑文件的编码，或者在命令行上用 |++enc| 强制检测
+结果。
+
+不过，编辑使用多种编码 (MIME 或 Unix mbox 文件这类的包容器格式) 或没有标准编码
+(二进制数据，另见 |edit-binary|) 的文件时，可能不想 MacVim 对文件进行任何重新
+编码。这种情况下，需要同时设置 'encoding' 和 'fileencodings' 为简单的单字节编
+码，如 Latin1，这样文件读入内存时，不会对原始的字节进行改变。
+
+							*macvim-shift-movement*
+Mac OS X 上的文本编辑器让用户按住 shift+移动键来扩展选择区。另外，选中时按住可
+显示字符会用该字符替换当前选择区。Macvim 可以模拟此类行为 (提供键映射并设置
+'keymodel' 和 'selectmode' 为非缺省值)，但缺省不采用。要使 MacVim 的行为更类似
+于 TextEdit 而不是 Vim，在 "~/.vimrc" (不是 .gvimrc) 文件里加入以下的行: >
+	if has("gui_macvim")
+	  let macvim_hig_shift_movement = 1
+	endif
+<
+							*macvim-drag-n-drop*
+拖动文件并在某窗口中放置文件，会在该窗口的标签页上打开那些文件，除非 Vim 处于
+命令行模式。在命令行模式时，把文件的名字加入命令行。不支持拖动时按住修饰符。
+
+如果拖放文件到 Dock 图标上，则不管 Vim 正处于什么模式，总是在新标签页上打开。
+在 Finder 中双击文件也是如此。
+
+如果不希望用标签页打开，通用首选面板里的 "Open files from applications" (应用
+中打开文件) 首选项提供更多拖放文件如何打开的选项，
+
+							*macvim-default-menu*
+MacVim 的缺省菜单经过改动，以更符合 Apple 人机界面设计指南 (HIG) 的规范。目
+前，这使本地化的菜单不能正常工作，所以只支持英语菜单 (译者注: 本 github 项目包
+含了 MacVim 的本地化中文菜单)。
+
+注意: 菜单的工作仍在进行。如果你对 HIG 有所了解并想为 MacVim 有所贡献，可以帮
+帮忙，使菜单更好用。
+
+							*macvim-window-title*
+缺省窗口标题不包含参数列表，一旦开始使用标签页后，看起来很难看。例如，拖放两个
+文件，再多拖放两个，然后切换回第一个标签页，窗口标题上会出现 "((3) of 2)" 这样
+奇怪的字符串。
+
+							*macvim-tablabel*
+标签页标签只显示文件名的尾部，这样编辑深度嵌套目录下的文件时标签页会更可读。在
+.gvimrc 文件里加入 "set guitablabel=" 可以恢复 Vim 缺省的标签页标签。
+
+							*macvim-options*
+MacVim 支持以下非标准的选项:
+	'antialias'	'blurradius'	'fullscreen'
+	'fuoptions'	'macligatures'	'macmeta'	'macthinstrokes'
+	'toolbariconsize'	'transparency'
+
+							*macvim-commands*
+MacVim 支持以下非标准的命令:
+	|:macaction|	|:macmenu|
+
+							*macvim-find*
+在 Vim 中进行查找时 (例如，用 "/") 搜索查询被复制到 OS X 的 "查找粘贴板 (Find
+Pasteboard)"。这里的想法是你先查找一些东西，然后切换到其它应用时，按 <D-g> (或
+<D-G>) 可以在新应用中重复该查找。同样的特性也可用于先在某应用进行查找，然后切
+换回 MacVim 并按 <D-g>。
+
+注意 命令 |n| 不同于 <D-g>。前者重复上次 Vim 进行的查找，而后者用 findNext: 动
+作 (见 |:macaction|) 查找 OS X 查找粘贴板里的字符串。
+
+<D-g> 键或其等价功能是在 MacVim 里把搜索从一个窗口带到另一个窗口的很好的方法。
+简单地在一个窗口里查找 (用 "/") 然后切换到另一个 (如 <D-`>) 并按 <D-g> 会在新
+窗口中重复同样的搜索。
+
+					*macvim-backspace* *macvim-delete*
+系统 vimrc 里设置 'backspace' 选项，使删除键的行为对新用户更熟悉。如果不喜欢此
+非缺省的行为，在 "~/.vimrc" 文件里加入 "set backspace&"。
+
+==============================================================================
+2. 启动 MacVim						*macvim-start*
+
+最简单启动 MacVim 的方法是在 Finder 里双击其图标，但多数用户可能会更想用终端。
+首先介绍启动 MacVim 的 Finder 相关方式，然后介绍终端。
+注意 你可以把 MacVim 放在硬盘上任何位置，但此帮助文件假定它在 /Applications 目
+录下。
+
+MacVim 自动注册自身为若干标准文件格式的编辑器。这样双击文件时可以用 MacVim 打
+开 (如果没有和其它程序相关联的话)，或右击文件以打开 "Open with" 菜单。也可以在
+Dock 图标上拖放文件以便在新窗口上用标签页打开这些文件，也可以在已经打开的窗口
+上拖放文件以便在该窗口上用标签页打开这些文件 (通过改变通用首选面板的 "Open
+files from applications" 选项，也可以用分割等方式打开文件)。最后，Mac OS X 系
+统服务可用来在 MacVim 里打开文件，见 |macvim-services|。
+
+|mvim| 脚本用来从终端启动 MacVim。
+
+也可用 "open" 命令 (此方法不能用来给 Vim 传递参数) >
+	open -a MacVim file ...
+后者的优点是会采用首选面板里文件打开相关的设定，如果打开 |Quickstart|，文件会
+瞬时打开。
+
+终端 Vim 里用以下命令可以打开 MacVim: >
+	:gui [++opt] [+cmd] [-f|-b] [files...]
+注意: 分叉 ("-b") 目前不能用。
+
+							*mvim*
+"mvim" 外壳脚本和 MacVim 捆绑提供。 >
+	/Applications/MacVim.app/Contents/bin/mvim
+它是在捆绑包里启动 Vim 可执行程序的一个包装脚本。把此目录 >
+	/Applications/MacVim.app/Contents/bin
+加到你的 path 里，就可以简单地从终端里通过键入 "mvim" 来启动 MacVim。 >
+	$ mvim
+也可以指定要打开的文件。 >
+	$ mvim file ...
+另外 bin 目录有便捷脚本，可用于比较和以只读方式打开文件。 >
+	* 比较:		mvimdiff
+	* 只读:		mview
+
+如果想要非 GUI 的 Vim 版本，可用 "vim"、"vimdiff" 和 "view"。
+
+							*Quickstart*
+Quickstart 确保新窗口会即时打开，如按下 <D-n> 时。可从高级首选面板中打开此特性
+(缺省关闭)。注意 此设定不影响运行 |mvim| 命令时打开窗口的速度。
+
+注意 任何保存在非标准位置 (也就是不在 ~/.vim 里) 的 runtime 文件被改动之后，首
+个打开窗口看不见这些改动。另外，还有一些和 |viminfo| 文件的读写相关的问题，可
+能会导致命令行历史 (和其它保存在 |viminfo| 文件的信息) 看起来有丢失。例如，如
+果你打开窗口，编辑一些文件，然后关闭窗口，此时下个打开的窗口看不见刚刚关闭窗口
+的相同命令行历史 (不过再下个打开的窗口就会有了)。为了这些原因，缺省关闭
+Quickstart。
+
+						*odbeditor* *external-editor*
+MacVim 可以作为 '外部编辑器'，用于支持 ODB 编辑器协议 (或 '外部编辑器' 协议)
+的 Mac OS X 应用。每个应用有不同的配置此选项的方式，请查阅应用本身的文档。一经
+正确配置，MacVim 可用来在这样的应用中打开文件。
+
+技术 备注: MacVim 处理文件打开、修改和关闭事件。在打开事件中解析 FTok 和 Burl
+参数 (不过现在忽略后者)。在修改和关闭事件中把 Tokn 参数回传给服务器应用。
+
+==============================================================================
+3. 首选项				    *macvim-prefs* *macvim-preferences*
+
+有些设置全局于 MacVim 应用，因而不合适作为 Vim 选项。这些设置保存在用户缺省
+数据库里，可以通过 "MacVim.Preferences..." 菜单项目访问。
+
+							*macvim-user-defaults*
+不是所有用户缺省数据库的项目都可通过首选面板访问，通常因为它们在正常情况下不
+应被用户修改。这些选项仍然可以在终端里通过 "defaults" 命令进行改变，键入 >
+	defaults write org.vim.MacVim KEY VALUE
+关于此命令和 Mac OS X 用户缺省值的一般情况的详情可查阅 "defaults" 的手册页。
+
+这里是相关的字典项目的列表:
+
+键				值 ~
+MMCellWidthMultiplier		以 em 单位计普通字型的宽度 [float]
+MMDialogsTrackPwd		打开/保存对话框跟踪 Vim 的当前路径 [bool]
+MMFullScreenFadeTime		非自带全屏的淡入淡出的延迟 [float]
+MMLoginShellArgument		登录外壳的参数 [string]
+MMLoginShellCommand		使用哪个外壳来启动 Vim [string]
+MMNoFontSubstitution		关闭自动字体替换 [bool]
+MMNoTitleBarWindow		隐藏标题栏 [bool]
+MMShareFindPboard		将搜索文本分享到查找粘贴板 [bool]
+MMShowAddTabButton		在标签页行上打开 "add tab" 按钮 [bool]
+MMTabMaxWidth			标签最大宽度 [int]
+MMTabMinWidth			标签最小宽度 [int]
+MMTabOptimumWidth		标签缺省宽度 [int]
+MMTextInsetBottom		文本区域以像素计的位移 [int]
+MMTextInsetLeft			文本区域以像素计的位移 [int]
+MMTextInsetRight		文本区域以像素计的位移 [int]
+MMTextInsetTop			文本区域以像素计的位移 [int]
+MMTexturedWindow		使用拉丝金属质感窗口 (仅适用于 Tiger) [bool]
+MMTranslateCtrlClick		把 ctrl-鼠标左键解释为鼠标右键 [bool]
+MMUseMouseTime			使用鼠标时间来检测多重点击 [bool]
+MMVerticalSplit			用垂直分割来打开文件 [bool]
+MMZoomBoth			缩放按钮在两个方向同时最大化 [bool]
+
+作为一个例子，如果你有多于一个鼠标按钮，并想把 Ctrl-鼠标左键空出来以绑定其它功
+能，那么合适的命令是: >
+	defaults write org.vim.MacVim MMTranslateCtrlClick 0
+
+如果你想恢复所有的用户缺省值为预设值，打开终端并转入: >
+	defaults delete org.vim.MacVim
+<
+							*macvim-login-shell*
+Finder 打开的应用不自动载入用户环境变量 (通常在 .profile 或 .bashrc 里设置)。
+这会在 |:!| 执行外壳命令时产生问题，例如 $PATH 可能没有正确设置。要绕过这个问
+题，MacVim 用登录外壳来启动新 Vim 进程，这样就能设置所有的环境变量了。
+
+缺省 MacVim 使用 $SHELL 环境变量来决定使用哪个外壳 (如果没有设置 $SHELL，使用
+"/bin/bash")。设置用户缺省值 MMLoginShellCommand 可以改变此选择 (如
+"/bin/tcsh")。MacVim 试图在 argv[0] 前加上破折号，使外壳成为登录外壳。如果使用
+一个特别的外壳版本而必须通过传递参数来使之成为登录外壳，可以设置用户缺省值
+MMLoginShellArgument (如设为 "-l")。最后，使用 "bash" 外壳时会自动加入参数
+"-l"。要覆盖此行为，设置 MMLoginShellArgument 为 "--"。
+
+==============================================================================
+4. 特殊颜色						*macvim-colors*
+
+MacVim 在应用捆绑 (MacVim.app/Contents/Resources) 的 "Resources" 目录中的两个
+字典里定义颜色。可以通过修改这些文件来增加更多颜色。Vim 里访问时色彩的大小写不
+敏感，但在字典中必须使用小写。
+
+							*SystemColors.plist*
+Vim 只能访问若干系统颜色。它们在 "SystemColors.plist" 字典中定义。此字典储存
+(键, 值) 配对，其中键为色彩名，而值为 NSColor 选择器名。
+
+最有用的系统颜色是: >
+	MacSelectedTextBackgroundColor
+	MacSecondarySelectedColor
+前者是所谓的 "高亮显示颜色"，在系统偏好设置的 "外观" 小节里可以调节。后者是失
+去焦点的 Cocoa 应用的选择区颜色。
+
+							*Colors.plist*
+除了系统颜色以外，也可以使用标准 X11 颜色名 (见
+http://en.wikipedia.org/wiki/X11_color_names)，它们通常来自名为 "rgb.txt" 的文
+件。MacVim 不用这样的文件，而是把这些颜色放在名为 "Colors.plist" 的字典里。此
+字典的键为色彩名，而值为形如 #rrggbb 的 RGB 值，以数值形式存放。
+
+							*macvim-colorscheme*
+MacVim 自带定制的色彩方案，而不用缺省的 Vim 色彩方案。色彩方案可以这样改变 >
+	:colorscheme macvim
+如果你喜欢深色背景，载入 "macvim" 色彩方案后键入 >
+	:set bg=dark
+
+如果你想用其它的色彩方案，可用 |:colorscheme| 命令。注意 要想手动设置系统高亮
+颜色，必须建立自己的色彩方案，或者在 .vimrc (~/.gvimrc 不行) 里加入 >
+	let macvim_skip_colorscheme=1
+一行。否则执行系统 gvimrc 文件时会载入 "macvim" 色彩方案而搞乱你所作的改动。
+
+此色彩方案使用系统 "高亮显示颜色"，在系统偏好设置的 "外观" 面板里可以调节。也
+改变窗口不在激活状态时的高亮色。
+
+==============================================================================
+5. 菜单							*macvim-menus*
+
+Mac OS X 的菜单行为和其它平台稍有不同。因此，为 Vim 新增了两个命令。要理解这些
+命令，你必须先了解 OS X 的菜单工作方式。
+
+菜单里的每一项称为 "菜单项目"。每个菜单项目相关联的有: 标题、等价键和动作消
+息。显示菜单时，标题显示在左侧，而等价键 (如有) 显示在右侧。等价键使你可以用键
+盘而不是鼠标来访问菜单项目。点击菜单项目时，发送其相联的动作消息。动作可以用来
+指示 MacVim 粘贴文本 (paste:)，打开新窗口 (newWindow:) 等等。若干动作是整个 OS
+X 里的标准动作，所以 MacVim 必须为每个菜单项目设置动作。(例如，菜单项目
+"Edit.Paste" 必须绑定动作 "paste:"，否则对话框里不能正常粘贴，因为那是指示对话
+框进行粘贴的动作。)
+
+菜单通过 |:macmenu| 命令配置，而 |:macaction| 命令可用来发送动作消息。
+
+						*:maca* *:macaction*
+:maca[ction] {action:}	发送信息 "action:" 到首个响应者。要看到合法动作的列
+			表，可键入
+			    :maca <C-d>
+			试图发送没有在这里列出的动作会报错。名为
+			|Actions.plist| 的属性列表文件指定此列表.
+
+						*:macm* *:macmenu*
+:macm[enu] {menu} {key}={arg} ...
+			设置 Mac 特定的 {menu} 属性。可以设置的属性是:
+			    action	此菜单发送的动作
+			    alt		如是上条菜单的替代，"yes"
+			    key		此菜单的等价键
+			此命令必须在启动文件中使用，如 "~/.gvimrc"。否则无效。
+
+			为方便计，带有 "action=name:" 且和 <Nop> 绑定的菜单会
+			为当作和 ":maca name:<CR>" 绑定。比如，如果这样给出
+			"Menu.Item": >
+			    :an Menu.Item <Nop>
+			    :macm Menu.Item action=name:
+<			那么 ":emenu Menu.Item" 等价于 ":maca name:"。
+
+			等价键通过 <D-..> 语法给定。这里大小写敏感，<D-a> 意味
+			着 Cmd-a 而 <D-A> 意味着 Cmd-Shift-a。
+			注意 等价键必须包含 Cmd 修饰符标志位 (<D-..>)，其优先
+			级高于普通映射。
+			"key=<nop>" 语法用来清除菜单的等价键。可用来释放系统
+			gvimrc 设定的键组合，以便可重新用 ":map" 映射。
+
+			"alt" 认可的值包括 "0"、"no"、"1" 和 "yes"。缺省是
+			"no"。替代菜单必须和它的上条菜单和相同的等价键，除了修
+			饰符标志位必须不同以外。替代菜单缺省隐藏，只有在按下修
+			饰符时才会显示。
+
+下面是如何使用这些命令的一些例子:
+
+1. 建立菜单，在 "File" 菜单下，标题是 "New Window"，等价键是 Cmd-n，选中时打开
+新窗口: >
+	:an 10.290 File.New\ Window <Nop>
+	:macm File.New\ Window action=newWindow: key=<D-n>
+2. 改变轮流切换标签页的等价键为 Cmd-Left/Right: >
+	:macm Window.Previous\ Tab  key=<D-Left>
+	:macm Window.Next\ Tab	    key=<D-Right>
+3. 建立普通模式映射来关闭当前标签页/窗口: >
+	:map <C-w> :maca performClose:<CR>
+4. 释放 Cmd-t 并把它重新映射来在分割视图里打开文件浏览器: >
+	macm File.New\ Tab key=<nop>
+	nmap <D-t> :sp .<CR>
+注意: 这两行必须加在 .gvimrc 里，否则首行会失败。第二行大小写敏感，所以 <D-T>
+(Cmd-Shift-t) 和 <D-t> (Cmd-t) 不同！
+
+缺省菜单在 "$VIMRUNTIME/menu.vim" 里定义。看看该文件可以找到更多如何设置菜单的
+示例。注意: 如果没有打开任何窗口，使用最小化的缺省菜单。缺省菜单在应用捆绑的
+"Resources/English.lproj/" 目录中的 MainMenu.nib 里定义。
+
+							*Actions.plist*
+有些动作消息不适合在 Vim 里调用，所以有一个名为 "Actions.plist" (在应用捆绑的
+Resources 目录里) 的字典，包含了所有可以调用的动作。此字典的键是动作消息名 (大
+小写敏感)，值没有用到。
+
+提示: |:macaction| 命令支持命令行补全，可用 ":maca<Space><C-d>" 来看到所有可用
+动作的列表。
+
+这里随机摘取了一些 Actions.plist 里可能有用的动作。
+
+动作				描述 ~
+fileOpen:			显示 "File Open" 对话框
+findNext:			使用 "查找粘贴板" 正向查找
+findPrevious:			使用 "查找粘贴板" 反向查找
+fontSizeDown:			减小字体
+fontSizeUp:			增大字体
+hide:				隐藏 MacVim
+miniaturizeAll:			最小化所有窗口到 Dock 上
+newWindow:			打开新 (空) 窗口
+orderFrontCharacterPalette:	打开 "Special Characters" 对话框
+orderFrontFontPanel:		显示字体面板
+orderFrontPreferencePanel:	显示首选面板
+performMiniaturize:		最小化窗口到 Dock 上
+performZoom:			放大窗口 (相当于点击绿色圆形按钮)
+terminate:			退出 MacVim
+zoomAll:			放大所有窗口
+_cycleWindows:			选择下个窗口 (类似于 <D-`>)
+_cycleWindowsBackwards:		选择上个窗口 (类似于 <D-S-`>)
+
+==============================================================================
+6. 工具栏						*macvim-toolbar*
+
+MacVim 的工具栏和其它 GUI 的工作方式一致 (见 |gui-toolbar|)，但加上了两个分隔
+符项目 (见 |menu-separator|)。它们可以这样用: >
+	:an ToolBar.-space1-        <Nop>
+	:an ToolBar.-flexspace2-    <Nop>
+首例在工具栏上创建空白空间，次例创建可伸缩的空白空间，使其右侧的项目右对齐。
+工具栏项目的名字以 "-space" ("-flexspace") 开始并以 "-" 结束时就会创建空间 (伸
+缩空间)。
+
+工具栏图标必须是 tiff、png 或 icns 格式，尺寸为 32x32 或 24x24 像素。'tbis' 为
+"medium" 或 "large" 时使用大尺寸，否则使用小尺寸 (缺省)。如果图标文件只包含一
+种尺寸，Mac OS X 在有必要时会伸缩图标到需要的尺寸。如果不想如此，请使用支持多
+种分辨率的文件格式 (如 icns) 并同时提供 32x32 和 24x24 版本的图标。
+
+备注: 现在只有一部分内建的工具栏项目有图标。如果图标没找到，会显示警告的三角形
+来代替。
+
+==============================================================================
+7. 对话框						*macvim-dialogs*
+
+有两种方式可以用键盘控制对话框。对话框的每个按钮缺省和一个键绑定。蓝色高亮的按
+钮和 Enter 绑定，标题为 "Cancel" 的按钮和 Escape 绑定，而标题为 "Don't Save"
+的按钮和 <D-d> 绑定。其它按钮通常和其标题的第一个字母绑定。因为没有按钮绑定哪
+个字母的视觉反馈，有时需要实验一下才能确定要按哪个键。
+
+第二种用键盘来控制对话框的方式是在系统偏好的 "键盘" 面板中打开 "全键盘控制”
+功能 (也可以按 Ctrl-F7 开关此功能)。打开键盘访问后，用 Tab 键可在按钮间移动，
+然后用空格键选择当前按钮。蓝色边框指示当前按钮。
+
+==============================================================================
+8. 系统服务						*macvim-services*
+
+MacVim 支持两种系统服务。可以通过服务菜单的 MacVim 子菜单或右击选择进行访问。
+要使用服务，MacVim.app 必须在 /Applications 目录下。(可以先退出登录再重新登录
+确保 Mac OS X 能检测到 MacVim 服务。)
+
+这里是当前支持的服务:
+	* New MacVim Buffer With Selection: 新建缓冲区并粘贴当前选择的文本。
+	* New MacVim Buffer Here: 新建缓冲区并设置当前目录为 Finder 选中的文件
+	  或目录。
+
+这些服务遵从 General 首选的 "Open files from applications" 设定。
+
+==============================================================================
+9. mvim:// URL 处理程序				*mvim://* *macvim-url-handler*
+
+MacVim 支持 "mvim://" URL 的定制 URL 处理程序。此处理程序应该与以下文档所述的
+TextMate 的 URL 方案兼容 >
+	http://blog.macromates.com/2007/the-textmate-url-scheme/.
+
+目前，这意味着格式应是 >
+	mvim://open?<arguments>
+其中 "arguments" 可为:
+	* url — 要实际打开的文件 (即 file://... URL)，此参数省略时隐含最前面的
+		文档
+	* line — 要转到的行号 (以一为基)
+	* column — 要转到的列号 (以一为基)
+
+例如，在网页浏览器里点击下面的链接 >
+	mvim://open?url=file:///etc/profile&line=20
+时会打开文件 /etc/profile 并定位在第 20 行。
+
+注意 url 必须是指向已存在的本地文件的 file:// url。
+
+==============================================================================
+10. 键盘快捷键						*macvim-shortcuts*
+
+多数 MacVim 的键盘快捷键和菜单项目绑定，可以通过菜单查看 (|macvim-menus| 说明
+如何建立自己的菜单快捷键，|cmd-key| 说明如果映射自己的命令到 Cmd-key 快捷键)。
+这里列出其余的快捷键:
+
+							*Cmd-.* *<D-.>*
+Cmd-.			中断 Vim。和 CTRL-C 不同，后者作为正常的键盘输出发送
+			(因而必须先被接收到再作解释)，前者向 Vim 进程发送
+			SIGINT 信号。如果 Vim 进程看来被锁住，而对键输入无反应
+			时，可使用此快捷键。此 Cmd-key 组合不能被重映射。
+
+							*Cmd-`* *<D-`>*
+Cmd-`			轮转到下个窗口。在美式键盘上 "`" 键在 Esc 键之下。在欧
+			式键盘上此键通常和左 Shift 键相邻，可能都不用 "`" 标
+			注。此 Cmd-key 组合只能通过 "键盘" 系统偏好取消映射。
+
+							*Cmd-Left*  *<D-Left>*
+Cmd-Left		移到光标到行首 (见 |cmd-movement|)。
+
+							*Cmd-Right* *<D-Right>*
+Cmd-Right		移到光标到行尾 (见 |cmd-movement|)。
+
+							*Cmd-Up*    *<D-Up>*
+Cmd-Up			移动光标到首行 (见 |cmd-movement|)。
+
+							*Cmd-Down*  *<D-Down>*
+Cmd-Down		移动光标到末行 (见 |cmd-movement|)。
+
+							*Alt-Left*  *<M-Left>*
+Alt-Left		移动光标和上个单词的开头 (见 |alt-movement|)。
+
+							*Alt-Right* *<M-Right>*
+Alt-Right		移动光标到下个单词的开头 (见 |alt-movement|)。
+
+							*Alt-Up*    *<M-Up>*
+Alt-Up			移动光标前进一个段落 (见 |alt-movement|)
+			(译者注: 原文如此，应为后退一个段落)。
+
+							*Alt-Down*  *<M-Down>*
+Alt-Down		移动光标后退一个段落 (见 |alt-movement|)。
+			(译者注: 原文如此，应为前进一个段落)。
+
+						*cmd-movement* *alt-movement*
+上述涉及 Cmd/Alt + 光标键的映射在系统 gvimrc 文件 "$VIM/gvimrc" 里缺省打开。可
+以在 "~/.vimrc" (不是 .gvimrc) 文件里加入如下行，以快速关闭所有这些映射: >
+	if has("gui_macvim")
+	  let macvim_skip_cmd_opt_movement = 1
+	endif
+注意: 这些是 MacVim 生成的仅有的键盘映射 (不算菜单的等价键，因为它们不通过
+:map 设置)。
+
+如果你想 Shift 和上述 Cmd/Alt 移动快捷键联合使用时选择文本，请见
+|macvim-shift-movement|。
+
+						*cmd-key* *cmd-shortcuts*
+涉及 Cmd 键 (Vim 记法是 <D-..>) 的键盘映射的建立有时是比较麻烦的。这里是所有你
+要考虑的事情:
+
+- 查看菜单，确定快捷键不被用于任何菜单项目。如果是，在可以映射之前，先要取消
+  绑定。|:macmenu| 命令的帮助有说明。
+- <D-..> 的绑定大小写敏感: <D-d> 不同于 <D-D>。如果你要映射 Cmd+Shift+d，要用
+  <D-D> 而不是 <D-S-d> 或 <D-S-D>。
+- 有些命令快捷键是 Mac OS X 保留的，不能进行映射 (如 <D-Tab>)。但其中有些可在
+  系统偏好设置的键盘页里进行释放 (如 Cmd+Space)。
+- 一些命令快捷键是 MacVim 设置的，见 |cmd-movement|。
+
+==============================================================================
+11. 触控板手势						*macvim-gestures*
+
+MacVim 支持触控板滑动手势。缺省可用于帮助里后退/前进的导航 (试试！)。
+
+每个手势生成以下 Vim 虚拟键之一:
+
+						 *<SwipeLeft>* *<SwipeRight>*
+	触控板上横向轻扫三个手指。Apple Magic Mouse 则在横向轻扫两个手指时生成
+	这些事件。
+
+						 *<SwipeUp>*   *<SwipeDown>*
+	触控板上纵向轻扫三个手指。(Apple Magic Mouse 不支持。)
+
+像其它键一样，可以用 |:map| 命令家族来映射这些键。例如，下面的命令映射普通模式
+下的左/右轻扫到上个/下个标签页的切换: >
+
+	nmap <SwipeLeft> gT
+	nmap <SwipeRight> gt
+
+另一例，这样可使左/右轻扫切换缓冲区: >
+
+	nmap <SwipeLeft> :bN<CR>
+	nmap <SwipeRight> :bn<CR>
+
+参见 |key-mapping| 章节，有更多如何对键映射的帮助。
+
+==============================================================================
+12. 国际化						*macvim-international*
+
+编辑非英语文本时，如果能把普通和插入模式的键盘布局分开，可能较为方便。在 Mac
+OS X 10.5 或之后，这可通过 'imd' 选项支持 (10.4 上 'imd' 选项的支持不太有用，
+它只能在罗马和非罗马输入源之间切换，而且已知不太可靠)。
+
+例如: 打开 'noimd' 时 (即IM 打开时)，在普通和插入模式切换时保存输入源，这样你
+可以在普通模式时使用美国布局，而切换到插入模式时选择瑞典布局。回到普通模式时又
+会选择美国布局，而进入插入模式时又会选择瑞典布局。这也适用于文本搜索等场合。见
+'imc'、'imi'、'ims'。
+
+注意　普通模式使用的布局是设置 'noimd' 时 (即 IM 打开时) 所使用的布局。如果你
+发现回到普通模式时 MacVim 切换到了错误的布局，选择你想在普通模式用的布局，键入
+":set imd"，然后 ":set noimd"。
+
+==============================================================================
+13. 已知漏洞/缺失功能					*macvim-todo*
+
+此清单不一定完整，只列出最常见的漏洞/缺失功能。
+
+- 不支持本地化菜单。"系统偏好" 的 "国际化" 面板选择除了 "英语" 之外的其它语种
+  可能会破坏菜单 (和工具栏)。
+- 不能很好地处理一些 Unicode 字符 (例如非间距标记)
+- 有时多字节字符看来 "太宽" 了，也就是，和后面的字符有重叠。改变 'ambiwidth'
+  或有帮助，也可以通过手动设置 'guifontwide'  来覆盖自动的字体替换。
+- 打印。临时的办法是 <D-p>，它建立 PostScript 文件并在 Preview 里打开，然后就
+  可以打印了。
+- 工具栏看起来很丑陋，不太有用。
+
+如果发现新的漏洞，请在 vim_mac 邮件列表中贴出您的发现:	*vim_mac_group*   >
+	http://groups.google.com/group/vim_mac
+
+这也是提出需求请求和关于 MacVim 的通用问题提问的最好的地方。
+
+==============================================================================
+14. 提示						*macvim-hints*
+
+本小节给出一些通用的 (未必和 MacVim 相关) 提示。
+
+场景: ~
+试图用标签页打开一些文件，但不是所有文件都在自己的标签页里打开。
+解决方案: ~
+要绕过这个问题，在 .gvimrc 文件里设置 'tabpagemax' 为大数 (如 ":set
+tabpagemax=100")。
+
+场景: ~
+要用标签页中已经打开的窗口中打开文件，但在终端中键入 "mvim filename" 时在单独
+的窗口中打开了该文件。
+解决方案: ~
+用 |--remote-tab| 开关。如果有多个窗口打开，可能要通过 |--servername| 开关指定
+想要文件在哪个窗口中打开。窗口的标题通常以 "VIM" 或 "VIM3" 接尾 --- 该窗口的服
+务器名。要在标题以 "VIM3" 结尾的窗口打开名为 "foobar.txt" 的文件，请键入 (参数
+顺序是有关系的): >
+	mvim --servername VIM3 --remote-tab foobar.txt
+详情可参阅 |client-server| 手册页。
+
+场景: ~
+你喜欢按住 shift 并移动箭头键时选择文本，觉得 Vim 选择文本的方式很奇怪。
+解决方案: ~
+见 |macvim-shift-movement|。
+
+场景: ~
+不希望 MacVim 设置任何键盘映射。
+解决方案: ~
+见 |cmd-movement|。
+
+场景: ~
+打开本地化菜单时破坏了工具栏和菜单。
+解决方案: ~
+这是已知问题，见 |macvim-todo|。
+
+场景: ~
+点击 (绿色) 放大按钮时，你想要窗口横向和纵向同时最大化。
+解决方案: ~
+按住 Cmd 再点击放大按钮。如果你希望这是缺省动作，设置用户缺省值 MMZoomBoth (见
+|macvim-prefs|)。
+
+场景: ~
+光标刚好在右括号 (即 ')'、'}' 或 ']') 前时键入反应比较迟钝。
+解决方案: ~
+通过 :NoMatchParen 来屏蔽 "matchparen" 插件 (见 |matchparen|)。如要这有用，你
+可在 "~/.vimrc" 里加入以下内容来永久关闭 "matchparen": >
+	let loaded_matchparen=1
+<
+场景: ~
+你想要用 MacVim 作为外部应用的编辑器。
+解决方案: ~
+如果外部应用让你指定要执行的程序，那么 "mvim -f" 这样就可以了 ("-f" 开关确保
+"mvim" 脚本只在你关闭编辑器窗口时才返回，否则 "mvim" 立即返回)。如果外面程序接
+受 EDITOR 环境变量 (例如 Git 就是)，那么你可以在 "~/.profile" 里加入: >
+	export EDITOR='mvim -f'
+如果你没有在 path 里安装 "mvim" 脚本，可以直接提供 Vim 可执行文件的路径。如果
+"MacVim.app" 在 Applications 目录里，可以用下行: >
+	export EDITOR='/Applications/MacVim.app/Contents/MacOS/Vim -g -f'
+
+场景:~
+外部程序中已经设置好如何打开 MacVim，完成编辑时 (通过关闭 MacVim 窗口)，你希望
+外部程序重新捕获焦点。
+解决方案: ~
+使用 VimLeave 自动命令使窗口关闭时隐藏 MacVim: >
+	au VimLeave * maca hide:
+假定外部程序有打开编辑器所执行命令的设置，可以设置该选项为: >
+	mvim -f -c "au VimLeave * maca hide:"
+(关于 "-f" 开关的解释，见上面的场景。)
+
+场景: ~
+想把 Caps Lock 重新映射为 Esc。
+解决方案: ~
+"PCKeyboardHack" 应用可用来重新映射 Caps Lock。可以从这里免费下载: >
+	http://pqrs.org/macosx/keyremap4macbook/extra.html
+在有些 Apple 键盘上，Caps Lock 不立即登记，这会使得 Caps Lock ”丢失“ 按键。要
+绕过这个问题，先到系统偏好的 "键盘" 面板里把 Caps Lock 重新映射到 Ctrl (点击
+"修饰键..." 按钮)。如果尽管被映射成了 Esc， Caps Lock 灯依然开/关，可能也需要
+这个小技巧。
+
+场景: ~
+创建涉及 Cmd 键的定制映射时有问题。
+解决方案: ~
+要绑定涉及 Cmd 的键，要用 "<D-..>" 语法。许多 Cmd-key 映射己经在菜单里使用，所
+以如果映射不可用，通常的解决方法是先取消菜单绑定的映射 (见 |macvim-menus|，尤
+其要阅读该小节的末段)。另外，有些 Cmd-key 的组合虽然不用于菜单，但仍然需要先释
+放才能用于定制的绑定，可见 |macvim-shortcuts| 一节。
+
+场景: ~
+找不到你认为应该在此手册页里的关于 MacVim 的信息。
+解决方案: ~
+把你的问题发在 |vim_mac| 邮件列表上，等等回答吧。
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:
