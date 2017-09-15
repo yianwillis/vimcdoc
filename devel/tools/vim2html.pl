@@ -152,6 +152,7 @@ EOF
 <body>
 $banner
 <div id=outer>
+<h2>$outfile</h2>
 <pre>
 EOF
 
