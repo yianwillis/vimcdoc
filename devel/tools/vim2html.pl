@@ -183,10 +183,12 @@ EOF
 		if ( /^=+\s*$/ ) {
 			print OUT "</pre><hr class=\"doubleline\" /><pre>\n";
 			$inheader = 1;
+			$inexample = 0;
 			next;
 		}
 		elsif ( /^\s*-+\s*$/ ) {
 			print OUT "</pre><hr class=\"singleline\" /><pre>\n";
+			$inexample = 0;
 			next;
 		}
 
