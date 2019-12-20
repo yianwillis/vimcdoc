@@ -1,4 +1,4 @@
-*mbyte.txt*     For Vim version 8.0.  最近更新: 2017年8月
+*mbyte.txt*     For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar et al.
@@ -24,8 +24,9 @@
 7. 在 X11 上输入			|mbyte-XIM|
 8. 在 MS-Windows 上输入			|mbyte-IME|
 9. 使用键盘映射表输入			|mbyte-keymap|
-10. 使用 UTF-8				|mbyte-utf8|
-11. 选项总述				|mbyte-options|
+10. 用 imactivatefunc() 输入		|mbyte-func|
+11. 使用 UTF-8				|mbyte-utf8|
+12. 选项总述				|mbyte-options|
 
 注意: 本文件包含 UTF-8 编码字符。如果使用其它编码，这些字符可能显示为奇怪的符
 号或者方框。
@@ -730,6 +731,8 @@ Wnn4.2 是一个好输入系统。Wnn 4.2 包括，
   |OffTheSpot|、|OverTheSpot| 和 |Root|。
 
   目前 GUI Vim 支持三种输入方式:  |OverTheSpot|、|OffTheSpot| 和 |Root|。
+  编译时带 |+GUI_GTK| 特性时，GUI Vim 支持两种输入方式: |OnTheSpot| 和
+  |OverTheSpot|。可用 'imstyle' 选项选择。
 
 *.  on-the-spot						*OnTheSpot*
     客户软件在其所用显示区内执行预编辑区和状态区。客户软件由 |IM-server| 控制
@@ -1105,7 +1108,33 @@ Vim 在普通状态下几乎不需要 IME，即使是在编辑多字节文本也
 ﭏ    0xfb4f  Xal  alef-lamed
 
 ==============================================================================
-10. 使用 UTF-8				*mbyte-utf8* *UTF-8* *utf-8* *utf8*
+10.  用 imactivatefunc() 输入					*mbyte-func*
+
+Vim 有 'imactivatefunc' 和 'imstatusfunc' 选项。用于以任意方式来激活/关闭输入
+法，包含使用外部命令。例如，fcitx 提供了 fcitx-remote 命令: >
+
+	set iminsert=2
+	set imsearch=2
+	set imcmdline
+
+	set imactivatefunc=ImActivate
+	function! ImActivate(active)
+	  if a:active
+	    call system('fcitx-remote -o')
+	  else
+	    call system('fcitx-remote -c')
+	  endif
+	endfunction
+
+	set imstatusfunc=ImStatus
+	function! ImStatus()
+	  return system('fcitx-remote')[0] is# '2'
+	endfunction
+
+使用此脚本，即使编译时没有带 |+xim| 也能通过 Vim 激活/关闭 XIM。
+
+==============================================================================
+11. 使用 UTF-8				*mbyte-utf8* *UTF-8* *utf-8* *utf8*
 							*Unicode* *unicode*
 Unicode 字符集的设计就是要包含所有其他的字符集。这样你就可以用 Unicode 写任何
 文字 (除了少数偏僻的语种以外)。它也最大限度的提供了在一个文件里混合各种语言的
@@ -1225,7 +1254,7 @@ MS-Windows，utf-32 并不是常用的文件格式。
 
 
 ==============================================================================
-11. 选项总述						*mbyte-options*
+12. 选项总述						*mbyte-options*
 
 以下的各选项会影响对多字节文件的编辑。更详细的信息请参考 options.txt。
 

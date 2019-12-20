@@ -1,4 +1,4 @@
-*gui.txt*       For Vim version 8.0.  最近更新: 2017年7月
+*gui.txt*       For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -59,15 +59,15 @@ gvimrc 文件是 GUI 专用的启动命令应该放置的地方。它总在 |vim
   - 如果 GVIMINIT 环境变量存在而且非空，把它作为 Ex 命令执行之。
   - 如果用户 gvimrc 文件存在，执行之。该文件的名字通常是 "$HOME/.gvimrc"。用
     ":version" 检查之。
-  - 对 Win32 而言，如果没设置 $HOME，使用 "$VIM\_gvimrc"。
+  - 对 Win32 而言，需要时 Vim 会设置 $HOME，见 |$HOME-windows|。
   - 如果 "_gvimrc" 文件没找到，尝试 ".gvimrc"。反之亦然。
   第一个找到的文件名保存在 $MYGVIMRC 里，除非后者已经被设置。
 - 如果置位 'exrc' 选项 (缺省_并非_如此)，执行文件 ./.gvimrc。如果该文件不属于
   你，有一些安全的限制。如果 ".gvimrc" 找不到，尝试 "_gvimrc"。Macintosh 和
   DOS/Win32 环境下先尝试 "_gvimrc"。
 
-注意: 如果 Vim 启动时使用 "-u NONE" 而且没有给出 "-U" 参数，或者使用 "-U
-NONE"，则除了第一步以外，都不执行。
+注意: 如果 Vim 启动时使用 "-u NONE" 或 "-u DEFAULTS" 而且没有给出 "-U" 参数，
+或者使用 "-U NONE"，则除了第一步以外，都不执行。
 
 这些步骤都在普通 Vim 初始化之_后_执行，比如读取 .vimrc 文件。见
 |initialization|。
@@ -113,7 +113,7 @@ Vim 试图在启动时使窗口在屏幕上的大小合适，以免部分内容�
 :winp[os]
 		显示 GUI vim 窗口以像素计的当前左上角位置。并非在所有系统上都
 		可以。
-		另见 |getwinposx()| 和 |getwinposy()|。
+		另见 |getwinpos()|、|getwinposx()| 和 |getwinposy()|。
 
 :winp[os] {X} {Y}							*E466*
 		把 GUI vim 窗口放在给定 {X} 和 {Y} 坐标。坐标应指定以像素计的
@@ -135,7 +135,7 @@ Vim 试图在启动时使窗口在屏幕上的大小合适，以免部分内容�
 	:execute '!xprop -id ' . v:windowid
 <
 							*gui-IME* *iBus*
-在 X 里依赖于 XIM 框架输入国际字符的输入法，尤其是 iBus，已知会给 gVim 带来一
+在 X 里依赖于 XIM 框架输入国际字符的输入法，尤其是 iBus，已知会给 gvim 带来一
 些不良效果。包括不能输入空格，输入字符间有长时间的延迟，或者输入的字符不能为
 应用所识别等。
 
@@ -411,6 +411,7 @@ Vim  的长期用户不太用菜单。但是它的优势在你可以增加自己
 你记不住键序列的功能的时候很有用。
 
 关于如何创建不同语言的菜单，见 |:menutrans|。
+如果完全不想使用菜单，见 |'go-M'|。
 
 							*menu.vim*
 缺省菜单从 "$VIMRUNTIME/menu.vim" 文件里读取。关于该路径从何而来，见
@@ -424,7 +425,19 @@ Syntax 菜单第一项可以用来显示包含所有可用的文件类型的菜�
 如果你确实想要启动时就同时得到所有文件类型，加入: >
 		:let do_syntax_sel_menu = 1
 
-<
+以下菜单项显示所有的可用配色方案，键盘映射和编译器设定:
+	Edit > Color Scheme ~
+	Edit > Keymap ~
+	Tools > Set Compiler ~
+不过，载入这些项目很花时间，因为它们要从 'runtimepath' 的众目录中搜索所有的相
+关文件。因此，它们被延后载入 (通过 |CursorHold| 事件)，你也可以手动载入之。
+如果你希望系统启动时载入所有这些项目，加入: >
+	:let do_no_lazyload_menus = 1
+
+注意 `:syntax on` 或 `:filetype on` 执行时或 .vimrc 文件载入时，会载入
+menu.vim。这意味着 'encoding' 选项和消息语言 (`:language messages`) 须在那之前
+设置好 (如果你想有所改变的话)。
+
 							*console-menus*
 尽管本文档讨论 GUI，你其实也可以在控制台模式使用菜单。你需要自行载入
 |menu.vim|，因为在那里，这一步不是自动进行的。你可以使用 |:emenu| 命令和带
@@ -678,10 +691,35 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 在 Win32 和 GTK+ GUI 上，以 ']' 开始的菜单名使得该菜单不会在主菜单栏里出现。你
 可以用 |:popup| 或者 |:tearoff| 命令来显示之。
 
+					*window-toolbar* *WinBar*
+每个窗口都可有本地工具条。使用窗口的首行，这会减少一行文本可用的空间。工具条项
+目须以 "WinBar" 开始。
+
+只能用文本。使用 Unicode 可以用特殊字符来使项目看上去像个图标。
+
+如果不能将全部项目安放于一行，则后面几个不能使用。工具条不会回绕。
+
+备注 Vim 执行这些命令时可能处于任何模式。菜单应为普通模式定义，执行时也不
+应改变当前模式。这样，如果当然窗口处于可视模式而菜单命令没有主动改变模式的话，
+Vim 会继续留在可视模式。最好用 `:nnoremenu` 来避免副作用。
+
+调试工具示例: >
+	nnoremenu 1.10 WinBar.Step :Step<CR>
+	nnoremenu 1.20 WinBar.Next :Next<CR>
+	nnoremenu 1.30 WinBar.Finish :Finish<CR>
+	nnoremenu 1.40 WinBar.Cont :Continue<CR>
+<
+窗口工具条使用 ToolbarLine 和 ToolbarButton 高亮组。
+
+分割窗口时，并不在新窗口中复制窗口工具条。
+
 							*popup-menu*
 在 Win32、GTK+、Motif、Athena 和 Photon GUI 上，你可以定义特殊的 "PopUp" 菜
 单。如果 'mousemodel' 设为 popup 或者 popup_setpos，这将是按下鼠标右键时显示的
 菜单。
+示例: >
+    nnoremenu 1.40 PopUp.&Paste	"+gP
+    menu PopUp
 
 
 5.3 显示菜单如何被映射					*showing-menus*
@@ -822,10 +860,13 @@ gui 平台上也会出现。
 							*:popup* *:popu*
 :popu[p] {name}			弹出菜单 {name}。菜单名必须有至少一项子项，但
 				不一定需要出现在菜单栏上 (见 |hidden-menus|)。
-				{仅在 Win32 和 GTK GUI 上有效}
+				{仅在 Win32 和 GTK GUI 上或编译时带
+				+insert_expand 特性时的终端里有效}
 
 :popu[p]! {name}		和上面类似，但使用鼠标指针所在的位置，而不是光
 				标位置。
+				在终端中，这是最后已知的位置，通常这是最后点击
+				或释放所在的位置 (和鼠标的移动不相干)。
 
 示例: >
 	:popup File
@@ -835,6 +876,9 @@ gui 平台上也会出现。
 	:amenu ]Toolbar.Make	:make<CR>
 	:popup ]Toolbar
 会创建一个弹出式菜单，该菜单并不存在于主菜单栏中。
+
+注意 在 GUI 上 :popup 命令立即返回，不等用户作出选择。终端中此命令则等待用户的
+选择完成。
 
 注意 ']' 开始的菜单不会显示。
 

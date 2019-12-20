@@ -1,4 +1,4 @@
-*map.txt*	For Vim version 8.0.  最近更新: 2017年8月
+*map.txt*	For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -54,6 +54,7 @@
 :im[ap]	{lhs} {rhs}		|mapmode-i|		*:im* *:imap*
 :lm[ap]	{lhs} {rhs}		|mapmode-l|		*:lm* *:lmap*
 :cm[ap]	{lhs} {rhs}		|mapmode-c|		*:cm* *:cmap*
+:tma[p]	{lhs} {rhs}		|mapmode-t|		*:tma* *:tmap*
 			在映射命令作用的模式中把键系列 {lhs} 映射为 {rhs}。并
 			且映射后的 {rhs} 也被进行映射扫描。这个特性可以用来进
 			行映射的嵌套和递归。
@@ -70,6 +71,7 @@
 :ino[remap] {lhs} {rhs}		|mapmode-i|	*:ino* *:inoremap*
 :ln[oremap] {lhs} {rhs}		|mapmode-l|	*:ln*  *:lnoremap*
 :cno[remap] {lhs} {rhs}		|mapmode-c|	*:cno* *:cnoremap*
+:tno[remap] {lhs} {rhs}		|mapmode-t|	*:tno* *:tnoremap*
 			在映射命令作用的模式中把键序列 {lhs} 映射为 {rhs} 。禁
 			止对映射后的 {rhs} 进行映射扫描。这个特性可以避免映射
 			的嵌套和递归。通常用于重定义一个命令。{Vi 无此功能}
@@ -84,6 +86,7 @@
 :iu[nmap] {lhs}			|mapmode-i|		*:iu*   *:iunmap*
 :lu[nmap] {lhs}			|mapmode-l|		*:lu*   *:lunmap*
 :cu[nmap] {lhs}			|mapmode-c|		*:cu*   *:cunmap*
+:tunma[p] {lhs}			|mapmode-t|		*:tunma* *:tunmap*
 			在映射命令作用的模式中删除 {lhs} 的映射。该映射仍然可
 			以在其它模式中保留其定义。
 			备注: {lhs} 包含末尾的空格。该映射取消操作_不会_生效:
@@ -100,6 +103,7 @@
 :imapc[lear]			|mapmode-i|		*:imapc*  *:imapclear*
 :lmapc[lear]			|mapmode-l|		*:lmapc*  *:lmapclear*
 :cmapc[lear]			|mapmode-c|		*:cmapc*  *:cmapclear*
+:tmapc[lear]			|mapmode-t|		*:tmapc*  *:tmapclear*
 			在映射命令作用的模式中删除_所有_的映射。{Vi 无此功能}
 			<buffer> 参数可用来删除所的有缓冲区局部映射
 			|:map-<buffer>|
@@ -115,6 +119,7 @@
 :im[ap]				|mapmode-i|
 :lm[ap]				|mapmode-l|
 :cm[ap]				|mapmode-c|
+:tma[p]				|mapmode-t|
 			在映射命令作用的模式中列出所有的键映射。注意 ":map" 和
 			":map!" 是最常用的，因为它们包括其它模式。
 
@@ -128,6 +133,7 @@
 :im[ap] {lhs}			|mapmode-i|		*:imap_l*
 :lm[ap] {lhs}			|mapmode-l|		*:lmap_l*
 :cm[ap] {lhs}			|mapmode-c|		*:cmap_l*
+:tma[p] {lhs}			|mapmode-t|		*:tmap_l*
 			在映射命令作用的模式中列出以 {lhs} 开头的键映射的键系
 			列。 {Vi 无此功能}
 
@@ -282,6 +288,7 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 :imap  :inoremap :iunmap    插入
 :lmap  :lnoremap :lunmap    插入、命令行、Lang-Arg
 :cmap  :cnoremap :cunmap    命令行
+:tmap  :tnoremap :tunmap    终端作业
 
     命 令				      模 式 ~
 					普通	可视+选择	操作符等待 ~
@@ -317,6 +324,10 @@ CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样
 此 ":map" 和 ":map!" 命令为多个模式定义和回显映射。在 Vim 中你可以使用
 ":nmap"、":vmap"、:omap"、":cmap" 和 ":imap" 命令来对每个不同的模式分别定义映
 射。
+
+							*mapmode-t*
+终端映射用于终端窗口中，其中输入的键用于终端中运行的作业。见
+|terminal-typing| 。
 
 							*omap-info*
 操作符等待映射可以用来定义和任何操作符一起使用的移动命令。简单例子:
@@ -369,6 +380,7 @@ CTRL-U (<C-U>) 用于删除命令行上 Vim 可能插入的范围。普通模式
 	i	插入
 	l	插入、命令行和 Lang-Arg 模式的 ":lmap" 映射
 	c	命令行
+	t	终端作业
 
 {rhs} 之前可能显示一个特殊字符:
 	*	表示它不可重映射
@@ -591,7 +603,7 @@ CTRL-V)。
 间)。之后，它假定 'q' 已经不会再被输入。如果你的输入很慢，或者你的系统很慢，复
 位 'timeout' 选项。这时，你可能还需要是否置位 'ttimeout' 选项。
 
-                            				*map-precedence*
+							*map-precedence*
 缓冲区局部映射 (|:map-<buffer>| 所定义的) 优先于全局映射。如果缓冲区局部映射和
 全局映射完全相同，Vim 使用缓冲区局部映射。另外如果映射以 <nowait> 定义的话，
 Vim 立即使用完整出现的映射，即便有一个更长的映射使用相同的前缀。例如，给定以下
@@ -775,7 +787,8 @@ non-id	  "non-id" 类型以一个非关键字字符结尾，其它字符可以�
 
 full-id	  匹配的前面是一个非关键字字符，或者是在行或插入的开始。例外: 当缩写仅
 	  有一个字符时，如果它前面有一个非关键字字符则不会被识别，除非那是空格
-	  和制表。
+	  和制表。不过，命令行上忽略 "'<,'>" (或其它标记) 部分，就像命令行从那
+	  之后开始那样。
 
 end-id	  匹配的前面是一个关键字字符，或者空格或制表，或者行或插入的开始。
 
@@ -1071,6 +1084,7 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 缺省时，用户定义命令的参数不进行自动补全。但是，通过指定以下的一个或多个属性
 后，参数可以进行自动补全:
 
+	-complete=arglist	参数列表中的文件名
 	-complete=augroup	自动命令组
 	-complete=buffer	缓冲区名
 	-complete=behave	:behave 子选项
@@ -1090,6 +1104,7 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 	-complete=highlight	高亮组
 	-complete=history	|:history| 子选项
 	-complete=locale	locale 名 (和 locale -a 给出的相同)
+	-complete=mapclear	缓冲区参数
 	-complete=mapping	映射名
 	-complete=menu		菜单
 	-complete=messages	|:messages| 子选项
@@ -1207,6 +1222,8 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 	<line1>	命令处理范围的开始行。
 						*<line2>*
 	<line2>	命令处理范围的末尾行。
+						*<range>*
+	<range> 命令处理范围的项目数: 0、1 或 2
 						*<count>*
 	<count>	提供的数量 (在 '-range' 和 '-count' 属性中描述)。
 						*<bang>*

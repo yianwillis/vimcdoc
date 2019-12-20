@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 8.0.  最近更新: 2017年7月
+*if_pyth.txt*   For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Paul Moore
@@ -638,6 +638,8 @@ vim.Function 对象				*python-Function*
 为了访问双向接口的方便，可用 |pyeval()| 和 |py3eval()| 函数来计算 Python 表达
 式然后返回计算结果给 Vim 脚本。也可用 |pyxeval()|。
 
+Python "None" 值转化为 v:none。
+
 ==============================================================================
 9. 动态调入						*python-dynamic*
 
@@ -655,8 +657,8 @@ MS-Windows ~
 指定 Python DLL。
 
 DLL 的名字应该匹配 Vim 编译时所使用的 Python 版本。目前，用于 Python 2 的名字
-为 "python27.dll"，也就是 Python 2.7。用于 Python 3 的是 python35.dll (Python
-3.5)。要确信这一点，编辑 "gvim.exe" 文件并查找 "python\d*.dll\c"。
+为 "python27.dll"，也就是 Python 2.7。用于 Python 3 的是 python36.dll (Python
+3.6)。要确信这一点，编辑 "gvim.exe" 文件并查找 "python\d*.dll\c"。
 
 
 Unix ~
@@ -720,13 +722,30 @@ Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的
 以下方法可用来测试哪个 Python 版本可用: >
 	if has('python')
 	  echo '有 Python 2.x'
-  	elseif has('python3')
+	endif
+	if has('python3')
 	  echo '有 Python 3.x'
 	endif
 
 注意 不过，当 Python 2 和 3 同时存在且都是动态载入，这些 has() 调用会试图载入
 它们。如果两个版本不能同时载入，单单对 Python 2 或 3 是否可用的检查就会导致另
 一个版本不能调入。
+
+要避免载入动态库，只需要检查 Vim 编译时是否有 python 支持: >
+	if has('python_compiled')
+	  echo '编译时带 Python 2.x 支持'
+	  if has('python_dynamic')
+	    echo 'Python 2.x 已动态载入'
+	  endif
+	endif
+	if has('python3_compiled')
+	  echo '编译时带 Python 3.x 支持'
+	  if has('python3_dynamic')
+	    echo 'Python 3.x 已动态载入'
+	  endif
+	endif
+
+这段代码也会告诉你 Python 是否已动态载入，如果找不到运行库时会报错。
 
 ==============================================================================
 11. Python X						*python_x* *pythonx*
@@ -800,10 +819,10 @@ Ubuntu 上需要为 Python 2 安装以下包:
 	python-dev
 Python 3:
 	python3
-	pytyon3-dev
+	python3-dev
 Python 3.6:
 	python3.6
-	pytyon3.6-dev
+	python3.6-dev
 
 如果有多于一个 Python 3 版本，在运行 configure 前链接 python3 到你选择的那
 个版本。
