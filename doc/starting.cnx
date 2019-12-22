@@ -1,4 +1,4 @@
-*starting.txt*  For Vim version 8.0.  最近更新: 2017年8月
+*starting.txt*  For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -56,8 +56,8 @@
 <		开始编辑新缓冲区，并以标准输入读取的文本填充之。通常从标准输入
 		读入的命令现在从标准错误 (stderr) 读入。例如: >
 			find . -name "*.c" -print | vim -
-<		缓冲区会被标为已修改，因为它包含需要保存的文本。除非以只读模式
-		进入，这时缓冲区不会标为已修改。例如: >
+<		缓冲区不会被标为已修改，以方便退出。如果不想意外地丢失，可以小
+		心地把缓冲区标记成已修改。例如: >
 			ls | view -
 <
 		以 Ex 模式启动: >
@@ -118,7 +118,8 @@ Unix 上，你通常有一个可执行文件叫 Vim，并链接该可执行文�
 VMS 上，所有的选项参数假定都是小写的，除非前面有一个正斜杠。这样，"-R" 应该意
 味着恢复而 "-/R" 表示只读。
 
---help							*-h* *--help*
+--help							*-h* *--help* *-?*
+-?
 -h		给出使用说明 (帮助) 并退出。{Vi 无此功能}
 		关于捕获文本，见 |info-message|。
 
@@ -131,11 +132,12 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 --noplugin	跳过插件的载入。复位 'loadplugins' 选项。
 		{Vi 无此功能}
 		注意 |-u| 参数可能会屏蔽载入的插件:
-			参数		载入 vimrc 文件		载入插件 ~
-			(无)			是		    是
-			-u NONE			否		    否
-			-u NORC			否		    是
-			--noplugin		是		    否
+			参数       载入: vimrc 文件    插件    defaults.vim~
+			(无)		     是		是	  是
+			-u NONE		     否		否	  否
+			-u DEFAULTS	     否		否	  是
+			-u NORC		     否		是	  否
+			--noplugin	     是		否	  是
 
 --startuptime {fname}					*--startuptime*
 		启动时把计时信息写入文件 {fname}。可用于分析载入 .vimrc、插件
@@ -371,6 +373,7 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 							*--not-a-term*
 --not-a-term	告知 Vim 用户确定输入和/或输出不连接到终端。可用于避免相关警告
 		和因此发生的两秒延迟。
+		同时也避免了 "Reading from stdin..." 信息。
 		{Vi 无此功能}
 
 							*--ttyfail*
@@ -408,17 +411,25 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 --nofork	GUI: 不分叉。和 |-f| 相同。
 							*-u* *E282*
 -u {vimrc}	读入文件 {vimrc} 执行初始化。跳过多数其他的初始化步骤；见
-		|initialization|。这可以用来启动 Vim 进入特殊模式，使用特殊的
-		映射和设置。可以用外壳映射来方便使用之。例如: >
+		|initialization|。
+
+		这可以用来启动 Vim 进入特殊模式，使用特殊的映射和设置。可以用
+		外壳映射来方便使用之。例如: >
 			alias vimc vim -u ~/.c_vimrc !*
 <		也可以考虑自动命令；见 |autocommand|。
+
 		如果 {vimrc} 等于 "NONE" (全是大写)，所有文件和环境变量的初始
 		化都被跳过，这包括 GUI 开始时候 |gvimrc| 文件的读入。插件的载
 		入也被跳过。
+
 		如果 {vimrc} 等于 "NORC" (全是大写)，那么和 "NONE" 基本相同，
-		除了不跳过插件的载入之外。
-		使用 "-u" 参数的副作用是 'compatible' 选项缺省是打开的。这可能
-		有意想不到的效果。见 |'compatible'|。
+		但不跳过插件的载入。
+
+		如果 {vimrc} 等于 "DEFAULTS" (全是大写)，那么和 "NONE" 基本相
+		同，但载入 |defaults.vim| 脚本，其中置位 'nocompatible'。
+
+		除了 DEFAULTS 以外，使用 "-u" 参数的副作用是 'compatible' 选项
+		缺省是打开的。这可能有意想不到的效果。见 |'compatible'|。
 		{Vi 无此功能}
 
 							*-U* *E230*
@@ -434,6 +445,14 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		":wv" 的时候，也不读写 viminfo 文件。另见 |viminfo-file|。
 		{Vi 无此功能}
 
+							*--clean*
+--clean		等价于 "-u DEFAULTS -U NONE -i NONE":
+		- 路过文件和环境变量的初始化
+		- 载入 |defaults.vim| 脚本，隐含 'nocompatible': 使用 Vim 缺省
+		  值
+		- 不载入 |gvimrc| 脚本
+		- 不读也不写 viminfo 文件
+		- 'runtimepath' 把主目录排除在外
 							*-x*
 -x		读写文件都使用加密。会提示密钥，该密钥存在 'key' 选项里。所有
 		的写操作使用该密钥加密文本。 '-x' 参数在读文件的时候是不需要
@@ -747,6 +766,9 @@ Evim 里，以下选项被改变，不同于缺省值:
      (*) 如果使用该文件或环境变量，'compatible' 缺省被关闭。见
 	 |compatible-default|。
 
+     备注: |mzscheme| 界面在 vimrc 文件载入后初始化。此后再改变 'mzschemedll'
+     不会有效果。
+
 4. 载入插件脚本。						*load-plugins*
 	相当于执行如下命令: >
 		:runtime! plugin/**/*.vim
@@ -757,8 +779,9 @@ Evim 里，以下选项被改变，不同于缺省值:
 	后载入，详情下述。
 	以下情况下，不载入插件:
 	- vimrc 文件里复位 'loadplugins' 选项。
-	- 使用 |--noplugin| 命令化参数。
-	- 使用 "-u NONE" 命令化参数 |-u|。
+	- 使用 |--noplugin| 命令行参数。
+	- 使用 |--clean| 命令行参数。
+	- 使用 "-u NONE" 命令行参数 |-u|。
 	- 编译 Vim 时不带 |+eval| 特性。
 	注意 使用 "-c set noloadplugins" 没有用，因为命令行的命令这时还没有执
 	行。可以用 "--cmd 'set noloadplugins'"  或 "--cmd 'set loadplugins'"
@@ -863,11 +886,12 @@ Vim 启动时，'compatible' 选项是打开的。Vim 开始初始化的时候�
 旦:
 - 找到用户 vimrc 文件，或者
 - 找到当前目录下的 vimrc 文件，或者
-- 设置 "VIMINIT" 环境变量，或者
-- 给出 "-N" 命令行参数，即使 vimrc 文件不存在亦然，或者
+- 设置了 "VIMINIT" 环境变量，或者
+- 给出 "-N" 命令行参数，或者
+- 给出 "--clean" 命令行参数，或者
 - 载入了 |defaults.vim| 脚本，或者
 - 找到 gvimrc 文件，
-就会设为 'nocompatible'。
+就会把该选项设为 'nocompatible'。
 
 注意 这并_不_适用于找到系统范围的 vimrc 文件。
 
@@ -887,11 +911,11 @@ Vim 启动时，'compatible' 选项是打开的。Vim 开始初始化的时候�
 
 没有 .vimrc 文件里的缺省值 ~
 							*defaults.vim*
-如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUTIME/defaults.vim 脚本。
+如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUNTIME/defaults.vim 脚本。
 这会关闭 'compatible'，打开语法高亮和一些更多的设置。详见该脚本。注意: 这从
 Vim 8.0 开始，不是 Vim 7.4。(准确地说，由 7.4.2111 补丁加入)。
 
-这方便了新 Vim 用户。如果创建了自己 .vimrc，建议在顶部附近加入此行: >
+这方便了新 Vim 用户。如果创建了自己 .vimrc，建议在顶部附近加入这些行: >
 	unlet! skip_defaults_vim
 	source $VIMRUNTIME/defaults.vim
 如果你有 .vimrc，这样 Vim 就像之前一样地工作了。一个方法是复制
@@ -1194,7 +1218,7 @@ $VIM 目录 (MS-DOS)。你也可以使用自动命令 |autocommand| 和/或模�
 4. 如果使用手动折叠并且 'viewoptions' 包含 "folds" 的话，恢复折叠。也恢复手动
    打开和关闭的折叠。
 5. 滚动条的位置和文件中的光标位置。如果有关闭的折叠，这不能很好的工作。
-6. 本地的当前目录，如果和全局当前目录不同的话。
+6. 本地的当前目录，如果和全局当前目录不同且 'viewoptions' 包含 "curdir" 的话。
 
 注意 视图和会话并不完善:
 - 它们并不会恢复所有的信息。比如，定义的函数、自动命令和 ":syntax on" 并不包括
@@ -1285,8 +1309,8 @@ Unix 上的 注意 事项:
 - viminfo 的文件保护会被设置，使得其它用户不能够读取。因为它可能包含任何文本或
   者工作所需的命令。
 - 如果你需要和其它用户共享 viminfo 文件 (例如，当你 "su" 到另外一个用户的时
-  候)，你可以使该文件对同组甚至所有人可写。Vim 在写入新的 viminfo 文件的时候会
-  保留该文件的权限。要小心，不要不加考虑的允许任何人读写你的 viminfo 文件！
+  候)，你可以使该文件对同组甚至所有人可写。Vim 在替换 viminfo 文件的时候会保留
+  该文件的权限。要小心，不要不加考虑的允许任何人读写你的 viminfo 文件！
 - Vim 不会覆盖当前 "实际" 用户不能写入的 viminfo 文件。这对使用 "su" 成为 root
   但是 $HOME 仍然指向一个普通用户的主目录的用户有用。不然 Vim 会建立一个 root
   拥有的 viminfo 文件，使得别人都无法读取。
@@ -1332,7 +1356,9 @@ viminfo 文 件 名					*viminfo-file-name*
 - 'viminfo' 选项里的 'n' 标志位可以用来指定另外一个 viminfo 文件名
   |'viminfo'|。
 - Vim 的 "-i" 参数可以用来设置另外一个文件名 |-i|。如果给出的文件名是 "NONE"
-  (全是大写)，不读写任何 viminfo 文件。下面给出的这些命令里也可以这么使用！
+  (全是大写)，不读写任何 viminfo 文件。下面给出的命令也不会！
+- 'viminfofile' 选项和 "-i" 参数用法相同。事实上，"-i" 参数的值保存在
+  'viminfofile' 选项里。
 - 下面给出的命令里，可以给定另外一个文件名。它覆盖缺省文件名和 'viminfo' 或者
   "-i" 给定的文件名 (除非它是 NONE)。
 
