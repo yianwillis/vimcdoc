@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>mbyte</h2>
 <pre>
-<b class="vimtag"> <a name="mbyte.txt">mbyte.txt</a> </b>     For Vim version 8.0.  最近更新: 2017年8月
+<b class="vimtag"> <a name="mbyte.txt">mbyte.txt</a> </b>     For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar et al.</code>
@@ -43,8 +43,9 @@
 7. 在 X11 上输入                         <a href="mbyte.html#mbyte-XIM">mbyte-XIM</a> 
 8. 在 MS-Windows 上输入                  <a href="mbyte.html#mbyte-IME">mbyte-IME</a> 
 9. 使用键盘映射表输入                    <a href="mbyte.html#mbyte-keymap">mbyte-keymap</a> 
-10. 使用 UTF-8                           <a href="mbyte.html#mbyte-utf8">mbyte-utf8</a> 
-11. 选项总述                             <a href="mbyte.html#mbyte-options">mbyte-options</a> 
+10. 用 imactivatefunc() 输入             <a href="mbyte.html#mbyte-func">mbyte-func</a> 
+11. 使用 UTF-8                           <a href="mbyte.html#mbyte-utf8">mbyte-utf8</a> 
+12. 选项总述                             <a href="mbyte.html#mbyte-options">mbyte-options</a> 
 
 <code class="note">注意</code>: 本文件包含 UTF-8 编码字符。如果使用其它编码，这些字符可能显示为奇怪的符
 号或者方框。
@@ -742,6 +743,8 @@ Wnn4.2 是一个好输入系统。Wnn 4.2 包括，
    <a href="mbyte.html#OffTheSpot">OffTheSpot</a> 、 <a href="mbyte.html#OverTheSpot">OverTheSpot</a>  和  <a href="mbyte.html#Root">Root</a> 。
 
   目前 GUI Vim 支持三种输入方式:   <a href="mbyte.html#OverTheSpot">OverTheSpot</a> 、 <a href="mbyte.html#OffTheSpot">OffTheSpot</a>  和  <a href="mbyte.html#Root">Root</a> 。
+  编译时带  <a href="various.html#+GUI_GTK">+GUI_GTK</a>  特性时，GUI Vim 支持两种输入方式:  <a href="mbyte.html#OnTheSpot">OnTheSpot</a>  和
+   <a href="mbyte.html#OverTheSpot">OverTheSpot</a> 。可用 <a href="options.html#'imstyle'">'imstyle'</a> 选项选择。
 
 *.  on-the-spot                                         <b class="vimtag"> <a name="OnTheSpot">OnTheSpot</a> </b>
     客户软件在其所用显示区内执行预编辑区和状态区。客户软件由  <a href="mbyte.html#IM-server">IM-server</a>  控制
@@ -1115,7 +1118,32 @@ Vim 在普通状态下几乎不需要 IME，即使是在编辑多字节文本也
 ﭏ    0xfb4f  Xal  alef-lamed
 
 </pre><hr class="doubleline" /><pre>
-<h4>10. 使用 UTF-8                          <b class="vimtag"> <a name="mbyte-utf8">mbyte-utf8</a> </b> <b class="vimtag"> <a name="UTF-8">UTF-8</a> </b> <b class="vimtag"> <a name="utf-8">utf-8</a> </b> <b class="vimtag"> <a name="utf8">utf8</a> </b></h4>                                                        <b class="vimtag"> <a name="Unicode">Unicode</a> </b> <b class="vimtag"> <a name="unicode">unicode</a> </b>
+<h4>10.  用 imactivatefunc() 输入                                   <b class="vimtag"> <a name="mbyte-func">mbyte-func</a> </b></h4>
+Vim 有 <a href="options.html#'imactivatefunc'">'imactivatefunc'</a> 和 <a href="options.html#'imstatusfunc'">'imstatusfunc'</a> 选项。用于以任意方式来激活/关闭输入
+法，包含使用外部命令。例如，fcitx 提供了 fcitx-remote 命令: 
+<code class="example"></code>
+<code class="example">        set iminsert=2</code>
+<code class="example">        set imsearch=2</code>
+<code class="example">        set imcmdline</code>
+<code class="example"></code>
+<code class="example">        set imactivatefunc=ImActivate</code>
+<code class="example">        function! ImActivate(active)</code>
+<code class="example">          if a:active</code>
+<code class="example">            call system('fcitx-remote -o')</code>
+<code class="example">          else</code>
+<code class="example">            call system('fcitx-remote -c')</code>
+<code class="example">          endif</code>
+<code class="example">        endfunction</code>
+<code class="example"></code>
+<code class="example">        set imstatusfunc=ImStatus</code>
+<code class="example">        function! ImStatus()</code>
+<code class="example">          return system('fcitx-remote')[0] is# '2'</code>
+<code class="example">        endfunction</code>
+<code class="example"></code>
+使用此脚本，即使编译时没有带  <a href="various.html#+xim">+xim</a>  也能通过 Vim 激活/关闭 XIM。
+
+</pre><hr class="doubleline" /><pre>
+<h4>11. 使用 UTF-8                          <b class="vimtag"> <a name="mbyte-utf8">mbyte-utf8</a> </b> <b class="vimtag"> <a name="UTF-8">UTF-8</a> </b> <b class="vimtag"> <a name="utf-8">utf-8</a> </b> <b class="vimtag"> <a name="utf8">utf8</a> </b></h4>                                                        <b class="vimtag"> <a name="Unicode">Unicode</a> </b> <b class="vimtag"> <a name="unicode">unicode</a> </b>
 Unicode 字符集的设计就是要包含所有其他的字符集。这样你就可以用 Unicode 写任何
 文字 (除了少数偏僻的语种以外)。它也最大限度的提供了在一个文件里混合各种语言的
 能力，这用其他编码是不可能的。
@@ -1234,7 +1262,7 @@ MS-Windows，utf-32 并不是常用的文件格式。
 
 
 </pre><hr class="doubleline" /><pre>
-<h4>11. 选项总述                                            <b class="vimtag"> <a name="mbyte-options">mbyte-options</a> </b></h4>
+<h4>12. 选项总述                                            <b class="vimtag"> <a name="mbyte-options">mbyte-options</a> </b></h4>
 以下的各选项会影响对多字节文件的编辑。更详细的信息请参考 options.txt。
 
 <a href="options.html#'encoding'">'encoding'</a>      键盘和显示使用的编码。同时也是文件的缺省编码。

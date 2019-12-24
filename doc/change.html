@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>change</h2>
 <pre>
-<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    For Vim version 8.0.  最近更新: 2017年7月
+<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -478,6 +478,7 @@ g??                     用 Rot13 对当前行进行编码。<code class="notvi"
 
 如果 <a href="options.html#'smartindent'">'smartindent'</a> 选项打开，或者 <a href="options.html#'cindent'">'cindent'</a> 打开并且 <a href="options.html#'cinkeys'">'cinkeys'</a> 包含带零值的
 '#'，右移不影响 '#' 开始的行 (这些应该是 C 预处理行，它们应该保持在第一列)。
+用 <a href="options.html#'cino'">'cino'</a> 选项可改变此行为，参见  <a href="indent.html#cino-%23">cino-#</a> 。
 
 如果 <a href="options.html#'expandtab'">'expandtab'</a> 选项关闭 (这是缺省值)， Vim 尽可能使用 <code class="special">&lt;Tab&gt;</code> 来构成缩进。你可
 以用 "&gt;&gt;&lt;&lt;" 来把缩进尽可能从空格替换成同样缩进距离的 <code class="special">&lt;Tab&gt;</code> (如有需要，还有少量
@@ -875,6 +876,9 @@ g&amp;                      等价于  <code class="badlink">:%s//~/&amp;</code>
                         惯)。
                          <a href="change.html#:retab!">:retab!</a>  也把空格序列换成 <code class="special">&lt;Tab&gt;</code>，这可能会使 printf()
                         引起混淆。
+                        如果打开  <a href="various.html#+vartabs">+vartabs</a>  特性，可用以逗号分隔的制表宽度的列
+                        表来代替单个制表位。列表的每个值代表一个制表位的宽度。
+                        末值除外，该值适用于其后所有的制表位。
                         <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name="retab-example">retab-example</a> </b>
@@ -1242,6 +1246,48 @@ gww                     对当前行排版，其它和 "gw" 类同。<code class
 
 你可以设置 <a href="options.html#'formatexpr'">'formatexpr'</a> 选项为某表达式或设置 <a href="options.html#'formatprg'">'formatprg'</a> 选项为外部程序名，Vim
 会用之进行文本排版。<a href="options.html#'textwidth'">'textwidth'</a> 等选项对外部程序的排版不起作用。
+
+                                                        <b class="vimtag"> <a name="format-formatexpr">format-formatexpr</a> </b>
+<a href="options.html#'formatexpr'">'formatexpr'</a> 选项可设为对缓冲区重新排版的 Vim 脚本函数。此功能常用于
+ <a href="usr_41.html#ftplugin">ftplugin</a> ，因为排版方式高度依赖于文件类型。这里，建议使用  <a href="eval.html#autoload">autoload</a>  脚本，这
+样只有在有需要时才会载入对应的脚本，而该脚本应命名为 <code class="special">&lt;filetype&gt;</code>format.vim。
+
+例如，随 Vim 发布的在 $VIMRUNTIME 目录里的 XML 文件类型插件把 <a href="options.html#'formatexpr'">'formatexpr'</a> 选
+项设为: 
+<code class="example"></code>
+<code class="example">   setlocal formatexpr=xmlformat#Format()</code>
+<code class="example"></code>
+这意味着，在以下目录你会找到相应的脚本，其中定义了 xmlformat#Format() 函数:
+ <code class="badlink">$VIMRUNTIME/autoload/xmlformat.vim</code> 
+
+下例脚本删除选定文本的拖尾空白。把它放在你的 autoload 目录，如
+~/.vim/autoload/format.vim 里: 
+<code class="example"></code>
+<code class="example">  func! format#Format()</code>
+<code class="example">    " 只在显式的 gq 命令时重新排版</code>
+<code class="example">    if mode() != 'n'</code>
+<code class="example">      " 缺省使用 Vim 内部的重新排版方式</code>
+<code class="example">      return 1</code>
+<code class="example">    endif</code>
+<code class="example">    let lines = getline(v:lnum, v:lnum + v:count - 1)</code>
+<code class="example">    call map(lines, {key, val -&gt; substitute(val, '\s\+$', '', 'g')})</code>
+<code class="example">    call setline('.', lines)</code>
+<code class="example"></code>
+<code class="example">    " 不使用内部的排版方式！</code>
+<code class="example">    return 0</code>
+<code class="example">  endfunc</code>
+<code class="example"></code>
+然后，如此打开此种排版方式: 
+<code class="example">  setlocal formatexpr=format#Format()</code>
+
+<code class="note">注意</code>: 此函数在插入模式下 (一般这意味着文本的插入超出了 <a href="options.html#'textwidth'">'textwidth'</a> 限制) 显式
+返回非零。这样，Vim 会使用缺省的内部排版方法。
+
+反之，该  <a href="change.html#gq">gq</a>  命令会用于重新排版文本，此时，函数获取所选的行，删除这些行拖尾的
+空白，并在原地放置。如果你需要把单行分割为多行，小心不要覆盖额外的部分。
+
+如果在插入或替换模式下希望重排文本，分外小心，因为此时函数可能会被递归调用。调
+试可用 <a href="options.html#'debug'">'debug'</a> 选项。
 
                                                         <b class="vimtag"> <a name="right-justify">right-justify</a> </b>
 Vim 没有靠右控制对齐 (right justify) 文本的命令。你可以用 "par" 这样的外部命令

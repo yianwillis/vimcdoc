@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>starting</h2>
 <pre>
-<b class="vimtag"> <a name="starting.txt">starting.txt</a> </b>  For Vim version 8.0.  最近更新: 2017年8月
+<b class="vimtag"> <a name="starting.txt">starting.txt</a> </b>  For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -74,8 +74,8 @@
                 开始编辑新缓冲区，并以标准输入读取的文本填充之。通常从标准输入
                 读入的命令现在从标准错误 (stderr) 读入。例如: 
 <code class="example">                        find . -name "*.c" -print | vim -</code>
-                缓冲区会被标为已修改，因为它包含需要保存的文本。除非以只读模式
-                进入，这时缓冲区不会标为已修改。例如: 
+                缓冲区不会被标为已修改，以方便退出。如果不想意外地丢失，可以小
+                心地把缓冲区标记成已修改。例如: 
 <code class="example">                        ls | view -</code>
 
                 以 Ex 模式启动: 
@@ -136,7 +136,8 @@ Unix 上，你通常有一个可执行文件叫 Vim，并链接该可执行文�
 VMS 上，所有的选项参数假定都是小写的，除非前面有一个正斜杠。这样，"-R" 应该意
 味着恢复而 "-/R" 表示只读。
 
---help                                                  <b class="vimtag"> <a name="-h">-h</a> </b> <b class="vimtag"> <a name="--help">--help</a> </b>
+--help                                                  <b class="vimtag"> <a name="-h">-h</a> </b> <b class="vimtag"> <a name="--help">--help</a> </b> <b class="vimtag"> <a name="-?">-?</a> </b>
+-?
 -h              给出使用说明 (帮助) 并退出。<code class="notvi">{Vi 无此功能}</code>
                 关于捕获文本，见  <a href="starting.html#info-message">info-message</a> 。
 
@@ -149,11 +150,12 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 --noplugin      跳过插件的载入。复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
                 <code class="notvi">{Vi 无此功能}</code>
                 <code class="note">注意</code>  <a href="starting.html#-u">-u</a>  参数可能会屏蔽载入的插件:
-<code class="section">                        参数            载入 vimrc 文件         载入插件 </code>
-                        (无)                    是                  是
-                        -u NONE                 否                  否
-                        -u NORC                 否                  是
-                        --noplugin              是                  否
+<code class="section">                        参数       载入: vimrc 文件    插件    defaults.vim</code>
+                        (无)                 是         是        是
+                        -u NONE              否         否        否
+                        -u DEFAULTS          否         否        是
+                        -u NORC              否         是        否
+                        --noplugin           是         否        是
 
 --startuptime <code class="special">{fname}</code>                                   <b class="vimtag"> <a name="--startuptime">--startuptime</a> </b>
                 启动时把计时信息写入文件 <code class="special">{fname}</code>。可用于分析载入 .vimrc、插件
@@ -389,6 +391,7 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                                                         <b class="vimtag"> <a name="--not-a-term">--not-a-term</a> </b>
 --not-a-term    告知 Vim 用户确定输入和/或输出不连接到终端。可用于避免相关警告
                 和因此发生的两秒延迟。
+                同时也避免了 "Reading from stdin..." 信息。
                 <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name="--ttyfail">--ttyfail</a> </b>
@@ -426,17 +429,25 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 --nofork        GUI: 不分叉。和  <a href="starting.html#-f">-f</a>  相同。
                                                         <b class="vimtag"> <a name="-u">-u</a> </b> <b class="vimtag"> <a name="E282">E282</a> </b>
 -u <code class="special">{vimrc}</code>      读入文件 <code class="special">{vimrc}</code> 执行初始化。跳过多数其他的初始化步骤；见
-                 <a href="starting.html#initialization">initialization</a> 。这可以用来启动 Vim 进入特殊模式，使用特殊的
-                映射和设置。可以用外壳映射来方便使用之。例如: 
+                 <a href="starting.html#initialization">initialization</a> 。
+
+                这可以用来启动 Vim 进入特殊模式，使用特殊的映射和设置。可以用
+                外壳映射来方便使用之。例如: 
 <code class="example">                        alias vimc vim -u ~/.c_vimrc !*</code>
                 也可以考虑自动命令；见  <a href="autocmd.html#autocommand">autocommand</a> 。
+
                 如果 <code class="special">{vimrc}</code> 等于 "NONE" (全是大写)，所有文件和环境变量的初始
                 化都被跳过，这包括 GUI 开始时候  <a href="gui.html#gvimrc">gvimrc</a>  文件的读入。插件的载
                 入也被跳过。
+
                 如果 <code class="special">{vimrc}</code> 等于 "NORC" (全是大写)，那么和 "NONE" 基本相同，
-                除了不跳过插件的载入之外。
-                使用 "-u" 参数的副作用是 <a href="options.html#'compatible'">'compatible'</a> 选项缺省是打开的。这可能
-                有意想不到的效果。见  <a href="options.html#'compatible'">'compatible'</a> 。
+                但不跳过插件的载入。
+
+                如果 <code class="special">{vimrc}</code> 等于 "DEFAULTS" (全是大写)，那么和 "NONE" 基本相
+                同，但载入  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，其中置位 <a href="options.html#'nocompatible'">'nocompatible'</a>。
+
+                除了 DEFAULTS 以外，使用 "-u" 参数的副作用是 <a href="options.html#'compatible'">'compatible'</a> 选项
+                缺省是打开的。这可能有意想不到的效果。见  <a href="options.html#'compatible'">'compatible'</a> 。
                 <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name="-U">-U</a> </b> <b class="vimtag"> <a name="E230">E230</a> </b>
@@ -452,6 +463,14 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 ":wv" 的时候，也不读写 viminfo 文件。另见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
                 <code class="notvi">{Vi 无此功能}</code>
 
+                                                        <b class="vimtag"> <a name="--clean">--clean</a> </b>
+--clean         等价于 "-u DEFAULTS -U NONE -i NONE":
+                - 路过文件和环境变量的初始化
+                - 载入  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，隐含 <a href="options.html#'nocompatible'">'nocompatible'</a>: 使用 Vim 缺省
+                  值
+                - 不载入  <a href="gui.html#gvimrc">gvimrc</a>  脚本
+                - 不读也不写 viminfo 文件
+                - <a href="options.html#'runtimepath'">'runtimepath'</a> 把主目录排除在外
                                                         <b class="vimtag"> <a name="-x">-x</a> </b>
 -x              读写文件都使用加密。会提示密钥，该密钥存在 <a href="options.html#'key'">'key'</a> 选项里。所有
                 的写操作使用该密钥加密文本。 '-x' 参数在读文件的时候是不需要
@@ -762,6 +781,9 @@ Evim 里，以下选项被改变，不同于缺省值:
      (*) 如果使用该文件或环境变量，<a href="options.html#'compatible'">'compatible'</a> 缺省被关闭。见
           <a href="starting.html#compatible-default">compatible-default</a> 。
 
+     <code class="note">备注</code>:  <a href="if_mzsch.html#mzscheme">mzscheme</a>  界面在 vimrc 文件载入后初始化。此后再改变 <a href="options.html#'mzschemedll'">'mzschemedll'</a>
+     不会有效果。
+
 4. 载入插件脚本。                                               <b class="vimtag"> <a name="load-plugins">load-plugins</a> </b>
         相当于执行如下命令: 
 <code class="example">                :runtime! plugin/**/*.vim</code>
@@ -772,8 +794,9 @@ Evim 里，以下选项被改变，不同于缺省值:
         后载入，详情下述。
         以下情况下，不载入插件:
         - vimrc 文件里复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
-        - 使用  <a href="starting.html#--noplugin">--noplugin</a>  命令化参数。
-        - 使用 "-u NONE" 命令化参数  <a href="starting.html#-u">-u</a> 。
+        - 使用  <a href="starting.html#--noplugin">--noplugin</a>  命令行参数。
+        - 使用  <a href="starting.html#--clean">--clean</a>  命令行参数。
+        - 使用 "-u NONE" 命令行参数  <a href="starting.html#-u">-u</a> 。
         - 编译 Vim 时不带  <a href="various.html#+eval">+eval</a>  特性。
         <code class="note">注意</code> 使用 "-c set noloadplugins" 没有用，因为命令行的命令这时还没有执
         行。可以用 "--cmd 'set noloadplugins'"  或 "--cmd 'set loadplugins'"
@@ -878,11 +901,12 @@ Vim 启动时，<a href="options.html#'compatible'">'compatible'</a> 选项是�
 旦:
 - 找到用户 vimrc 文件，或者
 - 找到当前目录下的 vimrc 文件，或者
-- 设置 "VIMINIT" 环境变量，或者
-- 给出 "-N" 命令行参数，即使 vimrc 文件不存在亦然，或者
+- 设置了 "VIMINIT" 环境变量，或者
+- 给出 "-N" 命令行参数，或者
+- 给出 "--clean" 命令行参数，或者
 - 载入了  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，或者
 - 找到 gvimrc 文件，
-就会设为 <a href="options.html#'nocompatible'">'nocompatible'</a>。
+就会把该选项设为 <a href="options.html#'nocompatible'">'nocompatible'</a>。
 
 <code class="note">注意</code> 这并 <code class="emphasis">不</code> 适用于找到系统范围的 vimrc 文件。
 
@@ -902,11 +926,11 @@ Vim 启动时，<a href="options.html#'compatible'">'compatible'</a> 选项是�
 
 <code class="section">没有 .vimrc 文件里的缺省值 </code>
                                                         <b class="vimtag"> <a name="defaults.vim">defaults.vim</a> </b>
-如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUTIME/defaults.vim 脚本。
+如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUNTIME/defaults.vim 脚本。
 这会关闭 <a href="options.html#'compatible'">'compatible'</a>，打开语法高亮和一些更多的设置。详见该脚本。<code class="note">注意</code>: 这从
 Vim 8.0 开始，不是 Vim 7.4。(准确地说，由 7.4.2111 补丁加入)。
 
-这方便了新 Vim 用户。如果创建了自己 .vimrc，建议在顶部附近加入此行: 
+这方便了新 Vim 用户。如果创建了自己 .vimrc，建议在顶部附近加入这些行: 
 <code class="example">        unlet! skip_defaults_vim</code>
 <code class="example">        source $VIMRUNTIME/defaults.vim</code>
 如果你有 .vimrc，这样 Vim 就像之前一样地工作了。一个方法是复制
@@ -1204,7 +1228,7 @@ $VIM 目录 (MS-DOS)。你也可以使用自动命令  <a href="autocmd.html#aut
 4. 如果使用手动折叠并且 <a href="options.html#'viewoptions'">'viewoptions'</a> 包含 "folds" 的话，恢复折叠。也恢复手动
    打开和关闭的折叠。
 5. 滚动条的位置和文件中的光标位置。如果有关闭的折叠，这不能很好的工作。
-6. 本地的当前目录，如果和全局当前目录不同的话。
+6. 本地的当前目录，如果和全局当前目录不同且 <a href="options.html#'viewoptions'">'viewoptions'</a> 包含 "curdir" 的话。
 
 <code class="note">注意</code> 视图和会话并不完善:
 - 它们并不会恢复所有的信息。比如，定义的函数、自动命令和 ":syntax on" 并不包括
@@ -1294,8 +1318,8 @@ Unix 上的 <code class="note">注意</code> 事项:
 - viminfo 的文件保护会被设置，使得其它用户不能够读取。因为它可能包含任何文本或
   者工作所需的命令。
 - 如果你需要和其它用户共享 viminfo 文件 (例如，当你 "su" 到另外一个用户的时
-  候)，你可以使该文件对同组甚至所有人可写。Vim 在写入新的 viminfo 文件的时候会
-  保留该文件的权限。要小心，不要不加考虑的允许任何人读写你的 viminfo 文件！
+  候)，你可以使该文件对同组甚至所有人可写。Vim 在替换 viminfo 文件的时候会保留
+  该文件的权限。要小心，不要不加考虑的允许任何人读写你的 viminfo 文件！
 - Vim 不会覆盖当前 "实际" 用户不能写入的 viminfo 文件。这对使用 "su" 成为 root
   但是 $HOME 仍然指向一个普通用户的主目录的用户有用。不然 Vim 会建立一个 root
   拥有的 viminfo 文件，使得别人都无法读取。
@@ -1341,7 +1365,9 @@ viminfo 文 件 名                                        <b class="vimtag"> <a
 - <a href="options.html#'viminfo'">'viminfo'</a> 选项里的 'n' 标志位可以用来指定另外一个 viminfo 文件名
    <a href="options.html#'viminfo'">'viminfo'</a> 。
 - Vim 的 "-i" 参数可以用来设置另外一个文件名  <a href="starting.html#-i">-i</a> 。如果给出的文件名是 "NONE"
-  (全是大写)，不读写任何 viminfo 文件。下面给出的这些命令里也可以这么使用！
+  (全是大写)，不读写任何 viminfo 文件。下面给出的命令也不会！
+- <a href="options.html#'viminfofile'">'viminfofile'</a> 选项和 "-i" 参数用法相同。事实上，"-i" 参数的值保存在
+  <a href="options.html#'viminfofile'">'viminfofile'</a> 选项里。
 - 下面给出的命令里，可以给定另外一个文件名。它覆盖缺省文件名和 <a href="options.html#'viminfo'">'viminfo'</a> 或者
   "-i" 给定的文件名 (除非它是 NONE)。
 

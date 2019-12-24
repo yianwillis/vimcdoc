@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>intro</h2>
 <pre>
-<b class="vimtag"> <a name="intro.txt">intro.txt</a> </b>     for Vim version 8.0.  最近更新: 2017年8月
+<b class="vimtag"> <a name="intro.txt">intro.txt</a> </b>     for Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -143,8 +143,14 @@ http://www.vim.org/maillist.php
    文本会转发到 vim-dev 邮件列表。
 
 请尽量使用精练的语言描述；回答邮件里的问题势必会占用维护者开发 Vim 的时间！要
-给出导致漏洞的可重复的例子，并且尽可能找出哪个选项影响该漏洞。如果可能的话，换
-一台机器试试；如果你能解决这个问题，把补丁发给我。
+给出导致漏洞的可重复的例子，并且尽可能找出哪个选项或其它东西触发该漏洞。
+
+推荐这样启动 Vim: 
+<code class="example">        vim --clean -u reproduce.vim</code>
+其中 reproduce.vim 是重现问题的一个脚本。如果相关的话，换一台机器试试 (有可能
+是 MS-Windows 特定的漏洞哦？)。
+
+如果你能解决这个问题，把补丁发给我。
 
 下面这个命令能够帮你提供你正在使用的 Vim 版本和配置信息: 
 <code class="example">   :so $vimruntime/bugreport.vim</code>
@@ -250,6 +256,10 @@ Vim 编辑器是在 Stevie 的基础上并汲取了其它软件的思想开发�
         Juergen Weigert         Lattice 版本，AUX 改进，UNIX 和 MS-DOS 移植，
                                 及 autoconf
         Stefan <code class="badlink">'Sec'</code> Zehl       vim.org 的维护者
+        Yasuhiro Matsumoto      许多 MS-Windows 改进
+        Ken Takata              修正和功能
+        Kazunobu Kuriyama       GTK 3
+        Christian Brabandt      许多修正，功能，用户支持等等
 
 我希望感谢所有向我报告 bug 和给我建议的人，但是人太多在这里不能一一提及。如果
 没有他们的帮助，Vim 不可能成为现在这个样子: 他们是 Vim 的生命之源。
@@ -473,7 +483,7 @@ delete 键会发送 termcap 入口项 "kD" 的值。这两个值有同样的效�
 
 </pre><hr class="doubleline" /><pre>
 <h4>5. 了解一下模式                                 <b class="vimtag"> <a name="vim-modes-intro">vim-modes-intro</a> </b> <b class="vimtag"> <a name="vim-modes">vim-modes</a> </b></h4>
-Vim 有六种基本模式:
+Vim 有七种基本模式:
 
                                         <b class="vimtag"> <a name="Normal">Normal</a> </b> <b class="vimtag"> <a name="Normal-mode">Normal-mode</a> </b> <b class="vimtag"> <a name="command-mode">command-mode</a> </b>
 普通模式                在普通 (normal) 模式里，你可以输入所有的普通编辑命令。
@@ -505,7 +515,10 @@ Vim 有六种基本模式:
 Ex 模式                 与命令行模式类似，但是执行完一条命令后，你会继续停留在
                         Ex 模式。提供非常有限的命令行编辑。 <a href="intro.html#Ex-mode">Ex-mode</a> 
 
-还有六种 <code class="emphasis">附加</code> 模式。这些都是在基本模式的基础上变化而来的:
+终端作业模式            在终端窗口中和作业互动。输入的键传给作业，作业输出在终
+                        端窗口中显示。 <a href="terminal.html#terminal">terminal</a>  说明如何切换到其它模式。
+
+还有七种 <code class="emphasis">附加</code> 模式。这些都是在基本模式的基础上变化而来的:
 
                                 <b class="vimtag"> <a name="Operator-pending">Operator-pending</a> </b> <b class="vimtag"> <a name="Operator-pending-mode">Operator-pending-mode</a> </b>
 操作符等待模式          该 (operator-pending) 模式与普通模式类似，但是在操作符
@@ -530,6 +543,9 @@ Ex 模式                 与命令行模式类似，但是执行完一条命令
                         模式。
                         如果置位了 <a href="options.html#'showmode'">'showmode'</a> 选项，窗口底部会出现
                         "-- (insert) --" 字样。
+
+终端普通模式            在终端窗口中使用普通模式。不能作任何修改。插入命令如
+                        "a" 或 "i" 会返到终端作业模式。
 
 插入可视模式            在插入模式里进行可视模式的选择，例如，在插入模式里键入
                         <code class="keystroke">CTRL-O</code> 然后键入 "v" 或 "V" 或 <code class="keystroke">CTRL-V</code>，可进入该 (insert
@@ -597,6 +613,8 @@ Ex               :vi      --      --     --         --        --
 另外，<code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 或 &lt;C-\&gt;<code class="special">&lt;C-N&gt;</code> 可以用来从其它模式切换到普通模式。这样可以确
 保 Vim 处于普通模式而不会像 <code class="special">&lt;Esc&gt;</code> 那样产生响声。然而，它不能用在 Ex 模式。当用
 在一个需要参数的命令，诸如  <a href="motion.html#f">f</a>  、 <a href="motion.html#m">m</a>  等之后，等待时间由 <a href="options.html#'ttimeoutlen'">'ttimeoutlen'</a> 决定。
+焦点在终端窗口时，<code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 只为一个命令切换到普通模式，见
+ <a href="terminal.html#t_CTRL-\_CTRL-N">t_CTRL-\_CTRL-N</a> 。
 
         <b class="vimtag"> <a name="CTRL-\_CTRL-G">CTRL-\_CTRL-G</a> </b> <b class="vimtag"> <a name="i_CTRL-\_CTRL-G">i_CTRL-\_CTRL-G</a> </b> <b class="vimtag"> <a name="c_CTRL-\_CTRL-G">c_CTRL-\_CTRL-G</a> </b> <b class="vimtag"> <a name="v_CTRL-\_CTRL-G">v_CTRL-\_CTRL-G</a> </b>
 如果置位了 <a href="options.html#'insertmode'">'insertmode'</a>，则 <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-G</code> 或 &lt;C-\&gt;<code class="special">&lt;C-G&gt;</code> 切换到插入模式，否则切
@@ -731,10 +749,11 @@ gQ                      同 "Q"，切换到 "Ex" 模式，但与一条接一条�
 
 </pre><hr class="doubleline" /><pre>
 <h4>8. 术语                                                 <b class="vimtag"> <a name="definitions">definitions</a> </b></h4>
+  缓冲区                包含文本行，通常从一个文件中读入。
   屏幕                  Vim 所用的整个工作区域。可以是一个终端模拟窗口。也被叫
                         做 "Vim 窗口"。
 
-  窗口                  缓冲区视图。
+  窗口                  缓冲区视图。同一个缓冲区可有多个窗口。
 
 
 一个屏幕包含一个或多个窗口，被状态行和屏幕底部的命令行分割。

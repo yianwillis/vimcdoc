@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>quickfix</h2>
 <pre>
-<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  For Vim version 8.0.  最近更新: 2017年8月
+<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -60,6 +60,11 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 你需要设定 <a href="options.html#'errorformat'">'errorformat'</a>，使其和编译器产生的出错信息格式一致 (见
  <a href="quickfix.html#errorformat">errorformat</a> )。
 
+                                                        <b class="vimtag"> <a name="quickfix-ID">quickfix-ID</a> </b>
+每个 quickfix 列表有唯一的标识符，叫做 quickfix ID，此数值在同一个 Vim 会话中
+保持不变。getqflist() 函数可用于获取赋给该列表的标识符。还有一个 quickfix 列表
+号，该值在 quickfix 栈加入超过十个列表的时候可能会改变。
+
                                                 <b class="vimtag"> <a name="location-list">location-list</a> </b> <b class="vimtag"> <a name="E776">E776</a> </b>
 位置列表是一个窗口局部的 quickfix 列表。由  <a href="quickfix.html#:lvimgrep">:lvimgrep</a> 、 <a href="quickfix.html#:lgrep">:lgrep</a> 、
  <a href="helphelp.html#:lhelpgrep">:lhelpgrep</a> 、 <a href="quickfix.html#:lmake">:lmake</a>  等命令产生，它们生成位置列表而不是对应的  <a href="quickfix.html#:vimgrep">:vimgrep</a> 、
@@ -69,6 +74,12 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 
 如果包含位置列表的窗口被分割，新窗口得到该位置列表的一个备份。如果一个位置列表
 不再被引用，该位置列表被删除。
+
+                                                <b class="vimtag"> <a name="quickfix-changedtick">quickfix-changedtick</a> </b>
+每个 quickfix 和位置列表都有一个只读的 changedtick 变量，记录该列表发生过的总
+改动数。每次 quickfix 列表有改动时，此计数增一。此计数可用于在任何列表发生改动
+时执行些操作。getqflist() 和 getloclist() 函数可用于查询 changedtick 的当前
+值。不可直接修改 changedtick 变量。
 
 以下 quickfix 命令可供使用。位置列表命令和 quickfix 命令类似，把 quickfix 命令
 里的 'c' 前缀换成 'l' 就行了。
@@ -266,6 +277,8 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
                         误。负数从最后一个错误向前算起，-1 为最后一个错误。当
                         跳转到另一个缓冲区时，会受到 <a href="options.html#'switchbuf'">'switchbuf'</a> 有关设定的影
                         响。
+                         <a href="various.html#:filter">:filter</a>  命令可用来只显示匹配指定模式的 quickfix 项
+                        目。该模式匹配文件名、模块名、项目的模式和文本。
 
 :cl[ist] +<code class="special">{count}</code>       列出当前和下面 <code class="special">{count}</code> 个有效的错误。类似于 ":clist
                         from from+count"，这里 "from" 是当前的错误位置。
@@ -293,8 +306,8 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 标记由于某种原因被删除，"line changed" 信息会显示以警告你出错位置可能有误。如
 果你退出并重新运行 Vim，标记会丢失，而出错位置也可能不再正确。
 
-如果 vim 内建  <a href="various.html#+autocmd">+autocmd</a>  支持，可以在 quickfix 命令 (':make'、':grep' 等) 执行
-前后使用两个自动命令。详见  <a href="autocmd.html#QuickFixCmdPre">QuickFixCmdPre</a>  和  <a href="autocmd.html#QuickFixCmdPost">QuickFixCmdPost</a> 。
+可以在 quickfix 命令 (':make'、':grep' 等) 执行前与后使用两个自动命令。详见
+ <a href="autocmd.html#QuickFixCmdPre">QuickFixCmdPre</a>  和  <a href="autocmd.html#QuickFixCmdPost">QuickFixCmdPost</a> 。
 
                                                 <b class="vimtag"> <a name="QuickFixCmdPost-example">QuickFixCmdPost-example</a> </b>
 如果 <a href="options.html#'encoding'">'encoding'</a> 不同于 locale，错误信息可能和 Vim 使用的编码不同。以下代码可以
@@ -309,6 +322,45 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 <code class="example"></code>
 <code class="example">        au QuickfixCmdPost make call QfMakeConv()</code>
 另一个选项是用 <a href="options.html#'makeencoding'">'makeencoding'</a>。
+
+                                                        <b class="vimtag"> <a name="quickfix-title">quickfix-title</a> </b>
+每个 quickfix 和位置列表都有标题。缺省标题设为建立此列表的命令。 <a href="eval.html#getqflist()">getqflist()</a> 
+和  <a href="eval.html#getloclist()">getloclist()</a>  函数可分别用于获取 quickfix 和位置列表的标题。 <a href="eval.html#setqflist()">setqflist()</a> 
+和  <a href="eval.html#setloclist()">setloclist()</a>  函数可分别用于修改 quickfix 和位置列表的标题。示例: 
+<code class="example">        call setqflist([], 'a', {'title' : 'Cmd output'})</code>
+<code class="example">        echo getqflist({'title' : 1})</code>
+<code class="example">        call setloclist(3, [], 'a', {'title' : 'Cmd output'})</code>
+<code class="example">        echo getloclist(3, {'title' : 1})</code>
+
+                                                        <b class="vimtag"> <a name="quickfix-size">quickfix-size</a> </b>
+ <a href="eval.html#getqflist()">getqflist()</a>  和  <a href="eval.html#getloclist()">getloclist()</a>  函数可分别用于获取 quickfix 和位置列表的项目数
+(size)。示例: 
+<code class="example">        echo getqflist({'size' : 1})</code>
+<code class="example">        echo getloclist(5, {'size' : 1})</code>
+
+                                                        <b class="vimtag"> <a name="quickfix-context">quickfix-context</a> </b>
+quickfix 和位置列表可关联任何 Vim 类型作为上下文。 <a href="eval.html#setqflist()">setqflist()</a>  和
+ <a href="eval.html#setloclist()">setloclist()</a>  函数可分别用于建立 quickfix 和位置列表上下文的关联。
+ <a href="eval.html#getqflist()">getqflist()</a>  和  <a href="eval.html#getloclist()">getloclist()</a>  函数可分别用于获取 quickfix 和位置列表的上下
+文。这可用于处理多个 quickfix/位置列表的 Vim 插件。
+示例: 
+<code class="example"></code>
+<code class="example">        let somectx = {'name' : 'Vim', 'type' : 'Editor'}</code>
+<code class="example">        call setqflist([], 'a', {'context' : somectx})</code>
+<code class="example">        echo getqflist({'context' : 1})</code>
+<code class="example"></code>
+<code class="example">        let newctx = ['red', 'green', 'blue']</code>
+<code class="example">        call setloclist(2, [], 'a', {'id' : qfid, 'context' : newctx})</code>
+<code class="example">        echo getloclist(2, {'id' : qfid, 'context' : 1})</code>
+
+                                                        <b class="vimtag"> <a name="quickfix-parse">quickfix-parse</a> </b>
+使用  <a href="eval.html#getqflist()">getqflist()</a>  函数，不用建立或修改 quickfix 列表你就可以用 <a href="options.html#'errorformat'">'errorformat'</a>
+来解析若干行。例如: 
+<code class="example">        echo getqflist({'lines' : ["F1:10:Line10", "F2:20:Line20"]})</code>
+<code class="example">        echo getqflist({'lines' : systemlist('grep -Hn quickfix *')})</code>
+返回字典，其中的 <code class="badlink">'items'</code> 键包含从 lines 解析出来的 quickfix 项目。下面展示了如
+何使用定制的 <a href="options.html#'errorformat'">'errorformat'</a> 来解析 lines 而无须修改 <a href="options.html#'errorformat'">'errorformat'</a> 选项: 
+<code class="example">        echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})</code>
 
 
 在 所 有 QUICKFIX 或 位 置 列 表 的 缓 冲 区 中 执 行 一 个 命 令:
@@ -332,7 +384,7 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 
                         <code class="note">备注</code>: 此命令执行时，把它加到 <a href="options.html#'eventignore'">'eventignore'</a> 以关闭语法
                         自动命令事件。这样显著地提高了缓冲区编辑的速度。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
                         另见  <a href="windows.html#:bufdo">:bufdo</a> 、 <a href="tabpage.html#:tabdo">:tabdo</a> 、 <a href="editing.html#:argdo">:argdo</a> 、 <a href="windows.html#:windo">:windo</a> 、
                          <a href="quickfix.html#:ldo">:ldo</a> 、 <a href="quickfix.html#:cfdo">:cfdo</a>  和  <a href="quickfix.html#:lfdo">:lfdo</a> 。
 
@@ -345,7 +397,7 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 <code class="example">                                :{cmd}</code>
 <code class="example">                                等等</code>
                         此外，和  <a href="quickfix.html#:cdo">:cdo</a>  相同。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name=":ldo">:ldo</a> </b>
 :ld[o][!] <code class="special">{cmd}</code>         在当前窗口位置列表的每个有效的项目上执行 <code class="special">{cmd}</code>。
@@ -356,7 +408,7 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 <code class="example">                                :{cmd}</code>
 <code class="example">                                etc.</code>
                         只使用位置列表里的有效的项目，此外，和  <a href="quickfix.html#:cdo">:cdo</a>  相同。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name=":lfdo">:lfdo</a> </b>
 :lfdo[!] <code class="special">{cmd}</code>          在当前窗口位置列表的每个文件上执行 <code class="special">{cmd}</code>。
@@ -367,7 +419,7 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
 <code class="example">                                :{cmd}</code>
 <code class="example">                                etc.</code>
                         此外，和  <a href="quickfix.html#:ldo">:ldo</a>  相同。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时指定  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
 </pre><hr class="doubleline" /><pre>
 <h4>2. 出错窗口                                     <b class="vimtag"> <a name="quickfix-window">quickfix-window</a> </b></h4>
@@ -384,7 +436,8 @@ Vim 里，quickfix 命令的使用更广泛，它可以找到文件各种位置�
                         该窗口含有一个特殊的缓冲区，<a href="options.html#'buftype'">'buftype'</a> 为 "quickfix"。
                         不要修改此选项！该窗口会设置 w:quickfix_title 变量为生
                         成 quickfix 列表的命令。可用于通过适当地调整
-                        <a href="options.html#'statusline'">'statusline'</a> 来定制状态行。
+                        <a href="options.html#'statusline'">'statusline'</a> 来定制状态行。任何时候 quickfix 命令或函
+                        数要是修改了此缓冲区， <a href="eval.html#b:changedtick">b:changedtick</a>  变量增一。
 
                                                         <b class="vimtag"> <a name=":lop">:lop</a> </b> <b class="vimtag"> <a name=":lopen">:lopen</a> </b>
 :lop[en] <code class="special">[height]</code>       打开一个窗口显示当前窗口的位置列表。只有当前窗口有位置
@@ -466,6 +519,116 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 在所有这些情形下，如果选择窗口的位置列表还没有设置，那么它被设置为位置列表窗口
 里显示的位置列表。
 
+                                                        <b class="vimtag"> <a name="quickfix-window-ID">quickfix-window-ID</a> </b>
+ <a href="eval.html#getqflist()">getqflist()</a>  和  <a href="eval.html#getloclist()">getloclist()</a>  函数可分别用来获取 quickfix 窗口和位置列表的窗
+口 ID (如果存在)。例如: 
+<code class="example">        echo getqflist({'winid' : 1}).winid</code>
+<code class="example">        echo getloclist(2, {'winid' : 1}).winid</code>
+
+                                                        <b class="vimtag"> <a name="getqflist-examples">getqflist-examples</a> </b>
+getqflist() 和 getloclist() 函数可分别用来获取 quickfix 和位置列表的若干属性。
+以下提供了使用这些函数的一些例子:
+
+<code class="example">    " 获取当前 quickfix 列表的标题</code>
+<code class="example">    :echo getqflist({'title' : 0}).title</code>
+<code class="example"></code>
+<code class="example">    " 获取当前 quickfix 列表的标识符</code>
+<code class="example">    :let qfid = getqflist({'id' : 0}).id</code>
+<code class="example"></code>
+<code class="example">    " 获取栈中第四个 quickfix 列表的标识符</code>
+<code class="example">    :let qfid = getqflist({'nr' : 4, 'id' : 0}).id</code>
+<code class="example"></code>
+<code class="example">    " 检查是否存在指定标识符的 quickfix 列表</code>
+<code class="example">    :if getqflist({'id' : qfid}).id == qfid</code>
+<code class="example"></code>
+<code class="example">    " 获取当前 quickfix 列表在栈中的索引</code>
+<code class="example">    :let qfnum = getqflist({'nr' : 0}).nr</code>
+<code class="example"></code>
+<code class="example">    " 获取指定标识符的 quickfix 列表的项目</code>
+<code class="example">    :echo getqflist({'id' : qfid, 'items' : 0}).items</code>
+<code class="example"></code>
+<code class="example">    " 获取指定标识符的 quickfix 列表的项目数</code>
+<code class="example">    :echo getqflist({'id' : qfid, 'size' : 0}).size</code>
+<code class="example"></code>
+<code class="example">    " 获取栈中第三个 quickfix 列表的上下文</code>
+<code class="example">    :echo getqflist({'nr' : 3, 'context' : 0}).context</code>
+<code class="example"></code>
+<code class="example">    " 获取栈中 quickfix 列表的数目</code>
+<code class="example">    :echo getqflist({'nr' : '$'}).nr</code>
+<code class="example"></code>
+<code class="example">    " 获取当前 quickfix 列表改动的次数</code>
+<code class="example">    :echo getqflist({'changedtick' : 0}).changedtick</code>
+<code class="example"></code>
+<code class="example">    " 获取指定标识符的 quickfix 列表的当前项目</code>
+<code class="example">    :echo getqflist({'id' : qfid, 'idx' : 0}).idx</code>
+<code class="example"></code>
+<code class="example">    " 获取指定标识符的 quickfix 列表的所有属性</code>
+<code class="example">    :echo getqflist({'id' : qfid, 'all' : 0})</code>
+<code class="example"></code>
+<code class="example">    " 解析文本行的列表，并返回 quickfix 列表</code>
+<code class="example">    :let myList = ["a.java:10:L10", "b.java:20:L20"]</code>
+<code class="example">    :echo getqflist({'lines' : myList}).items</code>
+<code class="example"></code>
+<code class="example">    " 使用定制 'efm' 解析文本并返回 quickfix 列表</code>
+<code class="example">    :echo getqflist({'lines' : ['a.c#10#Line 10'], 'efm':'%f#%l#%m'}).items</code>
+<code class="example"></code>
+<code class="example">    " 获取 quickfix 列表的窗口 id</code>
+<code class="example">    :echo getqflist({'winid' : 0}).winid</code>
+<code class="example"></code>
+<code class="example">    " 获取当前位置列表的上下文</code>
+<code class="example">    :echo getloclist(0, {'context' : 0}).context</code>
+<code class="example"></code>
+<code class="example">    " 获取第三个窗口的位置列表的窗口 id</code>
+<code class="example">    :echo getloclist(3, {'winid' : 0}).winid</code>
+
+                                                        <b class="vimtag"> <a name="setqflist-examples">setqflist-examples</a> </b>
+setqflist() 和 setloclist() 函数可分别用来设置 quickfix 和位置列表的若干属性。
+以下提供了使用这些函数的一些例子:
+
+<code class="example">    " 建立空 quickfix 列表，指定标题和上下文</code>
+<code class="example">    :let t = 'Search results'</code>
+<code class="example">    :let c = {'cmd' : 'grep'}</code>
+<code class="example">    :call setqflist([], ' ', {'title' : t, 'context' : c})</code>
+<code class="example"></code>
+<code class="example">    " 设置当前 quickfix 列表的标题</code>
+<code class="example">    :call setqflist([], 'a', {'title' : 'Mytitle'})</code>
+<code class="example"></code>
+<code class="example">    " 设置指定标识符的 quickfix 列表的上下文</code>
+<code class="example">    " set the context of a quickfix list specified by an identifier</code>
+<code class="example">    :call setqflist([], 'a', {'id' : qfid, 'context' : {'val' : 100}})</code>
+<code class="example"></code>
+<code class="example">    " 从命令行输出生成新的 quickfix 列表</code>
+<code class="example">    :call setqflist([], ' ', {'lines' : systemlist('grep -Hn main *.c')})</code>
+<code class="example"></code>
+<code class="example">    " 使用定制 efm 来解析文本，并加入指定的 quickfix 列表</code>
+<code class="example">    :call setqflist([], 'a', {'id' : qfid,</code>
+<code class="example">                \ 'lines' : ["a.c#10#L10", "b.c#20#L20"], 'efm':'%f#%l#%m'})</code>
+<code class="example"></code>
+<code class="example">    " 为指定标识符的 quickfix 列表加入项目</code>
+<code class="example">    :let newItems = [{'filename' : 'a.txt', 'lnum' : 10, 'text' : "Apple"},</code>
+<code class="example">                    \ {'filename' : 'b.txt', 'lnum' : 20, 'text' : "Orange"}]</code>
+<code class="example">    :call setqflist([], 'a', {'id' : qfid, 'items' : newItems})</code>
+<code class="example"></code>
+<code class="example">    " 清空指定标识符的 quickfix 列表</code>
+<code class="example">    :call setqflist([], 'r', {'id' : qfid, 'items' : []})</code>
+<code class="example"></code>
+<code class="example">    " 清空栈中所有的 quickfix 列表</code>
+<code class="example">    :call setqflist([], 'f')</code>
+<code class="example"></code>
+<code class="example">    " 设置第四个 quickfix 列表的标题</code>
+<code class="example">    :call setqflist([], 'a', {'nr' : 4, 'title' : 'SomeTitle'})</code>
+<code class="example"></code>
+<code class="example">    " 在栈尾创建新的 quickfix 列表</code>
+<code class="example">    :call setqflist([], ' ', {'nr' : '$',</code>
+<code class="example">                        \ 'lines' : systemlist('grep -Hn class *.java')})</code>
+<code class="example"></code>
+<code class="example">    " 从命令行输出生成新的位置列表</code>
+<code class="example">    :call setloclist(0, [], ' ', {'lines' : systemlist('grep -Hn main *.c')})</code>
+<code class="example"></code>
+<code class="example">    " 替换第三个窗口位置列表的项目</code>
+<code class="example">    :call setloclist(3, [], 'r', {'items' : newItems})</code>
+
+
 </pre><hr class="doubleline" /><pre>
 <h4>3. 使用多个错误列表                                     <b class="vimtag"> <a name="quickfix-error-lists">quickfix-error-lists</a> </b></h4>
 到目前为止，我们都假定只有一个错误列表。实际上最近使用的 10 个错误列表都会被记
@@ -503,11 +666,17 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
 一个较新列表会被覆盖。这在使用 ":grep" (见  <a href="quickfix.html#grep">grep</a> ) 时相当有用。如果你想保留最
 近的错误列表，先要使用 ":cnewer 99" 命令。
 
+ <a href="eval.html#getqflist()">getqflist()</a>  和  <a href="eval.html#getloclist()">getloclist()</a>  函数可分别用来获取 quickfix 和位置列表的栈的列
+表数目，只要把列表号设为特殊值 '$'。例如: 
+<code class="example">        echo getqflist({'nr' : '$'}).nr</code>
+<code class="example">        echo getloclist(3, {'nr' : '$'}).nr</code>
+要获取栈中当前列表的编号: 
+<code class="example">        echo getqflist({'nr' : 0}).nr</code>
+
 </pre><hr class="doubleline" /><pre>
 <h4>4. 使用 :make                                           <b class="vimtag"> <a name=":make_makeprg">:make_makeprg</a> </b></h4>
                                                         <b class="vimtag"> <a name=":mak">:mak</a> </b> <b class="vimtag"> <a name=":make">:make</a> </b>
-:mak[e][!] <code class="special">[arguments]</code>  1. 如果 Vim 编译时带  <a href="various.html#+autocmd">+autocmd</a> ，执行所有相关的
-                            <a href="autocmd.html#QuickFixCmdPre">QuickFixCmdPre</a>  自动命令。
+:mak[e][!] <code class="special">[arguments]</code>  1. 执行所有相关的  <a href="autocmd.html#QuickFixCmdPre">QuickFixCmdPre</a>  自动命令。
                         2. 如果设定 <a href="options.html#'autowrite'">'autowrite'</a>，则写入所有修改过的缓冲区。
                         3. 根据 <a href="options.html#'makeef'">'makeef'</a> 的值产生错误文件。如果 <a href="options.html#'makeef'">'makeef'</a> 值不
                            包含 "##" 且此文件已存在，则该文件会被先删除。
@@ -515,9 +684,7 @@ quickfix 窗口一般会在屏幕的底端。如果有垂直分割，它会在�
                            <code class="special">[arguments]</code> 为其参数。其输出被储存到错误文件名 (如
                            是 Unix，也会在屏幕上显示)。
                         5. 错误文件以 <a href="options.html#'errorformat'">'errorformat'</a> 格式读入。
-                        6. 如果 Vim 编译时带  <a href="various.html#+autocmd">+autocmd</a> ，执行所有相关的
-                            <a href="autocmd.html#QuickFixCmdPost">QuickFixCmdPost</a>  自动命令。
-                           见下例。
+                        6. 执行所有相关的  <a href="autocmd.html#QuickFixCmdPost">QuickFixCmdPost</a>  自动命令。见下例。
                         7. 如果没指定 [!]，则跳转到首个错误。
                         8. 错误文件被删除。
                         9. 你现在可以用  <a href="quickfix.html#:cnext">:cnext</a> ， <a href="quickfix.html#:cprevious">:cprevious</a>  等命令在错误间
@@ -909,6 +1076,7 @@ Chuprina 测试) 都适用。要使  <a href="quickfix.html#errorformat-LaTeX">e
 基 本 条 目
 
         %f              文件名 (期待字符串 (<code class="vim">译者注</code>: 以下 "期待" 二字从略))
+        %o              模块名 (字符串)
         %l              行号 (数字)
         %c              列号 (代表错误中字符列的数字，(<code class="special">&lt;tab&gt;</code> 为一个字符列))
         %v              虚拟列号 (代表错误中屏幕列的数字，(<code class="special">&lt;tab&gt;</code> 等于 8 个屏幕
@@ -945,6 +1113,9 @@ Chuprina 测试) 都适用。要使  <a href="quickfix.html#errorformat-LaTeX">e
 缀，使得它 "very nomagic"。"%s" 转换可用于定位错误输出里没有行号的行。"grep"
 外壳命令的输出就是如此。
 如果此模式存在，不使用行号。
+
+"%o" 转换指定 quickfix 项目的模块名。如果存在，用于 quickfix 错误窗口，而不是
+缺省的文件名。模块名只用于显示目的，总是用文件名来跳转到相应文件。
 
 改 变 目 录
 

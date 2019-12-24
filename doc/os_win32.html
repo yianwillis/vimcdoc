@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>os_win32</h2>
 <pre>
-<b class="vimtag"> <a name="os_win32.txt">os_win32.txt</a> </b>  For Vim version 8.0.  最近更新: 2017年8月
+<b class="vimtag"> <a name="os_win32.txt">os_win32.txt</a> </b>  For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by George Reilly</code>
@@ -96,9 +96,41 @@ $PATH 环境变量                                          <b class="vimtag"> <
 Vim 可执行程序的路径被加入到变量 $PATH 中。这主要使 "!xxd" 能够运行，因为它在
 工具菜单中。这也意味着当 executable() 返回 1 时，该可执行程序确实能够执行。
 
-文件名内的引号                                          <b class="vimtag"> <a name="win32-quotes">win32-quotes</a> </b>
+命令行参数                                              <b class="vimtag"> <a name="win32-cmdargs">win32-cmdargs</a> </b>
 
-文件名 (或任何其它命令行参数) 内的引号可以用反斜杠转义。例如 
+对 MS Windows 把命令行分解为参数的分析没有一个标准。Vim 和 gvim 过去使用不同
+的逻辑来处理命令行 (7.4.432 之前)，而且这些逻辑也取决于如何地编译。现在 Vim
+和 gvim 两者都使用 CommandLineToArgvW() Win32 API，从而行为一致。
+
+基本规则是:                                             <b class="vimtag"> <a name="win32-backslashes">win32-backslashes</a> </b>
+      a) 参数是图形字符的序列。
+      b) 参数似空白分隔。
+      c) 参数可以双引号包围，其中可包含空白。
+      d) 零和多个反斜杠 (\) 和一个双引号 (") 是特别的。有效的反斜杠减半往下取
+        整。偶数反斜杠反转空格和制表的可接受性，奇数反斜杠生成按本义出现的双
+        引号。
+
+因而:
+        "       是特殊双引号
+        \"      是按本义出现的双引号
+        \\"     是一个按本义出现的反引号和一个特殊双引号
+        \\\"    是一个按本义出现的反引号和一个按本义出现的双引号
+        \\\\"   是两个按本义出现的反引号和一个特殊双引号
+        \\\\\"  是两个按本义出现的反引号和一个按本义出现的双引号
+        等等
+
+示例: 
+<code class="example">        vim "C:\My Music\freude" +"set ignorecase" +/"\"foo\\" +\"bar\\\"</code>
+<code class="example"></code>
+打开 "C:\My Music\freude" 并执行行模式命令: 
+<code class="example">        set ignorecase; /"foo\ and /bar\"</code>
+<code class="example"></code>
+CommandLineToArgvW API 的参考中也有这些规则的描述:
+    https://msdn.microsoft.com/en-us/library/windows/desktop/bb776391.aspx
+
+                                                        <b class="vimtag"> <a name="win32-quotes">win32-quotes</a> </b>
+引号还有额外的规则 (这里文档不甚完整)。如上所述，文件名 (或任何其它命令行参数)
+内的引号可以用反斜杠转义。例如 
 <code class="example">        vim -c "echo 'foo\"bar'"</code>
 <code class="example"></code>
 也可要用三个引号来表示一个实际一个引号: 
@@ -141,7 +173,7 @@ Vim 的 Win32 版本支持鼠标。如果你使用两键鼠标，可以用同时
 
 </pre><hr class="doubleline" /><pre>
 <h4>6. 在 Windows 3.1 下运行                                <b class="vimtag"> <a name="win32-win3.1">win32-win3.1</a> </b></h4>
-                                        <b class="vimtag"> <a name="win32s">win32s</a> </b> <b class="vimtag"> <a name="windows-3.1">windows-3.1</a> </b> <b class="vimtag"> <a name="gui-w32s">gui-w32s</a> </b>
+                                <b class="vimtag"> <a name="win32s">win32s</a> </b> <b class="vimtag"> <a name="windows-3.1">windows-3.1</a> </b> <b class="vimtag"> <a name="gui-w32s">gui-w32s</a> </b> <b class="vimtag"> <a name="win16">win16</a> </b>
 有一个特殊的 Win32 版本的 Gvim 可以在 Windows 3.1 和 3.11 运行。
 7.4.1363 补丁删除了此支持。
 

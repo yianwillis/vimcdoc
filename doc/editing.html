@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>editing</h2>
 <pre>
-<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   For Vim version 8.0.  最近更新: 2017年7月
+<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   For Vim version 8.1.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -366,6 +366,13 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 在 Unix 和一些其它系统上你可以用反引号代替文件名参数。例如: 
 <code class="example">        :next `find . -name ver\\*.c -print`</code>
 <code class="example">        :view `ls -t *.patch  \| head -n1`</code>
+Vim 会用 <a href="options.html#'shell'">'shell'</a> 来执行反引号内的命令，其标准输出作为给定 Vim 命令的参数 (但外
+壳命令的错误信息会被丢弃)。
+要看到 Vim 执行的外壳命令，设置 <a href="options.html#'verbose'">'verbose'</a> 选项为 4。如果外壳命令返回非零退出
+码，会显示错误信息并异常中止 Vim 命令。如果不想如此，须保证外壳命令永远返回零
+值。可以这样: 
+<code class="example">       :next `find . -name ver\\*.c -print \|\| true`</code>
+<code class="example"></code>
 星号之前需要有反斜杠，以防 "ver*.c" 在执行 find 程序之前被外壳先扩展。在外壳管
 道符号 "|" 之前的反斜杠使 Vim 不会把它解析为命令的终止。
 该功能对于多数其他系统也使用，但要求反引号必须包围整个项目。你不能在第一个之前
@@ -525,14 +532,14 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                         另见  <a href="editing.html#++opt">++opt</a>  和  <a href="editing.html#+cmd">+cmd</a> 。
                         <code class="notvi">{Vi: 无 ++opt}</code>
 
-:<code class="special">[count]</code>arge[dit][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{name}</code>              <b class="vimtag"> <a name=":arge">:arge</a> </b> <b class="vimtag"> <a name=":argedit">:argedit</a> </b>
-                        将 <code class="special">{name}</code> 加到参数列表里，并编辑之。
+:<code class="special">[count]</code>arge[dit][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{name}</code> ..           <b class="vimtag"> <a name=":arge">:arge</a> </b> <b class="vimtag"> <a name=":argedit">:argedit</a> </b>
+                        将一或多个 <code class="special">{name}</code> 加到参数列表里，并编辑之。
                         如果 <code class="special">{name}</code> 已经在参数列表里存在，只编辑之。
                         这和用  <a href="editing.html#:argadd">:argadd</a>  然后  <a href="editing.html#:edit">:edit</a>  类似。
-                        <code class="note">注意</code> 这里只允许单个文件名，文件名里的空格是允许的，就
-                        像  <a href="editing.html#:edit">:edit</a>  一样。
+                        文件名里的空格需用 "\" 转义。
                         <code class="special">[count]</code> 的用法和  <a href="editing.html#:argadd">:argadd</a>  一样。
-                        如果当前文件不能被放弃  <a href="editing.html#abandon">abandon</a> ，[!] 是必需的。
+                        如果当前文件不能被放弃  <a href="editing.html#abandon">abandon</a> ，<code class="special">{name}</code> 等仍会被加入
+                        到参数列表中，但不进行编辑。不检查重复项。
                         另见  <a href="editing.html#++opt">++opt</a>  和  <a href="editing.html#+cmd">+cmd</a> 。
                         <code class="notvi">{Vi: 无 ++opt}</code>
 
@@ -552,7 +559,7 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                                 :+2argadd y     a b c x y
                         这里不会检查重复项，因此一个文件可能加入参数列表两次。
                         不改变当前编辑的文件。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
                         <code class="note">注意</code>: 你也可以使用这个方法: 
 <code class="example">                                :args ## x</code>
                         这会加入 "x" 项并对新的列表排序。
@@ -565,7 +572,7 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                         编辑。
                         例如: 
 <code class="example">                                :argdel *.obj</code>
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
 :<code class="special">[range]</code>argd[elete]     从参数列表里删除 <code class="special">[range]</code> 范围里的文件。
                         例如: 
@@ -580,7 +587,7 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                         删除参数列表里所有文件。
                         如果该范围的最后一个数字过大，删除直到最后一个参数为
                         止。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name=":argu">:argu</a> </b> <b class="vimtag"> <a name=":argument">:argument</a> </b>
 :<code class="special">[count]</code>argu[ment] <code class="special">[count]</code> <code class="special">[++opt]</code> <code class="special">[+cmd]</code>
@@ -588,13 +595,13 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
                         候，编辑当前入口项。如果已经作了修改而 vim 不能放弃
                          <a href="editing.html#abandon">abandon</a>  当前的缓冲区，该命令失败。
                         另见  <a href="editing.html#++opt">++opt</a>  和  <a href="editing.html#+cmd">+cmd</a> 。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
 :<code class="special">[count]</code>argu[ment]! <code class="special">[count]</code> <code class="special">[++opt]</code> <code class="special">[+cmd]</code>
                         编辑参数列表里的第 <code class="special">[count]</code> 个文件。忽略任何对当前缓冲
                         区的已有修改。在忽略 <code class="special">[count]</code> 的时候，编辑当前入口项。
                         另见  <a href="editing.html#++opt">++opt</a>  和  <a href="editing.html#+cmd">+cmd</a> 。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
 
 :<code class="special">[count]</code>n[ext] <code class="special">[++opt]</code> <code class="special">[+cmd]</code>                   <b class="vimtag"> <a name=":n">:n</a> </b> <b class="vimtag"> <a name=":ne">:ne</a> </b> <b class="vimtag"> <a name=":next">:next</a> </b> <b class="vimtag"> <a name="E165">E165</a> </b> <b class="vimtag"> <a name="E163">E163</a> </b>
                         编辑向后第 <code class="special">[count]</code> 个文件。如果已经作了修改而 vim 不能
@@ -700,7 +707,6 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 局 部 参 数 列 表
 
 <code class="notvi">{Vi 无此功能}</code>
-<code class="notvi">{仅在编译时加入  <a href="various.html#+windows">+windows</a>  和  <a href="various.html#+listcmds">+listcmds</a>  特性时才有效}</code>
 
                                                         <b class="vimtag"> <a name=":arglocal">:arglocal</a> </b>
 :argl[ocal]             复制一个全局参数列表的局部备份。并不开始编辑另外一个文
@@ -747,7 +753,7 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
                         <code class="note">注意</code>: 当命令执行时，Syntax 自动命令事件被加到
                         <a href="options.html#'eventignore'">'eventignore'</a> 里，从而被屏蔽。这样显著提高了编辑每个文
                         件的速度。
-                        <code class="notvi">{Vi 无此功能}</code> <code class="notvi">{仅当编译时加入  <a href="various.html#+listcmds">+listcmds</a>  特性才有效}</code>
+                        <code class="notvi">{Vi 无此功能}</code>
                         另见  <a href="windows.html#:windo">:windo</a> 、 <a href="tabpage.html#:tabdo">:tabdo</a> 、 <a href="windows.html#:bufdo">:bufdo</a> 、 <a href="quickfix.html#:cdo">:cdo</a> 、 <a href="quickfix.html#:ldo">:ldo</a> 、
                          <a href="quickfix.html#:cfdo">:cfdo</a>  和  <a href="quickfix.html#:lfdo">:lfdo</a> 
 
@@ -768,8 +774,8 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 <code class="note">注意</code>: 如果 <a href="options.html#'write'">'write'</a> 选项关闭，你不能写入任何文件。
 
                                                         <b class="vimtag"> <a name=":w">:w</a> </b> <b class="vimtag"> <a name=":write">:write</a> </b>
-                                                <b class="vimtag"> <a name="E502">E502</a> </b> <b class="vimtag"> <a name="E503">E503</a> </b> <b class="vimtag"> <a name="E504">E504</a> </b> <b class="vimtag"> <a name="E505">E505</a> </b>
-                                                <b class="vimtag"> <a name="E512">E512</a> </b> <b class="vimtag"> <a name="E514">E514</a> </b> <b class="vimtag"> <a name="E667">E667</a> </b> <b class="vimtag"> <a name="E796">E796</a> </b>
+                                        <b class="vimtag"> <a name="E502">E502</a> </b> <b class="vimtag"> <a name="E503">E503</a> </b> <b class="vimtag"> <a name="E504">E504</a> </b> <b class="vimtag"> <a name="E505">E505</a> </b>
+                                        <b class="vimtag"> <a name="E512">E512</a> </b> <b class="vimtag"> <a name="E514">E514</a> </b> <b class="vimtag"> <a name="E667">E667</a> </b> <b class="vimtag"> <a name="E796">E796</a> </b> <b class="vimtag"> <a name="E949">E949</a> </b>
 :w[rite] <code class="special">[++opt]</code>        将整个缓冲区写入当前文件。这是保存文件更动最普通的方
                         式。如果置位了 <a href="options.html#'readonly'">'readonly'</a> 选项或者其他原因不能写入文
                         件，它会失败。
@@ -816,6 +822,8 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 如果 ":w" 给出一个文件名，它成为轮换文件。这可以用来，比如说，当写入失败而你想
 再迟些再试一次: ":w #"。该功能可以通过从 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项里去掉 'A' 标志位来关
 闭。
+
+<code class="note">注意</code> <a href="options.html#'fsync'">'fsync'</a> 选项如果置位，写操作会变慢 (但更安全)。
 
                                                         <b class="vimtag"> <a name=":sav">:sav</a> </b> <b class="vimtag"> <a name=":saveas">:saveas</a> </b>
 :sav[eas][!] <code class="special">[++opt]</code> <code class="special">{file}</code>
@@ -941,6 +949,7 @@ Unix 上当文件名不引用一个普通文件或者目录时，检测为设备
                         如果有其它标签页，并且退出的是当前标签页的最后一个窗
                         口，关闭当前标签页  <a href="tabpage.html#tab-page">tab-page</a> 。
                         激活  <a href="autocmd.html#QuitPre">QuitPre</a>  自动命令事件。
+                        参见  <a href="windows.html#CTRL-W_q">CTRL-W_q</a>  用来退出其它窗口。
 
 :conf[irm] q[uit]       退出，但如果已经有修改或者参数列表的最后一个文件还未被
                         编辑，给出提示。参见  <a href="editing.html#:confirm">:confirm</a>  和 <a href="options.html#'confirm'">'confirm'</a>。
@@ -1010,7 +1019,9 @@ ZQ                      退出，不检查是否发生了修改 (等同于 ":q!"
 
 :wqa[ll] <code class="special">[++opt]</code>                                <b class="vimtag"> <a name=":wqa">:wqa</a> </b> <b class="vimtag"> <a name=":wqall">:wqall</a> </b> <b class="vimtag"> <a name=":xa">:xa</a> </b> <b class="vimtag"> <a name=":xall">:xall</a> </b>
 :xa[ll]         保存所有修改过的缓冲区并退出 Vim。如果其中有无名的、只读的、
-                或者其他原因写入失败的缓冲区，Vim 不会退出。<code class="notvi">{Vi 无此功能}</code>
+                其他原因写入失败的缓冲区，或者有还在运行作业的终端，Vim 不会退
+                出。
+                <code class="notvi">{Vi 无此功能}</code>
 
 :conf[irm] wqa[ll] <code class="special">[++opt]</code>
 :conf[irm] xa[ll]
@@ -1127,8 +1138,10 @@ Motif 使用相同的格式，但只使用第一个模式 (Motif 只提供一个
 :chd[ir][!] <code class="special">[path]</code>      和  <a href="editing.html#:cd">:cd</a>  相同。
 
                                                         <b class="vimtag"> <a name=":lc">:lc</a> </b> <b class="vimtag"> <a name=":lcd">:lcd</a> </b>
-:lc[d][!] <code class="special">{path}</code>        和  <a href="editing.html#:cd">:cd</a>  类似，但只设置当前窗口的当前目录。别的窗口的
-                        当前目录保持不变。<code class="notvi">{Vi 无此功能}</code>
+:lc[d][!] <code class="special">{path}</code>        和  <a href="editing.html#:cd">:cd</a>  类似，但只在光标在当前窗口时设置当前目录。别
+                        的窗口的当前目录保持不变，切换到其它窗口会停止使用
+                        <code class="special">{path}</code>。
+                        <code class="notvi">{Vi 无此功能}</code>
 
                                                         <b class="vimtag"> <a name=":lch">:lch</a> </b> <b class="vimtag"> <a name=":lchdir">:lchdir</a> </b>
 :lch[dir][!]            和  <a href="editing.html#:lcd">:lcd</a>  相同。<code class="notvi">{Vi 无此功能}</code>
@@ -1441,7 +1454,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 <code class="section">        /u/user_x/** </code>
     它会搜索相同的目录群，但顺序不同。
 
-    <code class="note">注意</code> ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 url、使用带
+    <code class="note">注意</code> ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 URL、使用带
     深度限定的双星记号 (/usr/**2) 或向上搜索 (;) 记号的 <a href="options.html#'path'">'path'</a> 项目。
 
  vim:tw=78:ts=8:ft=help:norl:
