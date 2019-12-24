@@ -1,0 +1,782 @@
+*terminal.txt*	For Vim version 8.1.  最近更新: 2019年12月
+
+
+		  VIM 参考手册    by Bram Moolenaar
+				译者: Willis
+				https://github.com/yianwillis/vimcdoc
+
+
+终端窗口支持				*terminal* *terminal-window*
+
+
+终端特性是可选的，要检查你的 Vim 是否带有此特性: >
+	echo has('terminal')
+如果返回 "1" 就代表拥有此特性。
+
+
+1. 基本用法			|terminal-use|
+      键入				|terminal-typing|
+      大小与色彩			|terminal-size-color|
+      语法 				|:terminal|
+      调整大小				|terminal-resizing|
+      终端模式				|Terminal-mode|
+      光标风格				|terminal-cursor-style|
+      会话				|terminal-session|
+      特殊键				|terminal-special-keys|
+      Unix				|terminal-unix|
+      MS-Windows			|terminal-ms-windows|
+2. 终端通信			|terminal-communication|
+      Vim 到作业: term_sendkeys()	|terminal-to-job|
+      作业到 Vim: JSON API		|terminal-api|
+      使用客户-服务器特性		|terminal-client-server|
+3. 远程测试			|terminal-testing|
+4. 屏幕截图比较			|terminal-diff|
+      编写 Vim 屏幕截图测试		|terminal-dumptest|
+      创建屏幕截图			|terminal-screendump|
+      比较屏幕截图			|terminal-diffscreendump|
+5. 调试				|terminal-debug|
+      启动				|termdebug-starting|
+      示例会话				|termdebug-example|
+      代码中步进			|termdebug-stepping|
+      检视变量				|termdebug-variables|
+      其它命令				|termdebug-commands|
+      提示模式				|termdebug-prompt|
+      通信				|termdebug-communication|
+      定制				|termdebug-customizing|
+
+{Vi 无此功能}
+{仅当编译时加入 |+terminal| 特性才有效}
+终端特性需要 |+multi_byte|、|+job| 和 |+channel| 特性的支持。
+
+==============================================================================
+1. 基本用法						*terminal-use*
+
+本特性用于在 Vim 窗口中运行终端模拟器。终端模拟器启动时可以连接作业。例如，运
+行外壳程序: >
+     :term bash
+
+或运行编译命令: >
+     :term make myprogram
+
+作业和 Vim 异步运行，窗口会刷新以显示作业的输出，同时在其它窗口上进行编辑。
+
+
+键入 ~
+							*terminal-typing*
+键盘的焦点在终端窗口时，输入的键会发送给其中的作业。可能的话使用 pty。在终端窗
+口之外点击把键盘焦点移到别处。
+
+CTRL-W 可用来在窗口间切换和执行其它 CTRL-W 命令，如:
+	CTRL-W CTRL-W	移动焦点到下个窗口
+	CTRL-W :	输入 Ex 命令
+更多命令见 |CTRL-W|。
+
+终端窗口特有的映射:				*CTRL-W_.*  *CTRL-W_N*
+	CTRL-W .	给终端中的作业发送 CTRL-W
+	CTRL-W CTRL-\	给终端中的作业发送 CTRL-\
+	CTRL-W N	切换到终端普通模式，见 |Terminal-mode|
+	CTRL-\ CTRL-N   切换到终端普通模式，见 |Terminal-mode|
+	CTRL-W " {reg}  粘贴寄存器 {reg}		*CTRL-W_quote*
+			也适用于 = 寄存器，插入表达式计算的结果。
+	CTRL-W CTRL-C	结束作业，见下 |t_CTRL-W_CTRL-C|
+
+另见选项 'termwinkey'，指定 CTRL-W 的替代键，和 CTRL-W 的用法相同。不过，输入
+'termwinkey' 两次会给作业发送 'termwinkey'。例如:
+	'termwinkey' CTRL-W    移动焦点到下个窗口
+	'termwinkey' :	       输入 Ex 命令
+	'termwinkey' 'termwinkey' 给终端中的作业发送 'termwinkey'
+	'termwinkey' .	       给终端中的作业发送 'termwinkey'
+	'termwinkey' CTRL-\    给终端中的作业发送 CTRL-\
+	'termwinkey' N	       切换到终端普通模式，见下
+	'termwinkey' CTRL-N    等价于 CTRL-W N
+	'termwinkey' CTRL-C    等价于 |t_CTRL-W_CTRL-C|
+							*t_CTRL-\_CTRL-N*
+特殊键组合 CTRL-\ CTRL-N 可用于切换到普通模式，其它模式下也都如此。
+							*t_CTRL-W_CTRL-C*
+CTRL-W CTRL-C 可可用强制结束作业。MS-Windows 上 CTRL-BREAK 也会杀掉作业。
+
+直接按 CTRL-C 的效果取决于 pty 的相应配置。简单命令会导致 SIGINT 发送给作业，
+结果是中止作业。其它命令可能会忽略 SIGINT 或自行处理 CTRL-C (Vim 就是如此)。
+
+要改变终端模式的映射所用的键，请见 |:tmap|。和其它映射的定义类似，但适用于给终
+端中运行的作业发送的键。例如，要使 F1 切换到终端普通模式: >
+   tnoremap <F1> <C-W>N
+可以用 Esc，但务须保证不影响其它的键: >
+   tnoremap <Esc> <C-W>N
+   set notimeout ttimeout timeoutlen=100
+
+<							*options-in-terminal*
+打开终端窗口并设置其 'buftype' 为 "terminal" 后，激活 TerminalOpen 自动命令。
+这样便可以设置为其窗口和缓冲区特定的选项。例如: >
+   au TerminalOpen * if &buftype == 'terminal' | setlocal bufhidden=hide | endif
+这里的 <abuf> 设为终端缓冲区，但如果没有窗口 (隐藏终端)，那么选项会在错误的缓
+冲区上设置，为此上例中还须检查 &buftype。
+
+鼠标事件 (点击和拖曳) 会传给终端。而鼠标移动事件只有 Vim 自身接收到时才会传递。
+对终端而言，这意味着 'balloonevalterm' 打开。
+
+
+大小与色彩 ~
+							*terminal-size-color*
+关于控制终端窗口的大小，见 'termwinsize' 选项。
+(TODO: 终端超出窗口大小时的滚动)
+
+终端中运行的作业可以改变色彩。缺省前景和背景色来自 Vim 的 Normal 高亮组。
+
+对色彩终端而言，'background' 选项用于决定终端窗口以白色或是黑色背景开始。
+
+要使用其它颜色，使用 Terminal 高亮组，例如: >
+    hi Terminal ctermbg=lightgrey ctermfg=blue guibg=lightgrey guifg=blue
+<
+							*g:terminal_ansi_colors*
+GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 种 ANSI 颜色可通
+过 `g:terminal_ansi_colors` 设置，它应是 16 种色彩名或十六制色彩代码的列表，类
+似于 |highlight-guifg| 接受的格式。如果不使用 GUI 颜色，终端窗口总是使用下层终
+端的 16 种 ANSI 色。
+|term_setansicolors()| 函数可用来改变颜色，而 |term_getansicolors()| 可获取当
+前使用的颜色。
+
+
+语法 ~
+
+:[range]ter[minal] [options] [command]			*:ter* *:terminal*
+			打开新终端窗口。
+
+			给出 [command] 时，把它作为作业运行，并连接其输入和输
+			出到终端上。
+			如果没有给出 [command]，使用 'shell' 选项值。
+			如果 [command] 为 NONE，不启动作业，但终端的 pty 可被
+			gdb 这样的命令使用。
+
+			如果没有给出 [command]，缺省行为是外壳退出时关闭终端。
+			可以用 ++noclose 参数改变此行为。
+			给出 [command] 时，缺省行为是保持终端打开在终端普通模
+			式下。可以用 ++close 参数改变此行为。
+
+			建立新缓冲区，名字使用 [command] 或 'shell' 再加上前缀
+			"!"。如果带此名的缓冲区已存在，加一个括起的数值。比
+			如，如果 "gdb" 存在 (译者注: 似应为 "!gdb")，第二个终
+			端缓冲区会用名字 "!gdb (1)" 。
+
+			如果给出 [range]，使用给定行的范围作为作业的输入。此时
+			终端窗口不接受键盘输入。MS-Windows 请见下面的 ++eof 参
+			数。
+
+						*term++close* *term++open*
+			支持的 [options] 有:
+			++close		作业终止时自动关闭终端窗口。
+			++noclose	作业终止时_不_自动关闭终端窗口。
+			++open		作业终止时如果没有窗口显示它，会打开窗
+					口。
+					注意 这会打断正常的操作。
+				最后出现的 ++close、 ++noclose 和 ++open 才起
+				作用并否决之前的参数。
+
+			++curwin	在当前窗口打开终端，不分割当前窗口。如
+					果当前缓冲区不能 |abandon| 则失败。
+			++hidden	在隐藏缓冲区打开终端，不使用窗口。
+			++norestore	不把此终端窗口加到会话文件中。
+			++kill={how}	关闭终端窗口的尝试使用 {how} 信号杀死
+					作业。相关值见 |term_setkill()|。
+			++rows={height} 使用 {height} 作为终端窗口高度。如果终
+					端使用整个 Vim 的高度 (终端窗口上下没
+					有其它窗口)，有必要时会减少命令行高
+					度。
+			++cols={width}  使用 {width} 作为终端窗口宽度。如果 终
+					端使用整个 Vim 的宽度 (终端窗口左右没
+					有其它窗口)，忽略此值。
+			++eof={text}	使用 [range] 时: 写完最后一行后发送的
+					文本。之后附加 CR。MS-Windows 缺省发送
+					的是 CTRL-D。
+					例如，外壳用 "++eof=exit" 而 Python 用
+					"++eof=exit()"。特殊代码可以用 `:map`
+					类似的用法，如 "<C-Z>" 代表 CTRL-Z。
+
+			想要更多选项，可用 |term_start()| 函数。
+
+和终端相关联的缓冲区被强制卸载或真正删除时，杀死作业，相当于调用
+`job_stop(job, "kill")`。
+正常关闭窗口会给出 |E947|。如果用 "++kill={how}" 或 |term_setkill()| 给出杀死
+进程的方法，则窗口关闭时使用该方法杀掉或中断作业。例如: >
+	:term ++kill=term tail -f /tmp/log
+
+只要作业还在运行，窗口把它当做包含修改过的缓冲区。用 `CTRL-W :quit` 试图关闭窗
+口会失败。如果用 `CTRL-W :quit!`，作业会结束。但窗口中的文本会丢失。此时缓冲区
+还存在，但用 `:buffer` 在别的窗口打开它时会显示空缓冲区。
+
+用 `CTRL-W :close` 试图关闭窗口也会失败。用 `CTRL-W :close!` 会关闭窗口并隐藏
+缓冲区。
+
+用 `CTRL-W :hide` 关闭终端窗口并隐藏缓冲区，但作业继续执行。`:buffer` 命令可用
+来把当前窗口变成终端窗口。如果有未保存的改变，这会失败，但和平常一样用 ! 可以
+强制进行。
+
+要不打开窗口在后台运行作业，完成后再打开窗口，可以这样使用选项: >
+	:term ++hidden ++open make
+注意 窗口会在意想不到的时候打开，可能会中断你正在做的事情。
+
+							*E947* *E948*
+只要作业还在运行，缓冲区被认为是已修改，Vim 不能随便退出，见 |abandon|。
+
+作业结束且缓冲区没有发生改动时: 关闭窗口会真正删除缓冲区。
+
+在终端缓冲区可以改动之前，'modifiable' 选项必须置位。这只有在作业结束时才有可
+能。此时，第一个改动会把缓冲区变成正常的缓冲区并删除高亮。你也许要用 |:file|
+来改变缓冲区名以便写入文件，不然缓冲区名仍然对应着命令。
+
+
+调整大小 ~
+							*terminal-resizing*
+终端大小处于以下三种模式之一:
+
+1. 'termwinsize' 选项为空: 终端大小跟随窗口大小。最小尺寸是 2 行屏幕行，每行
+   10 个单元格。
+
+2. 'termwinsize' 选项形如 "rows*cols"，其中 "rows" 为屏幕行的最少数目，而
+   "cols" 是单元格的最少数目。
+
+3. 'termwinsize' 选项形如 "rowsXcols" (其中 x 可以大小写)。终端大小固定为指定
+   的屏幕行和单元格数。如果窗口较之为大，会有多出来的不可用的空白空间。
+
+如果窗口小于终端大小，终端只有部分可见 (左下部分)。
+
+|term_getsize()| 函数可用于获取终端的当前大小。|term_setsize()| 只可用于前两种
+模式，不能用于 'termwinsize' 为 "rowsXcols" 的情况。
+
+
+终端作业和终端普通模式 ~
+						*Terminal-mode* *Terminal-Job*
+作业运行时终端的内容受作业控制。这也包括光标的位置。输入的键发送给作业。终端的
+内容可随时改变。这称为终端作业模式。
+
+CTRL-W N (或 'termwinkey' N) 切换到终端普通模式。此时，终端窗口内容由 Vim 控
+制，作业的输出被暂停。CTRL-\ CTRL-N 的效果相同。
+
+终端作业模式适用 |:tmap| 映射。tmap 不用于 |term_sendkeys()| 发送的键，但会用
+于来自 |feedkeys()| 的键。
+
+从终端作业模式不能进入插入模式。
+
+						*Terminal-Normal* *E946*
+终端普通模式里可用通常的 Vim 命令来移动光标、可视标记文本、抽出文本等等。但不
+能修改缓冲区的内容。启动插入模式的命令如 'i' 和 'a' 等会回到终端作业模式。窗口
+会刷新以显示终端的内容。|:startinsert| 无效。
+
+终端普通模式下状态行和窗口标题会显示 "(Terminal)"。如果作业已结束且在终端普通
+模式下，则为 "(Terminal-finished)"。
+
+终端中作业输出的行，包括滚过了屏幕顶部的内容，会被记住且在终端普通模式中可见。
+行数受 'termwinscroll' 选项限制。超过此限制时，滚动行的前 10% 被删除且丢失。
+
+
+光标风格 ~
+							*terminal-cursor-style*
+缺省终端窗口使用不闪烁的块状光标。正常的 xterm 转义序列可用于改变闪烁状态和形
+状。一但焦点离开终端窗口，Vim 会恢复原有的光标。
+
+一个例外是当 xterm 启动时带 "-bc" 参数或通过别的方式使光标闪烁的时候。这实际意
+味着反转闪烁标志位。因为 Vim 没法检测这一点，终端窗口的光标闪烁也被反转。
+
+
+会话 ~
+							*terminal-session*
+如有可能且用户需要的话，使用会话文件可以恢复终端窗口。
+
+如果 'sessionoptions' 删除了 "terminal"，不恢复终端窗口。
+
+如果终端中运行的作业已经结束，不恢复其窗口。
+
+如果终端可以恢复，会再次使用曾经用来打开它的命令。要改变之，使用
+|term_setrestore()| 函数。把相应的命令设为 "NONE"，也可用这个函数来选择性不恢
+复特定的终端。
+
+
+特殊键~
+							*terminal-special-keys*
+因为终端模拟器模拟的是 xterm 终端，终端窗口只能接收 Vim 和 xterm 都能识别的转
+义序列。要想给终端中运行的作业传递其它转义序列，需要设置转发。示例: >
+	tmap <expr> <Esc>]b SendToTerm("\<Esc>]b")
+	func SendToTerm(what)
+	  call term_sendkeys('', a:what)
+	  return ''
+	endfunc
+
+
+Unix ~
+							*terminal-unix*
+Unix 上使用 pty 来运行所有类型的命令。包含在终端上运行 Vim 自身！这可用调试，
+见下。
+
+可用环境变量为运行的作业传递信息:
+    TERM		终端名，来自 'term' 选项或 GUI 里的 $TERM；如果不以
+			"xterm" 开头的话，回退到 "xterm"
+    ROWS		终端初始行数
+    LINES		同 ROWS
+    COLUMNS		终端初始列数
+    COLORS		颜色数，'t_Co' (GUI 里是 256*256*256)
+    VIM_SERVERNAME	v:servername
+    VIM_TERMINAL	v:version
+
+
+MS-Windows ~
+							*terminal-ms-windows*
+MS-Windows 上使用 winpty 来运行所有类型的命令。显然，必须是终端上运行的命令，
+不能打开它们自己的窗口。
+
+需要来自 winpty 的两个文件:
+
+    winpty.dll
+    winpty-agent.exe
+
+可以从下面页面下载它们:
+
+    https://github.com/rprichard/winpty
+
+只有把它们放在你的 PATH 路径某处就行了。有必要的话，设置 'winptydll' 选项指向
+正确的文件。如果同时有 32 位和 64 位版本，把它们分别换名为 winpty32.dll 和
+winpty64.dll 来对应 Vim 编译时的用法。
+
+可用环境变量为运行的作业传递信息:
+    VIM_SERVERNAME	v:servername
+
+==============================================================================
+2. 终端通信					 *terminal-communication*
+
+有几种和终端中运行的作业通信的办法:
+- 使用 |term_sendkeys()| 从 Vim 发送文本和转义序列到作业。
+- 使用 JSON API 从作业发送经编码的命令到 Vim。
+- 使用 |client-server| 机制。适用于有 X server 和 MS-Windows 的机器。
+
+
+Vim 到 job: term_sendkeys() ~
+							*terminal-to-job*
+这允许运程控制在终端中运行的作业。这是单向的机制。但作业可以刷新显示给 Vim 传
+递信号。例如，如果终端中运行的是外壳，可以这样: >
+	call term_sendkeys(buf, "ls *.java\<CR>")
+
+这需要作业处于正确的状态，以便接收键击时，可以作出正确的反应。在上例中，外壳必
+须正在等待命令行的键入。
+
+如果作业支持，可以反方向发送 JSON API 转义序列，如: >
+	call term_sendkeys(buf, "\<Esc>]51;["response"]\x07")
+
+
+Job 到 Vim: JSON API ~
+							*terminal-api*
+作业可以使用特殊的转义序列发送 JSON 给 Vi。JSON 编码一个 Vim 能理解的命令。一
+个这样信息的示例: >
+	<Esc>]51;["drop", "README.md"]<07>
+
+本体总是列表，以便寻找结尾处: ]<07>。
+<Esc>]51;msg<07> 序列是 xterm 保留给 "Emacs shell" 的，和我们要做的差不多吧。
+
+目前支持的命令:
+
+	call {funcname} {argument}
+
+		调用用户定义函数并带参数 {argument}。
+		函数调用时有两个参数: 终端缓冲区号和 {argument}，一个解码的
+		JSON 参数。函数名必须以 "Tapi_" 开始，以免不小心调用了为非终端
+		API 设计的函数。
+		用户函数须检查参数的合法性。
+		函数可以用 |term_sendkeys()| 来发送反馈。
+		JSON 示例: >
+			["call", "Tapi_Impression", ["play", 14]]
+<		会调用以下定义的函数: >
+			function Tapi_Impression(bufnum, arglist)
+			  if len(a:arglist) == 2
+			    echomsg "impression " . a:arglist[0]
+			    echomsg "count " . a:arglist[1]
+			  endif
+			endfunc
+<		如果用 |:echo|，重画可能被删除其输出，用 `:echomsg` 就会保证在
+		`:messages` 中看到这些消息。
+
+	drop {filename} [options]
+
+		让 Vim 打开文件，就像 `:drop` 命令那样。如果 {filename} 已经在
+		窗口中打开，切换到该窗口。否则打开新窗口，并编辑 {filename}。
+		注意 作业和 Vim 都可能改变当前目录，所以最好使用完整路径。
+
+		[options] 只在打开新窗口里有用。如果给出，必须是字典。和
+		|++opt| 类似，识别以下项目:
+		  "ff"		文件格式: "dos"、"mac" 或 "unix"
+		  "fileformat"	同上
+		  "enc"		覆盖 'fileencoding'
+		  "encoding"	同上
+		  "bin"		置位 'binary'
+		  "binary"	同上
+		  "nobin"	复位 'binary'
+		  "nobinary"	同上
+		  "bad"		指定坏字符的行为，见 |++bad|
+
+		JSON 示例: >
+			["drop", "path/file.txt", {"ff": "dos"}]
+
+让 vim 发送此转义序列的一个小技巧: >
+	exe "set t_ts=\<Esc>]51; t_fs=\x07"
+	let &titlestring = '["call","Tapi_TryThis",["hello",123]]'
+	redraw
+	set t_ts& t_fs&
+
+理据: 为什么不允许任何命令或表达式呢？因为可能会造成安全问题。
+
+
+使用客户-服务器特性 ~
+						*terminal-client-server*
+只在 v:servername 非空时有用。如果需要可以这样在打开终端前设置之: >
+	call remote_startserver('vim-server')
+
+在终端里，$VIM_SERVERNAME 会设为传递进来的服务器名。
+
+在作业中可以这样做: >
+	vim --servername $VIM_SERVERNAME --remote +123 some_file.c
+这会打开文件 "some_file.c" 并把光标放在第 123 行上。
+
+==============================================================================
+3. 远程测试						*terminal-testing*
+
+多数 Vim 测试在 Vim 内部执行脚本。有些测试这样不行，因为测试的执行和要测试的代
+码有干扰。为了避免这种干扰，可在终端窗口中执行 Vim。测试给它发送键击并检视结果
+的屏幕状态。
+
+函数 ~
+
+|term_sendkeys()|	给终端发送键击 (不应用映射)
+|term_wait()|		等待屏幕的刷新
+|term_scrape()|		检视终端屏幕
+
+
+==============================================================================
+4. 屏幕截图比较						*terminal-diff*
+
+有些情况下要测试 Vim 在屏幕上是否显示正确的字符很麻烦，例如带语法高亮的时候。
+现在有一个略简便的方法，为终端进行屏幕截图，并和期待的屏幕截图相比较。
+
+Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的屏幕大小、字体和其它属
+性是无关的。这样此机制在系统间可移植。而常规的屏幕截图会反映所有的差异，包括字
+体大小和家族等。
+
+
+编写 Vim 屏幕截图测试 ~
+							*terminal-dumptest*
+一个实际的例子可见 src/testdir/test_syntax.vim 中的 Test_syntax_c() 函数。其主
+要步骤是:
+- 写一个待测试的文件。用于测试语法高亮。也可以从空缓冲区启动 Vim。
+- 在指定大小的终端中运行 Vim。缺省是 20 行每行 75 字符。这保证截图有恒定的大
+  小。 函数 RunVimInTerminal() 会做到这一点。把 Vim 命令的参数传递给它就可以
+  了。
+- 用 |term_sendkeys()| 给 Vim 发送任何命令。例如: >
+	call term_sendkeys(buf, ":echo &lines &columns\<CR>")
+- 用 VerifyScreenDump() 检查屏幕现在匹配期待的状态。它假定参考屏幕截图在
+  src/testdir/dumps/ 目录下，名字不需要 ".dump" 部分。建议使用测试函数的名字加
+  一个序列号，以便我们知道什么测试使用此文件。
+- 重复发送命令和检查状态的步骤。
+- 最后调用 StopVimInTerminal() 来停止 Vim。
+
+第一次你还没有屏幕截图。先建立空文件，如: >
+	touch src/testdir/dumps/Test_function_name_01.dump
+
+此时测试会失败，并给出比较参考截图和失败截图的命令，如: >
+	call term_dumpdiff("Test_func.dump.failed", "dumps/Test_func.dump")
+
+把当前目录设为 src/testdir，在 Vim 中使用此命令。一旦你对测试满意了，把失败截
+图移动到参考截图的位置: >
+	:!mv Test_func.dump.failed dumps/Test_func.dump
+
+
+创建屏幕截图 ~
+							*terminal-screendump*
+
+要创建屏幕截图，在终端中运行 Vim (或其它程序)，并使它显示想要的状态。然后用
+|term_dumpwrite()| 函数来创建屏幕截图文件。例如: >
+	:call term_dumpwrite(77, "mysyntax.dump")
+
+这里 "77" 是终端缓冲区号。`:ls!` 可以看到。
+
+要浏览屏幕截图，可用 |term_dumpload()|: >
+	:call term_dumpload("mysyntax.dump")
+
+要验证 Vim 还显示完全相同的屏幕，一模一样地再运行一次 Vim，显示想要的状态。然
+后用另一个文件名再创建一份屏幕截图: >
+	:call term_dumpwrite(88, "test.dump")
+
+要断言两份文件完全相同，可用 |assert_equalfile()|: >
+	call assert_equalfile("mysyntax.dump", "test.dump")
+
+如果有不同，v:errors 会包含错误信息。
+
+
+比较屏幕截图 ~
+						*terminal-diffscreendump*
+
+|assert_equalfile()| 不能方便地看到差异之处。要发现问题，可用
+|term_dumpdiff()|: >
+	call term_dumpdiff("mysyntax.dump", "test.dump")
+
+这会打开一个窗口，包含三个部分:
+1.  第一份截图的内容
+2.  两份截图的差异
+3.  第二份截图的内容
+
+你通常在第二部分看到差异之处。'ruler' 可用来把它和第一份或第二份截图的位置联系
+起来。
+
+另外，按 "s" 会交换两份截图。多做几次，在文本的上下文中找到差异会容易一些。
+
+==============================================================================
+5. 调试					*terminal-debug* *terminal-debugger*
+
+终端调试插件可用来使用 gdb 来调试程序而同时在 Vim 窗口中查看源代码。因为这完全
+包含在 Vim 内完成，我们通过 ssh 连接也可以远程进行工作。
+
+如果没有 |+terminal| 特性但可能的话，此插件会使用 "prompt" 缓冲区类型。详见下
+述的 |termdebug-prompt|。
+
+
+启动 ~
+							*termdebug-starting*
+此命令载入插件: >
+	packadd termdebug
+<							*:Termdebug*
+要启动调试，用 `:Termdebug` 或 `:TermdebugCommand`` 后跟命令名，如: >
+	:Termdebug vim
+
+这会打开两个窗口:
+
+gdb 窗口	终端窗口，其中执行 "gdb vim"。这里你可以直接和 gdb 交互。缓冲
+		区名是 "!gdb"。
+
+program 窗口	用于执行程序的终端窗口，。gdb 里 "run" 时，程序 I/O 会在此窗口
+		中发生，这样不会和控制的 gdb 有干扰。
+		缓冲区名是 "gdb program"。
+
+当前窗口用于显示源代码。gdb 暂停时，如有可能会显示源代码的位置。标号用来高亮当
+前位置，使用高亮组 debugPC。
+
+如果当前窗口缓冲区被修改，会打开另一个窗口来显示 gdb 的当前位置。用 `:Winbar`
+可以在那里加上窗口工具条。
+
+聚焦执行程序的终端可以和它互动。这和终端窗口运行任何命令的用法一样。
+
+通常在 gdb 窗口中输入 "quit" 可以结束调试器。此时，这两个打开的窗口会被关闭。
+
+一次只能激活一个调试器。
+							*:TermdebugCommand*
+要指定要调试的命令，可用 `:TermdebugCommand` 命令后跟命令名和其它参数。 >
+	:TermdebugCommand vim --clean -c ':set nu'
+
+`:Termdebug` 和 `:TermdebugCommand` 两者都支持可选的 "!" 感叹号参数，它会立即
+启动命令而不暂停在 gdb 窗口中 (光标会留在待调试的窗口)。示例: >
+	:TermdebugCommand! vim --clean
+
+要把 gdb 和已经在运行的可执行程序或 core 文件绑定，传递额外的参数。如: >
+	:Termdebug vim core
+	:Termdebug vim 98343
+
+如果不给出参数，会打开 gdb 窗口，那里要通过如 gdb `file` 命令等方式去执行想要
+的命令。
+
+
+示例会话 ~
+							*termdebug-example*
+从 Vim  "src" 目录开始并编译 Vim: >
+	% make
+启动 Vim: >
+	% ./vim
+载入 termdebug 插件并开始调试 Vim: >
+	:packadd termdebug
+	:Termdebug vim
+你现在应有三个窗口:
+    源代码  - 你开始的地方，有带按钮的窗口工具条
+    gdb	    - 这里你开始输入 gdb 命令
+    program - 执行中程序会使用本窗口
+
+可用 CTRL-W CTRL-W 或鼠标在窗口间转换焦点。把焦点放在 gdb 窗口上并输入: >
+	break ex_help
+	run
+Vim 会在 program 窗口上开始运行。把焦点放在那里并输入: >
+	:help gui
+Gdb 会在 ex_help 断点处运行。源代码窗口此时会显示 ex_cmds.c 文件。一个红色的
+"1 " 标记会出现在标号列里，指示断点所在的位置。调试器所在的行被高亮。现在你可
+以在程序中步进了。让我们用下鼠标: 在窗口工具条的 "Next" 按钮上点击。你会看到随
+着调试器执行一行源代码，高亮也跟着移动。
+
+点击 "Next" 几次直到 for 循环被高亮。把光标放在 "eap->arg" 的尾部，然后按工具
+条上的 "Eval"。你会看到:
+	"eap->arg": 0x555555e68855 "gui" ~
+这样你可以检视局部变量的值。也可以聚焦在 gdb 窗口上并使用 "print" 命令，如: >
+	print *eap
+如果支持鼠标指针移动，Vim 也会在鼠标停留的文本上显示通过 gdb 计算的气泡。
+
+现在回到源代码窗口，把光标放在 for 循环后的第一行，然后输入: >
+	:Break
+你会看到 ">>" 标记出现，指示一个新的断点。现在在工具条上点击 "Cont"，这会继续
+执行代码直到断点为止。
+
+gdb 窗口上可以输入更高级的命令。例如，输入: >
+	watch curbuf
+现在在工具条点击 "Cont" (或在 gdb 窗口中输入 "cont")。现在会继续执行直到
+"curbuf" 的值有改变，这应在 do_ecmd() 里。
+要删除此观察点，在 gdb 窗口中再输入: >
+	delete 3
+
+要看到堆栈，在gdb 窗口中输入: >
+	where
+在堆栈框架间移动，比如可用: >
+	frame 3
+源代码窗口会显示在更深层的调用所在的代码。
+
+
+代码中步进 ~
+							*termdebug-stepping*
+把焦点移到 gdb 窗口，在那里输入命令。常用的有:
+- CTRL-C	中断程序
+- next		执行当前行并停在下一行
+- step		执行当前行并停在下个语句上，进入函数
+- finish	执行直到退出当前函数为止
+- where		显示堆栈
+- frame N	转到第 N 堆栈框架
+- continue	继续执行
+
+						*:Run* *:Arguments*
+在显示源代码的窗口中以下命令可用于控制 gdb:
+ `:Run` [args]	    执行程序，使用 [args] 或之前的参数
+ `:Arguments` {args}  设置下次 `:Run` 使用的参数
+
+ *:Break*	在当前行设置断点；标号会显示
+ *:Clear*	删除当前行所在的断点
+
+ *:Step*	执行 gdb "step" 命令
+ *:Over*	执行 gdb "next" 命令 (`:Next` 是 Vim 的命令)
+ *:Finish*	执行 gdb "finish" 命令
+ *:Continue*	执行 gdb "continue" 命令
+ *:Stop*	中断程序
+
+如果设置了 'mouse'，插件加入窗口工具条，带以下项目:
+  Step		`:Step`
+  Next		`:Over`
+  Finish	`:Finish`
+  Cont		`:Continue`
+  Stop		`:Stop`
+  Eval		`:Evaluate`
+这样你就可用鼠标完成大部分的常用操作。需要设置 'mouse' 选项来支持鼠标点击。
+								*:Winbar*
+你可以这样在其它打开的窗口加入窗口工具条: >
+  :Winbar
+
+如果 gdb 停在某个源代码行上而当前没有窗口显示该源代码，会创建新窗口来显示该源
+代码。如果源代码窗口的缓冲区被修改而不能放弃，这也会发生。
+
+gdb 为每个断点编号。Vim 里在标号列中以红色背景显示该编号。可以使用这些 gdb 命
+令:
+- info break	列出断点
+- delete N	删除断点 N
+如果光标在断点行上，也可用 `:Clear` 命令，或右键菜单项目中的 "Clear
+breakpoint"。
+
+
+检视变量 ~
+					*termdebug-variables* *:Evaluate*
+ `:Evaluate`	    检视光标下的表达式
+ `K`		    同上
+ `:Evaluate` {expr}   计算 {expr}
+ `:'<,'>Evaluate`     计算可视选择的文本
+
+类似于在 gdb 窗口用 "print"。
+通常可缩短 `:Evaluate` 为 `:Ev`。
+
+
+其它命令 ~
+							*termdebug-commands*
+ *:Gdb*	     跳转到 gdb 窗口
+ *:Program*    跳转到运行程序的窗口
+ *:Source*     跳转到源代码窗口，如果还没有则创建之
+
+
+提示模式 ~
+						*termdebug-prompt*
+如果不支持 |+terminal| 特性且在 MS-Windows 上，gdb 会在 'buftype' 设为
+"prompt" 的缓冲区中运行。工作方式略有不同:
+- 键入命令时，gdb 窗口会进入插入模式。<Esc> 会进入普通模式，然后你在缓冲区内可
+  以移动，复制/粘贴，等等。任何开始插入模式的命令，如 `a` 或 `i`，会回去进行
+  gdb 命令的编辑。
+- 待调试的程序在单独的窗口中运行。MS-Windows 上这是个新的控制台窗口。Unix 上，
+  如果 |+terminal| 特性可用，打开终端窗口以运行待调试的程序。
+
+						*termdebug_use_prompt*
+即使 |+terminal| 特性可用，也可使用提示模式，用: >
+	let g:termdebug_use_prompt = 1
+
+
+通信 ~
+						*termdebug-communication*
+还有一个缓冲区，它是隐藏的，用于 Vim 和 gdb 的通信。缓冲区名是 "gdb
+communication"。不要删除此缓冲区，否则会破坏调试器。
+
+gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，在 gdb 窗口中输入
+"continue" 后 CTRL-C 可用于中断运行中的程序。但用 MI 命令 "-exec-continue" 后
+CTRL-C 并不中断。因此 `:Continue` 命令用 "continue" 而不是通信通道。
+
+
+定制 ~
+
+GDB 命令						 *termdebug-customizing*
+
+要改变 gdb 命令的名字，在调用 `:Termdebug` 前设置 "termdebugger" 变量: >
+	let termdebugger = "mygdb"
+<							*gdb-version*
+只能用和 gdb 完全兼容的调试器。Vim 使用 GDB/MI 接口。"new-ui" 命令需要 gdb
+7.12 或更新的版本。如见此错误:
+	Undefined command: "new-ui". Try "help".~
+你的 gdb 版本太老了。
+
+
+颜色						*hl-debugPC* *hl-debugBreakpoint*
+
+标号的颜色可用以下高亮组调整:
+- debugPC		当前位置
+- debugBreakpoint	断点
+
+'background' 为 "light" 的缺省:
+  hi debugPC term=reverse ctermbg=lightblue guibg=lightblue
+  hi debugBreakpoint term=reverse ctermbg=red guibg=red
+
+'background' 为 "dark" 的缺省:
+  hi debugPC term=reverse ctermbg=darkblue guibg=darkblue
+  hi debugBreakpoint term=reverse ctermbg=red guibg=red
+
+
+快捷键							*termdebug_shortcuts*
+
+可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
+窗口中使用。例如: >
+	map ,w :call TermDebugSendCommand('where')<CR>
+参数是 gdb 命令。
+
+
+弹出式菜单						*termdebug_popup*
+
+缺省 Termdebug 插件设置 'mousemodel' 为 "popup_setpos"，并在弹出式菜单里加入以
+下项目:
+	Set breakpoint		`:Break`
+	Clear breakpoint	`:Clear`
+	Evaluate		`:Evaluate`
+如果不想要，可以这样关闭之: >
+	let g:termdebug_popup = 0
+
+
+Vim 窗口宽度						*termdebug_wide*
+
+要改变调试开始时的 Vim 窗口宽度并用垂直分割: >
+  let g:termdebug_wide = 163
+这会在使用 `:Termdebug` 时设置 &columns 为 163。退出调试器后此值复原。
+如果设置了 g:termdebug_wide 而 &columns 已经大于 g:termdebug_wide，则使用垂直
+分割且不改变 &columns。
+把它设为 1 会保证垂直分割且不会改变 &columns (用于 Vim 不能改变终端大小的场
+合)。
+
+
+
+ vim:tw=78:ts=8:ft=help:norl:
+
