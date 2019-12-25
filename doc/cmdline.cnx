@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 8.0.  最近更新: 2017年7月
+*cmdline.txt*   For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -156,12 +156,14 @@ CTRL-R CTRL-F				*c_CTRL-R_CTRL-F* *c_<C-R>_<C-F>*
 CTRL-R CTRL-P				*c_CTRL-R_CTRL-P* *c_<C-R>_<C-P>*
 CTRL-R CTRL-W				*c_CTRL-R_CTRL-W* *c_<C-R>_<C-W>*
 CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
+CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 		插入光标下的对象:
 			CTRL-F	光标下的文件名
 			CTRL-P	用 'path' 扩展的光标下的文件名。与 |gf|
 				中的类似。
 			CTRL-W	光标下的单词
 			CTRL-A	光标下的字串；参见: |WORD|
+			CTRL-L	光标下的文本行
 
 		如果置位 'incsearch'，使用当前显示匹配文本的末尾作为光标位置。
 		使用 CTRL-W 时，已经录入的单词部分不再重复插入。
@@ -171,8 +173,8 @@ CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
+CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		插入寄存器或光标下的对象。类似于 |c_CTRL-R|，但是该命令按本义
 		插入文本。例如，如果寄存器 a 的内容为 "xy^Hz" (^H 是退格键)，
 		那么 "CTRL-R a" 会插入 "xz"，而 "CTRL-R CTRL-R a" 会插入
@@ -358,13 +360,16 @@ CTRL-D		列出与光标前面的模式所匹配的名字。
 		特殊的意义。) 如果再次输入，并且有多项匹配时，则插入下一项匹
 		配。在最后一项匹配之后，会再次匹配第一项 (循环使用)。
 		该行为可以通过设置 'wildmode' 选项来改变。
+							*c_<S-Tab>*
+<S-Tab>		和 'wildchar' 或 <Tab> 类似，但从最末匹配开始，依次选择前一项
+		匹配。
+		<S-Tab> 不是所有系统都可用。
 							*c_CTRL-N*
 CTRL-N		在使用 'wildchar' 之后，如果得到了多项匹配，则选择下一项匹配。
 		否则选择命令历史列表中的下一条命令。
-<S-Tab>							*c_CTRL-P* *c_<S-Tab>*
+							*c_CTRL-P*
 CTRL-P		在使用 'wildchar' 之后，如果得到了多项匹配，则选择前一项匹配。
-		否则选择命令历史列表中的上一条命令。<S-Tab> 只在 Amiga 的 GUI
-		和 MS-DOS 上可以用。
+		否则选择命令历史列表中的上一条命令。
 							*c_CTRL-A*
 CTRL-A		将所有与模式匹配的项全部插入到光标前面。
 							*c_CTRL-L*
@@ -389,7 +394,12 @@ CTRL-T		如果置位 'incsearch'，用 "/" 或 "?" 录入搜索模式而显示�
 里用的是 <Esc>)。 如果用来匹配文件名，在匹配模式里可以使用标准的通配符 '*' 和
 '?'。'*' 匹配任意字符串，'?' 匹配一个字符。
 
+重复使用 'wildchar' 或 CTRL-N 会循环选择匹配，并最终转回到正在输入的内容。如果
+首个匹配不如所愿，可以用 <S-Tab> 或 CTRL-P 直接回到刚输入的内容。
+
 置位选项 'wildignorecase' 可用于忽略文件名的大小写。
+
+'wildmenu' 选项可用于设置在命令行正上方显示可能的匹配。
 
 如果你喜欢 tcsh 的自动列表匹配，可以使用这个映射: >
 	:cnoremap X <C-L><C-D>
@@ -707,12 +717,18 @@ Ex 命令有几个特别的地方:
 			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
 			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
 			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
+			       *:<cexpr>* *<cexpr>*
 			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
 注意: 下面这些不是特殊键，需要逐个字符输入！
 	<cword>    被当前光标下的单词代替 (类似于 |star|)
 	<cWORD>    被当前光标下的字串代替 (见 |WORD|)
+	<cexpr>    被当前光标下的单词，必要时包含更多内容以构成的完整 C 表达式
+		   所代替。如，当光标在 "ptr->arg" 的 "arg" 上，结果是
+		   "ptr->arg"；如光标在 "list[idx]" 的 "]" 上，则结果是
+		   "list[idx]"。用于 |v:beval_text|。
 	<cfile>    被当前光标下的路径名代替 (类似于 |gf| 用的方法)
-	<afile>    在执行自动命令时，被用来读或写的文件的文件名取代。
+	<afile>    在执行自动命令时，被所操作的缓冲区或用来读或写的文件的文件
+		   名取代。
 	<abuf>     在执行自动命令时，被当前有效的缓冲区序号取代 (对于
 		   ":r file" 和 ":so file" 来说是当前的缓冲区，因为被读取/执行
 		   的文件不在缓冲区里)。
@@ -748,7 +764,8 @@ Ex 命令有几个特别的地方:
 	:~	如果可能，路径名缩减为基于主目录的相对路径。若文件不在主目录
 		下，则文件名不会被改变。
 	:.	如果可能，路径名缩减为基于当前目录的相对路径。若文件不在当前目
-		录下，则文件名不会被改变。
+		录下，则文件名不会被改变，但在 MS-Windows 上，如果和当前驱动器
+		匹配，会删除驱动器部分。
 		要想尽可能缩减，可使用 ":~:." 。
 	:h	文件名的头部 (除去文件名的最后一部分以及路径分隔符)。
 		不能与 :e，:r 或 :t 一起使用。

@@ -1,4 +1,4 @@
-*gui_x11.txt*   For Vim version 8.0.  最近更新: 2017年7月
+*gui_x11.txt*   For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -57,6 +57,8 @@ gui 并分叉，而  "mvim -f" 启动 gui 但不分叉 (见 |mvim|)。但 MacVim
 vim 中执行 |:gui| 不会分叉。
 
 "gvim --nofork" 和 "gvim -f" 的效果一样。
+
+有还在运行的作业时 Vim 不会 fork，因为进程不再是子进程。
 								*E851* *E852*
 GUI 方式启动失败时，Vim 仍会继续尝试以终端方式运行。
 
@@ -256,7 +258,8 @@ Vim 资源中加入这些 (改变成你喜欢的颜色): >
 在 "mwm" (Motif 窗口管理器) 该行应是: >
    Mwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
 
-X11 中可用的鼠标指针					*X11_mouse_shapes*
+X11 中可用的鼠标指针 ~
+						*X11_mouse_shapes*
 
 当使用 |'mouseshape'| 选项时，vim 进入各种模式时鼠标指针都会自动改变 (例如，在
 插入或命令模式中)。目前可用的指针如下:
@@ -324,6 +327,7 @@ GTK＿不＿使用传统的 X 资源设置。所以，你的 ~/.Xdefaults 或 ap
 别设置，你需要改动 gtkrc 之类的文件。至于如何改动，可参考 GTK 文档。更多的信息
 请参考 http://developer.gnome.org/doc/API/2.0/gtk/gtk-Resource-Files.html。
 
+工具提示条色彩 ~
 							*gtk-tooltip-colors*
 如，设定工具提示条为黑字亮黄色背景: >
 
@@ -340,14 +344,115 @@ GTK＿不＿使用传统的 X 资源设置。所以，你的 ~/.Xdefaults 或 ap
 
 GTK+ 3 上，要达成类似的效果，可在 $XDG_HOME_DIR/gtk-3.0/gtk.css (通常是
 $HOME/.config/gtk-3.0/gtk.css) 中加入以下的 CSS 代码:
- >
+
+对 GTK+ 3 < 3.20 而言: >
+
 	.tooltip {
 		background-color: #ffffcc;
 		color: #000000;
 	}
 <
+对 GTK+ 3 >= 3.20 而言: >
 
-使用 Vim 作为 GTK+ 的插件				*gui-gtk-socketid*
+	tooltip {
+	    background-color: #ffffcc;
+	    text-shadow: none;
+	}
+
+	tooltip label {
+	    color: #2e3436;
+	}
+<
+
+GTK+ CSS 的快速一览 ~
+							*gtk-css*
+这一小段的内容只适用于 GTK+ 3.2 或以后版本，因为它们有对 GTK+ CSS 的稳定支持:
+
+	https://developer.gnome.org/gtk3/stable/theming.html
+
+GTK+ 使用 CSS 来提供 小组件的风格和排版。本小段会通过简单和说明性的示例来提供
+GTK+ CSS 的快速一览。
+
+示例 1。空白空间调整 ~
+
+缺省 GTK+ 3 GUI 的工具条和标签条行比 GTK+ 2 GUI 稍大。有些人可能希望和 GTK+ 2
+GUI 在大小上更加接近一些。
+
+为此，我们要减少图标和标签周围看来过多的空白。
+
+在 $XDG_HOME_DIR/gtk-3.0/gtk.css 中加入以下内容 (通常是
+$HOME/.config/gtk-3.0/gtk.css): >
+
+	toolbar button {
+	    margin-top: -2px;
+	    margin-right: 0px;
+	    margin-bottom: -2px;
+	    margin-left: 0px;
+
+	    padding-top: 0px;
+	    padding-right: 0px;
+	    padding-bottom: 0px;
+	    padding-left: 0px
+	}
+
+	notebook tab {
+	    margin-top: -1px;
+	    margin-right: 3px;
+	    margin-bottom: -1px;
+	    margin-left: 3px;
+
+	    padding-top: 0px;
+	    padding-right: 0px;
+	    padding-bottom: 0px;
+	    padding-left: 0px
+	}
+<
+因为这是 CSS，可用以下的缩写重写: >
+
+	toolbar button {
+	    margin: -2px 0px;
+	    padding: 0px;
+	}
+
+	notebook tab {
+	    margin: -1px 3px;
+	    padding: 0px
+	}
+<
+备注: 也可用 'toolbariconsize' 来调整图标大小。
+
+备注: 取决于图标方案和/或使用的字体，要达到满意的结果可能需要更多额外微调。
+
+备注: 除了 margin 和 padding 以外，还可用 border。具体细节可见 CSS 的盒模式，
+例如，
+
+	https://www.w3schools.com/css/css_boxmodel.asp
+
+示例 2。色彩之外 ~
+
+GTK+ CSS 也支持渐变色: >
+
+	tooltip {
+	    background-image: -gtk-gradient(linear,
+					    0 0, 0 1,
+					    color-stop(0, #344752),
+					    color-stop(0.5, #546772),
+					    color-stop(1, #243742));
+	}
+
+	tooltip label {
+	    color: #f3f3f3;
+	}
+<
+渐变色用于使 GUI 元素视觉上和其它元素视觉上有区隔。相应地，有效地使用渐变色是
+使主题方案的色彩和光线有统一的感觉一项有用的技术。
+
+备注: 制定主题方案是困难的，因为要让所有应用都同样悦目；使单个应用更吸引往往使
+其它的应用意料之外地不好看或破坏其可用性。要改进主题方案时请记住这一点。
+
+
+使用 Vim 作为 GTK+ 的插件 ~
+							*gui-gtk-socketid*
 
 当 GTK+ 版本的 Vim 启动时，它会创建自己的顶层窗口 (技术上，'GtkWindow')。GTK+
 提供了用 GtkSocket 和 GtkPlug 组件 (widget) 嵌入的便利手段。如果一 GTK+ 应用程
@@ -387,7 +492,8 @@ GNOME 将被编译进来。
 3。
 
 
-GNOME 会话支持				*gui-gnome-session* *gnome-session*
+GNOME 会话支持 ~
+					*gui-gnome-session* *gnome-session*
 
 如果在退出登录时有任何改动过的缓冲区，Vim 会显示一个确认窗口。单击 [Cancel] 会
 终止退出的过程。否则当前的会话会被用 |:mksession| 命令存入硬盘，并在下次登陆时

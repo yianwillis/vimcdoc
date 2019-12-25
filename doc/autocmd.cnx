@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 8.0.  最近更新: 2017年7月
+*autocmd.txt*   For Vim version 8.1.  最近更新: 2018年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -6,7 +6,7 @@
 				http://vimcdoc.sf.net
 
 
-自动命令						*autocommand*
+自动命令					*autocommand* *autocommands*
 
 一个基本的介绍可以在用户手册的 |40.3| 章节找到。
 
@@ -23,7 +23,6 @@
 11. 屏蔽自动命令		|autocmd-disable|
 
 {Vi 没有任何以上的命令}
-{仅当编译时加入 |+autocmd| 特性才有效}
 
 ==============================================================================
 1. 简介							*autocmd-intro*
@@ -33,7 +32,7 @@
 还可以用自动命令来实现诸如编辑压缩文件 (见 |gzip-example|) 等的高级特性。一般
 来说，自动命令在 .vimrc 或 .exrc 文件里设置。
 
-					*E203* *E204* *E143* *E855* *E937*
+				*E203* *E204* *E143* *E855* *E937* *E952*
 警告: 自动命令功能强大，甚至会导致意想不到的副作用。小心你的文本不要遭到破坏。
 - 最好能先在一个能够牺牲的副本上进行测试。
   例如: 如果你使用自动命令在文件开始编辑时进行解压，应确保写回时能正确执行压缩
@@ -51,6 +50,7 @@
 :au[tocmd] [group] {event} {pat} [nested] {cmd}
 			把 {cmd} 加到 Vim 在匹配 {pat} 模式的文件执行 {event}
 			事件时自动执行的命令列表。见 |autocmd-patterns|。
+			注意: 引号视为 :autocmd 的参数而非注释的引导。
 			Vim 总把 {cmd} 加到已有的自动命令之后，这样保证自动命
 			令的执行顺序与其定义的顺序相同。
 			关于 [nested]，参见 |autocmd-nested|。
@@ -62,8 +62,14 @@
 样: >
 	:augroup mine | au! BufRead | augroup END
 但下列命令会把 "augroup" 视为所定义命令的一部分: >
+	:augroup mine | au! BufRead * | augroup END
 	:augroup mine | au BufRead * set tw=70 | augroup END
-
+正确的方法应把组名放在命令里: >
+	:au! mine BufRead *
+	:au mine BufRead * set tw=70
+或者用 `:execute`: >
+	:augroup mine | exe "au! BufRead *" | augroup END
+	:augroup mine | exe "au BufRead * set tw=70" | augroup END
 
 注意 ":autocmd" 的参数里的特殊字符 (例如，"%"、"<cword>") 在定义时不会被扩展，
 而是在事件发生并执行 {cmd} 的时候才进行。唯一的例外是 "<sfile>" 在定义时扩展。
@@ -78,7 +84,8 @@
 清除之前的命令: >
 
 	augroup vimrc
-	  autocmd!	" 清除 vimcrc 组全部的的自动命令
+	  " 清除 vimcrc 组全部的的自动命令
+	  autocmd!
 	  au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 	augroup END
 
@@ -125,6 +132,7 @@
 			常用事件进行操作，可能会对插件、语法高亮等产生破坏。
 
 :au[tocmd]! [group]	删除所有的自动命令。
+			注意: 引号视为 :autocmd 的参数而非注释的引导。
 			警告: 没有给出组时，不要轻易用本命令，会对插件、语法高
 			亮等产生破坏。
 
@@ -231,6 +239,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |BufCreate|		刚把缓冲区附加到缓冲区列表后
 |BufDelete|		从缓冲区列表删除缓冲区前
 |BufWipeout|		从缓冲区列表完全删除缓冲区前
+|TerminalOpen|		建立终端缓冲区后
 
 |BufFilePre|		改变当前缓冲区名字前
 |BufFilePost|		改变当前缓冲区名字后
@@ -260,6 +269,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |TermResponse|		收到 |t_RV| 的终端应答后
 
 |QuitPre|		用 `:quit` 时，决定是否退出之前
+|ExitPre|		用可使 Vim 退出的命令时
 |VimLeavePre|		退出 Vim 前，在写入 viminfo 文件之前
 |VimLeave|		退出 Vim 前，在写入 viminfo 文件之后
 
@@ -267,6 +277,8 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |FileChangedShell|	Vim 注意到文件在编辑开始后被改变
 |FileChangedShellPost|	对在编辑开始后被改变的文件的处理完成后
 |FileChangedRO|		对只读文件进行第一次修改前
+
+|DirChanged|		工作目录改变后
 
 |ShellCmdPost|		执行外壳命令后
 |ShellFilterPost|	用外壳命令执行完过滤后
@@ -295,14 +307,21 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |CmdwinEnter|		进入命令行窗口后
 |CmdwinLeave|		离开命令行窗口前
 
+|CmdlineChanged|	命令行文本发生改变后
+|CmdlineEnter|		光标移到命令行后
+|CmdlineLeave|		光标离开命令行前
+
 |InsertEnter|		开始插入模式前
 |InsertChange|		在插入或替换模式下输入 <Insert> 时
 |InsertLeave|		离开插入模式时
 |InsertCharPre|		插入模式输入每个字符前
 
 |TextChanged|		普通模式中对文本进行改变后
-|TextChangedI|		插入模式中对文本进行改变后
+|TextChangedI|		弹出菜单不可见时，插入模式中对文本进行改变后
+|TextChangedP|		弹出菜单可见时，插入模式中对文本进行改变后
+|TextYankPost|		文本抽出或删除后
 
+|ColorSchemePre|	载入色彩方案前
 |ColorScheme|		载入色彩方案后
 
 |RemoteReply|		得到了 Vim 服务器的应答
@@ -393,6 +412,8 @@ BufWinEnter			窗口显示缓冲区后。可以是新缓冲区载入 (处理完�
 				文件也是如此，同样因为它重用已有的缓冲区。但用
 				当前缓冲区名来 ":split" 却会激活本事件，因为此
 				时该缓冲区被重新载入。
+				终端窗口不适用，因为以终端-作业模式启动时，普
+				通模式不可用。可用 |TerminalOpen| 代替。
 							*BufWinLeave*
 BufWinLeave			窗口删除缓冲区前。除非它在别的窗口仍然可见。
 				系统退出时也会激活。在 BufUnload 或 BufHidden
@@ -430,6 +451,22 @@ CmdUndefined			调用未定义的用户命令时。可以用来实现在实际�
 				注意: 在命令未定义前，自动补全不能工作。一个替
 				代方法是总是定义好用户命令，使之调用自动载入函
 				数。见 |autoload|。
+							*CmdlineChanged*
+CmdlineChanged			命令行文本发生改变后。小心不要改动命令行本身，
+				不然可能会使 Vim 死锁。
+				<afile> 设为单个字符，指示命令行的类型。
+				|cmdwin-char|
+							*CmdlineEnter*
+CmdlineEnter			光标移到命令行后，此时用户可输入命令或搜索字符
+				串。
+				<afile> 设为单个字符，指示命令行的类型。
+				|cmdwin-char|
+							*CmdlineLeave*
+CmdlineLeave			离开命令行前。也用于按 CTRL-C 或 <Esc> 之后放
+				弃命令行时。
+				此处命令出错时，命令行本身依旧执行。
+				<afile> 设为单个字符，指示命令行的类型。
+				|cmdwin-char|
 							*CmdwinEnter*
 CmdwinEnter			进入命令行窗口后。可用来对此特殊类型的窗口进行
 				设置。激活此事件，而_不是_ BufEnter 和
@@ -447,6 +484,10 @@ ColorScheme			载入色彩方案后。|:colorscheme|
 				模式匹配的是色彩方案名。<afile> 可获得设置该选
 				项时的实际文件名。<amatch> 为新色彩方案名。
 
+							*ColorSchemePre*
+ColorSchemePre			载入色彩方案前。|:colorscheme|
+				可用于在下个色彩方案载入之前，删除前一个色彩方
+				案的若干设置，
 
 							*CompleteDone*
 CompleteDone			插入模式补全结束之后。不管补会是否成功完成或是
@@ -512,6 +553,21 @@ FileChangedRO			刚开始修改只读文件前。可以用来从源文件控制�
 							*E881*
 				如果行数改变，撤销的保存可能会失败，相关改动也
 				会被放弃。
+							*DirChanged*
+DirChanged			因 |:cd| 或 |:lcd| 命令，或 'autochdir' 选项而
+				引起的工作目录改变时。
+				模式可以是:
+					"window" 由 `:lcd` 触发
+					"global" 由 `:cd` 触发
+					"auto"   由 'autochdir' 触发。
+					"drop"	 由文件编辑触发
+				<afile> 设为新目录名。
+							*ExitPre*
+ExitPre				用 `:quit`、`:wq` 等命令如使得 Vim 退出，或用
+				`:qall` 时，此事件紧跟在 |QuitPre| 之后。可用
+				于关闭非紧要的窗口。如果有已修改的缓冲区且未自
+				动保存的话，退出行为仍然可被终止。真正退出可用
+				|VimLeavePre|。
 							*FileChangedShell*
 FileChangedShell		Vim 注意到文件的修改时间不同于编辑开始的时间或
 				者文件属性或文件大小发生改变时。|timestamp|
@@ -550,8 +606,9 @@ FileReadPre			":read" 命令读入文件前。
 							*FileType*
 FileType			设置 'filetype' 选项时。模式匹配的是文件类型。
 				<afile> 可以用来取得设置该选项的文件名，而
-				<amatch> 则是 'filetype' 的新值。参见
-				|filetypes|。
+				<amatch> 则是 'filetype' 的新值。不允许切换到
+				其它窗口或缓冲区。
+				参见 |filetypes|。
 							*FileWriteCmd*
 FileWriteCmd			写入文件前，但不包括写入整个缓冲区。应执行写入
 				文件的操作。不应改动缓冲区的内容。用 '[ 和 ']
@@ -614,6 +671,7 @@ InsertCharPre			插入模式输入每个字符前。
 				如果 |v:char| 被设为多于一个字符，按本义插入。
 				文本锁激活时不能改变文本 |textlock|。
 				'paste' 置位时不激活本事件。
+				{仅当编译时加入 |+eval| 特性才有效}
 							*InsertEnter*
 InsertEnter			刚开始插入模式之前。也适用于替换模式和虚拟替换
 				模式。|v:insertmode| 变量指明该模式。
@@ -672,6 +730,7 @@ QuickFixCmdPost			类似于 QuickFixCmdPre，但在执行 quickfix 命令
 QuitPre				`:quit`、`:wq` 或 `:qall` 调用时，在决定是否
 				关闭当前窗口或退出 Vim 之前。可用于在当前窗口
 				是最后一个普通窗口时关闭辅助的窗口。
+				另见 |ExitPre|。
 							*RemoteReply*
 RemoteReply			Vim 作为服务器时收到应答时 |server2client()|。
 				模式匹配的是 {serverid}。 <amatch> 是发出应答
@@ -725,6 +784,7 @@ SwapExists			开始编辑文件时检测到交换文件已存在。只有此时�
 							*E812*
 				此处不允许切换到其它缓冲区、为缓冲区换名或者更
 				改目录。
+				{仅当编译时加入 |+eval| 特性才有效}
 							*Syntax*
 Syntax				设置 'syntax' 选项时。模式匹配的是语法名。
 				<afile> 可以用来取得设置该选项的文件名，而
@@ -746,6 +806,10 @@ TabNew				创建标签页时。|tab-page|
 TermChanged			'term' 的值发生改变后。可用来重新读入语法文
 				件，更新色彩、字体和其他终端相关的设置。对所
 				有已载入的缓冲区执行。
+							*TerminalOpen*
+TerminalOpen			用 `:terminal` 或 |term_start()| 建立终端缓冲
+				区后。即使以 ++hidden 选项创建无窗口的缓冲区也
+				会触发此事件。
 							*TermResponse*
 TermResponse			收到终端对 |t_RV| 的应答后。
 				可用 |v:termresponse| 的值判别终端版本。
@@ -761,9 +825,31 @@ TextChanged			普通模式修改当前缓冲区文本之后。即
 							*TextChangedI*
 TextChangedI			插入模式修改当前缓冲区文本之后。
 				弹出菜单可见时不激活。其他事项同 TextChanged。
+							*TextChangedP*
+TextChangedP			插入模式修改当前缓冲区文本之后。
+				只适用于弹出菜单可见时。其他事项同
+				TextChanged。
+							*TextYankPost*
+TextYankPost			当前缓冲区的文本被抽出或删除后。
+				|v:event| 的值可用于决定触发此自动命令的操作，
+				如下所示:
+				   operator    	执行的操作。
+				   regcontents 	寄存器里以行列表形式保存的文
+						本，相当于: >
+						getreg(r, 1, 1)
+<				   regname	|register| 名，无名寄存器返回
+						空串。
+				   regtype	寄存器类型，参见
+						|getregtype()|。
+				用 |quote_| 时不触发，递归调用时也是。
+				此事件不允许改变缓冲区文本，参见 |textlock|。
+				{仅当编译时加入 |+eval| 特性才有效}
 							*User*
 User				不会自动执行。只有用 ":doautocmd" 执行自动命令
 				时才会调用。
+				注意 使用 `:doautocmd User MyEvent` 如果没有匹
+				配的自动命令，会报错。如果不想，自己定义一个空
+				自动命令。
 							*UserGettingBored*
 UserGettingBored		用户按同一个键 42 遍的时候。开玩笑的！
 							*VimEnter*
@@ -777,7 +863,7 @@ VimEnter			做完所有启动任务后，包括载入 .vimrc 文件，执行
 				   else
 				     au VimEnter * call s:init()
 				   endif
-							*VimLeave*
+<							*VimLeave*
 VimLeave			退出 Vim 前，刚写入 .viminfo 文件之后。和
 				VimLeavePre 一样，只执行一次。
 				要检测非正常的退出，使用 |v:dying|。
@@ -798,8 +884,9 @@ WinEnter			进入别的窗口后。不包括 Vim 启动时的第一个窗
 				可用来设定窗口的高度。
 				如果该窗口显示缓冲区，Vim 在 WinEnter 自动命令
 				之后执行 BufEnter 自动命令。
-				注意: ":split fname" 时，WinEnter 事件在分割之
-				后但载入 "fname" 文件之前发生。
+				注意: 对分割和标签页诸命令来说，WinEnter 事件
+				在这些分割或标签命令之后但在文件载入之前发生。
+
 							*WinLeave*
 WinLeave			离开某窗口前。如果将要进入的窗口要显示的是别的
 				缓冲区，Vim 在 WinLeave 自动命令前先执行
@@ -1048,7 +1135,7 @@ FileWriteCmd	FileWritePre	FileWritePost	其他的文件写入
 
 在期待文件名的命令里，你可以使用 "<afile>" 指定被读入的文件名 |:<afile>| (你可
 以用 "%" 指定当前文件名)。"<abuf>" 指定当前有效的缓冲区的缓冲区号。它可以用
-于没有名字的缓冲区，但不包括没有缓冲区的文件 (例如，用 ":r file")。
+于没有名字的缓冲区，但不适用于没有缓冲区的文件 (例如，用 ":r file")。
 
 							*gzip-example*
 读写压缩文件的示例: >

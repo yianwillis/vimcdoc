@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 8.0.  最近更新: 2017年8月
+*syntax.txt*	For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -58,10 +58,12 @@ Vim 支持所有终端上的语法高亮。但因为多数普通的终端只有�
 通常总能找到，如果不行，你可以自己设置 VIM 环境变量为存放 Vim 相关文件所在的
 目录。例如，如果你的语法文件放在 "/usr/vim/vim50/syntax" 目录，设置
 $VIMRUNTIME 为 "/usr/vim/vim50"。启动 Vim 前，你必须在外壳上进行此设置。
+当 GUI 已经在运行或即将运行时，此命令也执行 |menu.vim| 脚本。要避免可见
+|'go-M'|。
 
 							*:syn-on* *:syntax-on*
-":syntax enable" 命令会保持你当前的色彩设置。这样，不管在使用此命令的前后，你
-都可以用 ":highlight" 命令设置你喜欢的颜色。如果你希望 Vim 用缺省值覆盖你自己
+`:syntax enable` 命令会保持你当前的色彩设置。这样，不管在使用此命令的前后，你
+都可以用 `:highlight` 命令设置你喜欢的颜色。如果你希望 Vim 用缺省值覆盖你自己
 的，只要用: >
 	:syntax on
 <
@@ -720,12 +722,8 @@ ant 语法文件缺省提供了 javascript 和 python 的语法高亮。其他�
 
 APACHE						*apache.vim* *ft-apache-syntax*
 
-Apache 语法文件提供的语法高亮取决于 Apache HTTP 服务器的版本，缺省为 1.3.x。设
-置 "apache_version" 为 Apache 的相应版本 (字符串形式) 可以得到其它版本的高亮方
-式。例如: >
+Apache 语法文件为 Apache HTTP 服务器 2.2.3 版本提供语法高亮。
 
-	:let apache_version = "2.0"
-<
 
 		*asm.vim* *asmh8300.vim* *nasm.vim* *masm.vim* *asm68k*
 ASSEMBLY	*ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*
@@ -1708,7 +1706,7 @@ lite 语法高亮有两个选项。
 
 LPC						*lpc.vim* *ft-lpc-syntax*
 
-LPC 代表一种简单又节省内存的语言: Lars Pensj| C。LPC 的文件名通常是 *.c。把这
+LPC 代表一种简单又节省内存的语言: Lars Pensjö C。LPC 的文件名通常是 *.c。把这
 些文件识别为 LPC 会惹恼那些只用 C 程序的用户。如果你想使用 Vim 的 LPC 语法，在
 你的 .vimrc 文件里设置变量: >
 
@@ -1850,6 +1848,14 @@ msql 语法高亮有两个选项。
 希望的值。例如: >
 
 	:let msql_minlines = 200
+
+
+N1QL						*n1ql.vim* *ft-n1ql-syntax*
+
+N1QL 是类 SQL 的声明式语言，用于操作 Couchbase Server 数据库的JSON 文档。
+
+Vim 语法高亮 N1QL 语句、关键字、操作符、类型、注释和特殊值。Vim 忽略 SQL 或它
+的许多方言中特定的如 COLUMN 或 CHAR 等 N1QL 不存在的语法成分。
 
 
 NCF						*ncf.vim* *ft-ncf-syntax*
@@ -2414,11 +2420,9 @@ RUBY						*ruby.vim* *ft-ruby-syntax*
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
 
-缺省只高亮 R5RS 关键字并进行适当的缩进。
+缺省只高亮 R7RS 关键字并进行适当的缩进。
 
-如果定义  b:is_mzscheme 或 g:is_mzscheme 变量，可以使用 MzScheme 特定的内容。
-
-此外，scheme.vim 也支持 Chicken Scheme->C compiler 的关键字。如果需要，定义
+scheme.vim 也支持 Chicken Scheme->C compiler 的扩展。如果需要，定义
 b:is_chicken 或 g:is_chicken。
 
 
@@ -3977,7 +3981,8 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 				runtime colors/evening.vim
 				hi Statement ctermfg=Blue guifg=Blue
 
-<			色彩方案载入后，激活 |ColorScheme| 自动命令事件。关于
+<			色彩方案载入前，激活 |ColorSchemePre| 自动命令事件。
+			色彩方案载入后，激活 |ColorScheme| 自动命令事件。关于
 			如何编写色彩方案文件的信息: >
 				:edit $VIMRUNTIME/colors/README.txt
 
@@ -4033,21 +4038,24 @@ gui	GUI
 
 					*bold* *underline* *undercurl*
 					*inverse* *italic* *standout*
+					*nocombine* *strikethrough*
 term={attr-list}			*attr-list* *highlight-term* *E418*
 	attr-list 是逗号分隔的下述项目 (不能有空格) 的列表 (任何顺序都可以):
 		bold
 		underline
 		undercurl	不一定总是可用
+		strikethrough	不一定总是可用
 		reverse
 		inverse		等同于 reverse
 		italic
 		standout
++		nocombine	覆盖属性而不是混合属性
 		NONE		不使用属性 (用于复位)
 
 	注意 这里使用 "bold" 和使用粗体字体都可以，效果相同。
 	"undercurl" 是波浪状的下划线。如果不能用 "undercurl"，使用 "underline"
-	代替。一般，只有 GUI 才能使用 "undercurl"。颜色可用 |highlight-guisp|
-	设置。
+	代替。一般，只有 GUI 才能使用 "undercurl" 和 "strikethrough"。颜色可用
+	|highlight-guisp| 设置。
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4180,7 +4188,7 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	给出 GUI 使用的前景色 (guifg)、背景色 (guibg) 和特殊颜色 (guisp)。
-	"guisp" 用于 undercurl。可用一些特殊的名字:
+	"guisp" 用于 undercurl 和 strikethrough。可用一些特殊的名字:
 		NONE		没有颜色 (透明)
 		bg		使用 Normal 的背景色
 		background	使用 Normal 的背景色
@@ -4280,9 +4288,11 @@ PmenuSbar	弹出菜单: 滚动条。
 PmenuThumb	弹出菜单: 滚动条的拇指 (thumb)。
 							*hl-Question*
 Question	|hit-enter| 提示和 yes/no 问题
+							*hl-QuickFixLine*
+QuickFixLine	quickfix 窗口的当前 |quickfix| 项目。
 							*hl-Search*
-Search		最近搜索模式的高亮 (见 'hlsearch')。也用于 quickfix 当前行的
-		高亮和其它类似的要突出显示的项目。
+Search		最近搜索模式的高亮 (见 'hlsearch')。
+		也用于类似的要突出显示的项目。
 							*hl-SpecialKey*
 SpecialKey	":map" 列出的 Meta 和特殊键，也包括文本里不可显示字符的显示和
 		'listchars'。
@@ -4305,12 +4315,18 @@ StatusLine	当前窗口的状态行
 StatusLineNC	非当前窗口的状态行
 		注意: 如果等于 "StatusLine"，Vim 会使用 "^^^" 指示当前窗口的状
 		态行。
+							*hl-StatusLineTerm*
+StatusLineTerm	|terminal| 窗口为当前窗口时的状态行。
+							*hl-StatusLineTermNC*
+StatusLineTermNC   |terminal| 窗口不为当前窗口时的状态行。
 							*hl-TabLine*
 TabLine		标签页行，非活动标签页标签
 							*hl-TabLineFill*
 TabLineFill	标签页行，没有标签的地方
 							*hl-TabLineSel*
 TabLineSel	标签页行，活动标签页标签
+							*hl-Terminal*
+Terminal	|terminal| 窗口 (见 |terminal-size-color|)
 							*hl-Title*
 Title		":set all"、":autocmd" 等输出的标题
 							*hl-Visual*

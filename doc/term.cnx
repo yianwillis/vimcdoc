@@ -1,4 +1,4 @@
-*term.txt*      For Vim version 8.0.  最近更新: 2017年8月
+*term.txt*      For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -93,6 +93,15 @@ ALL_BUILTIN_TCAPS	++builtin_terms		全部
 	set t_BE=
 如果这样做，Vim 运行时发送 't_BD' 给终端以关闭括号内的粘贴。
 
+如果你的终端支持括号内的粘贴但没有自动设置相关选项，可以试试下面: >
+
+	if &term =~ "screen"
+	  let &t_BE = "\e[?2004h"
+	  let &t_BD = "\e[?2004l"
+	  exec "set t_PS=\e[200~"
+	  exec "set t_PE=\e[201~"
+	endif
+<
 							*cs7-problem*
 注意: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
 Solaris 2.5 上 "stty cs8 parenb"，使用 "stty cs7 parenb" 恢复就会有这个问题。
@@ -244,24 +253,27 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 	t_ts	开始设置窗口标题 (进入 termcap 状态行)		*t_ts* *'t_ts'*
 	t_ue	下划结束					*t_ue* *'t_ue'*
 	t_us	下划模式					*t_us* *'t_us'*
-	t_Ce	下曲 (undercurl) 结束				*t_Ce* *'t_Ce'*
-	t_Cs	下曲模式					*t_Cs* *'t_Cs'*
 	t_ut	使用当前背景色清除				*t_ut* *'t_ut'*
 	t_vb	可视铃声					*t_vb* *'t_vb'*
 	t_ve	光标可见					*t_ve* *'t_ve'*
 	t_vi	光标不可见					*t_vi* *'t_vi'*
-	t_vs	光标 "非常" 可见				*t_vs* *'t_vs'*
+	t_vs	光标 "非常" 可见 (闪烁)				*t_vs* *'t_vs'*
 	t_xs	如果非空，突出部分不能通过覆盖删除 (hpterm)	*t_xs* *'t_xs'*
 	t_xn	如果非空，在屏幕最后单元里写入字符不导致滚动	*t_xn* *'t_xn'*
 	t_ZH	斜体模式					*t_ZH* *'t_ZH'*
 	t_ZR	斜体结束					*t_ZR* *'t_ZR'*
 
 Vim 增加的 (它们没有标准代码):
+	t_Ce	下曲 (undercurl) 结束				*t_Ce* *'t_Ce'*
+	t_Cs	下曲模式					*t_Cs* *'t_Cs'*
+	t_Te	删除线结束					*t_Te* *'t_Te'*
+	t_Ts	删除线模式					*t_Ts* *'t_Ts'*
 	t_IS	开始设置图标文本				*t_IS* *'t_IS'*
 	t_IE	结束设置图标文本				*t_IE* *'t_IE'*
 	t_WP	设置窗口位置 (Y，X)，以像素计算			*t_WP* *'t_WP'*
 	t_GP	获取窗口位置 (Y，X)，以像素计算			*t_GP* *'t_GP'*
-	t_WS	设置窗口大小 (高度，宽度) 以字符数计算		*t_WS* *'t_WS'*
+	t_WS	设置窗口大小 (高度，宽度) 以单元格数计算	*t_WS* *'t_WS'*
+	t_VS	光标正常可见 (无闪烁)				*t_VS* *'t_VS'*
 	t_SI    开始插入模式 (条形光标)				*t_SI* *'t_SI'*
 	t_SR	开始替换模式 (下划线光标)			*t_SR* *'t_SR'*
 	t_EI    结束插入或替换模式 (块形光标)			*t_EI* *'t_EI'*
@@ -270,6 +282,7 @@ Vim 增加的 (它们没有标准代码):
 		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
 	t_u7	请求光标位置 (适用于 xterm)			*t_u7* *'t_u7'*
 		见 |'ambiwidth'|
+	t_RF	请求终端前景色					*t_RF* *'t_RF'*
 	t_RB	请求终端背景色 					*t_RB* *'t_RB'*
 	t_8f	设置终端前景色 (R, G, B)			*t_8f* *'t_8f'*
 		|xterm-true-color|
@@ -279,6 +292,28 @@ Vim 增加的 (它们没有标准代码):
 		|xterm-bracketed-paste|
 	t_BD	关闭括号内粘贴模式				*t_BD* *'t_BD'*
 		|xterm-bracketed-paste|
+	t_SC	开始设置光标颜色				*t_SC* *'t_SC'*
+	t_EC	结束设置光标颜色				*t_EC* *'t_EC'*
+	t_SH	设置光标形状					*t_SH* *'t_SH'*
+	t_RC	请求终端光标闪烁				*t_RC* *'t_RC'*
+	t_RS	请求终端光标风格				*t_RS* *'t_RS'*
+
+有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
+本。
+	设置标题文本:     t_ts {title text} t_fs
+	设置图标文本:     t_IS {icon text} t_IE
+	设置光标颜色:     t_SC  {color name}  t_EC
+
+t_SH 必须提供一个参数:
+	0、1 或无  	闪烁块状光标
+	2	      	块状光标
+	3		闪烁下划光标
+	4		下划光标
+	5		产供垂直条光标
+	6		垂直条光标
+
+仅当接收到 t_RV 的反馈时才会发送 t_RS。Mac OS 上如果 termresponse 不能识别到
+Terminal.app 也不会用它。
 
 键 代 码						*terminal-key-codes*
 备注: 尽量使用 <> 形式

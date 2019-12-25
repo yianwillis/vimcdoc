@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 8.0.  最近更新: 2017年7月
+*change.txt*    For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -462,6 +462,7 @@ CTRL-A 命令在宏命令里很有用。例如: 使用以下的步骤构造一�
 
 如果 'smartindent' 选项打开，或者 'cindent' 打开并且 'cinkeys' 包含带零值的
 '#'，右移不影响 '#' 开始的行 (这些应该是 C 预处理行，它们应该保持在第一列)。
+用 'cino' 选项可改变此行为，参见 |cino-#|。
 
 如果 'expandtab' 选项关闭 (这是缺省值)， Vim 尽可能使用 <Tab> 来构成缩进。你可
 以用 ">><<" 来把缩进尽可能从空格替换成同样缩进距离的 <Tab> (如有需要，还有少量
@@ -860,6 +861,9 @@ magic	nomagic	  动作    ~
 			惯)。
 			`:retab!` 也把空格序列换成 <Tab>，这可能会使 printf()
 			引起混淆。
+			如果打开 |+vartabs| 特性，可用以逗号分隔的制表宽度的列
+			表来代替单个制表位。列表的每个值代表一个制表位的宽度。
+			末值除外，该值适用于其后所有的制表位。
 			{Vi 无此功能}
 
 							*retab-example*
@@ -1229,6 +1233,48 @@ gww			对当前行排版，其它和 "gw" 类同。{Vi 无此功能}
 
 你可以设置 'formatexpr' 选项为某表达式或设置 'formatprg' 选项为外部程序名，Vim
 会用之进行文本排版。'textwidth' 等选项对外部程序的排版不起作用。
+
+                                                        *format-formatexpr*
+'formatexpr' 选项可设为对缓冲区重新排版的 Vim 脚本函数。此功能常用于
+|ftplugin|，因为排版方式高度依赖于文件类型。这里，建议使用 |autoload| 脚本，这
+样只有在有需要时才会载入对应的脚本，而该脚本应命名为 <filetype>format.vim。
+
+例如，随 Vim 发布的在 $VIMRUNTIME 目录里的 XML 文件类型插件把 'formatexpr' 选
+项设为: >
+
+   setlocal formatexpr=xmlformat#Format()
+
+这意味着，在以下目录你会找到相应的脚本，其中定义了 xmlformat#Format() 函数:
+`$VIMRUNTIME/autoload/xmlformat.vim`
+
+下例脚本删除选定文本的拖尾空白。把它放在你的 autoload 目录，如
+~/.vim/autoload/format.vim 里: >
+
+  func! format#Format()
+    " 只在显式的 gq 命令时重新排版
+    if mode() != 'n'
+      " 缺省使用 Vim 内部的重新排版方式
+      return 1
+    endif
+    let lines = getline(v:lnum, v:lnum + v:count - 1)
+    call map(lines, {key, val -> substitute(val, '\s\+$', '', 'g')})
+    call setline('.', lines)
+
+    " 不使用内部的排版方式！
+    return 0
+  endfunc
+
+然后，如此打开此种排版方式: >
+  setlocal formatexpr=format#Format()
+>
+注意: 此函数在插入模式下 (一般这意味着文本的插入超出了 'textwidth' 限制) 显式
+返回非零。这样，Vim 会使用缺省的内部排版方法。
+
+反之，该 |gq| 命令会用于重新排版文本，此时，函数获取所选的行，删除这些行拖尾的
+空白，并在原地放置。如果你需要把单行分割为多行，小心不要覆盖额外的部分。
+
+如果在插入或替换模式下希望重排文本，分外小心，因为此时函数可能会被递归调用。调
+试可用 'debug' 选项。
 
 							*right-justify*
 Vim 没有靠右控制对齐 (right justify) 文本的命令。你可以用 "par" 这样的外部命令

@@ -1,4 +1,4 @@
-*channel.txt* 	For Vim version 8.0.  最近更新: 2017年7月
+*channel.txt* 	For Vim version 8.1.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -24,6 +24,7 @@ Netbeans 接口也使用通道。|netbeans|
 9. 不带通道启动作业			|job-start-nochannel|
 10. 作业选项				|job-options|
 11. 控制作业				|job-control|
+12. 使用提示缓冲区			|prompt-buffer|
 
 {Vi 没有这些功能}
 {仅当编译时带有 |+channel| 特性时才有通道功能}
@@ -536,7 +537,7 @@ ch_setoptions(channel, {options}) 对作业相关的通道给出。
 "close_cb": handler	通道关闭时的回调。与 |ch_open()| 的 "close_cb" 相同，
 			见 |close_cb|。
 						*job-drop*
-"drop"			指定何时丢弃消息。与 |ch_open()| 的 "drop" 相同，见
+"drop": when		指定何时丢弃消息。与 |ch_open()| 的 "drop" 相同，见
 			|channel-drop|。如用 "auto"，不考虑 exit_cb。
 						*job-exit_cb*
 "exit_cb": handler	作业结束时的回调。参数是作业和退出状态。
@@ -545,11 +546,11 @@ ch_setoptions(channel, {options}) 对作业相关的通道给出。
 			函数。
 			备注 数据可能会缓冲，进程结束后还可能调用回调。
 							*job-timeout*
-"timeout"		等待阻塞请求，如 ch_evalexpr() 等的时间，以毫秒计。缺
+"timeout": time		等待阻塞请求，如 ch_evalexpr() 等的时间，以毫秒计。缺
 			省是 2000 (2 秒)。
 						*out_timeout* *err_timeout*
-"out_timeout"		stdout 所用的超时。仅适用于管道情形。
-"err_timeout"		stderr 所用的超时。仅适用于管道情形。
+"out_timeout": time	stdout 所用的超时。仅适用于管道情形。
+"err_timeout": time	stderr 所用的超时。仅适用于管道情形。
 			注意: 设置 "timeout" 时，覆盖部分特定的模式。因而，先
 			设置 "timeout"，再设置部分特定的模式。
 
@@ -560,13 +561,18 @@ ch_setoptions(channel, {options}) 对作业相关的通道给出。
 			缺省是 "term"。
 
 						*job-term*
-"term": "open"		启动终端并重定向作业的 stdin/stdout/stderr 到终端。
+"term": "open"		在新窗口中启动终端并重定向作业的 stdin/stdout/stderr
+			到终端。和 `:terminal` 类似。
 			注意: 尚未实现！
 
 "channel": {channel}	使用己有的通道，而不重新创建。
 			新作业所用的通道部分会从之前的使用者处断开。如果通道还
 			在被其它的作业使用，这可能会导致 I/O 错误。
 			已有的回调和其它设置不变。
+
+"pty": 1		如有可能，使用 pty (伪终端) 而非管道。最常和终端窗口组
+			合使用，见 |terminal|。
+			{仅在 Unix 和类似系统中才有效}
 
 				*job-in_io* *in_top* *in_bot* *in_name* *in_buf*
 "in_io": "null"		不连接 stdin (从 /dev/null 读取)
@@ -602,6 +608,9 @@ ch_setoptions(channel, {options}) 对作业相关的通道给出。
 			error..."
 
 "block_write": number	只用于测试: 模拟每隔一个的 stdin 写入是阻塞写入
+
+"env": dict		新进程使用的环境变量
+"cwd": "/path/to/dir"	新进程的当前工作目录；如该目录不存在则报错
 
 
 写入缓冲区 ~
@@ -662,6 +671,40 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 	job_stop(job, "kill")
 
 更多选项，可见 |job_stop()|。
+
+==============================================================================
+12. 使用提示缓冲区					*prompt-buffer*
+
+如果你希望在 Vim 窗口中为作业提供输入，有几种选项:
+- 使用普通缓冲区，自行处理所有可能的命令。这很复杂，因为可能的命令有很多。
+- 使用终端窗口。此方式直接在窗口中键入作业输入并显示作业的输出。
+  见 |terminal-window|。
+- 使用提示窗口。此方式下在 Vim 中输入一行作业命令，而在窗口中显示作业的 (可能
+  经过过滤的) 输出。
+
+通过设置 'buftype' 为 "prompt" 创立提示缓冲区。通常只在缓冲区新建时使用。
+
+用户可以在缓冲区的末行上编辑和输入一行文本行。在该提示行上输入 Enter 后，激活
+|prompt_setcallback()| 设置的回调。通常，它会把该行发送给作业。另一个回调会从
+作业接收输出，并在缓冲区中显示结果。显示位置在提示文本之下 (但在下一个提示文本
+的上方)。
+
+只有末行提示文本之后的文本可进行编辑。普通模式命令不可修改缓冲区其余部分。但通
+过调用如 |append()| 等的函数，还是可以的。使用其它命令可能搞乱缓冲区。
+
+设置 'buftype' 为 "prompt" 时，Vim 并不自动启动插入模式。如想开始插入模式，用
+`:startinsert`，这样用户可以行的输入。
+
+通过 |prompt_setprompt()| 函数可设置提示文本。
+
+用户可用普通模式浏览缓冲区，以便查看旧作业的输出或进行文本复制。
+
+CTRL-W 键可用于开始窗口命令，例如，CTRL-W w 可切换到下一个窗口。这也适用于插入
+模式 (用 Shift-CTRL-W 删除单词)。离开提示窗口时会停止插入模式。而回到提示窗口
+时会复原窗口模式。
+
+任何启动插入模式的命令，如 "a"、"i"、"A" 和 "I" 等，会自动移动光标到末行。"A"
+会移到行尾，而 "I" 会移到行首。
 
 
  vim:tw=78:ts=8:ft=help:norl:
