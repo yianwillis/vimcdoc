@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 8.1.  最近更新: 2019年12月
+*cmdline.txt*   For Vim version 8.2.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -27,7 +27,6 @@
 
 通常，字符会在光标位置前插入。你可以用键盘上的左右键来移动光标的位置。还可以通
 过 <Insert> 键，在 "插入" 和 "替换" 两种模式之间切换。
-{Vi: 只能改变每一行的最后一个字符}
 
 注意，如果你的键盘上没有可以移动光标的键或其它特殊键，你可以用 ":cnoremap" 定
 义另外一个键来代替它们。例如，定义一组 tcsh 风格的键: 	*tcsh-style*  >
@@ -61,7 +60,6 @@
 - 所有的搜索操作都会放到与搜索相关的历史记录中，包括通过 "*" 和 "#" 进行的搜
   索。但是对于映射，只有最近一次的搜索会被记录下来 (这样是为了避免很长的映射把
   历史记录搞乱) 。
-{Vi: 没有历史记录}
 {仅当编译的时候加入 |+cmdline_hist| 特性才可用}
 
 命令行的自动匹配功能；见 |cmdline-completion|。
@@ -70,11 +68,17 @@
 CTRL-V		下一个字符如果是非数字字符，按本义插入。不然，不超过三个的数字
 		字符用于输入单个字节的十进制编码。非数字和三个数字字符不会被映
 		射。这与插入模式下的工作方式相同 (见 |i_CTRL-V|)。
-		注意: 由于在 Windows 系统上，CTRL-V 被映射为 "粘贴文本"，这时
-		我们要用 CTRL-Q 代替 CTRL-V。
+		注意: 由于在 MS-Windows 系统上，CTRL-V 被映射为 "粘贴文本"，这
+		时我们要用 CTRL-Q 代替 CTRL-V。
+		如果打开 |modifyOtherKeys|，特殊转义序列被转换回没有
+		|modifyOtherKeys| 时的样子，除非同时按住 Shift 键。
 							*c_CTRL-Q*
 CTRL-Q		与 CTRL-V 相同。但是有些终端把它定义为控制字符，那样就无法使用
 		了。
+
+CTRL-SHIFT-V				*c_CTRL-SHIFT-V* *c_CTRL-SHIFT-Q*
+CTRL-SHIFT-Q	与 CTRL-V 类似，除非激活了 |modifyOtherKeys|，此时插入带修饰符
+		的键的转义序列。
 
 							*c_<Left>* *c_Left*
 <Left>		光标左移
@@ -113,14 +117,14 @@ CTRL-U		删除光标所在位置与行首之间的所有字符。先前一些版
 			:cnoremap <C-U> <C-E><C-U>
 <
 						*c_<Insert>* *c_Insert*
-<Insert>	在插入和替换之间切换。{Vi 没有该功能}
+<Insert>	在插入和替换之间切换。
 
 {char1} <BS> {char2}	或				*c_digraph*
 CTRL-K {char1} {char2}					*c_CTRL-K*
 		输入二合字母 (见 |digraphs|)。如果 {char1} 是一个特殊键，插入
-		该键 <> 形式的编码。{Vi 没有该功能}
+		该键 <> 形式的编码。
 
-CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
+CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		插入寄存器里的内容。当按下 CTRL-R 时，屏幕会显示一个 '"' 字
 		符，提示你输入一个寄存器的名字。
 		插入的文字就像是你自己输入的，但是映射和缩写不会生效。同样也不
@@ -147,7 +151,7 @@ CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
 				如果结果为 |List| 列表，其中的每一项当作一行。
 				当然其中内容也可包含换行符。
 				如果结果为浮点数，自动转换为字符串。
-		与寄存器相关的内容请参见 |registers|。{Vi 无此功能}
+		与寄存器相关的内容请参见 |registers|。
 		实现细节: 如果使用 |expression| 寄存器并且调用 setcmdpos()，那
 		么在插入返回的文本之前设置光标位置。使用 CTRL-R CTRL-R 在插入
 		返回的文本之后设置光标位置。
@@ -168,13 +172,12 @@ CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 		如果置位 'incsearch'，使用当前显示匹配文本的末尾作为光标位置。
 		使用 CTRL-W 时，已经录入的单词部分不再重复插入。
 
-		{Vi 无此功能}
 		CTRL-F 和 CTRL-P: {仅当包含 |+file_in_path| 特性才可用}
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-R {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		插入寄存器或光标下的对象。类似于 |c_CTRL-R|，但是该命令按本义
 		插入文本。例如，如果寄存器 a 的内容为 "xy^Hz" (^H 是退格键)，
 		那么 "CTRL-R a" 会插入 "xz"，而 "CTRL-R CTRL-R a" 会插入
@@ -277,7 +280,7 @@ CTRL-^		语言映射 |:lmap| 和/或 输入法的开关。
 		同的概念，后者只适用于普通模式。)
 
 						*c_CTRL-]*
-CTRL-]		激活缩写，但不插入任何字符。{Vi 无此功能}
+CTRL-]		激活缩写，但不插入任何字符。
 
 对于 Emacs 风格的命令行编辑请参阅 |emacs-keys|。
 
@@ -289,7 +292,6 @@ CTRL-]		激活缩写，但不插入任何字符。{Vi 无此功能}
 
 							*:his* *:history*
 :his[tory]	列出最近执行的命令。
-		{Vi 无此功能}
 		{仅当编译时加入 |+cmdline_hist| 特性才可用}
 
 :his[tory] [{name}] [{first}][, [{last}]]
@@ -300,7 +302,6 @@ CTRL-]		激活缩写，但不插入任何字符。{Vi 无此功能}
 		i[nput]	 或 @		输入行的历史记录
 		d[ebug]	 或 >		调试命令的历史记录
 		a[ll]			所有上述记录
-		{Vi 无此功能}
 
 		如果给定了数字 {first} 和 {last}，那么就会列出指定范围内的历史
 		记录条目。这些数字可以是下面的格式:
@@ -339,9 +340,7 @@ CTRL-]		激活缩写，但不插入任何字符。{Vi 无此功能}
 - 映射: 仅在 ":map" 或与之类似的命令之后。
 - 变量和函数名: 仅在 ":if"，":call" 或类似的命令之后。
 
-如果在编译 Vim 时没有加入 |+cmdline_compl| 特性，则只有文件名、目录、和帮助条
-目可以补全。帮助条目的匹配数目有上限 (目前是 300 个)，以避免过多匹配造成的延迟
-问题。
+帮助条目的匹配数目有上限 (目前是 300 个)，以避免过多匹配造成的延迟问题。
 
 以下是可以使用的命令:
 
@@ -458,8 +457,45 @@ Ex 命令有几个特别的地方:
 如果 '"' 出现在一行的开始，那么该行被忽略。如果 '"' 出现在命令之后，则使得该行
 的剩余部分被忽略。这可以被用于添加注释。例如: >
 	:set ai		"set 'autoindent' option
-不能给外壳命令 (":!cmd") 或 ":map" 和其它的一些的命令添加注释，因为它们把 '"'
-视为命令的一部分。解释具体命令时会提到这一点。
+不能给外壳命令 (":!cmd") 或 ":map" 和其它的一些的命令 (主要是期待表达式的命令)
+添加注释，因为它们把 '"' 视为命令的一部分。
+
+    :argdo
+    :autocmd
+    :bufdo
+    :cexpr (诸如此类)
+    :cdo (诸如此类)
+    :command
+    :cscope (诸如此类)
+    :debug
+    :display
+    :echo (诸如此类)
+    :elseif
+    :execute
+    :folddoopen
+    :folddoclosed
+    :for
+    :grep (诸如此类)
+    :help (诸如此类)
+    :if
+    :let
+    :make
+    :map (诸如此类，包括 :abbrev 等命令)
+    :menu (诸如此类)
+    :mkspell
+    :normal
+    :ownsyntax
+    :popup
+    :promptfind (诸如此类)
+    :registers
+    :return
+    :sort
+    :syntax
+    :tabdo
+    :tearoff
+    :vimgrep (诸如此类)
+    :while
+    :windo
 
 							*:bar* *:\bar*
 '|' 可以用来分割命令，所以你可以在一行里输入多个命令。如果你想在参数里使用
@@ -584,7 +620,7 @@ Ex 命令有几个特别的地方:
 
 若行限定符的个数多于命令需要的数量，则第一个 (或前几个) 限定符被忽略。
 
-行号可以用下列符号限定:				*:range* *E14* *{address}*
+行号可以用下列符号限定:				*:range* *{address}*
 	{number}	行号
 	.		当前行					  *:.*
 	$		文件的最后一行				  *:$*
@@ -714,11 +750,12 @@ Ex 命令有几个特别的地方:
 	   \\#			\#
 另见 |`=|。
 
-			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
-			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
-			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
-			       *:<cexpr>* *<cexpr>*
-			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
+			       *:<cword>* *<cword>* *:<cWORD>* *<cWORD>*
+			       *:<cexpr>* *<cexpr>* *:<cfile>* *<cfile>*
+			       *:<afile>* *<afile>* *:<abuf>* *<abuf>*
+			       *:<amatch>* *<amatch>*
+			       *:<sfile>* *<sfile>* *:<slnum>* *<slnum>*
+			       *:<sflnum>* *<sflnum>* *E499* *E500*
 注意: 下面这些不是特殊键，需要逐个字符输入！
 	<cword>    被当前光标下的单词代替 (类似于 |star|)
 	<cWORD>    被当前光标下的字串代替 (见 |WORD|)
@@ -728,13 +765,13 @@ Ex 命令有几个特别的地方:
 		   "list[idx]"。用于 |v:beval_text|。
 	<cfile>    被当前光标下的路径名代替 (类似于 |gf| 用的方法)
 	<afile>    在执行自动命令时，被所操作的缓冲区或用来读或写的文件的文件
-		   名取代。
+		   名取代。 *E495*
 	<abuf>     在执行自动命令时，被当前有效的缓冲区序号取代 (对于
 		   ":r file" 和 ":so file" 来说是当前的缓冲区，因为被读取/执行
-		   的文件不在缓冲区里)。
-	<amatch>   在执行自动命令时，被激发自动命令的实际匹配代替。只有在文件
-		   名不用于匹配 (对于 FileType、Syntax 和 SpellFileMissing 事
-		   件) 时，才与 <afile> 不同。
+		   的文件不在缓冲区里)。 *E496*
+	<amatch>   在执行自动命令时，被激发自动命令的实际匹配代替。 *E497*
+		   只有在文件名不用于匹配 (对于 FileType、Syntax 和
+		   SpellFileMissing 事件) 时，才与 <afile> 不同。
 	<sfile>    执行 ":source" 命令时，替换为正在被 "source" 执行的文件名。
 		   *E498*
 		   执行函数时，替换为:
@@ -744,14 +781,16 @@ Ex 命令有几个特别的地方:
 		   注意，如果 <sfile> 用在函数里，那么文件名修饰符
 		   (filename-modifiers) 就没用了。
 	<slnum>	   执行 ":source" 命令时，替换为行号。 *E842*
-		   执行函数时，替换为相对函数开始处的行号。
+		   执行函数时，这是相对函数开始处的行号。
+	<sflnum>   执行脚本时，替换为行号。
+		   和 <slnum> 不同在于不管什么情况，<sflnum> 都会被替换为脚本
+		   的行号。 *E961*
 
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
 可以在 "%"，"#"，"#n"，"<cfile>"，"<sfile>"，"<afile>" 或 "<abuf>" 之后使用文
 件名修饰符。这些修饰符也可以和 |fnamemodify()| 函数一起用。
-如果 Vim 编译的时候没有加入 |+modify_fname| 特性，则不可用。
 
 此类修饰符必须按如下顺序给出:
 	:p	给出文件名的全路径。必须是第一个修饰符。也会将 "~/" (Unix 和
@@ -772,9 +811,9 @@ Ex 命令有几个特别的地方:
 		可以被重复使用来删除后面的多个部分。
 		如果文件名以一个路径分隔符结尾，仅删除该分隔符。这样一个目录
 		名的 ":p:h" 结果是目录名本身 (没有后面的斜杠)。
-		如果文件名是一个绝对路径 (Unix 上以 "/" 开始；MS-DOS，WIN32，
-		OS/2 以 "x:\" 开始；Amiga 以 "drive:" 开始)，这些部分不会被删
-		除。如果没有文件头 (路径是相对于当前目录的)，则结果为空。
+		如果文件名是一个绝对路径 (Unix 上以 "/" 开始；WIN32 以 "x:\"
+		开始；Amiga 以 "drive:" 开始)，这些部分不会被删除。如果没有文
+		件头 (路径是相对于当前目录的)，则结果为空。
 	:t	文件名的尾部 (文件名的最后一部分)。必须在 :r 或 :e 之前。
 	:r	文件名的根部 (除去最后的扩展名)。如果只有扩展名 (文件名以 '.'
 		开始，例如，".vimrc")，则不会被删除。可以重复使用，以删除多个
@@ -862,10 +901,9 @@ Ex 命令有几个特别的地方:
 "sh"，会执行两次转义，以避免外壳扩展 "!"。
 
 							*filename-backslash*
-对于文件系统使用反斜杠作为目录分隔符的操作系统 (MS-DOS，Windows，OS/2) 来说，
-确认反斜杠是否为转义字符就有点儿困难了。一般来说: 如果反斜杠后面跟一个普通的
-字符，那么就没有特殊意义。因此 "\file\foo" 是合法文件名，没有必要输入两次反斜
-杠。
+对于文件系统使用反斜杠作为目录分隔符的操作系统 (MS-Windows) 来说，确认反斜杠是
+否为转义字符就有点儿困难了。一般来说: 如果反斜杠后面跟一个普通的字符，那么就没
+有特殊意义。因此 "\file\foo" 是合法文件名，没有必要输入两次反斜杠。
 
 一个例外是 '$' 符号。在文件名里它是一个合法的字符。但是为了避免像 "$home" 这
 样的文件名被当作环境变量解释，则需要在前面加一个反斜杠。因此你需要用 "/\$home"
@@ -884,7 +922,7 @@ Ex 命令有几个特别的地方:
 							*command-line-window*
 在命令行窗口里，可以像编辑文本一样来编辑命令。这是一类特殊的窗口，你不能把它当
 作普通窗口使用。
-{仅当编译时加入 |+cmdline_hist| 和 |+vertsplit| 特性才可用}
+{仅当编译时加入 |+cmdline_hist| 特性才可用}
 
 
 开 启						*c_CTRL-F* *q:* *q/* *q?*
@@ -945,7 +983,6 @@ CTRL-C		继续回到命令行模式。光标下的命令被用做命令行的命
 命令行窗口不能用在:
 - 已经存在一个命令行窗口的时候 (不能嵌套)
 - 输入密钥或使用 inputsecret() 函数的时候
-- Vim 编译时没有加入 |+vertsplit| 特性的时候
 
 打开命令行窗口的时候，会自动设置下面的选项:
 'filetype'	当编辑 Ex 命令时，会设置为 "vim"；如果打开高亮的话，这样就会启
@@ -978,9 +1015,8 @@ CTRL-C		继续回到命令行模式。光标下的命令被用做命令行的命
 
 自 动 命 令
 
-使用两种自动命令事件: |CmdwinEnter| 和 |CmdwinLeave|。因为此窗口的类型特殊，
-WinEnter，WinLeave，BufEnter 和 BufLeave 事件不会被触发。你可以使用这些 Cmdwin
-事件对命令行窗口进行特殊的设置。小心不要引起副作用！
+使用两种自动命令事件: |CmdwinEnter| 和 |CmdwinLeave|。你可以使用这些 Cmdwin 事
+件对命令行窗口进行特殊的设置。小心不要引起副作用！
 例如: >
 	:au CmdwinEnter :  let b:cpt_save = &cpt | set cpt=.
 	:au CmdwinLeave :  let &cpt = b:cpt_save
@@ -999,4 +1035,4 @@ WinEnter，WinLeave，BufEnter 和 BufLeave 事件不会被触发。你可以使
 	@	|input()| 字符串
 	-	|:insert| 或 |:append| 的文本
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

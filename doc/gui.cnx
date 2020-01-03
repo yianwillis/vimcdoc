@@ -1,4 +1,4 @@
-*gui.txt*       For Vim version 8.1.  最近更新: 2019年12月
+*gui.txt*       For Vim version 8.2.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -13,14 +13,14 @@ Vim 的图形用户界面					*gui* *GUI*
 3. 鼠标控制			|gui-mouse|
 4. 使用 GUI 进行选择		|gui-selections|
 5. 菜单				|menus|
-6. 附加				|gui-extras|
-7. 外壳命令			|gui-shell|
+6. 字体				|gui-font|
+7. 附加				|gui-extras|
+8. 外壳命令			|gui-shell|
 
 其它的 GUI 文档:
 |gui_x11.txt|	关于 X11 GUI 的特定内容。
 |gui_w32.txt|	关于 Win32 GUI 的特定内容。
 
-{Vi 没有这里的任何命令}
 
 ==============================================================================
 1. 启动 GUI					*gui-start* *E229* *E233*
@@ -80,9 +80,7 @@ GUI 窗口只在全部的初始化执行完毕后才会打开。如果你希望�
 
 建议你把自己的 GUI 初始化部分放在:
 	Unix		    $HOME/.gvimrc 或 $HOME/.vim/gvimrc
-	OS/2		    $HOME/.gvimrc、$HOME/vimfiles/gvimrc 或
-			    $VIM/.gvimrc
-	MS-DOS 和 Win32     $HOME/_gvimrc、$HOME/vimfiles/gvimrc 或
+	Win32    	    $HOME/_gvimrc、$HOME/vimfiles/gvimrc 或
 			    $VIM/_gvimrc
 	Amiga		    s:.gvimrc、home:.gvimrc、home:vimfiles:gvimrc 或
 			    $VIM/.gvimrc
@@ -262,7 +260,7 @@ CTRL-C 键。不过如果你不在意，使用这个命令: >
 顶上的窗口。
 
 如果你在 ':' 行上 (或者 '/' 或 '?')，那么点击鼠标左键或右键只会把光标定位在
-':' 行上 (如果 'mouse' 包含 'c'、'a' 或 'A' 的话)。
+':' 行上 (如果 'mouse' 包含 'c' 或 'a' 的话)。
 
 任何情况下，点击鼠标中键可以用来粘贴当前的选择内容。
 
@@ -467,19 +465,21 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 
 5.2 创建新的菜单					*creating-menus*
 
-				*:me*  *:menu*  *:noreme*  *:noremenu*
-				*:am*  *:amenu* *:an*      *:anoremenu*
-				*:nme* *:nmenu* *:nnoreme* *:nnoremenu*
-				*:ome* *:omenu* *:onoreme* *:onoremenu*
-				*:vme* *:vmenu* *:vnoreme* *:vnoremenu*
-				*:xme* *:xmenu* *:xnoreme* *:xnoremenu*
-				*:sme* *:smenu* *:snoreme* *:snoremenu*
-				*:ime* *:imenu* *:inoreme* *:inoremenu*
-				*:cme* *:cmenu* *:cnoreme* *:cnoremenu*
+				*:me*  *:menu*   *:noreme*  *:noremenu*
+				*:am*  *:amenu*  *:an*      *:anoremenu*
+				*:nme* *:nmenu*  *:nnoreme* *:nnoremenu*
+				*:ome* *:omenu*  *:onoreme* *:onoremenu*
+				*:vme* *:vmenu*  *:vnoreme* *:vnoremenu*
+				*:xme* *:xmenu*  *:xnoreme* *:xnoremenu*
+				*:sme* *:smenu*  *:snoreme* *:snoremenu*
+				*:ime* *:imenu*  *:inoreme* *:inoremenu*
+				*:cme* *:cmenu*  *:cnoreme* *:cnoremenu*
+				*:tlm* *:tlmenu* *:tln*     *:tlnoremenu*
 				*E330* *E327* *E331* *E336* *E333*
 				*E328* *E329* *E337* *E792*
-要创建新的菜单项，使用 ":menu" 命令群。它们和 ":map" 命令群非常类似，但是第一
-个参数是菜单项名。形式为 '.' 分隔的菜单或子菜单的路径，例如: >
+要创建新的菜单项，使用 ":menu" 命令群。它们和 ":map" 命令群非常类似 (见
+|map-modes|)，但是第一个参数是菜单项名。形式为 '.' 分隔的菜单或子菜单的路径，
+例如: >
 
    :menu File.Save  :w<CR>
    :inoremenu File.Save  <C-O>:w<CR>
@@ -488,6 +488,11 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 最后一项会在菜单栏里创建一个新的项目 "Edit"，在它上面按下鼠标键，会弹出菜单，
 里面包含 "Big Changes" 一项，这又是包含 "Delete All Spaces" 项的一个子菜单。如
 果选择了该项，执行操作。
+
+要创建终端模式的菜单，用 |:tlmenu| 而不是 |:tmenu|，这和键盘映射不一致
+(|:tmap|)。这是因为 |:tmenu| 已经用于定义菜单的工具提示了。见
+|terminal-typing|。
+
 
 菜单名里可用的特殊字符:
 
@@ -504,8 +509,8 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 通过快捷键 "F" (按着 <Alt> 键)，然后 "O"，就可以使用这个菜单。第二部分显示为
 "Open     :e"。这里 ":e" 右对齐，而 "O" 有下划线，指示这是那个快捷键。
 
-":amenu" 命令可以用来一次定义所有模式下的菜单项。要使得该命令正确工作，在有些
-模式下需要自动插入一个字符:
+":amenu" 命令可以用来一次定义除终端模式以外所有模式下的菜单项。要使得该命令正
+确工作，在有些模式下需要自动插入一个字符:
 	模式		前面插入	后面附加	~
 	普通		不需要		不需要
 	可视		<C-C>		<C-\><C-G>
@@ -747,6 +752,16 @@ Vim 会继续留在可视模式。最好用 `:nnoremenu` 来避免副作用。
 >
 	:emenu File.Exit
 
+:[range]em[enu] {mode} {menu}	同上，但执行 {mode} 下的菜单:
+				    'n': |:nmenu|  普通模式
+				    'v': |:vmenu|  可视模式
+				    's': |:smenu|  选择模式
+				    'o': |:omenu|  操作符等待模式
+				    't': |:tlmenu| 终端模式
+				    'i': |:imenu|  插入模式
+				    'c': |:cmenu|  命令行模式
+
+
 如果控制台模式的 vim 编译时加入 WANT_MENU，你可以用 :emenu 来访问你已经习惯的
 GUI 模式下有用的菜单项目。关于一个能用于此目的的选项，见 'wildmenu'。例子又可
 以见 |console-menus|。
@@ -766,6 +781,7 @@ GUI 模式下有用的菜单项目。关于一个能用于此目的的选项，�
 						*:sunme* *:sunmenu*
 						*:iunme* *:iunmenu*
 						*:cunme* *:cunmenu*
+						*:tlu*   *:tlunmenu*
 要删除一个菜单项或者整个子菜单，使用 umenu 命令，类似于 unmap 命令。例如: >
     :unmenu! Edit.Paste
 
@@ -776,7 +792,8 @@ GUI 模式下有用的菜单项目。关于一个能用于此目的的选项，�
 要删除所有的菜单，可用:				*:unmenu-all*  >
 	:unmenu *	" 删除普通和可视模式下的所有菜单
 	:unmenu! *	" 删除插入和命令行模式下的所有菜单
-	:aunmenu *	" 删除所有模式下的所有菜单
+	:aunmenu *	" 删除终端模式除外的所有模式下的所有菜单
+	:tlunmenu *	" 删除终端模式下的所有菜单
 
 如果你想去掉菜单栏: >
 	:set guioptions-=m
@@ -826,6 +843,8 @@ GUI 模式下有用的菜单项目。关于一个能用于此目的的选项，�
 :tu[nmenu] {menupath}		删除菜单或者工具的提示。
 				{仅存在于 X11 和 Win32 GUI}
 
+备注: 要创建终端模式的菜单，使用 |:tlmenu| 代替。
+
 如果为某菜单项定义了提示，当鼠标移过该项目时，命令行区域会出现该提示，就像标准
 Windows 菜单提示出现在状态栏那样。(除非 Vim 在命令行模式的时候，这时当然什么都
 不会显示。)
@@ -860,8 +879,7 @@ gui 平台上也会出现。
 							*:popup* *:popu*
 :popu[p] {name}			弹出菜单 {name}。菜单名必须有至少一项子项，但
 				不一定需要出现在菜单栏上 (见 |hidden-menus|)。
-				{仅在 Win32 和 GTK GUI 上或编译时带
-				+insert_expand 特性时的终端里有效}
+				{仅在 Win32 和 GTK GUI 或终端上有效}
 
 :popu[p]! {name}		和上面类似，但使用鼠标指针所在的位置，而不是光
 				标位置。
@@ -883,7 +901,120 @@ gui 平台上也会出现。
 注意 ']' 开始的菜单不会显示。
 
 ==============================================================================
-6. 附加							*gui-extras*
+6. 字体
+
+本小节描述字体相关的选项。
+
+GUIFONT							*gui-font*
+
+'guifont' 是告诉 Vim 要使用什么字体的选项。它最简单的形式就是单个字体名。也可
+以是逗号分隔的字体名列表。使用第一个合法的字体。如果没有合法的字体则报错。
+
+支持 'guifontset' 的系统上 (X11)，如果 'guifontset' 不为空，不使用
+'guifont'。见 |xfontset|。
+
+注意: 对 GTK GUI 而言，非法的名字不会报错，总是选择并使用列表的首个单元。这是
+因为 GTK GUI 并不去识别给出名字的字体，而是把它作为一个模式去在可选的字体中寻
+找最佳的匹配字体，从这个意义上，匹配永远不会失败。非法的名字不要紧，因为除了
+名字以外，还有一些其它的字体属性会帮助匹配的完成。
+
+忽略逗号之后的空格。要在字体名里包含逗号，在它之前加上反斜杠。选项的设置需要
+在空格和反斜杠之前加上额外的反斜杠。另见 |option-backslash|。比如: >
+    :set guifont=Screen15,\ 7x13,font\\,with\\,commas
+会使 Vim 先寻找字体 "Screen15"，如果失败，再找 "7x13"，最后 "font,with,commas"
+。
+
+如果没有载入任何字体，Vim 保持原先的设置。如果给出空的字体列表，Vim 会试图使
+用别的资源设置 (对 X 而言，会寻找 Vim.font 资源)，最后，选择总是可用的内建缺
+省值 (X 使用的是 "7x13")。给出的字体必须是 "正常" 字体。 Vim 会试图找到相关的
+粗体和斜体字体。
+
+对于 Win32、GTK、Motif、Mac OS 和 Photon: >
+    :set guifont=*
+给出字体请求对话框，从中可以选择你需要的字体。
+
+字体名取决于不同的 GUI。|setting-guifont| 提供一个为不同系统设置 'guifont' 的
+方法。
+
+GTK+ 2 和 3 GUI 的字体名看起来如此: >
+    :set guifont=Andale\ Mono\ 11
+就这样多。不使用 XLFD (X 逻辑字体描述)。有报告说对中文而言，可以这样设: >
+    if has("gui_gtk2")
+      set guifont=Bitstream\ Vera\ Sans\ Mono\ 12,Fixed\ 12
+      set guifontwide=Microsoft\ Yahei\ 12,WenQuanYi\ Zen\ Hei\ 12
+    endif
+<
+(GTK+ 3 GUI 上把 gui_gtk2 换成 gui_gtk3)
+
+Mac OSX 上，你可以这么用: >
+    :set guifont=Monaco:h10
+另见 'macatsui'。可以修正显示问题。
+							*E236*
+注意 字体必须等宽 (所有字符相同宽度)。GTK 是例外: 可以接受所有字体，不
+过等宽字体的视觉效果最好。
+
+要在 X11 上预览字体，可以使用 "xfontsel" 程序。"xlsfonts" 程序给出所有
+可用的字体的列表。
+
+对 Win32 GUI 而言					*E244* *E245*
+- 字体名里接受如下选项 (选项间用 ':' 分隔):
+	hXX - 高度为 XX (点 (point)，可以是浮点数)
+	wXX - 宽度为 XX (点 (point)，可以是浮点数)
+	WXX - 权重为 XX (见下面关于权重的备注)
+	b   - 粗体。等价于权重设为 700。
+	i   - 斜体
+	u   - 下划线
+	s   - 突出
+	cXX - 字符集 XX。合法的字符集是: ANSI、ARABIC、BALTIC、
+	      CHINESEBIG5、DEFAULT、EASTEUROPE、GB2312、GREEK、HANGEUL、
+	      HEBREW、JOHAB、MAC、OEM、RUSSIAN、SHIFTJIS、SYMBOL、THAI、
+	      TURKISH 和 VIETNAMESE。通常你会用 "cDEFAULT"。
+	qXX - 质量值 XX。合法的质量名为: PROOF、DRAFT、ANTIALIASED、
+	      NONANTIALIASED、CLEARTYPE 和 DEFAULT。通常你会用 "qDEFAULT"。
+	      若干质量值在旧式的操作系统上不支持。
+- '_' 可以代替空格，这样就无须用反斜杠转义空格。
+例如: >
+    :set guifont=courier_new:h12:w5:b:cRUSSIAN
+    :set guifont=Andale_Mono:h7.5:w4.5
+
+另见 |font-sizes|。
+
+关于权重的 备注: 字体通常提供不同的权重。Windows 上的 "正常" 权重值为 400，如
+果未指定，这是寻找字体所使用的值。和名字比较，Windows 对字体的匹配更看重权重，
+这意味着可能会用某个 Book 或 Medium 的字体变体而不是 Light 或 ExtraLight 的变
+体。如果你觉得替代的字体权重太重了，可以显式设置低一点的权重值来抵消不合适替代
+的影响。
+
+
+GUIFONTWIDE						*gui-fontwide*
+
+如果非空，'guifontwide' 指定逗号分隔的用于双宽字符的字体列表。使用第一个能载入
+的字体。
+
+注意: 这些字体必须使用 'guifont' 指定的两倍宽度和相同的高度。如果不符合要求，
+文本的绘制会不正确。
+
+除了 GTK+ 之外的所有 GUI 版本:
+
+'guifontwide' 只有在 'encoding' 设为 "utf-8" 并且 'guifontset' 为空或非法时才
+使用。
+如果设置 'guifont' 并且从中找到合法的字体，但 'guifontwide' 为空的时候，Vim 会
+试图找到匹配的双宽的字体并设置 'guifontwide' 为此值。
+
+仅限于 GTK+ GUI:			*guifontwide_gtk*
+
+如果设置且合法，即使 'encoding' 没有设为 "utf-8"，总为双宽字符使用
+'guifontwide' 。
+Vim 不会试图自动寻找 'guifontwide' 的合适的值。如果 'guifontwide' 为空，
+Pango/Xft 会选择 'guifont' 里没有的字符的字体。所以，你完全可以不必设置
+'guifontwide'，除非你想改变 Pango/Xft 的选择。
+
+仅限于 Windows +multibyte:		*guifontwide_win_mbyte*
+
+如果设置且合法，IME 使用 'guifontwide' 代替 'guifont'。
+
+==============================================================================
+7. 附加							*gui-extras*
 
 这一节说明其它和 GUI 相关的特性。
 
@@ -893,7 +1024,8 @@ gui 平台上也会出现。
   意义。也可以按下修饰符，得到 "<Modifiers-Key>"。
 
 - 在 GUI 上，修饰符 SHIFT、CTRL 和 ALT (或 META) 可以在映射里和特殊键或鼠标一
-  起使用，例如 :map <M-LeftDrag> <LeftDrag>
+  起使用。
+  例如 :map <M-LeftDrag> <LeftDrag>
 
 - 在 GUI 上，若干普通键在映射等命令里可以带修饰符，它们是 <Space>、<Tab>、
   <NL>、<CR> 和 <Esc>。
@@ -923,7 +1055,7 @@ gui 平台上也会出现。
 MS Mincho 是一个推荐的日文字体。相关信息见: http://www.lexikan.com/mincho.htm
 
 ==============================================================================
-7. 外壳命令						*gui-shell*
+8. 外壳命令						*gui-shell*
 
 X11 GUI 上，外部命令在 gvim 窗口里执行。见 |gui-pty|。
 
@@ -933,4 +1065,4 @@ X11 GUI 上，外部命令在 gvim 窗口里执行。见 |gui-pty|。
 
 Win32 GUI 上，外部命令在一个单独的窗口上执行。见 |gui-shell-win32|。
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

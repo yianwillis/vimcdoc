@@ -1,4 +1,4 @@
-*index.txt*     For Vim version 8.1.  最近更新: 2019年12月
+*index.txt*     For Vim version 8.2.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -18,11 +18,13 @@ ASCII 值排序。
    2.3. 方括号命令			|[|
    2.4. 'g' 开头的命令			|g|
    2.5. 'z' 开头的命令			|z|
+   2.6. 操作符等待模式			|operator-pending-index|
 3. 可视模式				|visual-index|
 4. 命令行编辑				|ex-edit-index|
-5. EX 命令				|ex-cmd-index|
+5. 终端作业模式				|terminal-job-index|
+6. EX 命令				|ex-cmd-index|
 
-选项总览可见 help.txt |option-list|。
+选项总览可见 |option-list|。
 内建函数总览可见 |functions|。
 Vim 变量的列表可见 |vim-variable|。
 帮助项目的完整列表可见 |help-tags|。
@@ -66,13 +68,13 @@ Vim 变量的列表可见 |vim-variable|。
 |i_CTRL-O|	CTRL-O		执行单个命令然后回到插入模式
 |i_CTRL-P|	CTRL-P		查找光标前面的关键字的前一个匹配
 |i_CTRL-Q|	CTRL-Q		等同于 CTRL-V，除非它用于终端控制流
-|i_CTRL-R|	CTRL-R {0-9a-z"%#*:=}
+|i_CTRL-R|	CTRL-R {register}
 				插入寄存器内容
-|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {register}
 				按本义插入寄存器内容
-|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {register}
 				按本义插入寄存器内容，而且不自动缩进
-|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {register}
 				按本义插入寄存器内容，而且修正缩进
 		CTRL-S		(用于终端控制流)
 |i_CTRL-T|	CTRL-T		在当前行插入一个 shiftwidth 的缩进
@@ -152,7 +154,20 @@ CTRL-X 子模式的命令					*i_CTRL-X_index*
 |i_CTRL-X_CTRL-Y|	CTRL-X CTRL-Y	下滚
 |i_CTRL-X_CTRL-]|	CTRL-X CTRL-]	补全标签
 |i_CTRL-X_s|		CTRL-X s	拼写建议
-{仅当编译时加入 |+insert_expand| 特性才有效}
+
+补全模式的命令 (见 |popupmenu-keys|)
+
+|complete_CTRL-E| CTRL-E	停止补全并回到原来的文本
+|complete_CTRL-Y| CTRL-Y	接受选择的匹配并停止补全
+		CTRL-L		从当前匹配中插入一个字符
+		<CR>		插入当前选择的匹配
+		<BS>		删除一个字符，重新搜索
+		CTRL-H		和 <BS> 相同
+		<Up>		选择上一个匹配
+		<Down>		选择下一个匹配
+		<PageUp>	选择往上几个项目的匹配
+		<PageDown>	选择往下几个项目的匹配
+		其它		停止补全并插入键入的字符
 
 ==============================================================================
 2. 普通模式						*normal-index*
@@ -480,10 +495,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |CTRL-W_CTRL-]|	CTRL-W CTRL-]	   等同于 "CTRL-W ]"
 |CTRL-W_CTRL-^|	CTRL-W CTRL-^	   等同于 "CTRL-W ^"
 |CTRL-W_CTRL-_|	CTRL-W CTRL-_	   等同于 "CTRL-W _"
-|CTRL-W_quote|	CTRL-W "	   终端窗口: 粘贴寄存器
 |CTRL-W_+|	CTRL-W +	   增加当前窗口高度 N 行
 |CTRL-W_-|	CTRL-W -	   减少当前窗口高度 N 行
-|CTRL-W_.|	CTRL-W .	   终端窗口: 输入 CTRL-W
 |CTRL-W_:|	CTRL-W :	   等同于 |:|, 编辑命令行
 |CTRL-W_<|	CTRL-W <	   减少当前窗口宽度 N 列
 |CTRL-W_=|	CTRL-W =	   使得所有窗口同宽同高
@@ -492,7 +505,6 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |CTRL-W_J|	CTRL-W J	   移动当前窗口到最底部
 |CTRL-W_K|	CTRL-W K	   移动当前窗口到最顶部
 |CTRL-W_L|	CTRL-W L	   移动当前窗口到最右端
-|CTRL-W_N|	CTRL-W N	   终端窗口: 切换到终端普通模式
 |CTRL-W_P|	CTRL-W P	   跳转到预览窗口
 |CTRL-W_R|	CTRL-W R	   向上旋转窗口 N 次
 |CTRL-W_S|	CTRL-W S	   等同于 "CTRL-W s"
@@ -513,6 +525,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |CTRL-W_gf|	CTRL-W g f	   在新的标签页里编辑光标所在的文件名
 |CTRL-W_gF|	CTRL-W g F	   在新的标签页里编辑光标所在的文件名然后跳转
 				   到文件名后给出的行号上。
+|CTRL-W_gt|	CTRL-W g t	   等同于 `gt`: 跳转到下一个标签页
+|CTRL-W_gT|	CTRL-W g T	   等同于 `gT`: 跳转到上一个标签页
 |CTRL-W_h|	CTRL-W h	   跳转到左面第 N 个的窗口 (在首个窗口上停止)
 |CTRL-W_i|	CTRL-W i	   分割窗口并跳转到光标所在的标识符的声明上
 |CTRL-W_j|	CTRL-W j	   跳转到下面第 N 个的窗口 (在最后窗口上停止)
@@ -670,6 +684,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |gj|		gj		1  类似于 "j"，但 'wrap' 打开时往下 N 个屏幕行
 |gk|		gk		1  类似于 "k"，但 'wrap' 打开时往上 N 个屏幕行
 |gm|		gm		1  转到屏幕行正中间的那个字符
+|gM|		gM		1  转到文本行正中间的那个字符
 |gn|		gn	      1,2  使用前次搜索模式搜索下一个匹配，并可视选择
 				   之
 |go|		go		1  光标移动到缓冲区的第 N 个字节
@@ -744,12 +759,26 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |zs|		zs		   'wrap' 关闭时，水平滚动使得光标定位到屏幕的
 				   起始处 (最左侧)
 |zt|		zt		   重画，光标移动到窗口的顶部
+|zuw|		zuw		   撤销 |zw|
+|zug|		zug		   撤销 |zg|
+|zuW|		zuW		   撤销 |zW|
+|zuG|		zuG		   撤销 |zG|
 |zw|		zw		   把单词标记为拼写错误 (wrong)
 |zv|		zv		   打开足够的折叠，使得当前行可见
 |zx|		zx		   重新应用 'foldlevel' 然后执行 "zv"
 |zz|		zz		   重画，光标移动到窗口的中间行
 |z<Left>|	z<Left>		   等同于 "zh"
 |z<Right>|	z<Right>	   等同于 "zl"
+
+2.6 操作符等待模式				*operator-pending-index*
+
+它们在操作符后但在键入 {motion} 之前使用。
+
+标签		字符		操作符等待模式下的动作 ~
+-----------------------------------------------------------------------
+|o_v|		v		强制操作符面向字符
+|o_V|		V		强制操作符面向行
+|o_CTRL-V|	CTRL-V		强制操作符面向列块
 
 ==============================================================================
 3. 可视模式						*visual-index*
@@ -852,7 +881,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 输入普通字符会在当前光标位置插入该字符。
 下面的 "补全" 指上下文相关的补全。如果可能，会补全文件名、标签、命令等。
 
-标签		字符	       命令行编辑模式下的动作	~
+标签		字符		命令行编辑模式下的动作	~
 ------------------------------------------------------------------------------
 		CTRL-@		不用
 |c_CTRL-A|	CTRL-A		使用光标前面的模式进行补全，并插入所有的匹配
@@ -883,10 +912,11 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |c_CTRL-P|	CTRL-P		使用 'wildchar' 并有多个匹配: 转到上一个匹配，
 				不然: 从历史中调入前一个命令行
 |c_CTRL-Q|	CTRL-Q		等同于 CTRL-V，除非用于终端控制流
-|c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R|	CTRL-R {regname}
 				插入寄存器的内容或特殊对象到光标所在的地方，如
 				同直接输入那样
-|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {regname}
+|c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
 				按本义插入寄存器的内容或特殊对象到光标所在的地
 				方
 		CTRL-S		(用于终端控制流)
@@ -928,16 +958,39 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |c_<Insert>|	<Insert>	切换插入/替换模式
 |c_<LeftMouse>|	<LeftMouse>	光标移动到鼠标点击的地方
 
+==============================================================================
+5. 终端作业模式					*terminal-job-index*
+
+除了窗口命令 (|CTRL-W|) 以外，绝大多数普通模式命令不能直接应用在终端窗口。要用
+这些命令，先切换到终端普通模式。
+这里假定未设置 'termwinkey'。
+
+标签		字符		终端作业模式下的动作	~
+-----------------------------------------------------------------------
+|t_CTRL-\_CTRL-N| CTRL-\ CTRL-N	切换到终端普通模式
+|t_CTRL-W_N|	CTRL-W N	切换到终端普通模式
+|t_CTRL-W_:|	CTRL-W :	输入 Ex 命令
+|t_CTRL-W_.|	CTRL-W .	在终端中输入 CTRL-W
+		CTRL-W CTRL-\	给终端中的作业发送 CTRL-\
+|t_CTRL-W_quote|  CTRL-W " {0-9a-z"%#*:=}
+				在终端中粘贴寄存器
+|t_CTRL-W_CTRL-C| CTRL-W CTRL-C	强制结束作业
+|t_CTRL-W_CTRL-W| CTRL-W CTRL-W	移动焦点到下个窗口
+|t_CTRL-W_gt|	CTRL-W gt	转到下一个标签页，等同于 `gt`
+|t_CTRL-W_gT|	CTRL-W gT	转到上一个标签页，等同于 `gT`
+
 亚瑟王，你找到 (圣杯) 了！			*holy-grail* *:smile*
 
 ==============================================================================
-5. EX 命令					*ex-cmd-index* *:index*
+6. EX 命令					*ex-cmd-index* *:index*
 
 这里是一个简短但完整的 ":" 命令的列表。这里不讨论参数。命令可选的部分用 [] 括
 起。命令按照名字非可选部分排序。
 
-标签		字符	       动作	~
+标签		字符		动作	~
 ------------------------------------------------------------------------------
+|:|		:		什么都不作
+|:range|	:{range}	转到 {range} 的末行
 |:!|		:!		过滤行，或可通过外部命令执行之
 |:!!|		:!!		重复上次的 ":!" 命令
 |:#|		:#		等同于 ":number"
@@ -998,11 +1051,15 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:cNfile|	:cNf[ile]	跳转到前一个文件的最后一个错误
 |:cabbrev|	:ca[bbrev]	类似于 ":abbreviate"，但用于命令行模式
 |:cabclear|	:cabc[lear]	清除所有缩写，用于命令行模式
+|:cabove|	:cabo[ve]	转到当前行之上的错误
 |:caddbuffer|	:cad[dbuffer]	通过缓冲区补充错误
 |:caddexpr|	:cadde[xpr]	通过表达式补充错误
 |:caddfile|	:caddf[ile]	加入错误信息到当前 quickfix 列表
+|:cafter|	:caf[ter]	转到当前光标之后的错误
 |:call|		:cal[l]		调用函数
 |:catch|	:cat[ch]	:try 命令的一部分
+|:cbefore|	:cbef[ore]	转到当前光标之前的错误
+|:cbelow|	:cbel[ow]	转到当前行之下的错误
 |:cbottom|	:cbo[ttom]	滚动到 quickfox 窗口底部
 |:cbuffer|	:cb[uffer]	分析错误信息并跳转到第一个
 |:cc|		:cc		跳转到特定的错误
@@ -1043,6 +1100,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:compiler|	:comp[iler]	为特定编译器设定选项
 |:continue|	:con[tinue]	回到 :while 开始处
 |:confirm|	:conf[irm]	需要确认时，提示用户
+|:const|	:cons[t]	建立常量变量
 |:copen|	:cope[n]	打开 quickfix 窗口
 |:cprevious|	:cp[revious]	跳转到上一个错误
 |:cpfile|	:cpf[ile]	跳转到上一个文件的最后一个错误
@@ -1158,12 +1216,16 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:lNext|	:lN[ext]	转到位置列表的上一个位置
 |:lNfile|	:lNf[ile]	转到上个文件的最近一个位置
 |:list|		:l[ist]		显示行
+|:labove|	:lab[ove]	转到当前行之上的位置
 |:laddexpr|	:lad[dexpr]	通过表达式补充位置
 |:laddbuffer|	:laddb[uffer]	通过缓冲区补充位置
 |:laddfile|	:laddf[ile]	把位置加到当前位置列表里
+|:lafter|	:laf[ter]	转到当前光标之后的位置
 |:last|		:la[st]		转到参数列表的最后一个文件
 |:language|	:lan[guage]	设置语言 (locale)
 |:later|	:lat[er]	转到新的改变，重做
+|:lbefore|	:lbef[ore]	转到当前光标之前的位置
+|:lbelow|	:lbel[ow]	转到当前行之下的位置
 |:lbottom|	:lbo[ttom]	滚动到位置窗口的底部
 |:lbuffer|	:lb[uffer]	分析位置并跳转到第一个位置
 |:lcd|		:lc[d]		改变本地的目录
@@ -1311,6 +1373,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:redir|	:redi[r]	重定向消息到文件或者寄存器
 |:redraw|	:redr[aw]	强迫显示的重画
 |:redrawstatus|	:redraws[tatus]	强迫状态行的重画
+|:redrawtabline|  :redrawt[abline]  强迫标签行的重画
 |:registers|	:reg[isters]	显示寄存器的内容
 |:resize|	:res[ize]	改变当前窗口的高度
 |:retab|	:ret[ab]	改变制表大小
@@ -1340,7 +1403,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:sbprevious|	:sbp[revious]	分割窗口并转到缓冲区列表的前一个文件
 |:sbrewind|	:sbr[ewind]	分割窗口并转到缓冲区列表的第一个文件
 |:scriptnames|	:scr[iptnames]	列出所有执行过的 Vim 脚本的名字
-|:scriptencoding| :scripte[ncoding]	执行过的 Vim 脚本使用的编码
+|:scriptencoding| :scripte[ncoding]  执行过的 Vim 脚本使用的编码
+|:scriptversion|  :scriptv[ersion]   Vim 脚本使用的版本
 |:scscope|	:scs[cope]	分割窗口并执行 cscope 命令
 |:set|		:se[t]		显示或设置选项
 |:setfiletype|	:setf[iletype]	设置 'filetype'，除非已经设置过
@@ -1357,7 +1421,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:smagic|	:sm[agic]	带 'magic' 的 :substitute
 |:smap|		:smap		类似于 ":map"，但用于选择模式
 |:smapclear|	:smapc[lear]	删除选择模式所有的映射
-|:smenu|	:sme[nu]	增加选择模式菜单
+|:smenu|	:sme[nu]	为选择模式增加菜单
 |:smile|	:smi[le]	让用户高兴一下
 |:snext|	:sn[ext]	分割窗口并转到参数列表的下一个文件
 |:snomagic|	:sno[magic]	带 'nomagic' 的 :substitute
@@ -1368,6 +1432,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:spelldump|	:spelld[ump]	分割窗口并用正确的单词填充
 |:spellgood|	:spe[llgood]	增加拼写的好词
 |:spellinfo|	:spelli[nfo]	显示载入的拼写文件的信息
+|:spellrare|	:spellra[re]	增加拼写的罕见词
 |:spellrepall|	:spellr[epall]	像上次 |z=| 那样，但替换所有的坏词
 |:spellundo|	:spellu[ndo]	删除好词或坏词
 |:spellwrong|	:spellw[rong]	增加拼写错误
@@ -1410,6 +1475,8 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:tab|		:tab		打开新窗口时建立新的标签页
 |:tag|		:ta[g]		跳转到标签上
 |:tags|		:tags		显示标签栈的内容
+|:tcd|		:tcd		切换标签页的目录
+|:tchdir|	:tch[dir]	切换标签页的目录
 |:tcl|		:tc[l]		执行 Tcl 命令
 |:tcldo|	:tcld[o]	为每行执行 Tcl 命令
 |:tclfile|	:tclf[ile]	执行 Tcl 脚本文件
@@ -1419,6 +1486,9 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:throw|	:th[row]	抛出例外
 |:tjump|	:tj[ump]	类似于 ":tselect"，只有一个匹配时直接跳转之
 |:tlast|	:tl[ast]	跳转到最后一个匹配的标签
+|:tlmenu|	:tlm[enu]	为终端作业模式增加菜单
+|:tlnoremenu|	:tln[oremenu]	类似于 ":noremenu"，但用于终端作业模式
+|:tlunmenu|	:tlu[nmenu]	删除终端作业模式的菜单
 |:tmapclear|	:tmapc[lear]	删除所有终端作业模式的映射
 |:tmap|		:tma[p]		类似于 ":map" 但用于终端作业模式
 |:tmenu|	:tm[enu]	定义菜单的工具提示
@@ -1472,7 +1542,6 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:wprevious|	:wp[revious]	写回文件，然后跳转到参数列表的前一个文件
 |:wq|		:wq		写回文件，然后退出窗口或者 Vim
 |:wqall|	:wqa[ll]	写回所有 (改变的) 缓冲区然后退出 Vim
-|:wsverb|	:ws[verb]	把动词通过 IPC 发送给 workshop
 |:wundo|	:wu[ndo]	把撤销信息写入文件
 |:wviminfo|	:wv[iminfo]	写入 viminfo 文件
 |:xit|		:x[it]		如果缓冲区被改动，写入之。然后退出窗口或者 Vim
@@ -1480,6 +1549,7 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:xmapclear|	:xmapc[lear]	删除可视模式的所有映射
 |:xmap|		:xm[ap]		类似于 ":map"，但使用可视模式
 |:xmenu|	:xme[nu]	增加可视模式的菜单
+|:xrestore|	:xr[estore]	恢复 X 服务器的连接
 |:xnoremap|	:xn[oremap]	类似于 ":noremap"，但使用可视模式
 |:xnoremenu|	:xnoreme[nu]	类似于 ":noremenu"，但使用可视模式
 |:xunmap|	:xu[nmap]	类似于 ":unmap"，但使用可视模式
@@ -1489,4 +1559,4 @@ SECTION	 可能以 '}' 而不是 '{' 开始的小节
 |:~|		:~		重复上次 ":substitute"
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

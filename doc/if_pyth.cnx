@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 8.1.  最近更新: 2019年12月
+*if_pyth.txt*   For Vim version 8.2.  最近更新: 2019年12月
 
 
 		  VIM 参考手册    by Paul Moore
@@ -20,8 +20,6 @@ Vim 的 Python 编程接口					*python* *Python*
 11. Python X					|python_x|
 12. 编译时带 Python 支持			|python-building|
 
-{Vi 无此功能}
-
 Vim 的 Python 2.x 接口仅当 |+python| 特性被编译进 Vim 时才有效。
 Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 可以同时使用两者，但请阅读 |python-2-and-3|。
@@ -35,16 +33,19 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 			用的简单检查: >
 				:python print "Hello"
 
-:[range]py[thon] << {endmarker}
+:[range]py[thon] << [endmarker]
 {script}
 {endmarker}
 			执行 Python 脚本 {script}。
 			备注: 此命令在没有编译进 Python 特性时无效。为了避免这
 			样的错误，参阅 |script-here|。
 
-{endmarker} 前面_不能_有任何空白字符。如果在 "<<" 之后省略了 {endmarker}，在
-{script} 之后一定要有一个点 '.'。这和 |:append| 及 |:insert| 命令的道理是一样
-的。这种形式的 |:python| 命令主要用于在 Vim 脚本中嵌入 Python 代码。
+{script} 之下的 {endmarker} 前面_不能_有任何空白字符。
+
+如果在 "<<" 之后省略了 [endmarker]，就像|:append| 及 |:insert| 命令那样，在
+{script} 之后一定要有一个点 '.'。
+
+这种形式的 |:python| 命令主要用于在 Vim 脚本中嵌入 Python 代码。
 
 例子: >
 	function! IcecreamInitialize()
@@ -56,8 +57,9 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 	endfunction
 
 要看运行的 Python 版本: >
-	:python import sys
 	:python print(sys.version)
+
+没必要 import sys，缺省就会。
 
 备注: Python 对于缩进是非常敏感的。要确保 "class" 所在行及 "EOF" 没有任何缩
 进。
@@ -68,17 +70,27 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 			行不带尾部 <EOL> 的文本，以及行号。该函数应该返回字符
 			串或者 None。如果返回字符串，它会用来替代当前执行的
 			行。缺省 [range] 为整个文件: "1,$"。
-			{Vi 无此功能}
 
 示例:
 >
 	:pydo return "%s\t%d" % (line[::-1], len(line))
 	:pydo if line: return "%4d: %s" % (linenr, line)
 <
+可以和 `:py` 配合，用 `:pydo` 来利用 python 过滤行范围。例如: >
+
+	:py3 << EOF
+	needle = vim.eval('@a')
+	replacement = vim.eval('@b')
+
+	def py_vim_string_replace(str):
+		return str.replace(needle, replacement)
+	EOF
+	:'<,'>py3do return py_vim_string_replace(line)
+<
 							*:pyfile* *:pyf*
 :[range]pyf[ile] {file}
 			执行 {file} 文件中包含的 Python 脚本。整个参数被用作一
-			个文件名。 {Vi 无此功能}
+			个文件名。
 
 这些命令根本上都差不多 － 它们都将当前范围 |python-range| 设定为指定的行范围，
 并对其执行 Python 代码。
@@ -90,7 +102,6 @@ Python 命令不能在 |sandbox| 里使用。
 
 需要传递参数的话，你得使用 sys.argv[]。例如: >
 
-	:python import sys
 	:python sys.argv = ["foo", "bar"]
 	:pyfile myscript.py
 
@@ -157,19 +168,23 @@ vim.eval(str)						*python-eval*
 	-如果 Vim 表达式计算结果是 Vim 字典，那么返回一个字典
 	字典和列表被递归扩展。
 	例: >
+	    :" 'textwidth' 选项值
 	    :py text_width = vim.eval("&tw")
-	    :py str = vim.eval("12+12")		# 注意: 结果是个字符串！
-						# 使用 string.atoi()
-						# 把它转换成数字
-
+	    :
+	    :" 'a' 寄存器的内容
+	    :py a_reg = vim.eval("@a")
+	    :
+	    :" 结果是个字符串！使用 string.atoi() 把它转换成数值。
+	    :py str = vim.eval("12+12")
+	    :
 	    :py tagList = vim.eval('taglist("eval_expr")')
 <	后一个将返回一个 python 类型的字典列表，例如:
 	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name': ~
 	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}] ~
 
 vim.bindeval(str)					*python-bindeval*
-	类似于 |python-eval|，但返回 |python-bindeval-objects| 中描述的特殊
-	对象。这些 python 对象可用于修改 (|List| 或 |Dictionary|) 或调用
+	类似于 |python-eval|，但返回 |python-bindeval-objects| 中描述的特殊对
+	象。这些 python 对象可用于修改 (|List| 或 |Dictionary|) 或调用
 	(|Funcref|) vim 对象。
 
 vim.strwidth(str)					*python-strwidth*
@@ -671,17 +686,28 @@ Unix ~
 10. Python 3						*python3*
 
 							*:py3* *:python3*
-`:py3` 和 `:python3` 命令和 `:python` 类似。判断 `:py3` 命令是否可用的一个简单
-检查: >
-	:py3 print("Hello")
+:[range]py3 {stmt}
+:[range]py3 << [endmarker]
+{script}
+{endmarker}
 
-要看运行的 Python 版本: >
-	:py3 import sys
-	:py3 print(sys.version)
+:[range]python3 {stmt}
+:[range]python3 << [endmarker]
+{script}
+{endmarker}
+	`:py3` 和 `:python3` 命令和 `:python` 类似。判断 `:py3` 命令是否可用的
+	一个简单检查: >
+		:py3 print("Hello")
+<
+	要看运行的 Python 版本: >
+		:py3 import sys
+		:py3 print(sys.version)
 <							*:py3file*
-`:py3file` 命令和 `:pyfile` 类似。
+:[range]py3f[ile] {file}
+	`:py3file` 命令和 `:pyfile` 类似。
 							*:py3do*
-`:py3do` 命令和 `:pydo` 类似。
+:[range]py3do {body}
+	`:py3do` 命令和 `:pydo` 类似。
 
 
 Vim 可以用四种方式编译 (:version 输出结果):
@@ -828,4 +854,4 @@ Python 3.6:
 个版本。
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
