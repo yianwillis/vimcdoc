@@ -3384,8 +3384,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'imactivatekey'* *'imak'*
 'imactivatekey' 'imak'	字符串 (缺省为 "")
 			全局
-			{仅当编译时加入 |+multi_byte| 特性才有效}
-								*E599*
+			{仅当编译时加入 |+vim| 和
+			|+GUI_GTK| 特性才有效}			*E599*
 	指定激活 X-Window 窗口输入方法 (Input Method) 的热键。如果正确指定，
 	vim 可以用 'imcmdline'、'iminsert' 和 'imsearch' 来完整控制 IM。
 	你不能用本选项来改变激活键。这个选项只是告知 Vim 这个键是什么。
@@ -5916,6 +5916,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	      如果参数列表里的文件数为零或一，空字符串。
 	{ NF  计算 '%{' 和 '}' 之间的表达式，并返回其结果替代。注意 结束的 '}'
 	      之前没有 '%'。表达式不能包含 '}' 字符，要绕过这点，请调用函数。
+	      见下 |stl-%{|。
 	( -   项目组的开始。可以用来为某组项目设置宽度和对齐。后面某处必须有
 	      %)。
 	) -   项目组的结束。不能指定宽度域。
@@ -5940,10 +5941,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	minwid，整个组成为空字符串。这使得下面这样的组完全从状态行上消失，如果
 	没有标志位被置位的话。 >
 		:set statusline=...%(\ [%M%R%H]%)...
-<							*g:actual_curbuf*
-	要小心，每次显示状态行时都要计算此表达式。当前缓冲区和当前窗口会临时设
-	为目前要显示的状态行所属的窗口 (缓冲区)，而表达式会使用此上下文计算。
-	变量 "actual_curbuf" 被设为实际的当前缓冲区的 'bufnr()' 号。
+<	要小心，每次显示状态行时都要计算此表达式。
+				*stl-%{* *g:actual_curbuf* *g:actual_curwin*
+	计算 %{} 时，当前缓冲区和当前窗口会临时设为目前要显示的状态行所属的窗
+	口 (缓冲区)，而表达式会使用此上下文计算。
+	变量 "g:actual_curbuf" 被设为实际的当前缓冲区的 'bufnr()' 号，而
+	"g:actual_curwin" 被设为实际的当前窗口的 |window-ID|。这些值均为字符串
+	类型。
 
 	如果从模式行中设置，'statusline' 选项的计算在沙盘 |sandbox| 里进行，见
 	|sandbox-option|。
@@ -6040,10 +6044,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			":sbuffer"、":sbnext" 或 ":sbrewind"。
 	   usetab	类似于 "useopen"，但也考虑其它标签页里的窗口。
 	   split	如果包含，在载入用于在 |quickfix| 命令里显示错误的缓冲
-	   		区之前分割当前窗口。不然: 不分割，使用当前窗口。
+			区之前分割当前窗口。不然: 不分割，使用当前窗口 (如果已
+			在 quickfix 窗口中: 上次使用的窗口，如果没有其它窗口，
+			还是会分割)。
 	   vsplit	类似于 "split"，但水平分割。
 	   newtab	类似于 "split"，但打开新标签页。如果和 "split" 同时存
 			在，本值优先。
+	   uselast	如果包含，当用 |quickfix| 命令跳转到错误时，跳到上次使
+			用的窗口。
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	数值型	(缺省为 3000)
@@ -6080,7 +6088,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'tabline'* *'tal'*
 'tabline' 'tal'		字符串	(缺省为空)
 			全局
-			{仅当编译时加入 |+windows| 特性才有效}
 	如果非空，此选项决定 Vim 窗口顶部标签页行的内容。如果为空，Vim 使用缺
 	省的标签页行。详见 |setting-tabline|。
 
@@ -6092,6 +6099,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|tabpagewinnr()| 和 |tabpagebuflist()| 来决定要显示的文本。用 "%1T" 来
 	指定第一个标签，"%2T" 第二个，依此类推。用 "%X" 项目指定关闭的标签。
 
+	当 'tabline' 使用的某些值被改变而没有触发其更新时，使用
+	|:redrawtabline|。
 	'modelineexpr' 关闭时，不能在模式行中设置此选项。
 
 	记住只有一个标签页是当前标签页，其它标签页都是不可见的，你不能调到它们
@@ -6101,7 +6110,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'tabpagemax'* *'tpm'*
 'tabpagemax' 'tpm'	数值型	(缺省为 10)
 			全局
-			{仅当编译时加入 |+windows| 特性才有效}
 	|-p| 命令行参数或 ":tab all" 命令打开的最大标签页数。|tabpage|
 
 
@@ -6183,6 +6191,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
 
+							*'tagfunc'* *'tfu'*
+'tagfunc' 'tfu'		字符串	(缺省: 空)
+			局部于缓冲区
+			{仅当编译时加入 |+eval| 特性才有效}
+	此选项指定函数，用于执行标签搜索。此函数取得标签模式并应返回匹配标签的
+	列表。见 |tag-function| 说明如何写此函数并给出一例。
+
 						*'taglength'* *'tl'*
 'taglength' 'tl'	数值型	(缺省为 0)
 			全局
@@ -6241,7 +6256,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					     Mac: "mac-ansi"
 					    MiNT: "vt52"
 				          MS-DOS: "pcterm"
-					    OS/2: "os2ansi"
 					    Unix: "ansi"
 					     VMS: "ansi"
 				          Win 32: "win32")
@@ -6269,7 +6283,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'termencoding' 'tenc'	字符串	(缺省为 ""；GTK+ GUI: "utf-8"；
 					    Macintosh GUI: "macroman")
 			全局
-			{仅当编译时加入 |+multi_byte| 特性才有效}
 	终端使用的编码。它指定键盘产生的和显示能识别的字符编码。对 GUI 而言，
 	这只适用于键盘 ('encoding' 用于显示)。Mac 上如果 'macatsui' 关闭时例
 	外，此时 'termencoding' 应是 "macroman"。
@@ -6307,13 +6320,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意 仍然使用 "cterm" 属性，而不是 "gui" 那些。
 	注意: 如果置位 'compatible'，本选项被复位。
 
-						*'termwinscroll'* *'twsl'*
-'termwinscroll' 'twsl'	数值型	(缺省 10000)
-			局部于缓冲区
-			{仅当编译时加入 |+terminal| 特性才有效}
-	保留的回滚行数。超过此限制后删除保留回滚行的前 10% 部分。这只是为了减
-	少内容消耗。见 |Terminal-Normal|。
-
 						*'termwinkey'* *'twk'*
 'termwinkey' 'twk'	字符串	(缺省 "")
 			局部于窗口
@@ -6323,6 +6329,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	字符串必须对应一个键击，但可以有多个字节。
 	如果不指定则使用 CTRL-W，这样 CTRL-W : 把你带到命令行上。如果
 	'termwinkey' 设为 CTRL-L，则 CTRL-L : 会把你带到命令行上。
+
+						*'termwinscroll'* *'twsl'*
+'termwinscroll' 'twsl'	数值型	(缺省 10000)
+			局部于缓冲区
+			{仅当编译时加入 |+terminal| 特性才有效}
+	保留的回滚行数。超过此限制后删除保留回滚行的前 10% 部分。这只是为了减
+	少内容消耗。见 |Terminal-Normal|。
 
 						*'termwinsize'* *'tws'*
 'termwinsize' 'tws'	字符串	(缺省 "")
@@ -6344,6 +6357,21 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意 终端中运行的命令还可能改变终端大小。此时只要可能，会调整 Vim 窗口
 	到该大小。
 
+						*'termwintype'* *'twt'*
+'termwintype' 'twt'	字符串  (缺省 "")
+			全局
+			{仅当 MS-Windows 上编译时加入 |+terminal| 特性才有效}
+	指定打开终端窗口时使用的虚拟控制台 (pty)。
+
+	可能值是:
+	    ""		如果 ConPTY 稳定则使用之，返回使用 winpty
+	    "winpty"	使用 winpty，如果不支持则失败
+	    "conpty"	使用 |ConPTY|，如果不支持则失败
+
+	|ConPTY| 的支持取决于系统。Windows 10 October 2018 更新是首个支持
+	ConPTY 的版本，不过还是不够稳定。Windows 10 的下个发布 ConPTY 会开始稳
+	定。winpty 的支持需要安装。如果两者都没有，你不能打开终端窗口。
+
 						*'terse'* *'noterse'*
 'terse'			布尔型	(缺省关闭)
 			全局
@@ -6361,7 +6389,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'compatible'，本选项被设为 Vim 的缺省值。
 
 				   *'textmode'* *'tx'* *'notextmode'* *'notx'*
-'textmode' 'tx'		布尔型	(MS-DOS、Win32 和 OS/2: 缺省打开，
+'textmode' 'tx'		布尔型	(Win32: 缺省打开，
 				 其它: 缺省关闭)
 			局部于缓冲区
 	本选项已废弃。使用 'fileformat'。
@@ -6382,12 +6410,16 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'thesaurus'* *'tsr'*
 'thesaurus' 'tsr'	字符串	(缺省为 "")
 			全局或局部于缓冲区 |global-local|
-	逗号分隔的文件名列表，用于为同义词补全命令查找单词 |i_CTRL-X_CTRL-K|。
+	逗号分隔的文件名列表，用于为同义词补全命令查找单词 |i_CTRL-X_CTRL-T|。
+
 	文件里的每行应该包含相近意思的单词，以非关键字字符分隔 (建议使用空
 	白)。最大的行长为 510 个字节。
-	要得到能用于此处的文件，查阅此 ftp 站点:
-	[对不起此链接不再有效，你知道有好用的么？]
-	ftp://ftp.ox.ac.uk/pub/wordlists/  首先阅读 README 文件。
+
+	此 github 议题附加了英语单词列表:
+	https://github.com/vim/vim/issues/629#issuecomment-443293282
+	解包 thesaurus_pkg.zip，把 thesaurus.txt 文件放在某处，如
+	~/.vim/thesaurus/english.txt，然后把 'thesaurus' 选项设为此文件名。
+
 	要在文件名里包含逗号，在它之前加上反斜杠。逗号之后的空格被忽略，其它情
 	况下空格视为文件的一部分。|option-backslash| 说明如何使用反斜杠。
 	建议使用 |:set+=| 和 |:set-=| 来从列表里加减目录。这可以避免未来版本使
@@ -6598,8 +6630,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			样更快也更准确。你的 xterm 必须在补丁号 88 / XFree
 			3.3.3 或以上才可以。稍后，说明 Vim 的自动识别机制。
 							*netterm-mouse*
-	   netterm	NetTerm 鼠标处理。鼠标产生 "<Esc>}r,c<CR>"，其中
-			"r,c" 是两个代表行和列的十进制数。
+	   netterm	NetTerm 鼠标处理。鼠标左键点击产生 "<Esc>}r,c<CR>"，其
+			中 "r,c" 是两个代表行和列的十进制数。不支持其它鼠标事
+			件。
 							*dec-mouse*
 	   dec		DEC 终端处理。鼠标产生相当复杂的序列，以 "<Esc>[" 开
 			始。
@@ -6628,10 +6661,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	完整匹配)、"st-" 或 "stterm" 开始的名字并且 'ttymouse' 还未设的话，本
 	选项自动设为 "xterm"。
 	此外，在编译时加入 |+termresponse| 特性并且 |t_RV| 设为请求 xterm 版本
-	号的转义序列以后，运行更加智能的检测过程。
-	如果报告的 xterm 版本是 95 到 276，本值设为 "xterm2"。如果报告的 xterm
-	版本是 277 或更高并且 Vim 检测到 Mac Terminal.app 或 iTerm2，本值设为
-	"sgr"。
+	号的转义序列以后，会运行更加智能的检测过程。
+	如果报告的 xterm 版本是 95 到 276，本值设为 "xterm2"。如果Vim 检测到
+	Mac Terminal.app、iTerm2 或 mintty，并且 (译者注: 原文如此，似应为或)
+	报告的 xterm 版本是 277 或更高，本值设为 "sgr"。
 	如果你不想 'ttymouse' 被自动设为 "xterm2" 或 "sgr"，把 t_RV 置为空字符
 	串: >
 		:set t_RV=
@@ -6662,6 +6695,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	读入时，查找所有的项目来寻找对应的撤销文件。使用第一个找到的撤销文件。
 	如果该文件不可读，报错，但不再继续查找。
 	见 |undo-persistence|。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
 'undofile' 'udf'	布尔型	(缺省关闭)
@@ -6676,10 +6710,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意: 如果置位 'compatible'，本选项被复位。
 
 						*'undolevels'* *'ul'*
-'undolevels' 'ul'	数值型	(缺省为 100，Unix、VMS、Win32 和 OS/2 为 1000)
+'undolevels' 'ul'	数值型	(缺省为 100，Unix、VMS、Win32 为 1000)
 			全局或局部于缓冲区 |global-local|
 	可以撤销的最大改变次数。因为撤销需要的信息保存在内存里，更大的数值导致
-	更多的内存被消耗 (不过，单个改变本来就可能使用不受限制的内存)。
+	更多的内存被消耗。不过，单个改变本来就可能使用不受限制的内存。
 	设为 0 和 Vi 兼容: 一层撤销，而 "u" 可以撤销自身: >
 		set ul=0
 <	你可以用在 'cpoptions' 里加入 'u' 标志位得到 Vi 的兼容性，同时可以使用
@@ -6782,7 +6816,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	和 |:redir| 的区别是，在设置 'verbosefile' 时不再显示 verbose 消息。
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	字符串	(Amiga、MS-DOS、OS/2 和 Win32 的缺省:
+'viewdir' 'vdir'	字符串	(Amiga 和 Win32 的缺省:
 						 "$VIM/vimfiles/view"，
 				 Unix: "~/.vim/view"，
 				 Macintosh: "$VIM:vimfiles:view"
@@ -6805,17 +6839,17 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	   options	局部于窗口或缓冲区的选项和映射 (不是局部选项的全局值)
 	   localoptions 等同于 "options"
 	   slash	文件名的反斜杠被替换成正斜杠
-	   unix		使用 Unix 换行格式 (单个 <NL>)，即使在 Windows 或 DOS
-			上也是如此
+	   unix		使用 Unix 换行格式 (单个 <NL>)，即使在 Windows 上也是
+			如此
 	   curdir	如果用 `:lcd` 设置过，局部于窗口的目录
 
-	"slash" 和 "unix" 可在 Windows 上使用，使得生成的视图文件可以和 Unix
-	的共享。Unix 版本的 Vim 不能执行 dos 格式的脚本，但 Windows 版本的 Vim
-	却可以执行 unix 格式的脚本。
+	"slash" 和 "unix" 可在 MS-Windows 上使用，使得生成的视图文件可以和
+	Unix 的共享。Unix 版本的 Vim 不能执行 dos 格式的脚本，但 MS-Windows 版
+	本的 Vim 却可以执行 unix 格式的脚本。
 
 				*'viminfo'* *'vi'* *E526* *E527* *E528*
-'viminfo' 'vi'		字符串	(Vi 缺省: ""，Vim MS-DOS、Windows 和 OS/2 的缺
-				   省: '100,<50,s10,h,rA:,rB:，
+'viminfo' 'vi'		字符串	(Vi 缺省: ""，Vim
+				   MS-Windows 的缺省: '100,<50,s10,h,rA:,rB:，
 				   Amiga: '100,<50,s10,h,rdf0:,rdf1:,rdf2:
 				   其它: '100,<50,s10,h)
 			全局
@@ -6915,6 +6949,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如果为 "NONE"，不读取或写入 viminfo 文件。
 	可用 |-i| 命令行标志位设置此选项。|--clean| 命令行标志位设置它为
 	"NONE"。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	字符串	(缺省为 "")
@@ -6994,8 +7029,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	光标跨过行尾时，"3h" 和 "3dh" 效果不同。这也适用于 "x" 和 "X"，因为它
 	们分别和 "dl" 以及 "dh" 相同。如果这么用，你可能想用映射 ":map <BS> X"
 	来使退格键删除光标之前的字符。
-	如果包含 'l'，位于行尾时如果在操作符之后使用它，不会移动到下一行。这样
-	"dl"、"cl"、"yl" 等都能正常工作。
+	如果包含 'l'，位于 (非空) 行尾时如果在操作符之后使用它，不会移动到下一
+	行。这样 "dl"、"cl"、"yl" 等都能正常工作。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
 
@@ -7088,6 +7123,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	"list:full"	如果有多于一个补全，列出所有的匹配并先用第一个补全。
 	"list:longest"	如果有多于一个补全，列出所有的匹配并先用最长的子串补
 			全。
+	"list:lastused" 如果有多于一个缓冲区匹配，给缓冲区按最近使用的时间排序
+			(除当前缓冲区外)。
 	如果只有一个匹配，所有情况下都完整补全。
 
 	例如: >
@@ -7131,6 +7168,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	此选项不用于 <F10>；在 Win32 和 GTK 上，<F10> 会选择菜单，除非它被映
 	射。
 
+						*'wincolor'* *'wcr'*
+'wincolor' 'wcr' 字符串 (缺省为空)
+			局部于窗口
+	用于此窗口取代 Normal 颜色 |hl-Normal| 的高亮组名。
+
 						*'window'* *'wi'*
 'window' 'wi'		数值型  (缺省为屏幕高度 - 1)
 			全局
@@ -7145,7 +7187,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'winheight'* *'wh'* *E591*
 'winheight' 'wh'	数值型	(缺省为 1)
 			全局
-			{仅当编译时加入 |+windows| 特性才有效}
 	当前窗口的最少行数。这不是绝对的最小值，如果没有足够的空间，Vim 仍会使
 	用更少的行。
 	焦点移到比本选项小的窗口时，增大其高度，但以减少其它窗口的高度为代价。
@@ -7161,7 +7202,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	布尔型	(缺省关闭)
 			局部于窗口
-			{仅当编译时加入 |+windows| 特性才有效}
 	窗口打开或关闭并且置位 'equalalways' 时，保持窗口的高度。另见
 	|CTRL-W_=|。|preview-window| 和 |quickfix-window| 中缺省打开。
 	不过，如果空间不够，高度仍然会改变。
@@ -7169,7 +7209,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			*'winfixwidth'* *'wfw'* *'nowinfixwidth'* *'nowfw'*
 'winfixwidth' 'wfw'	布尔型	(缺省关闭)
 			局部于窗口
-			{仅当编译时加入 |+windows| 特性才有效}
 	窗口打开或关闭并且置位 'equalalways' 的时候，保持窗口的宽度。另见
 	|CTRL-W_=|。
 	不过，如果空间不够，宽度仍然会改变。
@@ -7177,7 +7216,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'winminheight'* *'wmh'*
 'winminheight' 'wmh'	数值型	(缺省为 1)
 			全局
-			{仅当编译时加入 |+windows| 特性才有效}
 	非当前窗口的最小高度。
 	这是一个绝对的最小值，窗口决不会比这更小。
 	如果设为零，在需要的话，窗口可能被 "挤压" 为零行 (也就是，只有状态
@@ -7189,7 +7227,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'winminwidth'* *'wmw'*
 'winminwidth' 'wmw'	数值型	(缺省为 1)
 			全局
-			{仅当编译时加入 |+vertsplit| 特性才有效}
 	非当前窗口的最小宽度。
 	这是一个绝对的最小值，窗口决不会比这更小。
 	如果设为零，在需要的话，窗口可能被 "挤压" 为零列 (也就是，只有垂直分割
@@ -7210,7 +7247,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	数值型	(缺省为 20)
 			全局
-			{仅当编译时加入 |+vertsplit| 特性才有效}
 	当前窗口的最少列数。这不是绝对的最小值，如果没有足够的空间，Vim 仍会使
 	用更少的列。如果当前窗口比本选项小，增大之，但以减少其它窗口的宽度为代
 	价。设之为 999 使得当前窗口总是填充整个屏幕。普通的编辑应设置它为一个
@@ -7273,6 +7309,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	能成功为止)。
 	|backup-table| 还有另外的解释。
 	如果 'backupskip' 模式匹配，无论如何都不会建立备份。
+	取决于 'backupcopy'，备份或是一个新文件，或是换名后的原始文件 (同时新
+	文件被写入)。
 	注意: 如果置位 'compatible'，本选项被设为缺省值。
 
 						*'writedelay'* *'wd'*

@@ -1,4 +1,4 @@
-*tagsrch.txt*   For Vim version 8.1.  最近更新: 2019年12月
+*tagsrch.txt*   For Vim version 8.2.  最近更新: 2020年1月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -16,6 +16,7 @@
 4. 标签细节			|tag-details|
 5. 标签文件格式			|tags-file-format|
 6. 头文件搜索			|include-search|
+7. 使用 'tagfunc'		|tag-function|
 
 ==============================================================================
 1. 跳转到标签						*tag-commands*
@@ -48,11 +49,9 @@ CTRL-]			跳转到光标所在的关键字的定义。和 ":tag {name}" 相同�
 			如果有 {name} 的多个匹配，则跳转到它们中的第 [count]
 			个。如果没有 [count]，跳转到第一个。 要跳转到其它匹配
 			的标签，参见 |tag-matchlist|。
-			{Vi: 光标之后的标识符}
 
 							*v_CTRL-]*
 {Visual}CTRL-]		和 ":tag {name}" 相同，其中 {name} 是高亮的文本。
-			{Vi 无此功能}
 
 							*telnet-CTRL-]*
 CTRL-] 是缺省的 telnet 转义键。在你按 CTRL-] 进行标签跳转的时候，你会得到
@@ -76,17 +75,20 @@ telnet 的提示符。许多版本的 telnet 允许你改变或者屏蔽缺省�
 淆。在使用 ":tag {name}" 时，优先顺序才会改变。
 
 以下情况下，":tag" 命令不会查找忽略大小写的匹配:
-- 'ignorecase' 选项关闭 且 'tagcase' 为 "followic"
+- 'tagcase' 为 "followic" 且 'ignorecase' 选项关闭
+- 'tagcase' 为 "followscs" 且 'ignorecase' 选项关闭且 'smartcase' 选项关闭或模
+  式包含大写字符。(译者注: 原文如此，似不确)
 - 'tagcase' 为 "match"
 - 'tagcase' 为 "smart" 且模式包含大写字符。
-- 'tagcase' 为 "followscs" 且 'smartcase' 选项打开，且模式包含大写字符。
 
 以下情况下，查找忽略大小写的匹配:
 - 使用模式 (以 "/" 开始)
 - ":tselect"
-- 'tagcase' 为 "followic" 且 'ignorecase' 关闭 (译者注: 应为打开)
-- 'tagcase' 为 "match" (译者注: 应为 "ignore")
-- 'tagcase' 为 "followscs" 且 'smartcase' 选项关闭
+- 'tagcase' 为 "followic" 且 'ignorecase' 打开
+- 'tagcase' 为 "followscs" 且 'ignorecase' 打开或 'smartcase' 选项打开且模式不
+  包含大写字符 (译者注: 原文如此，似不确)
+- 'tagcase' 为 "ignore"
+- 'tagcase' 为 "smart" 且模式不包含大写字符
 
 注意 使用忽略大小写查找就无法应用 tags 文件的二分法查找，从而减慢了查找速度。
 这可以用大小写合并排序的标签文件来解决。具体解释见 'tagbsearch' 选项。
@@ -100,17 +102,16 @@ telnet 的提示符。许多版本的 telnet 允许你改变或者屏蔽缺省�
 g<RightMouse>						*g<RightMouse>*
 <C-RightMouse>					*<C-RightMouse>* *CTRL-T*
 CTRL-T			跳到标签栈上第 [count] 个较早的项目 (缺省为 1)。
-			{Vi 无此功能}
 
 						*:po* *:pop* *E555* *E556*
 :[count]po[p][!]	跳到标签栈上第 [count] 个较早的项目 (缺省为 1)。
-			[!] 见 |tag-!|。{Vi 无此功能}
+			[!] 见 |tag-!|。
 
 :[count]ta[g][!]	跳到标签栈上第 [count] 个较新的项目 (缺省为 1)。
-			[!] 见 |tag-!|。{Vi 无此功能}
+			[!] 见 |tag-!|。
 
 							*:tags*
-:tags			显示标签栈的内容。激活的项目以 '>' 标明。{Vi 无此功能}
+:tags			显示标签栈的内容。激活的项目以 '>' 标明。
 
 ":tags" 的输出结果类似于:
 
@@ -159,6 +160,9 @@ FuncB。
    1  1 main		1  harddisk2:text/vim/test
    2  1 FuncB	       59  harddisk2:text/vim/src/main.c
 
+|gettagstack()| 函数返回指定窗口的标签栈。|settagstack()| 函数修改窗口的标签
+栈。
+
 							*E73*
 如果你试图使用标签栈，而其中没有任何内容，你会得到一个错误信息。
 
@@ -175,7 +179,6 @@ FuncB。
 			第一列的 '>' 指示列表的当前位置 (如果有的话)。
 			[name] 可以是正规表达式，见 |tag-regexp|。
 			列表使用的优先级顺序见 |tag-priority|。
-			{Vi 无此功能}
 			示例输出:
 
 >
@@ -198,52 +201,45 @@ FuncB。
 
 							*:sts* *:stselect*
 :sts[elect][!] [name]	":tselect[!] [name]" 并分割窗口以显示选择的标签。
-			{Vi 无此功能}
 
 							*g]*
 g]			类似于 CTRL-]，但使用 ":tselect" 而不是 ":tag"。
-			{Vi 无此功能}
 
 							*v_g]*
 {Visual}g]		和 "g]" 相同，但使用高亮文本作为标识符。
-			{Vi 无此功能}
 
 							*:tj* *:tjump*
 :tj[ump][!] [name]	类似于 ":tselect"，但如果只有一个匹配，直接跳转之。
-			{Vi 无此功能}
 
 							*:stj* *:stjump*
 :stj[ump][!] [name]	":tjump[!] [name]" 并分割窗口以显示选择的标签。
-			{Vi 无此功能}
 
 							*g_CTRL-]*
 g CTRL-]		类似于 CTRL-]，但使用 ":tjump" 而不是 ":tag"。
-			{Vi 无此功能}
 
 							*v_g_CTRL-]*
 {Visual}g CTRL-]	和 "g CTRL-]" 相同，但使用高亮文本作为标识符。
-			{Vi 无此功能}
 
 							*:tn* *:tnext*
 :[count]tn[ext][!]	跳转到向下 [count] 个匹配的标签 (缺省为 1)。[!] 见
-			|tag-!|。{Vi 无此功能}
+			|tag-!|。
 
 							*:tp* *:tprevious*
 :[count]tp[revious][!]	跳转到向上 [count] 个匹配的标签 (缺省为 1)。[!] 见
-			|tag-!|。{Vi 无此功能}
+			|tag-!|。
 
 							*:tN* *:tNext*
-:[count]tN[ext][!]	和 ":tprevious" 相同。{Vi 无此功能}
+:[count]tN[ext][!]	和 ":tprevious" 相同。
 
 							*:tr* *:trewind*
 :[count]tr[ewind][!]	跳转到第一个匹配的标签。如果给出 [count]，跳到第
-			[count] 个匹配的标签。[!] 见 |tag-!|。{Vi 无此功能}
+			[count] 个匹配的标签。[!] 见 |tag-!|。
 
 							*:tf* *:tfirst*
-:[count]tf[irst][!]	和 ":trewind" 相同。{Vi 无此功能}
+:[count]tf[irst][!]	和 ":trewind" 相同。
 
 							*:tl* *:tlast*
-:tl[ast][!]		跳到最后匹配的标签。[!] 见 |tag-!|。{Vi 无此功能}
+:tl[ast][!]		跳到最后匹配的标签。[!] 见 |tag-!|。
 
 							*:lt* *:ltag*
 :lt[ag][!] [name]	跳转到标签 [name] 上并在当前窗口的新位置列表中加入匹
@@ -253,7 +249,6 @@ g CTRL-]		类似于 CTRL-]，但使用 ":tjump" 而不是 ":tag"。
 			的搜索模式会加上 "\V" 前缀，转义所有的特殊字符 (very
 			nomagic)。显示匹配标签的位置列表独立于标签栈。 [!] 见
 			|tag-!|。
-			{Vi 无此功能}
 
 如果没有其他消息，Vim 显示跳到的是哪个匹配的标签，还有匹配标签的总数: >
 	tag 1 of 3 or more
@@ -275,36 +270,28 @@ g CTRL-]		类似于 CTRL-]，但使用 ":tjump" 而不是 ":tag"。
 							*:pts* *:ptselect*
 :pts[elect][!] [name]	":tselect[!] [name]" 并在预览窗口显示新的标签。详情见
 			|:ptag|。
-			{Vi 无此功能}
 
 							*:ptj* *:ptjump*
 :ptj[ump][!] [name]	":tjump[!] [name]" 并在预览窗口显示新的标签。详情见
 			|:ptag|。
-			{Vi 无此功能}
 
 							*:ptn* *:ptnext*
 :[count]ptn[ext][!]	在预览窗口里 ":tnext"。见 |:ptag|。
-			{Vi 无此功能}
 
 							*:ptp* *:ptprevious*
 :[count]ptp[revious][!]	在预览窗口里 ":tprevious"。见 |:ptag|。
-			{Vi 无此功能}
 
 							*:ptN* *:ptNext*
 :[count]ptN[ext][!]	等价于 ":ptprevious"。
-			{Vi 无此功能}
 
 							*:ptr* *:ptrewind*
 :[count]ptr[ewind][!]	在预览窗口中 ":trewind"。见 |:ptag|。
-			{Vi 无此功能}
 
 							*:ptf* *:ptfirst*
 :[count]ptf[irst][!]	等价于 ":ptrewind"。
-			{Vi 无此功能}
 
 							*:ptl* *:ptlast*
 :ptl[ast][!]		在预览窗口中见 ":tlast"。见 |:ptag|。
-			{Vi 无此功能}
 
 ==============================================================================
 4. 标签细节						*tag-details*
@@ -375,7 +362,6 @@ Vim 使用二分法查找标签文件，以快速查找到希望找到的标签 
 在将来的版本里，也许会禁止对缓冲区的改变。这些都是为了安全原因: 有的人可能在
 tags 文件里隐藏了恶意的命令。如果不这么做，你也许不能看到这一点。例如: >
 	:$d|/tag-function-name/
-{Vi 没有这个安全保护措施}
 
 Vi 里跳转某个标签的同时设置当前搜索模式。Vim 没有这么做，以前的搜索模式还是记
 住的。除非 'cpoptions' 里设置了 't' 标志位。搜索历史里包含了这个搜索模式，所以
@@ -386,7 +372,7 @@ Emacs 风格的 tag 文件只有在 Vim 编译的时候加入 |+emacs_tags| 特�
 不起，这里没有 Emacs 标签文件的解释，支持它只是为了后向兼容。:-)。
 
 Emacs 标签文件的行可能很长。Vim 只处理不超过 510 字节的行。要看到哪些行被忽
-略，设置 'verbose' 为 5 或更高。
+略，设置 'verbose' 为 5 或更高。非 Emacs 的标签文件行接受任何长度。
 
 							*tags-option*
 'tags' 选项是文件名的列表。其中的每个文件都用来搜索标签。这可以用来指定不同于
@@ -456,31 +442,25 @@ gnatxref		为 Ada 而设计。见 http://www.gnuada.org/。gnatxref 是
 			gnat 包的一部分。
 
 
-标签文件的行应是以下三种格式之一:
+标签文件的行应是以下两种格式之一:
 
 1.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress}
-2.  {tagfile}:{tagname} {TAB} {tagfile} {TAB} {tagaddress}
-3.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress} {term} {field} ..
+2.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress} {term} {field} ..
 
-第一个是普通的标签，和 Vi 完全兼容。传统的 ctags 实现只能产生这种格式。通常，
-这用于被别的文件所引用的全局函数，
+之前支持一种旧格式。见 |tag-old-static|。
+
+第一种格式是普通的标签，和 Vi 完全兼容。传统的 ctags 实现只能产生这种格式。通
+常，这用于被别的文件所引用的全局函数，
 
 标签文件行可以用 <LF> 或者 <CR><LF> 结尾。在 Macintosh 上，<CR> 也能工作。<CR>
 和 <NL> 字符不应该在行内出现。
 
-							*tag-old-static*
-第二个格式只限于静态标签。现在已经废弃了，被第三个格式取而代之。只有 Elvis
-1.x, Vim 还有很少的 ctags 版本支持。静态变量用于本地函数，只有文件 {tagfile}
-才引用。注意 对静态变量而言，{tagfile} 的两次出现必须完全一致。关于如何使用静
-态变量，见下面的 |tags-option|。
-
-第三个格式是新出现的。它在每行尾部的可选字段上包含了附加的信息。它和 Vi 后向兼
+第二个格式是新出现的。它在每行尾部的可选字段上包含了附加的信息。它和 Vi 后向兼
 容。只有新的 ctags 版本 (比如 Exuberant ctags) 才支持这种格式。
 
 {tagname}	标识符。通常是函数的名字，但可以是任何标识符。不能包含 <Tab>。
 {TAB}		单个 <Tab> 字符。注意: 以前的版本允许任意多个空白字符。现在不
-		支持，因为 {tagfile} 里可能包含空格。编译时加入
-		|+tag_any_white| 特性可以重新打开这个功能。 *tag-any-white*
+		支持，因为 {tagfile} 里可能包含空格。
 {tagfile}	包含 {tagname} 定义的文件。可以是绝对路径或者相对路径。还可以
 		包含环境变量甚至通配符 (尽管使用通配符很值得怀疑)。它不能包含
 		<Tab>。
@@ -488,7 +468,14 @@ gnatxref		为 Ada 而设计。见 http://www.gnuada.org/。gnatxref 是
 		有一些限制 (见 |tag-security|)。Posix 只允许行号和搜索命令，这
 		也是最常用的。
 {term}		;" 分号和双引号两个字符。这被 Vi 解释为注释的开始，从而忽略其
-		后的部分。这样，就能和 Vi 后向兼容，因为 Vi 忽略后面的字段。
+		后的部分。这样，就能和 Vi 后向兼容，因为 Vi 忽略后面的字段。例
+		如:
+			APP	file	/^static int APP;$/;"	v
+		如果 {tagaddress} 不是行号或搜索模式，{term} 必须是 |;"。这里
+		的竖线结束命令 (不包含竖线)，而 ;" 使 Vi 忽略行的其它部分。例
+		如:
+			APP	file.c	call cursor(3, 4)|;"	v
+
 {field} ..	可选的字段列表。每个字段有以下形式:
 
 			<Tab>{fieldname}:{value}
@@ -519,8 +506,7 @@ gnatxref		为 Ada 而设计。见 http://www.gnuada.org/。gnatxref 是
 'tagbsearch'。这时可以用值 2:
 	!_TAG_FILE_SORTED<Tab>2<Tab>{anything} ~
 
-另一个 Vim 识别的标签，只有在编译时带了 |+multi_byte| 特性才有效。它指定标签文
-件的编码:
+另一个 Vim 识别的标签指定标签文件的编码:
 	!_TAG_FILE_ENCODING<Tab>utf-8<Tab>{anything} ~
 这里 "utf-8" 是标签们所用的编码。Vim 会把查找的标签从 'encoding' 转为标签文件
 的编码。当列出标签时，则反之。如果转换失败，则直接使用未经转换的标签。
@@ -540,9 +526,6 @@ gnatxref		为 Ada 而设计。见 http://www.gnuada.org/。gnatxref 是
 - 搜索从文件第 1 行开始。
   如果用 "/"，搜索方向为正向，"?" 则为反向。
   注意 'wrapscan' 没有影响，总是搜索整个文件。
-  {Vi 使用 'wrapscan'，使得有时标签可能找不到}。
-  {Vi 从别的文件的第二行开始搜索。如果没有置位 'wrapscan'，它不会去找别的文件
-  的第一行的标签}
 - 如果搜索失败，忽略大小写再重新尝试一次。如果还不行，搜索:
 	"^tagname[ \t]*("
   (实际的标签前面加上 '^' 而后面加上 "[ \t]*(")。应用函数名的时候，它会找到在
@@ -550,7 +533,19 @@ gnatxref		为 Ada 而设计。见 http://www.gnuada.org/。gnatxref 是
   异。如果还不行，进行另外一个搜索:
 	"^[#a-zA-Z_].*\<tagname[ \t]*("
   这意味着: 以 '#' 或者一个标识符开始的一行，包含标签本身，后面紧跟空白和一个
-  '('。这会找到宏名和前面有返回类型的函数名。{Vi 没有这些额外的搜索}
+  '('。这会找到宏名和前面有返回类型的函数名。
+
+							*tag-old-static*
+直到 2019 年 3 月 (8.1.1092 补丁) 为止，曾经支持过另一种过时的格式:
+    {tagfile}:{tagname} {TAB} {tagfile} {TAB} {tagaddress}
+
+这种格式只限于静态标签。现在已经废弃了，被第二种格式取而代之。只有 Elvis 1.x,
+旧版的 Vim 还有很少的 ctags 版本支持。静态变量用于本地函数，只有文件 {tagfile}
+才引用。注意 对静态变量而言，{tagfile} 的两次出现必须完全一致。关于如何使用静
+态变量，见下面的 |tags-option|。
+
+删除了此支持，因为你既然可以更新 Vim 版本，也应可以更新 ctags 以支持第二种格
+式。
 
 ==============================================================================
 6. 头文件搜索				*include-search* *definition-search*
@@ -596,90 +591,86 @@ C 程序。注意: Vim 并不试图识别 C 语法。如果 'include' 选项在 
 [i			显示第一个包含光标所在的关键字的行。搜索从文件开头开
 			始。看起来像注释的行被忽略 (见 'comments' 选项)。如果
 			给出一个计数，跳转到第 count 个匹配的行，注释行不忽
-			略。{Vi 无此功能}
+			略。
 
 							*]i*
 ]i			类似于 "[i"，但是从当前光标位置开始。
-			{Vi 无此功能}
 
 							*:is* *:isearch*
 :[range]is[earch][!] [count] [/]pattern[/]
 			类似于 "[i" 和 "]i"，但在 [range] 行范围搜索 (缺省: 整
 			个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 							*[I*
 [I			显示包含光标下的关键字的所有的行。找到的每行都显示文件
-			名和行号。搜索从文件头开始。{Vi 无此功能}
+			名和行号。搜索从文件头开始。
 
 							*]I*
 ]I			类似于 "[I"，但是从当前光标位置开始。
-			{Vi 无此功能}
 
 							*:il* *:ilist*
 :[range]il[ist][!] [/]pattern[/]
 			类似于 "[I" 和 "]I"，但在 [range] 行范围搜索 (缺省:
 			整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 							*[_CTRL-I*
 [ CTRL-I		跳转到第一个包含光标所在的关键字的行。搜索从文件开头开
 			始。看起来像注释的行被忽略 (见 'comments' 选项)。如果
 			给出一个计数，跳转到第 count 个匹配的行，注释行不忽
-			略。{Vi 无此功能}
+			略。
 
 
 							*]_CTRL-I*
 ] CTRL-I		类似于 "[ CTRL-I"，但是从当前光标位置开始。
-			{Vi 无此功能}
 
 							*:ij* *:ijump*
 :[range]ij[ump][!] [count] [/]pattern[/]
 			类似于 "[ CTRL-I"  和 "] CTRL-I"，但在 [range] 行范围
 			搜索 (缺省: 整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 CTRL-W CTRL-I					*CTRL-W_CTRL-I* *CTRL-W_i*
 CTRL-W i		打开一个新窗口，把光标放在第一个包含光标所在的关键字的
 			行。搜索从文件开头开始。看起来像注释的行被忽略 (见
 			'comments' 选项)。如果给出一个计数，跳转到第 count 个
-			匹配的行，注释行不忽略。 {Vi 无此功能}
+			匹配的行，注释行不忽略。
 
 
 							*:isp* *:isplit*
 :[range]isp[lit][!] [count] [/]pattern[/]
 			类似于 "CTRL-W i"  和 "CTRL-W i"，但在 [range] 行范围
 			搜索 (缺省: 整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 
 							*[d*
 [d			显示第一个包含光标所在的关键字的宏定义。搜索从文件头
 			开始。如果给出一个计数，跳转到第 count 个匹配的行。
-			{Vi 无此功能}
 
 
 							*]d*
-]d			类似于 "[d"，但是从当前光标位置开始。{Vi 无此功能}
+]d			类似于 "[d"，但是从当前光标位置开始。
 
 							*:ds* *:dsearch*
 :[range]ds[earch][!] [count] [/]string[/]
 			类似于 "[d"  和 "]d"，但在 [range] 行范围搜索 (缺省:
 			整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 							*[D*
 [D			显示包含光标下的宏的所有的宏定义。找到的每行都显示文件
-			名和行号。搜索从文件头开始。{Vi 无此功能}
+			名和行号。搜索从文件头开始。
 
 							*]D*
-]D			类似于 "[D"，但是从当前光标位置开始。{Vi 无此功能}
+]D			类似于 "[D"，但是从当前光标位置开始。
 
 							*:dli* *:dlist*
 :[range]dli[st][!] [/]string[/]
 			类似于 `[D` 和 `]D`，但在 [range] 行范围搜索 (缺省: 整
 			个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 			注意 `:dl` 功能等同带 "l" 标志位的 `:delete`，而不是
 			`:dlist`。
 
@@ -687,33 +678,32 @@ CTRL-W i		打开一个新窗口，把光标放在第一个包含光标所在的�
 							*[_CTRL-D*
 [ CTRL-D		跳转到第一个包含光标所在的关键字的宏定义。搜索从文件头
 			开始。如果给出一个计数，跳转到第 count 个匹配的行。
-			{Vi 无此功能}
 
 							*]_CTRL-D*
-] CTRL-D		类似于 "[ CTRL-D"，但是从当前光标开始。{Vi 无此功能}
+] CTRL-D		类似于 "[ CTRL-D"，但是从当前光标开始。
 
 							*:dj* *:djump*
 :[range]dj[ump][!] [count] [/]string[/]
 			类似于 "[ CTRL-D"  和 "] CTRL-D"，但是在 [range] 行范
 			围内搜索 (缺省: 整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|。
 
 
 CTRL-W CTRL-D					*CTRL-W_CTRL-D* *CTRL-W_d*
 CTRL-W d		打开一个新窗口，把光标放在第一个包含光标所在的关键字的
 			宏定义行。搜索从文件头开始。如果给出一个计数，跳转到第
-			count 个匹配的行。{Vi 无此功能}
+			count 个匹配的行。
 
 							*:dsp* *:dsplit*
 :[range]dsp[lit][!] [count] [/]string[/]
 			类似于 "CTRL-W d"，但是在 [range] 行范围内查找
 			(缺省: 整个文件)。
-			关于 [/] 和 [!] 见 |:search-args|。{Vi 无此功能}
+			关于 [/] 和 [!] 见 |:search-args|
 
-							*:che* *:checkpath*
-:che[ckpath]		列出所有找不到的头文件。{Vi 无此功能}
+					*:che* *:chec* *:check* *:checkpath*
+:che[ckpath]		列出所有找不到的头文件。
 
-:che[ckpath]!		列出所有的头文件。{Vi 无此功能}
+:che[ckpath]!		列出所有的头文件。
 
 								*:search-args*
 以上命令通用的参数:
@@ -734,5 +724,62 @@ CTRL-W d		打开一个新窗口，把光标放在第一个包含光标所在的�
 	:isearch /string/ | echo "the last one"
 <	对于 ":djump"、":dsplit"、":dlist" 和 ":dsearch" 命令，模式是按本义理
 	解的字符串，而不是搜索模式。
+
+==============================================================================
+7. 使用 'tagfunc'						*tag-function*
+
+可以给 Vim 提供函数，生成 |:tag|、|:tselect| 等命令和 |CTRL-]| 这样的普通模式
+标签命令所使用的标签列表。
+
+生成标签列表的函数通过设置 'tagfunc' 选项指定。此函数调用时带三个参数:
+   a:pattern	标签搜索时使用的标签标识符。
+   a:flags	控制函数行为的标志位列表。
+   a:info	包含以下项目的字典:
+		    buf_ffname	  可用于优先级的完整文件名。
+		    user_data	  如有，之前通过 tagfunc 存在标签栈里的定制数
+				  据字符串。
+
+目前可以给标签函数传递两个标志位:
+  'c'		函数是处理中的普通命令调用的
+		(助记: 标签函数可用光标附近的上下文 (context) 来更好地生成标签
+		列表。)
+  'i'		插入模式中，用户在补全标签 (用 |i_CTRL-X_CTRL-]|)。
+
+注意 设置 'tagfunc' 时，|tag-priority| 描述的标签优先级不适用。相反，优先级完
+全由函数返回的列表元素的顺序来决定。
+								*E987*
+函数应返回字典项目的列表。每个字典至少包含以下项，所有值都是字符串:
+	name		标签名。
+	filename	标签定义所在的文件名。可以是相对于当前目录的相对路径，
+			也可以是完整路径。
+	cmd		用于在文件中定位标签的 Ex 命令。可以是 Ex 搜索模式或是
+			行号。
+注意 格式和 |taglist()| 类似，这样可以使用后者的输出来生成结果。
+下列域是可选的:
+	kind		标签的类型。
+	user_data	存于标签栈中的定制数据，可用于区别不同操作间的标签。
+
+如果函数返回 |v:null| 而不是列表，执行标准的标签查找。
+
+在 'tagfunc' 内不允许改动标签栈。 *E986*
+
+下面是一个用于 'tagfunc' 函数的假想例。它使用 |taglist()| 的输出来生成结果: 按
+文件名的逆序生成标签列表。
+>
+	function! TagFunc(pattern, flags, info)
+	  function! CompareFilenames(item1, item2)
+	    let f1 = a:item1['filename']
+	    let f2 = a:item2['filename']
+	    return f1 >=# f2 ?
+			\ -1 : f1 <=# f2 ? 1 : 0
+	  endfunction
+
+	  let result = taglist(a:pattern)
+	  call sort(result, "CompareFilenames")
+
+	  return result
+	endfunc
+	set tagfunc=TagFunc
+<
 
  vim:tw=78:ts=8:noet:ft=help:norl:

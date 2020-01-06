@@ -1,4 +1,4 @@
-*term.txt*      For Vim version 8.1.  最近更新: 2019年12月
+*term.txt*      For Vim version 8.2.  最近更新: 2020年1月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -72,11 +72,15 @@ ALL_BUILTIN_TCAPS	++builtin_terms		全部
    endif
 <
 						*raw-terminal-mode*
-普通的编辑会把终端设为原始 ("raw") 模式。't_ti' 和 't_ks' 定义的字符串会送到终
-端上。正常情况下，这把终端设为一个状态，该状态下能合法给出 termcap 代码，并激
-活光标和功能键。Vim 退出终端时，它会回到 Vim 启动前的模式。't_te' 和 't_ke' 定
-义的字符串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂
-时置回普通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <BS> 时继续。
+普通的编辑会把终端设为原始 ("raw") 模式。't_ti'、't_TI' 和 't_ks' 定义的字符串
+会送到终端上。正常情况下，这把终端设为一个状态，该状态下能合法给出 termcap 代
+码，并激活光标和功能键。
+Vim 退出终端时，它会回到 Vim 启动前的模式。't_te'、't_TE' 和 't_ke' 定义的字符
+串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂时置回普
+通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <BS> 时继续。
+
+注意: 如果 't_ti' 非空，Vim 假定它会切换到轮换屏幕上。执行外壳命令或退出 Vim
+时产生的结果可能会因此稍有不同。如果不想如此，用 't_TI' 和 't_TE'。
 
 						*xterm-bracketed-paste*
 如果设置了 't_BE' 选项，进入 "raw" 模式时会发送 't_BE' 到终端，退出 "raw" 模式
@@ -202,8 +206,6 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 通过设置合适的选项，你总是可以调整个别字符串的值。例如: >
 	:set t_ce=^V^[[K	(CTRL-V，<Esc>，[，K)
 
-{Vi: 没有终端选项。你必须退出 Vi，修改 termcap 项，并重新打开}
-
 这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
 个 termcap 代码是必须的: 光标移动，'t_cm'。
 
@@ -279,11 +281,15 @@ Vim 增加的 (它们没有标准代码):
 	t_EI    结束插入或替换模式 (块形光标)			*t_EI* *'t_EI'*
 		|termcap-cursor-shape|
 	t_RV	请求终端版本字符串 (适用于 xterm)		*t_RV* *'t_RV'*
-		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
+		其响应存于 |v:termresponse|
+		|xterm-8bit| |'ttymouse'| |xterm-codes|
 	t_u7	请求光标位置 (适用于 xterm)			*t_u7* *'t_u7'*
 		见 |'ambiwidth'|
+		其响应存于 |v:term7resp|
 	t_RF	请求终端前景色					*t_RF* *'t_RF'*
+		其响应存于 |v:termfgresp|
 	t_RB	请求终端背景色 					*t_RB* *'t_RB'*
+		其响应存于 |v:termbgresp|
 	t_8f	设置终端前景色 (R, G, B)			*t_8f* *'t_8f'*
 		|xterm-true-color|
 	t_8b	设置终端背景色 (R, G, B)			*t_8b* *'t_8b'*
@@ -296,7 +302,15 @@ Vim 增加的 (它们没有标准代码):
 	t_EC	结束设置光标颜色				*t_EC* *'t_EC'*
 	t_SH	设置光标形状					*t_SH* *'t_SH'*
 	t_RC	请求终端光标闪烁				*t_RC* *'t_RC'*
+		其响应存于 |v:termblinkresp|
 	t_RS	请求终端光标风格				*t_RS* *'t_RS'*
+		其响应存于 |v:termstyleresp|
+	t_ST	在栈中保存窗口标题				*t_ST* *'t_ST'*
+	t_RT	从栈中恢复窗口标题				*t_RT* *'t_RT'*
+	t_Si	在栈中保存图标文本				*t_Si* *'t_Si'*
+	t_Ri	从栈中恢复图标文本				*t_Ri* *'t_Ri'*
+	t_TE	结束 "raw" 模式					*t_TE* *'t_TE'*
+	t_TI	让终端进入 "raw" 模式	 			*t_TI* *'t_TI'*
 
 有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
 本。
@@ -457,7 +471,7 @@ CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾�
 							*termcap-colors*
 关于颜色的 注意 事项: 't_Co' 选项告诉 Vim 可用的颜色数。如果非零，'t_AB' 和
 't_AF' 选项可以用来设置颜色。如果这些都不可用，就使用 't_Sb' 和 't_Sf'。't_me'
-用来复位到缺省的颜色设置。
+用来复位到缺省的颜色设置。另见 'termguicolors'。
 
 				*termcap-cursor-shape* *termcap-cursor-color*
 Vim 进入插入模式时，发送 't_SI' 转义序列。Vim 进入替换模式而 't_SR' 已设置时，
@@ -627,10 +641,19 @@ screen 优化终端 I/O 挺不错的。
 鼠标能否在可视模式或者选择模式下开始选择，决定于 "selectmode" 选项包不包括
 "mouse"。
 
+							*terminal-mouse*
 在 xterm 终端里，在 'mouse' 选项包含当前激活的模式的前提下，普通的鼠标键击归
 Vim 使用，而带 shift 或者 ctrl 键的鼠标键击由 xterm 控制。如果 'mouse' 不包括
 当前激活的模式，则所有的鼠标键击由 xterm 控制。
 
+对于自身不能通过修饰符来使用鼠标事件的终端，一个权宜之计是在 Vim 的命令模式中
+不使用鼠标事件: >
+	:set mouse=nvi
+然后在终端中选择文本，用 ":" 进入命令行模式，选择并复制文本到系统中，然后按
+Esc。
+
+另一个办法是临时地用 ":sh" 来运行外壳，复制文本，然后退出外壳。此时 'mouse' 仍
+应设为 "a"。
 							*xterm-clipboard*
 Athena 和 Motif GUI 版本上，如果在终端运行但是可以访问 X-server (设置了
 DISPLAY)，那么复制和粘贴和 GUI 上的行为相似。如果不是，那么鼠标中键会插入无名

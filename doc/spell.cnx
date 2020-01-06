@@ -1,4 +1,4 @@
-*spell.txt*	For Vim version 8.1.  最近更新: 2019年12月
+*spell.txt*	For Vim version 8.2.  最近更新: 2020年1月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -13,9 +13,7 @@
 3. 生成拼写文件			|spell-mkspell|
 4. 拼写文件格式			|spell-file-format|
 
-{Vi 无此功能}
-
-如果编译时没有加入 |+syntax| 特性，不能使用拼写检查。
+{仅当编译时加入 |+syntax| 特性才有效}
 
 备注: 另有一个 vimspell 插件。如果你安装了，通过 ":help vimspell" 可以了解它。
 不过你可能更想把这个插件删掉而用 'spell' 选项。后者更好。
@@ -91,7 +89,7 @@ zug			撤销 |zw| 和 |zg|，从 'spellfile' 里删除单词。计数的使
 
 zuW							*zuG* *zuW*
 zuG			撤销 |zW| 和 |zG|，从内部单词列表里删除单词。计数的使
-			用方法同 |zg| (译者注: ？)。
+			用方法同 |zg|。
 
 							*:spe* *:spellgood*
 :[count]spe[llgood] {word}
@@ -109,6 +107,21 @@ zuG			撤销 |zW| 和 |zG|，从内部单词列表里删除单词。计数的使
 
 :spellw[rong]! {word}	把 {word} 作为一个坏 (错误: wrong) 词加入到内部单词列
 			表。类似 |zW|。
+
+							*:spellra* *:spellrare*
+:[count]spellr[are] {word}
+			把 {word} 作为一个罕见词加入到 'spellfile'，类似
+			|zw|。如果没有计数，使用第一个名字项目，计数为 2 使用
+			第二个项目，等等。
+
+			没有普通模式命令来标记单词为罕见词，因为这是很不常用的
+			命令，而所有直观的命令已经被用掉了。如果你要，可以自动
+			增加映射，如: >
+		nnoremap z?  :exe ':spellrare  ' . expand('<cWORD>')<CR>
+		nnoremap z/  :exe ':spellrare! ' . expand('<cWORD>')<CR>
+<			|:spellundo|、|zuw| 或 |zuW| 可用来撤销此行为。
+
+:spellr[rare]! {word}	把 {word} 作为一个罕见词加入内部单词列表，类似 |zW|。
 
 :[count]spellu[ndo] {word}				*:spellu* *:spellundo*
 			类似于 |zuw|，[count] 的使用同 |:spellgood|。
@@ -266,25 +279,25 @@ Vim 在 'runtimepath' 里的 "spell" 子目录查找拼写文件。名字规则�
   名字。
 
 例如，如果设置如下:
-	'runtimepath' 是 "~/.vim,/usr/share/vim70,~/.vim/after"
+	'runtimepath' 是 "~/.vim,/usr/share/vim81,~/.vim/after"
 	'encoding'    是 "iso-8859-2"
 	'spelllang'   是 "pl"
 
 Vim 会寻找:
 1. ~/.vim/spell/pl.iso-8859-2.spl
-2. /usr/share/vim70/spell/pl.iso-8859-2.spl
+2. /usr/share/vim81/spell/pl.iso-8859-2.spl
 3. ~/.vim/spell/pl.iso-8859-2.add.spl
-4. /usr/share/vim70/spell/pl.iso-8859-2.add.spl
+4. /usr/share/vim81/spell/pl.iso-8859-2.add.spl
 5. ~/.vim/after/spell/pl.iso-8859-2.add.spl
 
 这里假设没找到 1 但找到了 2。
 
 如果 'encoding' 为 "latin1"，Vim 会寻找:
 1. ~/.vim/spell/pl.latin1.spl
-2. /usr/share/vim70/spell/pl.latin1.spl
+2. /usr/share/vim81/spell/pl.latin1.spl
 3. ~/.vim/after/spell/pl.latin1.spl
 4. ~/.vim/spell/pl.ascii.spl
-5. /usr/share/vim70/spell/pl.ascii.spl
+5. /usr/share/vim81/spell/pl.ascii.spl
 6. ~/.vim/after/spell/pl.ascii.spl
 
 这里假设以上文件都找不到 (如果去掉所有的非 ASCII 字符，波兰语无法阅读)。
@@ -1336,6 +1349,10 @@ CHECKCOMPOUNDREP  (Hunspell)			*spell-CHECKCOMPOUNDREP*
 CHECKCOMPOUNDTRIPLE  (Hunspell)			*spell-CHECKCOMPOUNDTRIPLE*
 		禁止复合时出现三个相同的字符。不支持。
 
+CHECKSHARPS  (Hunspell))			*spell-CHECKSHARPS*
+		大写 (德语) 单词中的 SS 字母对可以是大写的 sharp s (ß)。不支
+		持。
+
 COMPLEXPREFIXES  (Hunspell)				*spell-COMPLEXPREFIXES*
 		允许使用两个前缀。不支持。
 
@@ -1349,12 +1366,18 @@ COMPOUNDFIRST	(Hunspell)				*spell-COMPOUNDFIRST*
 		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
 
 COMPOUNDBEGIN	(Hunspell)				*spell-COMPOUNDBEGIN*
+		COMPOUNDBEGIN 签字的单词可能是复合词的起始元素。
+		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
+
+COMPOUNDLAST	(Hunspell)				*spell-COMPOUNDLAST*
+		COMPOUNDLAST 签字的单词可能是复合词的结尾元素。
 		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
 
 COMPOUNDEND	(Hunspell)				*spell-COMPOUNDEND*
-		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
+		大概和 COMPOUNDLAST 相同
 
 COMPOUNDMIDDLE	(Hunspell)				*spell-COMPOUNDMIDDLE*
+		COMPOUNDMIDDLE 签字的单词可能是复合词的中间元素。
 		用 COMPOUNDRULE 代替。|spell-COMPOUNDRULE|
 
 COMPOUNDRULES	(Hunspell)				*spell-COMPOUNDRULES*
