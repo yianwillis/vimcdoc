@@ -1,0 +1,310 @@
+*textprop.txt*	For Vim version 8.2.  最近更新: 2020年1月
+
+
+		  VIM 参考手册    by Bram Moolenaar
+				译者: Willis
+				https://github.com/yianwillis/vimcdoc
+
+
+显示带附属属性的文本。				*textprop* *text-properties*
+
+
+1. 介绍				|text-prop-intro|
+2. 函数				|text-prop-functions|
+3. 文本有改动时			|text-prop-changes|
+
+
+{仅当编译时加入 |textprop| 特性才可以使用文本属性}
+
+==============================================================================
+1. 介绍							*text-prop-intro*
+
+缓冲区中的文本可附属文本属性。可随着文本移动: 如果删除或插入了行，属性会随着附
+属的文本移动。在文本属性之前的行上插入/删除文本也是如此。如果插入/删除文本属性
+内的文本，文本属性会增加/减少长度。
+
+文本属性的主要用途是文本的高亮。可以看作是语法高亮的替代。它不定义匹配文本的模
+式，而是用脚本来设置高亮，可能使用了外部解析器的输出。这只需要做一次，而不是每
+次重画屏幕的时候，所以会快许多，而付出的是附属文本属性的最初代价。
+
+文本属性也可用于其它识别文本的目的。例如，给函数名加上文本属性，这样就可以定义
+跳转到下个/上个函数的搜索了。
+
+文本属性附属在指定的行和列上，有指定的长度。属性可以跨多行。
+
+文本属性有以下字段:
+	"id"		按你喜欢所使用的数值
+	"type"		属性类型名
+
+
+属性类型 ~
+							*E971*
+文本属性通常有属性类型名，定义如何高亮文本。属性类型可有以下项目:
+	"highlight"	使用的高亮组名
+	"combine"	省略或 TRUE 时，文本属性高亮和任何语法高亮合并；FALSE
+			时文本属性高亮替代语法高亮
+	"priority"	属性有重叠昌，使用最高优先级的那个。
+	"start_incl"	TRUE 时在起始位置的插入会包含在文本属性内
+	"end_incl"    	TRUE 时在结束位置的插入会包含在文本属性内
+
+
+示例 ~
+
+假定缓冲区第 11 行有以下文本 (除了缩进外):
+
+	The number 123 is smaller than 4567.
+
+要高亮此文本的数值: >
+	call prop_type_add('number', {'highlight': 'Constant'})
+	call prop_add(11, 12, {'length': 3, 'type': 'number'})
+	call prop_add(11, 32, {'length': 4, 'type': 'number'})
+
+试试在文本上方插入或删除行，你会看到文本属性和文本捆绑，所以会按需调整行号。
+
+设置 "start_incl" 和 "end_incl" 可用于空白围绕文本，比如函数名的场合。为假时可
+用于文本以特定字符开始和/或结束，比如引号包围字符串的场合。
+
+	func FuncName(arg) ~
+	     ^^^^^^^^        置位 start_incl 和 end_incl 的属性
+
+	var = "text"; ~
+	      ^^^^^^	     复位 start_incl 和 end_incl 的属性
+
+不过，插入或删除文本时，可能需要解析文本并更新文本属性。但这会异步进行。
+
+
+内部错误 *E967*
+
+如果你看到 E967，请报告此漏洞。可以通过 Github:
+https://github.com/vim/vim/issues/new
+
+==============================================================================
+2. 函数							*text-prop-functions*
+
+操作文本属性类型:
+
+prop_type_add({name}, {props})		定义新的属性类型
+prop_type_change({name}, {props})	改变已有的属性类型
+prop_type_delete({name} [, {props}])	删除属性类型
+prop_type_get([{name} [, {props}])	获取属性类型值
+prop_type_list([{props}])		获取属性类型的列表
+
+
+操作文本属性:
+
+prop_add({lnum}, {col}, {props})  	新增文本属性
+prop_clear({lnum} [, {lnum-end} [, {bufnr}]])
+					删除所有文本属性
+prop_find({props} [, {direction}])	搜索文本属性
+prop_list({lnum} [, {props})  		{lnum} 中的文本属性
+prop_remove({props} [, {lnum} [, {lnum-end}]])
+					删除一个文本属性
+
+						*prop_add()* *E965*
+prop_add({lnum}, {col}, {props})
+		在位置 {lnum}，{col} 上附属文本属性。{col} 以字节计算，首列为
+		一。
+		{lnum} 如果非法，报错。 *E966*
+		{col} 如果非法，报错。 *E964*
+
+		{props} 是带以下域的字典:
+		   length	以字节计的文本长度，只能用于不在另一行继续的属
+				性；可为零
+		   end_lnum	文本结尾的行号
+		   end_col	文本刚刚结束之后的列；如果 "length" 存在则不
+				用；如果 {col} 和 "end_col" 相等，且
+				"end_lnum" 省略或等于 {lnum}，这是个零宽度的文
+				本属性
+		   bufnr	加入属性的缓冲区；省略是使用当前缓冲区
+		   id		用户定义的属性 ID；省略时使用零
+		   type		文本属性类型名
+		除 "type" 外，所有域均是可选的。
+
+		同时提供 "length" 和 "end_lnum" 或 "end_col" 是错误。要么用
+		"length" 或 "end_col" 用于单行的属性，或者用 "end_lnum" 和
+		"end_col" 用于跨多行的属性。
+		如果不给 "length" 也不给 "end_col"，属性为零宽度。这意味着它不
+		会高亮，但会随着文本移动，就像位置标记一样。
+		属性可以正好在文本的最后字符上结束，也可以在它之后结束。后者如
+		果在行上附加文本，文本属性会跟着变长，属性类型不置位
+		"end_incl" 时也是如此。
+
+		先在加入属性的缓冲区中寻找 "type"。如果找不到，再使用全局属性
+		类型。还找不到的话会报错。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetLnum()->prop_add(col, props)
+
+
+prop_clear({lnum} [, {lnum-end} [, {props}]])		*prop_clear()*
+		删除所有行 {lnum} 上的文本属性。
+		如果给出 {lnum-end}，删除从行 {lnum} 到 {lnum-end} (闭区间) 所
+		有的文本属性。
+
+		如果 {props} 包含 "bufnr" 项目，使用此缓冲区，否则使用当前缓冲
+		区。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetLnum()->prop_clear()
+<
+							*prop_find()*
+prop_find({props} [, {direction}])
+		{尚未实现}
+		搜索 {props} 指定的文本属性:
+		   id		带此 ID 的属性
+		   type		带此类型名的属性
+		   bufnr	在其中搜索的缓冲区；如果给出必须用 "lnum" 和
+		   		"col" 指定开始位置；如果省略使用当前缓冲区
+		   lnum		从此行开始 (省略时从光标所在行开始)
+		   col		从此列开始 (省略且给出 "lnum" 时: 使用列 1，否
+				则从光标开始)
+		   skipstart	不寻找开始位置所在的匹配
+
+		{direction} 可以是 "f" 用于正向，"b" 用于反向。如果省略执行正
+		向搜索。
+
+		如果找到匹配，返回字典，其项和 prop_list() 相同，另有 "lnum"
+		项。如果没找到匹配，返回空字典。
+
+		文本属性的相关信息可见 |text-properties|。
+
+
+prop_list({lnum} [, {props}])				*prop_list()*
+		返回行 {lnum} 上的所有文本属性的列表。
+
+		如果 {props} 包含 "bufnr" 项目，使用此缓冲区，否则使用当前缓冲
+		区。
+
+		属性以开始列和优先级排序。每个属性是带下列项的字典:
+		   col		开始列
+		   length	以字节计的长度，如果包含换行符加一
+		   id		属性 ID
+		   type		属性类型名，如果类型已删除则省略
+		   start	为 TRUE 时属性从这行开始
+		   end		为 TRUE 时属性在这行结束
+
+		如果 "start" 为零，属性从前面行开始，本行是继续行。
+		如果 "end" 为零，属性从下面行继续。包含此行之后的换行符。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetLnum()->prop_list()
+<
+						*prop_remove()* *E968*
+prop_remove({props} [, {lnum} [, {lnum-end}]])
+		删除 {lnum} 上的匹配文本属性。如果给出 {lnum-end}，删除从行
+		{lnum} 到 {lnum-end} (闭区间) 所有匹配的文本属性。
+
+		{props} 是包含下列域的字典:
+		   id		删除带此 ID 的文本属性
+		   type		删除带此类型名的文本属性
+		   bufnr	使用此缓冲区而非当前缓冲区
+		   all		为 TRUE 时删除所有的匹配文本属性，而不仅是头一
+				个
+		"id" 或 "type" 之一匹配则属性匹配。
+		如果缓冲区 "bufnr" 不存在会报错。
+		如果缓冲区 "bufnr" 未载入，什么都不会发生。
+
+		返回删除的属性个数。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetProps()->prop_remove()
+
+
+prop_type_add({name}, {props})		*prop_type_add()* *E969* *E970*
+		新增文本属性类型 {name}。如果带此名的属性类型已存在则报错。不
+		返回任何值。
+		{props} 是包含下面可选域的字典:
+		   bufnr	只为此缓冲区定义属性；它避免了名字冲突，而且缓
+				冲区删除时自动清除所有的属性类型。
+		   highlight	使用的高亮组名
+		   priority	当一个字符有多个文本属性时使用最高优先级的属
+		   		性；可用负值，缺省优先级为零
+		   combine	为 TRUE 时和任何语法高亮合并；省略或为 FALSE
+				时，不使用语法高亮
+		   start_incl	TRUE 时在起始位置的插入会包含在文本属性内
+		   end_incl	TRUE 时在结束位置的插入会包含在文本属性内
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetPropName()->prop_type_add(props)
+
+prop_type_change({name}, {props})			*prop_type_change()*
+		修改已有的文本属性类型的属性。如果带此名的属性不存在则报错。
+		{props} 参数可见 |prop_type_add()|。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetPropName()->prop_type_change(props)
+
+prop_type_delete({name} [, {props}])			*prop_type_delete()*
+		删除文本属性类型 {name}。如果带类型 {name} 的文本属性还在使用
+		中，它们不再有效，而且也不能依名字删除。
+
+		{props} 可以包含 "bufnr" 项目。如果给出，删除来自此缓冲区的属
+		性类型而不是全局属性类型。
+
+		如果找不到文本属性类型 {name}，不报错。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetPropName()->prop_type_delete()
+
+prop_type_get([{name} [, {props}])			*prop_type_get()*
+		返回属性类型 {name} 的属性。这是带和 prop_type_add() 给出的相
+		同域的字典。
+		如果属性类型 {name} 不存在，返回空字典。
+
+		{props} 可以包含 "bufnr" 项目。如果给出，使用来自此缓冲区的属
+		性类型而不是全局属性类型。
+
+		文本属性的相关信息可见 |text-properties|。
+
+		也可用作 |method|: >
+			GetPropName()->prop_type_get()
+
+prop_type_list([{props}])				*prop_type_list()*
+		返回掺属性类型名的列表。
+
+		{props} 可以包含 "bufnr" 项目。如果给出，使用来自此缓冲区的属
+		性类型而不是全局属性类型。
+
+		文本属性的相关信息可见 |text-properties|。
+
+
+==============================================================================
+3. 文本有改动时					*text-prop-changes*
+
+Vim 会尽力保持文本属性在原先附属的文本上。插入或删除文本后，属性会相应地移动。
+
+当文本删除后导致文本属性不再包含任何文本，会删除文本属性。不过，定义时就是零宽
+度的文本属性会保留，除非整行都被删除。
+								*E275*
+卸载缓冲区时，所有的文本属性都消失了。没有办法把属性保存在文件里。你可以重建它
+们。缓冲区隐藏时，保留文本所以也保留文本属性。不可以给卸载的缓冲区增加文本属
+性。
+
+使用替换模式时，在相同的字符位置上保留文本属性，虽然字符本身发生了改变。
+
+要在文本有改动后更新文本属性，用 `listener_add()` 安装回调。例如，如果你的插件
+进行拼写检查，可以用回调为改动过的文本更新拼写错误。Vim 会移动改动文本下方的属
+性，这样它们还能高亮相同的文本，你不需要自己去更新。
+
+
+不更新文本属性列: ~
+
+- 通过 |setline()| 或 Lua、Tcl 或 Python 等界面设置行时，Vim 不知道插入或删除
+  的是什么文本。
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
