@@ -243,8 +243,9 @@ EOF
 			}
 
 			$_ = esctext($token);
-			# keystroke
-			s/CTRL-(\w+|[^{])/<code class="keystroke">CTRL-$1<\/code>/g;
+			# keystroke; skip CTRL-{xyz} and CTRL-<xyz>, note that
+			# < has been escaped so &lt; is actually seen here.
+			s/CTRL-(\w+|[^{&])/<code class="keystroke">CTRL-$1<\/code>/g;
 
 			# parameter '...'
 			s/'(\w{2,}|t_..)'/maplink($&)/ge;
