@@ -16,11 +16,11 @@ https://github.com/yianwillis/vimcdoc/releases 提供发布版本的下载。
 
 * PDF 用户手册和参考手册
 * tar.gz 包
-* Win32 GB2312 版本和 UTF8 版本的中文自动安装程序
+* Win32 UTF8 版本的中文自动安装程序
 
 # 安装
 
-## Vim 8.0 自带软件包支持
+## Vim 8.0 及更高版本自带软件包支持
 
 ```shell
 $ mkdir -p ~/.vim/pack/foo/start
@@ -35,7 +35,17 @@ $ git clone git://github.com/yianwillis/vimcdoc.git
 当然，如果不想用 git，也可用解压下载的 tar.gz 包到 `~/.vim/pack/foo/start`。git
 方式的好处可以随时进行更新。
 
-## Vundle
+## [vim-plug](https://github.com/junegunn/vim-plug)
+
+.vimrc 中加入:
+
+```
+Plug 'yianwillis/vimcdoc'
+```
+
+重启 Vim 后执行命令 `:PlugInstall`。
+
+## [Vundle](https://github.com/VundleVim/Vundle.vim)
 
 .vimrc 中加入：
 
@@ -45,7 +55,7 @@ Plugin "yianwillis/vimcdoc"
 
 重启 Vim 后执行 `:PluginInstall`。
 
-## NeoBundle
+## [NeoBundle](https://github.com/Shougo/neobundle.vim)
 
 .vimrc 中加入：
 
@@ -55,7 +65,7 @@ NeoBundle 'yianwillis/vimcdoc"
 
 重启 Vim 后执行命令 `:NeoBundleInstall`。
 
-## Pathogen
+## [Pathogen](https://github.com/tpope/vim-pathogen)
 
 ```shell
 $ cd ~/.vim/bundle
@@ -63,16 +73,6 @@ $ git clone git://github.com/yianwillis/vimcdoc.git
 ```
 
 重启 Vim。
-
-## vim-plug
-
-.vimrc 中加入:
-
-```
-Plug 'yianwillis/vimcdoc'
-```
-
-重启 Vim 后执行命令 `:PlugInstall`。
 
 ## Linux 程序安装
 
