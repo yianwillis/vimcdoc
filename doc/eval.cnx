@@ -3595,14 +3595,14 @@ executable({expr})					*executable()*
 		是程序不带任何参数的名字。
 		executable() 使用 $PATH 的值和/或程序的普通的搜索路径。
 							*PATHEXT*
-		MS-DOS 和 MS-Windows 上，可以可选地包含 ".exe"、".bat" 等。为
-		此，$PATHEXT 里的扩展名会被尝试。这样，如果 "foo.exe" 不存在，
-		可能会找到 "foo.exe.bat"。如果没有设置 $PATHEXT，使用的是
+		MS-Windows 上，可以可选地包含 ".exe"、".bat" 等。为此，
+		$PATHEXT 里的扩展名会被尝试。这样，如果 "foo.exe" 不存在，可能
+		会找到 "foo.exe.bat"。如果没有设置 $PATHEXT，使用的是
 		".exe;.com;.bat;.cmd"。$PATHEXT 里可以使用单独的句号，以尝试没
 		有扩展名的名字。如果 'shell' 看起来像 Unix 外壳，那么也尝试没
 		有扩展名的名字。
-		MS-DOS 和 MS-Windows 上，只检查是否文件存在且不是目录，并不检
-		查它是否真的可以执行。
+		MS-Windows 上，只检查是否文件存在且不是目录，并不检查它是否真
+		的可以执行。
 		MS-Windows 上，和 Vim 在同一目录的可执行文件总能找到。因为这个
 		目录加到了 $PATH 里，执行应该也没有问题 |win32-PATH|。
 		返回数值:
@@ -4506,6 +4506,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		command		Ex 命令 (及参数)
 		compiler	编译器
 		cscope		|:cscope| 子选项
+		diff_buffer     |:diffget| 和 |:diffput| 补全
 		dir		目录名
 		environment	环境变量名
 		event		自动命令事件
@@ -4776,7 +4777,7 @@ getmousepos()						*getmousepos()*
 
 							*getpid()*
 getpid()	返回数值，即 Vim 进程的进程号。Unix 和 MS-Windows 上这是个唯一
-		的数值，直到 Vim 退出为止。MS-DOS 上该值总为零。
+		的数值，直到 Vim 退出为止。
 
 							*getpos()*
 getpos({expr})	得到 {expr} 的位置。可用的 {expr} 的值见 |line()|。要得到光标
@@ -7686,10 +7687,16 @@ settagstack({nr}, {dict} [, {action}])			*settagstack()*
 		用 {dict} 修改窗口 {nr} 标签栈。
 		{nr} 可以是窗口号或 |window-ID|。
 
-		要得到 {dict} 支持的项目的列表，可参考 |gettagstack()|。
+		要查阅 {dict} 支持项的列表，可参考 |gettagstack()|。
+		"curidx" 在标签栈修改之前生效。
 							*E962*
-		如果 {action} 没给出或是 'r'，标签栈被替换。如果 {action} 是
-		'a'，则 {dict} 中的新项被压进标签栈里。
+		标签栈如何修改取决于 {action} 参数:
+		- 如果 {action} 没给出或是 'r'，标签栈被替换。
+		- 如果 {action} 是 'a'，则 {dict} 中的新项被压进标签栈里。
+		- 如果 {action} 是 't'，删除标签栈的当前项或 {dict} 中的
+		  "curidx" 项里面的所有项目，然后把新项压进标签栈里。
+
+		当前索引设为修改之后的标签栈的长度之后的那项。
 
 		成功时返回零，失败则返回 -1。
 
@@ -9088,6 +9095,12 @@ winbufnr({nr})	返回数值，即窗口 {nr} 相关联的缓冲区号。{nr} 可
 wincol()	返回数值，窗口光标的虚拟列。亦即从窗口左侧起算的屏幕列数。最左
 		列为第一列。
 
+							*windowsversion()*
+windowsversion()
+		返回字符串。MS-Windows 上指示 OS 版本。例如，Windows 10 是
+		"10.0"。Windows 8 是 "6.2"，Windows XP 是 "5.1"。非 MS-Windows
+		系统上返回空串。
+
 winheight({nr})						*winheight()*
 		返回数值，窗口 {nr} 的高度。
 		{nr} 可以是窗口号或 |window-ID|。
@@ -9351,8 +9364,7 @@ file_in_path		编译时加入了 |gf| 和 |<cfile>| 的支持。
 filterpipe		'shelltemp' 关闭时，外壳读/写/过滤命令使用管道
 find_in_path		编译时加入了头文件搜索 |+find_in_path| 的支持。
 float			编译时加入了 |Float| 的支持。
-fname_case		文件名大小写敏感 (在 Amiga、MS-DOS 和 Windows 本特性不
-			存在)。
+fname_case		文件名大小写敏感 (在 Amiga 和 Windows 本特性不存在)。
 folding			编译时加入了 |folding| 的支持。
 footer			编译时加入了 GUI 信息页脚的支持。|gui-footer|
 fork			编译时决定使用 fork()/exec() 而不是 system()。
