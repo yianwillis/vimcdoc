@@ -36,47 +36,46 @@ GUI 和非 GUI 版本在 Vim 的 X11 版本上都可以运行。见 |gui-x11-sta
 
 			*gui-init* *gvimrc* *.gvimrc* *_gvimrc* *$MYGVIMRC*
 gvimrc 文件是 GUI 专用的启动命令应该放置的地方。它总在 |vimrc| 文件之后执行。
-如果你有这样的文件，$MYGVIMRC 环境变量保存它的名字。
+如果你有此文件，$MYGVIMRC 环境变量会保存其文件名。
 
-当 GUI 开始时，开展以下初始化操作 (按照给出的顺序):
+GUI 启动时，开展以下初始化操作 (按照给出的顺序):
 - 'term' 选项设为 "builtin_gui"，复位终端选项到其 GUI 的缺省值
   |terminal-options|。
-- 如果存在系统菜单文件，执行之。该文件名通常是 "$VIMRUNTIME/menu.vim"。你需要
-  用 ":version" 检查这一点。另见 |$VIMRUNTIME|。要跳过菜单载入，在
-  'guioptions' 里加入 'M'。		*buffers-menu* *no_buffers_menu*
-  系统菜单文件包含 "Buffers" 菜单。如果你不需要，在你的 .vimrc (不是
-  .gvimrc！) 里，设置 "no_buffers_menu" 变量: >
+- 如果存在系统菜单文件，执行之。该文件名通常是 "$VIMRUNTIME/menu.vim"，可用
+  ":version" 检查。另见 |$VIMRUNTIME|。要跳过菜单载入，在 'guioptions' 里加入
+  'M'。					*buffers-menu* *no_buffers_menu*
+  系统菜单文件包含 "Buffers" 菜单。如果不需要，在 .vimrc (不是 .gvimrc！) 里，
+  置位 "no_buffers_menu" 变量: >
 	:let no_buffers_menu = 1
-< 注意: 切换语法高亮也会载入菜单文件，因此屏蔽 Buffers 菜单必须在 ":syntax on"
-  之前。
-  路径名被截短到 35 个字符。你可以截短到不同的长度，例如 50:
+< 备注: 打开语法高亮也会载入菜单文件，因此 Buffers 菜单的屏蔽须在 ":syntax on"
+  之前。菜单上路径名被截短到 35 个字符。你可以这样截短它们到其它长度，如 50:
 	:let bmenu_max_pathlen = 50
-- 如果启动 Vim 时 使用 "-U {gvimrc}" 命令行选项，初始化过程会读入 {gvimrc} 文
-  件。以下的步骤被跳过。如果 {gvimrc} 为 "NONE"，初始化过程不读入任何文件。
+- 启动 Vim 时如果用了 "-U {gvimrc}" 命令行选项，初始化过程会读入该 {gvimrc} 文
+  件并跳过以下步骤。如果 {gvimrc} 为 "NONE"，初始化过程不读入任何文件。
 - 对 Unix 和 MS-Windows 而言，如果系统 gvimrc 存在，执行之。该文件的名字通常是
-  "$VIM/gvimrc"。你可以用 ":version" 检查这一点。另见 |$VIM|。
-- 尝试以下步骤，只使用第一个可用的:
-  - 如果 GVIMINIT 环境变量存在而且非空，把它作为 Ex 命令执行之。
-  - 如果用户 gvimrc 文件存在，执行之。该文件的名字通常是 "$HOME/.gvimrc"。用
-    ":version" 检查之。
-  - 对 Win32 而言，需要时 Vim 会设置 $HOME，见 |$HOME-windows|。
-  - 如果 "_gvimrc" 文件没找到，尝试 ".gvimrc"。反之亦然。
-  第一个找到的文件名保存在 $MYGVIMRC 里，除非后者已经被设置。
+  "$VIM/gvimrc"，可用 ":version" 检查。另见 |$VIM|。
+- 尝试以下位置，只使用其中第一个可用的:
+  - GVIMINIT 环境变量存在而且非空时，把它作为 Ex 命令执行之。
+  - 用户 gvimrc 文件存在时，执行之。该文件的名字通常是 "$HOME/.gvimrc"，可用
+    ":version" 检查。
+  - 对 Win32 而言，必要时 Vim 会设置 $HOME，见 |$HOME-windows|。
+  - 如果没找到 "_gvimrc" 文件，尝试 ".gvimrc"。反之亦然。
+  保存第一个找到的文件名到 $MYGVIMRC，除非已经被设置。
 - 如果置位 'exrc' 选项 (缺省_并非_如此)，执行文件 ./.gvimrc。如果该文件不属于
-  你，有一些安全的限制。如果 ".gvimrc" 找不到，尝试 "_gvimrc"。Macintosh 和
-  DOS/Win32 环境下先尝试 "_gvimrc"。
+  你，会有一些安全的限制。如果没找到 ".gvimrc"，尝试 "_gvimrc"。Macintosh 和
+  DOS/Win32 环境会先尝试 "_gvimrc"。
 
 注意: 如果 Vim 启动时使用 "-u NONE" 或 "-u DEFAULTS" 而且没有给出 "-U" 参数，
 或者使用 "-U NONE"，则除了第一步以外，都不执行。
 
-这些步骤都在普通 Vim 初始化之_后_执行，比如读取 .vimrc 文件。见
+以上这些，都在通用 Vim 初始化，比如读取 .vimrc 文件，的步骤之_后_执行。参见
 |initialization|。
-GUI 窗口只在全部的初始化执行完毕后才会打开。如果你希望在打开 GUI 窗口后执行某
-些命令，使用 |GUIEnter| 自动事件。例如: >
+但 GUI 窗口只有在全部初始化执行完毕后才会打开。如果你希望在打开 GUI 窗口后执行
+某些命令，使用 |GUIEnter| 自动事件。例如: >
 	:autocmd GUIEnter * winpos 100 50
 
-你可以使用 gvimrc 文件设置你自己定制的菜单 (见 |:menu|)，并初始化其它你希望和
-终端版本不同的设置。
+可用 gvimrc 文件设置定制菜单 (见 |:menu|)，并初始化其它和终端版本不同的个人设
+置。
 
 建议你把自己的 GUI 初始化部分放在:
 	Unix		    $HOME/.gvimrc 或 $HOME/.vim/gvimrc
@@ -85,13 +84,13 @@ GUI 窗口只在全部的初始化执行完毕后才会打开。如果你希望�
 	Amiga		    s:.gvimrc、home:.gvimrc、home:vimfiles:gvimrc 或
 			    $VIM/.gvimrc
 
-按上述的顺序依次查找个人化的初始文件，只读入第一个找到的文件。
+个人化初始文件会按上述的顺序依次找寻，且只读入其中第一个找到的文件。
 
 若干选项只有在 GUI 版本的 Vim 里才有意义。它们是 'guicursor'、'guifont'、
-'guipty' 和 'guioptions'。和其它选项一样，他们的文档在 |options.txt|。
+'guipty' 和 'guioptions'。和其它选项一样，文档可见 |options.txt|。
 
 如果使用 Motif 或者 Athena 版本的 GUI (不适用于 GTK+ 或 Win32 版本)，可以使用
-一些 X 资源。见 |gui-resources|。
+若干 X 资源。见 |gui-resources|。
 
 另外一个在不同场合下设置颜色的方法是使用高亮组。"Normal" 组用来设置背景和前景
 色。示例 (看上去很悦目): >
@@ -101,11 +100,10 @@ GUI 窗口只在全部的初始化执行完毕后才会打开。如果你希望�
 "guibg" 和 "guifg" 设置覆盖正常的背景和前景设置。其它 Normal 高亮组的设置都没
 有用到。使用 "guifont" 选项设置字体。
 
-要设置光标在不同模式下的颜色，也请查看 'guicursor' 选项。
+要设置在不同模式下的光标颜色，也请查看 'guicursor' 选项。
 
-Vim 试图在启动时使窗口在屏幕上的大小合适，以免部分内容不可见。在 X 窗口系统
-下，这需要一些猜测。使用 'guiheadroom' 选项，你可以改变窗口标题和任务栏的高
-度。
+启动时 Vim 试图使窗口在屏幕上的大小合适，以免部分内容不可见。在 X 窗口系统下，
+这需要一些推测。你可以用 'guiheadroom' 选项来改变窗口标题和任务栏的高度。
 
 						*:winp* *:winpos* *E188*
 :winp[os]
