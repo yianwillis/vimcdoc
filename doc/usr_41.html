@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>usr_41</h2>
 <pre>
-<b class="vimtag"> <a name="usr_41.txt">usr_41.txt</a> </b>    For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="usr_41.txt">usr_41.txt</a> </b>    For Vim version 8.2.  最近更新: 2020年1月
 
                      <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
                      <code class="vim">译者</code>: lang2、Willis http://vimcdoc.sf.net
@@ -113,18 +113,19 @@ Vim 脚本语言在很多地方用到，包括 vimrc 文件，语法文件，等
 这些链接。
 
 
-三 种 数 值
+四 种 数 值
 
-数值可以是十进制，十六进制，或者八进制的。以 "0x" 或 "0X" 开始的数值是十六进制
-的。例如 "0x1f" 代表十进制 31。以零开始的数值是八进制的。"017" 代表十进制 15。
-当心: 不要在十进制数前添上零，那样该数值将会被作为八进制数对待！
+数值可以是十进制，十六进制，八进制或者二进制的。以 "0x" 或 "0X" 开始的数值是十
+六进制的。例如 "0x1f" 代表十进制 31。以零开始的数值是八进制的。"017" 代表十进
+制 15。以 "0b" 或 "0B" 开始的数值是二进制的。例如 "0b101" 代表十进制 5。当心:
+不要在十进制数前添上零，那样该数值将会被作为八进制数对待！
    ":echo" 命令总以十进制格式显示数值。例: 
 <code class="example"></code>
 <code class="example">        :echo 0x7f 036</code>
 <code class="section">        127 30 </code>
 
-在一个数值前加上减号会将其变为负值。十六进制数和八进制数亦然。减号也用于减法操
-作。将下例与前面的比较: 
+在一个数值前加上减号会将其变为负值。十六进制数、八进制数和二进制数亦然。减号也
+用于减法操作。将下例与前面的比较: 
 <code class="example"></code>
 <code class="example">        :echo 0x7f -036</code>
 <code class="section">        97 </code>
@@ -529,8 +530,10 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 个以字母顺序排列的列表。在函数名上使用 <code class="keystroke">CTRL-]</code> 可以跳转至该函数的详细说明。
 
 字符串操作:                                             <b class="vimtag"> <a name="string-functions">string-functions</a> </b>
-        nr2char()               通过 ASCII 码值取得一个字符
-        char2nr()               取得字符的 ASCII 码值
+        nr2char()               通过数值码值取得一个字符
+        list2str()              从数值列表取得字符字符串
+        char2nr()               取得字符的数值码值
+        str2list()              从字符串取得数值列表
         str2nr()                把字符串转换为数值
         str2float()             把字符串转换为浮点数
         printf()                根据 % 项目格式化字符串
@@ -558,12 +561,15 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         strcharpart()           用字符索引获取字符串的子串
         strgetchar()            用字符索引获取字符串里的字符
         expand()                展开特殊的关键字
+        expandcmd()             像  <a href="editing.html#:edit">:edit</a>  那样扩展命令
         iconv()                 转换文本编码格式
         byteidx()               字符串里字符的字节位置
-        byteidxcomp()           类似于 byteidx()，但计算合成用字符
+        byteidxcomp()           类似于 byteidx()，但计算组合字符
         repeat()                重复字符串多次
         eval()                  计算字符串表达式
         execute()               执行 Ex 命令并获取输出
+        win_execute()           类似于 execute()，但用于指定窗口
+        trim()                  从字符串中删除字符
 
 列表处理:                                               <b class="vimtag"> <a name="list-functions">list-functions</a> </b>
         get()                   得到项目，错误索引不报错
@@ -666,14 +672,17 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         cursor()                置光标于 行／列 处
         screencol()             得到光标的屏幕列
         screenrow()             得到光标的屏幕行
+        screenpos()             文本字符的屏幕行与列
         getcurpos()             得到光标位置
         getpos()                得到光标、位置标记等的位置
         setpos()                设置光标、位置标记等的位置
         byte2line()             取得某字节位置所在行号
         line2byte()             取得某行之前的字节数
         diff_filler()           得到一行之上的填充行数目
-        screenattr()            得到屏蔽行的属性
-        screenchar()            得到屏蔽行的字符代码
+        screenattr()            得到屏幕行的属性
+        screenchar()            得到屏幕行的字符代码
+        screenchars()           得到屏幕行的多个字符代码
+        screenstring()          得到屏幕行的字符字符串
 
 操作当前缓冲区的文本:                                   <b class="vimtag"> <a name="text-functions">text-functions</a> </b>
         getline()               从缓冲区中取一行
@@ -691,6 +700,12 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         searchdecl()            查找名字的声明
         getcharsearch()         返回字符搜索信息
         setcharsearch()         设置字符搜索信息
+
+操作另一个缓冲区文本:
+        getbufline()            取得指定缓冲区的行列表
+        setbufline()            替换指定缓冲区的一行
+        appendbufline()         给指定缓冲区附加行列表
+        deletebufline()         从指定缓冲区中删除多行
 
                                         <b class="vimtag"> <a name="system-functions">system-functions</a> </b> <b class="vimtag"> <a name="file-functions">file-functions</a> </b>
 系统调用及文件操作:
@@ -713,21 +728,27 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         isdirectory()           检查一个目录是否存在
         getfsize()              取得文件大小
         getcwd()                取得当前工作路径
-        haslocaldir()           检查当前窗口是否使用过  <a href="editing.html#:lcd">:lcd</a> 
+        haslocaldir()           检查当前窗口是否使用过  <a href="editing.html#:lcd">:lcd</a>  或  <a href="editing.html#:tcd">:tcd</a> 
         tempname()              取得一个临时文件的名称
         mkdir()                 建立新目录
+        chdir()                 改变当前目录
         delete()                删除文件
         rename()                重命名文件
         system()                得到字符串形式的外壳命令结果
         systemlist()            得到列表形式的外壳命令结果
+        environ()               得到所有环境变量
+        getenv()                得到一个环境变量
+        setenv()                设置一个环境变量
         hostname()              系统的名称
         readfile()              读入文件到一个行列表
-        writefile()             把一个行列表写到文件里
+        readdir()               从目录得到文件名的列表
+        writefile()             把一个行列表或 blob 写到文件里
 
 日期和时间:                             <b class="vimtag"> <a name="date-functions">date-functions</a> </b> <b class="vimtag"> <a name="time-functions">time-functions</a> </b>
         getftime()              得到文件的最近修改时间
         localtime()             得到以秒计的当前时间
         strftime()              把时间转换为字符串
+        strptime()              把日期/时间字符串转换为时间
         reltime()               得到准确的当前或者已经经过的时间
         reltimestr()            把 reltime() 的结果转换为字符串
         reltimefloat()          把 reltime() 的结果转换为浮点数
@@ -738,8 +759,10 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         argidx()                参数列表中的当前位置
         arglistid()             得到参数列表的编号
         argv()                  从参数列表中取得一项
+        bufadd()                给缓冲区列表增加文件
         bufexists()             检查缓冲区是否存在
         buflisted()             检查缓冲区是否存在并在列表内
+        bufload()               确保缓冲区已加载
         bufloaded()             检查缓冲区是否存在并已加载
         bufname()               取得某缓冲区名
         bufnr()                 取得某缓冲区号
@@ -750,7 +773,9 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         bufwinid()              取得某缓冲区的窗口 ID
         bufwinnr()              取得某缓冲区的窗口号
         winbufnr()              取得某窗口的缓冲区号
-        getbufline()            得到指定缓冲区的行列表
+        listener_add()          新增回调来监听改动
+        listener_flush()        调用监听器回调
+        listener_remove()       删除监听器回调
         win_findbuf()           寻找包括某缓冲区的窗口
         win_getid()             取得窗口的窗口 ID
         win_gotoid()            转到指定 ID 的窗口
@@ -761,6 +786,8 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         getwininfo()            获取窗口信息的列表
         getchangelist()         获取改变列表项目的列表
         getjumplist()           获取跳转列表项目的列表
+        swapinfo()              关于交换文件的信息
+        swapname()              取得缓冲区的交换文件路径
 
 命令行:                                         <b class="vimtag"> <a name="command-line-functions">command-line-functions</a> </b>
         getcmdline()            得到当前命令行
@@ -780,7 +807,9 @@ quickfix 和位置列表:                            <b class="vimtag"> <a name=
         complete()              设定要寻找的匹配
         complete_add()          加入要寻找的匹配
         complete_check()        检查补全是否被中止
+        complete_info()         取得当前补全的信息
         pumvisible()            检查弹出菜单是否显示
+        pum_getpos()            如果可见，弹出菜单的位置及大小
 
 折叠:                                           <b class="vimtag"> <a name="folding-functions">folding-functions</a> </b>
         foldclosed()            检查某一行是否被折叠起来
@@ -825,6 +854,7 @@ quickfix 和位置列表:                            <b class="vimtag"> <a name=
         confirm()               让用户作出选择
         getchar()               从用户那里取得一个字符输入
         getcharmod()            取得最近键入字符的修饰符
+        getmousepos()           取得最近已知的鼠标位置
         feedkeys()              把字符放到预输入队列中
         input()                 从用户那里取得一行输入
         inputlist()             让用户从列表里选择一个项目
@@ -840,6 +870,7 @@ GUI:                                            <b class="vimtag"> <a name="gui-
         getwinposy()            Vim 窗口的 Y 位置
         balloon_show()          设置气泡的内容
         balloon_split()         分割消息用于气泡的显示
+        balloon_gettext()       取得气泡中的文本
 
 Vim 服务器:                                     <b class="vimtag"> <a name="server-functions">server-functions</a> </b>
         serverlist()            返回服务器列表
@@ -856,6 +887,7 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         winheight()             取得某窗口的高度
         winwidth()              取得某窗口的宽度
         win_screenpos()         取得某窗口的屏幕位置
+        winlayout()             取得标签页中窗口的布局
         winrestcmd()            恢复窗口大小的返回命令
         winsaveview()           得到当前窗口的视图
         winrestview()           恢复保存的当前窗口的视图
@@ -868,6 +900,7 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
 
 测试:                                       <b class="vimtag"> <a name="test-functions">test-functions</a> </b>
         assert_equal()          断言两个表达式的值相等
+        assert_equalfile()      断言两个文件的内容相同
         assert_notequal()       断言两个表达式的值不等
         assert_inrange()        断言表达式在范围内
         assert_match()          断言模式与值匹配
@@ -882,7 +915,9 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         test_autochdir()        启动时打开 <a href="options.html#'autochdir'">'autochdir'</a>
         test_override()         测试 Vim 内部的覆盖
         test_garbagecollect_now()   立即清理内存
+        test_getvalue()         取得内部变量的值
         test_ignore_error()     忽略指定的错误信息
+        test_null_blob()        返回 null blob
         test_null_channel()     返回 null 通道
         test_null_dict()        返回 null 字典
         test_null_job()         返回 null 作业
@@ -890,6 +925,10 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         test_null_partial()     返回 null 偏函数
         test_null_string()      返回 null 字符串
         test_settime()          设置 Vim 内部使用的时间
+        test_setmouse()         设置鼠标位置
+        test_feedinput()        给输入缓冲区加入键序列
+        test_option_not_set()   复位指定选项已设的标志位
+        test_scrollbar()        模拟 GUI 中的滚动条动作
 
 进程间通信:                                 <b class="vimtag"> <a name="channel-functions">channel-functions</a> </b>
         ch_canread()            检查是否有可读的内容
@@ -897,6 +936,7 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         ch_close()              关闭通道
         ch_close_in()           关闭通道的 in 部分
         ch_read()               从通道读取信息
+        ch_readblob()           从通道读取 blob
         ch_readraw()            从通道读取未处理的信息
         ch_sendexpr()           从通道读取 JSON 信息
         ch_sendraw()            向通道发送未处理的信息
@@ -922,6 +962,17 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         job_info()              获取作业信息
         job_setoptions()        设置作业选项
 
+标号:                                           <b class="vimtag"> <a name="sign-functions">sign-functions</a> </b>
+        sign_define()           定义或更新标号
+        sign_getdefined()       取得已定义的标号列表
+        sign_getplaced()        取得已放置的标号列表
+        sign_jump()             跳转到标号
+        sign_place()            放置标号
+        sign_placelist()        放置一列标号
+        sign_undefine()         删除标号的定义
+        sign_unplace()          撤销标号的放置
+        sign_unplacelist()      撤销一列标号的放置
+
 终端窗口:                                       <b class="vimtag"> <a name="terminal-functions">terminal-functions</a> </b>
         term_start()            打开终端窗口并运行作业
         term_list()             获取终端缓冲区的列表
@@ -940,6 +991,31 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         term_gettty()           获取终端 tty 名
         term_setansicolors()    设置 GUI 使用的 16 种 ANSI 颜色
         term_getansicolors()    获取 GUI 使用的 16 种 ANSI 颜色
+        term_dumpdiff()         显示两份屏幕截图的差异
+        term_dumpload()         在窗口中载入终端屏幕截图
+        term_dumpwrite()        把终端屏幕的内容写入文件
+        term_setkill()          设置停止终端中的作业的信号
+        term_setrestore()       设置恢复终端的命令
+        term_setsize()          设置终端的大小
+
+弹出窗口:                                       <b class="vimtag"> <a name="popup-window-functions">popup-window-functions</a> </b>
+        popup_create()          在屏幕中央创建弹出
+        popup_atcursor()        在光标位置正上方创建弹出，光标移开时关闭
+        popup_beval()           在 v:beval_ 变量指定的位置，光标移开时关闭
+        popup_notification()    用三秒钟显示通知
+        popup_dialog()          创建带填充和边框中间对齐的弹出
+        popup_menu()            提示从列表中选择一个项目
+        popup_hide()            临时隐藏弹出
+        popup_show()            显示之前隐藏的弹出
+        popup_move()            改变弹出的位置和大小
+        popup_setoptions()      覆盖弹出的选项
+        popup_settext()         替换弹出缓冲区的内容
+        popup_close()           关闭一个弹出
+        popup_clear()           关闭所有弹出
+        popup_filter_menu()     从一列项目中选择
+        popup_filter_yesno()    等待直到按了 'y' 或 'n' 为止
+        popup_getoptions()      取得弹出的当前选项
+        popup_getpos()          取得弹出的实际位置和大小
 
 定时器:                                         <b class="vimtag"> <a name="timer-functions">timer-functions</a> </b>
         timer_start()           建立定时器
@@ -947,6 +1023,17 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
         timer_stop()            停止定时器
         timer_stopall()         停止所有定时器
         timer_info()            获取定时器信息
+
+Tags:                                           <b class="vimtag"> <a name="tag-functions">tag-functions</a> </b>
+        taglist()               得到匹配标签的列表
+        tagfiles()              得到标签文件的列表
+        gettagstack()           得到窗口的标签栈
+        settagstack()           修改窗口的标签栈
+
+提示缓冲区:                                     <b class="vimtag"> <a name="promptbuffer-functions">promptbuffer-functions</a> </b>
+        prompt_setcallback()    设置缓冲区的提示回调
+        prompt_setinterrupt()   设置缓冲区的中断回调
+        prompt_setprompt()      设置缓冲区的提示文本
 
 杂项:                                           <b class="vimtag"> <a name="various-functions">various-functions</a> </b>
         mode()                  取得当前编辑状态
@@ -975,15 +1062,13 @@ Vim 服务器:                                     <b class="vimtag"> <a name="s
 
         wordcount()             获取缓冲区的字节/单词/字符计数
 
-        taglist()               得到匹配标签的列表
-        tagfiles()              得到标签文件的列表
-
         luaeval()               计算 Lua 表达式
         mzeval()                计算  <a href="if_mzsch.html#MzScheme">MzScheme</a>  表达式
         perleval()              计算 Perl 表达式 ( <a href="various.html#+perl">+perl</a> )
         py3eval()               计算 Python 表达式 ( <a href="various.html#+python3">+python3</a> )
         pyeval()                计算 Python 表达式 ( <a href="various.html#+python">+python</a> )
         pyxeval()               计算  <a href="if_pyth.html#python_x">python_x</a>  表达式
+        debugbreak()            中断正在调试的程序
 
 </pre><hr class="doubleline" /><pre>
 <h4><b class="vimtag"> <a name="41.7">41.7</a> </b>  定义一个函数</h4>
@@ -1506,8 +1591,8 @@ self.words。所以你可以把这叫做抽象类。
 <h4><b class="vimtag"> <a name="41.10">41.10</a> </b> 其它的讨论</h4>
 这里集中了一些和 Vim 脚本相关的讨论。别的地方其实也提到过，这里算做一个整理。
 
-行结束符取决于所在的系统。Unix 系统使用单个的 <code class="special">&lt;NL&gt;</code> 字符。MS-DOS、Windows、OS/2
-系列的系统使用 <code class="special">&lt;CR&gt;</code><code class="special">&lt;LF&gt;</code>。对于那些使用 <code class="special">&lt;CR&gt;</code> 的映射而言，这一点很重要。参阅
+行结束符取决于所在的系统。Unix 系统使用单个的 <code class="special">&lt;NL&gt;</code> 字符。MS-Windows 系列的系统
+使用 <code class="special">&lt;CR&gt;</code><code class="special">&lt;LF&gt;</code>。对于那些使用 <code class="special">&lt;CR&gt;</code> 的映射而言，这一点很重要。参阅
  <a href="repeat.html#:source_crnl">:source_crnl</a> 。
 
 
@@ -1666,7 +1751,7 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
 
 首先你得给你的插件起个名字。这个名字应该很清楚地表示该插件的用途。同时应该避免
 同别的插件用同样的名字而用途不同。请将插件名限制在 8 个字符以内，这样可以使得
-该插件在老的 Windows 系统也能使用。
+该插件在老的 MS-Windows 系统也能使用。
 
 一个纠正打字错误的插件可能被命名为 "typecorr.vim"。我们将用这个名字来举例。
 
@@ -2366,7 +2451,7 @@ Vim 脚本应该可以用于任何系统。它们不一定有 tar 或 gzip 命�
 </pre><hr class="doubleline" /><pre>
 <h4></h4>下一章:  <a href="usr_42.html#usr_42.txt">usr_42.txt</a>   添加新的菜单
 
-版权: 参见  <a href="usr_01.html#manual-copyright">manual-copyright</a>   vim:tw=78:ts=8:ft=help:norl:
+版权: 参见  <a href="usr_01.html#manual-copyright">manual-copyright</a>   vim:tw=78:ts=8:noet:ft=help:norl:
 </pre>
 <p><i>Generated by vim2html</i></p>
 </div>

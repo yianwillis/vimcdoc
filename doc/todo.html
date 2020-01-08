@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>todo</h2>
 <pre>
-<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      For Vim version 8.2.  最近更新: 2020年1月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -55,39 +55,82 @@
 #1234 这样的号码指 github 的议题或拉取请求。要在浏览器上查看，可用:
 https://github.com/vim/vim/issues/1234
 
+(把 1234 替换为实际的议题/拉取请求号)
                                                         <b class="vimtag"> <a name="known-bugs">known-bugs</a> </b>
 ----------------------- 已知漏洞和当前工作 --------------------------
 
-Crash when ui_breakcheck() called from regexec() calls regexec() recursively.
-(Andy Massimino, #3175)
-Make regexp work recursively, store all globals in "rex"?
+Include ipv6 syntax changes?  (DJ Lucas, #5360)
+
+Popup windows:
+- Make it possible to put a terminal window in a popup.  Would always grab key
+  input?  Sort-of possible by creating a hidden terminal and opening a popup
+  with that buffer: #4063.
+- Use popup (or popup menu) for command line completion
+- Implement flip option
+- Make redrawing more efficient and avoid flicker:
+    - put popup menu also in popup_mask?
+- Any other commands to disable in a popup window?
+  Use ERROR_IF_POPUP_WINDOW for these.
+- Figure out the size and position better if wrapping inserts indent
+
+Text properties:
+- Implement prop_find() issue #4970
+- Text properties spanning more than one line
+- See remarks at top of src/textprop.c
+
+<a href="options.html#'incsearch'">'incsearch'</a> with :s:
+- :s/foo  using <code class="keystroke">CTRL-G</code> moves to another line, should not happen, or use the
+  correct line (it uses the last but one line) (Lifepillar, Aug 18, #3345)
+- :s@pat/tern@ doesn't include "/" in the pattern. (Takahiro Yoshihara, #3637)
+   pass delim to do_search() ?
+- Also support range: :/foo/,/bar/delete
+- Also support for user command, e.g. Cfilter
+- :%s/foo should take the first match below the cursor line, unless there
+  isn't one?
+  Then :%s?foo should take the first match above the cursor line.
 
 Prompt buffer:
-- Add a command line history.
+- Add a command line history, using up/down keys.  issue #5010
 - delay next prompt until plugin gives OK?
+- add prompt_addtext(<code class="special">{buf}</code>, <code class="special">{expr}</code>)     none    add text to a prompt buffer
 
 Terminal debugger:
 - Make prompt-buffer variant work better.
+- Add option to not open the program window.  It's not used when attaching to
+  an already running program. (M. Kelly)
 - When only gdb window exists, on "quit" edit another buffer.
+- Use a sign group
 - Termdebug does not work when Vim was build with mzscheme: gdb hangs just
   after "run".  Everything else works, including communication channel.  Not
   initializing mzscheme avoid the problem, thus it's not some #ifdef.
+- Add support for lldb?  issue #3565
+- Could we do something similar for debugging Vim scripts?  At least see the
+  script while stepping through it.  Simple version would use an extra window.
+  More complete solution would actually run Vim in a Terminal and control it
+  with another Vim instance.
 
 Terminal emulator window:
+- When the job in the terminal doesn't use mouse events, let the scroll wheel
+  scroll the scrollback, like a terminal does at the shell prompt. #2490
+  And use modeless selection.  #2962
+- Use <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-K</code> to enter a digraph? #5371
+- When Vim runs in the terminal and changes the title, the statusline needs to
+  be redrawn.
+- GUI: When using ":set go+=!" a system() call causes the hit-enter prompt.
+  (#3327)
+- GUI: hang until key typed. (#3530)
+- Allow for specifying the directory, with ++cwd=<code class="special">{dir}</code>.
 - With a vertical split only one window is updated. (Linwei, 2018 Jun 2,
   #2977)
 - When pasting should call vterm_keyboard_start_paste(), e.g. when using
   K_MIDDLEMOUSE, calling insert_reg().
 - Users expect parsing the :term argument like a shell does, also support
   single quotes.  E.g. with:  :term grep 'alice says "hello"'  (#1999)
-- How to access selection in Terminal running a shell? (damnskippy, 2018 May
-  27, #29620  When terminal doesn't use the mouse, use modeless selection.
 - Win32: Redirecting input does not work, half of Test_terminal_redir_file()
   is disabled.
 - Win32: Redirecting output works but includes escape sequences.
 - Win32: Make terminal used for :!cmd in the GUI work better.  Allow for
   redirection.
-- Terminal API: Add more functionality? (Ozaki Kiichi 2018 May 13, #2907)
 - When the job only outputs lines, we could handle resizing the terminal
   better: store lines separated by line breaks, instead of screen lines,
   then when the window is resized redraw those lines.
@@ -97,6 +140,96 @@ Terminal emulator window:
 - When <a href="options.html#'encoding'">'encoding'</a> is not utf-8, or the job is using another encoding, setup
   conversions.
 
+Error numbers available:
+E290, E292, E362, E366, E450, E451, E452,
+E453, E454, E460, E489, E491, E565, E578, E610, E611, E653,
+E654, E856, E857, E860, E861, E863, E889, E900
+
+Patch to move duplicated code to a function. (Yegappan Lakshmanan, #5330)
+
+Patch to use more FOR_ALL_ macros and use them. (Yegappan Lakshmanan, #5339)
+
+Running test_gui and test_gui_init with Motif sometimes kills the window
+manager.  Problem with Motif? Now test_gui crashes in submenu_change().
+Athena is OK.
+Motif: Build on Ubuntu can't enter any text in dialog text fields.
+
+Patch to properly break CJK lines: Anton Kochkov, #3875
+Flag in <a href="options.html#'formatoptions'">'formatoptions'</a> is not used in the tests.
+
+Patch to add <code class="badlink">'vtp'</code> option. (#5344)
+Needs better docs.  Is there a better name?
+
+undo result wrong: Masato Nishihata, #4798
+
+Undo puts cursor in wrong line after "cG<code class="special">&lt;Esc&gt;</code>" undo.
+
+:unmap <code class="special">&lt;c-n&gt;</code> gives error but does remove the mapping. (Antony Scriven, 2019
+Dec 19)
+
+Sound: support on Mac?  Or does libcanberra work there?
+
+Patch to fix session file when using multiple tab pages. (Jason Franklin, 2019
+May 20)
+Also put :argadd commands at the start for all buffers, so that their order
+remains equal?  Then %argdel to clean it up.  Do try this with <a href="options.html#'hidden'">'hidden'</a> set.
+Also #4994: window-local options not always restored, related to using :badd.
+Also #5326: netrw buffers are not restored.
+
+Completion mixes results from the current buffer with tags and other files.
+Happens when typing <code class="keystroke">CTRL-N</code> while still searching for results.  E.g., type "b_"
+in terminal.c and then <code class="keystroke">CTRL-N</code> twice.
+Should do current file first and not split it up when more results are found.
+(Also #1890)
+
+Adding "10" to <a href="options.html#'spellsuggest'">'spellsuggest'</a> causes spell suggestions to become very slow.
+(#4087)
+
+Instead of using a syntax error, use #error to fail early when something is
+wrong.  E.g. in vim.h "Error:", and blowfish.c "error!". (#5299)
+
+":helptags ALL" should skip directories where "tags" cannot be written.
+(Matěj Cepl, #5026)
+
+":bnext" in a help buffer is supposed to go to the next help buffer, but it
+goes to any buffer, and then :bnext skips help buffers, since they are
+unlisted. (#4478)
+
+Enable <a href="options.html#'termbidi'">'termbidi'</a> if $VTE_VERSION &gt;= 5703 ?
+
+Universal solution to detect if t_RS is working, using cursor position.
+Koichi Iwamoto, #2126
+
+The :syntax cchar value can only be a single character.  It would be useful to
+support combining characters. (Charles Campbell)  Also #4687
+
+Include Haiku port. (Adrien Destugues, Siarzhuk Zharski, 2013 Oct 24)
+It can replace the BeOS code, which is likely not used anymore.
+Now on github: #1856.  Updated Oct 2017
+Got permission to include this under the Vim license.
+
+Result of synID() sometimes wrong in help files. (#5252)
+
+Problem showing a line if the number column width changes when using "o".
+(Mateusz Morusiewicz, #4245)
+
+When using :packadd for a replacement language plugin, it is loaded after the
+default one.  #4698
+
+When using :packadd files under "later" are not used, which is inconsistent
+with packages under "start". (xtal8, #1994)
+
+Patch to add new motion ]( and ]{.  (Yasuhiro Matsumoto, #5320)
+
+Modeless selection doesn't work in gvim. (#4783)
+Caused by patch 8.1.1534.
+
+Visual highlight not removed when <code class="badlink">'dipslay'</code> is "lastline" and line doesn't
+fit. (Kevin Lawler, #4457)
+
+Patch to add per-tabpage and per-window previous directory: "lcd -" and "tcd
+-". (Yegappan Lakshmanan, #4362)
+
 Does not build with MinGW out of the box:
 - _stat64 is not defined, need to use "struct stat" in vim.h
 - WINVER conflict, should use 0x0600 by default?
@@ -104,41 +237,402 @@ Does not build with MinGW out of the box:
 Crash when mixing matchadd and substitute()? (Max Christian Pohle, 2018 May
 13, #2910)  Can't reproduce?
 
-On Win32 when not in the console and t_Co &gt;= 256, allow using <a href="options.html#'tgc'">'tgc'</a>.
-(Nobuhiro Takasaki, #2833)  Also check t_Co.
+Patch to configure BUILD_DATE for reproducible builds. (James McCoy, #513)
+
+Patch to add MODIFIED_BY to MSVC build file. (Chen Lei, 2016 Nov 24, #1275)
+
+Patch to support "0o" for octal numbers. (Ken Takata, #5304)
+
+When getting a focus event halfway a mapping this aborts the mapping.  E.g.
+when "qq" is mapped and after the first "q" the mouse is moved outside of the
+gvim window (with focus follows mouse), then the K_FOCUSLOST key is put in the
+input buffer. (#5302)
+
+xterm should be able to pass focus changes to Vim, so that Vim can check for
+buffers that changed.  Perhaps in misc.c, function selectwindow().
+Xterm 224 supports it!
+Patch to make FocusGained and FocusLost work in modern terminals. (Hayaki
+Saito, 2013 Apr 24) Update 2016 Aug 12.
+Also see issue #609.
+We could add the enable/disable sequences to t_ti/t_te or t_ks/t_ke.
+
+Check_external_diff() is used too often. (Daniel Hahler, #4800)
+
+Win32: after "[I" showing matches, scroll wheel messes up screen. (Tsakiridis,
+2007 Feb 18)
+Patch by Alex Dobrynin, 2007 Jun 3.  Also fixes other scroll wheel problems.
+
+Add a WindowScrolled event.  Trigger around the same time as CursorMoved.
+Can be used to update highlighting. #3127  #5181
+
+Patch for Template string: #4491.  New pull: #4634
+Implementation is too inefficient, avoid using lambda.
+
+Incorrect formatting with autoindent. (Sebastian Gniazdowski, #4909)
+
+Patch to add the :bvimgrep command.  (Christian Brabandt, 2014 Nov 12)
+Updated 2016 Jun 10, #858  Update 2017 Mar 28: use <code class="special">&lt;buffer&gt;</code>
 
 Errors found with random data:
     heap-buffer-overflow in alist_add (#2472)
 
-Patch to fix that +packages is always in output of :version.
-(thinca, #3198)  reported by Takuya Fujiwara
+Patch to support CamelCase for spell checking: See a lower-to-upper case
+change as a word boundary. (btucker-MPCData, 2016 Nov 6, #1235)
+patch for <code class="badlink">'spellcamelcase'</code> option: spellcheck each CamelCased word.
+(Ben Tucker, 2016 Dec 2)
+
+Patch to add <code class="special">{skip}</code> argument to search(). (Christian Brabandt, 2016 Feb 24)
+Update 2016 Jun 10, #861
+
+Patch to add "cmdline" completion to getcompletion(). (Shougo, Oct 1, #1140)
+
+Improve fallback for menu translations, to avoid having to create lots of
+files that source the actual file.  E.g. menu_da_de -&gt; menu_da
+Include part of #3242?
+
+When a terminal exit_cb closes the window, a following typed key is lost, if
+it's in a mapping. (2018 Oct 6, #2302, #3522)
+
+Patch to have text objects defined by arbitrary single characters. (Daniel
+Thau, 2013 Nov 20, 2014 Jan 29, 2014 Jan 31)
+Added tests (James McCoy, 2016 Aug 3, #958).  Still needs more work.
+
+Patch for multi-byte characters in langmap and applying a mapping on them.
+(Christian Brabandt, 2015 Jun 12, update July 25)
+Is this the right solution?  Need to cleanup langmap behavior:
+- in vgetorpeek() apply langmap to the typeahead buffer and put the result in
+  a copy-buffer, only when langmap is appropriate for the current mode. Then
+  check for mapping and let gotchars() work on the copy-buffer.
+- Remove LANGMAP_ADJUST() in other parts of the code.  Make sure the mode is
+  covered by the above change.
+So that replaying the register doesn't use keymap/langmap and still does the
+same thing.  Remarks on PR #543 (Roland Puntaier).
+Also see #737: langmap not applied to replaying recording.
+
+Would be nice to set tab-local values for <a href="options.html#'diffexpr'">'diffexpr'</a> and <a href="options.html#'diffopt'">'diffopt'</a>.  Use
+t:diffexpr_option t:diffopt_option? (#4782)
+
+v:register isn't reset early enough, may be used by next command.
+(Andy Massimino, #5294, possible fix in #5305)
+
+Internal diff doesn't handle binary file like external diff does. (Mike
+Williams, 2018 Oct 30)
+
+'[ mark in wrong column after put. (#4776)
+
+"exepath('bin/cmd')" does not work while ":!bin/cmd" does work.
+(Daniel Hahler, #4710)  and executable('bin/cmd') returns 1
+
+Error drawing the number column when <a href="options.html#'cursorline'">'cursorline'</a> is set. (#3893)
+
+Problem with :tlmenu: Detach item added with all modes?  Issue #3563.
+
+Add an argument to expandcmd() to expand like ":next" does.
+
+When both "a" and "l" is in <a href="options.html#'formatoptions'">'formatoptions'</a> then auto-formatting also happens
+in a long line. #5189
+
+The quoting of the <code class="special">[command]</code> argument of :terminal is not clearly documented.
+Give a few examples. (#4288)
+
+Opening a file with --remote-tab-silent that matches <a href="options.html#'wildignore'">'wildignore'</a> does not
+work, results in (E479: No match". (#4610)
+
+Patch for this (Tristan Konolige, #1011, only adds the option, no implem.):
+7   Add an option to add one pixel column to the character width?  Lucida
+    Console italic is wider than the normal font ("d" overlaps with next char).
+    Opposite of <a href="options.html#'linespace'">'linespace'</a>: <code class="badlink">'columnspace'</code>.
+
+Bug: script written with "-W scriptout" contains Key codes, while the script
+read with "-s scriptin" expects escape codes.  Probably "scriptout" needs to
+be adjusted. (Daniel Steinberg, 2019 Feb 24, #4041)
+
+Add a string to the <a href="options.html#'display'">'display'</a> option ("smoothscroll" ?) to make <code class="keystroke">CTRL-E</code> and
+<code class="keystroke">CTRL-Y</code> scroll one screen line, also if this means the first line doesn't start
+with the first character (like what happens with a last line that doesn't
+fit).  Display "&lt;&lt;&lt;" at the start of the first visible line (like "@@@" is
+displayed in the last line). (Arseny Nasokin,  #5154)
+
+Patch for ambiguous width characters in libvterm on MS-Windows 10.
+(Nobuhiro Takasaki, #4411)
+
+Window size changes after closing a tab. (#4741)
+
+Problem with colors in terminal window. (Jason Franklin, 2019 May 12)
+
+Lifepillar: Updated/cleaned up color schemes:
+https://github.com/lifepillar/vim8-colorschemes.
+
+Include a few color schemes, based on popularity:
+http://www.vim.org/scripts/script_search_results.php?keywords=&amp;script_type=color+scheme&amp;order_by=rating&amp;direction=descending&amp;search=search
+http://vimawesome.com/?q=tag:color-scheme
+Use names that indicate their appearance (Christian Brabandt, 2017 Aug 3)
+- monokai - Xia Crusoe (2017 Aug 4)
+- seoul256 - Christian Brabandt (2017 Aug 3)
+- gruvbox -  Christian Brabandt (2017 Aug 3) (simplified version from
+      Lifepillar, 2018 Jan 22, #2573)
+- janah - Marco Hinz (2017 Aug 4)
+- apprentice - Romain Lafourcade (2017 Aug 6)  remarks about help file #1964
+Suggested by Hiroki Kokubun:
+- <code class="special">[Iceberg]</code>(https://github.com/cocopon/iceberg.vim) (my one)
+- <code class="special">[hybrid]</code>(https://github.com/w0ng/vim-hybrid)
+Include solarized color scheme?, it does not support termguicolors.
+- Sanitized version of pablo (Lifepillar, 2017 Nov 21)
+
+Bug: "vipgw" does not put cursor back where it belongs. (Jason Franklin, 2019
+Mar 5)
+
+Many users don't like <a href="options.html#'thesaurus'">'thesaurus'</a> to match so many words. (#4667, #1611)
+- when the match with the first word is partial, don't add other words on that
+  line.
+- support other file formats, such as comma separated.  Indicate by a prefix
+  to the file in the <a href="options.html#'thesaurus'">'thesaurus'</a> option.
+- <code class="badlink">'threglookexp'</code> option: only match with first word in thesaurus file.
+  (Jakson A. Aquino, 2006 Jun 14)
+
+Some composing characters actually add a cell width to the character they are
+on top off, making the whole thing two characters wide. (#4526)
+
+Should we include some part of pull request #4505, not increment changedtick
+in some cases?  E.g. for ":write" when the changed flag was already off, the
+buffer didn't change at all.
+
+Patch to add getreginfo() and setreg() with an option to set the unnamed
+register "", So that registers can be saved and fully restored.
+(Andy Massimino, 2018 Aug 24, #3370)
+
+Line numbers in profile are off when function was defined with ":execute".
+(Daniel Hahler, #4511)
+
+Add a way to create an empty, hidden buffer.  Like doing ":new|hide".
+":let buf = bufcreate(<code class="badlink">'name'</code>)
+
+Session file contains absolute paths when "curdir" is removed form
+<a href="options.html#'sessionoptions'">'sessionoptions'</a>, making it impossible to have a session with a relative path.
+(#4450)
+
+When using a timer callback vgetc_busy is reset, allowing for using input().
+But in a channel callback this does not happen.  We need to do something
+similar to check_due_timer().  Also see #3809.
+
+C syntax: <code class="special">{}</code> inside () causes following <code class="special">{}</code> to be highlighted as error.
+(Michalis Giannakidis, 2006 Jun 1)
+
+Support setting the character displayed below the last line?  Neovim uses
+"eob:X" in <a href="options.html#'fillchars'">'fillchars'</a>.
+
+Check: __attribute__((format(printf, on semsg() and siemsg().  Where was this
+added?
+
+Patch to add a flatten() function.  #3676.  Check that the doc explains the
+maxdepth argument (applies to the input "recursiveness").
+
+Add test for urxvt mouse codes.  Also test that mouse coordinates can be
+negative. (see #4326)
+
+<a href="options.html#'cmdheight'">'cmdheight'</a> has a tab-local value, but it cannot be obtained with
+`:echo gettabwinvar(2, 1, '&amp;cmdheight')` returns the value for the _current_
+tab page. (Ingo Karkat, #4324)
+:call settabwinvar(1, 1, '&amp;cmdheight', 2) also doesn't work well.
+
+This modeline throws unexpected errors: (#4165)
+    vim: syn=nosyntax
+
+":doau SomeEvent" gives "No matching autocommands".  This message doesn't give
+a hint about how to fix it. (#4300)
+
+Make balloon_show() work outside of <a href="options.html#'balloonexpr'">'balloonexpr'</a>?  Users expect it to work:
+#2948. (related to #1512?)
+On Win32 it stops showing, because showState is already ShS_SHOWING.
+balloon_show() does not work properly in the terminal. (Ben Jackson, 2017 Dec
+20, #2481)
+Also see #2352, want better control over balloon, perhaps set the position.
+Should also be possible to add highlighting, like in the status line?
+balloonexpr() on MS-Windows GUI doesn't handle accented chars? (nivaemail,
+2018 Sep 14)
+Another request: #3811.
 
 More warnings from static analysis:
 https://lgtm.com/projects/g/vim/vim/alerts/?mode=list
 
+Still a E315 error when using terminal. (Masato Nishihata, #3959)
+
+Not existing directory in CDPATH leads to two shell calls. (#4525)
+
+Use dict_iterate_start() / dict_iterate_next() instead of relying on the
+internals of the dict structure.
+
+nvo-mode mapping works on Windows, not on Linux. (#3678)
+
+Missing tests for:
+- add_termcap_entry()
+
+Redo only remembers the last change.  Could use "<code class="special">{count}</code>g." to redo an older
+change.  How does the user know which change?  At least have a way to list
+them: ":repeats".  Add to history, like search history and command line history.
+
+Incsearch test fails when locale is "C". (Dominique Pelle, #3986)
+Also run all tests with C locale?
+
+"vat" doesn't work well on XML when the closing &gt; is on another line.
+#3927
+
 Pasting foo} causes Vim to behave weird. (John Little, 2018 Jun 17)
 Related to bracketed paste.  I cannot reproduce it.
 
-Patch replacing imp with importlib. (#3163)
+When <a href="options.html#'confirm'">'confirm'</a> is set a "silent q" doesn't show the prompt.  It should in this
+case. (Nate Peterson, 2019 Jan 31, #3892)
+For "silent! q" it should not prompt and just fail.
 
-Using ":file" in quickfix window during an autocommand doesn't work. 
-(Jason Franklin, 2018 May 23) Allow for using it when there is no argument.
+Add <code class="special">&lt;aevent&gt;</code>, which expands to the currently triggered autocommand event name.
+(Daniel Hahler, #4232)  Or add it to v:event (easier to use but slightly more
+expensive).
 
-Patch in pull request #2967: Allow white space in sign text. (Ben Jackson)
+Some xterm responses are not properly handled: (Markus Gömmel, 2019 Apr 1)
+    DCS 0 $ r Pt ST    should be ignored.
+    DCS 0 + r/Pt/  ST  already ignored?
 
-Whenever the file name is "~" then expand('%:p') returns $HOME. (Aidan
-Shafran, 2018 Jun 23, #3072)  Proposed patch by Aidan, 2018 Jun 24.
+Using <code class="keystroke">CTRL-L</code> to add a character to the search string that contains \v,
+punctuation is repeated. (Smylers, 2018 Nov 17, #3621)
 
-Patch to set w_set_curswant when setting the cursor in language interfaces.
-(David Hotham, 2018 Jun 22, #3060)
+ml_get error: (Israel Chauca Fuentes, 2018 Oct 17, #3550).
 
-Patch to make <code class="keystroke">CTRL-W</code> <code class="special">&lt;CR&gt;</code> work properly in a quickfix window. (Jason Franklin,
-2018 May 30)
+Patch to add more info to OptionSet.  Should mention what triggered the change
+":set", ":setlocal", ":setglobal", "modeline"; and the old global value.
+#4118.  Proposed implementation: 2019 Mar 27.
+Updated 2019 May 25.
 
-Patch to make mode() return something different for Normal mode when coming
-from Insert mode with <code class="keystroke">CTRL-O</code>. (#3000)
+Using single wide base character with double wide composing character gives
+drawing errors.  Fill up the base character?  (Dominique, #4328)
 
-Patches for Python: #3162, #3263 (Ozaki Kiichi)
+Problem with two buffers with the same name a/b, if it didn't exist before and
+is created outside of Vim. (dskloetg, 2018 Jul 16, #3219)
+
+When <a href="options.html#'sidescrolloff'">'sidescrolloff'</a> is set, using "zl" to go to the end of the line, suddenly
+scrolls back.  Should allow for this scrolling, like <a href="options.html#'scrolloff'">'scrolloff'</a> does when
+using <code class="keystroke">CTRL-E</code>. (Yee Cheng Chin, #3721)
+
+Invalid memory access with old regexp engine. (Dominique Pelle, 2018 Sep 3,
+#3405)  Introduced by 8.0.1517, which was fixing another memory access error.
+(Sep 8)
+
+Add function to make use of internal diff, working on two lists and returning
+unified diff (list of lines).
+
+When splitting a window with few text lines, the relative cursor position is
+kept, which means part of the text isn't displayed.  Better show all the text
+when possible. (Dylan Lloyd, #3973)
+
+Make ":interactive !cmd" stop termcap mode, also when used in an autocommand.
+(#3692)
+
+Add buffer argument to undotree(). (#4001)
+
+Using uninitialized value in test_gn
+Using uninitialized value in test_crypt.
+memory leak in test_paste
+Memory leak in test_terminal:
+==23530==    by 0x2640D7: alloc (misc2.c:874)
+==23530==    by 0x2646D6: vim_strsave (misc2.c:1315)
+==23530==    by 0x25841D: FullName_save (misc1.c:5443)
+==23530==    by 0x17CB4F: fix_fname (buffer.c:4794)
+==23530==    by 0x17CB9A: fname_expand (buffer.c:4838)
+==23530==    by 0x1759AB: buflist_new (buffer.c:1889)
+==23530==    by 0x35C923: term_start (terminal.c:421)
+==23530==    by 0x2AFF30: mch_call_shell_terminal (os_unix.c:4377)
+==23530==    by 0x2B16BE: mch_call_shell (os_unix.c:5383)
+TODO: be able to run all parts of test_alot with valgrind separately
+Memory leak in test_alot with pyeval() (allocating partial)
+Memory leak in test_alot with expand()
+Memory leaks in test_channel? (or is it because of fork())
+
+gethostbyname() is old, use getaddrinfo() if available. (#3227)
+
+matchaddpos() gets slow with many matches.  Proposal by Rick Howe, 2018 Jul
+19.
+
+Should make <a href="options.html#'listchars'">'listchars'</a> global-local.  Local to window or to buffer?
+Probably window.  #5206
+Add something like <a href="options.html#'fillchars'">'fillchars'</a> local to window, but allow for specifying a
+highlight name.  Esp. for the statusline.
+And "extends" and "precedes" are also useful without <a href="options.html#'list'">'list'</a> set.  Also in
+<a href="options.html#'fillchars'">'fillchars'</a> or another option?
+
+Sourceforge Vim pages still have content, redirect from empty page.
+Check for PHP errors. (Wayne Davison, 2018 Oct 26)
+
+Patch to support ":tag <code class="special">&lt;tagkind&gt;</code> <code class="special">&lt;tagname&gt;</code>". (emmrk, 2018 May 7, #2871)
+Use something like ":tag <code class="special">{kind}</code>/<code class="special">{tagname}</code>".
+Not ready to include.
+
+Problem with Visual yank when <a href="options.html#'linebreak'">'linebreak'</a> and <a href="options.html#'showbreak'">'showbreak'</a> are set.
+Patch with tests, but it's not clear how it is supposed to work. (tommm, 2018
+Nov 17)  Asked about this, Dec 22. Christian will have a look.
+
+Patch for larger icons in installer. (#978)  Still not good.
+
+Patch to fix that using "5gj" starting inside a closed fold does not work on
+screen lines but on text lines. (Julius Hulsmann, #4095)  Lacks a test.
+
+Patch to implement <code class="badlink">'diffref'</code> option. (#3535)
+  Easier to use a <code class="badlink">'diffmaster'</code> option, is the extra complexity needed?
+  Not ready to include.
+
+Patch to specify color for cterm=underline and cterm=undercurl, like "guisp".
+Patch #2405 does something like this, but in the wrong way.
+
+home_replace() uses $HOME instead of "homedir". (Cesar Martins, 2018 Aug 9)
+
+When the status line uses term_gettitle(), it does not get updated when the
+terminal title changes. (Josh Triplett, 2018 Sep 9, #3418)
+How would we know that the status line needs to be updated?
+
+Adjust windows installer explanation of behavior. (scootergrisen, #3310)
+
+Update for xim-input-style help (Tony Mechelynck, 2019 Jan 10).
+Feedback from someone who uses this?
+
+ml_get error. (Dominique Pelle, 2018 Sep 14, #3434)
+
+Only output t_Cs when t_Ce is also set.  do not use Cs and Ce termcap entries.  (Daniel Hahler, 2018 Sep 25)
+Add t_cS and t_cR for cursor color select and reset.  Use Cs and Cr terminfo
+values.
+
+Further xdiff changes:
+- More options, e.g. different kind of whitespace diff.
+- when editing text, update the surrounding diff blocks.
+- omit diff.exe from distribution
+- Can we make this show differences within a line?
+- add option to use external diff above a certain size.
+
+Difference between two regexp engines: #3373
+
+Patch to add ch_listen() (Yasuhiro Matsumoto, 2018 Nov 26, #3639)
+What is the practical use for this?
+
+When the last line wraps, selecting with the mouse below that line only
+includes the first screen line. (2018 Aug 23, #3368)
+
+Refactored HTML indent file. (Michael Lee, #1821)
+Asked to write a test.
+
+MS-Windows: .lnk file not resolved properly when <a href="options.html#'encoding'">'encoding'</a> is set.
+(lkintact, 2018 Sep 22, #3473)
+
+Merge checking for <a href="options.html#'cursorline'">'cursorline'</a> and <a href="options.html#'concealcursor'">'concealcursor'</a>, see neovim #9492.
+
+Display error when a conceal match uses '\%&gt;1l'. (#4854)
+
+Add a windowID argument to placing a sign, so that it only shows up in one
+window for the buffer.
+
+Request to add sign_setlist() to make it faster to add a lot of signs, e.g.
+when adding a sign for every quickfix entry. (#4557)
+
+Win32 key codes are messy.  Mike Williams tried to fix that, but now old
+mappings no longer work.  Create a new terminal for the better solution?
+
+Patch to "fix" <a href="options.html#'visualbell'">'visualbell'</a>. Add option to set delay?  (#1789)
 
 Script generated by :mksession does not work well if there are windows with
 modified buffers
@@ -147,50 +641,49 @@ modified buffers
   skip "badd fname" if "fname" is already in the buffer list
   remove remark about unloading buffers from documentation
 
-Patch to make :help work for tags with a ?. (Hirohito Higashi, 2018 May 28)
-
-Patch to adjust to DPI setting for GTK. (Roel van de Kraats, 2017 Nov 20,
-#2357)
-
-Patch to fix window size when using VTP. (Nobuhiro Takasaki, #3164)
-
 Compiler warnings (geeknik, 2017 Oct 26):
 - signed integer overflow in do_sub() (#2249)
 - signed integer overflow in get_address() (#2248)
 - signed integer overflow in getdecchrs() (#2254)
 - undefined left shift in get_string_tv() (#2250)
 
-Patch for more quickfix refactoring. (Yegappan Lakshmanan, #2950)
+Win32 console: <code class="special">&lt;F11&gt;</code> and <code class="special">&lt;F12&gt;</code> typed in Insert mode don't result in normal
+characters. (#3246)
+
+<a href="options.html#'foldtext'">'foldtext'</a> is evaluated too often. (Daniel Hahler, #2773)
+
+Add Native language protocol server (LSP) support. (Yegappan Lakshmanan, 2018
+Oct 28)
+
+ml_get error when using a Python script. (Yggdroot, 2017 Jun 1, #1737)
+Lemonboy can reproduce (2017 Jun 5)
+Also reproduced by Benjamin Doherty, 2018 Oct 4.
+Simpler way: Ken Takata, Oct 6.
+
+Add more testing of the GTK GUI.
+- gtk_test_widget_click() can be used to simulate a click in a widget.
 
 Tests failing for "make testgui" with GTK:
 - Test_setbufvar_options()
 - Test_exit_callback_interval()
 
-Patch to stack and pop the window title and icon. (IWAMOTO Kouichi, 2018 Jun
-22, #3059)
-8   For xterm need to open a connection to the X server to get the window
-    title, which can be slow.  Can also get the title with "<code class="special">&lt;Esc&gt;</code>[21t", no
-    need to use X11 calls.  This returns "<code class="special">&lt;Esc&gt;</code>]l<code class="special">{title}</code><code class="special">&lt;Esc&gt;</code>\".
-Using title stack probably works better.
+Patch to be able to use hex numbers with :digraph. (Lcd, 2015 Sep 6)
+Update Sep 7.  Update by Christian Brabandt, 2015 Sep 8, 2016 Feb 1.
+Patch to be able to disable default digraphs (incomplete) (Eric Pruitt, 2018
+Nov 22).
 
-When a function is defined in the sandbox (with :function or as a lambda)
-always execute it in the sandbox.  (#3182)
-Remove "safe" argument from call_vim_function(), it's always FALSE.
+Patch to list user digraphs. (Christian Brabandt, 2012 Apr 14)
 
-Make balloon_show() work outside of <a href="options.html#'balloonexpr'">'balloonexpr'</a>?  Users expect it to work:
-#2948. (related to #1512?)
-On Win32 it stops showing, because showState is already ShS_SHOWING.
-balloon_show() does not work properly in the terminal. (Ben Jackson, 2017 Dec
-20, #2481)
-Also see #2352, want better control over balloon, perhaps set the position.
+Patch to add digraph() function. (Christian Brabandt, 2013 Aug 22, update Aug
+24)
 
-Try out background make plugin: 
+Try out background make plugin:
   https://github.com/AndrewVos/vim-make-background
-or asyncmake: 
+or asyncmake:
   https://github.com/yegappan/asyncmake
 
 Add a ModeChanged autocommand that has an argument indicating the old and new
-mode.  Also used for switching Terminal mode.
+mode, as what's returned from mode().  Also used for switching Terminal mode.
 
 Add an option with file patterns, to be used when unloading a buffer: If there
 is a match, remove entries for the buffer from marks, jumplist, etc.  To be
@@ -198,18 +691,15 @@ used for git temp files.
 
 Cursor in wrong position when line wraps. (#2540)
 
-Patch for Lua support. (Kazunobu Kuriyama, 2018 May 26)
+Setting <a href="options.html#'columns'">'columns'</a> in a BufEnter autocommand causes a second tab width to
+behave strangely, as if there is a gap and a vertical window separator.
+(Michael Soyka, 2018 Sep 23, #3477)
 
 Make <code class="special">{skip}</code> argument of searchpair() consistent with other places where we
 pass an expression to evaluate.  Allow passing zero for "never skip".
 
 Add an option similar to <a href="options.html#'lazyredraw'">'lazyredraw'</a> to skip redrawing while executing a
 script or function.
-
-Universal solution to detect if t_RS is working, using cursor position.
-Koichi Iwamoto, #2126
-
-Patch to fix profiling condition lines. (Ozaki Kiichi,, 2017 Dec 26, #2499)
 
 When using a menu item while the "more" prompt is displayed doesn't work well.
 E.g. after using help-&gt;version.  Have a key that ends the "more" prompt and
@@ -220,39 +710,25 @@ If <a href="options.html#'readonly'">'readonly'</a> is not set but the file appe
 (wait a little while).
 CreateFile() returns ERROR_SHARING_VIOLATION (Linwei, 2018 May 5)
 
+Using --remote to open a file in which a # appears does not work on
+MS-Windows.  Perhaps in \#  the \ is seen as a path separator. (Axel Bender,
+2017 Feb 9)  Can we expand wildcards first and send the path literally to the
+receiving Vim?  Or make an exception for #, it's not useful remotely.
+
 Should add a test for every command line argument.  Check coverage for what is
 missing: --nofork, -A , -b, -h, etc.
 
 ":au * * command" should not be allowed, only use * for event when listing or
 deleting autocmds, not when adding them.
 
-Quickfix window height is not kept with a vertical split. (Lifepillar, 2018
-Jun 10, #2998)
-
-Improve the installer for MS-Windows.  There are a few alternatives:
-- Add silent install option. (Shane Lee, #751)
-- Installer from Cream (Steve Hall).
-- Modern UI 2.0 for the Nsis installer. (Guopeng Wen)
-    https://github.com/gpwen/vim-installer-mui2
--  make it possible to do a silent install, see
-    http://nsis.sourceforge.net/Docs/Chapter4.html#4.12
-    Version from Guopeng Wen does this.
-- MSI installer: https://github.com/petrkle/vim-msi/
-- The one on Issue 279.
-Problem: they all work slightly different (e.g. don't install vimrun.exe).
-How to test that it works well for all Vim users?
-
 Alternative manpager.vim. (Enno, 2018 Jan 5, #2529)
 
-Patch to use NGETTEXT() in many more places. (Sergey Alyoshin, 2018 May 25)
-Updated ptach May 27.
+Delete all the specific stuff for the Borland compiler? (#3374)
+Patch in #3377 (Thomas Dziedzic)
 
-Does setting <a href="options.html#'cursorline'">'cursorline'</a> cause syntax highlighting to slow down?  Perhaps is
-mess up the cache?  (Mike Lee Williams, 2018 Jan 27, #2539)
-Also: <a href="options.html#'foldtext'">'foldtext'</a> is evaluated too often. (Daniel Hahler, #2773)
-
-When using :packadd files under "later" are not used, which is inconsistent
-with packages under "start". (xtal8, #1994)
+With <a href="options.html#'foldmethod'">'foldmethod'</a> "indent" and appending an empty line, what follows isn't
+included in the existing fold.  Deleting the empty line and undo fixes it.
+(Oleg Koshovetc, 2018 Jul 15, #3214)
 
 Patch to support "xxd -ps". (Erik Auerswald, 2018 May 1)
 Lacks a test.
@@ -276,17 +752,6 @@ confusing error message. (Wang Shidong, 2018 Jan 2, #2519)
 
 Add the debug command line history to viminfo.
 
-Avoid that "sign unplace id" does a redraw right away, esp. when there is a
-sequence of these commands. (Andy Stewart, 2018 Mar 16)
-
-ch_sendraw() with long string does not try to read in between, which may cause
-a deadlock if the reading side is waiting for the write to finish. (Nate
-Bosch, 2018 Jan 13, #2548)
-Perhaps just make chunks of 1024 bytes?
-
-Patch to include a cfilter plugin to filter quickfix/location lists.
-(Yegappan Lakshmanan, 2018 May 12)
-
 Add Makefiles to the runtime/spell directory tree, since nobody uses Aap.
 Will have to explain the manual steps (downloading the .aff and .dic files,
 applying the diff, etc.
@@ -304,8 +769,6 @@ With foldmethod=syntax and nofoldenable comment highlighting isn't removed.
 
 Using <a href="options.html#'wildignore'">'wildignore'</a> also applies to literally entered file name.  Also with
 :drop (remote commands).
-
-Patch to support ":tag <code class="special">&lt;tagkind&gt;</code> &lt;tagname". (emmrk, 2018 May 7, #2871)
 
 Inserting a line in a CompleteDone autocommand may confuse undo. (micbou,
 2018 Jun 18, #3027)
@@ -333,13 +796,14 @@ option_save(<code class="special">{list}</code>)                                
                 values are handled and the script ID is restored, so that
                 `:verbose set` will show where the option was originally set,
                 not where it was restored.
+  Alternatively: save and restore ALL options.  Implementation needs to use
+        copy-on-write.  Return an ID from option_save(), when
+        option_restore(ID) is called give an error if another option_save()
+        was called in the meantime, they must be balanced.
 
 "gvim --remote" from a directory with non-word characters changes the current
 directory (Paulo Marcel Coelho Arabic, 2017 Oct 30, #2266)
 Also see #1689.
-
-ml_get error when using a Python script. (Yggdroot, 2017 Jun 1, #1737)
-Lemonboy can reproduce (2017 Jun 5)
 
 crash when removing an element while inside map(). (Nikolai Pavlov, 2018 Feb
 17, #2652)
@@ -347,35 +811,20 @@ crash when removing an element while inside map(). (Nikolai Pavlov, 2018 Feb
 When <a href="options.html#'virtualedit'">'virtualedit'</a> is "all" and <a href="options.html#'cursorcolumn'">'cursorcolumn'</a> is set, the wrong column may be
 highlighted. (van-de-bugger, 2018 Jan 23, #2576)
 
-Patch to parse ":line" in tags file and use it for search. (Daniel Hahler,
-#2546)  Fixes #1057.  Missing a test.
-
 ":file" does not show anything when <a href="options.html#'shortmess'">'shortmess'</a> contains 'F'. (#3070)
-
-Patch to add winlayout() function. (Yegappan Lakshmanan, 2018 Jan 4)
 
 No profile information for function that executes ":quit". (Daniel Hahler,
 2017 Dec 26, #2501)
 
-Get a "No Name" buffer when <a href="options.html#'hidden'">'hidden'</a> is set and opening a new window from the
-quickfix list. (bfrg, 2018 Jan 22, #2574)
-
-<code class="keystroke">CTRL-X</code> on zero gets stuck on 0xfffffffffffffffe. (Hengyang Zhao, #2746)
-
 A function on a dictionary is not profiled. (ZyX, 2010 Dec 25)
+
+Add script number to profile?  (#3330 breaks tests).
+
+A function defined locally and lambda's are not easily recognized.
+Mention where they were defined somewhere.
 
 Invalid range error when using BufWinLeave for closing terminal.
 (Gabriel Barta, 2017 Nov 15, #2339)
-
-Using an external diff is inefficient.  Not all systems have a good diff
-program available (esp. MS-Windows).  Would be nice to have in internal diff
-implementation.  Can then also use this for displaying changes within a line.
-Olaf Dabrunz is working on this. (10 Jan 2016)
-9   Instead invoking an external diff program, use builtin code.  One can be
-    found here: http://www.ioplex.com/~miallen/libmba/dl/src/diff.c
-    It's complicated and badly documented.
-Alternative: use the xdiff library.  Patch from Christian Brabandt, 2018 Mar
-20, #2732)
 
 ml_get errors with buggy script. (Dominique, 2017 Apr 30)
 
@@ -400,9 +849,6 @@ In an optional package the "after" directory is not scanned?
 Patch for Neovim concerning restoring when closing help window. (glacambre
 neovim #7431)
 
-Default install on MS-Windows should source defaults.vim.
-Ask whether to use Windows or Vim key behavior?
-
 Patch for improving detecting Ruby on Mac in configure. (Ilya Mikhaltsou, 2017
 Nov 21)
 
@@ -420,13 +866,13 @@ always nested.
 
 matchit hasn't been maintained for a long time.  #955.
 
-Patch to add variable name after "scope add". (Eddie Lebow, 2018 Feb 7, #2620)
-Maybe not needed?
-
 Problem with <a href="options.html#'delcombine'">'delcombine'</a>. (agguser, 2017 Nov 10, #2313)
 
 MS-Windows: buffer completion doesn't work when using backslash (or slash)
 for a path separator. (xtal8, #2201)
+
+Would be nice for Insert mode completion to highlight the text that was added
+(and may change when picking another completion).
 
 Test runtime files.
 Start with filetype detection: testdir/test_filetype.vim
@@ -448,46 +894,17 @@ The ":move" command does not honor closed folds. (Ryan Lue, #2351)
 Patch to fix increment/decrement not working properly when <a href="options.html#'virtualedit'">'virtualedit'</a> is
 set. (Hirohito Higashi, 2016 Aug 1, #923)
 
-Memory leaks in test_channel? (or is it because of fork())
-Using uninitialized value in test_crypt.
-Memory leaks in test_escaped_glob
-
-Patch to make gM move to middle of line. (Yasuhiro Matsumoto, Sep 8, #2070)
-
 Cannot copy modeless selection when cursor is inside it. (lkintact, #2300)
-
-Include Haiku port. (Adrien Destugues, Siarzhuk Zharski, 2013 Oct 24)
-It can replace the BeOS code, which is likely not used anymore.
-Now on github: #1856.  Updated Oct 2017
-Got permission to include this under the Vim license.
-
-Refactored HTML indent file. (Michael Lee, #1821)
 
 Test_writefile_fails_conversion failure on Solaris because if different iconv
 behavior.  Skip when "uname" returns "SunOS"? (Pavel Heimlich, #1872)
 
 <a href="options.html#'tagrelative'">'tagrelative'</a> is broken in specific situation. (xaizek, 2017 Oct 19, #2221)
 
-All functions are global, which makes functions like get() and len() awkward.
-For the future use the ~get() and ~len() syntax, e.g.:
-    mylist~get(idx)
-    mydict~get(idx)
-    mystring~len()
-Alternatives for ~:
-    ^  list^get()    could also be used
-    .  list.get()    already means concatenate
-    $  list$get()    harder to read
-    @  list@get()    harder to read
-    -&gt;  list-&gt;get()  two characters, used for lambda
-
 The ++ options for the :edit command are also useful on the Vim command line.
 
 When recovering a file, put the swap file name in b:recovered_swapfile.  Then
 a command can delete it.
-
-When a swap file exists, is not for a running process, is from the same
-machine and recovering results in the same text, we could silently delete it.
-#1237
 
 Overlong utf-8 sequence is displayed wrong. (Harm te Hennepe, 2017 Sep 14,
 #2089)  Patch with possible solution by Björn Linse.
@@ -503,22 +920,6 @@ Seems to happen when the selection is requested the second time, but before
 clip_x11_convert_selection_cb() is invoked, thus in X library code.
 Kazunobu Kuriyama is working on a proper fix. (2017 Jul 25)
 
-Include a few color schemes, based on popularity:
-http://www.vim.org/scripts/script_search_results.php?keywords=&amp;script_type=color+scheme&amp;order_by=rating&amp;direction=descending&amp;search=search
-http://vimawesome.com/?q=tag:color-scheme
-Use names that indicate their appearance (Christian Brabandt, 2017 Aug 3)
-- monokai - Xia Crusoe (2017 Aug 4) 
-- seoul256 - Christian Brabandt (2017 Aug 3)
-- gruvbox -  Christian Brabandt (2017 Aug 3) (simplified version from
-      Lifepillar, 2018 Jan 22, #2573)
-- janah - Marco Hinz (2017 Aug 4)
-- apprentice - Romain Lafourcade (2017 Aug 6)  remarks about help file #1964
-Suggested by Hiroki Kokubun:
-- <code class="special">[Iceberg]</code>(https://github.com/cocopon/iceberg.vim) (my one)
-- <code class="special">[hybrid]</code>(https://github.com/w0ng/vim-hybrid)
-Include solarized color scheme?, it does not support termguicolors.
-- Sanitized version of pablo (Lifepillar, 2017 Nov 21)
-
 Problem with three-piece comment. (Michael Lee, 2017 May 11, #1696)
 
 Creating a partial with an autoload function is confused about the "self"
@@ -527,12 +928,6 @@ that optiona? (Bjorn Linse, 2017 Aug 5)
 
 Cindent: returning a structure has more indent for the second item.
 (Sam Pagenkopf, 2017 Sep 14, #2090)
-
-Completion mixes results from the current buffer with tags and other files.
-Happens when typing <code class="keystroke">CTRL-N</code> while still search for results.  E.g., type "b_" in
-terminal.c and then <code class="keystroke">CTRL-N</code> twice.
-Should do current file first and not split it up when more results are found.
-(Also #1890)
 
 Patch from Christian Brabandt to preserve upper case marks when wiping out a
 buffer. (2013 Dec 9)
@@ -545,9 +940,6 @@ stack trace. (Yggdroot, 2017 Jul 28, #1887)
 
 Profile of a dict function is lost when the dict is deleted.  Would it be
 possible to collect this?  (Daniel Hahler, #2350)
-
-Add  <a href="various.html#:filter">:filter</a>  support for various commands (Marcin Szamotulski, 2017 Nov 12
-#2322)  Now in #2327?
 
 When checking if a bufref is valid, also check the buffer number, to catch the
 case of :bwipe followed by :new.
@@ -582,9 +974,6 @@ Use gvimext.dll from the nightly build? (Issue #249)
 Problem with using :cd when remotely editing a file. (Gerd Wachsmuth, 2017 May
 8, #1690)
 
-Running test_gui and test_gui_init with Motif sometimes kills the window
-manager.  Problem with Motif?
-
 Bogus characters inserted when triggering indent while changing text.
 (Vitor Antunes, 2016 Nov 22, #1269)
 
@@ -600,13 +989,8 @@ Is it possible to keep the complete menu open when calling complete()?
 
 Memory leak in test97?  The string is actually freed.  Weird.
 
-Patch to add configure flags to skip rtl, farsi and arabic support.
-(Diego Carrión, #1867)
-
 assert_fails() can only check for the first error.  Make it possible to have
 it catch multiple errors and check all of them.
-
-New value "uselast" for <a href="options.html#'switchbuf'">'switchbuf'</a>. (Lemonboy, 2017 Apr 23, #1652)
 
 Add a toolbar in the terminal.  Can be global, above all windows, or specific
 for one window.
@@ -640,9 +1024,6 @@ import can't be used in define option when include matches too.
 When session file has name in argument list but the buffer was deleted, the
 buffer is not deleted when using the session file. (#1393)
 Should add the buffer in hidden state.
-
-When an item in the quickfix list has a file name that does not exist, behave
-like the item was not a match for :cnext.
 
 Wrong diff highlighting with three files. (2016 Oct 20, #1186)
 Also get E749 on exit.
@@ -692,19 +1073,11 @@ Implement optional arguments for functions.
     call Foo(12, all = 0)
     call Foo(12, 15, 0)
 
-Change the Farsi code to work with UTF-8.  Possibly combined with the Arabic
-support, or similar.
-Invalid read error in Farsi mode. (Dominique Pelle, 2009 Aug 2)
-
 Add a command to take a range of lines, filter them and put the output
 somewhere else.  :<code class="special">{range}</code>copy <code class="special">{dest}</code> !cmd
 
 Patch to fix that empty first tab is not in session.
 (Hirohito Higashi, 2016 Nov 25, #1282)
-
-Patch to add random number generator. (Hong Xu, 2010 Nov 8, update Nov 10)
-Alternative from Christian Brabandt. (2010 Sep 19)
-New one from Yasuhiro Matsumoto, #1277.
 
 Patch to fix escaping of job arguments. (Yasuhiro Matsumoto, 2016 Oct 5)
 Update Oct 14: https://gist.github.com/mattn/d47e7d3bfe5ade4be86062b565a4bfca
@@ -723,15 +1096,11 @@ Or point to nightly builds: https://github.com/vim/vim-win32-installer/releases
 Problem passing non-UTF-8 strings to Python 3. (Björn Linse, 2016 Sep 11,
 #1053)  With patch, does it work?
 
-Using --remote to open a file in which a # appears does not work on
-MS-Windows.  Perhaps in \#  the \ is seen as a path separator. (Axel Bender,
-2017 Feb 9)  Can we expand wildcards first and send the path literally to the
-receiving Vim?  Or make an exception for #, it's not useful remotely.
-
 ":sbr" docs state it respects <a href="options.html#'switchbuf'">'switchbuf'</a>, but "vsplit" does not cause a
 vertical split. (Haldean Brown, 2017 Mar 1)
 
 Use ADDR_OTHER instead of ADDR_LINES for many more commands.
+E.g. all the location list commands use a count.
 Add tests for using number larger than number of lines in buffer.
 
 Might be useful to have isreadonly(), like we have islocked().
@@ -751,18 +1120,11 @@ Does this also fix #1408 ?
 
 Patch for <code class="badlink">'cursorlinenr'</code> option. (Ozaki Kiichi, 2016 Nov 30)
 
-Patch to be able to separately map <code class="keystroke">CTRL-H</code> and BS on Windows.
-(Linwei, 2017 Jul 11, #1833)
-
 When <a href="options.html#'completeopt'">'completeopt'</a> has "noselect" does not insert a newline. (Lifepillar, 2017
 Apr 23, #1653)
 
 Window resizing with <a href="options.html#'winfixheight'">'winfixheight'</a>: With a vertical split the height changes
 anyway. (Tommy allen, 2017 Feb 21, #1502)
-
-When adding an item to a new quickfix list make ":cnext" jump to that item.
-Make a difference being at the first item and not having used :cnext at all.
-(Afanasiy Fet, 2017 Jan 3)
 
 Invalid behavior with NULL list. (Nikolai Pavlov, #768)
 E.g. deepcopy(test_null_list())
@@ -771,10 +1133,6 @@ Patch to make it possible to extend a list with itself.
 (Nikolai Pavlov, 2016 Sep 23)
 
 Patch to add Zstandard compressed file support. (Nick Terrell, 2016 Oct 24)
-
-Patch to add MODIFIED_BY to MSVC build file. (Chen Lei, 2016 Nov 24, #1275)
-
-Patch to change argument of :marks. (LemonBoy, 2017 Jan 29, #1426)
 
 On Windows buffer completion sees backslash as escape char instead of path
 separator. (Toffanim, 2016 Nov 24, #1274)
@@ -795,6 +1153,10 @@ sort() is not stable when using numeric/float sort (Nikolay Pavlov, 2016 Sep
 4#1038)
 
 +channel:
+- Add a in_cb, invoked when the write buffer has become empty. (Matteo Landi)
+- Add ch_readlines(): for a channel in NL mode, reads as many lines as are
+  available.  Should be more efficient than looping over ch_read() with
+  ch_status() to check for more.
 - Add a separate timeout for opening a socket.  Currently it's fixed at 50
   msec, which is too small for a remote connection. (tverniquet, #2130)
 - Problem with stderr on Windows? (Vincent Rischmann, 2016 Aug 31, #1026)
@@ -803,6 +1165,8 @@ sort() is not stable when using numeric/float sort (Nikolay Pavlov, 2016 Sep
 - When out_cb executes :sleep, the close_cb may be invoked. (Daniel Hahler,
   2016 Dec 11, #1320)
 - Implement  <a href="channel.html#job-term">job-term</a>  ?
+- Calling a function when receiving a "call" on a channel, using feedkeys()
+  does not work.  It does work from a timer. (Qiming Zhao, #3852)
 - Channel test fails with Motif.  Sometimes kills the X11 server.
 - When a message in the queue but there is no callback, drop it after a while?
   Add timestamp to queued messages and callbacks with ID, remove after a
@@ -819,6 +1183,12 @@ sort() is not stable when using numeric/float sort (Nikolay Pavlov, 2016 Sep
     Although user could use "xterm -e 'cmd arg'".
 
 正规表达式问题:
+- NFA engine can be slow for some patterns.  Dominique found out that most
+  time is spent in addstate_here() copying the threads.  Instead of copying,
+  let each thread point to the next one (by offset, the list is reallocated).
+  (Dominique Pelle, 2019 Feb 18)
+- Old engine: using <a href="options.html#'incsearch'">'incsearch'</a> /\Zabc does not highlight the "c" if it has a
+  composing character.  New engine is OK. (Tony Mechelynck, 2019 May 5)
 - When search pattern has the base character both with and without combining
   character, search fails.  E.g. "รรีบ" in "การรีบรักใคร". (agguser, #2312)
 - [:space:] only matches ASCII spaces.  Add [:white:] for all space-like
@@ -866,8 +1236,6 @@ sort() is not stable when using numeric/float sort (Nikolay Pavlov, 2016 Sep
   Another one: echom matchstr(" sdfsfsf\n sfdsdfsdf",'[^\n]*')
   (2017 May 15, #1252)
 
-Patch to add "cmdline" completion to getcompletion(). (Shougo, Oct 1, #1140)
-
 Feature request: Complete members of a dictionary. (Luc Hermitte, 2017 Jan 4,
 #1350)
 
@@ -880,16 +1248,8 @@ Add an argument to choose binary or non-binary (like readfile()), when omitted
 use the current behavior.
 Include the test.
 
-Patch to add tagfunc().  Cleaned up by Christian Brabandt, 2013 Jun 22.
-New update 2017 Apr 10, #1628
-
 When <a href="options.html#'keywordprg'">'keywordprg'</a> starts with ":" the argument is still escaped as a shell
 command argument. (Romain Lafourcade, 2016 Oct 16, #1175)
-
-Patch to support CamelCase for spell checking: See a lower-to-upper case
-change as a word boundary. (btucker-MPCData, 2016 Nov 6, #1235)
-patch for <code class="badlink">'spellcamelcase'</code> option: spellcheck each CamelCased word.
-(Ben Tucker, 2016 Dec 2)
 
 Idea from Sven: record sequence of keys.  Useful to show others what they are
 doing (look over the shoulder), and also to see what happened.
@@ -951,9 +1311,6 @@ Have a way to get the call stack, in a function and from an exception.
 Second problem in #966: ins_compl_add_tv() uses get_dict_string() multiple
 times, overwrites the one buffer. (Nikolay Pavlov, 2016 Aug 5)
 
-This does not work: :set cscopequickfix=a-
-(Linewi, 2015 Jul 12, #914)
-
 Possibly wrong value for seq_cur. (Florent Fayolle, 2016 May 15, #806)
 
 Filetype plugin for awk. (Doug Kearns, 2016 Sep 5)
@@ -975,9 +1332,6 @@ Reject the value? #710.
 
 When doing "vi buf.md" a BufNew autocommand for *.md is not triggered.
 Because of using the initial buffer? (Dun Peal, 2016 May 12)
-
-Patch to add the :bvimgrep command.  (Christian Brabandt, 2014 Nov 12)
-Updated 2016 Jun 10, #858  Update 2017 Mar 28: use <code class="special">&lt;buffer&gt;</code>
 
 Add redrawtabline command. (Naruhiko Nishino, 2016 Jun 11)
 
@@ -1040,10 +1394,6 @@ Also need to run update-desktop-database (Kuriyama Kazunobu, 2015 Nov 4)
 Test object i{ and it do not behave the same. #1379
 Do not include the linebreak at the start?
 
-Patch to have text objects defined by arbitrary single characters. (Daniel
-Thau, 2013 Nov 20, 2014 Jan 29, 2014 Jan 31)
-Added tests (James McCoy, 2016 Aug 3).  Still needs more work.
-
 Feature request: add the "al" text object, to manipulate a screen line.
 Especially useful when using <a href="options.html#'linebreak'">'linebreak'</a>
 
@@ -1059,12 +1409,6 @@ If ":bd" also closes a Tab page then the " mark is not set.  (Harm te Hennepe,
 Patch to avoid redrawing tabline when the popup menu is visible.
 (Christian Brabandt, 2016 Jan 28)
 
-Patch to add <code class="special">{skip}</code> argument to search(). (Christian Brabandt, 2016 Feb 24)
-Update 2016 Jun 10, #861
-
-Patch to be able to use hex numbers with :digraph. (Lcd, 2015 Sep 6)
-Update Sep 7.  Update by Christian Brabandt, 2015 Sep 8, 2016 Feb 1.
-
 Patch to show search statistics. (Christian Brabandt, 2016 Jul 22)
 
 When the CursorMovedI event triggers, and <code class="keystroke">CTRL-X</code> was typed, a script cannot
@@ -1078,9 +1422,6 @@ Perhaps we can use ":windo <code class="special">&lt;restore&gt;</code> <code cl
 Patch to add <code class="special">&lt;restore&gt;</code> to :windo, :bufdo, etc. (Christian Brabandt, 2015 Jan
 6, 2nd message)
 Alternative: ":keeppos" command modifier: ":keeppos windo <code class="special">{cmd}</code>".
-
-Patch to fix that executable() may fail on very long filename in MS-Windows.
-(Ken Takata, 2016 Feb 1)
 
 Patch to fix display of listchars on the cursorline. (Nayuri Aohime, 2013)
 Update suggested by Yasuhiro Matsumoto, 2014 Nov 25:
@@ -1143,10 +1484,6 @@ I can't recommend it though.
 Build with Python on Mac does not always use the right library.
 (Kazunobu Kuriyama, 2015 Mar 28)
 
-Patch to add arguments to argc() and argv(). (Yegappan Lakshmanan, 2016 Jan
-24)  Also need a way to get the global arg list?  Update later on Jan 24
-Update Mar 5. Update Apr 7.  Update Jun 5.
-
 To support Thai (and other languages) word boundaries, include the ICU
 library:  http://userguide.icu-project.org/boundaryanalysis
 
@@ -1189,18 +1526,6 @@ Patch to fix checking global option value when not using it.
 
 When <a href="options.html#'showbreak'">'showbreak'</a> is set repeating a Visual operation counts the size of the
 <a href="options.html#'showbreak'">'showbreak'</a> text as part of the operation. (Axel Bender, 2015 Jul 20)
-
-Patch for multi-byte characters in langmap and applying a mapping on them.
-(Christian Brabandt, 2015 Jun 12, update July 25)
-Is this the right solution?  Need to cleanup langmap behavior:
-- in vgetorpeek() apply langmap to the typeahead buffer and put the result in
-  a copy-buffer, only when langmap is appropriate for the current mode. Then
-  check for mapping and let gotchars() work on the copy-buffer.
-- Remove LANGMAP_ADJUST() in other parts of the code.  Make sure the mode is
-  covered by the above change.
-So that replaying the register doesn't use keymap/langmap and still does the
-same thing.  Remarks on issue 543 (Roland Puntaier).
-Also see #737: langmap not applied to replaying recording.
 
 Patch to add grepfile(). (Scott Prager, 2015 May 26)
 Work in progress.
@@ -1251,12 +1576,6 @@ Syntax highlighting slow (hangs) in SASS file. (Niek Bosch, 2013 Aug 21)
 
 Adding "~" to <a href="options.html#'cdpath'">'cdpath'</a> doesn't work for completion?  (Davido, 2013 Aug 19)
 
-Should be easy to highlight all matches with <a href="options.html#'incsearch'">'incsearch'</a>.  Idea by Itchyny,
-2015 Feb 6.
-
-Wrong scrolling when using incsearch.  Patch by Christian Brabandt, 2014 Dec 4.
-Is this a good solution?
-
 Patch: Let rare word highlighting overrule good word highlighting.
 (Jakson A. Aquino, 2010 Jul 30, again 2011 Jul 2)
 
@@ -1274,17 +1593,11 @@ Remark from Roland Eggner: does it cause crashes? (2014 Dec 12)
 Updated patch by Roland Eggner, Dec 16
 Updated patch from Charles, 2016 Jul 2
 
-Patch to open folds for <a href="options.html#'incsearch'">'incsearch'</a>. (Christian Brabandt, 2015 Jan 6)
-
 Patch for building a 32bit Vim with 64bit MingW compiler.
 (Michael Soyka, 2014 Oct 15)
 
 Patch: On MS-Windows shellescape() may have to triple double quotes.
 (Ingo Karkat, 2015 Jan 16)
-
-Redo only remembers the last change.  Could use "<code class="special">{count}</code>g." to redo an older
-change.  How does the user know which change?  At least have a way to list
-them: ":repeats".
 
 Patch for glob(), adding slash to normal files. (Ingo Karkat, 2014 Dec 22)
 
@@ -1321,14 +1634,6 @@ compatible with Vim spell files.  The old files can no longer be downloaded.
 
 Spell checking: Add a feature to only consider two spaces after a dot to start
 a new sentence.  Don't give the capitalization error when there is one space.
-
-xterm should be able to pass focus changes to Vim, so that Vim can check for
-buffers that changed.  Perhaps in misc.c, function selectwindow().
-Xterm 224 supports it!
-Patch to make FocusGained and FocusLost work in modern terminals. (Hayaki
-Saito, 2013 Apr 24) Update 2016 Aug 12.
-Also see issue #609.
-We could add the enable/disable sequences to t_ti/t_te or t_ks/t_ke.
 
 Idea: For a window in the middle (has window above and below it), use
 right-mouse-drag on the status line to move a window up/down without changing
@@ -1421,12 +1726,7 @@ possible. (Christian Brabandt, 2014 Mar 12, update Aug 22)
 
 Updated spec ftplugin. (Matěj Cepl, 2013 Oct 16)
 
-Patch to right-align signs. (James Kolb (email james), 2013 Sep 23)
-
 Patch to handle integer overflow. (Aaron Burrow, 2013 Dec 12)
-
-Patch to add "ntab" item in <a href="options.html#'listchars'">'listchars'</a> to repeat first character. (Nathaniel
-Braun, pragm, 2013 Oct 13)  A better solution 2014 Mar 5.
 
 7   Windows XP: When using "ClearType" for text smoothing, a column of yellow
     pixels remains when typing spaces in front of a "D" (<a href="options.html#'guifont'">'guifont'</a> set to
@@ -1490,9 +1790,6 @@ Two highlighting bugs. (ZyX, 2013 Aug 18)
 Patch to support 'u' in interactive substitute. (Christian Brabandt, 2012 Sep
 28)  With tests: Oct 9.
 
-Patch from Christian Brabandt to make the "buffer" argument for ":sign place"
-optional. (2013 Jul 12)
-
 Dialog is too big on Linux too. (David Fishburn, 2013 Sep 2)
 
 Patch to make fold updates much faster. (Christian Brabandt, 2012 Dec)
@@ -1517,10 +1814,6 @@ Or use expand('<code class="special">&lt;sid&gt;</code>')?
 
 Patch to make confirm() display colors. (Christian Brabandt, 2012 Nov 9)
 
-Patch to add functions for signs. (Christian Brabandt, 2013 Jan 27)
-
-Patch to remove flicker from popup menu. (Yasuhiro Matsumoto, 2013 Aug 15)
-
 Problem with refresh:always in completion. (Tyler Wade, 2013 Mar 17)
 
 b:undo_ftplugin cannot call a script-local function. (Boris Danilov, 2013 Jan
@@ -1538,9 +1831,6 @@ Patch for :tabcloseleft, after closing a tab go to left tab. (William Bowers,
 
 Patch to improve equivalence classes in regexp patterns.
 (Christian Brabandt, 2013 Jan 16, update Jan 17)
-
-Patch to add new regexp classes :ident:, :keyword:, :fname:.
-(ichizok, 2016 Jan 12, #1373)
 
 Patch with suggestions for starting.txt. (Tony Mechelynck, 2012 Oct 24)
 But use Gnome instead of GTK?
@@ -1586,11 +1876,6 @@ New tests Jul 13.   Update Jul 17.  Discussion Jul 18.
 When running Vim in silent ex mode, an existing swapfile causes Vim to wait
 for a user action without a prompt. (Maarten Billemont, 2012 Feb 3)
 Do give the prompt? Quit with an error?
-
-Patch to list user digraphs. (Christian Brabandt, 2012 Apr 14)
-
-Patch to add digraph() function. (Christian Brabandt, 2013 Aug 22, update Aug
-24)
 
 Patch for input method status. (Hirohito Higashi, 2012 Apr 18)
 
@@ -1650,12 +1935,6 @@ Syntax region with <code class="badlink">'concealends'</code> and a <code class=
 only one of the two ends gets the cchar displayed. (Brett Stahlman, 2010 Aug
 21, Ben Fritz, 2010 Sep 14)
 
-The :syntax cchar value can only be a single character.  It would be useful to
-support combining characters. (Charles Campbell)
-
-<a href="options.html#'cursorline'">'cursorline'</a> works on a text line only.  Add <code class="badlink">'cursorscreenline'</code> for
-highlighting the screen line. (Christian Brabandt, 2012 Mar 31)
-
 Win32: Patch to use task dialogs when available. (Sergiu Dotenco, 2011 Sep 17)
 New feature, requires testing.  Made some remarks.
 
@@ -1698,6 +1977,7 @@ cleared.  See test64.
 Patch to make "z=" work when <a href="options.html#'spell'">'spell'</a> is off.  Does this have nasty side
 effects?  (Christian Brabandt, 2012 Aug 5, Update 2013 Aug 12)
 Would also need to do this for spellbadword() and spellsuggest().
+https://github.com/chrisbra/vim-mq-patches/blob/master/enable_spellchecking
 
 On 64 bit MS-Windows "long" is only 32 bits, but we sometimes need to store a
 64 bits value.  Change all number options to use nropt_T and define it to the
@@ -1846,13 +2126,6 @@ Ruby: ":ruby print $buffer.number" returns zero.
 
 setpos() does not restore cursor position after :normal. (Tyru, 2010 Aug 11)
 
-7   The <a href="options.html#'directory'">'directory'</a> option supports changing path separators to "%" to make
-    file names unique, also support this for <a href="options.html#'backupdir'">'backupdir'</a>. (Mikolaj Machowski)
-    Patch by Christian Brabandt, 2010 Oct 21.
-    Is this an update:  related to: #179
-    https://github.com/chrisbra/vim-mq-patches/blob/master/backupdir
-    Fixed patch 2017 Jul 1.
-
 With "tw=55 fo+=a" typing space before ) doesn't work well. (Scott Mcdermott,
 2010 Oct 24)
 
@@ -1905,10 +2178,6 @@ Looks like only bash can do it. (Yakov Lerner)
 Cscope "cs add" stopped working somewhat before 7.2.438. (Gary Johnson, 2010
 Jun 29)  Caused by 7.2.433?
 
-I often see pasted text (from Firefox, to Vim in xterm) appear twice.
-Also, Vim in xterm sometimes loses copy/paste ability (probably after running
-an external command).
-
 Jumplist doesn't work properly in Insert mode? (Jean Johner, 2010 Mar 20)
 
 Problem with transparent cmdline.  Also: Terminal title is wrong with
@@ -1947,9 +2216,6 @@ Patch to support :undo absolute jump to file save number. (Christian Brabandt,
 
 Patch to use <a href="options.html#'foldnestmax'">'foldnestmax'</a> also for "marker" foldmethod. (Arnaud Lacombe, 2011
 Jan 7)
-
-Bug with <a href="options.html#'incsearch'">'incsearch'</a> going to wrong line. (Wolfram Kresse, 2009 Aug 17)
-Only with "vim -u NONE".
 
 Problem with editing file in binary mode. (Ingo Krabbe, 2009 Oct 8)
 
@@ -1996,12 +2262,6 @@ to avoid changing <a href="options.html#'eventignore'">'eventignore'</a>?
 Patch for displaying 0x200c and 0x200d. (Ali Gholami Rudi, 2009 May 6)
 Probably needs a bit of work.
 
-Patch to add farsi handling to arabic.c (Ali Gholami Rudi, 2009 May 2)
-Added test, updates, June 23.
-Updated for 7.4: http://litcave.rudi.ir/farsi_vim.diff
-With modification for Tatweel character: https://dpaste.de/VmFw
-Remark from Ameretat Reith (2014 Oct 13)
-
 List of encoding aliases. (Takao Fujiwara, 2009 Jul 18)
 Are they all OK?  Update Jul 22.
 
@@ -2039,8 +2299,6 @@ When $VIMRUNTIME is set in .vimrc, need to reload lang files.  Already done
 for GTK, how about others? (Ron Aaron, 2010 Apr 10)
 
 Patch for GTK buttons X1Mouse and X2Mouse. (Christian J. Robinson, 2010 Aug 9)
-
-Motif: Build on Ubuntu can't enter any text in dialog text fields.
 
 ":tab split fname" doesn't set the alternate file in the original window,
 because win_valid() always returns FALSE.  Below win_new_tabpage() in
@@ -2158,15 +2416,10 @@ still delete them.  Also convert all buffer file names?
 "gqip" in Insert mode has an off-by-one error, causing it to reflow text.
 (Raul Coronado, 2009 Nov 2)
 
-Update src/testdir/main.aap.
-
 Something wrong with session that has "cd" commands and "badd", in such a way
 that Vim doesn't find the edited file in the buffer list, causing the
 ATTENTION message?  (Tony Mechelynck, 2008 Dec 1)
 Also: swap files are in ~/tmp/  One has relative file name ".mozilla/...".
-
-Add v:motion_force. (Kana Natsuno, 2008 Dec 6)
-Maybe call it v:motiontype.
 
 MS-Windows: editing the first, empty buffer, <a href="options.html#'ffs'">'ffs'</a> set to "unix,dos", ":enew"
 doesn't set <a href="options.html#'ff'">'ff'</a> to "unix".  (Ben Fritz, 2008 Dec 5) Reusing the old buffer
@@ -2292,7 +2545,7 @@ Works OK when <a href="options.html#'cmdheight'">'cmdheight'</a> is 2.
 Patch by Christian Brabandt, 2013 May 31.
 
 The utf class table is missing some entries:
-        0x2212, minus sign 
+        0x2212, minus sign
         0x2217, star
         0x2500, bar
         0x26ab, circle
@@ -2357,9 +2610,6 @@ Syntax highlighting wrong for transparent region. (Doug Kearns, 2007 Feb 26)
 Bug in using a transparent syntax region. (Hanlen in vim-dev maillist, 2007
 Jul 31)
 
-C syntax: <code class="special">{}</code> inside () causes following <code class="special">{}</code> to be highlighted as error.
-(Michalis Giannakidis, 2006 Jun 1)
-
 When <a href="options.html#'diffopt'">'diffopt'</a> has "context:0" a single deleted line causes two folds to merge
 and mess up syncing. (Austin Jennings, 2008 Jan 31)
 
@@ -2409,8 +2659,6 @@ Add option settings to help ftplugin. (David Eggum, 2006 Dec 18)
 Autoconf problem: when checking for iconv library we may add -L/usr/local/lib,
 but when compiling further tests -liconv is added without the -L argument,
 that may fail (e.g., sizeof(int)). (Blaine, 2007 Aug 21)
-
-When opening quickfix window, disable spell checking?
 
 Problem with ".add" files when using two languages and restarting Vim. (Raul
 Coronado, 2008 Oct 30)
@@ -2474,7 +2722,7 @@ Windows installer: licence text should not use indent, causes bad word wrap.
 Dos uninstal may delete vim.bat from the wrong directory (e.g., when someone
 makes his own wrapper).  Add a magic string with the version number to the
 .bat file and check for it in the uninstaller.  E.g.
-          # uninstall key: vim7.3*
+          # uninstall key: vim8.1*
 
 Changes for Win32 makefile. (Mike Williams, 2007 Jan 22, Alexei Alexandrov,
 2007 Feb 8)
@@ -2491,10 +2739,6 @@ patches by Mathias, see mail Feb 22)
 
 Win32: compiling with normal features and OLE fails.  Patch by Mathias
 Michaelis, 2006 Jun 4.
-
-Win32: after "[I" showing matches, scroll wheel messes up screen. (Tsakiridis,
-2007 Feb 18)
-Patch by Alex Dobrynin, 2007 Jun 3.  Also fixes other scroll wheel problems.
 
 Win32: using <code class="keystroke">CTRL-S</code> in Insert mode doesn't remove the "+" from the tab pages
 label.  (Tsakiridis, 2007 Feb 18)  Patch from Ian Kelling, 2008 Aug 6.
@@ -2524,10 +2768,6 @@ If the variable "g:x#y#z" exists completion after ":echo g:x#" doesn't work.
 
 Feature request: Command to go to previous tab, like what <code class="keystroke">CTRL-W</code> p does for
 windows. (Adam George)
-
-F1 - F4 in an xterm produce a different escape sequence when used with a
-modifier key.  Need to catch three different sequences.  Use K_ZF1, like
-K_ZHOME? (Dickey, 2007 Dec 2)
 
 In debug mode, using <code class="keystroke">CTRL-R</code> = to evaluate a function causes stepping through
 the function. (Hari Krishna Dara, 2006 Jun 28)
@@ -2578,7 +2818,7 @@ Ruby completion is insecure.  Can this be fixed?
 
 When <a href="options.html#'backupskip'">'backupskip'</a> is set from $TEMP special characters need to be escaped.
 (patch by Grembowietz, 2007 Feb 26, not quite right)
-Another problem is that file_pat_to_reg_pat() doesn't recognize "\\", so "\\(" 
+Another problem is that file_pat_to_reg_pat() doesn't recognize "\\", so "\\("
 will be seen as a path separator plus "\(".
 
 gvim d:\path\path\(FILE).xml should not remove the \ before the (.
@@ -2663,12 +2903,6 @@ Setting <a href="options.html#'background'">'background'</a> resets the Normal b
 This is undesired, <a href="options.html#'background'">'background'</a> is supposed to tell Vim what the background
 color is, not reset it.
 
-Linux distributions:
-- Suggest compiling xterm with --enable-tcap-query, so that nr of colors is
-  known to Vim.  88 colors instead of 16 works better.  See ":help
-  xfree-xterm".
-- Suggest including bare "vi" and "vim" with X11, syntax, etc.
-
 Completion menu: For a wrapping line, completing a long file name, only the
 start of the path is shown in the menu.  Should move the menu to the right to
 show more text of the completions.  Shorten the items that don't fit in the
@@ -2682,12 +2916,6 @@ the buffer is displayed. (Antonios Tsakiridis)
 
 When ":cn" moves to an error in the same line the message isn't shortened.
 Only skip shortening for ":cc"?
-
-Write "making vim work better" for the docs (mostly pointers): <b class="vimtag"> <a name="nice">nice</a> </b>
-    - sourcing $VIMRUNTIME/vimrc_example.vim
-    - setting <a href="options.html#'mouse'">'mouse'</a> to "a"
-    - getting colors in xterm
-    - compiling Vim with X11, GUI, etc.
 
 Problem with ":call" and dictionary function. Hari Krishna Dara, Charles
 Campbell 2006 Jul 06.
@@ -2755,9 +2983,6 @@ Small problem displaying diff filler line when opening windows with a script.
 Is it allowed that <a href="options.html#'backupext'">'backupext'</a> is empty?  Problems when backup is in same dir
 as original file?  If it's OK don't compare with <a href="options.html#'patchmode'">'patchmode'</a>. (Thierry Closen)
 
-Patch for supporting count before CR in quickfix window. (AOYAMA Shotaro, 2007
-Jan 1)
-
 Patch for adding ":lscscope". (Navdeep Parhar, 2007 Apr 26; update 2008 Apr
 23)
 
@@ -2784,11 +3009,6 @@ Create a gvimtutor.1 file and change Makefiles to install it.
 When <a href="options.html#'encoding'">'encoding'</a> is utf-8 typing text at the end of the line causes previously
 typed characters to be redrawn.  Caused by patch 7.1.329. (Tyler Spivey, 2008
 Sep 3, 11)
-
-When Vim in an xterm owns the selection and the user does ":shell" Vim doesn't
-respond to selection requests.  Invoking XtDisownSelection() before executing
-the shell doesn't help.  Would require forking and doing a message loop, like
-what happens for the GUI.
 
 ":vimgrep" does not recognize a recursive symlink.  Is it possible to detect
 this, at least for Unix (using device/inode)?
@@ -2822,12 +3042,8 @@ Add an option for a minimal text length before inserting a line break for
 -   Another patch for Javascript indenting. (Hari Kumar, 2010 Jul 11)
     Needs a few tests.
 -   Add <code class="badlink">'cscopeignorecase'</code> option. (Liang Wenzhi, 2006 Sept 3)
--   Load intl.dll too, not only libintl.dll. (Mike Williams, 2006 May 9, docs
-    patch May 10)
 -   Extra argument to strtrans() to translate special keys to their name (Eric
     Arnold, 2006 May 22)
--   <code class="badlink">'threglookexp'</code> option: only match with first word in thesaurus file.
-    (Jakson A. Aquino, 2006 Jun 14)
 -   Mac: indicate whether a buffer was modified. (Nicolas Weber, 2006 Jun 30)
 -   Allow negative <code class="badlink">'nrwidth'</code> for left aligning. (Nathan Laredo, 2006 Aug 16)
 -   ml_append_string(): efficiently append to an existing line. (Brad
@@ -2882,11 +3098,6 @@ Add an option for a minimal text length before inserting a line break for
     use the patch that keeps using HLF_8 if HLF_WS has not
     been given values.
     Add section in help files for these highlight groups?
-8   "fg" and "bg" don't work in an xterm.  Get default colors from xterm
-    with an ESC sequence.
-    xterm can send colors for many things.  E.g. for the cursor:
-        <code class="special">&lt;Esc&gt;</code>]12;?<code class="special">&lt;Bel&gt;</code>
-    Can use this to get the background color and restore the colors on exit.
 7   Add "DefaultFG" and "DefaultBG" for the colors of the menu. (Marcin
     Dalecki has a patch for Motif and Carbon)
 -   Add possibility to highlight specific columns (for Fortran).  Or put a
@@ -2912,8 +3123,6 @@ Add an option for a minimal text length before inserting a line break for
                         + 1", but that's ugly.
 7   Add patch from Benoit Cerrina to integrate Vim and Perl functions
     better.  Now also works for Ruby (2001 Nov 10)
--   Patch from Herculano de Lima Einloft Neto for better formatting of the
-    quickfix window (2004 dec 2)
 7   When <a href="options.html#'rightleft'">'rightleft'</a> is set, the search pattern should be displayed right
     to left as well?  See patch of Dec 26. (Nadim Shaikli)
 8   Option to lock all used memory so that it doesn't get swapped to disk
@@ -2931,6 +3140,39 @@ Add an option for a minimal text length before inserting a line break for
     and GTK by degreneir (nov 10 and nov 18).
 -   Patch for "paranoid mode" by Kevin Collins, March 7.  Needs much more work.
 
+更好的 <a href="options.html#'rightleft'">'rightleft'</a> 或 BIDI 支持:
+- Minimal Vi with bidi support: https://github.com/aligrudi/neatvi
+  By Ali Gholami Rudi, also worked on arabic.c
+
+Quickfix/位置列表:
+-   Window size is wrong when using quickfix window. (Lifepillar, 2018 Aug 24,
+    #2999)
+-   When using <code class="keystroke">CTRL-W</code> CR in the quickfix window, the jumplist in the opened
+    window is cleared, to avoid going back to the list of errors buffer (would
+    have two windows with it).  Can we just remove the jump list entries for
+    the quickfix buffer?
+-   Quickfix window height is not kept with a vertical split. (Lifepillar,
+    2018 Jun 10, #2998)
+-   When an item in the quickfix list has a file name that does not exist,
+    behave like the item was not a match for :cnext.
+-   When adding an item to a new quickfix list make ":cnext" jump to that
+    item.  Make a difference being at the first item and not having used
+    :cnext at all.  (Afanasiy Fet, 2017 Jan 3)
+-   This does not work: :set cscopequickfix=a-
+    (Linewi, 2015 Jul 12, #914)
+-   When opening quickfix window, disable spell checking?
+-   Patch for supporting count before CR in quickfix window. (AOYAMA Shotaro,
+    2007 Jan 1)
+-   Patch from Herculano de Lima Einloft Neto for better formatting of the
+    quickfix window (2004 dec 2)
+-   Amiga: When using quickfix with the Manx compiler we only get the first 25
+    errors.  How do we get the rest?
+8   The quickfix file is read without conversion, thus in <a href="options.html#'encoding'">'encoding'</a>.  Add an
+    option to specify the encoding of the errorfile and convert it.  Also for
+    ":grep" and ":helpgrep".
+    More generic solution: support a filter (e.g., by calling a function).
+7   Add a command that goes back to the position from before jumping to the
+    first quickfix location.  ":cbefore"?
 
 Vi 不兼容性:
 -   Try new POSIX tests, made after my comments. (Geoff Clare, 2005 April 7)
@@ -3018,8 +3260,6 @@ Win32 GUI 已知的漏洞:
 8   The -P argument doesn't work very well with many MDI applications.
     The last argument of CreateWindowEx() should be used, see MSDN docs.
     Tutorial: http://win32assembly.online.fr/tut32.html
-8   In eval.c, io.h is included when MSWIN32 is defined.  Shouldn't this be
-    WIN32?  Or can including io.h be moved to vim.h? (Dan Sharp)
 6   Win32 GUI: With "-u NONE -U NONE" and doing "<code class="keystroke">CTRL-W</code> v" "<code class="keystroke">CTRL-W</code> o", the ":"
     of ":only" is highlighted like the cursor.  (Lipelis)
 8   When <a href="options.html#'encoding'">'encoding'</a> is "utf-8", should use <a href="options.html#'guifont'">'guifont'</a> for both normal and wide
@@ -3059,9 +3299,6 @@ Win32 GUI 已知的漏洞:
 8   When the <a href="options.html#'shell'">'shell'</a> cannot be executed, should give an appropriate error msg.
     Esp. for a filter command, currently it only complains the file could not
     be read.
-7   Add an option to add one pixel column to the character width?  Lucida
-    Console italic is wider than the normal font ("d" overlaps with next char).
-    Opposite of <a href="options.html#'linespace'">'linespace'</a>: <code class="badlink">'columnspace'</code>.
 7   At the hit-enter prompt scrolling now no longer works.  Need to use the
     keyboard to get around this.  Pretend <code class="special">&lt;CR&gt;</code> was hit when the user tries to
     scroll?
@@ -3426,8 +3663,6 @@ Macintosh:
     <a href="options.html#'magic'">'magic'</a> in history.  (Margo)
 9   optwin.vim: Restoring a mapping for <code class="special">&lt;Space&gt;</code> or <code class="special">&lt;CR&gt;</code> is not correct for
     ":noremap".  Add "mapcmd(<code class="special">{string}</code>, <code class="special">{mode}</code>)?  Use code from ":mkexrc".
-9   incsearch is incorrect for "/that/<code class="special">&lt;Return&gt;</code>/this/;//" (last search pattern
-    isn't updated).
 9   term_console is used before it is set (msdos, Amiga).
 9   Get out-of-memory for ":g/^/,$s//@/" on 1000 lines, this is not handled
     correctly.  Get many error messages while redrawing the screen, which
@@ -3456,7 +3691,6 @@ Macintosh:
 8   Xterm sends ^[[H for <code class="special">&lt;Home&gt;</code> and ^[[F for <code class="special">&lt;End&gt;</code> in some mode.  Also
     recognize these keys?  Mostly useful for xterm simulators, like gnometerm.
     See http://dickey.his.com/xterm/xterm.faq.html#xterm_pc_style.
-8   For xterm also recognize keypad up/down/left/right and insert.
 8   '[ and '] should be set to start/end of line when using a linewise operator
     (e.g., ":w").
 8   <code class="keystroke">CTRL-A</code> can't handle big "long" numbers, they become negative.  Check for
@@ -3471,10 +3705,6 @@ Macintosh:
     filesystem, an illegal file name may be created: ".vim".
 8   For each buffer that is opened, the viminfo file is opened and read to
     check for file marks.  This can be slow.
-7   In xterm, recognize both vt100 and vt220 cursor keys.  Change
-    add_termcode() to not remove an existing entry for a name, when it's
-    needed.
-    Need a generic solution to recognize different codes for the same key.
 8   Core dump within signal function: gdb doesn't show stack backtrace!  Option
     to skip catch_signals()?
 9   Repeating a "cw" with "." doesn't work if the text was pasted from the
@@ -3577,8 +3807,6 @@ Macintosh:
 -   In zsh, "gvim&amp;" changes the terminal settings.  This is a zsh problem.
     (Jennings)
 -   Problem with HPterm under X: old contents of window is lost (Cosentino).
--   Amiga: When using quickfix with the Manx compiler we only get the first 25
-    errors.  How do we get the rest?
 -   Amiga: The ":cq" command does not always abort the Manx compiler.  Why?
 -   Linux: A file with protection r--rw-rw- is seen readonly for others.  The
     access() function in GNU libc is probably wrong.
@@ -3649,6 +3877,7 @@ Macintosh:
     Alternative: Make a function for Ex commands: cmd_edit().
 -   Add COLUMN NUMBERS to ":" commands ":line1,line2[col1,col2]cmd".  Block
     can be selected with <code class="keystroke">CTRL-V</code>.  Allow '$' (end of line) for col2.
+    (issue #3292)
 -   ECLIPSE plugin.  Problem is: the interface is very complicated.  Need to
     implement part in Java and then connect to Vim.  Some hints from Alexandru
     Roman, 2004 Dec 15.  Should then also work with Oracle Jdeveloper, see JSR
@@ -3752,13 +3981,11 @@ Macintosh:
 8   Add local options for each tab page?  E.g., <a href="options.html#'diffopt'">'diffopt'</a> could differ between
     tab pages.
 7   Add local highlighting for each tab page?
-7   Add local directory for tab pages?  How would this interfere with
-    window-local directories?
 
 
 拼写检查:
 -   Support more regions? Caolan McNamara argues it's needed for es_XX.
-    https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=219777    
+    https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=219777
 -   Unicode defines another quote character: 0x2019.  Use it as an equivalent
     of a single quote, thus use it as a word character like a quote and match
     with words, replacing the curly quote with a single quote.
@@ -3857,7 +4084,8 @@ Diff 模式:
     secondary: zB zS zT zZ, z=)
 8   Vertical folds: looks like vertically split windows, but the cursor moves
     through the vertical separator, separator moves when scrolling.
-8   Add "z/" and "z?" for searching in not folded text only.
+8   Add "z/" and "z?" for searching in not folded text only.  Or use a regexp
+    item, so that it can be used in any pattern.
 8   When a closed fold is displayed open because of <a href="options.html#'foldminlines'">'foldminlines'</a>, the
     behavior of commands is still like the fold is closed.  How to make the
     user aware of this?
@@ -3910,10 +4138,6 @@ Diff 模式:
 8   Add an item in <a href="options.html#'fileencodings'">'fileencodings'</a> to check the first line of an XML file for
     the encoding.  &lt;?xml version="1.0" encoding="UTF-8"?&gt;  Or "charset=UTF-8"?
     For HTML look for "charset=utf-8".
-8   The quickfix file is read without conversion, thus in <a href="options.html#'encoding'">'encoding'</a>.  Add an
-    option to specify the encoding of the errorfile and convert it.  Also for
-    ":grep" and ":helpgrep".
-    More generic solution: support a filter (e.g., by calling a function).
 8   When a file was converted from <a href="options.html#'fileencoding'">'fileencoding'</a> to <a href="options.html#'encoding'">'encoding'</a>, a tag search
     should also do this on the search pattern. (Andrzej M. Ostruszka)
 8   When filtering changes the encoding <a href="options.html#'fileencoding'">'fileencoding'</a> may not work.  E.g.,
@@ -4151,8 +4375,6 @@ Vim 脚本语言:
     to avoid a performance penalty (esp. for string options)?
 8   Add referring to key options with "&amp;t_xx".  Both for "echo &amp;t_xx" and
     ":let &amp;t_xx =".  Useful for making portable mappings.
--   Add ":let var ?= value", conditional assignment.  Patch by Dave Eggum,
-    2006 Dec 11.
 -   range for ":exec", pass it on to the executed command.  (Webb)
 8   ":<code class="special">{range}</code>source": source the lines from the current file.
         You can already yank lines and use :@" to execute them.
@@ -4414,9 +4636,6 @@ Vim 脚本语言:
 
 
 屏幕刷新:
-7   Add a string to the <a href="options.html#'display'">'display'</a> option to make <code class="keystroke">CTRL-E</code> and <code class="keystroke">CTRL-Y</code> scroll one
-    screen line, also if this means the first line doesn't start with the
-    first character (like what happens with a single line that doesn't fit).
 -   screen_line():
     - insert/delete character stuff.
     - improve delete rest of line (spaces at end of line).
@@ -5203,16 +5422,22 @@ Java:
 
 
 增量搜索:
--   Add a limit to the number of lines that are searched for <a href="options.html#'incsearch'">'incsearch'</a>?
+-   Wrong scrolling when using incsearch.  Patch by Christian Brabandt, 2014
+    Dec 4.  Is this a good solution?
+-   Temporarily open folds to show where the search ends up.  Restore the
+    folds when going to another line.
+    Patch to open folds for <a href="options.html#'incsearch'">'incsearch'</a>. (Christian Brabandt, 2015 Jan 6)
+-   Bug with <a href="options.html#'incsearch'">'incsearch'</a> going to wrong line. (Wolfram Kresse, 2009 Aug 17)
+    Only with "vim -u NONE".
 -   When no match is found and the user types more, the screen is redrawn
     anyway.  Could skip that.  Esp. if the line wraps and the text is scrolled
     up every time.
--   Temporarily open folds to show where the search ends up.  Restore the
-    folds when going to another line.
 -   When incsearch used and hitting return, no need to search again in many
     cases, saves a lot of time in big files. (Slootman wants to work on this?)
     When not using special characters, can continue search from the last match
     (or not at all, when there was no match).  See oldmail/webb/in.872.
+9   incsearch is incorrect for "/that/<code class="special">&lt;Return&gt;</code>/this/;//" (last search pattern
+    isn't updated).
 
 
 搜索:
@@ -5515,9 +5740,6 @@ Viminfo:
     that marks if the option was set.  Useful to keep the effect of setting
     <a href="options.html#'compatible'">'compatible'</a> after ":syntax on" has been used.
 7   There is <a href="options.html#'titleold'">'titleold'</a>, why is there no <code class="badlink">'iconold'</code>? (Chazelas)
-7   Make <a href="options.html#'scrolloff'">'scrolloff'</a> a global-local option, so that it can be different in the
-    quickfix window, for example. (Gary Holloway)
-    Also do <a href="options.html#'sidescrolloff'">'sidescrolloff'</a>.
 
 
 外部命令:
@@ -5698,7 +5920,6 @@ Viminfo:
 7   Store the history from debug mode in viminfo.
 7   Make the debug mode history available with histget() et al.
 
-
 其他改进:
 7   Add plugins for formatting?  Should be able to make a choice depending on
     the language of a file (English/Korean/Japanese/etc.).
@@ -5719,8 +5940,6 @@ Viminfo:
     from the <a href="options.html#'makeprg'">'makeprg'</a>?
 -   Add %b to <a href="options.html#'errorformat'">'errorformat'</a>: buffer number. (Yegappan Lakshmanan / Suresh
     Govindachar)
-7   Add a command that goes back to the position from before jumping to the
-    first quickfix location.  ":cbefore"?
 7   Allow a window not to have a statusline.  Makes it possible to use a
     window as a buffer-tab selection.
 8   Allow non-active windows to have a different statusline. (Yakov Lerner)
@@ -5852,7 +6071,7 @@ Viminfo:
                         used, remove the <code class="special">&lt;CR&gt;</code> at the end of lines in <code class="special">[range]</code>.
                         A <code class="keystroke">CTRL-Z</code> at the end of the file is removed.  If
                         <code class="special">[range]</code> is omitted, or it is the whole file, and all
-                        lines end in <code class="special">&lt;CR&gt;</code> <a href="options.html#'textmode'">'textmode'</a> is set.  {not in Vi}
+                        lines end in <code class="special">&lt;CR&gt;</code> <a href="options.html#'textmode'">'textmode'</a> is set.
 -   Should integrate addstar() and file_pat_to_reg_pat().
 -   When working over a serial line with 7 bit characters, remove meta
     characters from <a href="options.html#'isprint'">'isprint'</a>.
@@ -6126,7 +6345,7 @@ Viminfo:
     are reflected in each Vim immediately.  Could work with local files but
     also over the internet.  See http://www.codingmonkeys.de/subethaedit/.
 
-vim:tw=78:sw=4:sts=4:ts=8:ft=help:norl:
+vim:tw=78:sw=4:sts=4:ts=8:noet:ft=help:norl:
 vim: set fo+=n :
 </pre>
 <p><i>Generated by vim2html</i></p>

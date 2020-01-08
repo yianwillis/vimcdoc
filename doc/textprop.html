@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: textprop</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<div id=banner>
+<a href="help.html">帮助总览</a> &middot;
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a>
+</div>
+
+<div id=outer>
+<h2>textprop</h2>
+<pre>
+<b class="vimtag"> <a name="textprop.txt">textprop.txt</a> </b>  For Vim version 8.2.  最近更新: 2020年1月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+                                https://github.com/yianwillis/vimcdoc
+
+
+显示带附属属性的文本。                          <b class="vimtag"> <a name="textprop">textprop</a> </b> <b class="vimtag"> <a name="text-properties">text-properties</a> </b>
+
+
+1. 介绍                          <a href="textprop.html#text-prop-intro">text-prop-intro</a> 
+2. 函数                          <a href="textprop.html#text-prop-functions">text-prop-functions</a> 
+3. 文本有改动时                  <a href="textprop.html#text-prop-changes">text-prop-changes</a> 
+
+
+<code class="notvi">{仅当编译时加入  <a href="textprop.html#textprop">textprop</a>  特性才可以使用文本属性}</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 介绍                                                 <b class="vimtag"> <a name="text-prop-intro">text-prop-intro</a> </b></h4>
+缓冲区中的文本可附属文本属性。可随着文本移动: 如果删除或插入了行，属性会随着附
+属的文本移动。在文本属性之前的行上插入/删除文本也是如此。如果插入/删除文本属性
+内的文本，文本属性会增加/减少长度。
+
+文本属性的主要用途是文本的高亮。可以看作是语法高亮的替代。它不定义匹配文本的模
+式，而是用脚本来设置高亮，可能使用了外部解析器的输出。这只需要做一次，而不是每
+次重画屏幕的时候，所以会快许多，而付出的是附属文本属性的最初代价。
+
+文本属性也可用于其它识别文本的目的。例如，给函数名加上文本属性，这样就可以定义
+跳转到下个/上个函数的搜索了。
+
+文本属性附属在指定的行和列上，有指定的长度。属性可以跨多行。
+
+文本属性有以下字段:
+        "id"            按你喜欢所使用的数值
+        "type"          属性类型名
+
+
+<code class="section">属性类型 </code>
+                                                        <b class="vimtag"> <a name="E971">E971</a> </b>
+文本属性通常有属性类型名，定义如何高亮文本。属性类型可有以下项目:
+        "highlight"     使用的高亮组名
+        "combine"       省略或 TRUE 时，文本属性高亮和任何语法高亮合并；FALSE
+                        时文本属性高亮替代语法高亮
+        "priority"      属性有重叠昌，使用最高优先级的那个。
+        "start_incl"    TRUE 时在起始位置的插入会包含在文本属性内
+        "end_incl"      TRUE 时在结束位置的插入会包含在文本属性内
+
+
+<code class="section">示例 </code>
+
+假定缓冲区第 11 行有以下文本 (除了缩进外):
+
+        The number 123 is smaller than 4567.
+
+要高亮此文本的数值: 
+<code class="example">        call prop_type_add('number', {'highlight': 'Constant'})</code>
+<code class="example">        call prop_add(11, 12, {'length': 3, 'type': 'number'})</code>
+<code class="example">        call prop_add(11, 32, {'length': 4, 'type': 'number'})</code>
+<code class="example"></code>
+试试在文本上方插入或删除行，你会看到文本属性和文本捆绑，所以会按需调整行号。
+
+设置 "start_incl" 和 "end_incl" 可用于空白围绕文本，比如函数名的场合。为假时可
+用于文本以特定字符开始和/或结束，比如引号包围字符串的场合。
+
+<code class="section">        func FuncName(arg) </code>
+             ^^^^^^^^        置位 start_incl 和 end_incl 的属性
+
+<code class="section">        var = "text"; </code>
+              ^^^^^^         复位 start_incl 和 end_incl 的属性
+
+不过，插入或删除文本时，可能需要解析文本并更新文本属性。但这会异步进行。
+
+
+内部错误 <b class="vimtag"> <a name="E967">E967</a> </b>
+
+如果你看到 E967，请报告此漏洞。可以通过 Github:
+https://github.com/vim/vim/issues/new
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. 函数                                                 <b class="vimtag"> <a name="text-prop-functions">text-prop-functions</a> </b></h4>
+操作文本属性类型:
+
+prop_type_add(<code class="special">{name}</code>, <code class="special">{props}</code>)          定义新的属性类型
+prop_type_change(<code class="special">{name}</code>, <code class="special">{props}</code>)       改变已有的属性类型
+prop_type_delete(<code class="special">{name}</code> [, <code class="special">{props}</code>])    删除属性类型
+prop_type_get([<code class="special">{name}</code> [, <code class="special">{props}</code>])      获取属性类型值
+prop_type_list([<code class="special">{props}</code>])               获取属性类型的列表
+
+
+操作文本属性:
+
+prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{props}</code>)        新增文本属性
+prop_clear(<code class="special">{lnum}</code> [, <code class="special">{lnum-end}</code> [, <code class="special">{bufnr}</code>]])
+                                        删除所有文本属性
+prop_find(<code class="special">{props}</code> [, <code class="special">{direction}</code>])      搜索文本属性
+prop_list(<code class="special">{lnum}</code> [, <code class="special">{props}</code>)            <code class="special">{lnum}</code> 中的文本属性
+prop_remove(<code class="special">{props}</code> [, <code class="special">{lnum}</code> [, <code class="special">{lnum-end}</code>]])
+                                        删除一个文本属性
+
+                                                <b class="vimtag"> <a name="prop_add()">prop_add()</a> </b> <b class="vimtag"> <a name="E965">E965</a> </b>
+prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{props}</code>)
+                在位置 <code class="special">{lnum}</code>，<code class="special">{col}</code> 上附属文本属性。<code class="special">{col}</code> 以字节计算，首列为
+                一。
+                <code class="special">{lnum}</code> 如果非法，报错。 <b class="vimtag"> <a name="E966">E966</a> </b>
+                <code class="special">{col}</code> 如果非法，报错。 <b class="vimtag"> <a name="E964">E964</a> </b>
+
+                <code class="special">{props}</code> 是带以下域的字典:
+                   length       以字节计的文本长度，只能用于不在另一行继续的属
+                                性；可为零
+                   end_lnum     文本结尾的行号
+                   end_col      文本刚刚结束之后的列；如果 "length" 存在则不
+                                用；如果 <code class="special">{col}</code> 和 "end_col" 相等，且
+                                "end_lnum" 省略或等于 <code class="special">{lnum}</code>，这是个零宽度的文
+                                本属性
+                   bufnr        加入属性的缓冲区；省略是使用当前缓冲区
+                   id           用户定义的属性 ID；省略时使用零
+                   type         文本属性类型名
+                除 "type" 外，所有域均是可选的。
+
+                同时提供 "length" 和 "end_lnum" 或 "end_col" 是错误。要么用
+                "length" 或 "end_col" 用于单行的属性，或者用 "end_lnum" 和
+                "end_col" 用于跨多行的属性。
+                如果不给 "length" 也不给 "end_col"，属性为零宽度。这意味着它不
+                会高亮，但会随着文本移动，就像位置标记一样。
+                属性可以正好在文本的最后字符上结束，也可以在它之后结束。后者如
+                果在行上附加文本，文本属性会跟着变长，属性类型不置位
+                "end_incl" 时也是如此。
+
+                先在加入属性的缓冲区中寻找 "type"。如果找不到，再使用全局属性
+                类型。还找不到的话会报错。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetLnum()-&gt;prop_add(col, props)</code>
+<code class="example"></code>
+<code class="example"></code>
+prop_clear(<code class="special">{lnum}</code> [, <code class="special">{lnum-end}</code> [, <code class="special">{props}</code>]])           <b class="vimtag"> <a name="prop_clear()">prop_clear()</a> </b>
+                删除所有行 <code class="special">{lnum}</code> 上的文本属性。
+                如果给出 <code class="special">{lnum-end}</code>，删除从行 <code class="special">{lnum}</code> 到 <code class="special">{lnum-end}</code> (闭区间) 所
+                有的文本属性。
+
+                如果 <code class="special">{props}</code> 包含 "bufnr" 项目，使用此缓冲区，否则使用当前缓冲
+                区。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetLnum()-&gt;prop_clear()</code>
+
+                                                        <b class="vimtag"> <a name="prop_find()">prop_find()</a> </b>
+prop_find(<code class="special">{props}</code> [, <code class="special">{direction}</code>])
+                <code class="special">{尚未实现}</code>
+                搜索 <code class="special">{props}</code> 指定的文本属性:
+                   id           带此 ID 的属性
+                   type         带此类型名的属性
+                   bufnr        在其中搜索的缓冲区；如果给出必须用 "lnum" 和
+                                "col" 指定开始位置；如果省略使用当前缓冲区
+                   lnum         从此行开始 (省略时从光标所在行开始)
+                   col          从此列开始 (省略且给出 "lnum" 时: 使用列 1，否
+                                则从光标开始)
+                   skipstart    不寻找开始位置所在的匹配
+
+                <code class="special">{direction}</code> 可以是 "f" 用于正向，"b" 用于反向。如果省略执行正
+                向搜索。
+
+                如果找到匹配，返回字典，其项和 prop_list() 相同，另有 "lnum"
+                项。如果没找到匹配，返回空字典。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+
+prop_list(<code class="special">{lnum}</code> [, <code class="special">{props}</code>])                           <b class="vimtag"> <a name="prop_list()">prop_list()</a> </b>
+                返回行 <code class="special">{lnum}</code> 上的所有文本属性的列表。
+
+                如果 <code class="special">{props}</code> 包含 "bufnr" 项目，使用此缓冲区，否则使用当前缓冲
+                区。
+
+                属性以开始列和优先级排序。每个属性是带下列项的字典:
+                   col          开始列
+                   length       以字节计的长度，如果包含换行符加一
+                   id           属性 ID
+                   type         属性类型名，如果类型已删除则省略
+                   start        为 TRUE 时属性从这行开始
+                   end          为 TRUE 时属性在这行结束
+
+                如果 "start" 为零，属性从前面行开始，本行是继续行。
+                如果 "end" 为零，属性从下面行继续。包含此行之后的换行符。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetLnum()-&gt;prop_list()</code>
+
+                                                <b class="vimtag"> <a name="prop_remove()">prop_remove()</a> </b> <b class="vimtag"> <a name="E968">E968</a> </b>
+prop_remove(<code class="special">{props}</code> [, <code class="special">{lnum}</code> [, <code class="special">{lnum-end}</code>]])
+                删除 <code class="special">{lnum}</code> 上的匹配文本属性。如果给出 <code class="special">{lnum-end}</code>，删除从行
+                <code class="special">{lnum}</code> 到 <code class="special">{lnum-end}</code> (闭区间) 所有匹配的文本属性。
+
+                <code class="special">{props}</code> 是包含下列域的字典:
+                   id           删除带此 ID 的文本属性
+                   type         删除带此类型名的文本属性
+                   bufnr        使用此缓冲区而非当前缓冲区
+                   all          为 TRUE 时删除所有的匹配文本属性，而不仅是头一
+                                个
+                "id" 或 "type" 之一匹配则属性匹配。
+                如果缓冲区 "bufnr" 不存在会报错。
+                如果缓冲区 "bufnr" 未载入，什么都不会发生。
+
+                返回删除的属性个数。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetProps()-&gt;prop_remove()</code>
+<code class="example"></code>
+<code class="example"></code>
+prop_type_add(<code class="special">{name}</code>, <code class="special">{props}</code>)          <b class="vimtag"> <a name="prop_type_add()">prop_type_add()</a> </b> <b class="vimtag"> <a name="E969">E969</a> </b> <b class="vimtag"> <a name="E970">E970</a> </b>
+                新增文本属性类型 <code class="special">{name}</code>。如果带此名的属性类型已存在则报错。不
+                返回任何值。
+                <code class="special">{props}</code> 是包含下面可选域的字典:
+                   bufnr        只为此缓冲区定义属性；它避免了名字冲突，而且缓
+                                冲区删除时自动清除所有的属性类型。
+                   highlight    使用的高亮组名
+                   priority     当一个字符有多个文本属性时使用最高优先级的属
+                                性；可用负值，缺省优先级为零
+                   combine      为 TRUE 时和任何语法高亮合并；省略或为 FALSE
+                                时，不使用语法高亮
+                   start_incl   TRUE 时在起始位置的插入会包含在文本属性内
+                   end_incl     TRUE 时在结束位置的插入会包含在文本属性内
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPropName()-&gt;prop_type_add(props)</code>
+<code class="example"></code>
+prop_type_change(<code class="special">{name}</code>, <code class="special">{props}</code>)                       <b class="vimtag"> <a name="prop_type_change()">prop_type_change()</a> </b>
+                修改已有的文本属性类型的属性。如果带此名的属性不存在则报错。
+                <code class="special">{props}</code> 参数可见  <a href="textprop.html#prop_type_add()">prop_type_add()</a> 。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPropName()-&gt;prop_type_change(props)</code>
+<code class="example"></code>
+prop_type_delete(<code class="special">{name}</code> [, <code class="special">{props}</code>])                    <b class="vimtag"> <a name="prop_type_delete()">prop_type_delete()</a> </b>
+                删除文本属性类型 <code class="special">{name}</code>。如果带类型 <code class="special">{name}</code> 的文本属性还在使用
+                中，它们不再有效，而且也不能依名字删除。
+
+                <code class="special">{props}</code> 可以包含 "bufnr" 项目。如果给出，删除来自此缓冲区的属
+                性类型而不是全局属性类型。
+
+                如果找不到文本属性类型 <code class="special">{name}</code>，不报错。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPropName()-&gt;prop_type_delete()</code>
+<code class="example"></code>
+prop_type_get([<code class="special">{name}</code> [, <code class="special">{props}</code>])                      <b class="vimtag"> <a name="prop_type_get()">prop_type_get()</a> </b>
+                返回属性类型 <code class="special">{name}</code> 的属性。这是带和 prop_type_add() 给出的相
+                同域的字典。
+                如果属性类型 <code class="special">{name}</code> 不存在，返回空字典。
+
+                <code class="special">{props}</code> 可以包含 "bufnr" 项目。如果给出，使用来自此缓冲区的属
+                性类型而不是全局属性类型。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPropName()-&gt;prop_type_get()</code>
+<code class="example"></code>
+prop_type_list([<code class="special">{props}</code>])                               <b class="vimtag"> <a name="prop_type_list()">prop_type_list()</a> </b>
+                返回掺属性类型名的列表。
+
+                <code class="special">{props}</code> 可以包含 "bufnr" 项目。如果给出，使用来自此缓冲区的属
+                性类型而不是全局属性类型。
+
+                文本属性的相关信息可见  <a href="textprop.html#text-properties">text-properties</a> 。
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>3. 文本有改动时                                 <b class="vimtag"> <a name="text-prop-changes">text-prop-changes</a> </b></h4>
+Vim 会尽力保持文本属性在原先附属的文本上。插入或删除文本后，属性会相应地移动。
+
+当文本删除后导致文本属性不再包含任何文本，会删除文本属性。不过，定义时就是零宽
+度的文本属性会保留，除非整行都被删除。
+                                                                <b class="vimtag"> <a name="E275">E275</a> </b>
+卸载缓冲区时，所有的文本属性都消失了。没有办法把属性保存在文件里。你可以重建它
+们。缓冲区隐藏时，保留文本所以也保留文本属性。不可以给卸载的缓冲区增加文本属
+性。
+
+使用替换模式时，在相同的字符位置上保留文本属性，虽然字符本身发生了改变。
+
+要在文本有改动后更新文本属性，用  <a href="eval.html#listener_add()">listener_add()</a>  安装回调。例如，如果你的插件
+进行拼写检查，可以用回调为改动过的文本更新拼写错误。Vim 会移动改动文本下方的属
+性，这样它们还能高亮相同的文本，你不需要自己去更新。
+
+
+<code class="section">不更新文本属性列: </code>
+
+- 通过  <a href="eval.html#setline()">setline()</a>  或 Lua、Tcl 或 Python 等界面设置行时，Vim 不知道插入或删除
+  的是什么文本。
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html</i></p>
+</div>
+</body>
+</html>

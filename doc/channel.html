@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>channel</h2>
 <pre>
-<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   For Vim version 8.2.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -39,13 +39,14 @@ Netbeans 接口也使用通道。 <a href="netbeans.html#netbeans">netbeans</a>
 5. 通道命令                              <a href="channel.html#channel-commands">channel-commands</a> 
 6. 使用 RAW 或 NL 通道                   <a href="channel.html#channel-raw">channel-raw</a> 
 7. 更多通道函数                          <a href="channel.html#channel-more">channel-more</a> 
-8. 带通道启动作业                        <a href="channel.html#job-start">job-start</a> 
-9. 不带通道启动作业                      <a href="channel.html#job-start-nochannel">job-start-nochannel</a> 
-10. 作业选项                             <a href="channel.html#job-options">job-options</a> 
-11. 控制作业                             <a href="channel.html#job-control">job-control</a> 
-12. 使用提示缓冲区                       <a href="channel.html#prompt-buffer">prompt-buffer</a> 
+8. 通道函数详情                          <a href="channel.html#channel-functions-details">channel-functions-details</a> 
+9. 带通道启动作业                        <a href="channel.html#job-start">job-start</a> 
+10. 不带通道启动作业                     <a href="channel.html#job-start-nochannel">job-start-nochannel</a> 
+11. 作业函数                             <a href="channel.html#job-functions-details">job-functions-details</a> 
+12. 作业选项                             <a href="channel.html#job-options">job-options</a> 
+13. 控制作业                             <a href="channel.html#job-control">job-control</a> 
+14. 使用提示缓冲区                       <a href="channel.html#prompt-buffer">prompt-buffer</a> 
 
-<code class="notvi">{Vi 没有这些功能}</code>
 <code class="notvi">{仅当编译时带有  <a href="various.html#+channel">+channel</a>  特性时才有通道功能}</code>
         可以这样查看: `has(<code class="badlink">'channel'</code>)`
 <code class="notvi">{仅当编译时带有  <a href="various.html#+job">+job</a>  特性时才有作业功能}</code>
@@ -118,7 +119,7 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 <code class="example"></code>
 测试通道时可能希望能知道发生了什么。可以告诉 Vim 在日志文件里记录事件: 
 <code class="example">        call ch_logfile('channellog', 'w')</code>
-见  <a href="eval.html#ch_logfile()">ch_logfile()</a> 。
+见  <a href="channel.html#ch_logfile()">ch_logfile()</a> 。
 
 </pre><hr class="doubleline" /><pre>
 <h4>3. 打开通道                                             <b class="vimtag"> <a name="channel-open">channel-open</a> </b></h4>
@@ -127,7 +128,7 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 <code class="example">    if ch_status(channel) == "open"</code>
 <code class="example">      " use the channel</code>
 <code class="example"></code>
-可用  <a href="eval.html#ch_status()">ch_status()</a>  看到通道是否已打开。
+可用  <a href="channel.html#ch_status()">ch_status()</a>  看到通道是否已打开。
 
 <code class="special">{address}</code> 的格式为 "hostname:port"。例如 "localhost:8765"。
 
@@ -161,11 +162,16 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 "close_cb"      通道关闭时，除非调用了 ch_close()，调用本函数。定义如下: 
 <code class="example">        func MyCloseHandler(channel)</code>
                 Vim 会调用回调函数先处理完所有数据，然后再调用 close_cb。当此
-                函数调用时，不会再有更多数据传到回调函数。
+                函数调用时，不会再有更多数据传到回调函数。不过，如果回调在让
+                Vim 检查消息，close_cb 调用时可能还在回调处理中。插件必须以某
+                种方式能处理这种情况，不过知道没有更多数据会传来还是有用的。
                                                         <b class="vimtag"> <a name="channel-drop">channel-drop</a> </b>
 "drop"          指定如何丢弃消息:
                     "auto"      没有回调来处理消息时。"close_cb" 也考虑在内。
                     "never"     所有消息都会保存。
+
+                                                        <b class="vimtag"> <a name="channel-noblock">channel-noblock</a> </b>
+"noblock"       和  <a href="channel.html#job-noblock">job-noblock</a>  效果相同。只适用于写操作。
 
                                                         <b class="vimtag"> <a name="waittime">waittime</a> </b>
 "waittime"      等待连接完成的时间，以毫秒计。负数代表永久等待。
@@ -180,7 +186,7 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 "mode" 为 "json" 或 "js" 时，"callback" 是可选的。省略时只有在发送一条消息后才
 能收到消息。
 
-打开通道后要改变通道选项，用  <a href="eval.html#ch_setoptions()">ch_setoptions()</a> 。参数类似于  <a href="eval.html#ch_open()">ch_open()</a>  所用的
+打开通道后要改变通道选项，用  <a href="channel.html#ch_setoptions()">ch_setoptions()</a> 。参数类似于  <a href="channel.html#ch_open()">ch_open()</a>  所用的
 参数，但不能指定 "waittime"，因为它只在通道打开时有意义。
 
 例如，可以新增或改变处理函数: 
@@ -286,8 +292,9 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
 
 <code class="section">"redraw" 命令</code>
 
-其它命令不刷新屏幕，以便你发送若干命令而不会移动光标。要显示改变的文本并移动光
-标到其恰当的位置，必须用 'redraw" 命令结束。
+其它命令特意不刷新屏幕，以便你发送若干命令而不会移动光标。有些命令的副作用仍可
+能导致重画。要显示改变的文本并移动光标到其恰当的位置，必须用 'redraw" 命令结
+束。
 
 参数通常是空字符串:
 <code class="section">        ["redraw", ""] </code>
@@ -367,7 +374,7 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
 <code class="special">{string}</code> 也可以是 JSON，用  <a href="eval.html#json_encode()">json_encode()</a>  可创建， <a href="eval.html#json_decode()">json_decode()</a>  可用来处理
 收到的 JSON 信息。
 
-原始通道不可使用  <a href="eval.html#ch_evalexpr()">ch_evalexpr()</a>  或  <a href="eval.html#ch_sendexpr()">ch_sendexpr()</a> 。
+原始通道不可使用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  或  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a> 。
 
 Vim 的字符串不可含有 NUL 字符。要收发 NUL 字符，请见  <a href="channel.html#in_io-buffer">in_io-buffer</a>  和
  <a href="channel.html#out_io-buffer">out_io-buffer</a> 。
@@ -387,7 +394,7 @@ Vim 的字符串不可含有 NUL 字符。要收发 NUL 字符，请见  <a href
 这里使用通道的 timeout。要读取不带超时以获得所有所用的信息: 
 <code class="example">        let output = ch_read(channel, {'timeout': 0})</code>
 如果无信息可读，结果在 JSON 或 JS 模式通道下为 v:none，RAW 或 NL 通道下为空字
-符串。可以用  <a href="eval.html#ch_canread()">ch_canread()</a>  检查是否有信息可读。
+符串。可以用  <a href="channel.html#ch_canread()">ch_canread()</a>  检查是否有信息可读。
 
 <code class="note">注意</code> 如果没有回调，消息会被丢弃。要避免之，给通道加入一个关闭回调函数。
 
@@ -411,7 +418,239 @@ JS 或 JSON 通道这里返回一条解码的信息。
 包含任何序列号。
 
 </pre><hr class="doubleline" /><pre>
-<h4>8. 带通道启动作业                                       <b class="vimtag"> <a name="job-start">job-start</a> </b> <b class="vimtag"> <a name="job">job</a> </b></h4>
+<h4>8. 通道函数详情                                 <b class="vimtag"> <a name="channel-functions-details">channel-functions-details</a> </b></h4>
+ch_canread(<code class="special">{handle}</code>)                                            <b class="vimtag"> <a name="ch_canread()">ch_canread()</a> </b>
+                如果从 <code class="special">{handle}</code> 有内容可读，返回非零。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+
+                用于在合适的时间才从通道读取的场合，例如在定时器中。
+
+                <code class="note">注意</code> 如果通道没有回调，这些消息被丢弃。要避免这一点，加上关闭
+                回调函数。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_canread()</code>
+<code class="example"></code>
+ch_close(<code class="special">{handle}</code>)                                              <b class="vimtag"> <a name="ch_close()">ch_close()</a> </b>
+                关闭 <code class="special">{handle}</code>。见  <a href="channel.html#channel-close">channel-close</a> 。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                不调用关闭回调函数。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_close()</code>
+<code class="example"></code>
+ch_close_in(<code class="special">{handle}</code>)                                           <b class="vimtag"> <a name="ch_close_in()">ch_close_in()</a> </b>
+                只关闭 <code class="special">{handle}</code> 的 "in" 部分。见  <a href="channel.html#channel-close-in">channel-close-in</a> 。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                不调用关闭回调函数。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_close_in()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_evalexpr(<code class="special">{handle}</code>, <code class="special">{expr}</code> [, <code class="special">{options}</code>])                     <b class="vimtag"> <a name="ch_evalexpr()">ch_evalexpr()</a> </b>
+                发送 <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。<code class="special">{expr}</code> 用通道类型进行编码。不能于
+                原始通道。见  <a href="channel.html#channel-use">channel-use</a> 。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                                                                <b class="vimtag"> <a name="E917">E917</a> </b>
+                <code class="special">{options}</code> 必须是字典。不能有 "callback" 项目。可以有 "timeout"
+                项目来指明此特定请求的超时。
+
+                ch_evalexpr() 等待响应并返回经解码的表达式。如果有错或超时，
+                返回空字符串。
+
+                <code class="note">注意</code> 在等待响应时，Vim 在处理其它的信息。要确保这不会有问题。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_evalexpr(expr)</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_evalraw(<code class="special">{handle}</code>, <code class="special">{string}</code> [, <code class="special">{options}</code>])            <b class="vimtag"> <a name="ch_evalraw()">ch_evalraw()</a> </b>
+                发送 <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+
+                类似于  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a> ，但不对请求编码也不对响应结果解码。调用
+                者负责内容的正确性。也不对 NL 模式的通道附加换行符，调用者须自
+                行负责。响应中的 NL 则被清除。
+                <code class="note">注意</code> Vim 不能判定原始通道上的文本何时被完整地收到。它只返回第
+                一部分，你需用  <a href="channel.html#ch_readraw()">ch_readraw()</a>  来读取其余的部分。
+                见  <a href="channel.html#channel-use">channel-use</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_evalraw(rawstring)</code>
+<code class="example"></code>
+ch_getbufnr(<code class="special">{handle}</code>, <code class="special">{what}</code>)                            <b class="vimtag"> <a name="ch_getbufnr()">ch_getbufnr()</a> </b>
+                返回 <code class="special">{handle}</code> 用于 <code class="special">{what}</code> 的缓冲区号。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                <code class="special">{what}</code> 可以是 "err"，代表 stderr，"out" 代表 stdout，或空，代
+                表套接字输出。
+                如果没有这样的缓冲区，返回 -1。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_getbufnr(what)</code>
+<code class="example"></code>
+ch_getjob(<code class="special">{channel}</code>)                                            <b class="vimtag"> <a name="ch_getjob()">ch_getjob()</a> </b>
+                取得 <code class="special">{channel}</code> 相关的作业。
+                如果没有这样的作业，在返回的作业上调用  <a href="channel.html#job_status()">job_status()</a>  会返回
+                "fail"。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_getjob()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_info(<code class="special">{handle}</code>)                                               <b class="vimtag"> <a name="ch_info()">ch_info()</a> </b>
+                返回 <code class="special">{handle}</code> 相关信息的一个字典。其项目为:
+                   "id"           通道号
+                   "status"       "open"、"buffered" 或 "closed"，可见
+                                  ch_status()
+                用于 ch_open() 打开的通道时:
+                   "hostname"     地址的机器名
+                   "port"         地址的端口号
+                   "sock_status"  "open" 或 "closed"
+                   "sock_mode"    "NL"、"RAW"、"JSON" 或 "JS"
+                   "sock_io"      "socket"
+                   "sock_timeout" 毫秒计的超时
+                用于 job_start() 打开的通道时:
+                   "out_status"   "open"、"buffered" 或 "closed"
+                   "out_mode"     "NL"、"RAW"、"JSON" 或 "JS"
+                   "out_io"       "null"、"pipe"、"file" 或 "buffer"
+                   "out_timeout"  毫秒计的超时
+                   "err_status"   "open"、"buffered" 或 "closed"
+                   "err_mode"     "NL"、"RAW"、"JSON" 或 "JS"
+                   "err_io"       "out"、"null"、"pipe"、"file" 或 "buffer"
+                   "err_timeout"  毫秒计的超时
+                   "in_status"    "open" 或 "closed"
+                   "in_mode"      "NL"、"RAW"、"JSON" 或 "JS"
+                   "in_io"        "null"、"pipe"、"file" 或 "buffer"
+                   "in_timeout"   毫秒计的超时
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_info()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_log(<code class="special">{msg}</code> [, <code class="special">{handle}</code>])                                      <b class="vimtag"> <a name="ch_log()">ch_log()</a> </b>
+                如果用  <a href="channel.html#ch_logfile()">ch_logfile()</a>  打开日志，把 <code class="special">{msg}</code> 写入通道日志文件中。
+                如果传入 <code class="special">{handle}</code>，使用该通道号写入信息。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。所用的通道号对应的通道必
+                须已打开。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        'did something'-&gt;ch_log()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_logfile(<code class="special">{fname}</code> [, <code class="special">{mode}</code>])                                  <b class="vimtag"> <a name="ch_logfile()">ch_logfile()</a> </b>
+                启动通道活动记录，写入 <code class="special">{fname}</code>。
+                如果 <code class="special">{fname}</code> 为空字符串，停止记录。
+
+                如果 <code class="special">{mode}</code> 省略或为 "a"，附加到文件。
+                如果 <code class="special">{mode}</code> 为 "w"，用新文件开始。
+
+                用  <a href="channel.html#ch_log()">ch_log()</a>  来写入日志信息。每条消息后都会刷新文件，Unix 上
+                可用 "tail -f" 实时监控。
+
+                此函数在  <a href="eval.html#sandbox">sandbox</a>  中不可用。
+                <code class="note">注意</code>: 通道在文件中保存通信见容，小心其中可能包含机密和敏感的隐
+                私信息，如你在终端窗口中输入的密码等。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        'logfile'-&gt;ch_logfile('w')</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_open(<code class="special">{address}</code> [, <code class="special">{options}</code>])                                <b class="vimtag"> <a name="ch_open()">ch_open()</a> </b>
+                打开通道到 <code class="special">{address}</code>。见  <a href="channel.html#channel">channel</a> 。
+                返回通道。错误检查可用  <a href="channel.html#ch_status()">ch_status()</a> 。
+
+                <code class="special">{address}</code> 形如 "hostname:port"，例如 "localhost:8765"。
+
+                <code class="special">{options}</code> 如果给出，必须是  <a href="eval.html#Dictionary">Dictionary</a> 。
+                见  <a href="channel.html#channel-open-options">channel-open-options</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetAddress()-&gt;ch_open()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_read(<code class="special">{handle}</code> [, <code class="special">{options}</code>])                                 <b class="vimtag"> <a name="ch_read()">ch_read()</a> </b>
+                从 <code class="special">{handle}</code> 读取，返回收到的消息。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                NL 通道会等待 NL 的到来，除非没有内容可读了 (通道已被关闭)。
+                见  <a href="channel.html#channel-more">channel-more</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_read()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_readblob(<code class="special">{handle}</code> [, <code class="special">{options}</code>])                     <b class="vimtag"> <a name="ch_readblob()">ch_readblob()</a> </b>
+                和 ch_read() 类似，但读取二进制数据并返回  <a href="eval.html#Blob">Blob</a> 。
+                见  <a href="channel.html#channel-more">channel-more</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_readblob()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_readraw(<code class="special">{handle}</code> [, <code class="special">{options}</code>])                      <b class="vimtag"> <a name="ch_readraw()">ch_readraw()</a> </b>
+                类似于 ch_read()，但 JS 和 JSON 通道不对消息解码。NL 通道不阻
+                塞等待 NL 的到来，其余和 ch_read() 类似。
+                见  <a href="channel.html#channel-more">channel-more</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_readraw()</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_sendexpr(<code class="special">{handle}</code>, <code class="special">{expr}</code> [, <code class="special">{options}</code>])                     <b class="vimtag"> <a name="ch_sendexpr()">ch_sendexpr()</a> </b>
+                发送 <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。<code class="special">{expr}</code> 用通道类型进行编码。不能于
+                原始通道。见  <a href="channel.html#channel-use">channel-use</a> 。                    <b class="vimtag"> <a name="E912">E912</a> </b>
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_sendexpr(expr)</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_sendraw(<code class="special">{handle}</code>, <code class="special">{expr}</code> [, <code class="special">{options}</code>])              <b class="vimtag"> <a name="ch_sendraw()">ch_sendraw()</a> </b>
+                发送  <a href="eval.html#String">String</a>  或  <a href="eval.html#Blob">Blob</a>  <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。
+                类似于  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a> ，但不对请求编码也不对响应结果解码。调用
+                者负责内容的正确性。也不对 NL 模式的通道附加换行符，调用者须自
+                行负责。响应中的 NL 则被清除。
+                见  <a href="channel.html#channel-use">channel-use</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_sendraw(rawexpr)</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_setoptions(<code class="special">{handle}</code>, <code class="special">{options}</code>)                      <b class="vimtag"> <a name="ch_setoptions()">ch_setoptions()</a> </b>
+                设置 <code class="special">{handle}</code> 的选项:
+                        "callback"      通道回调函数
+                        "timeout"       缺省读操作以毫秒计的超时
+                        "mode"          整个通道所用的模式
+                更多的解释可见  <a href="channel.html#ch_open()">ch_open()</a> 。
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+
+                <code class="note">注意</code> 改变模式可能会丢失正在排队的消息。
+
+                以下选项不可改变:
+                        "waittime"      只适用于  <a href="channel.html#ch_open()">ch_open()</a> 
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_setoptions(options)</code>
+<code class="example"></code>
+<code class="example"></code>
+ch_status(<code class="special">{handle}</code> [, <code class="special">{options}</code>])                               <b class="vimtag"> <a name="ch_status()">ch_status()</a> </b>
+                返回 <code class="special">{handle}</code> 的状态:
+                        "fail"          打开通道失败
+                        "open"          通道可用
+                        "buffered"      通道可读，不可写
+                        "closed"        通道不可用
+                <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                "buffered" 用于通道已关闭但还有数据用  <a href="channel.html#ch_read()">ch_read()</a>  可读的情况。
+
+                <code class="special">{options}</code> 给出时，可以包含 "part" 项目，指定通道要返回状态的部
+                分: "out" 还是 "err"。例如，要得到错误输出的状态: 
+<code class="example">                        ch_status(job, {"part": "err"})</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChannel()-&gt;ch_status()</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>9. 带通道启动作业                                       <b class="vimtag"> <a name="job-start">job-start</a> </b> <b class="vimtag"> <a name="job">job</a> </b></h4>
 要启动一个作业并打开对应 stdin/stdout/stderr 的通道: 
 <code class="example">    let job = job_start(command, {options})</code>
 <code class="example"></code>
@@ -426,7 +665,7 @@ JS 或 JSON 通道这里返回一条解码的信息。
 该函数调用时会被提供通道和一条信息。可以这样定义该函数: 
 <code class="example">    func MyHandler(channel, msg)</code>
 <code class="example"></code>
-如果没有处理函数，你需要通过  <a href="eval.html#ch_read()">ch_read()</a>  或  <a href="eval.html#ch_readraw()">ch_readraw()</a>  读取输出。这一步可
+如果没有处理函数，你需要通过  <a href="channel.html#ch_read()">ch_read()</a>  或  <a href="channel.html#ch_readraw()">ch_readraw()</a>  读取输出。这一步可
 以在关闭回调函数进行。见  <a href="channel.html#read-in-close-cb">read-in-close-cb</a> 。
 
 <code class="note">注意</code> 如果作业在你读取输出结果之前结束，输出可能会丢失。这取决于系统 (Unix 上是
@@ -471,7 +710,7 @@ ch_evalexpr()。
 倒数第二行被发送到作业的 stdin。这样你可以编辑末行并在回车时将它发送。
                                                         <b class="vimtag"> <a name="channel-close-in">channel-close-in</a> </b>
 如果不使用这种特殊模式，管道或套接字会在最后一行写入后关闭。这样就告诉了读入端
-输入己经完成。也可用  <a href="eval.html#ch_close_in()">ch_close_in()</a>  在更早之前关闭。
+输入己经完成。也可用  <a href="channel.html#ch_close_in()">ch_close_in()</a>  在更早之前关闭。
 
 文本中的 NUL 字节会被传给作业 (Vim 内部用 NL 字节保存)。
 
@@ -490,7 +729,7 @@ ch_evalexpr()。
 你要做的事情大概会比 "echomsg" 有用些吧。
 
 </pre><hr class="doubleline" /><pre>
-<h4>9. 不带通道启动作业                                     <b class="vimtag"> <a name="job-start-nochannel">job-start-nochannel</a> </b></h4>
+<h4>10. 不带通道启动作业                                    <b class="vimtag"> <a name="job-start-nochannel">job-start-nochannel</a> </b></h4>
 要启动别处的进程而不建立通道: 
 <code class="example">    let job = job_start(command,</code>
 <code class="example">        \ {"in_io": "null", "out_io": "null", "err_io": "null"})</code>
@@ -513,11 +752,163 @@ ch_evalexpr()。
 <code class="note">注意</code> 这里 ch_open() 的 waittime 给作业一秒钟时间使端口可用。
 
 </pre><hr class="doubleline" /><pre>
-<h4>10. 作业选项                                            <b class="vimtag"> <a name="job-options">job-options</a> </b></h4>
+<h4>11. 作业函数                                            <b class="vimtag"> <a name="job-functions-details">job-functions-details</a> </b></h4>
+job_getchannel(<code class="special">{job}</code>)                                    <b class="vimtag"> <a name="job_getchannel()">job_getchannel()</a> </b>
+                获取 <code class="special">{job}</code> 使用的通道句柄。
+                要确认作业没有通道: 
+<code class="example">                        if string(job_getchannel()) == 'channel fail'</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetJob()-&gt;job_getchannel()</code>
+<code class="example"></code>
+job_info([<code class="special">{job}</code>])                                       <b class="vimtag"> <a name="job_info()">job_info()</a> </b>
+                返回关于 <code class="special">{job}</code> 信息的字典:
+                   "status"      <a href="channel.html#job_status()">job_status()</a>  返回值
+                   "channel"     <a href="channel.html#job_getchannel()">job_getchannel()</a>  返回值
+                   "cmd"        启动作业的命令行参数列表
+                   "process"    进程 ID
+                   "tty_in"     终端输入名，如果没有则为空
+                   "tty_out"    终端输出名，如果没有则为空
+                   "exitval"    "status" 为 "dead" 时才有效
+                   "exit_cb"    退出时调用的函数
+                   "stoponexit"  <a href="channel.html#job-stoponexit">job-stoponexit</a> 
+
+                   仅用于 Unix:
+                   "termsig"    终止程序的信号 (相关值见  <a href="channel.html#job_stop()">job_stop()</a> )
+                                仅当 "status" 为 "dead" 时才有意义
+
+                   仅用于 MS-Windows:
+                   "tty_type"   使用的虚拟控制台类型。
+                                可选值是 "winpty" 或 "conpty"。
+                                见 <a href="options.html#'termwintype'">'termwintype'</a>。
+
+                无参数时返回所有作业对象的列表。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetJob()-&gt;job_info()</code>
+<code class="example"></code>
+<code class="example"></code>
+job_setoptions(<code class="special">{job}</code>, <code class="special">{options}</code>)                        <b class="vimtag"> <a name="job_setoptions()">job_setoptions()</a> </b>
+                改变 <code class="special">{job}</code> 的选项。目前支持:
+                   "stoponexit"  <a href="channel.html#job-stoponexit">job-stoponexit</a> 
+                   "exit_cb"     <a href="channel.html#job-exit_cb">job-exit_cb</a> 
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetJob()-&gt;job_setoptions(options)</code>
+<code class="example"></code>
+<code class="example"></code>
+job_start(<code class="special">{command}</code> [, <code class="special">{options}</code>])                      <b class="vimtag"> <a name="job_start()">job_start()</a> </b>
+                启动作业，返回 Job 对象。不同于  <a href="eval.html#system()">system()</a>  和  <a href="various.html#:!cmd">:!cmd</a> ，不等待
+                作业完成。
+                要在终端窗口中启动作业，可见  <a href="terminal.html#term_start()">term_start()</a> 。
+
+                如果作业启动失败，在返回的 Job 对象上调用  <a href="channel.html#job_status()">job_status()</a>  会报
+                告 "fail"，而且不会调用任何回调。
+
+                <code class="special">{command}</code> 可以是字符串。对 MS-Windows 最佳。Unix 上先切为空白
+                分隔的部分，然后传给 execvp()。而双引号内的参数可能包含空格。
+
+                <code class="special">{command}</code> 可以是列表，首项是可执行文件，后面诸项为参数。所有项
+                目转换为字符串。这对 Unix 最佳。
+
+                MS-Windows 上，job_start() 启动隐藏的 GUI 应用。要使之可见，用
+                 <a href="os_win32.html#:!start">:!start</a>  代替。
+
+                命令直接执行，不通过外壳，不使用 <a href="options.html#'shell'">'shell'</a> 选项。要使用外壳: 
+<code class="example">        let job = job_start(["/bin/sh", "-c", "echo hello"])</code>
+                或: 
+<code class="example">        let job = job_start('/bin/sh -c "echo hello"')</code>
+                <code class="note">注意</code> 这样会启动两个过程，外壳及其启动的命令。如果不希望如此，
+                可用 "exec" 外壳命令。
+
+                Unix 上仅当命令本身不包含斜杠时，才用 $PATH 来搜索可执行文件。
+
+                作业使用和 Vim 相同的终端。如果从 stdin 读入，该作业和 Vim 会
+                竞争输入，这样不行。要避免此问题，重定向 stdin 和 stdout: 
+<code class="example">        let job = job_start(['sh', '-c', "myserver &lt;/dev/null &gt;/dev/null"])</code>
+
+                返回的 Job 对象可用以通过  <a href="channel.html#job_status()">job_status()</a>  获取状态，和通过
+                 <a href="channel.html#job_stop()">job_stop()</a>  停止作业。
+
+                <code class="note">注意</code> 作业对象如果没有被引用会被删除。此时 stdin 和 stderr 会被
+                关闭，这可能会使作业失败报错。要避免之，总是保留对作业的引用。
+                所以，不要这样: 
+<code class="example">        call job_start('my-command')</code>
+                而要: 
+<code class="example">        let myjob = job_start('my-command')</code>
+                不再需要作业，或者已经不介意作业是否会失败之后 (如启动时已显示
+                了信息) 才可以 unlet "myjob"。记住函数返回后局部于函数的变量不
+                复存在。如有需要，可用局部于脚本的变量: 
+<code class="example">        let s:myjob = job_start('my-command')</code>
+
+                <code class="special">{options}</code> 必须是字典。可包含许多可选项目，见  <a href="channel.html#job-options">job-options</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        BuildCommand()-&gt;job_start()</code>
+<code class="example"></code>
+<code class="example"></code>
+job_status(<code class="special">{job}</code>)                                       <b class="vimtag"> <a name="job_status()">job_status()</a> </b> <b class="vimtag"> <a name="E916">E916</a> </b>
+                返回字符串，返回 <code class="special">{job}</code> 的状态:
+                        "run"   作业运行中
+                        "fail"  作业无法启动
+                        "dead"  作业启动后结束或被终止
+
+                Unix 上不存在的命令会报告 "dead" 而不是 "fail"，因为在检测到问
+                题之前，fork 操作已经发生。
+
+                如果用 "exit_cb" 选项设置了退出回调，而作业已检测到处于 "dead"
+                状态，调用该回调。
+
+                更多详情可见  <a href="channel.html#job_info()">job_info()</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetJob()-&gt;job_status()</code>
+<code class="example"></code>
+<code class="example"></code>
+job_stop(<code class="special">{job}</code> [, <code class="special">{how}</code>])                                       <b class="vimtag"> <a name="job_stop()">job_stop()</a> </b>
+                停止 <code class="special">{job}</code>。也用于给作业民发送信号。
+
+                如果 <code class="special">{how}</code> 省略或是 "term"，作业被终止。Unix 上发送 SIGTERM。
+                MS-Windows 上强制终止该作业 (没有所谓 "温柔的" 方式)。
+                应用在整个进程组上，因而子进程也受影响。
+
+                Unix 上的效果:
+                        "term"   SIGTERM (缺省)
+                        "hup"    SIGHUP
+                        "quit"   SIGQUIT
+                        "int"    SIGINT
+                        "kill"   SIGKILL (最强的停止方式)
+                        数值     该数值对应的信号
+
+                MS-Windows 上的效果:
+                        "term"   强制终止进程 (缺省)
+                        "hup"    CTRL_BREAK
+                        "quit"   CTRL_BREAK
+                        "int"    CTRL_C
+                        "kill"   强制终止进程
+                        Others   CTRL_BREAK
+
+                Unix 上发送信号到进程组。这意味着如果作业是 "sh -c command"，
+                外壳和命令同时受影响。
+
+                返回数值: 如果操作可执行返回 1，如果系统不支持 "how"，返回 0。
+                <code class="note">注意</code> 即使已执行了操作，作业停止与否需用  <a href="channel.html#job_status()">job_status()</a>  检查。
+
+                如果作业的状态是 "dead"，不发送信号。这是为了避免给错误的作业
+                发送信号 (尤其在 Unix 上，进程号是循环利用的)。
+
+                使用 "kill" 后，Vim 假定作业会终止，因而将通道关闭。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetJob()-&gt;job_stop()</code>
+<code class="example"></code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>12. 作业选项                                            <b class="vimtag"> <a name="job-options">job-options</a> </b></h4>
 job_start() 的 <code class="special">{options}</code> 参数是一个字典。所有的项目都是可选的。有些选项可以在
 作业启动后通过 job_setoptions(job, <code class="special">{options}</code>) 给出。许多选项可通过
 ch_setoptions(channel, <code class="special">{options}</code>) 对作业相关的通道给出。
-见  <a href="eval.html#job_setoptions()">job_setoptions()</a>  和  <a href="eval.html#ch_setoptions()">ch_setoptions()</a> 。
+见  <a href="channel.html#job_setoptions()">job_setoptions()</a>  和  <a href="channel.html#ch_setoptions()">ch_setoptions()</a> 。
 
                                                 <b class="vimtag"> <a name="in_mode">in_mode</a> </b> <b class="vimtag"> <a name="out_mode">out_mode</a> </b> <b class="vimtag"> <a name="err_mode">err_mode</a> </b>
 "in_mode"               stdin 特定的模式，仅适用于管道情形
@@ -531,6 +922,15 @@ ch_setoptions(channel, <code class="special">{options}</code>) 对作业相关�
                         <code class="note">备注</code>: 写入文件或缓冲区和从缓冲区读取时，缺省使用 NL 模
                         式。
 
+                                                <b class="vimtag"> <a name="job-noblock">job-noblock</a> </b>
+"noblock": 1            写入时使用非阻塞式的写调用。避免 Vim 在处理其它信息之
+                        间，比如作业把数据发还给 Vim 的时候，长时间等待，这意
+                        味着  <a href="channel.html#ch_sendraw()">ch_sendraw()</a>  返回时未必所有的数据已经写回。
+                        8.1.0350 补丁加入此选项，可如此测试之: 
+<code class="example">                                if has("patch-8.1.350")</code>
+<code class="example">                                  let options['noblock'] = 1</code>
+<code class="example">                                endif</code>
+
                                                 <b class="vimtag"> <a name="job-callback">job-callback</a> </b>
 "callback": handler     通道任何部分有读取内容时的回调。
                                                 <b class="vimtag"> <a name="job-out_cb">job-out_cb</a> </b> <b class="vimtag"> <a name="out_cb">out_cb</a> </b>
@@ -543,15 +943,15 @@ ch_setoptions(channel, <code class="special">{options}</code>) 对作业相关�
                         果不设 "err_cb"，使用通道本身的回调。
                         两个参数是通道和信息。
                                                 <b class="vimtag"> <a name="job-close_cb">job-close_cb</a> </b>
-"close_cb": handler     通道关闭时的回调。与  <a href="eval.html#ch_open()">ch_open()</a>  的 "close_cb" 相同，
+"close_cb": handler     通道关闭时的回调。与  <a href="channel.html#ch_open()">ch_open()</a>  的 "close_cb" 相同，
                         见  <a href="channel.html#close_cb">close_cb</a> 。
                                                 <b class="vimtag"> <a name="job-drop">job-drop</a> </b>
-"drop": when            指定何时丢弃消息。与  <a href="eval.html#ch_open()">ch_open()</a>  的 "drop" 相同，见
+"drop": when            指定何时丢弃消息。与  <a href="channel.html#ch_open()">ch_open()</a>  的 "drop" 相同，见
                          <a href="channel.html#channel-drop">channel-drop</a> 。如用 "auto"，不考虑 exit_cb。
                                                 <b class="vimtag"> <a name="job-exit_cb">job-exit_cb</a> </b>
 "exit_cb": handler      作业结束时的回调。参数是作业和退出状态。
                         对退出的作业，Vim 作最多每秒十次的检查。也可以通过
-                         <a href="eval.html#job_status()">job_status()</a>  调用触发检查，这样也会调用 exit_cb 处理
+                         <a href="channel.html#job_status()">job_status()</a>  调用触发检查，这样也会调用 exit_cb 处理
                         函数。
                         <code class="note">备注</code> 数据可能会缓冲，进程结束后还可能调用回调。
                                                         <b class="vimtag"> <a name="job-timeout">job-timeout</a> </b>
@@ -565,7 +965,7 @@ ch_setoptions(channel, <code class="special">{options}</code>) 对作业相关�
 
                                                 <b class="vimtag"> <a name="job-stoponexit">job-stoponexit</a> </b>
 "stoponexit": <code class="special">{signal}</code>  Vim 结束时给作业发信号 <code class="special">{signal}</code>。可取值参见
-                         <a href="eval.html#job_stop()">job_stop()</a> 。
+                         <a href="channel.html#job_stop()">job_stop()</a> 。
 "stoponexit": ""        Vim 结束时不结束作业。
                         缺省是 "term"。
 
@@ -638,7 +1038,7 @@ ch_setoptions(channel, <code class="special">{options}</code>) 对作业相关�
 "somename"，则使用该缓冲区。
 
 如果没有匹配的缓冲区，则创建新的缓冲区。如果使用空名，则一定会创建新缓冲区。
- <a href="eval.html#ch_getbufnr()">ch_getbufnr()</a>  可用来得到缓冲区编号。
+ <a href="channel.html#ch_getbufnr()">ch_getbufnr()</a>  可用来得到缓冲区编号。
 
 新缓冲区的 <a href="options.html#'buftype'">'buftype'</a> 设为 "nofile"，而 <a href="options.html#'bufhidden'">'bufhidden'</a> 为 "hide"。要想用别的设置，
 先建立好缓冲区，然后传入其缓冲区号。
@@ -667,7 +1067,7 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 如果文件已存在，文件内容被清空。
 
 </pre><hr class="doubleline" /><pre>
-<h4>11. 控制作业                                            <b class="vimtag"> <a name="job-control">job-control</a> </b></h4>
+<h4>13. 控制作业                                            <b class="vimtag"> <a name="job-control">job-control</a> </b></h4>
 要获知作业的状态: 
 <code class="example">        echo job_status(job)</code>
 <code class="example"></code>
@@ -678,10 +1078,10 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 业，甚至可以发送任意的信号。例如，要强制终止作业，"杀了它": 
 <code class="example">        job_stop(job, "kill")</code>
 <code class="example"></code>
-更多选项，可见  <a href="eval.html#job_stop()">job_stop()</a> 。
+更多选项，可见  <a href="channel.html#job_stop()">job_stop()</a> 。
 
 </pre><hr class="doubleline" /><pre>
-<h4>12. 使用提示缓冲区                                      <b class="vimtag"> <a name="prompt-buffer">prompt-buffer</a> </b></h4>
+<h4>14. 使用提示缓冲区                                      <b class="vimtag"> <a name="prompt-buffer">prompt-buffer</a> </b></h4>
 如果你希望在 Vim 窗口中为作业提供输入，有几种选项:
 - 使用普通缓冲区，自行处理所有可能的命令。这很复杂，因为可能的命令有很多。
 - 使用终端窗口。此方式直接在窗口中键入作业输入并显示作业的输出。
@@ -714,7 +1114,7 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 会移到行尾，而 "I" 会移到行首。
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
 </pre>
 <p><i>Generated by vim2html</i></p>
 </div>

@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>sign</h2>
 <pre>
-<b class="vimtag"> <a name="sign.txt">sign.txt</a> </b>      For Vim version 8.1.  最近更新: 2017年8月
+<b class="vimtag"> <a name="sign.txt">sign.txt</a> </b>      For Vim version 8.2.  最近更新: 2020年1月
 
 
                   <code class="vim">VIM 参考手册    by Gordon Prieur</code>
@@ -30,8 +30,8 @@
 
 1. 简介                                  <a href="sign.html#sign-intro">sign-intro</a> 
 2. 命令                                  <a href="sign.html#sign-commands">sign-commands</a> 
+3. 函数                                  <a href="sign.html#sign-functions-details">sign-functions-details</a> 
 
-<code class="notvi">{Vi 没有这些功能}</code>
 <code class="notvi">{仅当编译时加入  <a href="various.html#+signs">+signs</a>  特性才可用}</code>
 
 </pre><hr class="doubleline" /><pre>
@@ -45,7 +45,7 @@
 
 标号和相应的高亮并不仅对调试器有用。Sun 的 Visual WorkShop 用标号和高亮来标识
 错误和源程序浏览器的命中位置。它的调试器也支持 8 到 10 种不同的标号和高亮色。
- <a href="workshop.html#workshop">workshop</a>  Netbeans  <a href="netbeans.html#netbeans">netbeans</a>  也是如此。
+ <code class="badlink">Netbeans</code>  也是如此。
 
 应用标号的过程分两步进行:
 
@@ -55,13 +55,36 @@
 2. 放置标号。这里指定标号显示的文件和行号。每个定义好的标号可以在不同的文件和
    行号上多次放置。
 
+                                                        <b class="vimtag"> <a name="sign-column">sign-column</a> </b>
 如果文件里定义了标号，Vim 自动增加两个字符的纵列来显示标号。撤销最后一个标号之
 后，该列又会自动消失。<a href="options.html#'signcolumn'">'signcolumn'</a> 选项可改变此行为。
 
 该列的颜色由 SignColumn 高亮组定义  <a href="syntax.html#hl-SignColumn">hl-SignColumn</a> 。一个设定该颜色的示例: 
 <code class="example"></code>
 <code class="example">        :highlight SignColumn guibg=darkgrey</code>
-<code class="example"></code>
+
+                                                        <b class="vimtag"> <a name="sign-identifier">sign-identifier</a> </b>
+已放置的标号以一个数值识别，称为标号标识符。此标识符用于跳转到标号或删除标号。
+标识符在用  <a href="sign.html#:sign-place">:sign-place</a>  命令或  <a href="sign.html#sign_place()">sign_place()</a>  函数放置标号时分配。每个标号标
+识符应是唯一的数值。如果多个已放置的标号使用相同的标识符，标号的跳转或删除将不
+可预测。为了避免标识符重复，可用标号组。 <a href="sign.html#sign_place()">sign_place()</a>  函数调用时可提供零标号
+标识符来分配下个可用的标识符。
+
+                                                        <b class="vimtag"> <a name="sign-group">sign-group</a> </b>
+每个已放置的标号可在全局组或某命名组中分配。放置标号时，如果不提供组名或组名为
+空串时，标号放置在全局组。否则标号放置在命名组。标号标识符在每个组里是唯一的。
+标号组允许 Vim 插件使用唯一的标号，而不会为其它使用标号的插件相互干扰。
+
+要在弹出窗口中放置标号，组名必须以 "PopUp" 开始。其它标号不能在弹出窗口中显
+示。组名 "PopUpMenu" 用于 <a href="options.html#'cursorline'">'cursorline'</a> 置位的弹出窗口。
+
+                                                        <b class="vimtag"> <a name="sign-priority">sign-priority</a> </b>
+每个已放置的标号会分配一个优先值。同一行上如有多个标号放置，使用最高优先级的标
+号的属性，这与标号组无关。标号的缺省优先级是 10。优先级在标号放置时分配。
+
+标号放置的行如被删除，移动标号到下一行 (如果没有下一行则为缓冲区的末行)。删除
+如被撤销，标号并不移回。
+
 </pre><hr class="doubleline" /><pre>
 <h4>2. 命令                                         <b class="vimtag"> <a name="sign-commands">sign-commands</a> </b> <b class="vimtag"> <a name=":sig">:sig</a> </b> <b class="vimtag"> <a name=":sign">:sign</a> </b></h4>
 这里提供了一例，在当前文件的第 23 行显示 "piet" 标号，以文字 "&gt;&gt;" 标明。 
@@ -76,10 +99,12 @@
 
 定 义 标 号                             <b class="vimtag"> <a name=":sign-define">:sign-define</a> </b> <b class="vimtag"> <a name="E255">E255</a> </b> <b class="vimtag"> <a name="E160">E160</a> </b> <b class="vimtag"> <a name="E612">E612</a> </b>
 
+见  <a href="sign.html#sign_define()">sign_define()</a>  给出等价的 Vim 脚本函数。
+
 :sign define <code class="special">{name}</code> <code class="special">{argument}</code>...
                 定义新标号或为已存在的标号设置属性。<code class="special">{name}</code> 可以是完全由数位组
-                成的数值，也可以是由非数位开头的名字。忽略开头的数位 (<code class="vim">译者注</code>:
-                零？)，所以 "0012"、"012" 和 "12" 认为是相同的名字。
+                成的数值，也可以是由非数位开头的名字。忽略开头的零，所以
+                "0012"、"012" 和 "12" 认为是相同的名字。
                 可以定义大约 120 个不同的标号。
 
                 允许的参数是:
@@ -108,11 +133,15 @@
 
 删 除 标 号                                             <b class="vimtag"> <a name=":sign-undefine">:sign-undefine</a> </b> <b class="vimtag"> <a name="E155">E155</a> </b>
 
+见  <a href="sign.html#sign_undefine()">sign_undefine()</a>  给出等价的 Vim 脚本函数。
+
 :sign undefine <code class="special">{name}</code>
-                删除已定义的标号。如果 <code class="special">{name}</code> 标号已经放置，会有问题。
+                删除标号的定义。如果 <code class="special">{name}</code> 标号已经放置，会有问题。
 
 
 列 出 标 号                                             <b class="vimtag"> <a name=":sign-list">:sign-list</a> </b> <b class="vimtag"> <a name="E156">E156</a> </b>
+
+见  <a href="sign.html#sign_getdefined()">sign_getdefined()</a>  给出等价的 Vim 脚本函数。
 
 :sign list      列出所有的标号和它们的属性。
 
@@ -121,6 +150,8 @@
 
 
 放 置 标 号                                             <b class="vimtag"> <a name=":sign-place">:sign-place</a> </b> <b class="vimtag"> <a name="E158">E158</a> </b>
+
+见  <a href="sign.html#sign_place()">sign_place()</a>  给出等价的 Vim 脚本函数。
 
 :sign place <code class="special">{id}</code> line=<code class="special">{lnum}</code> name=<code class="special">{name}</code> file=<code class="special">{fname}</code>
                 把 <code class="special">{name}</code> 指定的标号放在文件 <code class="special">{fname}</code> 的第 <code class="special">{lnum}</code> 行。
@@ -133,8 +164,25 @@
                 户可以自行决定 <code class="special">{id}</code> 在每个文件内是否唯一。(如果多次使用，撤销
                 放置就必须做多次，而且进行修改时未必尽如预期)。
 
-:sign place <code class="special">{id}</code> line=<code class="special">{lnum}</code> name=<code class="special">{name}</code> buffer=<code class="special">{nr}</code>
-                同上，但指定缓冲区 <code class="special">{nr}</code>。
+                以下可选的标号属性可在 "file=" 前指定:
+                        group=<code class="special">{group}</code>   把标号放置在标号组 <code class="special">{group}</code>
+                        priority=<code class="special">{prio}</code> 给标号分配优先级 <code class="special">{prio}</code>
+
+                缺省，标号放置在全局标号组。
+
+                缺省，标号分配的缺省优先级为 10。要分配不同的优先值，用
+                "priority=<code class="special">{prio}</code>" 来指定。优先级用于在同一行有多个标号放置时决
+                定显示的标号。
+
+                示例: 
+<code class="example">                        :sign place 5 line=3 name=sign1 file=a.py</code>
+<code class="example">                        :sign place 6 group=g2 line=2 name=sign2 file=x.py</code>
+<code class="example">                        :sign place 9 group=g2 priority=50 line=5</code>
+<code class="example">                                                        \ name=sign1 file=a.py</code>
+
+:sign place <code class="special">{id}</code> line=<code class="special">{lnum}</code> name=<code class="special">{name}</code> [buffer=<code class="special">{nr}</code>]
+                同上，但指定缓冲区 <code class="special">{nr}</code>。如果不给出缓冲区参数，标号放置在当前
+                缓冲区。
 
                                                         <b class="vimtag"> <a name="E885">E885</a> </b>
 :sign place <code class="special">{id}</code> name=<code class="special">{name}</code> file=<code class="special">{fname}</code>
@@ -142,48 +190,118 @@
                 参看关于 <code class="special">{fname}</code> 的说明  <a href="sign.html#:sign-fname">:sign-fname</a> 。可用于不移动某个标号的
                 同时，更改它的显示方式 (例如，当调试器停在某个断点时)。
 
-:sign place <code class="special">{id}</code> name=<code class="special">{name}</code> buffer=<code class="special">{nr}</code>
-                同上，但指定缓冲区 <code class="special">{nr}</code>。
+                可选的 "group=<code class="special">{group}</code>" 属性可在 "file=" 前使用来选择特定组的标
+                号。可选的 "priority=<code class="special">{prio}</code>" 属性可用来发来已有标号的优先级。   
+
+:sign place <code class="special">{id}</code> name=<code class="special">{name}</code> [buffer=<code class="special">{nr}</code>]
+                同上，但指定缓冲区 <code class="special">{nr}</code>。如果不给出缓冲区参数，使用当前缓冲
+                区。
 
 
 撤 销 放 置 标 号                                       <b class="vimtag"> <a name=":sign-unplace">:sign-unplace</a> </b> <b class="vimtag"> <a name="E159">E159</a> </b>
+
+见  <a href="sign.html#sign_unplace()">sign_unplace()</a>  给出等价的 Vim 脚本函数。
 
 :sign unplace <code class="special">{id}</code> file=<code class="special">{fname}</code>
                 从文件 <code class="special">{fname}</code> 里撤销已放置的标号 <code class="special">{id}</code> 的放置。
                 参看关于 <code class="special">{fname}</code> 的说明  <a href="sign.html#:sign-fname">:sign-fname</a> 。
 
+:sign unplace <code class="special">{id}</code> group=<code class="special">{group}</code> file=<code class="special">{fname}</code>
+                同上，但撤销标号组 <code class="special">{group}</code> 里的标号 <code class="special">{id}</code>。
+
+:sign unplace <code class="special">{id}</code> group=* file=<code class="special">{fname}</code>
+                同上，但摊销所有标号组里的标号 <code class="special">{id}</code>。
+
 :sign unplace * file=<code class="special">{fname}</code>
-                从文件 <code class="special">{fname}</code> 里撤销所有已放置的标号。
+                从文件 <code class="special">{fname}</code> 里撤销所有标号的放置。
+
+:sign unplace * group=<code class="special">{group}</code> file=<code class="special">{fname}</code>
+                从文件 <code class="special">{fname}</code> 里撤销组 <code class="special">{group}</code> 里所有标号的放置。
+
+:sign unplace * group=* file=<code class="special">{fname}</code>
+                从文件 <code class="special">{fname}</code> 里撤销所有组里所有标号的放置。
 
 :sign unplace <code class="special">{id}</code> buffer=<code class="special">{nr}</code>
                 从缓冲区 <code class="special">{nr}</code> 里撤销已放置的标号 <code class="special">{id}</code> 的放置。
 
+:sign unplace <code class="special">{id}</code> group=<code class="special">{group}</code> buffer=<code class="special">{nr}</code>
+                从缓冲区 <code class="special">{nr}</code> 里撤销组 <code class="special">{group}</code> 里已放置的标号 <code class="special">{id}</code> 的放置。
+
+:sign unplace <code class="special">{id}</code> group=* buffer=<code class="special">{nr}</code>
+                从缓冲区 <code class="special">{nr}</code> 里撤销所有组里已放置的标号 <code class="special">{id}</code> 的放置。
+
 :sign unplace * buffer=<code class="special">{nr}</code>
-                从缓冲区 <code class="special">{nr}</code> 里撤销所有已放置的标号。
+                从缓冲区 <code class="special">{nr}</code> 里撤销所有标号的放置。
+
+:sign unplace * group=<code class="special">{group}</code> buffer=<code class="special">{nr}</code>
+                从缓冲区 <code class="special">{nr}</code> 里撤销组 <code class="special">{group}</code> 里所有标号的放置。
+
+:sign unplace * group=* buffer=<code class="special">{nr}</code>
+                从缓冲区 <code class="special">{nr}</code> 里撤销所有组里所有标号的放置。
 
 :sign unplace <code class="special">{id}</code>
                 撤销所有文件里出现的 <code class="special">{id}</code> 标号的放置。
 
+:sign unplace <code class="special">{id}</code> group=<code class="special">{group}</code>
+                撤销所有文件里出现的组 <code class="special">{group}</code> 里 <code class="special">{id}</code> 标号的放置。
+
+:sign unplace <code class="special">{id}</code> group=*
+                撤销所有文件里出现的所有组里 <code class="special">{id}</code> 标号的放置。
+
 :sign unplace *
-                撤销所有标号的放置。
+                从所有文件撤销全局组里所有标号的放置。
+
+:sign unplace * group=<code class="special">{group}</code>
+                从所有文件撤销组 <code class="special">{group}</code> 里所有标号的放置。
+
+:sign unplace * group=*
+                从所有文件撤销所有组里所有标号的放置。
 
 :sign unplace
-                撤销光标所在标号的放置。
+                撤销光标所在标号的放置。如果同一行有多个标号，只删除一个。
+
+:sign unplace group=<code class="special">{group}</code>
+                撤销组 <code class="special">{group}</code> 里光标所在标号的放置。
+
+:sign unplace group=*
+                撤销所有组里光标所在标号的放置。
 
 
 列 出 放 置 标 号                                       <b class="vimtag"> <a name=":sign-place-list">:sign-place-list</a> </b>
+
+见  <a href="sign.html#sign_getplaced()">sign_getplaced()</a>  给出等价的 Vim 脚本函数。
 
 :sign place file=<code class="special">{fname}</code>
                 列出文件 <code class="special">{fname}</code> 里所有放置的标号。
                 参看关于 <code class="special">{fname}</code> 的说明  <a href="sign.html#:sign-fname">:sign-fname</a> 。
 
+:sign place group=<code class="special">{group}</code> file=<code class="special">{fname}</code>
+                列出文件 <code class="special">{fname}</code> 里组 <code class="special">{group}</code> 里所有放置的标号。
+
+:sign place group=* file=<code class="special">{fname}</code>
+                列出文件 <code class="special">{fname}</code> 里所有组里所有放置的标号。
+
 :sign place buffer=<code class="special">{nr}</code>
                 列出缓冲区 <code class="special">{nr}</code> 里所有放置的标号。
 
-:sign place     列出所有文件里放置的标号。
+:sign place group=<code class="special">{group}</code> buffer=<code class="special">{nr}</code>
+                列出缓冲区 <code class="special">{nr}</code> 里组 <code class="special">{group}</code> 里所有放置的标号。
+
+:sign place group=* buffer=<code class="special">{nr}</code>
+                列出缓冲区 <code class="special">{nr}</code> 里所有组里所有放置的标号。
+
+:sign place     列出所有文件里全局组里放置的标号。
+
+:sign place group=<code class="special">{group}</code>
+                列出所有文件里组 <code class="special">{group}</code> 里放置的标号。
+
+:sign place group=*
+                列出所有文件里所有组里放置的标号。
 
 
 跳 到 标 号                                             <b class="vimtag"> <a name=":sign-jump">:sign-jump</a> </b> <b class="vimtag"> <a name="E157">E157</a> </b>
+
+见  <a href="sign.html#sign_jump()">sign_jump()</a>  给出等价的 Vim 脚本函数。
 
 :sign jump <code class="special">{id}</code> file=<code class="special">{fname}</code>
                 打开文件 <code class="special">{fname}</code> 或者跳转到包含 <code class="special">{fname}</code> 的窗口并把光标设在标号
@@ -192,11 +310,339 @@
                 如果此文件不在窗口显示但当前文件又不能被放弃  <a href="editing.html#abandon">abandon</a> ，此动作
                 失败。
 
-:sign jump <code class="special">{id}</code> buffer=<code class="special">{nr}</code>                                     <b class="vimtag"> <a name="E934">E934</a> </b>
-                同上，但指定缓冲区 <code class="special">{nr}</code>。如果缓冲区 <code class="special">{nr}</code> 没有名字，报错。
+:sign jump <code class="special">{id}</code> group=<code class="special">{group}</code> file=<code class="special">{fname}</code>
+                同上，但跳转到组 <code class="special">{group}</code> 里的标号
+
+:sign jump <code class="special">{id}</code> [buffer=<code class="special">{nr}</code>]                                   <b class="vimtag"> <a name="E934">E934</a> </b>
+                同上，但指定缓冲区 <code class="special">{nr}</code>。如果缓冲区 <code class="special">{nr}</code> 没有名字，报错。如果
+                未给出缓冲区参数，使用当前缓冲区。
+
+:sign jump <code class="special">{id}</code> group=<code class="special">{group}</code> [buffer=<code class="special">{nr}</code>]
+                同上，但跳转到组 <code class="special">{group}</code> 里的标号
+
+</pre><hr class="doubleline" /><pre>
+<h4>3. Functions                                    <b class="vimtag"> <a name="sign-functions-details">sign-functions-details</a> </b></h4>
+sign_define(<code class="special">{name}</code> [, <code class="special">{dict}</code>])                          <b class="vimtag"> <a name="sign_define()">sign_define()</a> </b>
+sign_define(<code class="special">{list}</code>)
+                定义名为 <code class="special">{name}</code> 的新标号或为已存在的标号设置属性。类似于
+                 <a href="sign.html#:sign-define">:sign-define</a>  命令。
+
+                给 <code class="special">{name}</code> 加上独有的前缀以避免名字冲突。不像放置标号那样有
+                <code class="special">{group}</code> 的区隔。
+
+                <code class="special">{name}</code> 可以是字符串或数值。可选的 <code class="special">{dict}</code> 参数指定标号的属性。
+                支持以下的值:
+                   icon         用于标号的位图文件完整路径。
+                   linehl       用于标号放置所在的整行的高亮组。
+                   text         没有图标或不使用 GUI 时显示的文本。
+                   texthl       文本项目使用的高亮组
+
+                如果名为 <code class="special">{name}</code> 的标号已存在，更新标号的属性。
+
+                单个参数 <code class="special">{list}</code> 可用来定义一列标号。每个列表项是 <code class="special">{dict}</code> 中上述
+                项目的字典，此外还有 "name" 项目指定标号名。
+
+                成功时返回 0，失败时返回 -1。如果使用单个参数 <code class="special">{list}</code>，返回值的
+                列表，其中每个值对应一个定义的标号。
+
+                示例: 
+<code class="example">                        call sign_define("mySign", {</code>
+<code class="example">                                \ "text" : "=&gt;",</code>
+<code class="example">                                \ "texthl" : "Error",</code>
+<code class="example">                                \ "linehl" : "Search"})</code>
+<code class="example">                        call sign_define([</code>
+<code class="example">                                \ {'name' : 'sign1',</code>
+<code class="example">                                \  'text' : '=&gt;'},</code>
+<code class="example">                                \ {'name' : 'sign2',</code>
+<code class="example">                                \  'text' : '!!'}</code>
+<code class="example">                                \ ])</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignList()-&gt;sign_define()</code>
+<code class="example"></code>
+sign_getdefined([<code class="special">{name}</code>])                               <b class="vimtag"> <a name="sign_getdefined()">sign_getdefined()</a> </b>
+                获取已定义标号及其属性的列表。类似于  <a href="sign.html#:sign-list">:sign-list</a>  命令。
+
+                如果不给出 <code class="special">{name}</code>，返回所有已定义标号的列表，否则返回指定标号
+                的属性。
+
+                返回值的每个列表项是包含以下项目的字典:
+                   icon         标号的位图文件完整路径
+                   linehl       标号放置所在的整行的高亮组。
+                   name         标号名
+                   text         没有图标或不使用 GUI 时显示的文本。
+                   texthl       文本项目使用的高亮组
+
+                如果没有标号或 <code class="special">{name}</code> 找不到，返回空列表。
+
+                示例: 
+<code class="example">                        " 获取所有定义的标号的列表</code>
+<code class="example">                        echo sign_getdefined()</code>
+<code class="example"></code>
+<code class="example">                        " 获取名为 mySign 的标号的属性</code>
+<code class="example">                        echo sign_getdefined("mySign")</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignList()-&gt;sign_getdefined()</code>
+<code class="example"></code>
+sign_getplaced([<code class="special">{expr}</code> [, <code class="special">{dict}</code>]])                     <b class="vimtag"> <a name="sign_getplaced()">sign_getplaced()</a> </b>
+                返回一个或所有缓冲区里放置的标号的列表。类似于
+                 <a href="sign.html#:sign-place-list">:sign-place-list</a>  命令。
+
+                如果给出可选的缓冲区名 <code class="special">{expr}</code>，只返回该缓冲区里放置的标号列
+                表。<code class="special">{expr}</code> 的用法见  <a href="eval.html#bufname()">bufname()</a> 。可选的 <code class="special">{dict}</code> 可包含以下项目:
+                   group        只选择此组内的标号
+                   id           选择带此标识符的标号
+                   lnum         选择放置在此行的标号。<code class="special">{lnum}</code> 的用法见
+                                 <a href="eval.html#line()">line()</a> 。
+                如果 <code class="special">{group}</code> 为 '*'，返回包括全局组的所有组的标号。如果
+                <code class="special">{group}</code> 未给出或为空串，只返回全局组里的标号。如果无参数，返回
+                所有缓冲区里放置的全局组里的所有标号。见  <a href="sign.html#sign-group">sign-group</a> 。
+
+                返回值的每个列表项目是带有以下项目的字典:
+                        bufnr   带有此标号的缓冲区号
+                        signs   放置在 <code class="special">{bufnr}</code> 的标号列表。每个列表项目是带有
+                                下列项的字典
+
+                每个标号的字典包含以下项:
+                        group   标号组。全局组设为 ''。
+                        id      标号标识符
+                        lnum    标号放置的行号
+                        name    已定义的标号名
+                        priority        标号优先级
+
+                缓冲区里返回的标号以行号和优先级排序。
+
+                失败或没有已放置的标号时返回空列表。
+
+                示例: 
+<code class="example">                        " 获取在 eval.c 里放置的全局组里的标号列表</code>
+<code class="example">                        echo sign_getplaced("eval.c")</code>
+<code class="example"></code>
+<code class="example">                        " 获取在 eval.c 里放置的组 'g1' 里的标号列表</code>
+<code class="example">                        echo sign_getplaced("eval.c", {'group' : 'g1'})</code>
+<code class="example"></code>
+<code class="example">                        " 获取在 eval.c 里放置在第 10 行的标号列表</code>
+<code class="example">                        echo sign_getplaced("eval.c", {'lnum' : 10})</code>
+<code class="example"></code>
+<code class="example">                        " 获取在 a.py 里放置的标识符为 10 的标号</code>
+<code class="example">                        echo sign_getplaced("a.py", {'id' : 10})</code>
+<code class="example"></code>
+<code class="example">                        " 获取在 a.py 里放置的组 'g1' 里带 id 20 的标号</code>
+<code class="example">                        echo sign_getplaced("a.py", {'group' : 'g1',</code>
+<code class="example">                                                        \  'id' : 20})</code>
+<code class="example"></code>
+<code class="example">                        " 获取所有放置的标号的列表</code>
+<code class="example">                        echo sign_getplaced()</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetBufname()-&gt;sign_getplaced()</code>
+
+                                                        <b class="vimtag"> <a name="sign_jump()">sign_jump()</a> </b>
+sign_jump(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{expr}</code>)
+                打开缓冲区 <code class="special">{expr}</code> 或跳转到包含 <code class="special">{expr}</code> 的窗口，并定位光标到组
+                <code class="special">{group}</code> 里的标号 <code class="special">{id}</code>。类似于  <a href="sign.html#:sign-jump">:sign-jump</a>  命令。
+
+                <code class="special">{expr}</code> 的用法见  <a href="eval.html#bufname()">bufname()</a> 。
+
+                返回标号的行号。如果参数非法返回 -1。
+
+                示例: 
+<code class="example">                        " 跳转到当前缓冲区的标号 10</code>
+<code class="example">                        call sign_jump(10, '', '')</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignid()-&gt;sign_jump()</code>
+
+                                                        <b class="vimtag"> <a name="sign_place()">sign_place()</a> </b>
+sign_place(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{name}</code>, <code class="special">{expr}</code> [, <code class="special">{dict}</code>])
+                把 <code class="special">{name}</code> 指定的标号放在文件 <code class="special">{fname}</code> 或缓冲区 <code class="special">{expr}</code> 的第
+                <code class="special">{lnum}</code> 行，并给标号指定 <code class="special">{id}</code> 和 <code class="special">{group}</code>。类似于  <a href="sign.html#:sign-place">:sign-place</a> 
+                命令。
+
+                如果标号标识符 <code class="special">{id}</code> 为零，分配新的标识符。否则使用指定的数值。
+                <code class="special">{group}</code> 为标号组名。要指定全局标号组，使用空串。<code class="special">{group}</code> 相当于
+                <code class="special">{id}</code> 的命名空间，这样两个组就可有相同的 ID。详情参见
+                 <a href="sign.html#sign-identifier">sign-identifier</a>  和  <a href="sign.html#sign-group">sign-group</a> 。
+
+                <code class="special">{name}</code> 指定已定义的标号。
+                <code class="special">{expr}</code> 指定缓冲区名或号。可接受的值见  <a href="eval.html#bufname()">bufname()</a> 。
+
+                可选的 <code class="special">{dict}</code> 参数支持以下项目:
+                        lnum            放置标号的文件或缓冲区 <code class="special">{expr}</code> 的行号。
+                                        可接受的值见  <a href="eval.html#line()">line()</a> 。
+                        priority        标号优先级。详见  <a href="sign.html#sign-priority">sign-priority</a> 。
+
+                如果不给出可选的 <code class="special">{dict}</code>，那么修改已放置的在组 <code class="special">{group}</code> 里的标号
+                <code class="special">{id}</code> 使用已定义的标号 <code class="special">{name}</code>。
+
+                成功时返回标号标识符，失败时返回 -1。
+
+                示例: 
+<code class="example">                        " 放置名为 sign1 的标号在缓冲区 json.c 第 20 行带 id</code>
+<code class="example">                        " 为 5</code>
+<code class="example">                        call sign_place(5, '', 'sign1', 'json.c',</code>
+<code class="example">                                                        \ {'lnum' : 20})</code>
+<code class="example"></code>
+<code class="example">                        " 更新缓冲区 json.c 的标号 5 使用 sign2</code>
+<code class="example">                        call sign_place(5, '', 'sign2', 'json.c')</code>
+<code class="example"></code>
+<code class="example">                        " 放置名为 sign3 的标号在缓冲区 json.c 第 30 行带新分</code>
+<code class="example">                        " 配的标识符</code>
+<code class="example">                        let id = sign_place(0, '', 'sign3', 'json.c',</code>
+<code class="example">                                                        \ {'lnum' : 30})</code>
+<code class="example"></code>
+<code class="example">                        " 放置名为 sign4 的标号在缓冲区 json.c 第 40 行带 id</code>
+<code class="example">                        " 为 10 且优先级为 90</code>
+<code class="example">                        call sign_place(10, 'g3', 'sign4', 'json.c',</code>
+<code class="example">                                        \ {'lnum' : 40, 'priority' : 90})</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignid()-&gt;sign_place(group, name, expr)</code>
+
+                                                        <b class="vimtag"> <a name="sign_placelist()">sign_placelist()</a> </b>
+sign_placelist(<code class="special">{list}</code>)
+                放置一或多个标号。类似于  <a href="sign.html#sign_place()">sign_place()</a>  函数。<code class="special">{list}</code> 参数指定
+                要放置的一列标号。每个列表项目是带以下标号属性的字典:
+                    buffer      缓冲区名或号。可接受的值见  <a href="eval.html#bufname()">bufname()</a> 。
+                    group       标号组名。<code class="special">{group}</code> 相当于 <code class="special">{id}</code> 的命名空间，这样
+                                两个组就可有相同的 ID。不指定或设为空串时则指
+                                定全局标号组，详见  <a href="sign.html#sign-group">sign-group</a> 。
+                    id          标号标识符。如果未指定或为零，分配新的唯一的标
+                                识符。否则使用指定的数值。详见
+                                 <a href="sign.html#sign-identifier">sign-identifier</a> 。
+                    lnum        放置标号的缓冲区 <code class="special">{expr}</code> 中的行号。可接受值见
+                                 <a href="eval.html#line()">line()</a> 。
+                    name        放置的标号名。详见  <a href="sign.html#sign_define()">sign_define()</a> 。
+                    priority    标号优先级。多个标号放置在同一行时，使用最高优
+                                先级的标号。如果不指定，缺省优先级是 10。详见
+                                 <a href="sign.html#sign-priority">sign-priority</a> 。
+
+                如果 <code class="special">{id}</code> 指定已存在的桔，则修改已有的标号以使用指定的 <code class="special">{name}</code>
+                和/或 <code class="special">{priority}</code>。
+
+                返回标号标识符列表。如果放置某标号失败，对应的列表项设为 -1。
+
+                示例: 
+<code class="example">                        " 放置标号 s1 在缓冲区 a.c 的第 20 行带 id 5，还有第</code>
+<code class="example">                        " 30 行带 id 10</code>
+<code class="example">                        let [n1, n2] = sign_placelist([</code>
+<code class="example">                                \ {'id' : 5,</code>
+<code class="example">                                \  'name' : 's1',</code>
+<code class="example">                                \  'buffer' : 'a.c',</code>
+<code class="example">                                \  'lnum' : 20},</code>
+<code class="example">                                \ {'id' : 10,</code>
+<code class="example">                                \  'name' : 's1',</code>
+<code class="example">                                \  'buffer' : 'a.c',</code>
+<code class="example">                                \  'lnum' : 30}</code>
+<code class="example">                                \ ])</code>
+<code class="example"></code>
+<code class="example">                        " 放置标号 s1 在缓冲区 a.c 的第 40 和 50 行带自动生成</code>
+<code class="example">                        " 的标识符</code>
+<code class="example">                        let [n1, n2] = sign_placelist([</code>
+<code class="example">                                \ {'name' : 's1',</code>
+<code class="example">                                \  'buffer' : 'a.c',</code>
+<code class="example">                                \  'lnum' : 40},</code>
+<code class="example">                                \ {'name' : 's1',</code>
+<code class="example">                                \  'buffer' : 'a.c',</code>
+<code class="example">                                \  'lnum' : 50}</code>
+<code class="example">                                \ ])</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignlist()-&gt;sign_placelist()</code>
+<code class="example"></code>
+sign_undefine([<code class="special">{name}</code>])                                 <b class="vimtag"> <a name="sign_undefine()">sign_undefine()</a> </b>
+sign_undefine(<code class="special">{list}</code>)
+                删除之前定义的标号 <code class="special">{name}</code>。类似于  <a href="sign.html#:sign-undefine">:sign-undefine</a>  命令。如果
+                不给出 <code class="special">{name}</code>，删除所有定义的标号。
+
+                单个参数 <code class="special">{list}</code> 可用来删除一列标号的定义。每个列表项是标号名。
+
+                成功时返回 0，失败时返回 -1。如果使用单个参数 <code class="special">{list}</code>，返回值的
+                列表，其中每个值对应一个删除定义的标号。
+
+                示例: 
+<code class="example">                        " 删除名为 mySign 的标号</code>
+<code class="example">                        call sign_undefine("mySign")</code>
+<code class="example"></code>
+<code class="example">                        " 删除标号 'sign1' 和 'sign2'</code>
+<code class="example">                        call sign_undefine(["sign1", "sign2"])</code>
+<code class="example"></code>
+<code class="example">                        " 删除所有标号</code>
+<code class="example">                        call sign_undefine()</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignlist()-&gt;sign_undefine()</code>
+<code class="example"></code>
+sign_unplace(<code class="special">{group}</code> [, <code class="special">{dict}</code>])                        <b class="vimtag"> <a name="sign_unplace()">sign_unplace()</a> </b>
+                撤销在一或多个缓冲区里已放置的标号的放置。类似于
+                 <a href="sign.html#:sign-unplace">:sign-unplace</a>  命令。
+
+                <code class="special">{group}</code> 是标号组名。要使用全局标号组，使用空串。如果 <code class="special">{group}</code>
+                设为 '*'，使用所有的组，包括全局组。
+                <code class="special">{group}</code> 里标号的选择基于 <code class="special">{dict}</code> 的项目。支持以下的 <code class="special">{dict}</code> 可选
+                项目:
+                        buffer  缓冲区名或号。见  <a href="eval.html#bufname()">bufname()</a> 。
+                        id      标号标识符
+                如果不给出 <code class="special">{dict}</code>，删除 <code class="special">{group}</code> 里的所有标号。
+
+                成功时返回 0，失败时返回 -1。
+
+                示例: 
+<code class="example">                        " 从缓冲区 a.vim 撤销标号 10</code>
+<code class="example">                        call sign_unplace('', {'buffer' : "a.vim", 'id' : 10})</code>
+<code class="example"></code>
+<code class="example">                        " 从缓冲区 3 撤销 'g1' 组里的标号 20</code>
+<code class="example">                        call sign_unplace('g1', {'buffer' : 3, 'id' : 20})</code>
+<code class="example"></code>
+<code class="example">                        " 从缓冲区 10 撤销 'g2' 组里的所有标号</code>
+<code class="example">                        call sign_unplace('g2', {'buffer' : 10})</code>
+<code class="example"></code>
+<code class="example">                        " 从所有缓冲区撤销 'g3' 组里的标号 30</code>
+<code class="example">                        call sign_unplace('g3', {'id' : 30})</code>
+<code class="example"></code>
+<code class="example">                        " 从缓冲区 5 撤销所有已放置的标号</code>
+<code class="example">                        call sign_unplace('*', {'buffer' : 5})</code>
+<code class="example"></code>
+<code class="example">                        " 从所有缓冲区撤销 'g4' 组里的所有标号</code>
+<code class="example">                        call sign_unplace('g4')</code>
+<code class="example"></code>
+<code class="example">                        " 从所有缓冲区撤销标号 40</code>
+<code class="example">                        call sign_unplace('*', {'id' : 40})</code>
+<code class="example"></code>
+<code class="example">                        " 从所有缓冲区撤销所有已放置的标号</code>
+<code class="example">                        call sign_unplace('*')</code>
+<code class="example"></code>
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSigngroup()-&gt;sign_unplace()</code>
+
+sign_unplacelist(<code class="special">{list}</code>)                                <b class="vimtag"> <a name="sign_unplacelist()">sign_unplacelist()</a> </b>
+                撤销在一或多个缓冲区里已放置的标号的放置。类似于
+                 <a href="sign.html#sign_unplace()">sign_unplace()</a>  函数。
+
+                <code class="special">{list}</code> 参数指定要撤销的标号的列表。每个列表项目是带有以下标号
+                属性的字典:
+                    buffer      缓冲区名或号。可接受的值见  <a href="eval.html#bufname()">bufname()</a> 。如无指
+                                定，从所有缓冲区里撤销指定的标号。
+                    group       标号组名。如无指定或设为空串，使用全局标号组，
+                                如果设为 '*'，使用所有的组，包括全局组。
+                    id          标号标识符。如无指定，撤销指定组的所有标号。
+
+                返回列表，如果标号被成功撤销，对应项设为 0，如果失败设为 -1。
+
+                示例: 
+<code class="example">                        " 从缓冲区 a.vim 撤销带 id 10 的标号，从缓冲区 b.vim</code>
+<code class="example">                        " 撤销带 id 20 的标号</code>
+<code class="example">                        call sign_unplacelist([</code>
+<code class="example">                                \ {'id' : 10, 'buffer' : "a.vim"},</code>
+<code class="example">                                \ {'id' : 20, 'buffer' : 'b.vim'},</code>
+<code class="example">                                \ ])</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetSignlist()-&gt;sign_unplacelist()</code>
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
 </pre>
 <p><i>Generated by vim2html</i></p>
 </div>

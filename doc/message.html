@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>message</h2>
 <pre>
-<b class="vimtag"> <a name="message.txt">message.txt</a> </b>   For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="message.txt">message.txt</a> </b>   For Vim version 8.2.  最近更新: 2020年1月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -441,6 +441,8 @@ Vim 内部出错，产生一个 NULL 指针。如果你知道如何重现，请�
 Vim 没有完全准备好内存溢出的情况。首先确保所有的改变被保存。然后试图解决内存的
 短缺问题。要确保安全无虞，先退出 Vim，再重新开始。
 
+如果这发生在 Vim 还在初始化时，文件编辑很可能不行，所以 Vim 会以值 123 退出。
+
 缓冲区只是部分保存在内存里，所以编辑一个很大的文件不太可能导致内存溢出错误。撤
 销信息则是完全保存在内存里，可以用以下选项减少内存的占用:
 - <a href="options.html#'undolevels'">'undolevels'</a>  设为较小的值，或 -1 以完全关闭之。对影响所有行的改变这会很有帮
@@ -509,13 +511,6 @@ Vim (和 Vi) 期待标签文件以 ASCII 顺序排序。然后可以使用二分
 这个消息只有在 Vim 在搜索标签时发生问题的时候才会给出。有的时候即使标签文件没
 有适当排序，这个消息也不会给出。
 
-                                                        <b class="vimtag"> <a name="E460">E460</a> </b>  
-<code class="example">  The resource fork would be lost (add ! to override)</code>
-<code class="example"></code>
-在 Macintosh (classic) 上，在写入文件时，Vim 试图保留文件的所有信息，包括它的
-资源派生。如果这做不到，你就会得到这个错误信息。在命令之后附加 "!" 强迫写入
-(但丢失了该项信息)。
-
                                                         <b class="vimtag"> <a name="E424">E424</a> </b>  
 <code class="example">  Too many different highlighting attributes in use</code>
 <code class="example"></code>
@@ -532,7 +527,7 @@ Vim 只能处理 223 种不同的高亮。如果遇到了这个限制，你一�
 <code class="example"></code>
 Vim 不能建立交换文件。你可以继续编辑该文件，但如果 Vim 不正常地退出，你所有的
 改变就丢失了。同时，Vim 可能在编辑大文件时消耗大量的内存。要避免这个错误，你可
-能想改变 <a href="options.html#'directory'">'directory'</a> 选项。见  <a href="recover.html#swap-file">swap-file</a> 。
+能想改变 <a href="options.html#'directory'">'directory'</a> 选项。当 <a href="options.html#'directory'">'directory'</a> 为空时不给出此错误。见  <a href="recover.html#swap-file">swap-file</a> 。
 
                                                         <b class="vimtag"> <a name="E140">E140</a> </b>  
 <code class="example">  Use ! to write partial buffer</code>
@@ -641,10 +636,12 @@ http://groups.yahoo.com/group/solarisonintel/message/12179。
 <code class="example"></code>
 这是由 Ex 命令执行时需要的参数没有提供引起的。
 
-                                                        <b class="vimtag"> <a name="E474">E474</a> </b> <b class="vimtag"> <a name="E475">E475</a> </b>  
+                                                        <b class="vimtag"> <a name="E474">E474</a> </b> <b class="vimtag"> <a name="E475">E475</a> </b> <b class="vimtag"> <a name="E983">E983</a> </b>  
+<code class="example">  Invalid argument</code>
 <code class="example">  Invalid argument: {arg}</code>
+<code class="example">  Duplicate argument: {arg}</code>
 <code class="example"></code>
-执行 Ex 命令时使用了非法的参数。
+执行 Ex 命令或函数时使用了非法的参数。
 
                                                         <b class="vimtag"> <a name="E488">E488</a> </b>  
 <code class="example">  Trailing characters</code>
@@ -725,7 +722,6 @@ Vim 不能读临时文件。特别是在 Windows 上，这可能由错误转义 
 -&gt; 如果 <a href="options.html#'mouse'">'mouse'</a> 包含 'r' 标志位，按鼠标左键和按 <code class="special">&lt;Space&gt;</code> 效果相同。不过这使得选
    择文本成为不可能。
 -&gt; GUI 模式上，在末行按鼠标左键和按 <code class="special">&lt;Space&gt;</code> 效果相同。
-<code class="notvi">{Vi: 只有 ":" 命令得到处理}</code>
 
 如果你不小心按了 <code class="special">&lt;Enter&gt;</code> 或 <code class="special">&lt;Space&gt;</code>，而你还想看显示的消息，可以使用  <a href="message.html#g%3C">g&lt;</a> 。这个
 命令只有 <a href="options.html#'more'">'more'</a> 置位时才有效。
@@ -734,6 +730,7 @@ Vim 不能读临时文件。特别是在 Windows 上，这可能由错误转义 
 - 把 <a href="options.html#'cmdheight'">'cmdheight'</a> 设为 2 或者更高。
 - 在 <a href="options.html#'shortmess'">'shortmess'</a> 里增加标志位。
 - 复位 <a href="options.html#'showcmd'">'showcmd'</a> 和/或 <a href="options.html#'ruler'">'ruler'</a>。
+- 确保  <a href="eval.html#:echo">:echo</a>  文本不长于  <a href="eval.html#v:echospace">v:echospace</a>  屏幕单元格。
 
 如果脚本导致出现按回车的提示而你不明所以， <a href="eval.html#v:scrollstart">v:scrollstart</a>  变量可能很有用。
 
@@ -753,10 +750,10 @@ Vim 不能读临时文件。特别是在 Windows 上，这可能由错误转义 
      <code class="special">&lt;Space&gt;</code> 或 f 或 <code class="special">&lt;PageDown&gt;</code>         下一屏
      G                                  一直往下，直到出现按回车的提示
 
-     <code class="special">&lt;BS&gt;</code> 或 k 或 <code class="special">&lt;Up&gt;</code>                  往回一行 (*)
-     u                                  往上一页 (半屏) (*)
-     b 或 <code class="special">&lt;PageUp&gt;</code>                      上一屏 (*)
-     g                                  回到开始处 (*)
+     <code class="special">&lt;BS&gt;</code> 或 k 或 <code class="special">&lt;Up&gt;</code>                  往回一行
+     u                                  往上一页 (半屏)
+     b 或 <code class="special">&lt;PageUp&gt;</code>                      上一屏
+     g                                  回到开始处
 
      q、<code class="special">&lt;Esc&gt;</code> 或 <code class="keystroke">CTRL-C</code>                 终止列表
      :                                  终止列表并进入命令行
@@ -764,12 +761,11 @@ Vim 不能读临时文件。特别是在 Windows 上，这可能由错误转义 
                                          <a href="gui.html#modeless-selection">modeless-selection</a>  到剪贴板
                                         ("* 和 "+ 寄存器)
     <code class="special">{menu-entry}</code>                        命令行模式里定义的菜单项。
-    <code class="special">&lt;LeftMouse&gt;</code> (**)                    下页
+    <code class="special">&lt;LeftMouse&gt;</code>                         下页 (*)
 
 所有其它的键保留它们本来的含义。
 
-(*)  反向滚动在 <code class="notvi">{Vi 中无此功能}</code>。只回滚到消息开始滚动时的位置。
-(**) 鼠标左键的点击只有在以下情况下才生效:
+(*) 鼠标左键的点击只有在以下情况下才生效:
      - GUI: 屏幕的最后一行。
      - <a href="options.html#'mouse'">'mouse'</a> 里定义了 'r' (不过这时文本选择不会工作)。
 
@@ -779,7 +775,7 @@ Vim 不能读临时文件。特别是在 Windows 上，这可能由错误转义 
  <a href="message.html#g%3C">g&lt;</a>  命令用于查看前一个命令输出的最后一页。如果在提示按回车的时候不小心按了空
 格 <code class="special">&lt;Space&gt;</code> 键，那么该命令尤其有用。
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
 </pre>
 <p><i>Generated by vim2html</i></p>
 </div>

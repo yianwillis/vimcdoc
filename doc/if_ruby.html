@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>if_ruby</h2>
 <pre>
-<b class="vimtag"> <a name="if_ruby.txt">if_ruby.txt</a> </b>   For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="if_ruby.txt">if_ruby.txt</a> </b>   For Vim version 8.2.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Shugo Maeda</code>
@@ -32,12 +32,12 @@ Vim 的 Ruby 接口                                        <b class="vimtag"> <a
 3. Vim::Buffer 对象              <a href="if_ruby.html#ruby-buffer">ruby-buffer</a> 
 4. Vim::Window 对象              <a href="if_ruby.html#ruby-window">ruby-window</a> 
 5. 全局变量                      <a href="if_ruby.html#ruby-globals">ruby-globals</a> 
-6. 动态调入                      <a href="if_ruby.html#ruby-dynamic">ruby-dynamic</a> 
+6. rubyeval() Vim 函数           <a href="if_ruby.html#ruby-rubyeval">ruby-rubyeval</a> 
+7. 动态调入                      <a href="if_ruby.html#ruby-dynamic">ruby-dynamic</a> 
 
-<code class="notvi">{Vi 无此功能}</code>
                         <b class="vimtag"> <a name="E266">E266</a> </b> <b class="vimtag"> <a name="E267">E267</a> </b> <b class="vimtag"> <a name="E268">E268</a> </b> <b class="vimtag"> <a name="E269">E269</a> </b> <b class="vimtag"> <a name="E270">E270</a> </b> <b class="vimtag"> <a name="E271">E271</a> </b> <b class="vimtag"> <a name="E272">E272</a> </b> <b class="vimtag"> <a name="E273">E273</a> </b>
 
-只有编译 Vim 时加入  <a href="various.html#+ruby">+ruby</a>  特性才会有 Ruby 接口功能。
+<code class="notvi">{仅当编译 Vim 时加入  <a href="various.html#+ruby">+ruby</a>  特性才有效}</code>
 
 ruby 的主页是 http://www.ruby-lang.org/。你可以在那里找到 Ruby 下载的链接。
 
@@ -47,14 +47,18 @@ ruby 的主页是 http://www.ruby-lang.org/。你可以在那里找到 Ruby 下�
 :rub[y] <code class="special">{cmd}</code>           执行 Ruby 命令 <code class="special">{cmd}</code>。要试一试: 
 <code class="example">                                :ruby print "Hello"</code>
 <code class="example"></code>
-:rub[y] &lt;&lt; <code class="special">{endpattern}</code>
+:rub[y] &lt;&lt; <code class="special">[endmarker]</code>
 <code class="special">{script}</code>
-<code class="special">{endpattern}</code>
+<code class="special">{endmarker}</code>
                         执行 Ruby 脚本 <code class="special">{script}</code>。
-                        <code class="special">{endpattern}</code>  <code class="emphasis">不能</code> 有前导空白。如果 <code class="special">{endpattern}</code> 省
-                        略，缺省为单个句号 '.'，类似于  <a href="insert.html#:append">:append</a>  和  <a href="insert.html#:insert">:insert</a> 
-                        命令。这种形式的  <a href="if_ruby.html#:ruby">:ruby</a>  命令主要用于在 vim 脚本里包含
-                        ruby 代码。
+                        <code class="special">{script}</code> 之后的 <code class="special">{endmarker}</code>  <code class="emphasis">不能</code> 有前导空白。
+
+                        如果省略 <code class="special">[endmarker]</code>，缺省为单个句号 '.'，类似于
+                         <a href="insert.html#:append">:append</a>  和  <a href="insert.html#:insert">:insert</a>  命令。
+
+                        这种形式的  <a href="if_ruby.html#:ruby">:ruby</a>  命令主要用于在 vim 脚本里包含 ruby
+                        代码。
+
                         <code class="note">注意</code>: 如果编译时没有加入 Ruby 特性，这个命令不会工作。
                         为了避免错误，参看  <a href="if_perl.html#script-here">script-here</a> 。
 
@@ -126,6 +130,10 @@ Ruby 代码通过 "Vim" 模块调用所有的 vim 功能。
 Vim::message(<code class="special">{msg}</code>)
         显示消息 <code class="special">{msg}</code>。
 
+                                                        <b class="vimtag"> <a name="ruby-blob">ruby-blob</a> </b>
+Vim::blob(<code class="special">{arg}</code>)
+        返回来自 <code class="special">{arg}</code> 的  <a href="eval.html#Blob">Blob</a>  字面常量字符串。
+
                                                         <b class="vimtag"> <a name="ruby-set_option">ruby-set_option</a> </b>
 Vim::set_option(<code class="special">{arg}</code>)
         设置 vim 选项。<code class="special">{arg}</code> 可以是任何一个 ":set" 命令接受的命令。 <code class="note">注意</code> 这意
@@ -158,7 +166,7 @@ self[<code class="special">{n}</code>]       返回第 <code class="special">{n}
 
 方法:
 
-name            返回缓冲区的名字。
+name            返回缓冲区的全名。
 number          返回缓冲区的序号。
 count           返回总行数。
 length          返回总行数。
@@ -190,6 +198,7 @@ height = <code class="special">{n}</code>    设置窗口的高度为 <code clas
 width           返回窗口的宽度。
 width = <code class="special">{n}</code>     设置窗口的宽度为 <code class="special">{n}</code>。
 cursor          返回光标位置数组: [行、列]。
+                首行号为 1 而首列号为 0。
 cursor = [<code class="special">{row}</code>, <code class="special">{col}</code>]
                 设置光标位置为行 <code class="special">{row}</code> 和列 <code class="special">{col}</code>。
 
@@ -201,7 +210,14 @@ $curwin         当前窗口对象。
 $curbuf         当前缓冲区对象。
 
 </pre><hr class="doubleline" /><pre>
-<h4>6. 动态调入                                             <b class="vimtag"> <a name="ruby-dynamic">ruby-dynamic</a> </b></h4>
+<h4>6. rubyeval() Vim 函数                                  <b class="vimtag"> <a name="ruby-rubyeval">ruby-rubyeval</a> </b></h4>
+为提供双向接口的方便，可用  <a href="eval.html#rubyeval()">rubyeval()</a>  函数来计算 Ruby 表达式并传递其值给 Vim
+脚本。
+
+Ruby 值 "true"、"false" 和 "nil" 分别转换为 v:true、v:false 和 v:null。
+
+</pre><hr class="doubleline" /><pre>
+<h4>7. 动态调入                                             <b class="vimtag"> <a name="ruby-dynamic">ruby-dynamic</a> </b></h4>
 MS-Windows 和 Unix 上，可以动态调入 Ruby 库。 <a href="various.html#:version">:version</a>  输出这时应包括
  <a href="various.html#+ruby%2Fdyn">+ruby/dyn</a> 。
 
@@ -235,7 +251,7 @@ src/INSTALLpc.txt。
 文件。共享库的版本必须和 Vim 编译使用的 Ruby 版本保持一致。
 
 </pre><hr class="doubleline" /><pre>
-<h4> vim:tw=78:ts=8:ft=help:norl:</h4></pre>
+<h4> vim:tw=78:ts=8:noet:ft=help:norl:</h4></pre>
 <p><i>Generated by vim2html</i></p>
 </div>
 </body>

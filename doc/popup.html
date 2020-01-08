@@ -1,0 +1,893 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>VIM: popup</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css">
+</head>
+<body>
+<div id=banner>
+<a href="help.html">帮助总览</a> &middot;
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a>
+</div>
+
+<div id=outer>
+<h2>popup</h2>
+<pre>
+<b class="vimtag"> <a name="popup.txt">popup.txt</a> </b>     For Vim version 8.2.  最近更新: 2020年1月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+                                https://github.com/yianwillis/vimcdoc
+
+
+在浮动窗口中显示文本。                  <b class="vimtag"> <a name="popup">popup</a> </b> <b class="vimtag"> <a name="popup-window">popup-window</a> </b> <b class="vimtag"> <a name="popupwin">popupwin</a> </b>
+
+
+1. 介绍                          <a href="popup.html#popup-intro">popup-intro</a> 
+   窗口位置和大小                <a href="popup.html#popup-position">popup-position</a> 
+   关闭弹出窗口                  <a href="popup.html#popup-close">popup-close</a> 
+   弹出缓冲区和窗口              <a href="popup.html#popup-buffer">popup-buffer</a> 
+2. 函数                          <a href="popup.html#popup-functions">popup-functions</a> 
+   细节                          <a href="popup.html#popup-function-details">popup-function-details</a> 
+3. 用法                          <a href="popup.html#popup-usage">popup-usage</a> 
+   popup_create() 参数           <a href="popup.html#popup_create-arguments">popup_create-arguments</a> 
+   弹出文本属性                  <a href="popup.html#popup-props">popup-props</a> 
+   用文本属性定位弹出            <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 
+   弹出过滤                      <a href="popup.html#popup-filter">popup-filter</a> 
+   弹出回调                      <a href="popup.html#popup-callback">popup-callback</a> 
+   弹出滚动条                    <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 
+   弹出掩码                      <a href="popup.html#popup-mask">popup-mask</a> 
+4. 示例                          <a href="popup.html#popup-examples">popup-examples</a> 
+
+
+<code class="notvi">{仅当编译时加入  <a href="popup.html#popupwin">popupwin</a>  特性才有效}</code>
+
+</pre><hr class="doubleline" /><pre>
+<h4>1. 介绍                                                 <b class="vimtag"> <a name="popup-intro">popup-intro</a> </b></h4>
+我们这里讨论弹出窗口，文本在正常窗口之上显示，可由插件控制。弹出窗口不能像正常
+窗口一样地编辑文本。
+
+弹出窗口可用于:
+- 简短地显示信息，而无须覆盖命令行
+- 用对话框提示用户
+- 键入时显示上下文信息
+- 给出自动补全的额外信息
+
+弹出窗口的文本可用  <a href="textprop.html#text-properties">text-properties</a>  加色。也可以使用语法高亮。
+
+缺省使用的颜色是 "Pmenu"。如果喜欢其它颜色，在 <a href="options.html#'wincolor'">'wincolor'</a> 选项使用 "highlight"
+参数，如: 
+<code class="example">        hi MyPopupColor ctermbg=lightblue guibg=lightblue</code>
+<code class="example">        call setwinvar(winid, '&amp;wincolor', 'MyPopupColor')</code>
+<code class="example"></code>
+弹出窗口中不显示 <a href="options.html#'hlsearch'">'hlsearch'</a> 高亮。
+
+弹出窗口和其它窗口一样，有自己的窗口 ID，但行为不同。它可以和整个 Vim 窗口一样
+大且和其它窗口重叠。弹出窗口间也可以互相重叠。"zindex" 属性指定谁在谁之上。
+
+弹出窗口包含缓冲区，此缓冲区总是和弹出窗口相捆绑。此窗口不能在普通、可视或插入
+模式，也得不到键盘焦点。可用  <a href="eval.html#setbufline()">setbufline()</a>  函数来改变缓冲区的文本。此窗口和缓
+冲区和正常的窗口和缓冲区还有更多的差别，见  <a href="popup.html#popup-buffer">popup-buffer</a> 。
+
+如果这不是你想要的，查查其它的弹出功能:
+- 弹出菜单，见  <a href="gui.html#popup-menu">popup-menu</a> 
+- 气泡，见  <a href="debugger.html#balloon-eval">balloon-eval</a> 
+
+
+窗 口 位 置 和 大 小                                    <b class="vimtag"> <a name="popup-position">popup-position</a> </b>
+
+窗口的高度通常等于缓冲区可能经回绕的行数。可由 "maxheight" 属性限制。可用空行
+或 "minheight" 属性来增加高度。
+
+缺省置位 <a href="options.html#'wrap'">'wrap'</a> 选项，不会有文本消失。否则，如果没有足够空间，窗口往左移以显示
+更多的文本。向右对齐时窗口向右移以显示更多文本。可用 "fixed" 属性关闭左移或右
+移。
+
+Vim 试图在你指定的位置显示弹出。有些情况下，弹出会超出 Vim 窗口的范围，这时会
+在附近某处显示。例如，如果用  <a href="popup.html#popup_atcursor()">popup_atcursor()</a> ，弹出通常在当前光标位置之上显
+示，但如果光标靠近 Vim 窗口的顶部，这里会在光标位置下方放置。
+
+屏幕因为 Ex 命令的输出滚动时，弹出也跟着移动，这样不会遮挡输出。
+
+即使在弹出窗口底下，仍然显示当前光标位置。这样你仍然看到它在哪里，虽然你看不到
+它所在的文本。
+
+
+关 闭 弹 出 窗 口                                       <b class="vimtag"> <a name="popup-close">popup-close</a> </b>
+
+通常创建弹出窗口的插件也负责它的关闭。如果因某些原因弹出依然残留，可以关闭所有
+的弹出: 
+<code class="example">        call popup_clear()</code>
+有些如通知这样的弹出在指定时间后关闭。时间可用  <a href="popup.html#popup_create()">popup_create()</a>  的 "time" 属性
+设置。
+其它的弹出可由点击右上角的 X 或在弹出内部任何位置点击关闭弹出。此行为必须通过
+"close" 属性打开。通知类型缺省打开。
+
+
+弹 出 缓 冲 区 和 窗 口                                 <b class="vimtag"> <a name="popup-buffer">popup-buffer</a> </b>
+
+如果调用了弹出函数来从文本中建立弹出，建立新的缓冲区来保存文本和弹出窗口的文本
+属性。此缓冲区总是和弹出窗口捆绑，且有诸多操作上的限制:
+- 缓冲区无名
+- <a href="options.html#'buftype'">'buftype'</a> 为 "popup"
+- <a href="options.html#'swapfile'">'swapfile'</a> 关闭
+- <a href="options.html#'bufhidden'">'bufhidden'</a> 为 "hide"
+- <a href="options.html#'buflisted'">'buflisted'</a> 关闭
+- <a href="options.html#'undolevels'">'undolevels'</a> 为 -1: 完全不能撤销
+- 所有其它缓冲区局部和窗口局部选项设为其 Vim 缺省值。
+
+可以修改特别列出的选项，但不知道会出什么问题，最好不要动吧。
+
+窗口有它的光标位置，但光标不显示。事实上，显示的是底下窗口的光标，这就像从弹出
+中窥视一样，这样你才能看到现在在哪里。
+
+要在弹出窗口和缓冲区的上下文中执行命令，使用  <a href="eval.html#win_execute()">win_execute()</a> 。例如: 
+<code class="example">        call win_execute(winid, 'syntax enable')</code>
+<code class="example"></code>
+可用  <a href="eval.html#setwinvar()">setwinvar()</a>  设置窗口上的选项，如: 
+<code class="example">        call setwinvar(winid, '&amp;wrap', 0)</code>
+可用  <a href="eval.html#setbufvar()">setbufvar()</a>  设置缓冲区上的选项，如.: 
+<code class="example">        call setbufvar(winbufnr(winid), '&amp;filetype', 'java')</code>
+也可用  <a href="eval.html#win_execute()">win_execute()</a>  来执行 ":setlocal" 命令。
+
+
+</pre><hr class="doubleline" /><pre>
+<h4>2. 函数                                                 <b class="vimtag"> <a name="popup-functions">popup-functions</a> </b></h4>
+建立弹出窗口:
+         <a href="popup.html#popup_create()">popup_create()</a>         在屏幕中央
+         <a href="popup.html#popup_atcursor()">popup_atcursor()</a>       在光标位置正上方，光标移开时关闭
+         <a href="popup.html#popup_beval()">popup_beval()</a>          在 v:beval_ 变量指定的位置，光标移开时关闭
+         <a href="popup.html#popup_notification()">popup_notification()</a>   用三秒钟显示通知
+         <a href="popup.html#popup_dialog()">popup_dialog()</a>         带填充和边框的中间对齐
+         <a href="popup.html#popup_menu()">popup_menu()</a>           提示从列表中选择一个项目
+
+操作弹出窗口:
+         <a href="popup.html#popup_hide()">popup_hide()</a>           临时隐藏弹出
+         <a href="popup.html#popup_show()">popup_show()</a>           显示之前隐藏的弹出
+         <a href="popup.html#popup_move()">popup_move()</a>           改变弹出的位置和大小
+         <a href="popup.html#popup_setoptions()">popup_setoptions()</a>     覆盖弹出的选项
+         <a href="popup.html#popup_settext()">popup_settext()</a>        替换弹出缓冲区的内容
+
+关闭弹出窗口:
+         <a href="popup.html#popup_close()">popup_close()</a>          关闭一个弹出
+         <a href="popup.html#popup_clear()">popup_clear()</a>          关闭所有弹出
+
+过滤函数:
+         <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>    从一列项目中选择
+         <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a>   等待直到按了 'y' 或 'n' 为止
+
+其它:
+         <a href="popup.html#popup_getoptions()">popup_getoptions()</a>     取得弹出的当前选项
+         <a href="popup.html#popup_getpos()">popup_getpos()</a>         取得弹出的实际位置和大小
+         <a href="popup.html#popup_locate()">popup_locate()</a>         找到位于指定屏幕位置的弹出窗口
+
+
+细 节                                           <b class="vimtag"> <a name="popup-function-details">popup-function-details</a> </b>
+
+popup_atcursor(<code class="special">{what}</code>, <code class="special">{options}</code>)                       <b class="vimtag"> <a name="popup_atcursor()">popup_atcursor()</a> </b>
+                在光标上方显示 <code class="special">{what}</code>，光标移开时关闭。类似于: 
+<code class="example">                        call popup_create({what}, #{</code>
+<code class="example">                                \ pos: 'botleft',</code>
+<code class="example">                                \ line: 'cursor-1',</code>
+<code class="example">                                \ col: 'cursor',</code>
+<code class="example">                                \ moved: 'WORD',</code>
+<code class="example">                                \ })</code>
+                <code class="special">{options}</code> 可用来改变属性。
+                如果 "pos" 为 "topleft"，那么 "line" 的缺省会成为 "cursor+1"。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;popup_atcursor({})</code>
+<code class="example"></code>
+<code class="example"></code>
+popup_beval(<code class="special">{what}</code>, <code class="special">{options}</code>)                  <b class="vimtag"> <a name="popup_beval()">popup_beval()</a> </b>
+                在来自 <a href="options.html#'ballooneval'">'ballooneval'</a> 的位置上方显示 <code class="special">{what}</code>，光标移开时关闭。类
+                似于: 
+<code class="example">                  let pos = screenpos(v:beval_winnr, v:beval_lnum, v:beval_col)</code>
+<code class="example">                  call popup_create({what}, #{</code>
+<code class="example">                        \ pos: 'botleft',</code>
+<code class="example">                        \ line: pos.row - 1,</code>
+<code class="example">                        \ col: pos.col,</code>
+<code class="example">                        \ mousemoved: 'WORD',</code>
+<code class="example">                        \ })</code>
+                <code class="special">{options}</code> 可用来改变属性。
+                相关例子可见  <a href="popup.html#popup_beval_example">popup_beval_example</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;popup_beval({})</code>
+
+                                                        <b class="vimtag"> <a name="popup_clear()">popup_clear()</a> </b>
+popup_clear()   处理表现不良插件的紧急方案: 关闭当前标签页的所有弹出窗口和全局
+                弹出。
+
+
+popup_close(<code class="special">{id}</code> [, <code class="special">{result}</code>])                          <b class="vimtag"> <a name="popup_close()">popup_close()</a> </b>
+                关闭弹出 <code class="special">{id}</code>。窗口和相关缓冲区被删除。
+
+                如果弹出有回调，会在弹出窗口刚刚删除之前调用。如果可选的
+                <code class="special">{result}</code> 给出，作为回调的第二个参数被传递。否则传递零给回调。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_close()</code>
+<code class="example"></code>
+popup_create(<code class="special">{what}</code>, <code class="special">{options}</code>)                         <b class="vimtag"> <a name="popup_create()">popup_create()</a> </b>
+                打开弹出窗口显示 <code class="special">{what}</code>，后者可以是以下之一:
+                - 缓冲区号
+                - 字符串
+                - 字符串列表
+                - 带文本属性的文本行的列表
+                如果 <code class="special">{what}</code> 不是缓冲区号，建立缓冲区并设 <a href="options.html#'buftype'">'buftype'</a> 为
+                "popup"。一旦弹出关闭，此缓冲区会被真正删除。
+
+                <code class="special">{options}</code> 为有许多可能项目的字典。详见
+                 <a href="popup.html#popup_create-arguments">popup_create-arguments</a> 。
+
+                返回窗口 ID，可用于其它的弹出函数。用  <a href="eval.html#winbufnr()">winbufnr()</a>  可得到窗口
+                的缓冲区号: 
+<code class="example">                        let winid = popup_create('hello', {})</code>
+<code class="example">                        let bufnr = winbufnr(winid)</code>
+<code class="example">                        call setbufline(bufnr, 2, 'second line')</code>
+                如果有错，返回零。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;popup_create({})</code>
+<code class="example"></code>
+popup_dialog(<code class="special">{what}</code>, <code class="special">{options}</code>)                         <b class="vimtag"> <a name="popup_dialog()">popup_dialog()</a> </b>
+                就像  <a href="popup.html#popup_create()">popup_create()</a>  但带以下缺省选项: 
+<code class="example">                        call popup_create({what}, #{</code>
+<code class="example">                                \ pos: 'center',</code>
+<code class="example">                                \ zindex: 200,</code>
+<code class="example">                                \ drag: 1,</code>
+<code class="example">                                \ border: [],</code>
+<code class="example">                                \ padding: [],</code>
+<code class="example">                                \ mapping: 0,</code>
+<code class="example">                                \})</code>
+                <code class="special">{options}</code> 可用来改变属性，例如，加入 <code class="badlink">'filter'</code> 选项，其值为
+                <code class="badlink">'popup_filter_yesno'</code>。示例: 
+<code class="example">                        call popup_create('do you want to quit (Yes/no)?', #{</code>
+<code class="example">                                \ filter: 'popup_filter_yesno',</code>
+<code class="example">                                \ callback: 'QuitCallback',</code>
+<code class="example">                                \ })</code>
+<code class="example"></code>
+                缺省对话框可以拖动，这样如果需要的话可以读到下面的文本。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;popup_dialog({})</code>
+<code class="example"></code>
+popup_filter_menu(<code class="special">{id}</code>, <code class="special">{key}</code>)                          <b class="vimtag"> <a name="popup_filter_menu()">popup_filter_menu()</a> </b>
+                弹出可用的过滤。可用以下键值:
+                    j <code class="special">&lt;Down&gt;</code>            选择下面的项目
+                    k <code class="special">&lt;Up&gt;</code>              选择上面的项目
+                    <code class="special">&lt;Space&gt;</code> <code class="special">&lt;Enter&gt;</code>     接受当前选择
+                    x Esc <code class="keystroke">CTRL-C</code>        取消菜单
+                忽略其它键。
+
+                在选中行上设置匹配以高亮之，见  <a href="popup.html#popup_menu()">popup_menu()</a> 。
+
+                如果当前选择被接受，调用弹出菜单的 "callback"，并把选中行的索
+                引作为第二个参数传递。首个项目的索引为一。取消菜单后会带参数
+                -1 调用回调。
+
+                要加入快捷键，参见这里的例子:  <a href="popup.html#popup_menu-shortcut-example">popup_menu-shortcut-example</a> 
+
+
+popup_filter_yesno(<code class="special">{id}</code>, <code class="special">{key}</code>)                         <b class="vimtag"> <a name="popup_filter_yesno()">popup_filter_yesno()</a> </b>
+                弹出可用的过滤。它只处理以下键 'y'、'Y'、'n' 或 'N'。调用弹出
+                菜单的 "callback"，它所带的第二个参数当 'y' 或 'Y' 时为 1，'n'
+                或 'N' 时为零。按 Esc 和 'x' 类似于按了 'n'。<code class="keystroke">CTRL-C</code> 则带参数
+                -1 调用回调。忽略其它键。
+                例子可见:  <a href="popup.html#popup_dialog-example">popup_dialog-example</a> 
+
+
+popup_findinfo()                                        <b class="vimtag"> <a name="popup_findinfo()">popup_findinfo()</a> </b>
+                寻找弹出菜单使用的弹出 info 窗口的  <a href="windows.html#window-ID">window-ID</a> ，见
+                 <a href="insert.html#complete-popup">complete-popup</a> 。info 弹出不用时会隐藏，可用  <a href="popup.html#popup_clear()">popup_clear()</a> 
+                和  <a href="popup.html#popup_close()">popup_close()</a>  删除。用  <a href="popup.html#popup_show()">popup_show()</a>  来根据弹出菜单中的
+                项目重新定位。
+                如果找不到返回零。
+
+
+popup_findpreview()                                     <b class="vimtag"> <a name="popup_findpreview()">popup_findpreview()</a> </b>
+                寻找弹出预览窗口的  <a href="windows.html#window-ID">window-ID</a> ，
+                如果找不到返回零。
+
+
+popup_getoptions(<code class="special">{id}</code>)                                  <b class="vimtag"> <a name="popup_getoptions()">popup_getoptions()</a> </b>
+                返回字典，弹出 <code class="special">{id}</code> 的 <code class="special">{options}</code>。
+                零值代表选项未设置。对 "zindex" 来说返回缺省值而不是零。
+
+                "moved" 项目是带行号、最小列和最大列的列表，没有设置的话则是
+                [0, 0, 0]。
+
+                "mousemoved" 项目是带屏幕行，最小屏幕列，最大屏幕列的列表。没
+                有设置的话则是 [0, 0, 0]。
+
+                "firstline" 是弹出上设置的属性，和  <a href="popup.html#popup_getpos()">popup_getpos()</a>  取得的
+                "firstline" 不同，后者是实际在弹出窗口顶部的缓冲区行。
+
+                "border" 和 "padding" 的值全为零时不包含在返回值内。值全是一时
+                包含一个空列表。
+
+                "borderhighlight" 所有值为空时不包含在返回值内。
+                "scrollbarhighlight" 和 "thumbhighlight" 仅在设置时被包含。
+
+                "tabpage" 对全局弹出会是 -1，当前标签页上的弹出会是零，其它标
+                签页上的弹出会是个正数。
+
+                "textprop"、"textpropid" 和 "textpropwin" 仅在 "textprop" 设置
+                时才存在。
+
+                如果找不到弹出窗口 <code class="special">{id}</code>，返回空字典。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_getoptions()</code>
+<code class="example"></code>
+popup_getpos(<code class="special">{id}</code>)                                      <b class="vimtag"> <a name="popup_getpos()">popup_getpos()</a> </b>
+                返回弹出 <code class="special">{id}</code> 的位置和大小。返回以下项目的字典:
+                    col         弹出的屏幕列，从一开始
+                    line        弹出的屏幕行，从一开始
+                    width       整个弹出以屏幕单元格计的宽度
+                    height      整个弹出以屏幕单元格计的高度
+                    core_col    文本框的屏幕列
+                    core_line   文本框的屏幕行
+                    core_width  文本框以屏幕单元格计的宽度
+                    core_height 文本框以屏幕单元格计的高度
+                    firstline   缓冲区的顶部行 (1 除非滚动过)
+                                (不是 "firstline" 属性的值)
+                    lastline    缓冲区的底部行 (弹出重画时会刷新)
+                    scrollbar   如果显示滚动条则非零
+                    visible     如果弹出可见则为一，隐藏则为零
+                <code class="note">注意</code> 这些是实际的屏幕位置。由于采用的大小和定位的机制，和
+                 <a href="popup.html#popup_getoptions()">popup_getoptions()</a>  的值不同。
+
+                "core_" 系列的值不计算填充和边框。
+
+                如果找不到弹出窗口 <code class="special">{id}</code>，返回空字典。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_getpos()</code>
+<code class="example"></code>
+popup_hide(<code class="special">{id}</code>)                                                <b class="vimtag"> <a name="popup_hide()">popup_hide()</a> </b>
+                如果 <code class="special">{id}</code> 是显示中的弹出，现在隐藏之。如果弹出有过滤，在弹出隐
+                藏期间不调用过滤。
+                如果窗口 <code class="special">{id}</code> 不存在，什么都不发生。如果窗口 <code class="special">{id}</code> 存在但不是弹
+                出窗口，报错。 <b class="vimtag"> <a name="E993">E993</a> </b>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_hide()</code>
+<code class="example"></code>
+popup_locate(<code class="special">{row}</code>, <code class="special">{col}</code>)                               <b class="vimtag"> <a name="popup_locate()">popup_locate()</a> </b>
+                返回在屏幕位置 <code class="special">{row}</code> 和 <code class="special">{col}</code> 上的弹出  <a href="windows.html#window-ID">window-ID</a> 。如果有多个
+                弹出，返回最高 zindex 的弹出。如果在该位置上没有弹出，返回零。
+
+
+popup_menu(<code class="special">{what}</code>, <code class="special">{options}</code>)                            <b class="vimtag"> <a name="popup_menu()">popup_menu()</a> </b>
+                在光标附近显示 <code class="special">{what}</code>，用光标键处理项目的选择，用 Space 或
+                Enter 选中项目后关闭窗口。<code class="special">{what}</code> 应有多行才能实际有用。
+                类似于: 
+<code class="example">                        call popup_create({what}, #{</code>
+<code class="example">                                \ pos: 'center',</code>
+<code class="example">                                \ zindex: 200,</code>
+<code class="example">                                \ drag: 1,</code>
+<code class="example">                                \ wrap: 0,</code>
+<code class="example">                                \ border: [],</code>
+<code class="example">                                \ cursorline: 1,</code>
+<code class="example">                                \ padding: [0,1,0,1],</code>
+<code class="example">                                \ filter: 'popup_filter_menu',</code>
+<code class="example">                                \ mapping: 0,</code>
+<code class="example">                                \ })</code>
+                当前行使用 "PopupSelected" 的匹配高亮，如果无定义则使用
+                "PmenuSel"。
+
+                <code class="special">{options}</code> 可用来改变属性。至少要设置 "callback" 为处理选中项目
+                的函数。示例: 
+<code class="example">                        func ColorSelected(id, result)</code>
+<code class="example">                           " use a:result</code>
+<code class="example">                        endfunc</code>
+<code class="example">                        call popup_menu(['red', 'green', 'blue'], #{</code>
+<code class="example">                                \ callback: 'ColorSelected',</code>
+<code class="example">                                \ })</code>
+<code class="example"></code>
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetChoices()-&gt;popup_menu({})</code>
+<code class="example"></code>
+popup_move(<code class="special">{id}</code>, <code class="special">{options}</code>)                                     <b class="vimtag"> <a name="popup_move()">popup_move()</a> </b>
+                移动弹出 <code class="special">{id}</code> 到 <code class="special">{options}</code> 指定的位置。
+                <code class="special">{options}</code> 可以包含  <a href="popup.html#popup_create()">popup_create()</a>  里指定弹出位置的选项:
+                        line
+                        col
+                        pos
+                        maxheight
+                        minheight
+                        maxwidth
+                        minwidth
+                        fixed
+                <code class="special">{id}</code> 可见  <a href="popup.html#popup_hide()">popup_hide()</a> 。
+                其它选项见  <a href="popup.html#popup_setoptions()">popup_setoptions()</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_move(options)</code>
+<code class="example"></code>
+popup_notification(<code class="special">{what}</code>, <code class="special">{options}</code>)                    <b class="vimtag"> <a name="popup_notification()">popup_notification()</a> </b>
+                用三秒钟在 Vim 窗口顶部显示 <code class="special">{what}</code>。
+                类似于: 
+<code class="example">                        call popup_create({what}, #{</code>
+<code class="example">                                \ line: 1,</code>
+<code class="example">                                \ col: 10,</code>
+<code class="example">                                \ minwidth: 20,</code>
+<code class="example">                                \ time: 3000,</code>
+<code class="example">                                \ tabpage: -1,</code>
+<code class="example">                                \ zindex: 300,</code>
+<code class="example">                                \ drag: 1,</code>
+<code class="example">                                \ highlight: 'WarningMsg',</code>
+<code class="example">                                \ border: [],</code>
+<code class="example">                                \ close: 'click',</code>
+<code class="example">                                \ padding: [0,1,0,1],</code>
+<code class="example">                                \ })</code>
+                如果有定义，使用 PopupNotification 高亮组而不是 WarningMsg。
+
+                如果没有  <a href="various.html#+timers">+timers</a>  特性，弹出不会自动消失。用户要点击它才行。
+
+                位置会经过调整以避免和其它通知重叠。
+                <code class="special">{options}</code> 可用来改变属性。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;popup_notification({})</code>
+<code class="example"></code>
+popup_show(<code class="special">{id}</code>)                                                <b class="vimtag"> <a name="popup_show()">popup_show()</a> </b>
+                如果 <code class="special">{id}</code> 是隐藏的弹出，现在显示之。
+                <code class="special">{id}</code> 可见  <a href="popup.html#popup_hide()">popup_hide()</a> 。
+                如果 <code class="special">{id}</code> 是 info 弹出，会定位在当前弹出菜单项边上。
+
+
+popup_setoptions(<code class="special">{id}</code>, <code class="special">{options}</code>)                       <b class="vimtag"> <a name="popup_setoptions()">popup_setoptions()</a> </b>
+                用 <code class="special">{options}</code> 里的项目来覆盖弹出 <code class="special">{id}</code> 的选项。
+                可以设置以下选项:
+                        border
+                        borderchars
+                        borderhighlight
+                        callback
+                        close
+                        cursorline
+                        drag
+                        filter
+                        firstline
+                        flip
+                        highlight
+                        mapping
+                        mask
+                        moved
+                        padding
+                        resize
+                        scrollbar
+                        scrollbarhighlight
+                        thumbhighlight
+                        time
+                        title
+                        wrap
+                        zindex
+                也可用  <a href="popup.html#popup_move()">popup_move()</a>  里的选项。
+                对 "hidden"，用  <a href="popup.html#popup_hide()">popup_hide()</a>  和  <a href="popup.html#popup_show()">popup_show()</a> 。
+                不能改变 "tabpage"。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_setoptions(options)</code>
+<code class="example"></code>
+popup_settext(<code class="special">{id}</code>, <code class="special">{text}</code>)                             <b class="vimtag"> <a name="popup_settext()">popup_settext()</a> </b>
+                设置弹出窗口 <code class="special">{id}</code> 缓冲区的文本。<code class="special">{text}</code> 和  <a href="popup.html#popup_create()">popup_create()</a>  提
+                供的相同，除了不接受缓冲区号以外。
+                除了文本的改变引起的以外，不改变窗口大小或位置。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPopup()-&gt;popup_settext('hello')</code>
+<code class="example"></code>
+</pre><hr class="doubleline" /><pre>
+<h4>3. 用法                                                 <b class="vimtag"> <a name="popup-usage">popup-usage</a> </b></h4>
+POPUP_CREATE() 参 数                             <b class="vimtag"> <a name="popup_create-arguments">popup_create-arguments</a> </b>
+
+ <a href="popup.html#popup_create()">popup_create()</a>  的首个参数 (以及  <a href="popup.html#popup_settext()">popup_settext()</a>  的第二个参数) 指定要显示的
+文本还有可选的文本属性。可以是以下四种形式之一:
+- 缓冲区号
+- 字符串
+- 字符串列表
+- 字典列表，其中每个字典有以下项目:
+        text            要显示的文本字符串
+        props           文本属性的列表。可选。
+                        每项是一个字典，类似于  <a href="textprop.html#prop_add()">prop_add()</a>  第三个参数，但字典
+                        中用 "col" 项指定列, 见下:  <a href="popup.html#popup-props">popup-props</a> 。
+
+如果你要自己创建新的缓冲区，用  <a href="eval.html#bufadd()">bufadd()</a>  并传递缓冲区号给 popup_create()。
+不用使用终端窗口的缓冲区。 <b class="vimtag"> <a name="E278">E278</a> </b>
+
+ <a href="popup.html#popup_create()">popup_create()</a>  的第二个参数是以下选项的字典:
+        line            定位弹出的屏幕行。可用数值、"cursor"、"cursor+1" 或
+                        "cursor-1" 来使用光标所在行并加或减若干行。如果省略，
+                        弹出垂直中间对齐。首行为 1。
+                        使用 "textprop" 时此值相对于文本属性，可为负。
+        col             定位弹出的屏幕列。可用数值、"cursor" 来指定光标列、
+                        "cursor+9" 或 "cursor-9" 来加或减若干列。如果省略，弹
+                        出水平中间对齐。首列为 1。
+                        使用 "textprop" 时此值相对于文本属性，可为负。
+        pos             "topleft"、"topright"、"botleft" 或 "botright":
+                        定义 "line" 和 "col" 用于指定弹出的哪个角。不指定时使
+                        用 "topleft"。
+                        此外 "center" 可用来定位弹出在 Vim 窗口的中央，此时忽
+                        略 "line" 和 "col"。
+        posinvert       为 FALSE 时总是使用 "pos" 的值。为 TRUE (缺省) 时如果
+                        弹出在垂直方向放不进而在另一边有更多的空间，会把弹出放
+                        置在 "line" 指示的位置的另一边。
+        textprop        给出时定位弹出紧贴着使用此名的文本属性，文本属性移动时
+                        会跟着移动。空串会删除之。见  <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 。
+        textpropwin     文本属性搜索的窗口。省略或值非法时使用当前窗口。
+        textpropid      给出 "textprop" 时用于识别文本属性。零会复位。
+        fixed           为 FALSE (缺省) 时，且:
+                         - "pos" 为 "botleft" 或 "topleft"，且
+                         - "wrap" 关闭，且
+                         - 弹出会在屏幕的右侧边缘被截断，那么
+                        弹出会移动到左侧使得内容可放得进屏幕。设为 TRUE 关闭此
+                        行为。
+        flip            为 TRUE (缺省) 时，位置相对于光标，翻转到光标之下或之
+                        上以避免和  <a href="insert.html#popupmenu-completion">popupmenu-completion</a>  或其它更多 "zindex"
+                        的弹出重叠。如果在光标上/下没有空间就在弹出或弹出菜单
+                        边上显示弹出。
+                        <code class="special">{尚未实现}</code>
+        maxheight       内容的最大高度，边框和填充不计在内。
+        minheight       内容的最小高度，边框和填充不计在内。
+        maxwidth        内容的最大宽度，边框、填充和滚动条不计在内。
+        minwidth        内容的最小宽度，边框、填充和滚动条不计在内。
+        firstline       显示的首个缓冲区行。大于一时，看起来文本向上滚动了。如
+                        果超出范围，缓冲区末行出现在窗口顶部。设为零则保留命令
+                        设置的位置。另见 "scrollbar"。
+        hidden          为 TRUE 时弹出存在但不显示；用  <a href="popup.html#popup_show()">popup_show()</a>  来撤销隐
+                        藏。
+        tabpage         为 -1 时: 显示所有标签页上的弹出。
+                        为 0 (缺省) 时: 显示当前标签页上的弹出。
+                        否则，显示弹出的标签页号；非法时不创建弹出且报错。
+                        <b class="vimtag"> <a name="E997">E997</a> </b>
+        title           弹出的首个项目上方显示的文本，在边框之上。如果没有顶部
+                        边框，加上一行填充行来放置标题。你可能希望在开始和结束
+                        处加上一或更多的空格作为填充。
+        wrap            为 TRUE 时使行回绕 (缺省为 TRUE)。
+        drag            为 TRUE 时弹出可用鼠标在边框上拖曳。弹出无边框时无效。
+                        一旦开始拖曳，"pos" 如果为 "center" 就会被改为
+                        "topleft"。
+        resize          为 TRUE 时弹出可用鼠标抓住右下角来调整大小。弹出无边框
+                        时无效。
+        close           为 "button" 时，在右上角显示 X，出现在任何边框、填充或
+                        文本之上。点击 X 时关闭弹出。调用回调，带参数 -2。
+                        为 "click" 时，在弹出上任何鼠标点击会关闭之。
+                        为 "none" (缺省) 时，鼠标点击不关闭弹出窗口。
+        highlight       文本使用的高亮组名，在 <a href="options.html#'wincolor'">'wincolor'</a> 选项里保存。
+        padding         数值列表，定义弹出上/右/下/左的填充 (和 CSS 类似)。空
+                        列表使用四周填充均为 1。填充包围文本，在任何边框之内。
+                        填充使用 <a href="options.html#'wincolor'">'wincolor'</a> 高亮。
+                        示例: [1, 2, 1, 3] 在上方有 1 行填充，右侧 2 列，下方
+                        1 行和左侧 3 列。
+        border          数值列表，定义弹出上/右/下/左的边框宽度 (和 CSS 类
+                        似)。仅识别零值和非零值。空列表代表四周均有边框。
+        borderhighlight 边框使用的高亮组名的列表。如果有一个项目用于所有边框，
+                        否则分别是上/右/下/左边的高亮。
+                        示例: [<code class="badlink">'TopColor'</code>, <code class="badlink">'RightColor'</code>, 'BottomColor,
+                        <code class="badlink">'LeftColor'</code>]
+        borderchars     字符列表，定义用于上/右/下/左边使用的字符。可选地可后
+                        跟用于左上/右上/右下/左下角的字符。
+                        示例: ['-', '|', '-', '|', '┌', '┐', '┘', '└']
+                        如果列表有一个字符，用于所有边框。
+                        如果列表有两个字符，第一个用于边框线，第二个用于角落。
+                        缺省 <a href="options.html#'encoding'">'encoding'</a> 为 "utf-8" 且 <a href="options.html#'ambiwidth'">'ambiwidth'</a> 为 "single"
+                        时使用双线，否则使用 ASCII 字符。
+        scrollbar       为非零时: 如果文本放不下，显示滚动条。
+                        为零时: 不显示滚动条。缺省为非零。
+                        另见  <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 。
+        scrollbarhighlight  滚动条使用的高亮组名。重要的是背景色。如果不给出使
+                        用 PmenuSbar。
+        thumbhighlight  滚动条拇指使用的高亮组名。重要的是背景色。如果不给出使
+                        用 PmenuThumb。
+        zindex          弹出的优先级，缺省为 50。最小值是 1，最大值是 32000。
+        mask            坐标列表的列表，定义弹出的透明部分。见  <a href="popup.html#popup-mask">popup-mask</a> 。
+        time            以毫秒计的时间，在此之后关闭弹出。
+                        省略时必须使用  <a href="popup.html#popup_close()">popup_close()</a> 。
+        moved           指定光标如何移开时关闭弹出:
+                        - "any": 如果光标有任何移动
+                        - "word": 如果光标移开了  <a href="cmdline.html#%3Ccword%3E">&lt;cword&gt;</a> 
+                        - "WORD": 如果光标移开了  <a href="cmdline.html#%3CcWORD%3E">&lt;cWORD&gt;</a> 
+                        - "expr": 如果光标移开了  <a href="cmdline.html#%3Ccexpr%3E">&lt;cexpr&gt;</a> 
+                        - [<code class="special">{start}</code>, <code class="special">{end}</code>]: 如果光标移动到 <code class="special">{start}</code> 列之前或
+                          <code class="special">{end}</code> 列之后
+                        - [<code class="special">{lnum}</code>, <code class="special">{start}</code>, <code class="special">{end}</code>]: 如果光标离开了 <code class="special">{lnum}</code> 行，
+                          移动到 <code class="special">{start}</code> 列之前或 <code class="special">{end}</code> 列之后
+                        - [0, 0, 0] 光标移动时不关闭弹出
+                        光标移动到另一行或另一窗口时也关闭弹出。
+        mousemoved      类似于 "moved"，但指的是鼠标指针位置
+        cursorline      为非零时: 高亮光标行。也滚动文本以显示此行 (仅当
+                                  <a href="options.html#'wrap'">'wrap'</a> 关闭时才能正确工作)。
+                        为零时:   不高亮光标行。
+                        缺省为零，但  <a href="popup.html#popup_menu()">popup_menu()</a>  除外。
+        filter          过滤输入字符的回调，见  <a href="popup.html#popup-filter">popup-filter</a> 。
+        mapping         支持键映射。为 FALSE、弹出可见且有 filter 回调时关闭键
+                        映射。缺省值为 TRUE。
+        filtermode      过滤应用的模式 (标志位同  <a href="eval.html#hasmapto()">hasmapto()</a> ，加上 "a"):
+                                n       普通模式
+                                v       可视和选择模式
+                                x       可视模式
+                                s       选择模式
+                                o       操作符等待模式
+                                i       插入模式
+                                l       Language-Argument ("r"、"f"、"t" 等等)
+                                c       命令行模式
+                                a       所有模式
+                        缺省模式是 "a"。
+        callback        弹出关闭时调用的回调，例如在使用  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a> 
+                        时，见  <a href="popup.html#popup-callback">popup-callback</a> 。
+
+取决于 "zindex"，弹出可以在其它弹出之上或之下显示。补全菜单 ( <a href="gui.html#popup-menu">popup-menu</a> ) 的
+zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
+
+缺省文本回绕，它会使得 <code class="special">{lines}</code> 的一行占据多于一个屏幕行。"wrap" 为 FALSE 时弹
+出之外或 Vim 窗口之外的文本不会显示，也就是被截短了。
+
+
+弹 出 文 本 属 性                                       <b class="vimtag"> <a name="popup-props">popup-props</a> </b>
+
+类似于  <a href="textprop.html#prop_add()">prop_add()</a>  的第三个参数，除了:
+- "lnum" 总是列表的当前行
+- "bufnr" 总是弹出的缓冲区
+- "col" 在字典只字典而不是单独的参数
+这样我们有:
+        col             以字节计的起始列，首列为一。
+        length          以字节计的文本长度；可为零
+        end_lnum        文本结尾的行号
+        end_col         文本刚刚结束之后的列；如果给出 "length" 则不用；如果
+                        <code class="special">{col}</code> 和 "end_col" 相等，为零宽度的文本属性
+        id              用户定义的属性 ID；如果省略则用零
+        type            文本属性类型名，由  <a href="textprop.html#prop_type_add()">prop_type_add()</a>  加入
+
+
+用 文 本 属 性 定 位 弹 出                              <b class="vimtag"> <a name="popup-textprop-pos">popup-textprop-pos</a> </b>
+
+紧贴着文本属性定位弹出会在插入或删除文本时移动弹出。弹出起工具提示的作用。
+
+需要三步才能完成此功能:
+
+- 定义文本属性类型，定义名字。
+        call prop_type_add(<code class="badlink">'popupMarker'</code>, <code class="special">{}</code>)
+
+- 在想要的文本上放置文本属性: 
+<code class="example">        let lnum = {文本行}</code>
+<code class="example">        let col = {文本起始列}</code>
+<code class="example">        let len = {文本长度}</code>
+<code class="example">        let propId = {任意但唯一的数值}</code>
+<code class="example">        call prop_add(lnum, col, #{</code>
+<code class="example">                \ length: len,</code>
+<code class="example">                \ type: 'popupMarker',</code>
+<code class="example">                \ id: propId,</code>
+<code class="example">                \ })</code>
+<code class="example"></code>
+- 创建弹出: 
+<code class="example">        let winid = popup_create('the text', #{</code>
+<code class="example">                \ pos: 'botleft',</code>
+<code class="example">                \ textprop: 'popupMarker',</code>
+<code class="example">                \ textpropid: propId,</code>
+<code class="example">                \ border: [],</code>
+<code class="example">                \ padding: [0,1,0,1],</code>
+<code class="example">                \ close: 'click',</code>
+<code class="example">                \ })</code>
+<code class="example"></code>
+缺省弹出定位在文本的角落上，和为弹出指定的 "pos" 相反。因而如果弹出使用
+"botleft"，弹出的左下角定位在文本属性的右上角:
+                          +----------+
+                          | the text |
+                          +----------+
+        just some PROPERTY as an example
+
+这里文本属性在 "PROPERTY" 上。给 popup_create() 传递负的 "col" 值可以向左平移
+弹出。用 "col: -5" 你会得到:
+
+                     +----------+
+                     | the text |
+                     +----------+
+        just some PROPERTY as an example
+
+如果文本属性移出了视窗，弹出会被隐藏。如果定义弹出的窗口被关闭，弹出也会被关
+闭。
+
+如果弹出在指定的位置放不下，会在附近的位置上显示。
+
+一些提示:
+- 要避免和其它插件的冲突，文本属性类型名必须唯一。可用 "bufnr" 项目使之局部于
+  缓冲区。
+- 如果只有一个文本属性可见，可以略过文本属性 ID。
+- 弹出可能挡住用户要做的事，如上例所示，让点击可以关闭它，会有帮助。
+- 如果删除了文本属性，弹出会关闭。可以这么用: 
+<code class="example">        call prop_remove(#{type: 'popupMarker', id: propId})</code>
+<code class="example"></code>
+<code class="example"></code>
+弹 出 过 滤                                             <b class="vimtag"> <a name="popup-filter">popup-filter</a> </b>
+
+弹出显示时接收任何输入键的回调。弹出隐藏时过滤回调不被调用。
+
+过滤可以返回 TRUE，指示键已处理完所以可以放弃，或者 FALSE 来让 Vim 按照当前状
+态的通常做法处理键。如果返回 FALSE 而且有另一个弹出窗口可见，也调用那个的过
+滤。先调用带最高 zindex 的弹出窗口的过滤。
+
+过滤函数调用时有两个参数: 弹出的 ID 的字符串形式的键，例如: 
+<code class="example">        func MyFilter(winid, key)</code>
+<code class="example">          if a:key == "\&lt;F2&gt;"</code>
+<code class="example">            " 做点什么</code>
+<code class="example">            return 1</code>
+<code class="example">          endif</code>
+<code class="example">          if a:key == 'x'</code>
+<code class="example">            call popup_close(a:winid)</code>
+<code class="example">            return 1</code>
+<code class="example">          endif</code>
+<code class="example">          return 0</code>
+<code class="example">        endfunc</code>
+                                                        <b class="vimtag"> <a name="popup-filter-mode">popup-filter-mode</a> </b>
+"filtermode" 属性可用来指定调用过滤的模式。缺省是 "a": 所有模式。如果使用
+"nvi"，不包含命令行模式，这样任何命令行上的命令不接受过滤。不如，要能到命令行
+模式，过滤不能消耗掉 ":"。就像不能消耗 "v" 才能进入可视模式一样。
+
+                                                        <b class="vimtag"> <a name="popup-mapping">popup-mapping</a> </b>
+键通常是映射后的结果，因为如果过滤不用，键作为正常输入传递。如果过滤消耗了键，
+设置 "mapping" 属性为零可以保证映射不会产生问题。这是  <a href="popup.html#popup_menu()">popup_menu()</a>  和
+ <a href="popup.html#popup_dialog()">popup_dialog()</a>  的缺省。
+
+一些建议的键动作:
+        x               关闭弹出 (见下面 <code class="note">备注</code>)
+        cursor keys     选择另一项
+        Tab             接受当前建议值
+
+鼠标点击产生 <code class="special">&lt;LeftMouse&gt;</code>。坐标可由  <a href="eval.html#getmousepos()">getmousepos()</a>  得到。
+
+Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>  和  <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a> 。
+
+<code class="note">备注</code> "x" 是关闭弹出的正常方法。你可能想用 Esc，但许多键以 Esc 字符开始，Vim 识
+别 Esc 键时可能有延迟。如果确实要用 Esc，建议设置 <a href="options.html#'ttimeoutlen'">'ttimeoutlen'</a> 选项为 100 并
+置位 <a href="options.html#'timeout'">'timeout'</a> 和/或 <a href="options.html#'ttimeout'">'ttimeout'</a>。
+
+
+弹 出 回 调                                             <b class="vimtag"> <a name="popup-callback">popup-callback</a> </b>
+
+弹出关闭时调用的回调。
+
+调用回调时有两个参数: 弹出窗口 ID 和结果，后者可以是弹出行的索引，或者是任意传
+递给  <a href="popup.html#popup_close()">popup_close()</a>  的第二个参数。
+
+如果弹出被强制关闭，如光标移动或按了 <code class="keystroke">CTRL-C</code>，传递数值 -1 给回调。
+
+示例: 
+<code class="example">        func SelectedColor(id, result)</code>
+<code class="example">           echo 'choice made: ' .. a:result</code>
+<code class="example">        endfunc</code>
+<code class="example"></code>
+<code class="example"></code>
+弹 出 滚 动 条                                          <b class="vimtag"> <a name="popup-scrollbar">popup-scrollbar</a> </b>
+
+如果弹出中的文本装不下，窗口右侧显示滚动条。可通过设置 "scrollbar" 选项为零来
+关闭之。如果显示滚动条，当鼠标位于弹出之上时，鼠标滚动事件像你预期地使文本往上
+或下滚动。点击滚动条上半部会下滚文本一行。点击滚动条下半部会上滚文本一行。不
+过，滚动有限制，以确保弹出不会变小。
+
+
+弹 出 掩 码                                             <b class="vimtag"> <a name="popup-mask">popup-mask</a> </b>
+
+要使弹出遮掩的文本最少，弹出的部分可以变透明。此行为由 "mask" 定义，这是列表的
+列表，其中每个列表有四个数值:
+    col         起始列，从左开始计数为正，1 是最左边，从右开始计数为负，-1 是
+                最右边
+    endcol      结束列，类似于 "col"
+    line        起始行，从顶开始计数为正，1 是最顶行，从底开始计数为负，-1 是
+                最底行
+    endline     结束行，类似于 "line"
+
+例如，要使最后一行的最后 10 列透明:
+        [[-10, -1, -1, -1]]
+
+要使四个角透明:
+        [[1, 1, 1, 1], [-1, -1, 1, 1], [1, 1, -1, -1], [-1, -1, -1, -1]]
+
+</pre><hr class="doubleline" /><pre>
+<h4>4. 示例                                                 <b class="vimtag"> <a name="popup-examples">popup-examples</a> </b></h4>
+TODO: 更多有意思的例子
+                                        <b class="vimtag"> <a name="popup_dialog-example">popup_dialog-example</a> </b>
+提示用户按 y/Y 或 n/N: 
+<code class="example"></code>
+<code class="example">        func MyDialogHandler(id, result)</code>
+<code class="example">           if a:result</code>
+<code class="example">              " ... 按了 'y' 或 'Y'</code>
+<code class="example">           endif</code>
+<code class="example">        endfunc</code>
+<code class="example"></code>
+<code class="example">        call popup_dialog('Continue? y/n', #{</code>
+<code class="example">                \ filter: 'popup_filter_yesno',</code>
+<code class="example">                \ callback: 'MyDialogHandler',</code>
+<code class="example">                \ })</code>
+
+                                        <b class="vimtag"> <a name="popup_menu-shortcut-example">popup_menu-shortcut-example</a> </b>
+用快捷键扩展 popup_filter_menu(): 
+<code class="example"></code>
+<code class="example">        call popup_menu(['Save', 'Cancel', 'Discard'], #{</code>
+<code class="example">                \ filter: 'MyMenuFilter',</code>
+<code class="example">                \ callback: 'MyMenuHandler',</code>
+<code class="example">                \ })</code>
+<code class="example"></code>
+<code class="example">        func MyMenuFilter(id, key)</code>
+<code class="example">          " 处理快捷键</code>
+<code class="example">          if a:key == 'S'</code>
+<code class="example">             call popup_close(a:id, 1)</code>
+<code class="example">             return 1</code>
+<code class="example">          endif</code>
+<code class="example">          if a:key == 'C'</code>
+<code class="example">             call popup_close(a:id, 2)</code>
+<code class="example">             return 1</code>
+<code class="example">          endif</code>
+<code class="example">          if a:key == 'D'</code>
+<code class="example">             call popup_close(a:id, 3)</code>
+<code class="example">             return 1</code>
+<code class="example">          endif</code>
+<code class="example"></code>
+<code class="example">          " 没有快捷键，传递给通用过滤</code>
+<code class="example">          return popup_filter_menu(a:id, a:key)</code>
+<code class="example">        endfunc</code>
+
+                                        <b class="vimtag"> <a name="popup_beval_example">popup_beval_example</a> </b>
+使用弹出窗口用作 <a href="options.html#'ballooneval'">'ballooneval'</a> 的例子: 
+<code class="example"></code>
+<code class="example">        set ballooneval balloonevalterm</code>
+<code class="example">        set balloonexpr=BalloonExpr()</code>
+<code class="example">        let s:winid = 0</code>
+<code class="example">        let s:last_text = ''</code>
+<code class="example"></code>
+<code class="example">        func BalloonExpr()</code>
+<code class="example">          if s:winid &amp;&amp; popup_getpos(s:winid) != {}</code>
+<code class="example">            " 上次的弹出窗口还在显示</code>
+<code class="example">            if v:beval_text == s:last_text</code>
+<code class="example">              " 还是相同的文本，保留原有的弹出</code>
+<code class="example">              return ''</code>
+<code class="example">            endif</code>
+<code class="example">            call popup_close(s:winid)</code>
+<code class="example">          endif</code>
+<code class="example">          let s:winid = popup_beval(v:beval_text, #{mousemoved: 'word'})</code>
+<code class="example">          let s:last_text = v:beval_text</code>
+<code class="example">          return ''</code>
+<code class="example">        endfunc</code>
+
+如果要异步获取文本，表达式函数返回空串，而一旦文本可用，调用 popup_beval()。下
+例用定时器调用来模拟: 
+<code class="example"></code>
+<code class="example">        set ballooneval balloonevalterm</code>
+<code class="example">        set balloonexpr=BalloonExpr()</code>
+<code class="example">        let s:winid = 0</code>
+<code class="example">        let s:balloonText = ''</code>
+<code class="example"></code>
+<code class="example">        func BalloonExpr()</code>
+<code class="example">          if s:winid &amp;&amp; popup_getpos(s:winid) != {}</code>
+<code class="example">            " 上次的弹出窗口还在显示</code>
+<code class="example">            if  v:beval_text == s:balloonText</code>
+<code class="example">              " 还是相同的文本，保留原有的弹出</code>
+<code class="example">              return ''</code>
+<code class="example">            endif</code>
+<code class="example">            call popup_close(s:winid)</code>
+<code class="example">            let s:winid = 0</code>
+<code class="example">          endif</code>
+<code class="example">          " 模拟异步查询要显示的文本</code>
+<code class="example">          let s:balloonText = v:beval_text</code>
+<code class="example">          call timer_start(100, 'ShowPopup')</code>
+<code class="example">          return ''</code>
+<code class="example">        endfunc</code>
+<code class="example"></code>
+<code class="example">        func ShowPopup(id)</code>
+<code class="example">          let s:winid = popup_beval(s:balloonText, #{mousemoved: 'word'})</code>
+<code class="example">        endfunc</code>
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
+</pre>
+<p><i>Generated by vim2html</i></p>
+</div>
+</body>
+</html>

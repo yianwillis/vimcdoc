@@ -17,7 +17,7 @@
 <div id=outer>
 <h2>diff</h2>
 <pre>
-<b class="vimtag"> <a name="diff.txt">diff.txt</a> </b>      For Vim version 8.1.  最近更新: 2019年12月
+<b class="vimtag"> <a name="diff.txt">diff.txt</a> </b>      For Vim version 8.2.  最近更新: 2019年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -36,8 +36,6 @@
 4. 复制差异文本                  <a href="diff.html#copy-diffs">copy-diffs</a> 
 5. diff 选项                     <a href="diff.html#diff-options">diff-options</a> 
 
-<code class="notvi">{Vi 无此功能}</code>
-
 </pre><hr class="doubleline" /><pre>
 <h4>1. 进入比较模式                                         <b class="vimtag"> <a name="start-vimdiff">start-vimdiff</a> </b></h4>
 进入比较模式编辑的最简单方法就是用 "vimdiff" 命令。它如常启动 Vim，但附加一些
@@ -54,7 +52,10 @@
 "r" 可以附加在这些名字前面，用来进入受限模式 (参考  <a href="starting.html#-Z">-Z</a> )。
 
 第二个及其后的参数也可以是目录名。Vim 将依据第一个参数所指定的文件名在指定目录
-中查找另外的文件名。这一特性仅对标准的 "diff" 命令有效。参见 <a href="options.html#'diffexpr'">'diffexpr'</a>。
+中查找另外的文件名。
+
+缺省使用内部 diff 库。如果设置了 <a href="options.html#'diffopt'">'diffopt'</a> 或 <code class="badlink">'difexpr'</code>，则使用外部的 "diff"
+命令。只有这样的 diff 程序可用的时候才行。
 
 窗口比较局部于当前标签页  <a href="tabpage.html#tab-page">tab-page</a>  中。你不能看到某窗口和别的标签页中的窗口的
 差异。这样，可以同时打开多组比较窗口，每组差异在单独的标签页中。
@@ -77,11 +78,13 @@ Vim 将为每个文件打开一个窗口，并且就像使用  <a href="starting
         <a href="options.html#'foldcolumn'">'foldcolumn'</a>    来自 <a href="options.html#'diffopt'">'diffopt'</a> 的值，缺省为 2
 
 这些参数仅设置于当前窗口。当编辑其它文件时，以上选项被重设回全局值。
-不过，重新编辑文件时，仍然可以用模式行修改这些参数。但 <a href="options.html#'diff'">'diff'</a> 置位时，
+不过，重新编辑文件时，仍然可以用模式行修改这些选项。但 <a href="options.html#'diff'">'diff'</a> 置位时，
 <a href="options.html#'foldmethod'">'foldmethod'</a> 和 <a href="options.html#'wrap'">'wrap'</a> 不受模式行改变。
+ <a href="diff.html#:diffoff">:diffoff</a>  提供了反转这样选项的简便办法。
 
 比较基于缓冲区的内容。因而，如果在载入文件后你做过改动，这些改动也将参加比较。
-不过，你也许要不时地使用 "diffupdate"。因为并非所有的改动的结果都能自动更新。
+不过，你也许要不时地使用 "diffupdate"。因为并非所有的改动的结果都能自动更新，
+尤其是使用外部 diff 命令的时候。
 
 在 .vimrc 文件中，你可以用以下的结构，对比较模式做专门的设定: 
 <code class="example"></code>
@@ -170,14 +173,14 @@ Vim 将为每个文件打开一个窗口，并且就像使用  <a href="starting
 令: 
 <code class="example">         command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_</code>
 <code class="example">                \ | diffthis | wincmd p | diffthis</code>
-( <a href="usr_05.html#vimrc_example.vim">vimrc_example.vim</a>  里有该示例)。之后，使用 ":DiffOrig" 就可以查看当前缓冲区
-和它刚从文件里载入时的不同之处。
+( <a href="starting.html#defaults.vim">defaults.vim</a>  里有该示例)。之后，使用 ":DiffOrig" 就可以查看当前缓冲区和它刚
+从文件里载入时的不同之处。
 
 要 <code class="note">注意</code>: 已经卸载的缓冲区不能参与比较。但一个隐藏的缓冲区是可以的。你可以使用
 ":hide" 来关闭但不卸载窗口。如果你不想缓冲区继续参与比较，可以在隐藏前先执行
 ":set nodiff"。
 
-                                                        <b class="vimtag"> <a name=":dif">:dif</a> </b> <b class="vimtag"> <a name=":diffupdate">:diffupdate</a> </b>
+                                                <b class="vimtag"> <a name=":dif">:dif</a> </b> <b class="vimtag"> <a name=":diff">:diff</a> </b> <b class="vimtag"> <a name=":diffupdate">:diffupdate</a> </b>
 :dif[fupdate][!]                刷新比较结果的高亮和折叠。
 
 在改变文本时，Vim 试图更新比较的结果。插入或删除行一般会得到正确的更新。但行内
@@ -297,15 +300,16 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 查 找 不 同                                             <b class="vimtag"> <a name="diff-diffexpr">diff-diffexpr</a> </b>
 
  <a href="options.html#'diffexpr'">'diffexpr'</a> 选项可以用来设定非标准的 "diff" 程序，用来比较文件间的异同。
+ <b class="vimtag"> <a name="E959">E959</a> </b>
 
 当 <a href="options.html#'diffexpr'">'diffexpr'</a> 为空的时候，Vim 使用以下命令在 file1 和 file2 中查找不同之处: 
 <code class="example"></code>
 <code class="example">        diff file1 file2 &gt; outfile</code>
 <code class="example"></code>
-其中的 "&gt;" 应当用 <a href="options.html#'shellredir'">'shellredir'</a> 的值替换。
+其中的 "&gt;" 会用 <a href="options.html#'shellredir'">'shellredir'</a> 的值替换。
 
-"diff" 的输出必须是普通的 "ed" 风格的 diff。 <code class="emphasis">不要</code>  使用上下文 (context) 风格的
-diff。下面就是一个 Vim 所期望格式的范例: 
+"diff" 的输出必须是普通的 "ed" 风格或合并风格 (unified) 的 diff。 <code class="emphasis">不要</code>  使用上
+下文 (context) 风格的 diff。下面就是一个 Vim 所期望的 "ed" 风格的范例: 
 <code class="example"></code>
 <code class="example">        1a2</code>
 <code class="example">        &gt; bbb</code>
@@ -343,12 +347,14 @@ diff。下面就是一个 Vim 所期望格式的范例:
 <code class="example">           endif</code>
 <code class="example">           silent execute "!diff -a --binary " . opt . v:fname_in . " " . v:fname_new .</code>
 <code class="example">                \  " &gt; " . v:fname_out</code>
+<code class="example">           redraw!</code>
 <code class="example">        endfunction</code>
 
 
 其中，"-a" 参数被用来强制将文件作为文本来比较，二进制的比较没有什么意义。
 "--binary" 参数使得文件以二进制模式读入，这样在 DOS 上 <code class="keystroke">CTRL-Z</code> 就不会结束文本。
 
+ <code class="badlink">redraw!</code>  命令不一定必要，取决于执行外壳命令时是否会在屏幕上显示东西。
 
                                                 <b class="vimtag"> <a name="E810">E810</a> </b> <b class="vimtag"> <a name="E97">E97</a> </b>
 Vim 将测试 diff 的输出看上去是否完全正确。如果不正确，你将得到一个错误信息。可
@@ -398,7 +404,7 @@ http://gnuwin32.sourceforge.net/packages/diffutils.htm。
 了让当前目录下的文件不被意外的打补丁。Vim 也将删除以 v:fname_in 开始以 ".rej"
 和 ".orig" 结尾的文件。
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
 </pre>
 <p><i>Generated by vim2html</i></p>
 </div>
