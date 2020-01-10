@@ -20,7 +20,7 @@ https://github.com/yianwillis/vimcdoc/releases 提供发布版本的下载。
 
 # 安装
 
-## Vim 8.0 及更高版本自带软件包支持
+## Vim 8+ 自带软件包支持
 
 ```shell
 $ mkdir -p ~/.vim/pack/foo/start
@@ -47,10 +47,10 @@ Plug 'yianwillis/vimcdoc'
 
 ## [Vundle](https://github.com/VundleVim/Vundle.vim)
 
-.vimrc 中加入：
+.vimrc 中加入:
 
 ```
-Plugin "yianwillis/vimcdoc"
+Plugin 'yianwillis/vimcdoc'
 ```
 
 重启 Vim 后执行 `:PluginInstall`。
@@ -60,7 +60,7 @@ Plugin "yianwillis/vimcdoc"
 .vimrc 中加入：
 
 ```
-NeoBundle 'yianwillis/vimcdoc"
+NeoBundle 'yianwillis/vimcdoc'
 ```
 
 重启 Vim 后执行命令 `:NeoBundleInstall`。
