@@ -355,3 +355,5 @@ foreach my $file ( 1..$#ARGV ) {
 	vim2html( $ARGV[ $file ] );
 }
 print "done.\n"
+
+# vi:ts=2:
