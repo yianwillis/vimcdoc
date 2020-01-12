@@ -276,7 +276,7 @@ EOF
 
 			# note
 			s/(Note[:\s])/<code class="note">$1<\/code>/gi;
-			s/(注意|备注)( (?=[^[:print:][:space:]]))?/<code class="note">$1<\/code>/g;
+			s/(注意|备注|警告)( (?=[^[:print:][:space:]]))?/<code class="note">$1<\/code>/g;
 
 			# parameter {...}
 			s/\{([^ {}'"|]*)\}/<code class="special">{$1}<\/code>/g;
