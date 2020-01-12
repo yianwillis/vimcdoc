@@ -207,7 +207,7 @@ EOF
 			if ( $inexample && /^(<)/ ) {
 				$_ = $';
 				$_ = " " . $_ if /^\s/;
-			}	
+			}
 			$inexample = 1;
 			chop;
 		}
@@ -289,6 +289,10 @@ EOF
 
 			# local heading
 			s/^(.*)\~$/<code class="section">$1<\/code>/g;
+
+			# URL
+			s/https?:\/\/[^' 	<>"]+[a-zA-Z0-9\/]/<a href="$&">$&<\/a>/g;
+
 			push( @out, $_ );
 		}
 
