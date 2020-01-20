@@ -257,6 +257,9 @@ EOF
 			# < has been escaped so &lt; is actually seen here.
 			s/CTRL-(\w+|[^{&])/<code class="keystroke">CTRL-$1<\/code>/g;
 
+			# URL. Must be done before maplink.
+			s/https?:\/\/[^' 	<>"]+[a-zA-Z0-9\/]/<a href="$&">$&<\/a>/g;
+
 			# parameter '...'
 			s/'(\w{2,}|t_..)'/maplink($&)/ge;
 
@@ -289,9 +292,6 @@ EOF
 
 			# local heading
 			s/^(.*)\~$/<code class="section">$1<\/code>/g;
-
-			# URL
-			s/https?:\/\/[^' 	<>"]+[a-zA-Z0-9\/]/<a href="$&">$&<\/a>/g;
 
 			push( @out, $_ );
 		}
