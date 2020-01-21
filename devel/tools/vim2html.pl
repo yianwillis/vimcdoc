@@ -282,7 +282,7 @@ EOF
 			s/https?:\/\/[^' 	<>"]+[a-zA-Z0-9\/]/<a href="$&">$&<\/a>/g;
 
 			# parameter '...'
-			s/'(\w{2,}|t_..)'/maplink($&)/ge;
+			s/'([a-z]{2,}|t_..)'/maplink($&)/ge;
 
 			# parameter `...`
 			if ( $conceal ) {
