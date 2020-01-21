@@ -21,6 +21,8 @@ chop $date;
 
 my $show_banner;
 my $conceal=1;
+my $global_tag='';
+my $global_url='';
 
 sub maplink
 {
@@ -52,6 +54,25 @@ sub readTagFile
 		$url{ $tag } = "<a href=\"$file#".escurl($tag)."\">".esctext($label)."</a>";
 	}
 	$url{ "help-tags" } = "<a href=\"tags.html"."\">".esctext("help-tags")."</a>";
+	close( TAGS );
+}
+
+sub readExternalTagFile
+{
+	my($tagfile, $tagurl) = @_;
+	my( $tag, $file, $name );
+
+	open(TAGS,"$tagfile") || die "can't read tags\n";
+
+	while( <TAGS> ) {
+		next unless /^(\S+)\s+(\S+)\s+/;
+
+		$tag = $1;
+		my $label = $tag;
+		($file= $2) =~ s/.\w+$/.html/g;
+
+		$url{ $tag } = "<a href=\"$tagurl/$file#".escurl($tag)."\">".esctext($label)."</a>";
+	}
 	close( TAGS );
 }
 
@@ -336,6 +357,8 @@ usage:
   Options:
 	--banner: optional. Print banner line.
 	--conceal: optional. Conceal certain notations. Default is true.
+	--global_url, --global_tag: optional. URL and tags file referring to the
+	                            tags and general VIM help html page.
 EOF
 }
 
@@ -348,10 +371,15 @@ usage() if !defined $ARGV[1];
 GetOptions(
     'banner' => \$show_banner,
     'conceal!' => \$conceal,
+    'global_tag=s' => \$global_tag,
+    'global_url=s' => \$global_url,
 ) or usage();
 
 print "Processing tags...\n";
 readTagFile( $ARGV[ 0 ] );
+if ($global_tag ne "" && $global_url ne "") {
+	readExternalTagFile($global_tag, $global_url);
+}
 
 vim2html( $ARGV[ 0 ] );
 foreach my $file ( 1..$#ARGV ) {
