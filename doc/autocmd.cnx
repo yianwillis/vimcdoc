@@ -342,7 +342,8 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 
 |MenuPopup|		刚要显示弹出菜单前
 |CompleteChanged|	插入模式补全菜单被改变后
-|CompleteDone|		插入模式补全结束之后
+|CompleteDonePre|	插入模式补全结束之后，清理 info 之前
+|CompleteDone|		插入模式补全结束之后，清理 info 之后
 
 |User|			和 ":doautocmd" 一起使用
 
@@ -498,8 +499,8 @@ ColorSchemePre			载入色彩方案前。|:colorscheme|
 				案的若干设置，
 CompleteChanged						*CompleteChanged*
 				每次插入模式补全菜单被改动后。不为弹出式菜单的
-				隐藏触发，为此可用 |CompleteDone|。绝不会递归
-				触发。
+				隐藏触发，为此可用 |CompleteDonePre| 或
+				|CompleteDone|。绝不会递归触发。
 
 				设置以下这些 |v:event| 键:
 				    completed_item	见 |complete-items|。
@@ -515,12 +516,21 @@ CompleteChanged						*CompleteChanged*
 				也可通过 |pum_getpos()| 得到弹出式菜单的大小和
 				位置。
 
+							*CompleteDonePre*
+CompleteDonePre			插入模式补全结束之后。不管补会是否成功完成或是
+				被放弃都会激活本事件。|ins-completion|
+				可用 |complete_info()|，CompleteDonePre 触发后
+				此信息被清空。
+				|v:completed_item| 变量包含补全项目的信息。
+
 							*CompleteDone*
 CompleteDone			插入模式补全结束之后。不管补会是否成功完成或是
 				被放弃都会激活本事件。|ins-completion|
-				可用 |complete_info()|，CompleteDone 触发后此
-				信息被清空。
+				不能用 |complete_info()|，CompleteDone 触发之
+				前此信息已被清空。如有需要可用 CompleteDonePre
+				事件。
 				|v:completed_item| 变量包含补全项目的信息。
+
 							*CursorHold*
 CursorHold			用户在 'updatetime' 指定的时间里没有按键时。如
 				果用户还没有按键，该事件不会再次激活 (就是说，
