@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<![endif]-->
+<title>VIM: vim9</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<nav id=banner>
+<a href="help.html">帮助总览</a> &middot;
+<hr/>
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="eval.html#functions">函数列表</a> &middot;
+<a href="quickref.html#option-list">选项列表</a> &middot;
+<a href="tags.html">标签索引</a> &middot;
+<hr/>
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a>
+</nav>
+
+<header>
+<h2>vim9</h2>
+</header>
+<article id=outer>
+<section class=inner>
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年1月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+Vim9 脚本命令和表达式。
+
+多数表达式的帮助可见  <a href="eval.html#eval.txt">eval.txt</a> 。此文件是关于 Vim9 脚本的新语法和特性。
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+
+1   什么是 Vim9 脚本？                   <a href="vim9.html#vim9-script">vim9-script</a> 
+2.  差别                                 <a href="vim9.html#vim9-differences">vim9-differences</a> 
+3.  新风格函数                           <a href="vim9.html#fast-functions">fast-functions</a> 
+4.  类型                                 <a href="vim9.html#vim9-types">vim9-types</a> 
+5.  命名风格、导入和导出                 <a href="vim9.html#vim9script">vim9script</a> 
+
+9.  理据                                 <a href="vim9.html#vim9-rationale">vim9-rationale</a> 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>1. 什么是 Vim9 脚本？                                   <b class="vimtag"> <a name="vim9-script">vim9-script</a> </b>
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+Vim 脚本随着时间推移日渐庞大，同时需要保持后向兼容。这意味着过去所做的错误决定
+常常不能再改变。执行颇慢，每行在每次执行时都要先解析。
+
+Vim9 脚本的主要目标是大幅提高性能。可以期待执行速度有成十上百倍的提高。一个次
+要目标是避免 Vim 特定的构造，而尽量和包括 JavaScript、TypeScript 和 Java 这样
+的主流编程语言接近。
+
+只有不 100% 后向兼容才能达到所需的性能提高。例如，在函数中参数不通过 "a:" 字典
+获取，因为字典的建立增加不少开销。其它一些差别，比如错误处理的方式，则更细微一
+些。
+
+Vim9 脚本语法和语义用于:
+- 使用  <a href="vim9.html#:def">:def</a>  命令定义的函数
+- 首个命令是  <a href="vim9.html#vim9script">vim9script</a>  的脚本文件
+
+Vim9 脚本文件里如果用了  <a href="eval.html#:function">:function</a> ，会用老式的语法。不过不鼓励如此。
+
+Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，它们会继续工作。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>2. 和老式 Vim 脚本的差异                                <b class="vimtag"> <a name="vim9-differences">vim9-differences</a> </b>
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+<code class="section">Vim9 函数</code>
+
+ <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有额外的参数: "range"、"abort"、"dict" 或
+"closure"。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
+
+在函数体里:
+- 参数可用不带 "a:" 的名字访问。
+- 没有 "a:" 字典或 "a:000" 列表。通过给定名字和列表类型来定义可变参数: 
+<code class="example">        def MyFunc(...itemlist: list&lt;type&gt;)</code>
+<code class="example">           for item in itemlist</code>
+<code class="example">             ...</code>
+<code class="example"></code>
+<code class="example"></code>
+<code class="section">用 :let 和 :const 声明变量</code>
+
+局部变量需用  <a href="eval.html#:let">:let</a>  定义。局部常量需用  <a href="eval.html#:const">:const</a>  定义。我们把两者都称为
+"变量"。
+
+变量可以局部于脚本、函数或代码块: 
+<code class="example">        vim9script</code>
+<code class="example">        let script_var = 123</code>
+<code class="example">        def SomeFunc()</code>
+<code class="example">          let func_var = script_var</code>
+<code class="example">          if cond</code>
+<code class="example">            let block_var = func_var</code>
+<code class="example">          ...</code>
+<code class="example"></code>
+变量只在定义所在的块和嵌套块中可见。块定义结束后，变量不再可访问: 
+<code class="example">        if cond</code>
+<code class="example">           let inner = 5</code>
+<code class="example">        else</code>
+<code class="example">           let inner = 0</code>
+<code class="example">        endif</code>
+<code class="example">        echo inner  " 报错！</code>
+<code class="example"></code>
+变量必须在使用之前进行声明: 
+<code class="example">        let inner: number</code>
+<code class="example">        if cond</code>
+<code class="example">           inner = 5</code>
+<code class="example">        else</code>
+<code class="example">           inner = 0</code>
+<code class="example">        endif</code>
+<code class="example">        echo inner</code>
+<code class="example"></code>
+要有意地运用之后不可用的变量，可用代码块: 
+<code class="example">        {</code>
+<code class="example">           let temp = 'temp'</code>
+<code class="example">           ...</code>
+<code class="example">        }</code>
+<code class="example">        echo temp  " 报错！</code>
+<code class="example"></code>
+不能用  <a href="eval.html#:let">:let</a>  给已存在的变量赋值，因为它意味着变量声明。全局变量是例外: 带或不
+带  <a href="eval.html#:let">:let</a>  的使用都可以，因为没有它们应在哪里声明的相关规则。
+
+变量不能隐藏之前定义的变量。
+变量可以隐藏 Ex 命令，如有需要请给变量换名。
+
+因为 "&amp;opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&amp;" 来重复
+ <a href="change.html#:substitute">:substitute</a>  命令了。
+
+
+<code class="section">省略 :call 和 :eval</code>
+
+可直接调用函数而无需  <a href="eval.html#:call">:call</a> : 
+<code class="example">        writefile(lines, 'file')</code>
+ <a href="eval.html#:call">:call</a>  还可用，但不鼓励。
+
+只要以标识符开始且不能是 Ex 命令，可直接调用方法而无需  <a href="eval.html#eval">eval</a> 。不能用于字符串
+常数: 
+<code class="example">        myList-&gt;add(123)                " 正确</code>
+<code class="example">        g:myList-&gt;add(123)              " 正确</code>
+<code class="example">        [1, 2, 3]-&gt;Process()            " 正确</code>
+<code class="example">        #{a: 1, b: 2}-&gt;Process()        " 正确</code>
+<code class="example">        {'a': 1, 'b': 2}-&gt;Process()     " 正确</code>
+<code class="example">        "foobar"-&gt;Process()             " _不_正确</code>
+<code class="example">        eval "foobar"-&gt;Process()        " 正确</code>
+<code class="example"></code>
+<code class="example"></code>
+<code class="section">没有花括号扩展</code>
+
+不能使用  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
+
+
+<code class="section">比较符</code>
+
+字符串的比较符不考虑 <a href="options.html#'ignorecase'">'ignorecase'</a> 选项。
+
+
+<code class="section">空白</code>
+
+Vim9 脚本强制空白的正确使用。以下不再允许: 
+<code class="example">        let var=234     " 出错！</code>
+<code class="example">        let var= 234    " 出错！</code>
+<code class="example">        let var =234    " 出错！</code>
+"=" 前后必须有空白: 
+<code class="example">        let var = 234   " OK</code>
+<code class="example"></code>
+多数操作符需要用空白包围。
+
+以下位置不允许空白:
+- 函数名和 "(" 之间: 
+<code class="example">        call Func (arg)    " 出错！</code>
+<code class="example">        call Func</code>
+<code class="example">             \ (arg)       " 出错！</code>
+<code class="example">        call Func(arg)     " 正确</code>
+<code class="example">        call Func(</code>
+<code class="example">             \ arg)        " 正确</code>
+<code class="example"></code>
+<code class="example"></code>
+<code class="section">条件和表达式</code>
+
+多数情况下，条件和表达式就像  JavaScript 里那样的用法。但如果 JavaScript 和多
+数人的期待不一致，会作出调整。特别是，空列表被当作假值。
+
+任何类型的变量都可用作条件，不会报错，即使用列表或作业也可以。这很像
+JavaScript，但有少许例外。
+
+<code class="section">        类型            何时为 TRUE</code>
+        bool            v:true
+        number          非零
+        float           非零
+        string          非空
+        blob            非空
+        list            非空 (和 JavaScript 不同)
+        dictionary      非空 (和 JavaScript 不同)
+        funcref         非 NULL 时
+        partial         非 NULL 时
+        special         v:true
+        job             非 NULL 时
+        channel         非 NULL 时
+        class           非 NULL 时
+        object          非 NULL 时 (TODO: 应为 isTrue() 返回 v:true 时)
+
+布尔操作符 "||" 和 "&amp;&amp;" 不改变值: 
+<code class="example">        8 || 2   == 8</code>
+<code class="example">        0 || 2   == 2</code>
+<code class="example">        0 || ''  == ''</code>
+<code class="example">        8 &amp;&amp; 2   == 2</code>
+<code class="example">        0 &amp;&amp; 2   == 0</code>
+<code class="example">        [] &amp;&amp; 2  == []</code>
+<code class="example"></code>
+ <code class="badlink">..</code>  用作字符串连接时，参数总是转化为字符串。 
+<code class="example">        'hello ' .. 123  == 'hello 123'</code>
+<code class="example">        'hello ' .. v:true  == 'hello true'</code>
+<code class="example"></code>
+Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
+
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>3. 新风格函数                                           <b class="vimtag"> <a name="fast-functions">fast-functions</a> </b>
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+                                                        <b class="vimtag"> <a name=":def">:def</a> </b>
+:def[!] <code class="special">{name}</code>(<code class="special">[arguments]</code>)[: <code class="special">{return-type}</code>
+                        定义名为 <code class="special">{name}</code> 的新函数。在下面的行给出函数体，直到配
+                        对的  <a href="vim9.html#:enddef">:enddef</a>  为止。
+
+                        <code class="special">{return-type}</code> 如果省略，返回类型由函数中首个见到的
+                         <code class="badlink">return</code>  语句决定。例如: 
+<code class="example">                                return 'message'</code>
+                        返回类型会是 "string"。
+                        
+                        <code class="special">{arguments}</code> 是零或多个参数声明的序列。有以下三种形式:
+                                <code class="special">{name}</code>: <code class="special">{type}</code>
+                                <code class="special">{name}</code> = <code class="special">{value}</code>
+                                <code class="special">{name}</code>: <code class="special">{type}</code> = <code class="special">{value}</code>
+                        第一种形式是必选参数，调用者必须提供。
+                        第二三种形式是可选参数。如果调用者省略参数，使用
+                        <code class="special">{value}</code> 值。
+
+                        [!] 的用法同  <a href="eval.html#:function">:function</a> 。
+
+                                                        <b class="vimtag"> <a name=":enddef">:enddef</a> </b>
+:enddef                 结束  <a href="vim9.html#:def">:def</a>  定义的函数。
+
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>4. 类型                                         <b class="vimtag"> <a name="vim9-types">vim9-types</a> </b>
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+支持以下内建类型:
+        bool
+        number
+        float
+        string
+        blob
+        list<code class="special">&lt;type&gt;</code>
+        dict<code class="special">&lt;type&gt;</code>
+        (a: type, b: type): type
+        job
+        channel
+
+尚未支持:
+        tuple&lt;a: type, b: type, ...&gt;
+
+以下类型可用于声明，但没有变量会有此类型:
+        type|type
+        void
+        any
+
+没有 array 类型，用 list<code class="special">&lt;type&gt;</code> 代替。list 常量使用了有效实现，以避免许多小片内
+存的分配。
+
+ <a href="vim9.html#:def">:def</a>  定义的函数必须声明返回类型。如果没有类型，函数什么都不返回。"void" 可用
+于类型声明。
+
+可用  <code class="badlink">:type</code>  定义定制类型: 
+<code class="example">        :type MyList list&lt;string&gt;</code>
+<code class="special">{尚未实现}</code>
+
+类和接口可用作类型: 
+<code class="example">        :class MyClass</code>
+<code class="example">        :let mine: MyClass</code>
+<code class="example"></code>
+<code class="example">        :interface MyInterface</code>
+<code class="example">        :let mine: MyInterface</code>
+<code class="example"></code>
+<code class="example">        :class MyTemplate&lt;Targ&gt;</code>
+<code class="example">        :let mine: MyTemplate&lt;number&gt;</code>
+<code class="example">        :let mine: MyTemplate&lt;string&gt;</code>
+<code class="example"></code>
+<code class="example">        :class MyInterface&lt;Targ&gt;</code>
+<code class="example">        :let mine: MyInterface&lt;number&gt;</code>
+<code class="example">        :let mine: MyInterface&lt;string&gt;</code>
+<code class="special">{尚未实现}</code>
+
+
+类型推论                                                <b class="vimtag"> <a name="type-inference">type-inference</a> </b>
+
+一般而言: 明显的类型可以省略。例如，声明变量并给出值时: 
+<code class="example">        let var = 0             " 推论为 number 类型</code>
+<code class="example">        let var = 'hello'       " 推论为 string 类型</code>
+<code class="example"></code>
+<code class="example"></code>
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>5.  命名风格、导入和导出
+                                        <b class="vimtag"> <a name="vim9script">vim9script</a> </b> <b class="vimtag"> <a name="vim9-export">vim9-export</a> </b> <b class="vimtag"> <a name="vim9-import">vim9-import</a> </b>
+
+还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
+
+可专门为导入而编写 Vim9 脚本。这意味着脚本中的一切除非明确导出，都是局部的。那
+些导出的项目，也只有那些项目，可以被其它脚本导入。
+
+
+<code class="section">命令空间</code>
+                                                        <b class="vimtag"> <a name=":vim9script">:vim9script</a> </b> <b class="vimtag"> <a name=":vim9">:vim9</a> </b>
+为了识别可导入的文件，文件出现的第一个语句必须是  <a href="vim9.html#vim9script">vim9script</a>  语句。它告知 Vim
+脚本在自己的命令空间而不是全局命令空间里被解释。如果文件这样开始: 
+<code class="example">        vim9script</code>
+<code class="example">        let myvar = 'yes'</code>
+那么 "myvar" 只存在于此文件中。如果没有  <a href="vim9.html#vim9script">vim9script</a> ，可被其它脚本和函数用
+ <code class="badlink">g:myvar</code>  访问。
+
+文件层级的变量和老式脚本里的局部 "s:" 变量非常类似，但省略 "s:"。
+
+和以前一样，Vim9 脚本中仍然可用全局 "g:" 命令空间。
+
+ <a href="vim9.html#:vim9script">:vim9script</a>  一个副作用是 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项设为 Vim 缺省值，类似于: 
+<code class="example">        :set cpo&amp;vim</code>
+其中一个效果是  <a href="repeat.html#line-continuation">line-continuation</a>  总是打开。脚本结束时会恢复 <a href="options.html#'cpoptions'">'cpoptions'</a> 原先
+的值。
+
+
+<code class="section">导出</code>
+                                                        <b class="vimtag"> <a name=":export">:export</a> </b> <b class="vimtag"> <a name=":exp">:exp</a> </b>
+可以这样导出项目: 
+<code class="example">        export const EXPORTED_CONST = 1234</code>
+<code class="example">        export let someValue = ...</code>
+<code class="example">        export def MyFunc() ...</code>
+<code class="example">        export class MyClass ...</code>
+<code class="example"></code>
+就像这里暗示的，只能导出常数、变量、 <a href="vim9.html#:def">:def</a>  函数和类。
+
+另外，也可用 export 语句来导出若干个已定义的 (否则就是脚本局部的) 项目: 
+<code class="example">        export {EXPORTED_CONST, someValue, MyFunc, MyClass}</code>
+<code class="example"></code>
+<code class="example"></code>
+<code class="section">导入</code>
+                                                        <b class="vimtag"> <a name=":import">:import</a> </b> <b class="vimtag"> <a name=":imp">:imp</a> </b>
+导出项目可在另一个 Vim9 脚本里被单独导入: 
+<code class="example">        import EXPORTED_CONST from "thatscript.vim"</code>
+<code class="example">        import MyClass from "myclass.vim"</code>
+<code class="example"></code>
+要一次导入多个项目: 
+<code class="example">        import {someValue, MyClass} from "thatscript.vim"</code>
+<code class="example"></code>
+如果名字有二义性，可提供其它名字: 
+<code class="example">        import MyClass as ThatClass from "myclass.vim"</code>
+<code class="example">        import {someValue, MyClass as ThatClass} from "myclass.vim"</code>
+<code class="example"></code>
+要导入指定标识符底下的所有导出项目: 
+<code class="example">        import * as That from 'thatscript.vim'</code>
+<code class="example"></code>
+然后就可用 "That.EXPORTED_CONST"、"That.someValue" 等等。有权选择 "That" 这样
+的名字，但强烈建议使用脚本文件的名字，以免混淆。
+
+ <code class="badlink">import</code>  之后的脚本名可以是:
+- 相对路径，以 "." 或 ".." 开始。这会找到相对于脚本文件自身所在位置的文件。可
+  用于把大型插件分割为几个文件。
+- 绝对路径，Unix 上以 "/" 开始，或 MS-Windows 上以 "D:/" 开始。很少用到。
+- 既非相对也不是绝对的路径。会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 项目的 "import" 子目录中寻找。
+  名字通常较长且唯一，以避免载入错误的文件。
+
+vim9 脚本文件一旦导入，结果被缓冲， 相同脚本下次导入时会使用。不会再次读取。
+                                                        <b class="vimtag"> <a name=":import-cycle">:import-cycle</a> </b>
+ <code class="badlink">import</code>  命令在见到时会执行。如果该脚本 (直接或间接地) 导入了当前脚本，
+ <code class="badlink">import</code>  之后定义的项目此时尚未处理。因此，可以存在循环导入，但会产生未定义的
+项目。
+
+
+<code class="section">在 autoload 脚本中导入</code>
+
+为了最佳的启动速度，应该尽量延迟脚本的载入直到实际需要为止。建议的机制是:
+
+1. 在插件中定义指向 autoload 脚本的用户命令、函数和/或映射。 
+<code class="example">        command -nargs=1 SearchForStuff call searchfor#Stuff(&lt;f-args&gt;)</code>
+<code class="example"></code>
+    应放在 .../plugin/anyname.vim。 "anyname.vim" 可自由选择。
+
+2. autoload 脚本完成实际的操作。可导入其它文件中的项目，以便把功能分割成若干
+   片。 
+<code class="example">        vim9script</code>
+<code class="example">        import FilterFunc from "../import/someother.vim"</code>
+<code class="example">        def searchfor#Stuff(arg: string)</code>
+<code class="example">          let filtered = FilterFunc(arg)</code>
+<code class="example">          ...</code>
+    应放在 .../autoload/searchfor.vim。文件中的 "searchfor" 必须和函数名的前缀
+    完全相同，这样 Vim 才能找到此文件。
+
+3. 其它可能在插件间共享的功能，包含导出项目和其它私有项目。 
+<code class="example">        vim9script</code>
+<code class="example">        let localVar = 'local'</code>
+<code class="example">        export def FilterFunc(arg: string): string</code>
+<code class="example">           ...</code>
+    应放在 .../import/someother.vim。
+
+
+<code class="section">在老式 Vim 脚本中导入</code>
+
+如果老式 Vim 脚本中使用了  <code class="badlink">import</code>  语句，标识符即使不指定 "s:"，也会使用脚本局
+部 "s:" 命令空间。
+
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>9. 理据                                                 <b class="vimtag"> <a name="vim9-rationale">vim9-rationale</a> </b>
+
+<code class="section">:def 命令</code>
+
+插件作者一直要求有更快的 Vim 脚本。调查发现保持原有的函数调用语义会使性能提高
+近乎不可能，因为涉及的函数调用、局部函数作用域的设置和行的执行引起的负担。这里
+需要处理很多细节，比如错误信息和例外。创建用于 a: 和 l: 作用域的字典、a:000 列
+表和若干其它部分增加了太多不可避免的负担。
+
+因此定义新风格函数的  <a href="vim9.html#:def">:def</a>  方法应运而生，它接受使用不同语义的函数。多数功能不
+变，但有些部分有变化。经过考虑，这种定义函数的新方法是区别旧风格代码和 Vim9 脚
+本代码的最佳方案。 
+
+使用 "def" 定义函数来源于 Python。其它语言使用 "function"，这和老式的 Vim 脚本
+使用的有冲突。
+
+
+<code class="section">类型检查</code>
+
+应在编译时尽可能地把 Vim 代码行编译为指令。延迟到运行时会使执行变慢，也意味着
+错误只能在后期才能发现。例如，如果遇到  "+" 字符时编译成通用的加法指令，在执行
+时，此指令必须检查参数类型并决定要执行的是哪种加法。如果类型是字典要抛出错误。
+如果类型已知为数值型，就可用 "数值相加" 指令，这会快很多。编译时可报错，而运行
+时就无需错误处理。
+
+类型语法类似于 Java，因为容易理解，也广泛使用。类型名是 Vim 之前所用的加上新增
+的 "void" 和 "bool" 等类型。
+
+
+<code class="section">JavaScript/TypeScript 语法和语义</code>
+
+脚本作者抱怨 Vim 脚本语法和他们习惯使用的有出乎意外的差异。为了减少抱怨，会使
+用流行的语言作为范例。与此同时，我们不想放弃老式的 Vim 脚本为人熟知的部分。
+
+因为 Vim 已经使用  <a href="eval.html#:let">:let</a>  和  <a href="eval.html#:const">:const</a> ，而可选的类型检查很受欢迎，
+JavaScript/TypeScript 语法最适用于变量的声明。 
+<code class="example">        const greeting = 'hello'  " 推论为 string 类型</code>
+<code class="example">        let name: string</code>
+<code class="example">        ...</code>
+<code class="example">        name = 'John'</code>
+<code class="example"></code>
+表达式计算已经和 JavaScript 和其它语言使用的很接近。一些细节出乎意外但可以修
+正。例如 || 和 &amp;&amp; 操作符工作的方式。老式的 Vim 脚本: 
+<code class="example">        let result = 44</code>
+<code class="example">        ...</code>
+<code class="example">        return result || 0      " 返回 1</code>
+<code class="example"></code>
+Vim9 脚本和 JavaScript 一样，保持值不变: 
+<code class="example">        let result = 44</code>
+<code class="example">        ...</code>
+<code class="example">        return result || 0      " 返回 44</code>
+<code class="example"></code>
+另一方面，重载 "+" 同时用于加法和字符串连接有违老式的 Vim 脚本，也经常引发错
+误。为此原因，我们继续使用 ".." 用于字符串连接。Lua 也如此使用 ".."。
+
+
+<code class="section">导入和导出</code>
+
+老式 Vim 脚本的一个问题是所有函数和变量缺省都是全局的。可以使它们局部于脚本，
+但因而就不能为其它脚本所用。
+
+Vim9 脚本里支持和 Javascript 导入导出非常相似的机制。这是已有的  <a href="repeat.html#:source">:source</a>  命令
+的变种，且工作方式符合人们期待:
+- 和所有的缺省都是全局相反，除非导出，所有的都是局部于脚本的。
+- 导入脚本时列出要导入的符号，避免以后新增功能时的名字冲突和可能的失败。
+- 此机制允许编写大而长又有清晰 API 的脚本: 导出函数和类。
+- 通过使用相对路径，同一包里导入的载入会更快，无需搜索许多目录。
+- 导入一旦使用，会被缓冲而避免了再次载入。
+- Vim 特定使事物局部于脚本的 "s:" 用法可以不需要了。
+
+
+<code class="section">类</code>
+
+Vim 支持 Perl、Python、Lua、Tcl 和一些其它语言的接口。但这些从未广泛使用过。
+Vim 9 设计时作了一个决定，淘汰这些接口并集中在 Vim 脚本上，同时鼓励脚本作者使
+用任何语言编程并作为外部工具运行，使用作业和通道通信。
+
+使用外部工具仍然有不足。一种替代方案是把工具转换为 Vim 脚本。要尽量减少翻译的
+工作量，并且同时保持代码快速，需要支持工具使用的构造。因为绝大多数语言支持类，
+缺少类的支持成为了 Vim 的一个问题。
+
+之前 Vim 通过为字典增加方法，支持过一种准面向对象的编程。如果小心一点这可以工
+作，但这看来不像真正的类。更有甚者，因为字典使用的缘故，速度很慢。
+
+Vim9 脚本对类的支持提供多数语法的类支持的 "最少公共功能"。它和 Java 的方式最类
+似，这也是最流行的编程语言了。
+
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
+</section>
+</article>
+<footer>
+Generated by vim2html
+</footer>
+</body>
+</html>
