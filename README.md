@@ -10,6 +10,15 @@ Vim 本身带有一个完备的帮助系统。本项目的目的就是将 Vim �
 便更多的人认识及更好地使用这个非常强大的编辑器。文档分成用户手册和参考手册两部
 分，你既可以象使用教程那样循序渐进，也可以快速地查阅来获取帮助。
 
+# 在 线 阅 读
+
+可在线阅读帮助文档的 HTML 版。
+
+https://yianwillis.github.io/vimcdoc/
+
+为了最佳阅读效果，请确保你的系统安装了 'Noto Sans Mono CJK SC' 或 NSimsun 字
+体，否则可能有字体不能完全对齐的情况。
+
 # 下 载
 
 https://github.com/yianwillis/vimcdoc/releases 提供发布版本的下载。
@@ -174,15 +183,6 @@ vimcdoc-Uninst.exe，只要执行它就可以了。
 ```vim
 :language message zh_CN.UTF-8
 ```
-
-# 在 线 阅 读
-
-可在线阅读帮助文档的 HTML 版。
-
-https://yianwillis.github.io/vimcdoc/
-
-为了最佳阅读效果，请确保你的系统安装了 'Noto Sans Mono CJK SC' 或 NSimsun 字
-体，否则可能有字体不能完全对齐的情况。
 
 # 加 入
 
