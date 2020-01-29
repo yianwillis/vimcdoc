@@ -4,7 +4,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
     for(var i = 0; i < document.links.length; ++i) {
       const link = document.links[i];
       if (link.innerHTML == tag) {
-        window.top.location.replace(link.href);
+        window.parent.location.replace(link.href);
       }
     } 
   }
