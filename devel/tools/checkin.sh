@@ -7,7 +7,7 @@ git push
 cd "$ROOT"/devel/doc
 aap -f main.aap allhtml
 git checkout gh-pages
-cp *.html *.css ../../doc
+cp *.html *.css *.js ../../doc
 git commit -a -m "$1"
 git push
 git checkout master
