@@ -19,7 +19,7 @@ use Getopt::Long qw(GetOptions);
 $date = Encode::decode_utf8(`date -u`);
 chop $date;
 
-my $show_banner;
+my $banner_file;
 my $conceal=1;
 my $global_tag='';
 my $global_url='';
@@ -152,20 +152,15 @@ sub vim2html
 	my $head = uc( $outfile );
 
 	my $filler = ' ' x 80;
-	my $banner = $show_banner ? <<"EOF" : "";
-<nav id=banner>
-<a href="help.html">帮助总览</a> &middot;
-<hr/>
-<a href="quickref.html">快速参考</a> &middot;
-<a href="index.html">命令索引</a> &middot;
-<a href="eval.html#functions">函数列表</a> &middot;
-<a href="quickref.html#option-list">选项列表</a> &middot;
-<a href="tags.html">标签索引</a> &middot;
-<hr/>
-<a href="usr_toc.html">用户手册</a> &middot;
-<a href="help.html#reference_toc">参考手册</a>
-</nav>
-EOF
+	my $banner = '';
+	if ($banner_file) {
+		$banner = do {
+			local $/ = undef;
+			open my $fh, "<:encoding(UTF-8)", $banner_file
+					or die "could not open $banner_file: $!";
+			<$fh>;
+		};
+	}
 
 	print OUT<<EOF;
 <!DOCTYPE html>
@@ -177,6 +172,7 @@ EOF
 <![endif]-->
 <title>VIM: $outfile</title>
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<script type="text/javascript" src="vimcdoc.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
@@ -356,7 +352,7 @@ usage:
 
 	vim2html.pl [options] <tag file> <text files>
   Options:
-	--banner: optional. Print banner line.
+	--banner: optional. banner HTML file.
 	--conceal: optional. Conceal certain notations. Default is true.
 	--global_url, --global_tag: optional. URL and tags file referring to the
 	                            tags and general VIM help html page.
@@ -370,7 +366,7 @@ EOF
 usage() if !defined $ARGV[1];
 
 GetOptions(
-    'banner' => \$show_banner,
+    'banner=s' => \$banner_file,
     'conceal!' => \$conceal,
     'global_tag=s' => \$global_tag,
     'global_url=s' => \$global_url,
