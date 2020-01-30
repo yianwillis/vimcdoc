@@ -4,7 +4,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
     for(var i = 0; i < document.links.length; ++i) {
       const link = document.links[i];
       if (link.innerHTML == tag) {
-        document.body.innerHTML = "JS executed";
         window.parent.location.replace(link.href);
       }
     } 
