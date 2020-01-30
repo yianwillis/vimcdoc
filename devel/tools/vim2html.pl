@@ -23,6 +23,7 @@ my $banner_file;
 my $conceal=1;
 my $global_tag='';
 my $global_url='';
+my $canonical_prefix='';
 
 sub maplink
 {
@@ -162,6 +163,12 @@ sub vim2html
 		};
 	}
 
+	my $canonical = '';
+	if ($canonical_prefix) {
+		$canonical =
+		qq(<link rel="canonical" href="$canonical_prefix/$outfile.html" />);
+	}
+
 	print OUT<<EOF;
 <!DOCTYPE html>
 <html>
@@ -172,6 +179,7 @@ sub vim2html
 <![endif]-->
 <title>VIM: $outfile</title>
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+$canonical
 <script type="text/javascript" src="vimcdoc.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
@@ -356,6 +364,7 @@ usage:
 	--conceal: optional. Conceal certain notations. Default is true.
 	--global_url, --global_tag: optional. URL and tags file referring to the
 	                            tags and general VIM help html page.
+	--canonical_prefix: optional. canonical site prefix.
 EOF
 }
 
@@ -370,6 +379,7 @@ GetOptions(
     'conceal!' => \$conceal,
     'global_tag=s' => \$global_tag,
     'global_url=s' => \$global_url,
+    'canonical_prefix=s' => \$canonical_prefix,
 ) or usage();
 
 print "Processing tags...\n";
