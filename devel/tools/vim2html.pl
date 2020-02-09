@@ -40,12 +40,24 @@ sub maplink
 	}
 }
 
+sub mapcategory
+{
+	my $tag = shift;
+	if ($tag =~ /^usr_/) {
+		return "中文用户手册";
+	} else {
+		return "中文帮助";
+	}
+}
+
 sub mapdesc
 {
 	my $tag = shift;
 	if( exists $filedesc{ $tag } ){
 		return $filedesc{ $tag };
-	} else {
+	} elsif ($tag eq "vim_faq") {
+		return "常见问题解答";
+  } else {
 		return $tag;
 	}
 }
@@ -97,7 +109,7 @@ sub readHelpFile
 	open(HELP,"<:utf8","$helpfile") || die "can't read $helpfile\n";
 
 	while( <HELP> ) {
-		next unless /^\|(\S+)\.txt\|\s+(.+)/;
+		next unless /^\|(\w+)(?:\.txt)?\|\s+(.+)/;
 		$filedesc{ $1 } = $2;
 	}
 	$filedesc{ "help" } =~ s/ \(本文件\)//;
@@ -177,7 +189,8 @@ sub vim2html
 	open( OUT, ">:utf8", "$outfile.html" )
 			|| die "Couldn't write to $outfile.html: $!.\n";
 	binmode STDOUT, ":utf8";
-	my $head = mapdesc( $outfile );
+	my $category = mapcategory ($outfile );
+	my $desc = mapdesc( $outfile );
 
 	my $filler = ' ' x 80;
 	my $banner = '';
@@ -204,7 +217,7 @@ sub vim2html
 <!--[if lt IE 9]>
   <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
 <![endif]-->
-<title>VIM 中文帮助: $head</title>
+<title>VIM $category: $desc</title>
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
 $canonical
 <script type="text/javascript" src="vimcdoc.js"></script>
