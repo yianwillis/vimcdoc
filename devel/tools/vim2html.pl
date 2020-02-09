@@ -15,8 +15,9 @@ use Encode;
 use vars qw/%url $date/;
 use Getopt::Long qw(GetOptions);
 
-%url = ();
-$date = Encode::decode_utf8(`date -u`);
+my %url = ();
+my %filedesc = ();
+my $date = Encode::decode_utf8(`date -u`);
 chop $date;
 
 my $banner_file;
@@ -24,6 +25,7 @@ my $conceal=1;
 my $global_tag='';
 my $global_url='';
 my $canonical_prefix='';
+my $help_file='';
 
 sub maplink
 {
@@ -38,12 +40,22 @@ sub maplink
 	}
 }
 
+sub mapdesc
+{
+	my $tag = shift;
+	if( exists $filedesc{ $tag } ){
+		return $filedesc{ $tag };
+	} else {
+		return $tag;
+	}
+}
+
 sub readTagFile
 {
 	my($tagfile) = @_;
-	my( $tag, $file, $name );
+	my( $tag, $file );
 
-	open(TAGS,"$tagfile") || die "can't read tags\n";
+	open(TAGS,"$tagfile") || die "can't read $tagfile\n";
 
 	while( <TAGS> ) {
 		next unless /^(\S+)\s+(\S+)\s+/;
@@ -61,9 +73,9 @@ sub readTagFile
 sub readExternalTagFile
 {
 	my($tagfile, $tagurl) = @_;
-	my( $tag, $file, $name );
+	my( $tag, $file );
 
-	open(TAGS,"$tagfile") || die "can't read tags\n";
+	open(TAGS,"$tagfile") || die "can't read $tagfile\n";
 
 	while( <TAGS> ) {
 		next unless /^(\S+)\s+(\S+)\s+/;
@@ -75,6 +87,21 @@ sub readExternalTagFile
 		$url{ $tag } = "<a href=\"$tagurl/$file#".escurl($tag)."\">".esctext($label)."</a>";
 	}
 	close( TAGS );
+}
+
+sub readHelpFile
+{
+	my($helpfile) = @_;
+	my( $tag, $file );
+
+	open(HELP,"<:utf8","$helpfile") || die "can't read $helpfile\n";
+
+	while( <HELP> ) {
+		next unless /^\|(\S+)\.txt\|\s+(.+)/;
+		$filedesc{ $1 } = $2;
+	}
+	$filedesc{ "help" } =~ s/ \(本文件\)//;
+	close( HELP );
 }
 
 sub esctext
@@ -150,7 +177,7 @@ sub vim2html
 	open( OUT, ">:utf8", "$outfile.html" )
 			|| die "Couldn't write to $outfile.html: $!.\n";
 	binmode STDOUT, ":utf8";
-	my $head = uc( $outfile );
+	my $head = mapdesc( $outfile );
 
 	my $filler = ' ' x 80;
 	my $banner = '';
@@ -177,7 +204,7 @@ sub vim2html
 <!--[if lt IE 9]>
   <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
 <![endif]-->
-<title>VIM: $outfile</title>
+<title>VIM 中文帮助: $head</title>
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
 $canonical
 <script type="text/javascript" src="vimcdoc.js"></script>
@@ -364,6 +391,7 @@ usage:
 	--conceal: optional. Conceal certain notations. Default is true.
 	--global_url, --global_tag: optional. URL and tags file referring to the
 	                            tags and general VIM help html page.
+  --help_file: optional. the general VIM help file, used to extract file desc.
 	--canonical_prefix: optional. canonical site prefix.
 EOF
 }
@@ -380,12 +408,18 @@ GetOptions(
     'global_tag=s' => \$global_tag,
     'global_url=s' => \$global_url,
     'canonical_prefix=s' => \$canonical_prefix,
+    'help_file=s' => \$help_file,
 ) or usage();
 
 print "Processing tags...\n";
 readTagFile( $ARGV[ 0 ] );
 if ($global_tag ne "" && $global_url ne "") {
+  print "Processing external tags...\n";
 	readExternalTagFile($global_tag, $global_url);
+}
+if ($help_file ne "") {
+  print "Processing help_file...\n";
+	readHelpFile($help_file);
 }
 
 vim2html( $ARGV[ 0 ] );
