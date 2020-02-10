@@ -8,15 +8,20 @@ all:
 	:print Use 'aap release' to generate pdf mauals to release.
 
 help.html:
-	:sys $TOOLS_DIR/vim2html.pl $DOC_DIR/tags-cn $DOC_FILES
+	:sys $TOOLS_DIR/vim2html.pl \
+            --canonical_prefix=https://yianwillis.github.io/vimcdoc/doc \
+            --help_file=$DOC_DIR/help.cnx \
+            $DOC_DIR/tags-cn \
+            $DOC_FILES
 	:copy $TOOLS_DIR/vim-stylesheet.css .
+	:copy $TOOLS_DIR/vimcdoc.js .
 	:sys ./uncss.sh
 
 :rule %.tex: help.html ../tools/html2lex %.inp
 	:sys ../tools/html2lex ${match}.inp -o $target
 
 :rule %.pdf: %.tex
-	:sys {f} latexmk -f -pdf $match
+	:sys {f} latexmk -f -xelatex $match
 
 release: reference.pdf user_manual.pdf
         :copy reference.pdf $(RELEASE_DIR)/reference-$(VERSION).pdf

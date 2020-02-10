@@ -751,7 +751,8 @@ char *file; int ln; char *to_file; char *name;
     link_t **p_link = &tfile->link;
 
     DEBUG_P4("add_ref(%s,%d,%s,%s)\n", file, ln, to_file, name);
-    for(;*p_link != NULL; p_link = &(*p_link)->next);
+    for(;*p_link != NULL; p_link = &(*p_link)->next)
+        ;
 
     {  link_t *n = ALLOC(link_t);
        n->next = NULL;
@@ -1143,21 +1144,31 @@ FILE *fout; ref_by_t *ref_by; char *file_name; int ln; bool file_exists;
     for(;ref_by != NULL; ref_by = ref_by->next)
     {   DEBUG_P2("ref_by: %s#%s", ref_by->file, ref_by->name);
         if (ref_by->href == NULL)
-                DEBUG_P("--href == NULL\n");
+        {
+            DEBUG_P("--href == NULL\n");
+        }
         else
-                DEBUG_P2("-- %s %s\n", ref_by->name, 
+        {
+            DEBUG_P2("-- %s %s\n", ref_by->name,
                                    ref_by->href->info.ref.re_name); 
+        }
         if (strcmp(file_name, ref_by->file))
             if (   ref_by->href == NULL
                 || !eq_name(ref_by->name, ref_by->href->info.ref.re_name))
+            {
                 if (ref_by->name == NULL)
+                {
                     fprintf(fout, "%s (%d) : %s: <a href=\"%s\">.\n",
                             file_name, ln, mess,
                             rel_URL(file_name, ref_by->file));
+                }
                 else
+                {
                     fprintf(fout, "%s (%d) : %s: <a href=\"%s#%s\">.\n",
                             file_name, ln, mess,
                             rel_URL(file_name, ref_by->file), ref_by->name);
+                }
+            }
      }
 }
 
@@ -1382,9 +1393,9 @@ bool norm_URL(origin, file) char *origin, *file;
             && s[0] == '.' && s[1] == '.' /* && s[2] == '/'*/)
             return FALSE;
         else if (i == 0)
-	{
-	    if (file != s) strcpy(file, s);
-	}
+        {
+           if (file != s) strcpy(file, s);
+        }
         else if(i + strlen(s) < MAX_DF)
         {   memcpy(df_buffer, origin, i); 
             strcpy(df_buffer + i, s);
@@ -1423,6 +1434,7 @@ bool norm_URL(origin, file) char *origin, *file;
     }
     /* if file starts with '/' add server_URL: */
     else if (document_URL != NULL && file[0] == '/') 
+    {
         if (strlen(file) + strlen(server_URL) < MAX_DF)
         {   strcpy(df_buffer, server_URL);
             strcat(df_buffer, file);
@@ -1430,6 +1442,7 @@ bool norm_URL(origin, file) char *origin, *file;
         }
         else 
             return FALSE;
+    }
 
     DEBUG_P1("After step 2: %s\n", file);
 
@@ -1653,8 +1666,8 @@ struct {
 
   {   34, "quot",   "\\\"{}",   '"' },
   {   38, "amp",    "\\&",      '&' },
-  {   60, "lt",     "$<",       '<' },
-  {   62, "gt",     "$>",       '>' },
+  {   60, "lt",     "<",       '<' },
+  {   62, "gt",     ">",       '>' },
 
   {  338, "OElig",  NULL,       0   },
   {  339, "oelig",  NULL,       0   },
@@ -1815,6 +1828,7 @@ void print_str(FILE *fout, char *str, FILE *freport, char *html_fn, int ln,
             }
             else 
             {   if (freport != NULL && option_warn)
+                {
                     if (html_ch[0] == '\0')
                         fprintf(freport,
                                 "%s (%d) : Replace `&' by `&amp;'.\n",
@@ -1823,6 +1837,7 @@ void print_str(FILE *fout, char *str, FILE *freport, char *html_fn, int ln,
                         fprintf(freport,
                                 "%s (%d) : Unknown sequence `&%s;'.\n",
                                 html_fn, ln, html_ch);
+                }
                 ch = *str;
             }
         }
@@ -1851,10 +1866,12 @@ void print_str(FILE *fout, char *str, FILE *freport, char *html_fn, int ln,
             {   if (special)
                 {   char *o = ch_table[v].tex_ch;
                     if (o != NULL)
+                    {
                         if (*o == '$')
                             fprintf(fout, "\\(%s\\)", o + 1);
                         else
                             fprintf(fout, "%s", o);
+                    }
                 }
                 else if (ch == '{' || ch == '}')
                     fprintf(fout, "\\%c", ch);
@@ -1988,6 +2005,7 @@ void print_str_(FILE *fout, char *str)
         else if ((unsigned char)*str >= ' ' && (unsigned char)*str <= HIGHASCII)
             ch = *str;
         if (fout)
+        {
             if (   ch == '#' || ch == '[' || ch == ']'
                 || ch == '-' || ch == '\\' || ch == '\'' || ch == ','
                 || ch == '`' || ch == '<' || ch == '='
@@ -1997,6 +2015,7 @@ void print_str_(FILE *fout, char *str)
             }
             else
                 fputc(ch, fout);
+        }
     }
 }
 
@@ -2488,7 +2507,7 @@ void print_bibliography(fout) FILE *fout;
 #define T_META  23
 #define T_SCRIPT 24
 #define T_STYLE 25
-#define NR_TAGS   74
+#define NR_TAGS   78
 #define NR_M_TAGS 10
 
 #define TN_H1   5
@@ -2678,25 +2697,33 @@ struct Codes
    { "input",   C_NO,  T_CHAR, 0, "", "" },
 #define H_TEXTAREA 73
    { "textarea",C_OPT, T_CHAR, 0, "", "" },
-#define H_M_OFF   74
+#define H_ARTICLE  74
+   { "article",  C_YES, T_VERB, 0, "", "" },
+#define H_SECTION  75
+   { "section",  C_YES, T_VERB, 0, "", "" },
+#define H_HEADER  76
+   { "header",  C_YES, T_VERB, 0, "", "" },
+#define H_FOOTER  77
+   { "footer",  C_YES, T_VERB, 0, "", "" },
+#define H_M_OFF   78
    { "!--latex-off--", C_YES, T_DIR, LATEX_KIND_OFF, "", "" },
-#define H_L1      75
+#define H_L1      79
    { "l1",      C_YES, T_ILL, 0, "\n\n\\chapter{", "}\n\n" },
-#define H_L2      76
+#define H_L2      80
    { "l2",      C_YES, T_ILL, 0, "\n\n\\section{", "}\n\n" },
-#define H_L3      77
+#define H_L3      81
    { "l3",      C_YES, T_ILL, 0, "\n\n\\subsection{", "}\n\n" },
-#define H_L4      78
+#define H_L4      82
    { "l4",      C_YES, T_ILL, 0, "\n\n\\subsubsection{", "}\n\n" },
-#define H_L5      79
+#define H_L5      83
    { "l5",      C_YES, T_ILL, 0, "\n\n\\paragraph{", "}\n" },
-#define H_L6      80
+#define H_L6      84
    { "l6",      C_YES, T_ILL, 0, "\n\n\\subparagraph{", "}\n" },
-#define H_L7      81
+#define H_L7      85
    { "l7",      C_YES, T_ILL, 0, "", "" },
-#define H_L8      82
+#define H_L8      86
    { "l8",      C_YES, T_ILL, 0, "", "" },
-#define H_L9      83
+#define H_L9      87
    { "l9",      C_YES, T_ILL, 0, "", "" },
 };
 
@@ -4224,6 +4251,7 @@ bool included;    /* Included in output (or only checking) */
                                  && href_status == REF_OKAY
                                  && link->info.ref.re_name != NULL
                                  && !eq_name(link->info.ref.re_name, href_name))
+                        {
                              if (link->info.ref.re_name != c_top)
                                  fprintf(freport,
                            "%s (%d) : could change into: <a href=\"%s#%s\">.\n",
@@ -4231,10 +4259,13 @@ bool included;    /* Included in output (or only checking) */
                                          rel_URL(html_fn, dest_file),
                                          link->info.ref.re_name);
                              else
+                             {
                                  fprintf(freport,
                               "%s (%d) : could change into: <a href=\"%s\">.\n",
                                          html_fn, ln,
                                          rel_URL(html_fn, dest_file));
+                             }
+                        }
                     }
                     DEBUG_P2("href: |%s|%s|\n", dest_file, 
                                  link->info.ref.name);
@@ -4252,7 +4283,7 @@ bool included;    /* Included in output (or only checking) */
                     fprintf(freport, "%s (%d) : unknown <%s>.\n",
                             html_fn, ln, html_com);
                     if(fout)
-                    {    if(attr_name)
+                    {    if(*attr_name)
                             fprintf(fout, "\n%% <%s %s=\"%s\">\n", html_com, attr_name, attr_val); 
                         else
                             fprintf(fout, "\n%% <%s>\n", html_com);
@@ -4417,6 +4448,7 @@ bool included;    /* Included in output (or only checking) */
                 if (   a_name && (!no_copy || in_head)
                     && name_referenced(html_fn, name))
                 {   if (active_label && fout != NULL)
+                    {
                         if (in_verb)
                         {   if (freport)
                                 fprintf(freport,
@@ -4424,8 +4456,11 @@ bool included;    /* Included in output (or only checking) */
                                         html_fn, ln, label_name);
                         }
                         else
+                        {
                             print_label(fout, in_file->nr, label_name, 
                                         FALSE);
+                        }
+                    }
                     active_label = TRUE;
                     strcpy(label_name, name);
                 }
@@ -4484,11 +4519,14 @@ bool included;    /* Included in output (or only checking) */
                 LATEX_CLOSES_K()
             else if (OPEN_TAG(T_IMG))
             {   if (a_src)
+                {
                     if (!norm_URL(html_fn, src)) 
                     {   if (freport != NULL)
+                        {
                             fprintf(freport, 
                                     "%s (%d) : URL `%s' illegal or too long.\n",
                                     html_fn, ln, src);
+                        }
                     }
                     else
                     {
@@ -4500,16 +4538,20 @@ bool included;    /* Included in output (or only checking) */
                             if ( freport != NULL
                                  && (   option_warn
                                      || src_file->nr_refs < 2))
+                            {
                                  fprintf(freport,
                                         "%s (%d) : file `%s' does not exist.\n",
                                          html_fn, ln, src);
+                            }
                         }
                         else if (fout && !no_copy)
                         {
                             if (tags[H_IMG].latex_open[0] != '\0')
+                            {
                                 fprintf(fout,"%s%s%s",
                                         tags[H_IMG].latex_open, src,
                                         tags[H_IMG].latex_close);
+                            }
                             else
                             {   char *s = src + strlen(src);
                                 while (s > src && *(s - 1) != '/')
@@ -4521,13 +4563,16 @@ bool included;    /* Included in output (or only checking) */
                             }
                         }
                     }
+                }
             }
             else if (OPEN_TAG(T_P))
             {   if (stack[stack_depth-1].tagkind == T_P)
                     LATEX_CLOSES(H_P);
                 if (in_header && freport != NULL && option_info)
+                {
                     fprintf(freport, "%s (%d) : <p> ignored in header\n",
                             html_fn, ln);
+                }
                 LATEX_OPEN(tagnr)
             }
             else if (CLOSE_TAG(T_P))
@@ -4582,6 +4627,7 @@ bool included;    /* Included in output (or only checking) */
 
                 while (!feof(fin) && (ch == ' ' || ch == '\n' || ch == '\t'))
                 {   if (fout != NULL && !no_copy)
+                    {
                         if (ch == '\n')
                         {   if (in_verb || in_alltt)
                             {   DEBUG_GN('V');
@@ -4601,6 +4647,7 @@ bool included;    /* Included in output (or only checking) */
                             }
                             fputc(ch, fout);
                         }
+                    }
                     if ((ch = (char)fgetc(fin)) == '\n') ln++;   
                 }
             }
@@ -4814,6 +4861,7 @@ char *fn;
                     strcpy(new->replace, buffer);
 
                     if (new->prefix[0] != '\0')
+                    {
                         if (is_link_mapping)
                         {   new->next = final_mappings;
                             final_mappings = new;
@@ -4822,6 +4870,7 @@ char *fn;
                         {   new->next = link_mappings;
                             link_mappings = new;
                         }
+                    }
                 }
                 else if (ch == 'b')
                 {   option_bibliography = TRUE; 
