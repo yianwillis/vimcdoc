@@ -81,7 +81,7 @@
 
                                                         <b class="vimtag"> <a name="Number">Number</a> </b> <b class="vimtag"> <a name="Integer">Integer</a> </b>
 数值            32 位或 64 位带符号整数。 <a href="eval.html#expr-number">expr-number</a> 
-                64-位整数只有在编译时带  <a href="various.html#+num64">+num64</a>  特性时才有效。
+                位数可以  <a href="eval.html#v:numbersize">v:numbersize</a>  得到。
                 示例:  -123  0x10  0177  0b1011
 
 浮点数          带小数的数值。 <a href="eval.html#floating-point-format">floating-point-format</a>  <b class="vimtag"> <a name="Float">Float</a> </b>
@@ -1806,6 +1806,9 @@ v:null          空字符串。用于在 JSON 里填入 "null"。见  <a href="e
 <code class="section">                        v:null </code>
                 这样 eval() 可以把该字符串解析回相同的值。只读。
 
+                                        <b class="vimtag"> <a name="v:numbersize">v:numbersize</a> </b> <b class="vimtag"> <a name="numbersize-variable">numbersize-variable</a> </b>
+v:numbersize    数值型的位数。通常为 64，但在某些系统上可能为 32。
+
                                         <b class="vimtag"> <a name="v:oldfiles">v:oldfiles</a> </b> <b class="vimtag"> <a name="oldfiles-variable">oldfiles-variable</a> </b>
 v:oldfiles      启动时从  <a href="starting.html#viminfo">viminfo</a>  文件载入的文件名列表。Vim 记住的位置标记所
                 在的就是这些文件。列表长度的上限由 <a href="options.html#'viminfo'">'viminfo'</a> 选项的 ' 参数定义
@@ -2620,13 +2623,15 @@ test_garbagecollect_now()       无      为测试用，立即释放内存
 test_garbagecollect_soon()      无      为测试用，尽快释放内存
 test_getvalue(<code class="special">{string}</code>)         可变    得到内部变量的值
 test_ignore_error(<code class="special">{expr}</code>)       无      忽略特定的错误
-test_null_blob()                blob    用作测试的空值
-test_null_channel()             通道    用作测试的空值
-test_null_dict()                字典    用作测试的空值
-test_null_job()                 作业    用作测试的空值
-test_null_list()                列表    用作测试的空值
-test_null_partial()             函数引用        用作测试的空值
-test_null_string()              字符串  用作测试的空值
+test_null_blob()                blob    用作测试的空值 (null)
+test_null_channel()             通道    用作测试的空值 (null)
+test_null_dict()                字典    用作测试的空值 (null)
+test_null_job()                 作业    用作测试的空值 (null)
+test_null_list()                列表    用作测试的空值 (null)
+test_null_partial()             函数引用        用作测试的空值 (null)
+test_null_string()              字符串  用作测试的空值 (null)
+test_unknown()                  可变    用作测试的未知值
+test_void()                     可变    且作测试的无值 (void)
 test_option_not_set(<code class="special">{name}</code>)     无      复位指示选项已设置的标志位
 test_override(<code class="special">{expr}</code>, <code class="special">{val}</code>)    无      Vim 内部覆盖用作测试
 test_refcount(<code class="special">{expr}</code>)           数值    得到 <code class="special">{expr}</code> 的引用计数
@@ -6121,6 +6126,8 @@ match(<code class="special">{expr}</code>, <code class="special">{pat}</code> [,
                  <a href="pattern.html#pattern">pattern</a>  说明可以接受的模式。
                 <a href="options.html#'ignorecase'">'ignorecase'</a> 选项用来设定模式是否忽略大小写。 <code class="emphasis">不</code> 使用
                 <a href="options.html#'smartcase'">'smartcase'</a>。匹配总是假定置位了 <a href="options.html#'magic'">'magic'</a> 而 <a href="options.html#'cpoptions'">'cpoptions'</a> 为空。
+                <code class="note">注意</code> 优先考虑开始处的匹配，所以使用 "*" (任意数目的匹配) 时，
+                模式倾向于寻找开始处的零匹配而不是文本内部的多数目匹配。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetList()-&gt;match('word')</code>
@@ -9400,6 +9407,7 @@ browsefilter            编译时加入了  <a href="editing.html#browsefilter">
 bsd                     编译时使用了 BSD 家族的 OS (除了 macOS)。
 builtin_terms           编译时打开了一些内建终端。
 byte_offset             编译时加入了 <a href="options.html#'statusline'">'statusline'</a> 中对 'o' 的支持。
+channel                 编译时加入了  <a href="channel.html#channel">channel</a>  和  <a href="channel.html#job">job</a>  的支持
 cindent                 编译时加入了 <a href="options.html#'cindent'">'cindent'</a> 的支持。
 clientserver            编译时加入了远程调用的支持。 <a href="remote.html#clientserver">clientserver</a> 。
 clipboard               编译时加入了 <a href="options.html#'clipboard'">'clipboard'</a> 的支持。
@@ -9441,12 +9449,14 @@ gui_gnome               编译时加入了 Gnome 支持 (同时也定义了 gui_
 gui_gtk                 编译时加入了 GTK+ GUI (任何版本)。
 gui_gtk2                编译时加入了 GTK+ 2 GUI (同时也定义了 gui_gtk)。
 gui_gtk3                编译时加入了 GTK+ 3 GUI (同时也定义了 gui_gtk)。
+gui_haiku               编译时加入了 Haiku GUI。
 gui_mac                 编译时加入了 Macintosh GUI。
 gui_motif               编译时加入了 Motif GUI。
 gui_photon              编译时加入了 Photon GUI。
 gui_running             Vim 在 GUI 上运行，或者 GUI 将很快启动。
 gui_win32               编译时加入了 MS Windows Win32 GUI。
 gui_win32s              同上，使用了 Win32s 系统 (Windows 3.1)
+haiku                   Vim 的 Haiku 版本。
 hangul_input            编译时加入了韩语输入的支持。 <a href="hangulin.html#hangul">hangul</a> 
 hpux                    Vim 的 HP-UX 版本。
 iconv                   可以使用 iconv() 进行转换。
@@ -9505,7 +9515,7 @@ python_dynamic          Python 2.x 接口已动态载入。 <a href="if_pyth.htm
 python3                 Python 3.x 接口可用。 <a href="if_pyth.html#has-python">has-python</a> 
 python3_compiled        编译时加入了 Python 3.x 接口。 <a href="if_pyth.html#has-python">has-python</a> 
 python3_dynamic         Python 3.x 接口已动态载入。 <a href="if_pyth.html#has-python">has-python</a> 
-pythonx                 编译时加入了  <a href="if_pyth.html#python_x">python_x</a>  接口。 <a href="if_pyth.html#has-pythonx">has-pythonx</a> 
+pythonx                 Python 2.x 和/或 3.x 接口可用。 <a href="if_pyth.html#pythonx">pythonx</a> 
 qnx                     Vim 的 QNX 版本。
 quickfix                编译时加入了  <a href="quickfix.html#quickfix">quickfix</a>  的支持。
 reltime                 编译时加入了  <a href="eval.html#reltime()">reltime()</a>  的支持。
@@ -10388,10 +10398,10 @@ text...
                         令，执行从 ":finally" 之后继续。否则，或者在那以后遇到
                         了 ":endtry"，则检查是否存在 (动态的) 往外一层的
                         ":try" 以及其相应的 ":finally" 等等。然后，脚本的处理
-                        被终止。(函数定义里是否有 "abort" 参数都不相干。)
+                        被终止。函数定义里是否有 "abort" 参数都不相干。
                         示例: 
-<code class="example">                :try | edit too much | finally | echo "cleanup" | endtry</code>
-<code class="example">                :echo "impossible"      " 到不了这里，脚本在上面已经终止</code>
+<code class="example">                try | call Unknown() | finally | echomsg "cleanup" | endtry</code>
+<code class="example">                echomsg "not reached"</code>
 
                         另外，":try" 和 ":endtry" 之间的错误或者中断 (动态地)
                         被转换成一个例外。它的捕获过程如同它被  <a href="eval.html#:throw">:throw</a>  命令抛
@@ -10404,8 +10414,8 @@ text...
                         名，而 <code class="special">{errmsg}</code> 是错误例外如果没有被捕获的时候会显示的
                         消息，它总以错误号开始。
                         示例: 
-<code class="example">                :try | sleep 100 | catch /^Vim:Interrupt$/ | endtry</code>
-<code class="example">                :try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry</code>
+<code class="example">                try | sleep 100 | catch /^Vim:Interrupt$/ | endtry</code>
+<code class="example">                try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry</code>
 
                                         <b class="vimtag"> <a name=":cat">:cat</a> </b> <b class="vimtag"> <a name=":catch">:catch</a> </b> <b class="vimtag"> <a name="E603">E603</a> </b> <b class="vimtag"> <a name="E604">E604</a> </b> <b class="vimtag"> <a name="E605">E605</a> </b>
 :cat[ch] /<code class="special">{pattern}</code>/    匹配 <code class="special">{pattern}</code> 的例外抛出时，如果它没有被前一个
@@ -10533,6 +10543,9 @@ text...
 
                         此命令本可缩短为  <code class="badlink">:ev</code>  或  <code class="badlink">:eva</code> ，但不易记，所以不提
                         供。
+
+                        此命令不能后跟 "|" 加其它命令，因为 "|" 视为表达式的一
+                        部分。
 
 
                                                         <b class="vimtag"> <a name=":exe">:exe</a> </b> <b class="vimtag"> <a name=":execute">:execute</a> </b>
