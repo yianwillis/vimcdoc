@@ -1,0 +1,198 @@
+*os_haiku.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年2月
+
+
+		  VIM 参考手册    by Bram Moolenaar
+				译者: Willis
+
+
+							*Haiku*
+本文包含了 Vim 的 Haiku 版本的特殊之处。除了本文提到的之外，和一般的 Unix
+|os_unix.txt| 版本的 Vim 行为大致相当。
+
+Haiku 是受 BeOS 启发的开源操作系统，特别针对个人计算。
+
+ 1. 通用			|haiku-general|
+ 2. 编译 Vim			|haiku-compiling|
+ 3. Haiku GUI			|haiku-gui|
+ 4. $VIM 目录			|haiku-vimdir|
+ 5. $BE_USER_SETTINGS 目录 	|haiku-user-settings-dir|
+ 6. 拖放			|haiku-dragndrop|
+ 7. 单一启动对多重启动 		|haiku-launch|
+ 8. 字体			|haiku-fonts|
+ 9. meta 键修饰符		|haiku-meta|
+10. 鼠标键映射			|haiku-mouse|
+11. 色彩名			|haiku-colors|
+12. 鸣谢			|haiku-support-credits|
+13. 漏洞和未完成事宜		|haiku-bugs|
+
+
+1. 通用							*haiku-general*
+
+缺省语法高亮主要用于使用不同的前景色来高亮项目。最适用于设置终端窗口为深色背景
+和浅色字母。有些中灰背景 (例如 (r,g,b)=(168,168,168)) 带黑色字母也很不错。
+
+
+2. 编译 Vim						*haiku-compiling*
+
+Vim 可以用标准的 configure/make 方法编译。不带参数运行 ./configure 或传递
+--enable-gui=haiku 会在编译 vim 时带上 Haiku GUI 支持。运行 ./configure --help
+可看到哪些其它的特性可以打开/关闭。
+
+现在要用 "make" 来编译 Vim，然后 "make install" 来安装。要和 Haiku 无缝集成，
+在 GUI 版本之外还应额外安装无 GUI 的 vim 程序。典型的编译命令是: >
+
+  ./configure --prefix=`finddir B_SYSTEM_NONPACKAGED_DIRECTORY` \
+    --datarootdir=`finddir B_SYSTEM_NONPACKAGED_DATA_DIRECTORY` \
+    --mandir=`finddir B_SYSTEM_NONPACKAGED_DIRECTORY`/documentation/man \
+  make clean
+  make install
+
+  ./configure --prefix=`finddir B_SYSTEM_NONPACKAGED_DIRECTORY`  \
+    --datarootdir=`finddir B_SYSTEM_NONPACKAGED_DATA_DIRECTORY` \
+    --mandir=`finddir B_SYSTEM_NONPACKAGED_DIRECTORY`/documentation/man \
+    --disable-gui
+  make clean
+  make install
+
+
+3.  Haiku GUI						*haiku-gui*
+
+通常，如果以 gvim 或 vim -g 方式启动，Vim 启动 GUI。带 GUI 的 vim 版本会试图判
+断是否从 Tracker 而不是终端启动，如果是，则总选用 GUI。不过，如果用命令
+"vim - </dev/null"，当前的检测机制会失效。
+
+还不可用的功能:
+
+- 在窗口之外不生成鼠标释放事件。这可能是 Haiku 的一个漏洞。如果你选择文本然后
+  把光标移动出窗口并释放鼠标按钮，就会注意到这个问题。另一个方法是在拖动滚动条
+  的时候做同样的事。因为 Vim 仍然认为你在操作滚动条，它不会自己更新它。我提供
+  了一个临时解决办法，在窗口激活或去活时启用 (所以最好打开焦点跟随鼠标选项)。
+- 光标不闪烁 (优先级很低；我自己不见得那么喜欢闪烁)
+
+
+4. $VIM 目录						*haiku-vimdir*
+
+$VIM 是代表 Vim 保存支持文件的位置的名字。$VIM 的缺省值在编译时决定，可这样看
+到 >
+
+  :version
+
+通常其值是 /boot/common/data/vim。如果不喜欢，可以自己设置 VIM 环境变量来覆盖
+此值，或在 .vimrc 里设置 'helpfile': >
+
+  :if version >= 500
+  :    set helpfile=~/vim/runtime/doc/help.txt
+  :    syntax on
+  :endif
+
+
+5. $USER_SETTINGS_DIR 目录			*haiku-user-settings-dir*
+
+$USER_SETTINGS_DIR 是代表 Haiku 保存配置和设定文件的位置的名字。
+
+通常其值是 /boot/home/config/settings。
+
+
+6. 拖放							*haiku-dragndrop*
+
+可以把文件和目录放置在 Vim 图标上 (启动新 Vim 会话，除非用文件类型应用把 Vim
+设为 "单一启动") 或 Vim 窗口上 (开始编辑文件)。放置目录会设置 Vim 的当前目录。
+|:cd| |:pwd| 如果放置文件或目录时按住 SHIFT 键，Vim 会改变目录为首个放置项目所
+在的目录。启动 Vim 时，不需要按住 shift: Vim 的行为和按住时一样。
+
+放置文件时会设置当前参数列表。|argument-list|
+
+
+7. 单一启动对多重启动					*haiku-launch*
+
+发布时 Vim 的应用标志位 (FileTypes 首选项所见的) 设为多重启动。如果你喜欢，可
+以设置为单一启动。试图打开第二份 Vim 时会用第一份 Vim 来打开文件。这既适用于
+Tracker，也适用于命令行。后者不运行非文件 (选项) 参数。单一启动的另一个缺点是
+以非 GUI 应用方式运行的 vim 实例会没有警告地忽略 "以 ... 方式打开" 请求，即使
+编译时带了 GUI 支持。以 GUI 方式运行的 Vim 实例没有这个问题。
+
+注意: 只有 GUI 版本有 BApplication (因而有应用标志位)。所以此节不适用于无 GUI
+的版本，如果你这样编译的话。
+
+
+8. 字体							*haiku-fonts*
+
+这样设置字体 >
+
+  :set guifont=DejaVu_Sans_Mono/Book/12
+
+这里第一部分是字体家族，第二部分是风格，而第三部分是大小。可用下划线代替家族和
+风格里的空格。
+
+等宽字体提供最佳效果。Vim 试图使用所有 B_FIXED_SPACING 模式的字体，但显然这不
+适用于比例字体 (尽管 BeBook 是这么说的)。
+
+要检验当前字符支持什么编码，可用 >
+
+  :digraphs
+
+命令，列出一堆字符和它们的 ISO Latin 1 编码。如果，比如说，其中有 "方框" 字符
+，或最后一个字符不是带点的 y，这么这个字体此编码不可用。
+
+如果你指定的字体不可用，会改用系统固定宽度字体。
+
+以下命令可给出 GUI 字体选择对话框 >
+
+  :set guifont=*
+
+
+9. meta 键修饰符					*haiku-meta*
+
+可由左或右 OPTION 键得到 META 键修饰符。这是因为 ALT (也就是 COMMAND) 键不传递
+给应用。
+
+
+10. 鼠标键映射						*haiku-mouse*
+
+Vim 调用若干鼠标按钮 LeftMouse、MiddleMouse 和 RightMouse。如果你用缺省鼠标首
+选设定，这些名字确实对应现实。Vim 使用以下映射:
+
+    Button 1 -> LeftMouse,
+    Button 2 -> RightMouse,
+    Button 3 -> MiddleMouse.
+
+如果你的鼠标少于 3 个按钮，可提供自己的映射，把带修饰符 (可多个) 的鼠标点击映
+射到其它的鼠标按钮。例见 $VIM/macros/swapmous.vim。 	|gui-mouse-mapping|
+
+
+11. 色彩名						*haiku-colors*
+
+Vim 有内建的若干色彩名。附加的名字从 $VIMRUNTIME/rgb.txt 文件里读取。此文件基
+本上就是 X 的色彩数据库。此文件使用的名字被缓冲，以提高效率。
+
+
+12. GUI 工具栏图像					*haiku-toolbar-images*
+
+工具栏图像的替换集必须是 PNG 图像，高度可自选。计算图像宽度时要能在一列中包含
+至少 32 个按钮的单元格。
+此图像必须以 $VIMRUNTIME/bitmaps/builtin-tools.png 名字保存。按钮分配的更多详
+情可见 |builtin-tools|。
+
+
+13. 鸣谢						*haiku-support-credits*
+
+Haiku 的移植版本是基于许多人完成的 BeOS 版本的工作
+ - BeBox GUI 支持，1998 年版权所有，作者是 Olaf Seibert；
+ - R4 的移植版本，作者是 Richard Offer <richard@whitequeen.com> 99 年七月；
+ - 其它有贡献者，不能列出但不会忘记；
+ - Haiku 支持，作者是 Siarzhuk Zharski <imker@gmx.li> 2009 年四至五月。
+
+所有的改动和补丁以 vim 许可证发布。
+
+谢谢大家了！
+
+
+13. 漏洞和未完成事宜					*haiku-bugs*
+
+此移植版本现在还在开发中，离尽善尽美还相差甚远。欢迎各种漏洞报告、补丁和愿望。
+
+
+ -Siarzhuk Zharski <imker@gmx.li>
+
+
+ vim:tw=78:ts=8:ft=help:norl:

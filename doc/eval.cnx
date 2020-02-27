@@ -47,7 +47,7 @@
 
 							*Number* *Integer*
 数值		32 位或 64 位带符号整数。|expr-number|
-		64-位整数只有在编译时带 |+num64| 特性时才有效。
+		位数可以 |v:numbersize| 得到。
 		示例:  -123  0x10  0177  0b1011
 
 浮点数		带小数的数值。|floating-point-format| *Float*
@@ -1774,6 +1774,9 @@ v:null		空字符串。用于在 JSON 里填入 "null"。见 |json_encode()|。
 <			v:null ~
 		这样 eval() 可以把该字符串解析回相同的值。只读。
 
+					*v:numbersize* *numbersize-variable*
+v:numbersize	数值型的位数。通常为 64，但在某些系统上可能为 32。
+
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	启动时从 |viminfo| 文件载入的文件名列表。Vim 记住的位置标记所
 		在的就是这些文件。列表长度的上限由 'viminfo' 选项的 ' 参数定义
@@ -2589,13 +2592,15 @@ test_garbagecollect_now()	无	为测试用，立即释放内存
 test_garbagecollect_soon()	无	为测试用，尽快释放内存
 test_getvalue({string})		可变	得到内部变量的值
 test_ignore_error({expr})	无	忽略特定的错误
-test_null_blob()		blob	用作测试的空值
-test_null_channel()		通道	用作测试的空值
-test_null_dict()		字典	用作测试的空值
-test_null_job()			作业	用作测试的空值
-test_null_list()		列表	用作测试的空值
-test_null_partial()		函数引用	用作测试的空值
-test_null_string()		字符串	用作测试的空值
+test_null_blob()		blob	用作测试的空值 (null)
+test_null_channel()		通道	用作测试的空值 (null)
+test_null_dict()		字典	用作测试的空值 (null)
+test_null_job()			作业	用作测试的空值 (null)
+test_null_list()		列表	用作测试的空值 (null)
+test_null_partial()		函数引用	用作测试的空值 (null)
+test_null_string()		字符串	用作测试的空值 (null)
+test_unknown()			可变	用作测试的未知值
+test_void()			可变	且作测试的无值 (void)
 test_option_not_set({name})	无	复位指示选项已设置的标志位
 test_override({expr}, {val})    无	Vim 内部覆盖用作测试
 test_refcount({expr})		数值	得到 {expr} 的引用计数
@@ -6090,6 +6095,8 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		|pattern| 说明可以接受的模式。
 		'ignorecase' 选项用来设定模式是否忽略大小写。_不_使用
 		'smartcase'。匹配总是假定置位了 'magic' 而 'cpoptions' 为空。
+		注意 优先考虑开始处的匹配，所以使用 "*" (任意数目的匹配) 时，
+		模式倾向于寻找开始处的零匹配而不是文本内部的多数目匹配。
 
 		也可用作 |method|: >
 			GetList()->match('word')
@@ -9369,6 +9376,7 @@ browsefilter		编译时加入了 |browsefilter| 的支持。
 bsd			编译时使用了 BSD 家族的 OS (除了 macOS)。
 builtin_terms		编译时打开了一些内建终端。
 byte_offset		编译时加入了 'statusline' 中对 'o' 的支持。
+channel			编译时加入了 |channel| 和 |job| 的支持
 cindent			编译时加入了 'cindent' 的支持。
 clientserver		编译时加入了远程调用的支持。|clientserver|。
 clipboard		编译时加入了 'clipboard' 的支持。
@@ -9410,12 +9418,14 @@ gui_gnome		编译时加入了 Gnome 支持 (同时也定义了 gui_gtk)。
 gui_gtk			编译时加入了 GTK+ GUI (任何版本)。
 gui_gtk2		编译时加入了 GTK+ 2 GUI (同时也定义了 gui_gtk)。
 gui_gtk3		编译时加入了 GTK+ 3 GUI (同时也定义了 gui_gtk)。
+gui_haiku		编译时加入了 Haiku GUI。
 gui_mac			编译时加入了 Macintosh GUI。
 gui_motif		编译时加入了 Motif GUI。
 gui_photon		编译时加入了 Photon GUI。
 gui_running		Vim 在 GUI 上运行，或者 GUI 将很快启动。
 gui_win32		编译时加入了 MS Windows Win32 GUI。
 gui_win32s		同上，使用了 Win32s 系统 (Windows 3.1)
+haiku			Vim 的 Haiku 版本。
 hangul_input		编译时加入了韩语输入的支持。|hangul|
 hpux			Vim 的 HP-UX 版本。
 iconv			可以使用 iconv() 进行转换。
@@ -9474,7 +9484,7 @@ python_dynamic		Python 2.x 接口已动态载入。|has-python|
 python3			Python 3.x 接口可用。|has-python|
 python3_compiled	编译时加入了 Python 3.x 接口。|has-python|
 python3_dynamic		Python 3.x 接口已动态载入。|has-python|
-pythonx			编译时加入了 |python_x| 接口。|has-pythonx|
+pythonx			Python 2.x 和/或 3.x 接口可用。|pythonx|
 qnx			Vim 的 QNX 版本。
 quickfix		编译时加入了 |quickfix| 的支持。
 reltime			编译时加入了 |reltime()| 的支持。
@@ -10360,10 +10370,10 @@ text...
 			令，执行从 ":finally" 之后继续。否则，或者在那以后遇到
 			了 ":endtry"，则检查是否存在 (动态的) 往外一层的
 			":try" 以及其相应的 ":finally" 等等。然后，脚本的处理
-			被终止。(函数定义里是否有 "abort" 参数都不相干。)
+			被终止。函数定义里是否有 "abort" 参数都不相干。
 			示例: >
-		:try | edit too much | finally | echo "cleanup" | endtry
-		:echo "impossible"	" 到不了这里，脚本在上面已经终止
+		try | call Unknown() | finally | echomsg "cleanup" | endtry
+		echomsg "not reached"
 <
 			另外，":try" 和 ":endtry" 之间的错误或者中断 (动态地)
 			被转换成一个例外。它的捕获过程如同它被 |:throw| 命令抛
@@ -10376,8 +10386,8 @@ text...
 			名，而 {errmsg} 是错误例外如果没有被捕获的时候会显示的
 			消息，它总以错误号开始。
 			示例: >
-		:try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
-		:try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
+		try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
+		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
 					*:cat* *:catch* *E603* *E604* *E605*
 :cat[ch] /{pattern}/	匹配 {pattern} 的例外抛出时，如果它没有被前一个
@@ -10505,6 +10515,9 @@ text...
 
 			此命令本可缩短为 `:ev` 或 `:eva`，但不易记，所以不提
 			供。
+
+			此命令不能后跟 "|" 加其它命令，因为 "|" 视为表达式的一
+			部分。
 
 
 							*:exe* *:execute*
