@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年2月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -153,17 +153,28 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 <code class="example">        writefile(lines, 'file')</code>
  <a href="eval.html#:call">:call</a>  还可用，但不鼓励。
 
-只要以标识符开始且不能是 Ex 命令，可直接调用方法而无需  <a href="eval.html#eval">eval</a> 。不能用于字符串
-常数: 
+只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需  <a href="eval.html#eval">eval</a> 。 <code class="emphasis">不能</code> 用于字
+符串常数: 
 <code class="example">        myList-&gt;add(123)                " 正确</code>
 <code class="example">        g:myList-&gt;add(123)              " 正确</code>
 <code class="example">        [1, 2, 3]-&gt;Process()            " 正确</code>
 <code class="example">        #{a: 1, b: 2}-&gt;Process()        " 正确</code>
 <code class="example">        {'a': 1, 'b': 2}-&gt;Process()     " 正确</code>
 <code class="example">        "foobar"-&gt;Process()             " _不_正确</code>
-<code class="example">        eval "foobar"-&gt;Process()        " 正确</code>
+<code class="example">        ("foobar")-&gt;Process()           " 正确</code>
+<code class="example">        'foobar'-&gt;Process()             " _不_正确</code>
+<code class="example">        ('foobar')-&gt;Process()           " 正确</code>
 <code class="example"></code>
+如果函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，既有
+ <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="eval.html#substitute()">substitute()</a>  函数。如果一行以  <code class="badlink">substitute(</code>  开始，
+会假定使用函数，要使用命令版本，加上冒号前缀: 
+<code class="example">        :substitute(pattern (replacement (</code>
 <code class="example"></code>
+<code class="note">注意</code> 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了函数间能相互依
+赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写错
+误只有在调用真正执行时才能发现。
+
+
 <code class="section">没有花括号扩展</code>
 
 不能使用  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
@@ -198,6 +209,9 @@ Vim9 脚本强制空白的正确使用。以下不再允许:
 <code class="example">        call Func(arg)     " 正确</code>
 <code class="example">        call Func(</code>
 <code class="example">             \ arg)        " 正确</code>
+<code class="example">        call Func(</code>
+<code class="example">             \ arg         " 正确</code>
+<code class="example">             \ )</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">条件和表达式</code>
@@ -267,9 +281,15 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
                                                         <b class="vimtag"> <a name=":enddef">:enddef</a> </b>
 :enddef                 结束  <a href="vim9.html#:def">:def</a>  定义的函数。
 
+如果函数定义所在的是 Vim9 脚本，可不经 "s:" 前缀直接访问局部于脚本的变量。这些
+变量必须在函数之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量必须
+通过 "s:" 前缀才能访问。
+
 
                                                 <b class="vimtag"> <a name=":disa">:disa</a> </b> <b class="vimtag"> <a name=":disassemble">:disassemble</a> </b>
 :disa[ssemble] <code class="special">{func}</code>   显示 <code class="special">{func}</code> 生成的指令序列。用于调试和测试。
+                        <code class="note">注意</code> <code class="special">{func}</code> 的命令行补全可在之前附加 "s:" 来查找局部于
+                        脚本的函数。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>4. 类型                                         <b class="vimtag"> <a name="vim9-types">vim9-types</a> </b>
