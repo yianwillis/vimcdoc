@@ -1,4 +1,4 @@
-*eval.txt*      适用于 Vim 8.2 版本。	最近更新: 2020年2月
+*eval.txt*      适用于 Vim 8.2 版本。	最近更新: 2020年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -2335,6 +2335,7 @@ matchstr({expr}, {pat} [, {start} [, {count}]])
 matchstrpos({expr}, {pat} [, {start} [, {count}]])
 				列表	{expr} 里 {pat} 的第 {count} 个匹配
 max({expr})			数值	{expr} 的项目的最大值
+menu_info({name} [, {mode}])	字典	获取菜单项目信息
 min({expr})			数值	{expr} 的项目的最小值
 mkdir({name} [, {path} [, {prot}]])
 				数值	建立目录 {name}
@@ -3905,6 +3906,7 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			这会影响撤销、打开折叠等行为。
 		'L'	底层输入。只用于 Unix 或 GUI。键的使用就像来自终端那
 			样。不使用其它标志位。		*E980*
+			CTRL-C 中断时，设置内部 "got_int" 标志位。
 		'i'	插入字符串而不是附加 (见上)。
 		'x'	执行命令，直至预输入为空为止。和 ":normal!" 类似。可以
 			不带 'x' 执行 feedkeys() 数次，然后一次性执行带 'x' 的
@@ -5162,6 +5164,13 @@ globpath({path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 has({feature})	返回数值，如果支持特性 {feature} 则为 1，不然为零。
 		{feature} 参数是字符串。见下面的 |feature-list|。
 		另见 |exists()|。
+		注意 特性不可用时，要跳过会有语法错误的代码，Vim 可能会跳过行
+		的其余部分，从而丢失其中跟随的 `endif`。所以，`endif` 请另起一
+		行: >
+			if has('feature')
+			  let x = this->breaks->without->the->feature
+			endif
+<		如果试图把 `endif` 移到第二行成为 "| endif"，它不会被找到。
 
 
 has_key({dict}, {key})					*has_key()*
@@ -6266,6 +6275,7 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 		也可用作 |method|: >
 			GetText()->matchstrpos('word')
 <
+
 							*max()*
 max({expr})	返回 {expr} 所有项目的最大值。
 		{expr} 可以是列表或字典。如果是字典，返回字典中所有值的最大
@@ -6275,6 +6285,60 @@ max({expr})	返回 {expr} 所有项目的最大值。
 
 		也可用作 |method|: >
 			mylist->max()
+
+
+menu_info({name} [, {mode}])				*menu_info()*
+		返回指定模式 {mode} 下的菜单 {name} 的信息。须指定不带快捷字符
+		('&') 的菜单名。
+
+		{mode} 可为下列字符串之一:
+			"n"	普通
+			"v"	可视 (包括选择)
+			"o"	操作符等待
+			"i"	插入
+			"c"	命令行
+			"s"	选择
+			"x"	可视
+			"t"	终端作业
+			""	普通、可视和操作符等待
+			"!"	插入和命令行
+		{mode} 省略时使用 "" 作为模式。
+
+		返回包含以下项的 |Dictionary|:
+		  accel		菜单项目加速文本 |menu-text|
+		  display	显示名 (不带 '&' 的名字)
+		  enabled	如果此菜单项目打开，返回 v:true
+				参考 |:menu-enable|
+		  icon		图标文件名 (用于工具栏) |toolbar-icon|
+		  iconidx	内建图标的索引
+		  modes		菜单为之定义的模式。除了上述模式以外，还使用以
+				下字符:
+				" "	普通、可视和操作符等待
+		  name		菜单项目名。
+		  noremenu	如果菜单项目的 {rhs} 不可重映射返回 v:true，否
+				则返回 v:false。
+		  priority	菜单顺序优先级 |menu-priority|
+		  rhs		菜单项目的右手边。返回字符串中的特殊字符以
+				":menu" 命令列表输出的同样的方式进行翻译。如果
+				菜单的 {rhs} 为空，返回 "<Nop>"。
+		  script	如果 {rhs} 允许局部于脚本的重映射，返回 v:true，
+				否则返回 v:false。见 |:menu-script|。
+		  shortcut	快捷键 (菜单名中 '&' 之后的字符)
+				|menu-shortcut|
+		  silent	如果菜单项目创建时带 <silent> 参数，返回 v:true
+				|:menu-silent|
+		  submenus	包含返回子菜单名的 |List|。仅当菜单项目有子菜
+				单时才存在。
+
+		如果菜单项目找不到，返回空字典。
+
+		示例: >
+			:echo menu_info('Edit.Cut')
+			:echo menu_info('File.Save', 'n')
+<
+		也可用作 |method|: >
+			GetMenuName()->menu_info('v')
+
 
 <							*min()*
 min({expr})	返回 {expr} 所有项目的最小值。
@@ -7552,6 +7616,9 @@ setpos({expr}, {list})
 setqflist({list} [, {action} [, {what}]])		*setqflist()*
 		创建或替代或加入到快速修复表。
 
+		如果提供了可选的 {what} 字典参数，只设置 {what} 列出的项目，忽
+		略首个参数 {list}。{what} 支持的项目见下。
+
 		如果不给出 {what}，使用 {list} 里的项目。每个 {list} 项目是一
 		个字典。{list} 里非字典的项目被忽略。每个字典项目可以包含以下
 		的项目:
@@ -7594,8 +7661,7 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 		修复列表之后加入新快速修复列表并释放其后的所有列表。要在栈的尾
 		部加入新快速修复列表，把 {what} 中的 "nr" 设为 "$"。
 
-		如果提供了可选的 {what} 字典参数，只设置 {what} 列出的项目，忽
-		略首个参数 {list}。{what} 支持以下项目:
+		{what} 支持以下项目:
 		    context	快速修复列表上下文。见 |quickfix-context|
 		    efm		解析 "lines" 时使用的 errorformat。如果没有给
 				出，使用 'errorformat' 选项值。
@@ -9175,10 +9241,11 @@ winlayout([{tabnr}])					*winlayout()*
 			" 两个水平分割的窗口
 			:echo winlayout()
 			['col', [['leaf', 1000], ['leaf', 1001]]]
-			" 三个水平分割的窗口，中间窗口有两个垂直分割的窗口
+			" 第二个标签页，其中有三个水平分割的窗口，中间窗口有两
+			" 个垂直分割的窗口
 			:echo winlayout(2)
-			['col', [['leaf', 1002], ['row', ['leaf', 1003],
-					     ['leaf', 1001]]], ['leaf', 1000]]
+			['col', [['leaf', 1002], ['row', [['leaf', 1003],
+					    ['leaf', 1001]]], ['leaf', 1000]]]
 <
 		也可用作 |method|: >
 			GetTabnr()->winlayout()
