@@ -2280,7 +2280,7 @@ glob(<code class="special">{expr}</code> [, <code class="special">{nosuf}</code>
 glob2regpat(<code class="special">{expr}</code>)             字符串  转化 glob 模式为搜索模式
 globpath(<code class="special">{path}</code>, <code class="special">{expr}</code> [, <code class="special">{nosuf}</code> [, <code class="special">{list}</code> [, <code class="special">{alllinks}</code>]]])
                                 字符串  在 <code class="special">{path}</code> 所有目录下执行 glob(<code class="special">{expr}</code>)
-has(<code class="special">{feature}</code>)                  数值    如果支持特性 <code class="special">{feature}</code> 则为  <a href="eval.html#TRUE">TRUE</a> 
+has(<code class="special">{feature}</code> [, <code class="special">{check}</code>])      数值    如果支持特性 <code class="special">{feature}</code> 则为  <a href="eval.html#TRUE">TRUE</a> 
 has_key(<code class="special">{dict}</code>, <code class="special">{key}</code>)          数值    如果 <code class="special">{dict}</code> 有项目 <code class="special">{key}</code> 则为  <a href="eval.html#TRUE">TRUE</a> 
 haslocaldir([<code class="special">{winnr}</code> [, <code class="special">{tabnr}</code>]])
                                 数值    如果当前窗口执行过  <a href="editing.html#:lcd">:lcd</a>  则为  <a href="eval.html#TRUE">TRUE</a> 
@@ -3718,9 +3718,11 @@ exists(<code class="special">{expr}</code>)  返回数值，如果 <code class="
                         +option-name    能工作的 Vim 选项。
                         $ENVNAME        环境变量 (也可以通过和空字符串比较完
                                         成)
-                        *funcname       内建函数 (见  <a href="eval.html#functions">functions</a> ) 或者用户定义
-                                        的函数 (见  <a href="eval.html#user-functions">user-functions</a> )。也可用于
-                                        指向函数引用的变量。
+                        *funcname       已实现的内建函数 (见  <a href="eval.html#functions">functions</a> ) 或者
+                                        用户定义的函数 (见  <a href="eval.html#user-functions">user-functions</a> )。
+                                        也可用于指向函数引用的变量。
+                        ?funcname       可实现的内建函数；用于检查 "funcname"
+                                        是否合法
                         varname         内部变量 (见  <a href="eval.html#internal-variables">internal-variables</a> )。也
                                         适用于  <a href="eval.html#curly-braces-names">curly-braces-names</a> 、
                                          <a href="eval.html#Dictionary">Dictionary</a>  项目、 <a href="eval.html#List">List</a>  项目等等。
@@ -3937,7 +3939,8 @@ feedkeys(<code class="special">{string}</code> [, <code class="special">{mode}</
                         这会影响撤销、打开折叠等行为。
                 'L'     底层输入。只用于 Unix 或 GUI。键的使用就像来自终端那
                         样。不使用其它标志位。          <b class="vimtag"> <a name="E980">E980</a> </b>
-                        <code class="keystroke">CTRL-C</code> 中断时，设置内部 "got_int" 标志位。
+                        <code class="keystroke">CTRL-C</code> 中断且包含 't' 标志位时，设置内部 "got_int" 标
+                        志位。
                 'i'     插入字符串而不是附加 (见上)。
                 'x'     执行命令，直至预输入为空为止。和 ":normal!" 类似。可以
                         不带 'x' 执行 feedkeys() 数次，然后一次性执行带 'x' 的
@@ -5192,9 +5195,18 @@ globpath(<code class="special">{path}</code>, <code class="special">{expr}</code
 <code class="example">                        GetExpr()-&gt;globpath(&amp;rtp)</code>
 
                                                         <b class="vimtag"> <a name="has()">has()</a> </b>
-has(<code class="special">{feature}</code>)  返回数值，如果支持特性 <code class="special">{feature}</code> 则为 1，不然为零。
-                <code class="special">{feature}</code> 参数是字符串。见下面的  <a href="eval.html#feature-list">feature-list</a> 。
+has(<code class="special">{feature}</code> [, <code class="special">{check}</code>])
+                如果 <code class="special">{check}</code> 省略或为零: 返回数值，如果支持特性 <code class="special">{feature}</code> 则为
+                1，不然为零。<code class="special">{feature}</code> 参数是大小写忽略的字符串。见下面的
+                 <a href="eval.html#feature-list">feature-list</a> 。
+
+                如果 <code class="special">{check}</code> 给出且非零: 返回数值，如果特性 <code class="special">{feature}</code> 可以支持，
+                则为 1，不然为零。可用于检查 <code class="special">{feature}</code> 是否有拼写错误，也可用
+                于检测死代码。要记住旧版本的 Vim 不知道新增的特性，而当前版本
+                的 Vim 也不会知道已废弃的特性。
+
                 另见  <a href="eval.html#exists()">exists()</a> 。
+
                 <code class="note">注意</code> 特性不可用时，要跳过会有语法错误的代码，Vim 可能会跳过行
                 的其余部分，从而丢失其中跟随的  <code class="badlink">endif</code> 。所以， <code class="badlink">endif</code>  请另起一
                 行: 
@@ -7732,6 +7744,7 @@ setqflist(<code class="special">{list}</code> [, <code class="special">{action}<
                                                         <b class="vimtag"> <a name="setreg()">setreg()</a> </b>
 setreg(<code class="special">{regname}</code>, <code class="special">{value}</code> [, <code class="special">{options}</code>])
                 设置寄存器 <code class="special">{regname}</code> 的值为 <code class="special">{value}</code>。
+                如果 <code class="special">{regname}</code> 为 "" 或 "@"，使用无名寄存器 '"'。
                 <code class="special">{value}</code> 可以是  <a href="eval.html#getreg()">getreg()</a>  返回的任何类型，包括  <a href="eval.html#List">List</a> 。
                 如果 <code class="special">{options}</code> 包含 "a" 或者 <code class="special">{regname}</code> 为大写，该值被附加于现
                 有值之后。
