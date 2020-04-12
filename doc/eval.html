@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年3月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -2627,6 +2627,7 @@ test_ignore_error(<code class="special">{expr}</code>)       无      忽略特�
 test_null_blob()                blob    用作测试的空值 (null)
 test_null_channel()             通道    用作测试的空值 (null)
 test_null_dict()                字典    用作测试的空值 (null)
+test_null_function()            函数引用        用作测试的空值 (null)
 test_null_job()                 作业    用作测试的空值 (null)
 test_null_list()                列表    用作测试的空值 (null)
 test_null_partial()             函数引用        用作测试的空值 (null)
@@ -2803,7 +2804,7 @@ arglistid([<code class="special">{winnr}</code> [, <code class="special">{tabnr}
                 <code class="special">{winnr}</code> 可以是窗口号或  <a href="windows.html#window-ID">window-ID</a> 。
 
                                                         <b class="vimtag"> <a name="argv()">argv()</a> </b>
-argv([<code class="special">{nr}</code> [, <code class="special">{winid}</code>])
+argv([<code class="special">{nr}</code> [, <code class="special">{winid}</code>]])
                 返回参数列表第 <code class="special">{nr}</code> 个参数。见  <a href="editing.html#arglist">arglist</a> 。"argv(0)" 是第一个参
                 数。例如: 
 <code class="example">        :let i = 0</code>
@@ -4604,10 +4605,11 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
 <code class="example">                        GetPattern()-&gt;getcompletion('color')</code>
 
                                                         <b class="vimtag"> <a name="getcurpos()">getcurpos()</a> </b>
-getcurpos()     返回光标位置。类似于 getpos('.')，但包含在列表中一个额外的项
-                目:
-<code class="section">                    [bufnum, lnum, col, off, curswant] </code>
+getcurpos()     返回光标位置。类似于 getpos('.')，但返回列表中包含一个额外的
+                "curswant" 项目:
+<code class="section">                    [0, lnum, col, off, curswant] </code>
                 "curswant" 数值是垂直移动光标时的首选列。另见  <a href="eval.html#getpos()">getpos()</a> 。
+                首个 "bufnum" 项目总是为零。
 
                 可用于保存和恢复光标位置: 
 <code class="example">                        let save_cursor = getcurpos()</code>
@@ -6051,6 +6053,7 @@ maparg(<code class="special">{name}</code> [, <code class="special">{mode}</code
                   "rhs"      映射的 <code class="special">{rhs}</code>，保持输入原样。
                   "silent"   1 若是  <a href="map.html#:map-silent">:map-silent</a>  映射，否则为 0。
                   "noremap"  1 若是映射的 <code class="special">{rhs}</code> 不能再映射。
+                  "script"   1 若是映射使用 <code class="special">&lt;script&gt;</code> 定义。
                   "expr"     1 若是表达式映射 ( <a href="map.html#:map-%3Cexpr%3E">:map-&lt;expr&gt;</a> )。
                   "buffer"   1 若是缓冲区本地映射 ( <a href="map.html#:map-local">:map-local</a> )。
                   "mode"     映射定义使用的模式。除了以上提到的模式以外，还会
@@ -7834,17 +7837,9 @@ settagstack(<code class="special">{nr}</code>, <code class="special">{dict}</cod
 
                 成功时返回零，失败则返回 -1。
 
-                示例:
-                    设置标签栈的当前索引为 4: 
-<code class="example">                        call settagstack(1005, {'curidx' : 4})</code>
-<code class="example"></code>
+                示例 (更多示例可见  <code class="badlink">tag-stack-examples</code> ):
                     清空窗口 3 的标签栈: 
 <code class="example">                        call settagstack(3, {'items' : []})</code>
-<code class="example"></code>
-                    给标签栈压入新项目: 
-<code class="example">                        let pos = [bufnr('myfile.txt'), 10, 1, 0]</code>
-<code class="example">                        let newtag = [{'tagname' : 'mytag', 'from' : pos}]</code>
-<code class="example">                        call settagstack(2, {'items' : newtag}, 'a')</code>
 <code class="example"></code>
                     保存并恢复标签栈: 
 <code class="example">                        let stack = gettagstack(1003)</code>
@@ -7927,7 +7922,9 @@ simplify(<code class="special">{filename}</code>)                               
                 除该组合。为了在简化路径名之前解析所有牵涉到的符号链接，使用
                  <a href="eval.html#resolve()">resolve()</a> 。
 
-
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetName()-&gt;simplify()</code>
+<code class="example"></code>
 sin(<code class="special">{expr}</code>)                                             <b class="vimtag"> <a name="sin()">sin()</a> </b>
                 返回浮点数，即以弧度测量的 <code class="special">{expr}</code> 的正弦值。
                 <code class="special">{expr}</code> 的计算结果必须是浮点数或数值。
@@ -9541,6 +9538,7 @@ hangul_input            编译时加入了韩语输入的支持。 <a href="hang
 hpux                    Vim 的 HP-UX 版本。
 iconv                   可以使用 iconv() 进行转换。
 insert_expand           编译时加入了插入模式中 <code class="keystroke">CTRL-X</code> 扩展命令的支持。(总为真)
+job                     编译时加入了  <a href="channel.html#channel">channel</a>  和  <a href="channel.html#job">job</a>  的支持
 jumplist                编译时加入了  <a href="motion.html#jumplist">jumplist</a>  的支持。
 keymap                  编译时加入了 <a href="options.html#'keymap'">'keymap'</a> 的支持。
 lambda                  编译时加入了  <a href="eval.html#lambda">lambda</a>  的支持。
@@ -9859,7 +9857,7 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
                                                 <b class="vimtag"> <a name="optional-function-argument">optional-function-argument</a> </b>
 可以提供位置命名参数的缺省值。这使得函数调用时它们成为可选参数。位置参数如果在
 调用时不指定，则使用缺省表达式来初始化。
-只用于  <a href="eval.html#:function">:function</a>  声明的函数，而不适用于匿名表达式  <a href="eval.html#expr-lambda">expr-lambda</a> 。
+只用于  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  声明的函数，而不适用于匿名表达式  <a href="eval.html#expr-lambda">expr-lambda</a> 。
 
 示例: 
 <code class="example">  function Something(key, value = 10)</code>
@@ -9893,8 +9891,8 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 <code class="example">  :function NoGood(first = a:second, second = 10)</code>
 <code class="example">  :endfunction</code>
 
-如果不使用 "..."，实际给出的参数数目必须等于必选参数的数目。如果使用 "..."，参
-数的数目可以更多。
+如果不使用 "..."，实际给出的参数数目必须至少等于必选参数的数目。如果使用
+"..."，参数的数目可以多于必选和可选参数的总数。
 
                                                         <b class="vimtag"> <a name="local-variables">local-variables</a> </b>
 在函数里，可以使用局部变量。它们在函数返回时就会消失。全局变量的访问需要通过
@@ -10202,7 +10200,7 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 :let [<code class="special">{name1}</code>, <code class="special">{name2}</code>, ...] -= <code class="special">{expr1}</code>
                         同上，但附加/加/减值到每个  <a href="eval.html#List">List</a>  项目。
 
-:let [<code class="special">{name}</code>, ..., ; <code class="special">{lastname}</code>] = <code class="special">{expr1}</code>
+:let [<code class="special">{name}</code>, ..., ; <code class="special">{lastname}</code>] = <code class="special">{expr1}</code>                              <b class="vimtag"> <a name="E452">E452</a> </b>
                         类似于上面的  <a href="eval.html#:let-unpack">:let-unpack</a> ，但  <a href="eval.html#List">List</a>  可以包含比给出名
                         字的数量更多的项目。列表其余项目赋给 <code class="special">{lastname}</code>。
                         如果没有余下的项目，<code class="special">{lastname}</code> 设为空列表。

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="tagsrch.txt">tagsrch.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年2月
+<b class="vimtag"> <a name="tagsrch.txt">tagsrch.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -194,6 +194,28 @@ FuncB。
 
  <a href="eval.html#gettagstack()">gettagstack()</a>  函数返回指定窗口的标签栈。 <a href="eval.html#settagstack()">settagstack()</a>  函数修改窗口的标签
 栈。
+
+                                                        <b class="vimtag"> <a name="tagstack-examples">tagstack-examples</a> </b>
+像  <a href="tagsrch.html#:tag">:tag</a>  那样写入标签栈，但用用户自定义的 jumper#jump_to_tag 函数: 
+<code class="example">        " 跳转前，先保存当前位置。</code>
+<code class="example">        let tag = expand('&lt;cword&gt;')</code>
+<code class="example">        let pos = [bufnr()] + getcurpos()[1:]</code>
+<code class="example">        let item = {'bufnr': pos[0], 'from': pos, 'tagname': tag}</code>
+<code class="example">        if jumper#jump_to_tag(tag)</code>
+<code class="example">                " 跳转成功，把之前的位置写入标签栈。</code>
+<code class="example">                let winid = win_getid()</code>
+<code class="example">                let stack = gettagstack(winid)</code>
+<code class="example">                let stack['items'] = [item]</code>
+<code class="example">                call settagstack(winid, stack, 't')</code>
+<code class="example">        endif</code>
+
+设置标签栈的当前索引为 4: 
+<code class="example">        call settagstack(1005, {'curidx' : 4})</code>
+
+给标签栈压入新项目: 
+<code class="example">        let pos = [bufnr('myfile.txt'), 10, 1, 0]</code>
+<code class="example">        let newtag = [{'tagname' : 'mytag', 'from' : pos}]</code>
+<code class="example">        call settagstack(2, {'items' : newtag}, 'a')</code>
 
                                                         <b class="vimtag"> <a name="E73">E73</a> </b>
 如果你试图使用标签栈，而其中没有任何内容，你会得到一个错误信息。

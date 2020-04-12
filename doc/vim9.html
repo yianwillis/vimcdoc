@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年3月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -143,6 +143,13 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
+全局变量必须带上 "g:" 前缀，即使脚本层的也是如此。
+不过，全局用户定义函数不用 "g:"。 
+<code class="example">        vim9script</code>
+<code class="example">        let script_local = 'text'</code>
+<code class="example">        let g:global = 'value'</code>
+<code class="example">        let Funcref = ThatFunction</code>
+<code class="example"></code>
 因为 "&amp;opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&amp;" 来重复
  <a href="change.html#:substitute">:substitute</a>  命令了。
 
@@ -175,6 +182,27 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 误只有在调用真正执行时才能发现。
 
 
+<code class="section">省略 function() </code>
+
+表达式中，用户定义函数可用作函数引用，而无需通过  <a href="eval.html#function()">function()</a> 。这里会检查参数
+类型和返回类型。函数必须已经有定义。 
+<code class="example"></code>
+<code class="example">        let Funcref = MyFunction</code>
+<code class="example"></code>
+使用  <a href="eval.html#function()">function()</a>  时，返回类型是 "func"，一个可带任何数量参数和任何返回类型的
+函数。函数此时可以延后定义。
+
+
+<code class="section">自动行继续 </code>
+
+许多情况下，表达式显然会在下一行继续。这些情况不需要在行前加入反斜杠。例如，当
+列表跨越多行时: 
+<code class="example">        let mylist = [</code>
+<code class="example">                'one',</code>
+<code class="example">                'two',</code>
+<code class="example">                ]</code>
+<code class="example"></code>
+<code class="example"></code>
 <code class="section">没有花括号扩展</code>
 
 不能使用  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
@@ -230,8 +258,7 @@ JavaScript，但有少许例外。
         blob            非空
         list            非空 (和 JavaScript 不同)
         dictionary      非空 (和 JavaScript 不同)
-        func            非 NULL 时
-        partial         非 NULL 时
+        func            有函数名时
         special         v:true
         job             非 NULL 时
         channel         非 NULL 时
@@ -263,7 +290,8 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
                         定义名为 <code class="special">{name}</code> 的新函数。在下面的行给出函数体，直到配
                         对的  <a href="vim9.html#:enddef">:enddef</a>  为止。
 
-                        <code class="special">{return-type}</code> 如果省略，函数不期待返回任何值。
+                        <code class="special">{return-type}</code> 如果省略或为 "void"，不期待函数返回任何
+                        值。
 
                         <code class="special">{arguments}</code> 是零或多个参数声明的序列。有以下三种形式:
                                 <code class="special">{name}</code>: <code class="special">{type}</code>
@@ -302,27 +330,44 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
         float
         string
         blob
-        list<code class="special">&lt;type&gt;</code>
-        dict<code class="special">&lt;type&gt;</code>
-        (a: type, b: type): type
+        list&lt;<code class="special">{type}</code>&gt;
+        dict&lt;<code class="special">{type}</code>&gt;
         job
         channel
         func
-        partial
+        func: <code class="special">{type}</code>
+        func(<code class="special">{type}</code>, ...)
+        func(<code class="special">{type}</code>, ...): <code class="special">{type}</code>
 
 尚未支持:
-        tuple&lt;a: type, b: type, ...&gt;
+        tuple&lt;a: <code class="special">{type}</code>, b: <code class="special">{type}</code>, ...&gt;
 
-以下类型可用于声明，但没有变量会有此类型:
-        type|type
+以下类型可用于声明，但不会有值有此类型:
+        <code class="special">{type}</code>|<code class="special">{type}</code>
         void
         any
 
-没有 array 类型，用 list<code class="special">&lt;type&gt;</code> 代替。list 常量使用了有效实现，以避免许多小片内
-存的分配。
+没有 array 类型，用 list&lt;<code class="special">{type}</code>&gt; 代替。list 常量使用了有效实现，以避免许多小片
+内存的分配。
 
- <a href="vim9.html#:def">:def</a>  定义的函数必须声明返回类型。如果没有类型，函数什么都不返回。"void" 可用
-于类型声明。
+可以用具体程度不同的方式来声明偏函数和函数:
+func                            任何类型的函数引用，不检查参数和返回值类型
+func: <code class="special">{type}</code>                    任何数量和类型的参数，特定返回类型
+func(<code class="special">{type}</code>)                    指定参数类型的函数，无返回值
+func(<code class="special">{type}</code>): <code class="special">{type}</code>            指定参数类型和返回类型的函数
+func(?<code class="special">{type}</code>)                   指定可选参数类型的函数，无返回值
+func(...<code class="special">{type}</code>)                 带可变数目的指定类型的函数，无返回值
+func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, ...<code class="special">{type}</code>): <code class="special">{type}</code>
+                                带以下的函数:
+                                - 必选参数的类型
+                                - 可选参数的类型
+                                - 可变数目参数的类型
+                                - 返回类型
+
+如果返回类型为 "void"，函数什么都不返回。
+
+引用也可是  <a href="eval.html#Partial">Partial</a> ，此时它保存了额外参数和/或字典，而这些对调用者是不可见
+的。因为调用方式相同，声明方式也是一致的。
 
 可用  <code class="badlink">:type</code>  定义定制类型: 
 <code class="example">        :type MyList list&lt;string&gt;</code>
