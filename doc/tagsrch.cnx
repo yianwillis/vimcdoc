@@ -1,4 +1,4 @@
-*tagsrch.txt*   适用于 Vim 8.2 版本。	最近更新: 2020年2月
+*tagsrch.txt*   适用于 Vim 8.2 版本。	最近更新: 2020年4月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -162,6 +162,28 @@ FuncB。
 |gettagstack()| 函数返回指定窗口的标签栈。|settagstack()| 函数修改窗口的标签
 栈。
 
+							*tagstack-examples*
+像 `:tag` 那样写入标签栈，但用用户自定义的 jumper#jump_to_tag 函数: >
+	" 跳转前，先保存当前位置。
+	let tag = expand('<cword>')
+	let pos = [bufnr()] + getcurpos()[1:]
+	let item = {'bufnr': pos[0], 'from': pos, 'tagname': tag}
+	if jumper#jump_to_tag(tag)
+		" 跳转成功，把之前的位置写入标签栈。
+		let winid = win_getid()
+		let stack = gettagstack(winid)
+		let stack['items'] = [item]
+		call settagstack(winid, stack, 't')
+	endif
+<
+设置标签栈的当前索引为 4: >
+	call settagstack(1005, {'curidx' : 4})
+<
+给标签栈压入新项目: >
+	let pos = [bufnr('myfile.txt'), 10, 1, 0]
+	let newtag = [{'tagname' : 'mytag', 'from' : pos}]
+	call settagstack(2, {'items' : newtag}, 'a')
+<
 							*E73*
 如果你试图使用标签栈，而其中没有任何内容，你会得到一个错误信息。
 

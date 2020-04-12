@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年3月
+*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年4月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -110,6 +110,13 @@ Vim9 函数~
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
+全局变量必须带上 "g:" 前缀，即使脚本层的也是如此。
+不过，全局用户定义函数不用 "g:"。 >
+	vim9script
+	let script_local = 'text'
+	let g:global = 'value'
+	let Funcref = ThatFunction
+
 因为 "&opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&" 来重复
 `:substitute` 命令了。
 
@@ -140,6 +147,27 @@ Vim9 函数~
 注意 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了函数间能相互依
 赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写错
 误只有在调用真正执行时才能发现。
+
+
+省略 function() ~
+
+表达式中，用户定义函数可用作函数引用，而无需通过 `function()`。这里会检查参数
+类型和返回类型。函数必须已经有定义。 >
+
+	let Funcref = MyFunction
+
+使用 `function()` 时，返回类型是 "func"，一个可带任何数量参数和任何返回类型的
+函数。函数此时可以延后定义。
+
+
+自动行继续 ~
+
+许多情况下，表达式显然会在下一行继续。这些情况不需要在行前加入反斜杠。例如，当
+列表跨越多行时: >
+	let mylist = [
+		'one',
+		'two',
+		]
 
 
 没有花括号扩展~
@@ -197,8 +225,7 @@ JavaScript，但有少许例外。
 	blob		非空
 	list		非空 (和 JavaScript 不同)
 	dictionary	非空 (和 JavaScript 不同)
-	func		非 NULL 时
-	partial		非 NULL 时
+	func		有函数名时
 	special		v:true
 	job		非 NULL 时
 	channel		非 NULL 时
@@ -231,7 +258,8 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
 			定义名为 {name} 的新函数。在下面的行给出函数体，直到配
 			对的 `:enddef` 为止。
 
-			{return-type} 如果省略，函数不期待返回任何值。
+			{return-type} 如果省略或为 "void"，不期待函数返回任何
+			值。
 
 			{arguments} 是零或多个参数声明的序列。有以下三种形式:
 				{name}: {type}
@@ -271,27 +299,44 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
 	float
 	string
 	blob
-	list<type>
-	dict<type>
-	(a: type, b: type): type
+	list<{type}>
+	dict<{type}>
 	job
 	channel
 	func
-	partial
+	func: {type}
+	func({type}, ...)
+	func({type}, ...): {type}
 
 尚未支持:
-	tuple<a: type, b: type, ...>
+	tuple<a: {type}, b: {type}, ...>
 
-以下类型可用于声明，但没有变量会有此类型:
-	type|type
+以下类型可用于声明，但不会有值有此类型:
+	{type}|{type}
 	void
 	any
 
-没有 array 类型，用 list<type> 代替。list 常量使用了有效实现，以避免许多小片内
-存的分配。
+没有 array 类型，用 list<{type}> 代替。list 常量使用了有效实现，以避免许多小片
+内存的分配。
 
-`:def` 定义的函数必须声明返回类型。如果没有类型，函数什么都不返回。"void" 可用
-于类型声明。
+可以用具体程度不同的方式来声明偏函数和函数:
+func				任何类型的函数引用，不检查参数和返回值类型
+func: {type}			任何数量和类型的参数，特定返回类型
+func({type})			指定参数类型的函数，无返回值
+func({type}): {type}		指定参数类型和返回类型的函数
+func(?{type})			指定可选参数类型的函数，无返回值
+func(...{type})			带可变数目的指定类型的函数，无返回值
+func({type}, ?{type}, ...{type}): {type}
+				带以下的函数:
+				- 必选参数的类型
+				- 可选参数的类型
+				- 可变数目参数的类型
+				- 返回类型
+
+如果返回类型为 "void"，函数什么都不返回。
+
+引用也可是 |Partial|，此时它保存了额外参数和/或字典，而这些对调用者是不可见
+的。因为调用方式相同，声明方式也是一致的。
 
 可用 `:type` 定义定制类型: >
 	:type MyList list<string>
