@@ -86,6 +86,17 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 
 还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
 
+<code class="section"># 开始的注释</code>
+
+Vim 通常以双引号开始脚本注释。但它也是字符串的开始，所以在很多地方不能使用。
+Vim9 也可用 # 开始脚本注释。通常这是带数字列出文本的命令，但可用  <a href="various.html#:number">:number</a>  代
+替。 
+<code class="example">        let count = 0  # Ni 出现的次数！</code>
+<code class="example"></code>
+为提高可读性，命令和开始注释的 # 之间必须有一个空格。<code class="note">注意</code> #{ 是字典的开始，所
+以不能用来开启注释。
+
+
 <code class="section">Vim9 函数</code>
 
  <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有额外的参数: "range"、"abort"、"dict" 或
@@ -99,6 +110,24 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 <code class="example">             ...</code>
 <code class="example"></code>
 <code class="example"></code>
+<code class="section">函数缺省局部于脚本</code>
+
+在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定脚本级别的新函数时，函数局部于
+脚本，就像用了 "s:" 前缀那样。要定义全局函数，必须使用 "g:" 前缀。
+
+在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定函数内的新函数时，函数局部于该
+函数。函数内不可以定义局部于脚本的函数。要定义全局函数，必须使用 "g:" 前缀。
+
+引用函数时如果不带 "s:" 或 "g:" 前缀，vim 会依以下顺序搜索函数:
+- 局部于当前函数作用域。
+- 局部于当前脚本文件。
+- 导入的函数，见  <a href="vim9.html#:import">:import</a> 。
+- 全局。
+
+可以在几乎任何时候定义和删除全局函数。vim9 脚本里，局部于脚本的函数在脚本载入
+时定义一次，且不能删除。
+
+
 <code class="section">用 :let 和 :const 声明变量</code>
 
 局部变量需用  <a href="eval.html#:let">:let</a>  定义。局部常量需用  <a href="eval.html#:const">:const</a>  定义。我们把两者都称为
@@ -201,6 +230,35 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 <code class="example">                'one',</code>
 <code class="example">                'two',</code>
 <code class="example">                ]</code>
+还有字典跨越多行时: 
+<code class="example">        let mydict = #{</code>
+<code class="example">                one: 1,</code>
+<code class="example">                two: 2,</code>
+<code class="example">                }</code>
+函数调用: 
+<code class="example">        let result = Func(</code>
+<code class="example">                        arg1,</code>
+<code class="example">                        arg2</code>
+<code class="example">                        )</code>
+<code class="example"></code>
+对不在 []、<code class="special">{}</code> 或 () 内的表达式中的二元操作符而言，可在操作符 <code class="emphasis">后</code> 断行。例如: 
+<code class="example">        let text = lead ..</code>
+<code class="example">                   middle ..</code>
+<code class="example">                   end</code>
+<code class="example">        let total = start +</code>
+<code class="example">                    end -</code>
+<code class="example">                    correction</code>
+<code class="example">        let result = positive ?</code>
+<code class="example">                        PosFunc(arg) :</code>
+<code class="example">                        NegFunc(arg)</code>
+<code class="example"></code>
+<code class="note">注意</code> "enddef" 不能用于继续行的开始，它会结束当前函数。
+
+函数声明也可以在参数间被分割为多行: 
+<code class="example">        def MyFunc(</code>
+<code class="example">                text: string,</code>
+<code class="example">                separator = '-'</code>
+<code class="example">                ): string</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">没有花括号扩展</code>
@@ -226,6 +284,9 @@ Vim9 脚本强制空白的正确使用。以下不再允许:
 <code class="example">        let var =234    " 出错！</code>
 "=" 前后必须有空白: 
 <code class="example">        let var = 234   " OK</code>
+开始注释的 # 之前必须有空白字符: 
+<code class="example">        let var = 234# 出错！</code>
+<code class="example">        let var = 234 # OK</code>
 <code class="example"></code>
 多数操作符需要用空白包围。
 
@@ -407,18 +468,20 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 些导出的项目，也只有那些项目，可以被其它脚本导入。
 
 
-<code class="section">命令空间</code>
+<code class="section">命名空间</code>
                                                         <b class="vimtag"> <a name=":vim9script">:vim9script</a> </b> <b class="vimtag"> <a name=":vim9">:vim9</a> </b>
 为了识别可导入的文件，文件出现的第一个语句必须是  <a href="vim9.html#vim9script">vim9script</a>  语句。它告知 Vim
-脚本在自己的命令空间而不是全局命令空间里被解释。如果文件这样开始: 
+脚本在自己的命名空间而不是全局命名空间里被解释。如果文件这样开始: 
 <code class="example">        vim9script</code>
 <code class="example">        let myvar = 'yes'</code>
 那么 "myvar" 只存在于此文件中。如果没有  <a href="vim9.html#vim9script">vim9script</a> ，可被其它脚本和函数用
  <code class="badlink">g:myvar</code>  访问。
 
-文件层级的变量和老式脚本里的局部 "s:" 变量非常类似，但省略 "s:"。
+文件层级的变量和老式脚本里的局部 "s:" 变量非常类似，但省略 "s:"。而且不能被删
+除。
 
-和以前一样，Vim9 脚本中仍然可用全局 "g:" 命令空间。
+和以前一样，Vim9 脚本中仍然可用全局 "g:" 命名空间。还有 "w:"、"b:" 和 "t:" 命
+名空间。它们的共同点是变量不声明，且可以删除。
 
  <a href="vim9.html#:vim9script">:vim9script</a>  一个副作用是 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项设为 Vim 缺省值，类似于: 
 <code class="example">        :set cpo&amp;vim</code>
@@ -504,7 +567,7 @@ vim9 脚本文件一旦导入，结果会被缓冲，下次导入相同脚本时
 <code class="section">在老式 Vim 脚本中导入</code>
 
 如果老式 Vim 脚本中使用了  <code class="badlink">import</code>  语句，标识符即使不指定 "s:"，也会使用脚本局
-部 "s:" 命令空间。
+部 "s:" 命名空间。
 
 
 </section><hr class="doubleline" /><section class=inner>
