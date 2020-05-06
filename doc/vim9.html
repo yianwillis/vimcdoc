@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年4月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年5月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -42,7 +42,7 @@
 
 还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
 
-Vim9 脚本命令和表达式。
+Vim9 脚本命令和表达式。                                 <b class="vimtag"> <a name="vim9">vim9</a> </b>
 
 多数表达式的帮助可见  <a href="eval.html#eval.txt">eval.txt</a> 。此文件是关于 Vim9 脚本的新语法和特性。
 
@@ -63,11 +63,14 @@ Vim9 脚本命令和表达式。
 还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
 
 Vim 脚本随着时间推移日渐庞大，同时需要保持后向兼容。这意味着过去所做的错误决定
-常常不能再改变。执行颇慢，每行在每次执行时都要先解析。
+常常不能再改变，而和 Vi 的兼容性限制了可能的解决方案。执行颇慢，每行在每次执行
+时都要先解析。
 
-Vim9 脚本的主要目标是大幅提高性能。可以期待执行速度有成十上百倍的提高。一个次
-要目标是避免 Vim 特定的构造，而尽量和包括 JavaScript、TypeScript 和 Java 这样
-的主流编程语言接近。
+Vim9 脚本的主要目标是大幅提高性能。这是通过把命令编译为可有效执行的指令完成
+的。可以期待执行速度有成十上百倍的提高。
+
+一个次要目标是避免 Vim 特定的构造，而尽量和包括 JavaScript、TypeScript 和 Java
+这样的主流编程语言接近。
 
 只有不 100% 后向兼容才能达到所需的性能提高。例如，在函数中参数不通过 "a:" 字典
 获取，因为字典的建立增加不少开销。其它一些差别，比如错误处理的方式，则更细微一
@@ -77,7 +80,7 @@ Vim9 脚本语法和语义用于:
 - 使用  <a href="vim9.html#:def">:def</a>  命令定义的函数
 - 首个命令是  <a href="vim9.html#vim9script">vim9script</a>  的脚本文件
 
-Vim9 脚本文件里如果用了  <a href="eval.html#:function">:function</a> ，会用老式的语法。不过不鼓励如此。
+Vim9 脚本文件里如果用了  <a href="eval.html#:function">:function</a> ，会用老式的语法。这容易混淆，所以不鼓励。
 
 Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，它们会继续工作。
 
@@ -89,9 +92,9 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 <code class="section"># 开始的注释</code>
 
 Vim 通常以双引号开始脚本注释。但它也是字符串的开始，所以在很多地方不能使用。
-Vim9 也可用 # 开始脚本注释。通常这是带数字列出文本的命令，但可用  <a href="various.html#:number">:number</a>  代
+Vim9 也可用 # 开始脚本注释。Vi 里这是带数字列出文本的命令，但可用  <a href="various.html#:number">:number</a>  代
 替。 
-<code class="example">        let count = 0  # Ni 出现的次数！</code>
+<code class="example">        let count = 0  # 出现的次数</code>
 <code class="example"></code>
 为提高可读性，命令和开始注释的 # 之间必须有一个空格。<code class="note">注意</code> #{ 是字典的开始，所
 以不能用来开启注释。
@@ -99,33 +102,49 @@ Vim9 也可用 # 开始脚本注释。通常这是带数字列出文本的命令
 
 <code class="section">Vim9 函数</code>
 
+由  <a href="vim9.html#:def">:def</a>  定义的函数进行编译。执行成倍加快，通常有 10x 到 100x 的加速。
+
+许多错误在编译时已经可以发现，而不用等到函数调用的时候。有严格的语法，以确保代
+码易读易理解。
+
  <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有额外的参数: "range"、"abort"、"dict" 或
 "closure"。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
 
-在函数体里:
-- 参数可用不带 "a:" 的名字访问。
-- 没有 "a:" 字典或 "a:000" 列表。通过给定名字和列表类型来定义可变参数: 
-<code class="example">        def MyFunc(...itemlist: list&lt;type&gt;)</code>
+必须指定参数类型和返回类型。可用 "any" 类型，和老式函数一样，此时类型检查会在
+运行时完成。
+
+参数可用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。
+
+类似于 Typescript，通过给定名字和列表类型的末项参数来定义可变参数。例如，数值
+的列表: 
+<code class="example">        def MyFunc(...itemlist: list&lt;number&gt;)</code>
 <code class="example">           for item in itemlist</code>
 <code class="example">             ...</code>
 <code class="example"></code>
 <code class="example"></code>
-<code class="section">函数缺省局部于脚本</code>
+<code class="section">函数和变量缺省局部于脚本</code>
 
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定脚本级别的新函数时，函数局部于
-脚本，就像用了 "s:" 前缀那样。要定义全局函数，必须使用 "g:" 前缀。
+脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。
+
+要定义和使用全局函数或变量，必须使用 "g:" 前缀。
 
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定函数内的新函数时，函数局部于该
-函数。函数内不可以定义局部于脚本的函数。要定义全局函数，必须使用 "g:" 前缀。
+函数。函数内不可以定义局部于脚本的函数。可以用 "g:" 前缀来定义全局函数。
 
 引用函数时如果不带 "s:" 或 "g:" 前缀，vim 会依以下顺序搜索函数:
-- 局部于当前函数作用域。
+- 局部于当前作用域及其外层各作用域，直到到达函数作用域为止。
 - 局部于当前脚本文件。
 - 导入的函数，见  <a href="vim9.html#:import">:import</a> 。
-- 全局。
+在所有情况下，函数必须先定义，然后才能使用。要能循环调用，必须使用全局函数。
+(TODO: 这需要修正吗？)
+
+其结果是，无命名空间的函数和变量可在定义所在或导入的脚本内访问。全局函数和变量
+可以在任何地方定义 (要找到需要点运气！)。
 
 可以在几乎任何时候定义和删除全局函数。vim9 脚本里，局部于脚本的函数在脚本载入
-时定义一次，且不能删除。
+时定义一次，且不能删除。除非相同的脚本被再次载入，此时所有的已有局部于脚本的函
+数和变量被先删除。
 
 
 <code class="section">用 :let 和 :const 声明变量</code>
@@ -172,12 +191,11 @@ Vim9 也可用 # 开始脚本注释。通常这是带数字列出文本的命令
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
-全局变量必须带上 "g:" 前缀，即使脚本层的也是如此。
-不过，全局用户定义函数不用 "g:"。 
+全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本层的也是如此。 
 <code class="example">        vim9script</code>
 <code class="example">        let script_local = 'text'</code>
 <code class="example">        let g:global = 'value'</code>
-<code class="example">        let Funcref = ThatFunction</code>
+<code class="example">        let Funcref = g:ThatFunction</code>
 <code class="example"></code>
 因为 "&amp;opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&amp;" 来重复
  <a href="change.html#:substitute">:substitute</a>  命令了。
