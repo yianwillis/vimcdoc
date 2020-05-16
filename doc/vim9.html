@@ -142,9 +142,49 @@ Vim9 也可用 # 开始脚本注释。Vi 里这是带数字列出文本的命令
 其结果是，无命名空间的函数和变量可在定义所在或导入的脚本内访问。全局函数和变量
 可以在任何地方定义 (要找到需要点运气！)。
 
-可以在几乎任何时候定义和删除全局函数。vim9 脚本里，局部于脚本的函数在脚本载入
-时定义一次，且不能删除。除非相同的脚本被再次载入，此时所有的已有局部于脚本的函
-数和变量被先删除。
+全局函数还是可以在几乎任何时候定义和删除。vim9 脚本里，局部于脚本的函数在脚本
+载入时定义一次，且不能删除。
+
+
+<code class="section">载入 Vim9 脚本的四个阶段</code>
+
+在老式脚本里，函数在遭遇时创立，但只在使用时解析。这样可以允许以任何顺序定义函
+<code class="section">数，并可相互调用，只要函数在调用时有定义便可: </code>
+        func One()
+           call Two()
+        endfunc
+        func Two()
+           if cond
+              call One()  " 递归调用
+           endif
+        endfunc
+        call One()
+
+Vim9 脚本里，函数经过编译。使用上例中同样的函数时，函数 One 在编译时不可以不知
+道函数 Two 的存在。不然就会需要运行时检查，这会变慢且不许可编译时的类型检查。
+
+载入 Vim9 脚本时，有四个阶段:
+1. 清理: 脚本载入前，删除所有局部于脚本的变量、导入和函数。
+2. 发现: 读入脚本，识别出函数、导入和变量的声明并解析其类型。变量的初始值设定
+   项如为常量时，进行计算以推出变量的类型。
+3. 编译: 编译函数。找到发现阶段识别的局部于脚本的函数、导入和变量并检查类型。
+4. 执行: 执行脚本中的命令，由头至尾。函数被跳过，因为不需要再次处理。变量的初
+   始值设定项在遭遇时进行计算。<code class="note">注意</code> 如果之前调用的某函数设置过该值，此时它会被
+   覆盖。最好变量在使用前先进行声明，以免此种混淆。
+
+这样做的效果是脚本层级定义的项目可以在脚本的任何位置使用。所以可在顶部放上主函
+数: 
+<code class="example">        def Main()</code>
+<code class="example">          SubOne()</code>
+<code class="example">          SubTwo()</code>
+<code class="example">        enddef</code>
+<code class="example">        def SubOne()</code>
+<code class="example">          ...</code>
+<code class="example">        def SubTwo()</code>
+<code class="example">          ...</code>
+<code class="example"></code>
+<code class="note">注意</code> 局部于脚本的变量必须给出类型定义或有常量的初始值设定项。否则会报出类型未
+知的错误。
 
 
 <code class="section">用 :let 和 :const 声明变量</code>

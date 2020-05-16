@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年4月
+<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年5月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -75,22 +75,17 @@
 ----------------------- 已知漏洞和当前工作 --------------------------
 
 Vim9 script:
-Big changes, need design:
-- Make closures work:
-  Grab the part of the stack that has the arguments and local vars.
-  Pass a pointer and offset to the closure where this stack fragment is (frame
-  pointer).
-  When a closure disappears at end of the function - nothing to do.
-  When a closure remains at end of the function: copy frame, attach to closure.
-- At the vim9 script level: Allow using a function that is defined later.
-  Requires compiling functions only when the whole script has been sourced.
-  Like Javascript "hoisting", but only at the script level:
-  1. Discovery phase: Read the file to find all functions, variable
-     declarations and imports If a variable has a constant expression we get
-     the type, otherwise it will be "any".  Follow imports recursively.
-  2. Compilation phase: compile :def function bodies, using declared types
-  3. Execution phase: Execute imports when encountered. (skip over functions)
-- When sourcing a script again, also delete script-local variables.
+Make closures work:
+  - call closure from not compiled context
+  - Create closure in a loop.  Need to make a list of them.
+Forward declarations:
+  - Cleanup when sourcing a script again: all script-local variables, imports
+    and functions are deleted.
+  - make sure only constants in declarations are executed, no function calls.
+  - Declare a variable at script level without an assignment.
+        let var: string
+    Error without a type or assignment
+        let var  # error!
 Making everything work:
 - Test that a script-local function in Vim9 script cannot be deleted.
 - Test that a function defined inside a :def function is local to that
@@ -98,7 +93,13 @@ Making everything work:
   defined.
 - Check that when using a user function name without prefix, it does not find
   a global function.  Prefixing g: is required.
-- Compile let [var, var] = expr
+- Compile: let [var, var] = expr
+- Compile: for [key, value] in items(map)
+- Assignment to dict doesn't work:
+      let ret: dict<code class="special">&lt;string&gt;</code> = #<code class="special">{}</code>
+      ret[i] = string(i)
+- Appending to dict item doesn't work:
+    let d[i] ..= value
 - Compile replacement of :s command: s/pat/\=expr/
 - Compile redir to local variable: var_redir_start().
 - Compile builtin functions that access local variables:
@@ -115,11 +116,8 @@ Making everything work:
 - expandcmd() with  <code class="badlink">=expr</code>  in filename uses legacy expression.
 - eval_expr() in ex_cexpr()
 - eval_expr() call in dbg_parsearg() and debuggy_find()
+- Make "true" and "false" work in vim9script
 New syntax and functionality:
-- define function and create funcref in one step:
-        let ref = def(arg: type): rettype
-            body
-        enddef
 Improve error checking:
 - "echo Func()" is an error if Func() does not return anything.
 Also:
@@ -154,6 +152,10 @@ Further improvements:
 - compile options that are an expression, e.g. "expr:" in <a href="options.html#'spellsuggest'">'spellsuggest'</a>,
   <a href="options.html#'foldexpr'">'foldexpr'</a>, <a href="options.html#'foldtext'">'foldtext'</a>, <a href="options.html#'printexpr'">'printexpr'</a>, <a href="options.html#'diffexpr'">'diffexpr'</a>, <a href="options.html#'patchexpr'">'patchexpr'</a>, <a href="options.html#'charconvert'">'charconvert'</a>,
   <a href="options.html#'balloonexpr'">'balloonexpr'</a>, <a href="options.html#'includeexpr'">'includeexpr'</a>, <a href="options.html#'indentexpr'">'indentexpr'</a>, <a href="options.html#'formatexpr'">'formatexpr'</a>.
+- Make inline function work, to be used as a funcref:
+        let ref = def(arg: type): rettype
+            body
+        enddef
 - compile get_lambda_tv() in popup_add_timeout()
 - compile "skip" argument of searchpair()
 - compile "expr" and "call" expression of a channel in channel_exe_cmd()?
@@ -290,6 +292,11 @@ Patch for the Haiku port: #5961
 
 Patch to add Turkish manual. (Emir Sarı, #5641)
 
+Patch to add lua sleep function. (Prabir Shrestha, #6057)
+Alternative: use vim.call and vim.fn: #6063
+
+Patch to add getmarklist() (Yegappan, #6032)
+
 Patch to support different color for undercurl in cterm.
 (Timur Celik, #6011)
 
@@ -324,6 +331,10 @@ Patch to delete BeOS code. (#5817)  Anyone who wants to keep it?
 
 With bash ":make" does not set v:shell_error.  Possible solution: set
 <a href="options.html#'shellpipe'">'shellpipe'</a> to "2&gt;&amp;1| tee %s; exit $<code class="special">{PIPESTATUS[0]}</code>"  #5994
+
+When changing the crypt key the buffer should be considered modified.
+Like when changing <a href="options.html#'fileformat'">'fileformat'</a>.  Save the old key in save_file_ff().
+(Ninu-Ciprian Marginean)
 
 Strange sequence of BufWipeout and BufNew events while doing omni-complete.
 (Paul Jolly, #5656)
@@ -391,8 +402,6 @@ goes to any buffer, and then :bnext skips help buffers, since they are
 unlisted. (#4478)
 
 Patch to include reduce() function. (#5481)
-
-When SIGTSTP is ignored, don't let <code class="keystroke">CTRL-Z</code> suspend Vim? (Kurtis Rader, #5990)
 
 Statusline highlighting error, off by one. (#5599)
 

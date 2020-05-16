@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年1月
+<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年5月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -419,6 +419,9 @@ Vim 会用 <a href="options.html#'shell'">'shell'</a> 来执行反引号内的�
 <code class="example"></code>
 <code class="example">        :w ++enc=latin1 newfile</code>
 把当前缓冲区写入到 "newfile"，以 latin1 编码。
+
+当 <a href="options.html#'fileencoding'">'fileencoding'</a> 或 ++enc 指定的值不同于 <a href="options.html#'encoding'">'encoding'</a> 时，写入文件时给出的消息
+会显示 "[已转换]"。
 
 可以用多个 ++opt 参数，以空格分隔。它们都必须在任何  <a href="editing.html#+cmd">+cmd</a>  参数之前。
 
@@ -932,9 +935,10 @@ Unix 上当文件名不引用一个普通文件或者目录时，检测为设备
 </section><hr class="doubleline" /><section class=inner>
 <h4>5. 写入并退出                                           <b class="vimtag"> <a name="write-quit">write-quit</a> </b></h4>
                                                         <b class="vimtag"> <a name=":q">:q</a> </b> <b class="vimtag"> <a name=":quit">:quit</a> </b>
-:q[uit]                 退出当前窗口。如果是最后的一个，退出 Vim。如果已经有
-                        修改而且 Vim 拒绝放弃  <a href="editing.html#abandon">abandon</a>  当前的缓冲区，或者
-                        如果参数列表的最后一个文件还没有被编辑，该操作失败。
+:q[uit]                 退出当前窗口。如果是最后的一个  <a href="windows.html#edit-window">edit-window</a> ，退出
+                        Vim。如果已经有修改而且 Vim 拒绝放弃  <a href="editing.html#abandon">abandon</a>  当前的
+                        缓冲区，或者如果参数列表的最后一个文件还没有被编辑，该
+                        操作失败。
                         如果有其它标签页，并且退出的是当前标签页的最后一个窗
                         口，关闭当前标签页  <a href="tabpage.html#tab-page">tab-page</a> 。
                         激活  <a href="autocmd.html#QuitPre">QuitPre</a>  自动命令事件。
@@ -954,17 +958,21 @@ Unix 上当文件名不引用一个普通文件或者目录时，检测为设备
                          <a href="quickfix.html#quickfix">quickfix</a> )。
 
                                                         <b class="vimtag"> <a name=":wq">:wq</a> </b>
-:wq <code class="special">[++opt]</code>             写回当前的文件并且退出。如果文件只读或者该缓冲区无名，
-                        写回操作将失败。如果参数列表的最后一个文件还没有编辑，
-                        那么退出操作将会失败。
+:wq <code class="special">[++opt]</code>             写回当前的文件并且关闭窗口。如果是最后的一个
+                         <a href="windows.html#edit-window">edit-window</a> ，Vim 退出。
+                        如果文件只读或者该缓冲区无名，写回操作失败。如果参数列
+                        表的最后一个文件还没有编辑，则退出操作失败。
 
-:wq! <code class="special">[++opt]</code>            写回当前的文件并且退出。如果当前缓冲区无名，则写回操作
-                        将失败。
+:wq! <code class="special">[++opt]</code>            写回当前的文件并且关闭窗口。如果是最后的一个
+                         <a href="windows.html#edit-window">edit-window</a> ，Vim 退出。如果当前缓冲区无名，则写回操
+                        作失败。
 
-:wq <code class="special">[++opt]</code> <code class="special">{file}</code>      写入到 <code class="special">{file}</code> 并且退出。 如果参数列表的最后一个文件还
-                        没有编辑， 那么退出操作将会失败。
+:wq <code class="special">[++opt]</code> <code class="special">{file}</code>      写入到 <code class="special">{file}</code> 并且关闭窗口。如果是最后的一个
+                         <a href="windows.html#edit-window">edit-window</a> ，Vim 退出。如果参数列表的最后一个文件还
+                        没有编辑， 则退出操作失败。
 
-:wq! <code class="special">[++opt]</code> <code class="special">{file}</code>     写入到 <code class="special">{file}</code> 并且退出。
+:wq! <code class="special">[++opt]</code> <code class="special">{file}</code>     写入到 <code class="special">{file}</code> 并且关闭窗口。如果是最后的一个
+                         <a href="windows.html#edit-window">edit-window</a> ，Vim 退出。
 
 :<code class="special">[range]</code>wq[!] <code class="special">[++opt]</code> <code class="special">[file]</code>
                         同上，但只写入 <code class="special">[range]</code> 界定的那些行。
@@ -980,9 +988,9 @@ Unix 上当文件名不引用一个普通文件或者目录时，检测为设备
                         同 :xit。
 
                                                         <b class="vimtag"> <a name="ZZ">ZZ</a> </b>
-ZZ                      如果文件被修改，写回当前文件。然后退出。(和 :x 相
-                        同)。(<code class="note">注意</code>: 如果有当前文件有多个窗口，该文件在被修改
-                        时会被写回，当前窗口会被关闭)。
+ZZ                      如果文件被修改，写回当前文件。然后关闭当前窗口。(和 :x
+                        相同)。
+                        如果有当前文件有多个窗口，只有当前窗口会被关闭。
 
                                                         <b class="vimtag"> <a name="ZQ">ZQ</a> </b>
 ZQ                      退出，不检查是否发生了修改 (同 ":q!")。
