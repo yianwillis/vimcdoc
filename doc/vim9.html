@@ -72,9 +72,8 @@ Vim9 脚本的主要目标是大幅提高性能。这是通过把命令编译为
 一个次要目标是避免 Vim 特定的构造，而尽量和包括 JavaScript、TypeScript 和 Java
 这样的主流编程语言接近。
 
-只有不 100% 后向兼容才能达到所需的性能提高。例如，在函数中参数不通过 "a:" 字典
-获取，因为字典的建立增加不少开销。其它一些差别，比如错误处理的方式，则更细微一
-些。
+只有不 100% 后向兼容才能达到所需的性能提高。例如，要使函数参数可通过 "a:" 字典
+获取，会增加不少开销。其它一些差别，比如错误处理的方式，则更细微一些。
 
 Vim9 脚本语法和语义用于:
 - 使用  <a href="vim9.html#:def">:def</a>  命令定义的函数
@@ -104,11 +103,13 @@ Vim9 也可用 # 开始脚本注释。Vi 里这是带数字列出文本的命令
 
 由  <a href="vim9.html#:def">:def</a>  定义的函数进行编译。执行成倍加快，通常有 10x 到 100x 的加速。
 
-许多错误在编译时已经可以发现，而不用等到函数调用的时候。有严格的语法，以确保代
+许多错误在编译时已经可以发现，而不用等到函数执行的时候。有严格的语法，以确保代
 码易读易理解。
 
- <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有额外的参数: "range"、"abort"、"dict" 或
-"closure"。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
+编译在函数第一次调用时，或遇到脚本中定义函数的  <a href="vim9.html#:defcompile">:defcompile</a>  命令时完成。
+
+ <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有 "range"、"abort"、"dict" 或 "closure" 这样的选
+项。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
 
 必须指定参数类型和返回类型。可用 "any" 类型，和老式函数一样，此时类型检查会在
 运行时完成。
@@ -136,55 +137,14 @@ Vim9 也可用 # 开始脚本注释。Vi 里这是带数字列出文本的命令
 - 局部于当前作用域及其外层各作用域，直到到达函数作用域为止。
 - 局部于当前脚本文件。
 - 导入的函数，见  <a href="vim9.html#:import">:import</a> 。
-在所有情况下，函数必须先定义，然后才能使用。要能循环调用，必须使用全局函数。
-(TODO: 这需要修正吗？)
+在所有情况下，函数必须先定义，然后才能使用。这是函数第一次调用或是
+ <a href="vim9.html#:defcompile">:defcompile</a>  导致调用被编译的时候。
 
 其结果是，无命名空间的函数和变量可在定义所在或导入的脚本内访问。全局函数和变量
 可以在任何地方定义 (要找到需要点运气！)。
 
 全局函数还是可以在几乎任何时候定义和删除。vim9 脚本里，局部于脚本的函数在脚本
-载入时定义一次，且不能删除。
-
-
-<code class="section">载入 Vim9 脚本的四个阶段</code>
-
-在老式脚本里，函数在遭遇时创立，但只在使用时解析。这样可以允许以任何顺序定义函
-<code class="section">数，并可相互调用，只要函数在调用时有定义便可: </code>
-        func One()
-           call Two()
-        endfunc
-        func Two()
-           if cond
-              call One()  " 递归调用
-           endif
-        endfunc
-        call One()
-
-Vim9 脚本里，函数经过编译。使用上例中同样的函数时，函数 One 在编译时不可以不知
-道函数 Two 的存在。不然就会需要运行时检查，这会变慢且不许可编译时的类型检查。
-
-载入 Vim9 脚本时，有四个阶段:
-1. 清理: 脚本载入前，删除所有局部于脚本的变量、导入和函数。
-2. 发现: 读入脚本，识别出函数、导入和变量的声明并解析其类型。变量的初始值设定
-   项如为常量时，进行计算以推出变量的类型。
-3. 编译: 编译函数。找到发现阶段识别的局部于脚本的函数、导入和变量并检查类型。
-4. 执行: 执行脚本中的命令，由头至尾。函数被跳过，因为不需要再次处理。变量的初
-   始值设定项在遭遇时进行计算。<code class="note">注意</code> 如果之前调用的某函数设置过该值，此时它会被
-   覆盖。最好变量在使用前先进行声明，以免此种混淆。
-
-这样做的效果是脚本层级定义的项目可以在脚本的任何位置使用。所以可在顶部放上主函
-数: 
-<code class="example">        def Main()</code>
-<code class="example">          SubOne()</code>
-<code class="example">          SubTwo()</code>
-<code class="example">        enddef</code>
-<code class="example">        def SubOne()</code>
-<code class="example">          ...</code>
-<code class="example">        def SubTwo()</code>
-<code class="example">          ...</code>
-<code class="example"></code>
-<code class="note">注意</code> 局部于脚本的变量必须给出类型定义或有常量的初始值设定项。否则会报出类型未
-知的错误。
+载入时定义一次，且不能删除或替代。
 
 
 <code class="section">用 :let 和 :const 声明变量</code>
@@ -218,7 +178,7 @@ Vim9 脚本里，函数经过编译。使用上例中同样的函数时，函数
 <code class="example">        endif</code>
 <code class="example">        echo inner</code>
 <code class="example"></code>
-要有意地运用之后不可用的变量，可用代码块: 
+要有意识地防止某个变量在其后仍可用，可用代码块: 
 <code class="example">        {</code>
 <code class="example">           let temp = 'temp'</code>
 <code class="example">           ...</code>
@@ -423,7 +383,8 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
                         <code class="note">注意</code>: 在  <a href="vim9.html#:def">:def</a>  里可以嵌套另一个  <a href="vim9.html#:def">:def</a> ，但为了后向兼
                         容起见，不可以在  <a href="eval.html#:function">:function</a>  里嵌套  <a href="vim9.html#:def">:def</a> 。
 
-                        [!] 的用法同  <a href="eval.html#:function">:function</a> 。
+                        [!] 的用法同  <a href="eval.html#:function">:function</a> 。<code class="note">注意</code> Vim9 脚本里局部于脚本的
+                        函数不能删除或重定义。
 
                                                         <b class="vimtag"> <a name=":enddef">:enddef</a> </b>
 :enddef                 结束  <a href="vim9.html#:def">:def</a>  定义的函数。
@@ -432,6 +393,9 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
 变量必须在函数之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量必须
 通过 "s:" 前缀才能访问。
 
+                                                <b class="vimtag"> <a name=":defc">:defc</a> </b> <b class="vimtag"> <a name=":defcompile">:defcompile</a> </b>
+:defc[ompile]           编译尚未编译的在当前脚本中定义的函数。
+                        编译中如有错误，会报错。
 
                                                 <b class="vimtag"> <a name=":disa">:disa</a> </b> <b class="vimtag"> <a name=":disassemble">:disassemble</a> </b>
 :disa[ssemble] <code class="special">{func}</code>   显示 <code class="special">{func}</code> 生成的指令序列。用于调试和测试。

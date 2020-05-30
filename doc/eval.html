@@ -562,11 +562,13 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 <code class="note">注意</code> 这不影响字典项目的顺序，不要希望 ":echo adict" 会先显示原有 adict 项目，
 然后再显示 bdict 的项目。
 
-从字典里删除多个项目可以用  <a href="eval.html#filter()">filter()</a>  完成: 
+可用  <a href="eval.html#filter()">filter()</a>  从字典里删除多个项目: 
 <code class="example">        :call filter(dict, 'v:val =~ "x"')</code>
-删除 "dict" 里所有值不匹配 "x" 的项目。
-
-
+会删除 "dict" 里所有值不匹配 "x" 的项目。
+也可这样来删除所有的项目: 
+<code class="example">        call filter(dict, 0)</code>
+<code class="example"></code>
+<code class="example"></code>
 <code class="section">字典函数 </code>
                                 <b class="vimtag"> <a name="Dictionary-function">Dictionary-function</a> </b> <b class="vimtag"> <a name="self">self</a> </b> <b class="vimtag"> <a name="E725">E725</a> </b> <b class="vimtag"> <a name="E862">E862</a> </b>
 定义函数时，如果带有 "dict" 属性，可以以一种特殊方式使用字典。例如: 
@@ -1258,6 +1260,9 @@ string                                  <b class="vimtag"> <a name="string">stri
         转义。
         双引号必须转义: "&lt;M-\"&gt;"。
         不要用 <code class="special">&lt;Char-xxxx&gt;</code> 来得到 utf-8 字符，用上面提到的 \uxxxxx。
+\<code class="special">{xxx}</code>  类似于 \<code class="special">&lt;xxx&gt;</code>，但在之前附加修饰符而不是把它包含到字符里。例如，
+        "\<code class="special">&lt;C-w&gt;</code>" 是单个字符 0x17，而 "\<code class="special">{C-w}</code>" 是四个字节: CTRL 修饰符对应 3
+        个，然后是字符 "W"。
 
 <code class="note">注意</code> "\xff" 保存为字节 255，在某些编码中它是不合法的。使用 "\u00ff" 可以按照
 <a href="options.html#'encoding'">'encoding'</a> 的当前值保存字符 255。
@@ -2352,6 +2357,8 @@ maparg(<code class="special">{name}</code> [, <code class="special">{mode}</code
                                         模式 <code class="special">{mode}</code> 的映射 <code class="special">{name}</code> 的右手边
 mapcheck(<code class="special">{name}</code> [, <code class="special">{mode}</code> [, <code class="special">{abbr}</code>]])
                                 字符串  检查匹配 <code class="special">{name}</code> 的映射
+mapset(<code class="special">{mode}</code>, <code class="special">{abbr}</code>, <code class="special">{dict}</code>)
+                                无      从  <a href="eval.html#maparg()">maparg()</a>  返回值恢复映射
 match(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
                                 数值    <code class="special">{expr}</code> 里 <code class="special">{pat}</code> 的匹配位置
 matchadd(<code class="special">{group}</code>, <code class="special">{pattern}</code> [, <code class="special">{priority}</code> [, <code class="special">{id}</code> [, <code class="special">{dict}</code>]]])
@@ -2682,6 +2689,7 @@ win_splitmove(<code class="special">{nr}</code>, <code class="special">{target}<
                                 数值    移动窗口 <code class="special">{nr}</code> 成为 <code class="special">{target}</code> 的分割窗口
 winbufnr(<code class="special">{nr}</code>)                  数值    窗口 <code class="special">{nr}</code> 的缓冲区号
 wincol()                        数值    光标所在的窗口列
+windowsversion()                字符串  MS-Windows 操作系统版本
 winheight(<code class="special">{nr}</code>)                 数值    窗口 <code class="special">{nr}</code> 的高度
 winlayout([<code class="special">{tabnr}</code>])            列表    标签页 <code class="special">{tabnr}</code> 的窗口布局
 winline()                       数值    光标所在的窗口行
@@ -3659,7 +3667,7 @@ executable(<code class="special">{expr}</code>)                                 
                 MS-Windows 上，可以可选地包含 ".exe"、".bat" 等。为此，
                 $PATHEXT 里的扩展名会被尝试。这样，如果 "foo.exe" 不存在，可能
                 会找到 "foo.exe.bat"。如果没有设置 $PATHEXT，使用的是
-                ".exe;.com;.bat;.cmd"。$PATHEXT 里可以使用单独的句号，以尝试没
+                ".com;.exe;.bat;.cmd"。$PATHEXT 里可以使用单独的句号，以尝试没
                 有扩展名的名字。如果 <a href="options.html#'shell'">'shell'</a> 看起来像 Unix 外壳，那么也尝试没
                 有扩展名的名字。
                 MS-Windows 上，只检查是否文件存在且不是目录，并不检查它是否真
@@ -6029,6 +6037,7 @@ map(<code class="special">{expr1}</code>, <code class="special">{expr2}</code>) 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mylist-&gt;map(expr2)</code>
 <code class="example"></code>
+<code class="example"></code>
 maparg(<code class="special">{name}</code> [, <code class="special">{mode}</code> [, <code class="special">{abbr}</code> [, <code class="special">{dict}</code>]]])                 <b class="vimtag"> <a name="maparg()">maparg()</a> </b>
                 当 <code class="special">{dict}</code> 省略或为零，返回模式 <code class="special">{mode}</code> 名为 <code class="special">{name}</code> 的映射的右手
                 边 (rhs)。返回字符串中的特殊字符用和 ":map" 命令输出的同样方式
@@ -6055,8 +6064,11 @@ maparg(<code class="special">{name}</code> [, <code class="special">{mode}</code
 
                 如果提供 <code class="special">{dict}</code> 且为  <a href="eval.html#TRUE">TRUE</a> ，返回字典，包含关于映射的所有信
                 息。有如下项目:
-                  "lhs"      映射的 <code class="special">{lhs}</code>。
-                  "rhs"      映射的 <code class="special">{rhs}</code>，保持输入原样。
+                  "lhs"      映射的 <code class="special">{lhs}</code>，作为键盘输入
+                  "lhsraw"   映射的 <code class="special">{lhs}</code>，保留原始字节
+                  "lhsrawalt" 映射的 <code class="special">{lhs}</code>，保留原始字节，这是一种替代形式，仅
+                              当和 "lhsraw" 不同时才会存在
+                  "rhs"      映射的 <code class="special">{rhs}</code>，作为键盘输入。
                   "silent"   1 若是  <a href="map.html#:map-silent">:map-silent</a>  映射，否则为 0。
                   "noremap"  1 若是映射的 <code class="special">{rhs}</code> 不能再映射。
                   "script"   1 若是映射使用 <code class="special">&lt;script&gt;</code> 定义。
@@ -6070,6 +6082,8 @@ maparg(<code class="special">{name}</code> [, <code class="special">{mode}</code
                   "sid"      脚本局部 ID，用于 <code class="special">&lt;sid&gt;</code> 映射 ( <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> )。
                   "lnum"     "sid" 中的行号，如果未知则为零。
                   "nowait"   不等待其它更长的映射。( <a href="map.html#:map-%3Cnowait%3E">:map-&lt;nowait&gt;</a> )。
+
+                此字典可用  <a href="eval.html#mapset()">mapset()</a>  来恢复映射。
 
                 先检查局部于当前缓冲区的映射，然后再检查全局映射。
                 此函数可以用来给键映射。如果已经映射过，还可以使用原来映射的内
@@ -6107,6 +6121,21 @@ mapcheck(<code class="special">{name}</code> [, <code class="special">{mode}</co
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetKey()-&gt;mapcheck('n')</code>
 <code class="example"></code>
+<code class="example"></code>
+mapset(<code class="special">{mode}</code>, <code class="special">{abbr}</code>, <code class="special">{dict}</code>)                          <b class="vimtag"> <a name="mapset()">mapset()</a> </b>
+                从  <a href="eval.html#maparg()">maparg()</a>  返回的字典中恢复映射。
+                <code class="special">{mode}</code> 和 <code class="special">{abbr}</code> 应和  <a href="eval.html#maparg()">maparg()</a>  调用时所用之值相同. <b class="vimtag"> <a name="E460">E460</a> </b>
+                <code class="special">{mode}</code> 用于定义映射设置所在的模式，而不是 <code class="special">{dict}</code> 中的 "mode"
+                项目。
+                保存和恢复映射的示例: 
+<code class="example">                        let save_map = maparg('K', 'n', 0, 1)</code>
+<code class="example">                        nnoremap K 其它映射值</code>
+<code class="example">                        ...</code>
+<code class="example">                        call mapset('n', 0, save_map)</code>
+                <code class="note">注意</code> 要替换适用于若干模式下的映射，如  <a href="map.html#:map!">:map!</a>  这样的，你需要分
+                别保存所有模式下的映射，因为它们之间可能不同。
+
+
 match(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])                    <b class="vimtag"> <a name="match()">match()</a> </b>
                 如果 <code class="special">{expr}</code> 是  <a href="eval.html#List">List</a> ，返回匹配 <code class="special">{pat}</code> 的第一个项目的索引。每个
                 项目用作字符串， <a href="eval.html#List">List</a>  和  <a href="eval.html#Dictionary">Dictionary</a>  使用回显的形式。
@@ -9763,6 +9792,7 @@ x11                     编译时加入了 X11 的支持。
                         期间除外。此时，这是一个错误。
                         <code class="note">备注</code>: 小心使用 !。如果不小心，可能会意外地替代已有的函
                         数。这很难调试。
+                        <code class="note">备注</code>: Vim9 脚本里局部于脚本的函数不能被删除或重定义。
 
                         <code class="special">{arguments}</code> 参见  <a href="eval.html#function-argument">function-argument</a> 。
 
