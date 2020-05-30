@@ -528,9 +528,11 @@ For 循环 ~
 注意 这不影响字典项目的顺序，不要希望 ":echo adict" 会先显示原有 adict 项目，
 然后再显示 bdict 的项目。
 
-从字典里删除多个项目可以用 |filter()| 完成: >
+可用 |filter()| 从字典里删除多个项目: >
 	:call filter(dict, 'v:val =~ "x"')
-删除 "dict" 里所有值不匹配 "x" 的项目。
+会删除 "dict" 里所有值不匹配 "x" 的项目。
+也可这样来删除所有的项目: >
+	call filter(dict, 0)
 
 
 字典函数 ~
@@ -1225,6 +1227,9 @@ string					*string* *String* *expr-string* *E114*
         转义。
 	双引号必须转义: "<M-\">"。
 	不要用 <Char-xxxx> 来得到 utf-8 字符，用上面提到的 \uxxxxx。
+\{xxx}	类似于 \<xxx>，但在之前附加修饰符而不是把它包含到字符里。例如，
+	"\<C-w>" 是单个字符 0x17，而 "\{C-w}" 是四个字节: CTRL 修饰符对应 3
+	个，然后是字符 "W"。
 
 注意 "\xff" 保存为字节 255，在某些编码中它是不合法的。使用 "\u00ff" 可以按照
 'encoding' 的当前值保存字符 255。
@@ -2321,6 +2326,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])
 					模式 {mode} 的映射 {name} 的右手边
 mapcheck({name} [, {mode} [, {abbr}]])
 				字符串	检查匹配 {name} 的映射
+mapset({mode}, {abbr}, {dict})
+				无	从 |maparg()| 返回值恢复映射
 match({expr}, {pat} [, {start} [, {count}]])
 				数值	{expr} 里 {pat} 的匹配位置
 matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
@@ -2651,6 +2658,7 @@ win_splitmove({nr}, {target} [, {options}])
 				数值	移动窗口 {nr} 成为 {target} 的分割窗口
 winbufnr({nr})			数值	窗口 {nr} 的缓冲区号
 wincol()			数值	光标所在的窗口列
+windowsversion()		字符串	MS-Windows 操作系统版本
 winheight({nr})			数值	窗口 {nr} 的高度
 winlayout([{tabnr}])		列表	标签页 {tabnr} 的窗口布局
 winline()			数值	光标所在的窗口行
@@ -3628,7 +3636,7 @@ executable({expr})					*executable()*
 		MS-Windows 上，可以可选地包含 ".exe"、".bat" 等。为此，
 		$PATHEXT 里的扩展名会被尝试。这样，如果 "foo.exe" 不存在，可能
 		会找到 "foo.exe.bat"。如果没有设置 $PATHEXT，使用的是
-		".exe;.com;.bat;.cmd"。$PATHEXT 里可以使用单独的句号，以尝试没
+		".com;.exe;.bat;.cmd"。$PATHEXT 里可以使用单独的句号，以尝试没
 		有扩展名的名字。如果 'shell' 看起来像 Unix 外壳，那么也尝试没
 		有扩展名的名字。
 		MS-Windows 上，只检查是否文件存在且不是目录，并不检查它是否真
@@ -5998,6 +6006,7 @@ map({expr1}, {expr2})					*map()*
 		也可用作 |method|: >
 			mylist->map(expr2)
 
+
 maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		当 {dict} 省略或为零，返回模式 {mode} 名为 {name} 的映射的右手
 		边 (rhs)。返回字符串中的特殊字符用和 ":map" 命令输出的同样方式
@@ -6024,8 +6033,11 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 
 		如果提供 {dict} 且为 |TRUE|，返回字典，包含关于映射的所有信
 		息。有如下项目:
-		  "lhs"	     映射的 {lhs}。
-		  "rhs"	     映射的 {rhs}，保持输入原样。
+		  "lhs"	     映射的 {lhs}，作为键盘输入
+		  "lhsraw"   映射的 {lhs}，保留原始字节
+		  "lhsrawalt" 映射的 {lhs}，保留原始字节，这是一种替代形式，仅
+			      当和 "lhsraw" 不同时才会存在
+		  "rhs"	     映射的 {rhs}，作为键盘输入。
 		  "silent"   1 若是 |:map-silent| 映射，否则为 0。
 		  "noremap"  1 若是映射的 {rhs} 不能再映射。
 		  "script"   1 若是映射使用 <script> 定义。
@@ -6039,6 +6051,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		  "sid"	     脚本局部 ID，用于 <sid> 映射 (|<SID>|)。
 		  "lnum"     "sid" 中的行号，如果未知则为零。
 		  "nowait"   不等待其它更长的映射。(|:map-<nowait>|)。
+
+		此字典可用 |mapset()| 来恢复映射。
 
 		先检查局部于当前缓冲区的映射，然后再检查全局映射。
 		此函数可以用来给键映射。如果已经映射过，还可以使用原来映射的内
@@ -6075,6 +6089,21 @@ mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 
 		也可用作 |method|: >
 			GetKey()->mapcheck('n')
+
+
+mapset({mode}, {abbr}, {dict})				*mapset()*
+		从 |maparg()| 返回的字典中恢复映射。
+		{mode} 和 {abbr} 应和 |maparg()| 调用时所用之值相同. *E460*
+		{mode} 用于定义映射设置所在的模式，而不是 {dict} 中的 "mode"
+		项目。
+		保存和恢复映射的示例: >
+			let save_map = maparg('K', 'n', 0, 1)
+			nnoremap K 其它映射值
+			...
+			call mapset('n', 0, save_map)
+<		注意 要替换适用于若干模式下的映射，如 `:map!` 这样的，你需要分
+		别保存所有模式下的映射，因为它们之间可能不同。
+
 
 match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		如果 {expr} 是 |List|，返回匹配 {pat} 的第一个项目的索引。每个
@@ -9733,6 +9762,7 @@ x11			编译时加入了 X11 的支持。
 			期间除外。此时，这是一个错误。
 			备注: 小心使用 !。如果不小心，可能会意外地替代已有的函
 			数。这很难调试。
+			备注: Vim9 脚本里局部于脚本的函数不能被删除或重定义。
 
 			{arguments} 参见 |function-argument|。
 
