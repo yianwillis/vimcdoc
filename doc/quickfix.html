@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2020年1月
+<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2020年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -51,6 +51,7 @@
 7. 错误格式                              <a href="quickfix.html#error-file-format">error-file-format</a> 
 8. 目录栈                                <a href="quickfix.html#quickfix-directory-stack">quickfix-directory-stack</a> 
 9. 特定错误格式                          <a href="quickfix.html#errorformats">errorformats</a> 
+10. 定制快速修复窗口                     <a href="quickfix.html#quickfix-window-function">quickfix-window-function</a> 
 
 如编译时没有指定  <a href="various.html#+quickfix">+quickfix</a>  则无法使用快速修复相关命令。
 
@@ -1196,7 +1197,11 @@ Vim 会读入任何长度的行，但只使用前 4095 个字符，忽略其余�
         %c              列号 (代表错误中字符列的数字，(<code class="special">&lt;tab&gt;</code> 为一个字符列))
         %v              虚拟列号 (代表错误中屏幕列的数字，(<code class="special">&lt;tab&gt;</code> 等于 8 个屏幕
                         列))
-        %t              错误类型 (单个字符)
+        %t              错误类型 (单个字符):
+                            e - 错误消息
+                            w - <code class="note">警告</code>消息
+                            i - 信息消息
+                            n - <code class="note">备注</code>消息
         %n              错误号 (数字)
         %m              错误信息 (字符串)
         %r              匹配 "余下的" 的单行文件信息 %O/P/Q
@@ -1249,14 +1254,15 @@ GNU make)。下面的代码可用于扫描这些目录名；它们将被保存�
 
 多 行 信 息                                     <b class="vimtag"> <a name="errorformat-multi-line">errorformat-multi-line</a> </b>
 
-Vim 可以读入程序输出的多行信息，也就是超过一行的错误字串。有关前缀有:
-        %E              多行错误信息开始
-        %W              多行<code class="note">警告</code>信息开始
-        %I              多行一般信息开始
+Vim 可以读入程序输出的多行消息，也就是超过一行的错误字串。有关前缀有:
+        %E              多行错误消息开始
+        %W              多行<code class="note">警告</code>消息开始
+        %I              多行信息消息开始
+        %N              多行<code class="note">备注</code>信息开始
         %A              多行信息开始 (未指定类型)
         %&gt;              下行再次从当前模式开始寻找  <a href="quickfix.html#efm-%%3E">efm-%&gt;</a> 
-        %C              多行信息继续
-        %Z              多行信息结束
+        %C              多行消息继续
+        %Z              多行消息结束
 这些可同 '+' 和 '-' 一起使用，参见下面的  <a href="quickfix.html#efm-ignore">efm-ignore</a> 。
 
 模式里的 "\n" 不能用于匹配多行消息。
@@ -1656,6 +1662,55 @@ ant (<a href="http://jakarta.apache.org/">http://jakarta.apache.org/</a>) 输出
 快速修复模式可以理解的格式。使用方法可以查看该文件的开头部分。(此脚本已过时，
 见  <a href="quickfix.html#compiler-perl">compiler-perl</a> 。)
 
+</section><hr class="doubleline" /><section class=inner>
+<h4>10. 定制快速修复窗口                            <b class="vimtag"> <a name="quickfix-window-function">quickfix-window-function</a> </b></h4>
+快速修复窗口和位置列表窗口显示行的缺省格式是:
+
+    <code class="special">&lt;filename&gt;</code>|<code class="special">&lt;lnum&gt;</code> col <code class="special">&lt;col&gt;</code>|<code class="special">&lt;text&gt;</code>
+
+每行显示的值对应于  <a href="eval.html#getqflist()">getqflist()</a>  函数返回的 "bufnr"、"lnum"、"col" 和 "text"
+字段。
+
+对有些快速修复/位置列表而言，显示的文本需要定制。例如，如果快速修复项目只有文
+件名，文件名后的两个 "|" 字段分隔符是多余的。另一个用例是定制文件名显示的路径
+部分。缺省，不在当前目录树下的文件会显示其完整路径 (可能过长)。文件路径可能需
+要简化为公共的父目录。
+
+可通过设置 <a href="options.html#'quickfixtextfunc'">'quickfixtextfunc'</a> 选项为一个 Vim 函数来定制显示的文本。此函数调用
+时会带一个字典参数，并应返回字符串的列表，它们会在快速修复或位置列表窗口中显
+示。此字典参数会包含以下字段:
+
+    quickfix    为快速修复列表调用时设为 1，为位置列表调用时设为 0。
+    winid       对位置列表而言，设为位置列表所在的窗口 id。快速修复列表则设为
+                0。可通过 getloclist() 调用以获取位置列表项目。
+    id          快速修复或位置列表标识符
+    start_idx   应返回文本的首个项目
+    end_idx     应返回文本的末个项目
+
+对应从 start_dx 到 end_idx 的每个项目，此函数应返回在快速修复窗口显示的的单行
+文本。此函数可通过指定快速修复列表标识符 "id" 调用  <a href="eval.html#getqflist()">getqflist()</a>  函数来获取项
+目的相关信息。对位置列表而言，可用带 <code class="badlink">'winid'</code> 参数的 getloclist() 函数。
+
+如果需要特定于某快速修复或位置列表的定制，可用  <a href="eval.html#setqflist()">setqflist()</a>  或  <a href="eval.html#setloclist()">setloclist()</a> 
+函数来设定该列表中的 <a href="options.html#'quickfixtextfunc'">'quickfixtextfunc'</a> 属性来覆盖全局的 <a href="options.html#'quickfixtextfunc'">'quickfixtextfunc'</a> 选
+项。
+
+下例在快速修复窗口中显示旧文件列表 ( <a href="eval.html#v:oldfiles">v:oldfiles</a> )。因为没有和每个项目相关联的
+行号、列号和错误文本信息，<a href="options.html#'quickfixtextfunc'">'quickfixtextfunc'</a> 函数只返回文件名。
+示例: 
+<code class="example">    " 从 v:oldfiles 来建立快速修复列表</code>
+<code class="example">    call setqflist([], ' ', {'lines' : v:oldfiles, 'efm' : '%f',</code>
+<code class="example">                                        \ 'quickfixtextfunc' : 'QfOldFiles'})</code>
+<code class="example">    func QfOldFiles(info)</code>
+<code class="example">        " 获取一段快速修复项目范围的相关信息</code>
+<code class="example">        let items = getqflist({'id' : a:info.id, 'items' : 1}).items</code>
+<code class="example">        let l = []</code>
+<code class="example">        for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)</code>
+<code class="example">            " 使用简化的文件名</code>
+<code class="example">          call add(l, fnamemodify(bufname(items[idx].bufnr), ':p:.'))</code>
+<code class="example">        endfor</code>
+<code class="example">        return l</code>
+<code class="example">    endfunc</code>
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

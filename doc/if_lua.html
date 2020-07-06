@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="if_lua.txt">if_lua.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2020年5月
+<b class="vimtag"> <a name="if_lua.txt">if_lua.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2020年7月
 
 
                   <code class="vim">VIM 参考手册    by Luis Carvalho</code>
@@ -218,7 +218,8 @@ Lua 通过 "vim" 模块和 Vim 进行接口。输入行范围的首末行分别�
                                 理。例如: 
 <code class="example">                                        :lua print(vim.call('has', 'timers'))</code>
 
-        vim.fn                  调用 Vim 函数的代理。代理方法会按需建立。例如: 
+        vim.fn                  调用 Vim 函数的代理。代理方法会按需建立。
+                                例如: 
 <code class="example">                                        :lua print(vim.fn.has('timers'))</code>
 
 
@@ -227,13 +228,22 @@ Lua 通过 "vim" 模块和 Vim 进行接口。输入行范围的首末行分别�
 列表用户数据代表 vim 的列表，其接口尽量和 Vim 的列表语法相近。因为列表为对象，
 Lua 中列表引用的改变会反映在 Vim 中，反之亦然。列表 "l" 有以下属性和方法:
 
+<code class="note">注意</code>: 8.2.1066 补丁开始，数组索引从以零为底改为以一为底。可以这样检查: 
+<code class="example">            if has("patch-8.2.1066")</code>
+<code class="example"></code>
 属性
 </section><hr class="singleline" /><section class=inner>
         o "#l" 是列表 "l" 的项目数，相当于 Vim 中的 "len(l)"。
-        o "l[k]" 返回 "l" 的第 k 项；"l" 索引从零开始，和 Vim 一样。要修改第 k
-            项，可用 "l[k] = newitem"；特别地，"l[k] = nil" 删除 "l" 的第 k
-            项。
+        o "l[k]" 返回 "l" 的第 k 项；"l" 索引从一开始，和 Lua 一样。
+            要修改第 k 项，可用 "l[k] = newitem"；特别地，"l[k] = nil" 删除
+            "l" 的第 k 项。要在列表最后附加项目，可用 "l[#l + 1] = newitem"
         o "l()" 返回遍历 "l" 的 iterator。
+        o "table.insert(l, newitem)" 在列表最后插入项目。
+            (仅适用于 Lua 5.3 和以后版本)
+        o "table.insert(l, position, newitem)" 在指定位置插入项目。"position"
+            从一开始。(仅适用于 Lua 5.3 和以后版本)
+        o "table.remove(l, position)" 在指定位置删除项目。"position" 从一开
+            始。
 
 方法
 </section><hr class="singleline" /><section class=inner>
@@ -246,14 +256,17 @@ Lua 中列表引用的改变会反映在 Vim 中，反之亦然。列表 "l" 有
 <code class="example">        :let l = [1, 'item']</code>
 <code class="example">        :lua l = vim.eval('l') -- 相同的 'l'</code>
 <code class="example">        :lua l:add(vim.list())</code>
-<code class="example">        :lua l[0] = math.pi</code>
+<code class="example">        :lua l[1] = math.pi</code>
 <code class="example">        :echo l[0] " 3.141593</code>
-<code class="example">        :lua l[0] = nil -- 删除第一项</code>
+<code class="example">        :lua l[1] = nil -- 删除第一项</code>
 <code class="example">        :lua l:insert(true, 1)</code>
-<code class="example">        :lua print(l, #l, l[0], l[1], l[-1])</code>
+<code class="example">        :lua print(l, #l, l[1], l[2])</code>
+<code class="example">        :lua l[#l + 1] = 'value'</code>
+<code class="example">        :lua table.insert(l, 100)</code>
+<code class="example">        :lua table.insert(l, 2, 200)</code>
+<code class="example">        :lua table.remove(l, 1)</code>
 <code class="example">        :lua for item in l() do print(item) end</code>
-
-
+<code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 字典用户数据                                         <b class="vimtag"> <a name="lua-dict">lua-dict</a> </b></h4>
 和列表用户数据类似，字典用户数据代表 vim 的字典；既然字典也是对象，Lua 和 Vim
@@ -335,7 +348,14 @@ blob 用户数据代表 vim blob。blob "b" 有以下属性:
 <code class="example">        :lua l = d.len -- 把 d 视为 'self'</code>
 <code class="example">        :lua print(l())</code>
 
+Lua 函数和闭包会自动转换为 Vim 的  <a href="eval.html#Funcref">Funcref</a> ，以便在 Vim 脚本里访问。例如:
 
+<code class="example">        lua &lt;&lt;EOF</code>
+<code class="example">        vim.fn.timer_start(1000, function(timer)</code>
+<code class="example">            print('timer callback')</code>
+<code class="example">        end)</code>
+<code class="example">        EOF</code>
+<code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>7. 缓冲区用户数据                                       <b class="vimtag"> <a name="lua-buffer">lua-buffer</a> </b></h4>
 缓冲区用户数据代表 vim 的缓冲区。缓冲区用户数据 "b" 包含以下属性和方法:

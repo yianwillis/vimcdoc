@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2019年12月
+<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2020年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -1106,13 +1106,16 @@ dart.vim 语法检测并高亮 Dart 语句、保留字、类型声明、存储�
 DESKTOP                                    <b class="vimtag"> <a name="desktop.vim">desktop.vim</a> </b> <b class="vimtag"> <a name="ft-desktop-syntax">ft-desktop-syntax</a> </b>
 
 该语法文件的主要目的是根据 freedesktop.org 标准:
-<a href="http://standards.freedesktop.org/desktop-entry-spec/latest/">http://standards.freedesktop.org/desktop-entry-spec/latest/</a>
-来高亮 .desktop 和 .directory 文件。但实际上，几乎没人完全实现了标准。所以，它
-实际被用来高亮所有的 Unix ini 文件。如果你希望强制使用符合标准的严格的高亮方
-式，在 vimrc 文件放上: 
-<code class="example">        :let enforce_freedesktop_standard = 1</code>
-<code class="example"></code>
-<code class="example"></code>
+<a href="https://specifications.freedesktop.org/desktop-entry-spec/latest/">https://specifications.freedesktop.org/desktop-entry-spec/latest/</a>
+来高亮 .desktop 和 .directory 文件。
+要高亮不以 X- 开头的非标准扩展，设置 
+<code class="example">        let g:desktop_enable_nonstd = 1</code>
+<code class="note">注意</code> 这可能会导致不正确的高亮。
+要高亮 KDE 的保留特性，设置 
+<code class="example">        let g:desktop_enable_kde = 1</code>
+如果未显式提供，g:desktop_enable_kde 追随 g:desktop_enable_nonstd。
+
+
 DIFF                                                    <b class="vimtag"> <a name="diff.vim">diff.vim</a> </b>
 
 比较高亮通常会寻找翻译的头部。如果文件里有很长的行，这会变慢。这样关闭翻译: 
@@ -3192,6 +3195,25 @@ Vim 理解三种语法项目的类型:
         显示 "syntax case match" 或 "syntax case ignore" 之一 (经过翻译)。
 
 
+定 义 折 叠 级 别                                       <b class="vimtag"> <a name=":syn-foldlevel">:syn-foldlevel</a> </b>
+
+:sy[ntax] foldlevel [start | minimum]
+        定义使用 foldmethod=syntax 时，如何计算行的折叠级别 (见  <a href="fold.html#fold-syntax">fold-syntax</a> 
+        和  <a href="syntax.html#:syn-fold">:syn-fold</a> ):
+
+        start:          使用包含行开始处项目的级别。
+        minimum:        使用行上所有项目的局部最小值级别的最小值。
+
+        缺省是 <code class="badlink">'start'</code>。使用 <code class="badlink">'minimum'</code> 会水平搜索行所包含的后跟更高级别的级别
+        的最小值。如果一行内水平不同的语法项目可能会关闭和打开，这会生成更自然
+        的折叠。
+
+:sy[ntax] foldlevel
+        显示 "syntax foldlevel start" 或 "syntax foldlevel minimum" 两者之一。
+
+        <code class="notvi">{仅当 Vim 编译时带有  <a href="various.html#+folding">+folding</a>  特性才有意义}</code>
+
+
 拼 写 检 查                                             <b class="vimtag"> <a name=":syn-spell">:syn-spell</a> </b>
 
 :sy[ntax] spell [toplevel | notoplevel | default]
@@ -3579,6 +3601,7 @@ fold                                                    <b class="vimtag"> <a na
 
 该折叠从项目开始的行开始，而在项目结束之行上结束。如果开始和结束处在同一行，则
 不形成折叠。<a href="options.html#'foldnestmax'">'foldnestmax'</a> 选项限制语法折叠的嵌套级别。
+ <a href="syntax.html#:syn-foldlevel">:syn-foldlevel</a>  控制如何从一行的语法项目中计算其折叠级别。
 <code class="notvi">{仅当 Vim 编译时带  <a href="various.html#+folding">+folding</a>  特性才有效}</code>
 
 
@@ -4205,10 +4228,14 @@ term=<code class="special">{attr-list}</code>                        <b class="v
                 NONE            不使用属性 (用于复位)
 
         <code class="note">注意</code> 这里使用 "bold" 和使用粗体字体都可以，效果相同。
-        "undercurl" 是波浪状的下划线。如果不能用 "undercurl"，使用 "underline"
-        代替。一般，只有 GUI 才能使用 "undercurl" 和 "strikethrough"。颜色可用
-         <a href="syntax.html#highlight-guisp">highlight-guisp</a>  设置。
-
+        "undercurl" 是波浪状的下划线。如果 "undercurl" 不可用，它会用
+        "underline" 代替。一般而言，只有 GUI 和部分终端才能使用 "undercurl" 和
+        "strikethrough"。其颜色可用  <a href="syntax.html#highlight-guisp">highlight-guisp</a>  或  <a href="syntax.html#highlight-ctermul">highlight-ctermul</a> 
+        设置。终端中，可以尝试以下 termcap 项目来使用波浪下划线: 
+<code class="example">            let &amp;t_Cs = "\e[4:3m"</code>
+<code class="example">            let &amp;t_Ce = "\e[4:0m"</code>
+<code class="example"></code>
+<code class="example"></code>
 start=<code class="special">{term-list}</code>                               <b class="vimtag"> <a name="highlight-start">highlight-start</a> </b> <b class="vimtag"> <a name="E422">E422</a> </b>
 stop=<code class="special">{term-list}</code>                                <b class="vimtag"> <a name="term-list">term-list</a> </b> <b class="vimtag"> <a name="highlight-stop">highlight-stop</a> </b>
         可以得到终端上的非标准的属性的终端代码的列表。
@@ -4242,6 +4269,10 @@ cterm=<code class="special">{attr-list}</code>                                  
 
 ctermfg=<code class="special">{color-nr}</code>                              <b class="vimtag"> <a name="highlight-ctermfg">highlight-ctermfg</a> </b> <b class="vimtag"> <a name="E421">E421</a> </b>
 ctermbg=<code class="special">{color-nr}</code>                              <b class="vimtag"> <a name="highlight-ctermbg">highlight-ctermbg</a> </b>
+ctermul=<code class="special">{color-nr}</code>                              <b class="vimtag"> <a name="highlight-ctermul">highlight-ctermul</a> </b>
+        这些参数指定给终端使用的前景 (ctermfg)、背景 (ctermbg) 和下划线
+        (ctermul) 颜色。
+
         <code class="special">{color-nr}</code> 参数指定颜色号。其范围从零到 termcap 项目 "Co" 给出的数字
         (不含)。实际的颜色取决于终端的类型和设置。有时，颜色也取决于 "cterm"
         的值。例如，有的系统上 "cterm=bold ctermfg=3" 给出另外一个颜色，别的系
@@ -4304,13 +4335,13 @@ ctermbg=<code class="special">{color-nr}</code>                              <b 
         如果你给 Normal 组设置了 "ctermfg" 或 "ctermbg"，Vim 退出时需要复位颜
         色，这通过 "op" termcap 项目  <a href="term.html#t_op">t_op</a>  完成。如果不能正确工作，尝试在你的
         .vimrc 里设置 <a href="term.html#'t_op'">'t_op'</a> 选项。
-                                                        <b class="vimtag"> <a name="E419">E419</a> </b> <b class="vimtag"> <a name="E420">E420</a> </b>
-        如果 Vim 知道 Normal 的前景和背景色，"fg" 和 "bg" 可以用做颜色名字。这
-        只有在设置了 Normal 组的颜色以后和 (<code class="vim">译者注</code>: 或？) 在 MS-Windows 控制台
-        上才可以。比如，设置反显视频: 
+                                                        <b class="vimtag"> <a name="E419">E419</a> </b> <b class="vimtag"> <a name="E420">E420</a> </b> <b class="vimtag"> <a name="E453">E453</a> </b>
+        如果 Vim 知道 Normal 的前景、背景和下划线色，"fg"、"bg" 和 "ul" 可以用
+        作色彩名。这只有在 Normal 组的颜色设置以后和 (<code class="vim">译者注</code>: 或？) 在
+        MS-Windows 控制台上才可以。比如，要设置反显视频: 
 <code class="example">            :highlight Visual ctermfg=bg ctermbg=fg</code>
-        <code class="note">注意</code> 使用的颜色必须在给出命令的时候已经合法。如果之后 Normal 组的颜色
-        发生改变，"fg" 和 "bg" 颜色不会被调整。
+        <code class="note">注意</code> 使用的颜色是在给出命令时的合法颜色。如果之后 Normal 组的颜色发生
+        改变，"fg" 和 "bg" 颜色不会被调整。
 
 
 3. GUI 的高亮参数

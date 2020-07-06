@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="options.txt">options.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年5月
+<b class="vimtag"> <a name="options.txt">options.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -3403,7 +3403,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'imactivatefunc'">'imactivatefunc'</a> <a href="options.html#'imaf'">'imaf'</a> 字符串 (缺省 "")
                         全局
         此选项指定的函数会在输入法激活或关闭时调用。
-        不用于 GUI。
+        不用于 MS-Windows GUI 版本。
         如果从模式行中设置，此表达式的计算在沙盘  <a href="eval.html#sandbox">sandbox</a>  里进行，见
          <a href="eval.html#sandbox-option">sandbox-option</a> 。
 
@@ -3498,7 +3498,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'imstatusfunc'">'imstatusfunc'</a> <a href="options.html#'imsf'">'imsf'</a>   字符串 (缺省 "")
                         全局
         此选项指定的函数会被调用来得到输入法的状态。IME 激活时应返回一个正数。
-        不用于 GUI。
+        不用于 MS-Windows GUI 版本。
 
         示例: 
 <code class="example">                function ImStatusFunc()</code>
@@ -4469,6 +4469,14 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                 上用 <code class="keystroke">CTRL-X</code> 得到 "0x0ff"。
         bin     如果包含，"0b" 或 "0B" 开始的数值认为是二进制。例如: "0b1000"
                 上用 <code class="keystroke">CTRL-X</code> 得到 "0b0111"。
+        unsigned    如果包含，数值被认为是无符号数。这样，开头的连字符或负号不
+                被认为是数值的一部分。例如:
+                    在 "9-2020" 的 "2020" 上用 <code class="keystroke">CTRL-X</code> 得到 "9-2019"
+                    (没有 "unsigned" 时会得到 "9-2021")。
+                    在 "9-2020" 的 "2020" 上用 <code class="keystroke">CTRL-A</code> 得到 "9-2021"
+                    (没有 "unsigned" 时会得到 "9-2019")。
+                    在 "0" 上用 <code class="keystroke">CTRL-X</code> 或 "18446744073709551615" (2^64 - 1) 上
+                    用 <code class="keystroke">CTRL-A</code> 没有效果，溢出会被防止。
         简单的以 1-9 的数字开始的数值总被认为是十进制的。这也包括不能识别为八
         进制或十六进制的数值。
 
@@ -4846,6 +4854,16 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
         如果 Vim 编译时只带有  <a href="various.html#+python">+python</a>  或  <a href="various.html#+python3">+python3</a> ，设置 <a href="options.html#'pyxversion'">'pyxversion'</a> 没有
         作用。pyx* 函数和命令总是和编译时的版本相同。
+
+        为了安全原因，本选项不能在  <a href="options.html#modeline">modeline</a>  或  <a href="eval.html#sandbox">sandbox</a>  里设置。
+
+                                                <b class="vimtag"> <a name="'quickfixtextfunc'">'quickfixtextfunc'</a> </b> <b class="vimtag"> <a name="'qftf'">'qftf'</a> </b>
+<a href="options.html#'quickfixtextfunc'">'quickfixtextfunc'</a> <a href="options.html#'qftf'">'qftf'</a>       字符串 (缺省为 "")
+                        全局
+                        <code class="notvi">{仅当编译时加入  <a href="various.html#+quickfix">+quickfix</a>  特性才有效}</code>
+        此选项指定一个函数，用于获取在快速修复和位置列表窗口中显示的文本。可用
+        于为对应的快速修复或位置列表的每个项目来定制在快速修复或位置窗口中显示
+        的信息。见  <a href="quickfix.html#quickfix-window-function">quickfix-window-function</a>  解释如何写此函数并给出一个示例。
 
         为了安全原因，本选项不能在  <a href="options.html#modeline">modeline</a>  或  <a href="eval.html#sandbox">sandbox</a>  里设置。
 
@@ -5806,6 +5824,14 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         其中 "LANG" 是 <a href="options.html#'spelllang'">'spelllang'</a> 第一个非 ASCII 字母、数字或连字符的字符之前
         的值。另见  <a href="spell.html#set-spc-auto">set-spc-auto</a> 。
 
+                                                <b class="vimtag"> <a name="'spelloptions'">'spelloptions'</a> </b> <b class="vimtag"> <a name="'spo'">'spo'</a> </b>
+<a href="options.html#'spelloptions'">'spelloptions'</a> <a href="options.html#'spo'">'spo'</a>    字符串  (缺省为 "")
+                        局部于缓冲区
+                        <code class="notvi">{仅当编译时加入  <a href="various.html#+syntax">+syntax</a>  特性才有效}</code>
+        用于拼写检查的逗号分隔的选项列表:
+           camel        如果单词是驼峰式大小写 (CamelCased)，假定 "Cased" 为单
+                        独的单词: 每个单词在小写字符之后的大写字符都指示一个新
+                        单词的开始。
 
                                                 <b class="vimtag"> <a name="'spellsuggest'">'spellsuggest'</a> </b> <b class="vimtag"> <a name="'sps'">'sps'</a> </b>
 <a href="options.html#'spellsuggest'">'spellsuggest'</a> <a href="options.html#'sps'">'sps'</a>    字符串  (缺省为 "best")
@@ -6292,7 +6318,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'term'">'term'</a>                  字符串  (缺省为 $TERM，如果失败:
                                              GUI: "builtin_gui"
                                            Amiga: "amiga"
-                                            BeOS: "beos-ansi"
                                            Haiku: "xterm"
                                              Mac: "mac-ansi"
                                             MiNT: "vt52"
@@ -6996,7 +7021,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                             <b class="vimtag"> <a name="'virtualedit'">'virtualedit'</a> </b> <b class="vimtag"> <a name="'ve'">'ve'</a> </b>
 <a href="options.html#'virtualedit'">'virtualedit'</a> <a href="options.html#'ve'">'ve'</a>      字符串  (缺省为 "")
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+virtualedit">+virtualedit</a>  特性才有效}</code>
         逗号分隔的下面单词的列表:
             block       允许可视列块模式的虚拟编辑。
             insert      允许插入模式的虚拟编辑。
