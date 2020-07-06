@@ -1,4 +1,4 @@
-*syntax.txt*	适用于 Vim 8.2 版本。	最近更新: 2019年12月
+*syntax.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年7月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -1076,11 +1076,14 @@ https://github.com/pr3d4t0r/dart-vim-syntax/
 DESKTOP					   *desktop.vim* *ft-desktop-syntax*
 
 该语法文件的主要目的是根据 freedesktop.org 标准:
-http://standards.freedesktop.org/desktop-entry-spec/latest/
-来高亮 .desktop 和 .directory 文件。但实际上，几乎没人完全实现了标准。所以，它
-实际被用来高亮所有的 Unix ini 文件。如果你希望强制使用符合标准的严格的高亮方
-式，在 vimrc 文件放上: >
-	:let enforce_freedesktop_standard = 1
+https://specifications.freedesktop.org/desktop-entry-spec/latest/
+来高亮 .desktop 和 .directory 文件。
+要高亮不以 X- 开头的非标准扩展，设置 >
+	let g:desktop_enable_nonstd = 1
+注意 这可能会导致不正确的高亮。
+要高亮 KDE 的保留特性，设置 >
+	let g:desktop_enable_kde = 1
+如果未显式提供，g:desktop_enable_kde 追随 g:desktop_enable_nonstd。
 
 
 DIFF							*diff.vim*
@@ -3163,6 +3166,25 @@ Vim 理解三种语法项目的类型:
 	显示 "syntax case match" 或 "syntax case ignore" 之一 (经过翻译)。
 
 
+定 义 折 叠 级 别					*:syn-foldlevel*
+
+:sy[ntax] foldlevel [start | minimum]
+	定义使用 foldmethod=syntax 时，如何计算行的折叠级别 (见 |fold-syntax|
+	和 |:syn-fold|):
+
+	start:		使用包含行开始处项目的级别。
+	minimum:	使用行上所有项目的局部最小值级别的最小值。
+
+	缺省是 'start'。使用 'minimum' 会水平搜索行所包含的后跟更高级别的级别
+	的最小值。如果一行内水平不同的语法项目可能会关闭和打开，这会生成更自然
+	的折叠。
+
+:sy[ntax] foldlevel
+	显示 "syntax foldlevel start" 或 "syntax foldlevel minimum" 两者之一。
+
+	{仅当 Vim 编译时带有 |+folding| 特性才有意义}
+
+
 拼 写 检 查						*:syn-spell*
 
 :sy[ntax] spell [toplevel | notoplevel | default]
@@ -3551,6 +3573,7 @@ fold							*:syn-fold*
 
 该折叠从项目开始的行开始，而在项目结束之行上结束。如果开始和结束处在同一行，则
 不形成折叠。'foldnestmax' 选项限制语法折叠的嵌套级别。
+|:syn-foldlevel| 控制如何从一行的语法项目中计算其折叠级别。
 {仅当 Vim 编译时带 |+folding| 特性才有效}
 
 
@@ -4183,9 +4206,13 @@ term={attr-list}			*attr-list* *highlight-term* *E418*
 		NONE		不使用属性 (用于复位)
 
 	注意 这里使用 "bold" 和使用粗体字体都可以，效果相同。
-	"undercurl" 是波浪状的下划线。如果不能用 "undercurl"，使用 "underline"
-	代替。一般，只有 GUI 才能使用 "undercurl" 和 "strikethrough"。颜色可用
-	|highlight-guisp| 设置。
+	"undercurl" 是波浪状的下划线。如果 "undercurl" 不可用，它会用
+	"underline" 代替。一般而言，只有 GUI 和部分终端才能使用 "undercurl" 和
+	"strikethrough"。其颜色可用 |highlight-guisp| 或 |highlight-ctermul|
+	设置。终端中，可以尝试以下 termcap 项目来使用波浪下划线: >
+	    let &t_Cs = "\e[4:3m"
+	    let &t_Ce = "\e[4:0m"
+
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4220,6 +4247,10 @@ cterm={attr-list}					*highlight-cterm*
 
 ctermfg={color-nr}				*highlight-ctermfg* *E421*
 ctermbg={color-nr}				*highlight-ctermbg*
+ctermul={color-nr}				*highlight-ctermul*
+	这些参数指定给终端使用的前景 (ctermfg)、背景 (ctermbg) 和下划线
+	(ctermul) 颜色。
+
 	{color-nr} 参数指定颜色号。其范围从零到 termcap 项目 "Co" 给出的数字
 	(不含)。实际的颜色取决于终端的类型和设置。有时，颜色也取决于 "cterm"
 	的值。例如，有的系统上 "cterm=bold ctermfg=3" 给出另外一个颜色，别的系
@@ -4282,13 +4313,13 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	如果你给 Normal 组设置了 "ctermfg" 或 "ctermbg"，Vim 退出时需要复位颜
 	色，这通过 "op" termcap 项目 |t_op| 完成。如果不能正确工作，尝试在你的
 	.vimrc 里设置 't_op' 选项。
-							*E419* *E420*
-	如果 Vim 知道 Normal 的前景和背景色，"fg" 和 "bg" 可以用做颜色名字。这
-	只有在设置了 Normal 组的颜色以后和 (译者注: 或？) 在 MS-Windows 控制台
-	上才可以。比如，设置反显视频: >
+							*E419* *E420* *E453*
+	如果 Vim 知道 Normal 的前景、背景和下划线色，"fg"、"bg" 和 "ul" 可以用
+	作色彩名。这只有在 Normal 组的颜色设置以后和 (译者注: 或？) 在
+	MS-Windows 控制台上才可以。比如，要设置反显视频: >
 	    :highlight Visual ctermfg=bg ctermbg=fg
-<	注意 使用的颜色必须在给出命令的时候已经合法。如果之后 Normal 组的颜色
-	发生改变，"fg" 和 "bg" 颜色不会被调整。
+<	注意 使用的颜色是在给出命令时的合法颜色。如果之后 Normal 组的颜色发生
+	改变，"fg" 和 "bg" 颜色不会被调整。
 
 
 3. GUI 的高亮参数

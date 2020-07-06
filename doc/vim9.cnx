@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年5月
+*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年7月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -92,6 +92,7 @@ Vim9 函数~
 
 函数和变量缺省局部于脚本~
 
+							*vim9-scopes*
 在 vim9 脚本中，用 `:function` 或 `:def` 来指定脚本级别的新函数时，函数局部于
 脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。
 
@@ -116,6 +117,7 @@ Vim9 函数~
 
 用 :let 和 :const 声明变量~
 
+							*vim9-declaration*
 局部变量需用 `:let` 定义。局部常量需用 `:const` 定义。我们把两者都称为
 "变量"。
 
@@ -158,7 +160,7 @@ Vim9 函数~
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
-全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本层的也是如此。 >
+全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本级别的也是如此。 >
 	vim9script
 	let script_local = 'text'
 	let g:global = 'value'
@@ -226,24 +228,39 @@ Vim9 函数~
 			arg2
 			)
 
-对不在 []、{} 或 () 内的表达式中的二元操作符而言，可在操作符_后_断行。例如: >
-	let text = lead ..
-		   middle ..
-		   end
+对不在 []、{} 或 () 内的表达式中的二元操作符而言，可在操作符之前或之后断行。例
+如: >
+	let text = lead
+		   .. middle
+		   .. end
 	let total = start +
 	            end -
 		    correction
-	let result = positive ?
-			PosFunc(arg) :
-			NegFunc(arg)
+	let result = positive
+			? PosFunc(arg)
+			: NegFunc(arg)
 
-注意 "enddef" 不能用于继续行的开始，它会结束当前函数。
+	let result = GetBuilder()
+			->BuilderSetWidth(333)
+			->BuilderSetHeight(777)
+			->BuilderBuild()
+
+<							*E1050*
+要识别出现在行首的操作符，需要在范围之前加上冒号。这样会把 "start" 加上
+print: >
+	let result = start
+	+ print
+而这样会赋值 "start" 并显示一行: >
+	let result = start
+	:+ print
 
 函数声明也可以在参数间被分割为多行: >
 	def MyFunc(
 		text: string,
 		separator = '-'
 		): string
+
+注意 "enddef" 不能用于继续行的开始，它会结束当前函数。
 
 
 没有花括号扩展~
@@ -326,6 +343,48 @@ JavaScript，但有少许例外。
 Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
 
 
+要注意什么~
+							*vim9-gotchas*
+Vim9 设计和常用的编程语言相近，而同时试图支持老式的 Vim 命令。这里不得不做出某
+些妥协。这里是若干出人意外之处的一个小结。
+
+Ex 命令范围需要冒号前缀。 >
+  	->		" 老式 Vim: 右移前行
+	->func()	" Vim9: 方法调用
+	:->		" Vim9: 右移前行
+
+	%s/a/b		" 老式 Vim: 在所有行上替代
+	x = alongname
+	     % another	" Vim9: 没有反斜杠的继续行
+	:%s/a/b		" Vim9: 在所有行上替代
+
+`:def` 定义的函数会对整个函数进行编译。老式函数可以随时放弃，因而以下的行不会
+被立即解析: >
+	func Maybe()
+	  if !has('feature')
+	    return
+	  endif
+	  use-feature
+	endfunc
+Vim9 函数作为一个整体被编译: >
+	def Maybe()
+	  if !has('feature')
+	    return
+	  endif
+	  use-feature  " 可能会报编译错误
+	enddef
+一个临时解决方法是把它分割为两个函数: >
+	func Maybe()
+	  if has('feature')
+	    call MaybyInner()
+	  endif
+	endfunc
+	if has('feature')
+	  def MaybeInner()
+	    use-feature
+	  enddef
+	endif
+
 ==============================================================================
 
 3. 新风格函数						*fast-functions*
@@ -348,18 +407,21 @@ Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
 			第二三种形式是可选参数。如果调用者省略参数，使用
 			{value} 值。
 
+			此函数在实际调用时或使用 `:defcompile` 时被编译为指令
+			序列。语法和类型错误会在那里发生。
+
 			注意: 在 `:def` 里可以嵌套另一个 `:def`，但为了后向兼
 			容起见，不可以在 `:function` 里嵌套 `:def`。
 
 			[!] 的用法同 `:function`。注意 Vim9 脚本里局部于脚本的
-			函数不能删除或重定义。
+			函数不能在同一脚本里删除或在之后重定义。
 
 							*:enddef*
 :enddef			结束 `:def` 定义的函数。
 
 如果函数定义所在的是 Vim9 脚本，可不经 "s:" 前缀直接访问局部于脚本的变量。这些
-变量必须在函数之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量必须
-通过 "s:" 前缀才能访问。
+变量必须在函数编译之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量
+必须通过 "s:" 前缀才能访问。
 
 						*:defc* *:defcompile*
 :defc[ompile]		编译尚未编译的在当前脚本中定义的函数。
@@ -493,10 +555,13 @@ func({type}, ?{type}, ...{type}): {type}
 
 另外，也可用 export 语句来导出若干个已定义的 (否则就是脚本局部的) 项目: >
 	export {EXPORTED_CONST, someValue, MyFunc, MyClass}
+<
+							*E1042*
+`:export` 只能用于 Vim9 脚本的脚本级别。
 
 
 导入~
-							*:import* *:imp*
+						*:import* *:imp* *E1094*
 导出项目可在另一个 Vim9 脚本里被单独导入: >
 	import EXPORTED_CONST from "thatscript.vim"
 	import MyClass from "myclass.vim"
@@ -558,8 +623,8 @@ vim9 脚本文件一旦导入，结果会被缓冲，下次导入相同脚本时
 
 在老式 Vim 脚本中导入~
 
-如果老式 Vim 脚本中使用了 `import` 语句，标识符即使不指定 "s:"，也会使用脚本局
-部 "s:" 命名空间。
+如果老式 Vim 脚本中使用了 `import` 语句，即使不指定 "s:"，导入项目也会使用脚本
+局部 "s:" 命名空间。
 
 
 ==============================================================================
@@ -593,10 +658,29 @@ a:000 列表和若干其它部分增加了太多不可避免的负担。
 的 "void" 和 "bool" 等类型。
 
 
-JavaScript/TypeScript 语法和语义~
+尽早编译函数~
 
-脚本作者抱怨 Vim 脚本语法和他们习惯使用的有出乎意外的差异。为了减少抱怨，会使
-用流行的语言作为范例。与此同时，我们不想放弃老式的 Vim 脚本为人熟知的部分。
+函数在实际调用时或使用 `:defcompile` 时才进行编译。为什么不尽早编译函数，以便
+尽快报告语法和类型错误呢？
+
+函数不能在遭遇时立刻编译，因为可能有之后定义的函数的前向引用。考虑定义函数 A、
+B 和 C，其中 A 调用 B，B 调用 C，而 C 又调用 A。这里不可能通过对函数重新排列来
+避免正向引用。
+
+一个替代方案是先扫描整个文件以定位项目并判断其类型，这样就能找到正向引用，然后
+再执行脚本并编译函数。这意味着脚本要解析两次，这会减慢速度，且脚本级别的某些条
+件，如检查某特性是否支持等等，会难于使用。有过这方面的尝试，但结果是不能很好地
+工作。
+
+也可以在脚本最后编译所有函数。这样做的缺点是如果函数从未被调用，仍然要承受其编
+译的开销。因为启动速度至关重要，绝大多数情况下最好延后处理，并在那时才报告语法
+和类型错误。如果确实希望早报告错误，譬如测试期间，`:defcompile` 命令可作救济。
+
+
+TypeScript 语法和语义~
+
+脚本作者抱怨 Vim 脚本语法和他们习惯使用的有出乎意外的差异。为了减少抱怨，使用
+流行的语言作为范例。与此同时，我们不想放弃老式的 Vim 脚本为人熟知的部分。
 
 因为 Vim 已经使用 `:let` 和 `:const`，而可选的类型检查很受欢迎，
 JavaScript/TypeScript 语法最适用于变量的声明。 >
@@ -611,7 +695,7 @@ JavaScript/TypeScript 语法最适用于变量的声明。 >
 	...
 	return result || 0	" 返回 1
 
-Vim9 脚本和 JavaScript 一样，保持值不变: >
+Vim9 脚本和 JavaScript/Typescript 一样，保持值不变: >
 	let result = 44
 	...
 	return result || 0	" 返回 44
@@ -633,6 +717,13 @@ Vim9 脚本里支持和 Javascript 导入导出非常相似的机制。这是已
 - 通过使用相对路径，同一包里导入的载入会更快，无需搜索许多目录。
 - 导入一旦使用，会被缓冲而避免了再次载入。
 - Vim 特定使事物局部于脚本的 "s:" 用法可以不需要了。
+
+从老式脚本里执行 Vim9 脚本里，只能使用全局定义的项目，而不是导出的项目。考虑过
+以下备选方案:
+- 所有导出项目成为局部于脚本的项目。这样没法控制什么项目有定义。
+- 使用导出项目成为全局项目。缺点是这样就不能避免全局空间的名字冲突。
+- 完全禁止 Vim9 脚本的执行，而必须使用 `:import`。这样就很难用脚本进行测试，或
+  在命令行上执行脚本进行实验。
 
 
 类~
