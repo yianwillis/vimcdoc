@@ -124,10 +124,10 @@ blob            二进制大对象 (Binary Large Object)。存储任意字符序
 <code class="section">        数值 0          --&gt;     字符串 "0" </code>
 <code class="section">        数值 -1         --&gt;     字符串 "-1" </code>
                                                         <b class="vimtag"> <a name="octal">octal</a> </b>
-字符串到数值的转换则把字符串开头的一系列数字位转换成数值。可以识别十六进制
-"0xf9"、八进制 "017" 或 "0o17" 和二进制 "0b10" 形式的数值 (<code class="note">注意</code>:
- <a href="eval.html#scriptversion-4">scriptversion-4</a>  不识别 "0" 开头的八进制)。如果字符串不以数字开始，则结果为
-零。
+只在老式 Vim 脚本中进行字符串到数值的转换，Vim9 脚本不进行转换。转换时，把字符
+串开头的一系列数字位转换成数值。可以识别十六进制 "0xf9"、八进制 "017" 或
+"0o17" 和二进制 "0b10" 形式的数值 (<code class="note">注意</code>:  <a href="eval.html#scriptversion-4">scriptversion-4</a>  不识别 "0" 开头的八
+进制)。如果字符串不以数字开始，则结果为零。
 例如:
 <code class="section">        字符串 "456"    --&gt;     数值 456 </code>
 <code class="section">        字符串 "6bar"   --&gt;     数值 6 </code>
@@ -2600,18 +2600,18 @@ string(<code class="special">{expr}</code>)                  字符串  <code cl
 strlen(<code class="special">{expr}</code>)                  数值    字符串 <code class="special">{expr}</code> 的长度
 strpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])
                                 字符串  <code class="special">{str}</code> 从 <code class="special">{start}</code> 开始的 <code class="special">{len}</code> 个字节
-strridx(<code class="special">{haystack}</code>, <code class="special">{needle}</code> [, <code class="special">{start}</code>])
-                                数值    <code class="special">{haystack}</code> 里最后一个 <code class="special">{needle}</code> 的位置
 strptime(<code class="special">{format}</code>, <code class="special">{timestring}</code>)
                                 数值    把 <code class="special">{timestring}</code> 转换为 unix 时间戳
+strridx(<code class="special">{haystack}</code>, <code class="special">{needle}</code> [, <code class="special">{start}</code>])
+                                数值    <code class="special">{haystack}</code> 里最后一个 <code class="special">{needle}</code> 的位置
 strtrans(<code class="special">{expr}</code>)                字符串  翻译字符串，使之可以显示
-swapinfo(<code class="special">{fname}</code>)               字典    关于交换文件 <code class="special">{fname}</code> 的信息
-swapname(<code class="special">{expr}</code>)                字符串  缓冲区 <code class="special">{expr}</code> 的交换文件
 strwidth(<code class="special">{expr}</code>)                数值    <code class="special">{expr}</code> 字符串的显示单元长度
 submatch(<code class="special">{nr}</code> [, <code class="special">{list}</code>])       字符串/列表
                                         ":s" 或 substitute() 的特定匹配
 substitute(<code class="special">{expr}</code>, <code class="special">{pat}</code>, <code class="special">{sub}</code>, <code class="special">{flags}</code>)
                                 字符串  <code class="special">{expr}</code> 里的所有 <code class="special">{pat}</code> 被 <code class="special">{sub}</code> 替代
+swapinfo(<code class="special">{fname}</code>)               字典    关于交换文件 <code class="special">{fname}</code> 的信息
+swapname(<code class="special">{expr}</code>)                字符串  缓冲区 <code class="special">{expr}</code> 的交换文件
 synID(<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{trans}</code>)   数值    <code class="special">{lnum}</code> 行 <code class="special">{col}</code> 列所在的语法 ID
 synIDattr(<code class="special">{synID}</code>, <code class="special">{what}</code> [, <code class="special">{mode}</code>])
                                 字符串  syntax ID <code class="special">{synID}</code> 的 <code class="special">{what}</code> 属性
@@ -2801,7 +2801,7 @@ append(<code class="special">{lnum}</code>, <code class="special">{text}</code>)
 <code class="example">                        :let failed = append(line('$'), "# THE END")</code>
 <code class="example">                        :let failed = append(0, ["Chapter 1", "the beginning"])</code>
 <code class="example"></code>
-                也可用作列表的  <a href="eval.html#method">method</a> : 
+                也可用作列表的  <a href="eval.html#method">method</a> ，基是作为第二个参数传递的: 
 <code class="example">                        mylist-&gt;append(lnum)</code>
 <code class="example"></code>
 <code class="example"></code>
@@ -2821,7 +2821,7 @@ appendbufline(<code class="special">{expr}</code>, <code class="special">{lnum}<
                 如果 <code class="special">{expr}</code> 不是合法的缓冲区或 <code class="special">{lnum}</code> 不合法，报错。例如: 
 <code class="example">                        :let failed = appendbufline(13, 0, "# THE START")</code>
 
-                也可用作列表的  <a href="eval.html#method">method</a> : 
+                也可用作列表的  <a href="eval.html#method">method</a> ，基是作为第二个参数传递的: 
 <code class="example">                        mylist-&gt;appendbufline(buf, lnum)</code>
 <code class="example"></code>
 <code class="example"></code>
@@ -4362,22 +4362,28 @@ garbagecollect([<code class="special">{atexit}</code>])                         
 get(<code class="special">{list}</code>, <code class="special">{idx}</code> [, <code class="special">{default}</code>])                        <b class="vimtag"> <a name="get()">get()</a> </b>
                 获取  <a href="eval.html#List">List</a>  <code class="special">{list}</code> 的第 <code class="special">{idx}</code> 个项目。如果不存在此项目，返回
                 <code class="special">{default}</code>。如果省略 <code class="special">{default}</code>，返回零。
-                也可用作  <a href="eval.html#method">method</a> : 
+                建议用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mylist-&gt;get(idx)</code>
 get(<code class="special">{blob}</code>, <code class="special">{idx}</code> [, <code class="special">{default}</code>])
                 获取  <a href="eval.html#Blob">Blob</a>  <code class="special">{blob}</code> 的第 <code class="special">{idx}</code> 个字节。如果不存在此字节，返回
                 <code class="special">{default}</code>。如果省略 <code class="special">{default}</code>，返回 -1。
+                建议用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        myblob-&gt;get(idx)</code>
 get(<code class="special">{dict}</code>, <code class="special">{key}</code> [, <code class="special">{default}</code>])
                 获取  <a href="eval.html#Dictionary">Dictionary</a>  <code class="special">{dict}</code> 键为 <code class="special">{key}</code> 的项目。如果不存在此项目，
                 返回 <code class="special">{default}</code>。如果省略 <code class="special">{default}</code>，返回零。有用的例子: 
 <code class="example">                        let val = get(g:, 'var_name', 'default')</code>
                 如果 g:var_name 存在，返回它的值，如果不存在返回 <code class="badlink">'default'</code>。
+                建议用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        mydict-&gt;get(key)</code>
 get(<code class="special">{func}</code>, <code class="special">{what}</code>)
                 获取 函数引用 <code class="special">{func}</code> 的项目。<code class="special">{what}</code> 的可能值是:
                         "name"  函数名
                         "func"  函数
                         "dict"  字典
                         "args"  参数列表
+                建议用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        myfunc-&gt;get(what)</code>
 
                                                         <b class="vimtag"> <a name="getbufinfo()">getbufinfo()</a> </b>
 getbufinfo([<code class="special">{expr}</code>])
@@ -4431,7 +4437,10 @@ getbufinfo([<code class="special">{dict}</code>])
 
                 要获取缓冲区局部选项，可用: 
 <code class="example">                        getbufvar({bufnr}, '&amp;option_name')</code>
-<code class="example"></code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetBufnr()-&gt;getbufinfo()</code>
+
 
                                                         <b class="vimtag"> <a name="getbufline()">getbufline()</a> </b>
 getbufline(<code class="special">{expr}</code>, <code class="special">{lnum}</code> [, <code class="special">{end}</code>])
@@ -4513,8 +4522,9 @@ getchar([expr])                                         <b class="vimtag"> <a na
                 getcharmod() 可用于得到附加的修饰符。
 
                 用户点击鼠标时，返回鼠标事件。所在的位置可以在  <a href="eval.html#v:mouse_col">v:mouse_col</a> 、
-                 <a href="eval.html#v:mouse_lnum">v:mouse_lnum</a>  、 <code class="badlink">v:mosue_winid</code>  和  <a href="eval.html#v:mouse_win">v:mouse_win</a>  里找到。
-                也可用  <a href="eval.html#getmousepos()">getmousepos()</a> 。下例用通常的处理方法定位鼠标: 
+                 <a href="eval.html#v:mouse_lnum">v:mouse_lnum</a>  、 <code class="badlink">v:mosue_winid</code>  和  <a href="eval.html#v:mouse_win">v:mouse_win</a>  里找到。也可
+                用  <a href="eval.html#getmousepos()">getmousepos()</a> 。鼠标移动事件被忽略。
+                下例用通常的处理方法定位鼠标: 
 <code class="example">                        let c = getchar()</code>
 <code class="example">                        if c == "\&lt;LeftMouse&gt;" &amp;&amp; v:mouse_win &gt; 0</code>
 <code class="example">                          exe v:mouse_win . "wincmd w"</code>
@@ -7942,6 +7952,8 @@ setloclist(<code class="special">{nr}</code>, <code class="special">{list}</code
                 其它同  <a href="eval.html#setqflist()">setqflist()</a> 。
                 另见  <a href="quickfix.html#location-list">location-list</a> 。
 
+                关于 <code class="special">{action}</code>，可见  <a href="eval.html#setqflist-action">setqflist-action</a> 。
+
                 如果给出可选的 <code class="special">{what}</code> 字典参数，只设置 <code class="special">{what}</code> 中列出的项目。
                 关于 <code class="special">{what}</code> 支持的键值的列表，参见  <a href="eval.html#setqflist()">setqflist()</a> 。
 
@@ -8003,7 +8015,7 @@ setqflist(<code class="special">{list}</code> [, <code class="special">{action}<
 
                 如果提供了可选的 <code class="special">{what}</code> 字典参数，只设置 <code class="special">{what}</code> 列出的项目，忽
                 略首个参数 <code class="special">{list}</code>。<code class="special">{what}</code> 支持的项目见下。
-
+                                                        <b class="vimtag"> <a name="setqflist-what">setqflist-what</a> </b>
                 如果不给出 <code class="special">{what}</code>，使用 <code class="special">{list}</code> 里的项目。每个 <code class="special">{list}</code> 项目是一
                 个字典。<code class="special">{list}</code> 里非字典的项目被忽略。每个字典项目可以包含以下
                 的项目:
@@ -8032,7 +8044,7 @@ setqflist(<code class="special">{list}</code> [, <code class="special">{action}<
                 如果 <code class="special">{list}</code> 为空，快速修复列表被清除。
                 <code class="note">注意</code> 此列表和  <a href="eval.html#getqflist()">getqflist()</a>  返回之值不尽相同。
 
-                <code class="special">{action}</code> 值:                                    <b class="vimtag"> <a name="E927">E927</a> </b>
+                <code class="special">{action}</code> 值:                    <b class="vimtag"> <a name="setqflist-action">setqflist-action</a> </b> <b class="vimtag"> <a name="E927">E927</a> </b>
                 'a'     把 <code class="special">{list}</code> 项目加入已有的快速修复列表。如果该列表尚不存
                         在，建立新表。
 
@@ -8063,7 +8075,8 @@ setqflist(<code class="special">{list}</code> [, <code class="special">{action}<
                     nr          快速修复堆栈中的列表号；零代表当前快速修复列
                                 表，"$" 代表最后的快速修复列表。
                     quickfixtextfunc
-                                获取显示在快速修复窗口的文本的函数。参见
+                                获取显示在快速修复窗口的文本的函数。值可取函数
+                                名、函数引用或匿名函数。参见
                                  <a href="quickfix.html#quickfix-window-function">quickfix-window-function</a>  解释如何写此函数并
                                 给出示例。
                     title       快速修复列表标题。见  <a href="quickfix.html#quickfix-title">quickfix-title</a> 

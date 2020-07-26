@@ -90,10 +90,16 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 
 <code class="section"># 开始的注释</code>
 
-Vim 通常以双引号开始脚本注释。但它也是字符串的开始，所以在很多地方不能使用。
-Vim9 也可用 # 开始脚本注释。Vi 里这是带数字列出文本的命令，但可用  <a href="various.html#:number">:number</a>  代
-替。 
+老式 Vim 脚本以双引号开始脚本注释。Vim9 脚本则用 # 开始脚本注释。 
+<code class="example">        # 声明</code>
 <code class="example">        let count = 0  # 出现的次数</code>
+<code class="example"></code>
+原因是双引号也是字符串的开始，在很多地方，尤其是表达式内部换行处，很难区分双引
+号真正的意思。为避免混淆，现在只识别 # 注释。这和外壳脚本和 Python 程序完全相
+同。
+
+Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various.html#:number">:number</a>  代替。 
+<code class="example">        101number</code>
 <code class="example"></code>
 为提高可读性，命令和开始注释的 # 之间必须有一个空格。<code class="note">注意</code> #{ 是字典的开始，所
 以不能用来开启注释。
@@ -293,9 +299,30 @@ print:
 <code class="example">                separator = '-'</code>
 <code class="example">                ): string</code>
 <code class="example"></code>
-<code class="note">注意</code> "enddef" 不能用于继续行的开始，它会结束当前函数。
-
-
+<code class="note">注意</code>:
+- "enddef" 不能用于继续行的开始，它会结束当前函数。
+- 赋值语句的 LHS 不接受换行。特别是列表解包  <a href="eval.html#:let-unpack">:let-unpack</a> 。这样可以: 
+<code class="example">        [var1, var2] =</code>
+<code class="example">                Func()</code>
+   这样不行: 
+<code class="example">        [var1,</code>
+<code class="example">            var2] =</code>
+<code class="example">                Func()</code>
+-  <a href="eval.html#:echo">:echo</a> 、 <a href="eval.html#:execute">:execute</a>  和类似命令的参数与参数之间不接受换行。这样可以: 
+<code class="example">        echo [1,</code>
+<code class="example">                2] [3,</code>
+<code class="example">                        4]</code>
+   这样不行: 
+<code class="example">        echo [1, 2]</code>
+<code class="example">                [3, 4]</code>
+- 匿名函数在 "{" 和 "-&gt;" 之间的参数部分不接受换行。这样可以: 
+<code class="example">        filter(list, {k, v -&gt;</code>
+<code class="example">                        v &gt; 0})</code>
+   这样不行: 
+<code class="example">        filter(list, {k,</code>
+<code class="example">                        v -&gt; v &gt; 0})</code>
+<code class="example"></code>
+<code class="example"></code>
 <code class="section">没有花括号扩展</code>
 
 不能使用  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
@@ -319,7 +346,7 @@ Vim9 脚本强制空白的正确使用。以下不再允许:
 <code class="example">        let var =234    " 出错！</code>
 "=" 前后必须有空白: 
 <code class="example">        let var = 234   " OK</code>
-开始注释的 # 之前必须有空白字符: 
+命令之后开始注释的 # 之前必须有空白字符: 
 <code class="example">        let var = 234# 出错！</code>
 <code class="example">        let var = 234 # OK</code>
 <code class="example"></code>
@@ -367,6 +394,7 @@ JavaScript，但有少许例外。
 <code class="example">        0 || ''  == ''</code>
 <code class="example">        8 &amp;&amp; 2   == 2</code>
 <code class="example">        0 &amp;&amp; 2   == 0</code>
+<code class="example">        2 &amp;&amp; 0   == 0</code>
 <code class="example">        [] &amp;&amp; 2  == []</code>
 <code class="example"></code>
  <code class="badlink">..</code>  用作字符串连接时，参数总是转化为字符串。 
@@ -383,13 +411,15 @@ Vim9 设计和常用的编程语言相近，而同时试图支持老式的 Vim �
 
 Ex 命令范围需要冒号前缀。 
 <code class="example">        -&gt;              " 老式 Vim: 右移前行</code>
-<code class="example">        -&gt;func()        " Vim9: 方法调用</code>
+<code class="example">        -&gt;func()        " Vim9: 继续行上的方法调用</code>
 <code class="example">        :-&gt;             " Vim9: 右移前行</code>
 <code class="example"></code>
 <code class="example">        %s/a/b          " 老式 Vim: 在所有行上替代</code>
 <code class="example">        x = alongname</code>
 <code class="example">             % another  " Vim9: 没有反斜杠的继续行</code>
 <code class="example">        :%s/a/b         " Vim9: 在所有行上替代</code>
+<code class="example">        'text'-&gt;func()  " Vim9: 方法调用</code>
+<code class="example">        :'t             " 老式 Vim: 跳转到位置标记 m</code>
 <code class="example"></code>
  <a href="vim9.html#:def">:def</a>  定义的函数会对整个函数进行编译。老式函数可以随时放弃，因而以下的行不会
 被立即解析: 
@@ -464,6 +494,21 @@ Vim9 函数作为一个整体被编译:
                         <code class="note">注意</code> <code class="special">{func}</code> 的命令行补全可在之前附加 "s:" 来查找局部于
                         脚本的函数。
 
+<code class="section">局限</code>
+
+字符串表达式计算时，局部变量不可见。例如: 
+<code class="example">        def EvalString(): list&lt;string&gt;</code>
+<code class="example">          let list = ['aa', 'bb', 'cc', 'dd']</code>
+<code class="example">          return range(1, 2)-&gt;map('list[v:val]')</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+map 参数是字符串表达式，它在函数作用域之外进行计算。可用匿名函数代替: 
+<code class="example">        def EvalString(): list&lt;string&gt;</code>
+<code class="example">          let list = ['aa', 'bb', 'cc', 'dd']</code>
+<code class="example">          return range(1, 2)-&gt;map({ _, v -&gt; list[v] })</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>4. 类型                                         <b class="vimtag"> <a name="vim9-types">vim9-types</a> </b>
 
