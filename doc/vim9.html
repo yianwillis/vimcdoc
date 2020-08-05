@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年7月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年8月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -95,14 +95,14 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 <code class="example">        let count = 0  # 出现的次数</code>
 <code class="example"></code>
 原因是双引号也是字符串的开始，在很多地方，尤其是表达式内部换行处，很难区分双引
-号真正的意思。为避免混淆，现在只识别 # 注释。这和外壳脚本和 Python 程序完全相
-同。
+号真正的意思，因为字符串和注释都可以后跟任意文本。为避免混淆，现在只识别 # 注
+释。这和外壳脚本和 Python 程序完全相同。
 
 Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various.html#:number">:number</a>  代替。 
-<code class="example">        101number</code>
+<code class="example">        101 number</code>
 <code class="example"></code>
 为提高可读性，命令和开始注释的 # 之间必须有一个空格。<code class="note">注意</code> #{ 是字典的开始，所
-以不能用来开启注释。
+以不开启注释。
 
 
 <code class="section">Vim9 函数</code>
@@ -113,6 +113,7 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 码易读易理解。
 
 编译在函数第一次调用时，或遇到脚本中定义函数的  <a href="vim9.html#:defcompile">:defcompile</a>  命令时完成。
+ <a href="vim9.html#:disassemble">:disassemble</a>  也进行函数编译。
 
  <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有 "range"、"abort"、"dict" 或 "closure" 这样的选
 项。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
@@ -120,7 +121,7 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 必须指定参数类型和返回类型。可用 "any" 类型，和老式函数一样，此时类型检查会在
 运行时完成。
 
-参数可用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。
+参数用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。就像其它语言那样。
 
 类似于 Typescript，通过给定名字和列表类型的末项参数来定义可变参数。例如，数值
 的列表: 
@@ -133,10 +134,13 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 
                                                         <b class="vimtag"> <a name="vim9-scopes">vim9-scopes</a> </b>
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定脚本级别的新函数时，函数局部于
-脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。
-
-要定义和使用全局函数或变量，必须使用 "g:" 前缀。
-
+脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。要定义和使用全局函数或变量，必须
+使用 "g:" 前缀。autoload 脚本中的函数使用 "name#" 这样的前缀就行了。 
+<code class="example">        def ThisFunction()          # 局部于脚本</code>
+<code class="example">        def s:ThisFunction()        # 局部于脚本</code>
+<code class="example">        def g:ThatFunction()        # 全局</code>
+<code class="example">        def scriptname#function()   # autoload</code>
+<code class="example"></code>
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定函数内的新函数时，函数局部于该
 函数。函数内不可以定义局部于脚本的函数。可以用 "g:" 前缀来定义全局函数。
 
@@ -193,8 +197,9 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 <code class="example">        }</code>
 <code class="example">        echo temp  " 报错！</code>
 <code class="example"></code>
-不能用  <a href="eval.html#:let">:let</a>  给已存在的变量赋值，因为它意味着变量声明。全局变量是例外: 带或不
-带  <a href="eval.html#:let">:let</a>  的使用都可以，因为没有它们应在哪里声明的相关规则。
+不能用  <a href="eval.html#:let">:let</a>  给已存在的变量赋值，因为它意味着变量声明。全局、窗口、标签页、缓
+冲区和 Vim 变量只能用不带  <a href="eval.html#:let">:let</a>  的形式，因为它们并非真正通过声明产生，但可用
+ <a href="eval.html#:unlet">:unlet</a>  删除。
 
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
@@ -202,11 +207,16 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本级别的也是如此。 
 <code class="example">        vim9script</code>
 <code class="example">        let script_local = 'text'</code>
-<code class="example">        let g:global = 'value'</code>
+<code class="example">        g:global = 'value'</code>
 <code class="example">        let Funcref = g:ThatFunction</code>
 <code class="example"></code>
 因为 "&amp;opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&amp;" 来重复
  <a href="change.html#:substitute">:substitute</a>  命令了。
+
+                                                        <b class="vimtag"> <a name="E1092">E1092</a> </b>
+目前不支持使用解包记法的多于一个变量的声明: 
+<code class="example">        let [v1, v2] = GetValues()  # 出错！</code>
+这是因为需要从列表项目类型中推导出类型，目前这有困难。
 
 
 <code class="section">省略 :call 和 :eval</code>
@@ -215,26 +225,25 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 <code class="example">        writefile(lines, 'file')</code>
  <a href="eval.html#:call">:call</a>  还可用，但不鼓励。
 
-只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需  <a href="eval.html#eval">eval</a> 。 <code class="emphasis">不能</code> 用于字
-符串常数: 
-<code class="example">        myList-&gt;add(123)                " 正确</code>
-<code class="example">        g:myList-&gt;add(123)              " 正确</code>
-<code class="example">        [1, 2, 3]-&gt;Process()            " 正确</code>
-<code class="example">        #{a: 1, b: 2}-&gt;Process()        " 正确</code>
-<code class="example">        {'a': 1, 'b': 2}-&gt;Process()     " 正确</code>
-<code class="example">        "foobar"-&gt;Process()             " _不_正确</code>
-<code class="example">        ("foobar")-&gt;Process()           " 正确</code>
-<code class="example">        'foobar'-&gt;Process()             " _不_正确</code>
-<code class="example">        ('foobar')-&gt;Process()           " 正确</code>
+只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需  <a href="eval.html#eval">eval</a> 。例如: 
+<code class="example">        myList-&gt;add(123)</code>
+<code class="example">        g:myList-&gt;add(123)</code>
+<code class="example">        [1, 2, 3]-&gt;Process()</code>
+<code class="example">        #{a: 1, b: 2}-&gt;Process()</code>
+<code class="example">        {'a': 1, 'b': 2}-&gt;Process()</code>
+<code class="example">        "foobar"-&gt;Process()</code>
+<code class="example">        ("foobar")-&gt;Process()</code>
+<code class="example">        'foobar'-&gt;Process()</code>
+<code class="example">        ('foobar')-&gt;Process()</code>
 <code class="example"></code>
-如果函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，既有
- <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="eval.html#substitute()">substitute()</a>  函数。如果一行以  <code class="badlink">substitute(</code>  开始，
-会假定使用函数，要使用命令版本，加上冒号前缀: 
+在罕见情形下函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，
+既有  <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="eval.html#substitute()">substitute()</a>  函数。如果一行以  <code class="badlink">substitute(</code>  开
+始，会假定使用函数，要使用命令版本，加上冒号前缀: 
 <code class="example">        :substitute(pattern (replacement (</code>
 <code class="example"></code>
 <code class="note">注意</code> 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了函数间能相互依
 赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写错
-误只有在调用真正执行时才能发现。
+误只有在函数进行调用时才能发现。
 
 
 <code class="section">省略 function() </code>
@@ -279,10 +288,13 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 <code class="example">                        ? PosFunc(arg)</code>
 <code class="example">                        : NegFunc(arg)</code>
 <code class="example"></code>
+对进行方法调用的 "-&gt;" 和进行成员访问的点号，之前可断行: 
 <code class="example">        let result = GetBuilder()</code>
 <code class="example">                        -&gt;BuilderSetWidth(333)</code>
 <code class="example">                        -&gt;BuilderSetHeight(777)</code>
 <code class="example">                        -&gt;BuilderBuild()</code>
+<code class="example">        let result = MyDict</code>
+<code class="example">                        .member</code>
 <code class="example"></code>
                                                         <b class="vimtag"> <a name="E1050">E1050</a> </b>
 要识别出现在行首的操作符，需要在范围之前加上冒号。这样会把 "start" 加上
@@ -328,9 +340,11 @@ print:
 不能使用  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
 
 
-<code class="section">没有 :append、:change 或 :insert </code>
+<code class="section">没有 :xit、:t、:append、:change 或 :insert </code>
 
 这些命令很容易会和局部变量名混淆。
+ <a href="editing.html#:x">:x</a>  或  <a href="editing.html#:xit">:xit</a>  可用  <a href="editing.html#:exit">:exit</a>  替代。
+ <a href="change.html#:t">:t</a>  可用  <a href="change.html#:copy">:copy</a>  替代。
 
 
 <code class="section">比较符</code>
@@ -469,17 +483,18 @@ Vim9 函数作为一个整体被编译:
                         第二三种形式是可选参数。如果调用者省略参数，使用
                         <code class="special">{value}</code> 值。
 
-                        此函数在实际调用时或使用  <a href="vim9.html#:defcompile">:defcompile</a>  时被编译为指令
-                        序列。语法和类型错误会在那里发生。
+                        此函数在实际调用时、使用  <a href="vim9.html#:disassemble">:disassemble</a>  或
+                         <a href="vim9.html#:defcompile">:defcompile</a>  时被编译为指令序列。语法和类型错误会在那
+                        里发生。
 
-                        <code class="note">注意</code>: 在  <a href="vim9.html#:def">:def</a>  里可以嵌套另一个  <a href="vim9.html#:def">:def</a> ，但为了后向兼
-                        容起见，不可以在  <a href="eval.html#:function">:function</a>  里嵌套  <a href="vim9.html#:def">:def</a> 。
+                        在  <a href="vim9.html#:def">:def</a>  或  <a href="eval.html#:function">:function</a>  里可以嵌套另一个  <a href="vim9.html#:def">:def</a> ，最多
+                        可达 50 层。
 
                         [!] 的用法同  <a href="eval.html#:function">:function</a> 。<code class="note">注意</code> Vim9 脚本里局部于脚本的
                         函数不能在同一脚本里删除或在之后重定义。
 
                                                         <b class="vimtag"> <a name=":enddef">:enddef</a> </b>
-:enddef                 结束  <a href="vim9.html#:def">:def</a>  定义的函数。
+:enddef                 结束  <a href="vim9.html#:def">:def</a>  定义的函数。必须单独起一行。
 
 如果函数定义所在的是 Vim9 脚本，可不经 "s:" 前缀直接访问局部于脚本的变量。这些
 变量必须在函数编译之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量
@@ -533,7 +548,7 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
         tuple&lt;a: <code class="special">{type}</code>, b: <code class="special">{type}</code>, ...&gt;
 
 以下类型可用于声明，但不会有值有此类型:
-        <code class="special">{type}</code>|<code class="special">{type}</code>
+        <code class="special">{type}</code>|<code class="special">{type}</code>  <code class="special">{尚未实现}</code>
         void
         any
 
@@ -626,10 +641,7 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 <code class="example">        export def MyFunc() ...</code>
 <code class="example">        export class MyClass ...</code>
 <code class="example"></code>
-就像这里暗示的，只能导出常数、变量、 <a href="vim9.html#:def">:def</a>  函数和类。
-
-另外，也可用 export 语句来导出若干个已定义的 (否则就是脚本局部的) 项目: 
-<code class="example">        export {EXPORTED_CONST, someValue, MyFunc, MyClass}</code>
+就像这里暗示的，只能导出常数、变量、 <a href="vim9.html#:def">:def</a>  函数和类。<code class="special">{类尚未实现}</code>
 
                                                         <b class="vimtag"> <a name="E1042">E1042</a> </b>
  <a href="vim9.html#:export">:export</a>  只能用于 Vim9 脚本的脚本级别。
