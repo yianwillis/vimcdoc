@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年7月
+*vim9.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -62,14 +62,14 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 	let count = 0  # 出现的次数
 
 原因是双引号也是字符串的开始，在很多地方，尤其是表达式内部换行处，很难区分双引
-号真正的意思。为避免混淆，现在只识别 # 注释。这和外壳脚本和 Python 程序完全相
-同。
+号真正的意思，因为字符串和注释都可以后跟任意文本。为避免混淆，现在只识别 # 注
+释。这和外壳脚本和 Python 程序完全相同。
 
 Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用 `:number` 代替。 >
-	101number
+	101 number
 
 为提高可读性，命令和开始注释的 # 之间必须有一个空格。注意 #{ 是字典的开始，所
-以不能用来开启注释。
+以不开启注释。
 
 
 Vim9 函数~
@@ -80,6 +80,7 @@ Vim9 函数~
 码易读易理解。
 
 编译在函数第一次调用时，或遇到脚本中定义函数的 `:defcompile` 命令时完成。
+`:disassemble` 也进行函数编译。
 
 `:def` 不像 `:function` 那样有 "range"、"abort"、"dict" 或 "closure" 这样的选
 项。`:def` 函数总会在错误时中止，不接受范围也不能是 "dict" 函数。
@@ -87,7 +88,7 @@ Vim9 函数~
 必须指定参数类型和返回类型。可用 "any" 类型，和老式函数一样，此时类型检查会在
 运行时完成。
 
-参数可用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。
+参数用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。就像其它语言那样。
 
 类似于 Typescript，通过给定名字和列表类型的末项参数来定义可变参数。例如，数值
 的列表: >
@@ -100,9 +101,12 @@ Vim9 函数~
 
 							*vim9-scopes*
 在 vim9 脚本中，用 `:function` 或 `:def` 来指定脚本级别的新函数时，函数局部于
-脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。
-
-要定义和使用全局函数或变量，必须使用 "g:" 前缀。
+脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。要定义和使用全局函数或变量，必须
+使用 "g:" 前缀。autoload 脚本中的函数使用 "name#" 这样的前缀就行了。 >
+	def ThisFunction()          # 局部于脚本
+	def s:ThisFunction()        # 局部于脚本
+	def g:ThatFunction()	    # 全局
+	def scriptname#function()   # autoload
 
 在 vim9 脚本中，用 `:function` 或 `:def` 来指定函数内的新函数时，函数局部于该
 函数。函数内不可以定义局部于脚本的函数。可以用 "g:" 前缀来定义全局函数。
@@ -160,8 +164,9 @@ Vim9 函数~
 	}
 	echo temp  " 报错！
 
-不能用 `:let` 给已存在的变量赋值，因为它意味着变量声明。全局变量是例外: 带或不
-带 `:let` 的使用都可以，因为没有它们应在哪里声明的相关规则。
+不能用 `:let` 给已存在的变量赋值，因为它意味着变量声明。全局、窗口、标签页、缓
+冲区和 Vim 变量只能用不带 `:let` 的形式，因为它们并非真正通过声明产生，但可用
+`:unlet` 删除。
 
 变量不能隐藏之前定义的变量。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
@@ -169,11 +174,16 @@ Vim9 函数~
 全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本级别的也是如此。 >
 	vim9script
 	let script_local = 'text'
-	let g:global = 'value'
+	g:global = 'value'
 	let Funcref = g:ThatFunction
 
 因为 "&opt = value" 现在用来给选项 "opt" 赋值，所以不再能用 ":&" 来重复
 `:substitute` 命令了。
+
+							*E1092*
+目前不支持使用解包记法的多于一个变量的声明: >
+	let [v1, v2] = GetValues()  # 出错！
+这是因为需要从列表项目类型中推导出类型，目前这有困难。
 
 
 省略 :call 和 :eval~
@@ -182,26 +192,25 @@ Vim9 函数~
 	writefile(lines, 'file')
 `:call` 还可用，但不鼓励。
 
-只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需 `eval`。_不能_用于字
-符串常数: >
-	myList->add(123)		" 正确
-	g:myList->add(123)		" 正确
-	[1, 2, 3]->Process()		" 正确
-	#{a: 1, b: 2}->Process()	" 正确
-	{'a': 1, 'b': 2}->Process()	" 正确
-	"foobar"->Process()		" _不_正确
-	("foobar")->Process()		" 正确
-	'foobar'->Process()		" _不_正确
-	('foobar')->Process()		" 正确
+只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需 `eval`。例如: >
+	myList->add(123)
+	g:myList->add(123)
+	[1, 2, 3]->Process()
+	#{a: 1, b: 2}->Process()
+	{'a': 1, 'b': 2}->Process()
+	"foobar"->Process()
+	("foobar")->Process()
+	'foobar'->Process()
+	('foobar')->Process()
 
-如果函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，既有
-`:substitute` 命令，又有 `substitute()` 函数。如果一行以 `substitute(` 开始，
-会假定使用函数，要使用命令版本，加上冒号前缀: >
+在罕见情形下函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，
+既有 `:substitute` 命令，又有 `substitute()` 函数。如果一行以 `substitute(` 开
+始，会假定使用函数，要使用命令版本，加上冒号前缀: >
 	:substitute(pattern (replacement (
 
 注意 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了函数间能相互依
 赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写错
-误只有在调用真正执行时才能发现。
+误只有在函数进行调用时才能发现。
 
 
 省略 function() ~
@@ -246,10 +255,13 @@ Vim9 函数~
 			? PosFunc(arg)
 			: NegFunc(arg)
 
+对进行方法调用的 "->" 和进行成员访问的点号，之前可断行: >
 	let result = GetBuilder()
 			->BuilderSetWidth(333)
 			->BuilderSetHeight(777)
 			->BuilderBuild()
+	let result = MyDict
+			.member
 
 <							*E1050*
 要识别出现在行首的操作符，需要在范围之前加上冒号。这样会把 "start" 加上
@@ -295,9 +307,11 @@ print: >
 不能使用 |curly-braces-names|。
 
 
-没有 :append、:change 或 :insert ~
+没有 :xit、:t、:append、:change 或 :insert ~
 
 这些命令很容易会和局部变量名混淆。
+`:x` 或 `:xit` 可用 `:exit` 替代。
+`:t` 可用 `:copy` 替代。
 
 
 比较符~
@@ -437,17 +451,18 @@ Vim9 函数作为一个整体被编译: >
 			第二三种形式是可选参数。如果调用者省略参数，使用
 			{value} 值。
 
-			此函数在实际调用时或使用 `:defcompile` 时被编译为指令
-			序列。语法和类型错误会在那里发生。
+			此函数在实际调用时、使用 `:disassemble` 或
+			`:defcompile` 时被编译为指令序列。语法和类型错误会在那
+			里发生。
 
-			注意: 在 `:def` 里可以嵌套另一个 `:def`，但为了后向兼
-			容起见，不可以在 `:function` 里嵌套 `:def`。
+			在 `:def` 或 `:function` 里可以嵌套另一个 `:def`，最多
+			可达 50 层。
 
 			[!] 的用法同 `:function`。注意 Vim9 脚本里局部于脚本的
 			函数不能在同一脚本里删除或在之后重定义。
 
 							*:enddef*
-:enddef			结束 `:def` 定义的函数。
+:enddef			结束 `:def` 定义的函数。必须单独起一行。
 
 如果函数定义所在的是 Vim9 脚本，可不经 "s:" 前缀直接访问局部于脚本的变量。这些
 变量必须在函数编译之前定义。如果函数定义所在的是老式脚本，那么局部于脚本的变量
@@ -502,7 +517,7 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 	tuple<a: {type}, b: {type}, ...>
 
 以下类型可用于声明，但不会有值有此类型:
-	{type}|{type}
+	{type}|{type}  {尚未实现}
 	void
 	any
 
@@ -596,11 +611,8 @@ func({type}, ?{type}, ...{type}): {type}
 	export def MyFunc() ...
 	export class MyClass ...
 
-就像这里暗示的，只能导出常数、变量、`:def` 函数和类。
+就像这里暗示的，只能导出常数、变量、`:def` 函数和类。{类尚未实现}
 
-另外，也可用 export 语句来导出若干个已定义的 (否则就是脚本局部的) 项目: >
-	export {EXPORTED_CONST, someValue, MyFunc, MyClass}
-<
 							*E1042*
 `:export` 只能用于 Vim9 脚本的脚本级别。
 
