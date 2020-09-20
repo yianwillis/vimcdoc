@@ -1062,16 +1062,21 @@ expr8                                                   <b class="vimtag"> <a na
 
 expr8[expr1]            字符串或  <a href="eval.html#List">List</a>  的项目          <b class="vimtag"> <a name="expr-[]">expr-[]</a> </b> <b class="vimtag"> <a name="E111">E111</a> </b>
                                                         <b class="vimtag"> <a name="E909">E909</a> </b> <b class="vimtag"> <a name="subscript">subscript</a> </b>
+老式 Vim 脚本里:
 如果 expr8 是数值或字符串，结果是字符串，包含 expr8 里第 expr1 个字节。expr8
-视作字符串，expr1 视作数值。这里不识别多字节编码，但可考虑使用  <a href="eval.html#byteidx()">byteidx()</a> ，或
-用  <a href="eval.html#split()">split()</a>  把字符串变为字符的列表。
-
-索引 0 给出第一个字节。这和 C 类同。要小心: 文本列号可是从 1 开始的！例如，要
-得到光标所在的字节: 
+视作字符串 (数值自动转换为字符串)，expr1 视作数值。这里不识别多字节编码，但可
+考虑使用  <a href="eval.html#byteidx()">byteidx()</a> ，或用  <a href="eval.html#split()">split()</a>  把字符串变为字符的列表。例如，要得到光标
+所在的字节: 
 <code class="example">        :let c = getline(line("."))[col(".") - 1]</code>
 <code class="example"></code>
+Vim9 脚本里:
+如果 expr8 是字符串，结果是字符串，包含 expr8 里第 expr1 个单个字符。要用字节
+索引，使用  <a href="eval.html#strpart()">strpart()</a> 。
+
+索引 0 给出第一个字节。要小心: 文本列号可是从 1 开始的！
+
 如果字符串的长度小于索引值，结果为空字符串。负索引总是给出空字符串 (原因: 反向
-兼容)。用 [-1:] 得到最后一个字节。
+兼容)。用 [-1:] 得到最后一个字节或字符。
 
 如果 expr8 是  <a href="eval.html#List">List</a> ，返回索引值为 expr1 的项目。可用的索引值见  <a href="eval.html#list-index">list-index</a> 。
 如果索引越界，产生错误。例如: 
@@ -1083,9 +1088,13 @@ expr8[expr1]            字符串或  <a href="eval.html#List">List</a>  的项�
 
 expr8[expr1a : expr1b]  子字符串或子列表                <b class="vimtag"> <a name="expr-[:]">expr-[:]</a> </b>
 
-如果 expr8 是数值或字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
-字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。这里不识别多字节编码，需用
- <a href="eval.html#byteidx()">byteidx()</a>  来计算索引值。
+如果 expr8 是字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
+字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。
+
+在老式 Vim 脚本里，索引是字节索引。这里不识别多字节编码，需用  <a href="eval.html#byteidx()">byteidx()</a>  来计
+算索引值。如果 expr8 为数值，先转换为字符串。
+
+在 Vim9 脚本里索引为字符索引。要使用字节索引，可用  <a href="eval.html#strpart()">strpart()</a> 。
 
 如果省略 expr1a，用零。如果省略 expr1b，用字符串的长度减一。
 
@@ -4414,7 +4423,7 @@ getbufinfo([<code class="special">{dict}</code>])
                                         的以秒计的时间戳。
                                         <code class="notvi">{仅当编译时加入  <a href="various.html#+viminfo">+viminfo</a>  特性才有效}</code>
                         listed          若缓冲区在列表内，则为 TRUE。
-                        lnum            缓冲区的当前行号。
+                        lnum            在当前窗口里打开本缓冲区时所用的行号。
                         linecount       缓冲区行数 (仅当缓冲区载入后才有效)
                         loaded          若缓冲区已载入则为 TRUE。
                         name            缓冲区文件的完整列表。
@@ -4874,7 +4883,7 @@ getloclist(<code class="special">{nr}</code> [, <code class="special">{what}</co
 <code class="example">                        :echo getloclist(5, {'filewinid': 0})</code>
 <code class="example"></code>
 <code class="example"></code>
-getmarklist([<code class="special">{expr}</code>]                                    <b class="vimtag"> <a name="getmarklist()">getmarklist()</a> </b>
+getmarklist([<code class="special">{expr}</code>])                                   <b class="vimtag"> <a name="getmarklist()">getmarklist()</a> </b>
                 无 <code class="special">{expr}</code> 参数时，返回  <a href="eval.html#List">List</a> ，给出所有全局位置标记的信息。
                  <a href="motion.html#mark">mark</a> 
 
@@ -7683,7 +7692,7 @@ searchcount([<code class="special">{options}</code>])                           
                   pos            <a href="eval.html#List">List</a>           重计算结果时的
                                                 `[lnum, col, off]` 值。
                                                 这会改变 "current" 返回值。见
-                                                 <a href="eval.html#cursor()">cursor()</a> ， <a href="eval.html#getpos()">getpos()</a> 
+                                                 <a href="eval.html#cursor()">cursor()</a> 、 <a href="eval.html#getpos()">getpos()</a> 
                                                 (缺省: 光标所在位置)
 
 
@@ -9100,7 +9109,11 @@ tabpagebuflist([<code class="special">{arg}</code>])                            
 <code class="example"></code>
 tabpagenr([<code class="special">{arg}</code>])                                      <b class="vimtag"> <a name="tabpagenr()">tabpagenr()</a> </b>
                 返回数值，当前标签页号。第一个标签页的编号为 1。
-                如果可选参数为 "$"，返回最后一个标签页的编号 (即标签页总数)。
+
+                可选参数 <code class="special">{arg}</code> 支持以下值:
+                        $       最后一个标签页的编号 (即标签页总数)。
+                        #       最近访问的标签页编号 ( <a href="tabpage.html#g%3CTab%3E">g&lt;Tab&gt;</a>  对应)。如果没有
+                                前次标签页，返回 0。
                 该数值可用于  <a href="tabpage.html#:tab">:tab</a>  命令。
 
 
@@ -10739,8 +10752,16 @@ text...
 <code class="example">                                :const x = 1</code>
                         等价于: 
 <code class="example">                                :let x = 1</code>
-<code class="example">                                :lockvar 1 x</code>
-                        可用于保证变量之后不会被修改。
+<code class="example">                                :lockvar! x</code>
+                        可用于保证变量之后不会被修改。如果值为列表或字典常量，
+                        其中的项目也不能被修改: 
+<code class="example">                                const ll = [1, 2, 3]</code>
+<code class="example">                                let ll[1] = 5  " 报错！</code>
+                        嵌套引用不加锁: 
+<code class="example">                                let lvar = ['a']</code>
+<code class="example">                                const lconst = [0, lvar]</code>
+<code class="example">                                let lconst[0] = 2  " 报错！</code>
+<code class="example">                                let lconst[1][0] = 'b'  " OK</code>
                                                         <b class="vimtag"> <a name="E995">E995</a> </b>
                          <a href="eval.html#:const">:const</a>  不能用来修改变量: 
 <code class="example">                                :let x = 1</code>

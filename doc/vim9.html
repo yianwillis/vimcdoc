@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年8月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -49,7 +49,7 @@ Vim9 脚本命令和表达式。                                 <b class="vimta
 还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
 
 
-1   什么是 Vim9 脚本？                   <a href="vim9.html#vim9-script">vim9-script</a> 
+1.  什么是 Vim9 脚本？                   <a href="vim9.html#vim9-script">vim9-script</a> 
 2.  差别                                 <a href="vim9.html#vim9-differences">vim9-differences</a> 
 3.  新风格函数                           <a href="vim9.html#fast-functions">fast-functions</a> 
 4.  类型                                 <a href="vim9.html#vim9-types">vim9-types</a> 
@@ -121,9 +121,9 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 必须指定参数类型和返回类型。可用 "any" 类型，和老式函数一样，此时类型检查会在
 运行时完成。
 
-参数用不带 "a:" 的名字访问。没有 "a:" 字典或 "a:000" 列表。就像其它语言那样。
+参数用不带 "a:" 的名字访问，就像其它语言一样。没有 "a:" 字典或 "a:000" 列表。
 
-类似于 Typescript，通过给定名字和列表类型的末项参数来定义可变参数。例如，数值
+类似于 TypeScript，通过给定名字和列表类型的末项参数来定义可变参数。例如，数值
 的列表: 
 <code class="example">        def MyFunc(...itemlist: list&lt;number&gt;)</code>
 <code class="example">           for item in itemlist</code>
@@ -134,25 +134,24 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 
                                                         <b class="vimtag"> <a name="vim9-scopes">vim9-scopes</a> </b>
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定脚本级别的新函数时，函数局部于
-脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。要定义和使用全局函数或变量，必须
-使用 "g:" 前缀。autoload 脚本中的函数使用 "name#" 这样的前缀就行了。 
+脚本，就像用了 "s:" 前缀那样。"s:" 前缀可选。要定义和使用全局函数或变量，应使
+用 "g:" 前缀。autoload 脚本中的函数使用 "name#" 这样的前缀就行了。 
 <code class="example">        def ThisFunction()          # 局部于脚本</code>
 <code class="example">        def s:ThisFunction()        # 局部于脚本</code>
 <code class="example">        def g:ThatFunction()        # 全局</code>
+<code class="example">        def ThatFunction()          # 如果没有局部 ThatFunction()，则为全局</code>
 <code class="example">        def scriptname#function()   # autoload</code>
 <code class="example"></code>
 在 vim9 脚本中，用  <a href="eval.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  来指定函数内的新函数时，函数局部于该
 函数。函数内不可以定义局部于脚本的函数。可以用 "g:" 前缀来定义全局函数。
 
-引用函数时如果不带 "s:" 或 "g:" 前缀，vim 会依以下顺序搜索函数:
-- 局部于当前作用域及其外层各作用域，直到到达函数作用域为止。
-- 局部于当前脚本文件。
-- 导入的函数，见  <a href="vim9.html#:import">:import</a> 。
+引用函数时如果不带 "s:" 或 "g:" 前缀，vim 会优先考虑局部函数 (函数作用域内、脚
+本作用域内或导入)，然后再考虑全局函数。
 在所有情况下，函数必须先定义，然后才能使用。这是函数第一次调用或是
  <a href="vim9.html#:defcompile">:defcompile</a>  导致调用被编译的时候。
 
-其结果是，无命名空间的函数和变量可在定义所在或导入的脚本内访问。全局函数和变量
-可以在任何地方定义 (要找到需要点运气！)。
+其结果是，无命名空间的函数和变量通常可在定义所在或导入的脚本内访问。全局函数和
+变量可以在任何地方定义 (要找到需要点运气！)。
 
 全局函数还是可以在几乎任何时候定义和删除。vim9 脚本里，局部于脚本的函数在脚本
 载入时定义一次，且不能删除或替代。
@@ -201,7 +200,7 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 冲区和 Vim 变量只能用不带  <a href="eval.html#:let">:let</a>  的形式，因为它们并非真正通过声明产生，但可用
  <a href="eval.html#:unlet">:unlet</a>  删除。
 
-变量不能隐藏之前定义的变量。
+变量和函数不能隐藏之前定义或导入的变量和函数。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
 全局变量和用户定义的函数必须带上 "g:" 前缀，即使脚本级别的也是如此。 
@@ -236,14 +235,14 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 <code class="example">        'foobar'-&gt;Process()</code>
 <code class="example">        ('foobar')-&gt;Process()</code>
 <code class="example"></code>
-在罕见情形下函数名和 Ex 命令有二义性，用 ":" 来明确你想用的是 Ex 命令。例如，
-既有  <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="eval.html#substitute()">substitute()</a>  函数。如果一行以  <code class="badlink">substitute(</code>  开
-始，会假定使用函数，要使用命令版本，加上冒号前缀: 
+在罕见情形下函数名和 Ex 命令有二义性，用 ":" 前缀来明确你想用的是 Ex 命令。例
+如，既有  <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="eval.html#substitute()">substitute()</a>  函数。如果一行以
+ <code class="badlink">substitute(</code>  开始，会假定使用函数，要使用命令版本，加上冒号前缀: 
 <code class="example">        :substitute(pattern (replacement (</code>
 <code class="example"></code>
-<code class="note">注意</code> 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了函数间能相互依
-赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写错
-误只有在函数进行调用时才能发现。
+<code class="note">注意</code> 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了允许函数间能相互
+依赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写
+错误只有在函数进行调用时才能发现。
 
 
 <code class="section">省略 function() </code>
@@ -259,8 +258,8 @@ Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various
 
 <code class="section">自动行继续 </code>
 
-许多情况下，表达式显然会在下一行继续。这些情况不需要在行前加入反斜杠。例如，当
-列表跨越多行时: 
+许多情况下，表达式显然会在下一行继续。这些情况不需要在行前加入反斜杠
+ <a href="repeat.html#line-continuation">line-continuation</a> 。例如，当列表跨越多行时: 
 <code class="example">        let mylist = [</code>
 <code class="example">                'one',</code>
 <code class="example">                'two',</code>
@@ -411,11 +410,18 @@ JavaScript，但有少许例外。
 <code class="example">        2 &amp;&amp; 0   == 0</code>
 <code class="example">        [] &amp;&amp; 2  == []</code>
 <code class="example"></code>
- <code class="badlink">..</code>  用作字符串连接时，参数总是转化为字符串。 
+ <code class="badlink">..</code>  用作字符串连接时，简单类型的参数总是转化为字符串。 
 <code class="example">        'hello ' .. 123  == 'hello 123'</code>
 <code class="example">        'hello ' .. v:true  == 'hello true'</code>
 <code class="example"></code>
+简单类型是字符串、浮点数、特殊类型和布尔型。其它类型可用  <a href="eval.html#string()">string()</a> 。
+
 Vim9 脚本里，可用 "true" 代表 v:true 而用 "false" 代表 v:false。
+
+字符串用 <code class="special">[idx]</code> 或 [idx, idx] 索引时使用的是字符索引而非字节索引。例如: 
+<code class="example">        echo 'bár'[1]</code>
+在老式脚本里，这会得到字符 0xc3 (一个非法字节)，在 Vim9 脚本里这会得到字符串
+'á'。
 
 
 <code class="section">要<code class="note">注意</code>什么</code>
@@ -434,6 +440,11 @@ Ex 命令范围需要冒号前缀。
 <code class="example">        :%s/a/b         " Vim9: 在所有行上替代</code>
 <code class="example">        'text'-&gt;func()  " Vim9: 方法调用</code>
 <code class="example">        :'t             " 老式 Vim: 跳转到位置标记 m</code>
+<code class="example"></code>
+有些 Ex 命令在 Vim9 脚本中和赋值语句会引起混淆: 
+<code class="example">        g:name = value  # 赋值</code>
+<code class="example">        g:pattern:cmd   # 非法命令 - 报错</code>
+<code class="example">        :g:pattern:cmd  # :global 命令</code>
 <code class="example"></code>
  <a href="vim9.html#:def">:def</a>  定义的函数会对整个函数进行编译。老式函数可以随时放弃，因而以下的行不会
 被立即解析: 
@@ -468,7 +479,7 @@ Vim9 函数作为一个整体被编译:
 还 在 开 发 中 - 一 切 都 可 能 失 效 - 一 切 都 可 能 会 改 变
 
                                                         <b class="vimtag"> <a name=":def">:def</a> </b>
-:def[!] <code class="special">{name}</code>(<code class="special">[arguments]</code>)[: <code class="special">{return-type}</code>
+:def[!] <code class="special">{name}</code>(<code class="special">[arguments]</code>)[: <code class="special">{return-type}</code>]
                         定义名为 <code class="special">{name}</code> 的新函数。在下面的行给出函数体，直到配
                         对的  <a href="vim9.html#:enddef">:enddef</a>  为止。
 
@@ -576,6 +587,8 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 
 可用  <code class="badlink">:type</code>  定义定制类型: 
 <code class="example">        :type MyList list&lt;string&gt;</code>
+定制类型必须以大写字母开头，以避免和之后新增的内建类型名字起冲突，这和用户函数
+类似。
 <code class="special">{尚未实现}</code>
 
 类和接口可用作类型: 
@@ -595,12 +608,40 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 <code class="special">{尚未实现}</code>
 
 
+变量类型和类型转换                                      <b class="vimtag"> <a name="variable-types">variable-types</a> </b>
+
+Vim9 脚本或  <a href="vim9.html#:def">:def</a>  函数中声明的变量有类型，或者显式指定，或者通过初始化推导得
+出。
+
+全局、缓冲区、窗口和标签页变量没有特定类型，其值可在任何时候改变，类型的改变亦
+然。因此，编译后的代码假定其为 "any" 类型。
+
+如果 "any" 类型不合适，而实际的类型希望保持不变时，这会有问题。例如，要声明列
+表: 
+<code class="example">        let l: list&lt;number&gt; = [1, g:two]</code>
+会报错，因为 "g:two" 的类型为 "any"。为避免此种情况，可用类型转换: 
+<code class="example">        let l: list&lt;number&gt; = [1, &lt;number&gt;g:two]</code>
+                                                        <b class="vimtag"> <a name="type-casting">type-casting</a> </b>
+编译后的代码会在运行时检查 "g:two" 是否为数值，如果不是会报错。这叫类型转换。
+
+类型转换的语法是:  "&lt;" <code class="special">{type}</code> "&gt;"。"&lt;" 之后或 "&gt;" 之前不能有空格 (为避免和小于
+号大于号操作符混淆)。
+
+其语义为，有必要时执行运行时类型检查。这里值并不改变。如果要改变类型，如转换为
+字符串型，可用  <a href="eval.html#string()">string()</a>  函数。或用  <a href="eval.html#str2nr()">str2nr()</a>  把字符串转换为数值。
+
+
 类型推论                                                <b class="vimtag"> <a name="type-inference">type-inference</a> </b>
 
 一般而言: 明显的类型可以省略。例如，声明变量并给出值时: 
 <code class="example">        let var = 0             " 推论为 number 类型</code>
 <code class="example">        let var = 'hello'       " 推论为 string 类型</code>
 <code class="example"></code>
+列表和字典的类型来自其值的公共类型。如果所有值为相同类型，则使用该类型为列表或
+字典的类型。如果有不同类型的混合，则用 "any" 类型。 
+<code class="example">        [1, 2, 3]       list&lt;number&gt;</code>
+<code class="example">        ['a', 'b', 'c'] list&lt;string&gt;</code>
+<code class="example">        [1, 'x', 3]     list&lt;any&gt;</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>5.  命名风格、导入和导出
@@ -707,6 +748,9 @@ vim9 脚本文件一旦导入，结果会被缓冲，下次导入相同脚本时
 <code class="example">           ...</code>
     应放在 .../import/someother.vim。
 
+编译  <a href="vim9.html#:def">:def</a>  函数时如果遇到 autoload 脚本中的函数，直到  <a href="vim9.html#:def">:def</a>  函数调用时才载入
+该脚本。
+
 
 <code class="section">在老式 Vim 脚本中导入</code>
 
@@ -781,7 +825,7 @@ JavaScript/TypeScript 语法最适用于变量的声明。
 <code class="example">        ...</code>
 <code class="example">        return result || 0      " 返回 1</code>
 <code class="example"></code>
-Vim9 脚本和 JavaScript/Typescript 一样，保持值不变: 
+Vim9 脚本和 JavaScript/TypeScript 一样，保持值不变: 
 <code class="example">        let result = 44</code>
 <code class="example">        ...</code>
 <code class="example">        return result || 0      " 返回 44</code>
@@ -795,7 +839,7 @@ Vim9 脚本和 JavaScript/Typescript 一样，保持值不变:
 老式 Vim 脚本的一个问题是所有函数和变量缺省都是全局的。可以使它们局部于脚本，
 但因而就不能为其它脚本所用。
 
-Vim9 脚本里支持和 Javascript 导入导出非常相似的机制。这是已有的  <a href="repeat.html#:source">:source</a>  命令
+Vim9 脚本里支持和 JavaScript 导入导出非常相似的机制。这是已有的  <a href="repeat.html#:source">:source</a>  命令
 的变种，且工作方式符合人们期待:
 - 和所有的缺省都是全局相反，除非导出，所有的都是局部于脚本的。
 - 导入脚本时列出要导入的符号，避免以后新增功能时的名字冲突和可能的失败。
