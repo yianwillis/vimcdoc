@@ -1,4 +1,4 @@
-*testing.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年7月
+*testing.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -20,16 +20,16 @@
 Vim 在编译后可以进行测试，通常用 "make test" 进行。
 这些测试位于目录 "src/testdir"。
 
-在不同的时间点，加入了几种不同类型的测试:
-	test33.in		最老的，不要再加了
-	test_something.in	旧风格测试
+在不同的时间点，加入了两种不同类型的测试:
+	test20.in		最老的，只用于微小和小编译版本
 	test_something.vim	新风格测试
 
 						*new-style-testing*
-新写的测试需用新风格的测试。使用 |assert_equal()| 之类的函数，以便在同一处地方
-维护测试命令和期待的结果。
+新写的测试需用新风格的测试。测试脚本命名方式为 test_<feature>.vim (把 <feature>
+换成待测试的功能名)。这些测试使用 |assert_equal()| 之类的函数，以便在同一处地
+方维护测试命令和期待的结果。
 						*old-style-testing*
-有些场合仍然需要旧风格的测试。例如在没有 |+eval| 特性时测试 Vim。
+这些测试只用于在没有 |+eval| 特性时测试 Vim。
 
 更多信息可见文件 src/testdir/README.txt。
 
@@ -254,7 +254,8 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 			  call assert_exception('E492:')
 			endtry
 
-assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
+							*assert_fails()*
+assert_fails({cmd} [, {error} [, {msg} [, {lnum}]]])
 		执行 {cmd}，如果_不_出错或错误信息中找不到 {error}，加入错误信
 		息到 |v:errors|。另见 |assert-return|。
 
@@ -269,13 +270,18 @@ assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		使用空串作为首错模式: >
 			assert_fails('cmd', ['', 'E987:'])
 <
+		{msg} 为空时不使用之。可用于传入 {lnum} 参数而获得缺省信息。
+
+		{lnum} 存在且非负，且 {error} 参数存在且匹配时，则和错误报告所
+		在的行号相比较。这可以是函数中的行号或脚本中的行号。
+
 		注意 响铃不作为错误处理，而有些出错的命令只会响铃。为此，可用
 		|assert_beeps()| 断言。
 
 		也可用作 |method|: >
 			GetCmd()->assert_fails('E99:')
 
-assert_false({actual} [, {msg}])				*assert_false()*
+assert_false({actual} [, {msg}])			*assert_false()*
 		{actual} 不为假时，加入错误信息到 |v:errors|，其余类同
 		|assert_equal()|。
 		另见 |assert-return|。

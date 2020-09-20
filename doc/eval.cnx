@@ -1029,16 +1029,21 @@ expr8							*expr8*
 
 expr8[expr1]		字符串或 |List| 的项目		*expr-[]* *E111*
 							*E909* *subscript*
+老式 Vim 脚本里:
 如果 expr8 是数值或字符串，结果是字符串，包含 expr8 里第 expr1 个字节。expr8
-视作字符串，expr1 视作数值。这里不识别多字节编码，但可考虑使用 `byteidx()`，或
-用 `split()` 把字符串变为字符的列表。
-
-索引 0 给出第一个字节。这和 C 类同。要小心: 文本列号可是从 1 开始的！例如，要
-得到光标所在的字节: >
+视作字符串 (数值自动转换为字符串)，expr1 视作数值。这里不识别多字节编码，但可
+考虑使用 `byteidx()`，或用 `split()` 把字符串变为字符的列表。例如，要得到光标
+所在的字节: >
 	:let c = getline(line("."))[col(".") - 1]
 
+Vim9 脚本里:
+如果 expr8 是字符串，结果是字符串，包含 expr8 里第 expr1 个单个字符。要用字节
+索引，使用 |strpart()|。
+
+索引 0 给出第一个字节。要小心: 文本列号可是从 1 开始的！
+
 如果字符串的长度小于索引值，结果为空字符串。负索引总是给出空字符串 (原因: 反向
-兼容)。用 [-1:] 得到最后一个字节。
+兼容)。用 [-1:] 得到最后一个字节或字符。
 
 如果 expr8 是 |List|，返回索引值为 expr1 的项目。可用的索引值见 |list-index|。
 如果索引越界，产生错误。例如: >
@@ -1050,9 +1055,13 @@ expr8[expr1]		字符串或 |List| 的项目		*expr-[]* *E111*
 
 expr8[expr1a : expr1b]	子字符串或子列表		*expr-[:]*
 
-如果 expr8 是数值或字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
-字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。这里不识别多字节编码，需用
-|byteidx()| 来计算索引值。
+如果 expr8 是字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
+字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。
+
+在老式 Vim 脚本里，索引是字节索引。这里不识别多字节编码，需用 |byteidx()| 来计
+算索引值。如果 expr8 为数值，先转换为字符串。
+
+在 Vim9 脚本里索引为字符索引。要使用字节索引，可用 |strpart()|。
 
 如果省略 expr1a，用零。如果省略 expr1b，用字符串的长度减一。
 
@@ -4383,7 +4392,7 @@ getbufinfo([{dict}])
 					的以秒计的时间戳。
 					{仅当编译时加入 |+viminfo| 特性才有效}
 			listed		若缓冲区在列表内，则为 TRUE。
-			lnum		缓冲区的当前行号。
+			lnum		在当前窗口里打开本缓冲区时所用的行号。
 			linecount	缓冲区行数 (仅当缓冲区载入后才有效)
 			loaded		若缓冲区已载入则为 TRUE。
 			name		缓冲区文件的完整列表。
@@ -4843,7 +4852,7 @@ getloclist({nr} [, {what}])				*getloclist()*
 			:echo getloclist(5, {'filewinid': 0})
 
 
-getmarklist([{expr}]					*getmarklist()*
+getmarklist([{expr}])					*getmarklist()*
 		无 {expr} 参数时，返回 |List|，给出所有全局位置标记的信息。
 		|mark|
 
@@ -7652,7 +7661,7 @@ searchcount([{options}])					*searchcount()*
 		  pos		|List|		重计算结果时的
 						`[lnum, col, off]` 值。
 						这会改变 "current" 返回值。见
-						|cursor()|，|getpos()|
+						|cursor()|、|getpos()|
 						(缺省: 光标所在位置)
 
 
@@ -9069,7 +9078,11 @@ tabpagebuflist([{arg}])					*tabpagebuflist()*
 
 tabpagenr([{arg}])					*tabpagenr()*
 		返回数值，当前标签页号。第一个标签页的编号为 1。
-		如果可选参数为 "$"，返回最后一个标签页的编号 (即标签页总数)。
+
+		可选参数 {arg} 支持以下值:
+			$	最后一个标签页的编号 (即标签页总数)。
+			#	最近访问的标签页编号 (|g<Tab>| 对应)。如果没有
+				前次标签页，返回 0。
 		该数值可用于 |:tab| 命令。
 
 
@@ -10711,9 +10724,17 @@ text...
 				:const x = 1
 <			等价于: >
 				:let x = 1
-				:lockvar 1 x
-<			可用于保证变量之后不会被修改。
-							*E995*
+				:lockvar! x
+<			可用于保证变量之后不会被修改。如果值为列表或字典常量，
+			其中的项目也不能被修改: >
+				const ll = [1, 2, 3]
+				let ll[1] = 5  " 报错！
+< 			嵌套引用不加锁: >
+				let lvar = ['a']
+				const lconst = [0, lvar]
+				let lconst[0] = 2  " 报错！
+				let lconst[1][0] = 'b'  " OK
+<							*E995*
 			|:const| 不能用来修改变量: >
 				:let x = 1
 				:const x = 2  " Error!
