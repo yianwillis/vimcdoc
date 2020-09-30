@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年8月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -146,7 +146,8 @@ blob            二进制大对象 (Binary Large Object)。存储任意字符序
 
                                                 <b class="vimtag"> <a name="TRUE">TRUE</a> </b> <b class="vimtag"> <a name="FALSE">FALSE</a> </b> <b class="vimtag"> <a name="Boolean">Boolean</a> </b>
 布尔型的操作使用数值类型。零代表假值 (FALSE)，非零代表真值 (TRUE)。也可用
- <a href="eval.html#v:false">v:false</a>  和  <a href="eval.html#v:true">v:true</a> 。函数返回 TRUE 时相当于数值一，FALSE 相当于数值零。
+ <a href="eval.html#v:false">v:false</a>  和  <a href="eval.html#v:true">v:true</a> 。Vim9 脚本中可用  <a href="vim9.html#false">false</a>  和  <a href="vim9.html#true">true</a> 。函数返回 TRUE 时相当
+于数值一，FALSE 相当于数值零。
 
 <code class="note">注意</code> 在命令: 
 <code class="example">        :if "foo"</code>
@@ -1089,7 +1090,7 @@ Vim9 脚本里:
 expr8[expr1a : expr1b]  子字符串或子列表                <b class="vimtag"> <a name="expr-[:]">expr-[:]</a> </b>
 
 如果 expr8 是字符串，结果是子字符串，包含第 expr1a 到第 expr1b (包含) 个
-字节。expr8 视作字符串，expr1a 和 expr1b 视作数值。
+字节或字符。expr8 视作字符串，expr1a 和 expr1b 视作数值。
 
 在老式 Vim 脚本里，索引是字节索引。这里不识别多字节编码，需用  <a href="eval.html#byteidx()">byteidx()</a>  来计
 算索引值。如果 expr8 为数值，先转换为字符串。
@@ -1105,6 +1106,7 @@ expr8[expr1a : expr1b]  子字符串或子列表                <b class="vimtag
 
 例如: 
 <code class="example">        :let c = name[-1:]              " 字符串最后一个字节</code>
+<code class="example">        :let c = name[0:-1]             " 整个字符串</code>
 <code class="example">        :let c = name[-2:-2]            " 字符串倒数第二个字节</code>
 <code class="example">        :let s = line(".")[4:]          " 从第五个字节到最后</code>
 <code class="example">        :let s = s[:-3]                 " 删除最后两个字节</code>
@@ -2121,7 +2123,7 @@ assert_equalfile(<code class="special">{fname-one}</code>, <code class="special"
                                 数值    断言文件内容相同
 assert_exception(<code class="special">{error}</code> [, <code class="special">{msg}</code>])
                                 数值    断言 v:exception 中有 <code class="special">{error}</code>
-assert_fails(<code class="special">{cmd}</code> [, <code class="special">{error}</code> [, <code class="special">{msg}</code>]])
+assert_fails(<code class="special">{cmd}</code> [, <code class="special">{error}</code> [, <code class="special">{msg}</code> [, <code class="special">{lnum}</code> [, <code class="special">{context}</code>]]]])
                                 数值    断言 <code class="special">{cmd}</code> 失败
 assert_false(<code class="special">{actual}</code> [, <code class="special">{msg}</code>])
                                 数值    断言 <code class="special">{actual}</code> 为假
@@ -2187,6 +2189,7 @@ ch_status(<code class="special">{handle}</code> [, <code class="special">{option
                                 字符串  通道 <code class="special">{handle}</code> 的状态
 changenr()                      数值    当前改变号
 char2nr(<code class="special">{expr}</code> [, <code class="special">{utf8}</code>])      数值    <code class="special">{expr}</code> 里第一个字符串的 ASCII/UTF8 值
+charclass(<code class="special">{string}</code>)             数值    <code class="special">{string}</code> 的字符类
 chdir(<code class="special">{dir}</code>)                    数值    改变当前目录
 cindent(<code class="special">{lnum}</code>)                 数值    第 <code class="special">{lnum}</code> 行的 C 缩进
 clearmatches([<code class="special">{win}</code>])           无      清除所有的匹配
@@ -2307,6 +2310,7 @@ gettabvar(<code class="special">{nr}</code>, <code class="special">{varname}</co
 gettabwinvar(<code class="special">{tabnr}</code>, <code class="special">{winnr}</code>, <code class="special">{name}</code> [, <code class="special">{def}</code>])
                                 可变    <code class="special">{tabnr}</code> 标签页 <code class="special">{winnr}</code> 窗口的 <code class="special">{name}</code>
 gettagstack([<code class="special">{nr}</code>])             字典    获取窗口 <code class="special">{nr}</code> 的标签栈
+gettext(<code class="special">{text}</code>)                 字符串  查找 <code class="special">{text}</code> 的翻译
 getwininfo([<code class="special">{winid}</code>])           列表    每个窗口信息的列表
 getwinpos([<code class="special">{timeout}</code>])          列表    Vim 窗口以像素计的 X 和 Y 坐标
 getwinposx()                    数值    Vim 窗口以像素计的 X 坐标
@@ -2398,6 +2402,7 @@ matcharg(<code class="special">{nr}</code>)                  列表     <a href=
 matchdelete(<code class="special">{id}</code> [, <code class="special">{win}</code>])     数值    删除 <code class="special">{id}</code> 指定的匹配
 matchend(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
                                 数值    <code class="special">{expr}</code> 里 <code class="special">{pat}</code> 的结束位置
+matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code>)       列表    在 <code class="special">{list}</code> 中模糊匹配 <code class="special">{str}</code>
 matchlist(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
                                 列表    <code class="special">{expr}</code> 里 <code class="special">{pat}</code> 的匹配和子匹配
 matchstr(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
@@ -2443,6 +2448,7 @@ popup_show(<code class="special">{id}</code>)                无      撤销弹�
 pow(<code class="special">{x}</code>, <code class="special">{y}</code>)                   浮点    <code class="special">{x}</code> 的 <code class="special">{y}</code> 次方
 prevnonblank(<code class="special">{lnum}</code>)            数值    最后一个 &lt;= <code class="special">{lnum}</code> 的非空白行的行号
 printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code>...)       字符串  排版文本
+prompt_getprompt(<code class="special">{buf}</code>)         字符串  获取提示文本
 prompt_setcallback(<code class="special">{buf}</code>, <code class="special">{expr}</code>) 无    设置提示回调函数
 prompt_setinterrupt(<code class="special">{buf}</code>, <code class="special">{text}</code>) 无   设置提示中断函数
 prompt_setprompt(<code class="special">{buf}</code>, <code class="special">{text}</code>) 无      设置提示文本
@@ -2531,6 +2537,7 @@ setbufline(<code class="special">{expr}</code>, <code class="special">{lnum}</co
 setbufvar(<code class="special">{expr}</code>, <code class="special">{varname}</code>, <code class="special">{val}</code>)
                                 无      设置缓冲区 <code class="special">{expr}</code> 的 <code class="special">{varname}</code> 为
                                         <code class="special">{val}</code>
+setcellwidths(<code class="special">{list}</code>)           无      设置字符单元宽度覆盖
 setcharsearch(<code class="special">{dict}</code>)           字典    从 <code class="special">{dict}</code> 设置字符搜索选项
 setcmdpos(<code class="special">{pos}</code>)                数值    设置命令行的光标位置
 setenv(<code class="special">{name}</code>, <code class="special">{val}</code>)           无      设置环境变量
@@ -2599,7 +2606,8 @@ str2list(<code class="special">{expr}</code> [, <code class="special">{utf8}</co
 str2nr(<code class="special">{expr}</code> [, <code class="special">{base}</code> [, <code class="special">{quoted}</code>]])
                                 数值    把字符串转换为数值
 strcharpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])
-                                字符串  <code class="special">{str}</code> 从 <code class="special">{start}</code> 开始的 <code class="special">{len}</code> 个字符
+                                字符串  <code class="special">{str}</code> 从第 <code class="special">{start}</code> 字符开始的 <code class="special">{len}</code> 个
+                                        字符
 strchars(<code class="special">{expr}</code> [, <code class="special">{skipcc}</code>])   数值    <code class="special">{expr}</code> 字符串的字符长度
 strdisplaywidth(<code class="special">{expr}</code> [, <code class="special">{col}</code>]) 数值  <code class="special">{expr}</code> 字符串的显示长度
 strftime(<code class="special">{format}</code> [, <code class="special">{time}</code>])   字符串  使用指定格式排版时间
@@ -2608,8 +2616,9 @@ stridx(<code class="special">{haystack}</code>, <code class="special">{needle}</
                                 数值    <code class="special">{haystack}</code> 里 <code class="special">{needle}</code> 的位置
 string(<code class="special">{expr}</code>)                  字符串  <code class="special">{expr}</code> 值得字符串表示
 strlen(<code class="special">{expr}</code>)                  数值    字符串 <code class="special">{expr}</code> 的长度
-strpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])
-                                字符串  <code class="special">{str}</code> 从 <code class="special">{start}</code> 开始的 <code class="special">{len}</code> 个字节
+strpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code> [, <code class="special">{chars}</code>]])
+                                字符串  <code class="special">{str}</code> 从 <code class="special">{start}</code> 字节开始的 <code class="special">{len}</code> 个字
+                                        节/字符
 strptime(<code class="special">{format}</code>, <code class="special">{timestring}</code>)
                                 数值    把 <code class="special">{timestring}</code> 转换为 unix 时间戳
 strridx(<code class="special">{haystack}</code>, <code class="special">{needle}</code> [, <code class="special">{start}</code>])
@@ -3078,7 +3087,7 @@ bufnr([<code class="special">{expr}</code> [, <code class="special">{create}</co
                 返回缓冲区的编号，如同 ":ls" 命令显示的那样。关于 <code class="special">{expr}</code> 的使
                 用，见上  <a href="eval.html#bufname()">bufname()</a> 。
                 如果不存在符合的缓冲区，返回 -1。或者，如果提供了 <code class="special">{create}</code> 参
-                数而且非零，建立一个新的列表外缓冲区，并返回其编号。例如: 
+                数而且为 TRUE，建立一个新的列表外缓冲区，并返回其编号。例如: 
 <code class="example">                        let newbuf = bufnr('Scratch001', 1)</code>
                 这里空名会使用当前缓冲区。要创建新缓冲区可用  <a href="eval.html#bufadd()">bufadd()</a>  带空
                 名。
@@ -3205,7 +3214,7 @@ char2nr(<code class="special">{expr}</code> [, <code class="special">{utf8}</cod
                 来说: 
 <code class="example">                        char2nr("Ã¡")           返回 225</code>
 <code class="example">                        char2nr("Ã¡"[0])        返回 195</code>
-                如果 <code class="special">{utf8}</code> 为 1，则总视为 utf-8 字符。
+                如果 <code class="special">{utf8}</code> 为 TRUE，则总视为 utf-8 字符。
                 组合字符是一个单独的字符。
                  <a href="eval.html#nr2char()">nr2char()</a>  是它的逆操作。
                 要把字符串转换为字符数值的列表: 
@@ -3216,6 +3225,18 @@ char2nr(<code class="special">{expr}</code> [, <code class="special">{utf8}</cod
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetChar()-&gt;char2nr()</code>
 <code class="example"></code>
+<code class="example"></code>
+charclass(<code class="special">{string}</code>)                                     <b class="vimtag"> <a name="charclass()">charclass()</a> </b>
+                返回 <code class="special">{string}</code> 首个字符的字符类。
+                字符类为以下之一:
+                        0       空白
+                        1       标点
+                        2       单词字符
+                        3       表情符号
+                        其它    特定 Unicode 类
+                此类用于模式匹配和单词动作。
+
+
 chdir(<code class="special">{dir}</code>)                                            <b class="vimtag"> <a name="chdir()">chdir()</a> </b>
                 切换当前工作目录为 <code class="special">{dir}</code>。目录改变的作用域取决于当前窗口的目
                 录:
@@ -3875,11 +3896,13 @@ expand(<code class="special">{expr}</code> [, <code class="special">{nosuf}</cod
                         <code class="special">&lt;afile&gt;</code>         自动命令文件名
                         <code class="special">&lt;abuf&gt;</code>          自动命令缓冲区号 (以字符串形式出现！)
                         <code class="special">&lt;amatch&gt;</code>        自动命令匹配的名字
+                        <code class="special">&lt;cexpr&gt;</code>         光标所在的 C 表达式
                         <code class="special">&lt;sfile&gt;</code>         载入的脚本文件或函数名
                         <code class="special">&lt;slnum&gt;</code>         载入脚本文件行号或函数行号
                         <code class="special">&lt;sflnum&gt;</code>        脚本文件行号，即使在函数中亦然
                         <code class="special">&lt;SID&gt;</code>           "<code class="special">&lt;SNR&gt;</code>123_"  其中 "123" 是当前脚本 ID
                                          <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> 
+                        <code class="special">&lt;stack&gt;</code>         调用栈
                         <code class="special">&lt;cword&gt;</code>         光标所在的单词
                         <code class="special">&lt;cWORD&gt;</code>         光标所在的字串 (WORD)
                         <code class="special">&lt;client&gt;</code>        最近收到的消息的 <code class="special">{clientid}</code>
@@ -5087,6 +5110,7 @@ getreginfo([<code class="special">{regname}</code>])                            
 
                 如果 <code class="special">{regname}</code> 非法或对应的寄存器没有设过，返回空列表。
                 如果没有指定 <code class="special">{regname}</code>，使用  <a href="eval.html#v:register">v:register</a> 。
+                返回的字典可传递给  <a href="eval.html#setreg()">setreg()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetRegname()-&gt;getreginfo()</code>
@@ -5180,6 +5204,16 @@ gettagstack([<code class="special">{nr}</code>])                                
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetWinnr()-&gt;gettagstack()</code>
 <code class="example"></code>
+<code class="example"></code>
+gettext(<code class="special">{text}</code>)                                         <b class="vimtag"> <a name="gettext()">gettext()</a> </b>
+                对 <code class="special">{text}</code> 进行翻译。
+                主要在发布的 Vim 脚本中使用。要生成消息翻译时，由 xgettext 对
+                <code class="special">{text}</code> 进行提取，翻<code class="vim">译者</code>会把翻译后的消息加到 .po 文件，调用
+                gettext() 时，Vim 会依此查找翻译内容。
+                <code class="special">{text}</code> 推荐使用双引号括起，因为 xgettext 不理解单引号字符串里
+                的转义。
+
+
 getwininfo([<code class="special">{winid}</code>])                                   <b class="vimtag"> <a name="getwininfo()">getwininfo()</a> </b>
                 返回窗口信息，返回值是字典的  <a href="eval.html#List">List</a> 。
 
@@ -6428,6 +6462,26 @@ matchend(<code class="special">{expr}</code>, <code class="special">{pat}</code>
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetText()-&gt;matchend('word')</code>
 <code class="example"></code>
+<code class="example"></code>
+matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code>)                       <b class="vimtag"> <a name="matchfuzzy()">matchfuzzy()</a> </b>
+                返回列表，包含 <code class="special">{list}</code> 中的所有模糊匹配 <code class="special">{str}</code> 的字符串。返回列
+                表中的字符串依匹配分数排序。<code class="special">{str}</code> 视作字符串常数， <code class="emphasis">不</code> 支持正规
+                表达式匹配。<code class="special">{str}</code> 支持的最大长度为 256。
+
+                如果没有匹配的字符串或有错误，返回空列表。如果 <code class="special">{str}</code> 的长度大
+                于 256，也返回空列表。
+
+                示例: 
+<code class="example">                   :echo matchfuzzy(["clay", "crow"], "cay")</code>
+                返回 ["clay"]. 
+<code class="example">                   :echo getbufinfo()-&gt;map({_, v -&gt; v.name})-&gt;matchfuzzy("ndl")</code>
+                返回模糊匹配 "ndl" 的缓冲区名的列表。 
+<code class="example">                   :echo v:oldfiles-&gt;matchfuzzy("test")</code>
+                返回模糊匹配 "test" 的文件名的列表。 
+<code class="example">                   :let l = readfile("buffer.c")-&gt;matchfuzzy("str")</code>
+                返回 "buffer.c" 文件中模糊匹配 "str" 的行的列表。
+
+
 matchlist(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])                <b class="vimtag"> <a name="matchlist()">matchlist()</a> </b>
                 和  <a href="eval.html#match()">match()</a>  相同，但返回  <a href="eval.html#List">List</a> 。列表第一项是匹配的字符串，和
                  <a href="eval.html#matchstr()">matchstr()</a>  返回值相同。其后的项目是子匹配，类似
@@ -6526,7 +6580,7 @@ menu_info(<code class="special">{name}</code> [, <code class="special">{mode}</c
                                 v:true，否则返回 v:false。见  <a href="gui.html#:menu-script">:menu-script</a> 。
                   shortcut      快捷键 (菜单名中 '&amp;' 之后的字符)
                                  <a href="gui.html#menu-shortcut">menu-shortcut</a> 
-                  silent        如果菜单项目创建时带 <code class="special">&lt;silent&gt;</code> 参数，返回 v:true
+                  silent        菜单项目创建时如带 <code class="special">&lt;silent&gt;</code> 参数，返回 v:true
                                  <a href="gui.html#:menu-silent">:menu-silent</a> 
                   submenus      包含返回子菜单名的  <a href="eval.html#List">List</a> 。仅当菜单项目有子菜
                                 单时才存在。
@@ -6706,7 +6760,7 @@ perleval(<code class="special">{expr}</code>)                                   
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+perl">+perl</a>  特性才有效}</code>
 
 
-popup_ 函数文档在这里:  <a href="popup.html#popup-functions">popup-functions</a> 。
+popup_ 函数文档在这里:  <a href="popup.html#popup-functions">popup-functions</a> 
 
 
 pow(<code class="special">{x}</code>, <code class="special">{y}</code>)                                           <b class="vimtag"> <a name="pow()">pow()</a> </b>
@@ -6889,6 +6943,16 @@ printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code> 
                 还是过多，都会给出错误。至多可用 18 个参数。
 
 
+prompt_getprompt(<code class="special">{buf}</code>)                                 <b class="vimtag"> <a name="prompt_getprompt()">prompt_getprompt()</a> </b>
+                返回缓冲区 <code class="special">{buf}</code> 的实际提示文本。<code class="special">{buf}</code> 可以缓冲区名或号。
+                 <a href="channel.html#prompt-buffer">prompt-buffer</a> 。
+
+                如果缓冲区不存在或不是提示缓冲区，返回空串。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetBuffer()-&gt;prompt_getprompt()</code>
+<code class="example"></code>
+<code class="example"></code>
 prompt_setcallback(<code class="special">{buf}</code>, <code class="special">{expr}</code>)                       <b class="vimtag"> <a name="prompt_setcallback()">prompt_setcallback()</a> </b>
                 设置缓冲区 <code class="special">{buf}</code> 的提示回调为 <code class="special">{expr}</code>。<code class="special">{expr}</code> 为空串时删除回
                 调。只对 <a href="options.html#'buftype'">'buftype'</a> 为 "prompt" 的 <code class="special">{buf}</code> 有效。
@@ -6936,7 +7000,7 @@ prompt_setprompt(<code class="special">{buf}</code>, <code class="special">{text
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetBuffer()-&gt;prompt_setprompt('command: ')</code>
 <code class="example"></code>
-prop_ 函数文档在这里:  <a href="textprop.html#text-prop-functions">text-prop-functions</a> 。
+prop_ 函数文档在这里:  <a href="textprop.html#text-prop-functions">text-prop-functions</a> 
 
 pum_getpos()                                            <b class="vimtag"> <a name="pum_getpos()">pum_getpos()</a> </b>
                 如果弹出菜单 (见  <a href="insert.html#ins-completion-menu">ins-completion-menu</a> ) 不可见，返回空
@@ -7657,7 +7721,7 @@ searchcount([<code class="special">{options}</code>])                           
 <code class="example">                          endif</code>
 <code class="example">                        endfunction</code>
 
-                也可用 "pattern" 来统计在当前缓冲区里匹配指定模式的文本数目:  
+                也可用 "pattern" 来统计在当前缓冲区里匹配指定模式的文本数目: 
 <code class="example"></code>
 <code class="example">                        " 统计此缓冲区中的 '\&lt;foo\&gt;' 数</code>
 <code class="example">                        " (注意 这也会更新搜索计数)</code>
@@ -7872,6 +7936,27 @@ setbufvar(<code class="special">{expr}</code>, <code class="special">{varname}</
                 也可用作  <a href="eval.html#method">method</a> ，基是作为第三个参数传递的: 
 <code class="example">                        GetValue()-&gt;setbufvar(buf, varname)</code>
 <code class="example"></code>
+<code class="example"></code>
+setcellwidths(<code class="special">{list}</code>)                                   <b class="vimtag"> <a name="setcellwidths()">setcellwidths()</a> </b>
+                指定字符范围的单元宽度覆盖。用于告知 Vim 字符以屏幕单元计的宽
+                度。此设置超越 <a href="options.html#'ambiwidth'">'ambiwidth'</a>。示例: 
+<code class="example">                   setcellwidths([[0xad, 0xad, 1],</code>
+<code class="example">                                \ [0x2194, 0x2199, 2]])</code>
+<code class="example"></code>
+                                        <b class="vimtag"> <a name="E1109">E1109</a> </b> <b class="vimtag"> <a name="E1110">E1110</a> </b> <b class="vimtag"> <a name="E1111">E1111</a> </b> <b class="vimtag"> <a name="E1112">E1112</a> </b> <b class="vimtag"> <a name="E1113">E1113</a> </b>
+                <code class="special">{list}</code> 参数为三个数值组成的列表的列表。这三个数值为 [low,
+                high, width]。"low" 和 "high" 可以相同，代表单个字符。否则，它
+                们指定从 "low" 到 "high" (闭区间) 的字符范围。"width" 可为 1
+                或 2，指定以屏幕单元计的字符宽度。
+                如果参数不合法或范围相互有重叠，报错。
+                只能指定值为 0x100 和更高的字符。
+
+                要清除覆盖，传递空列表: 
+<code class="example">                   setcellwidths([]);</code>
+                可用 $VIMRUNTIME/tools/emoji_list.vim 脚本来查看已知表情字符的
+                效果。
+
+
 setcharsearch(<code class="special">{dict}</code>)                                   <b class="vimtag"> <a name="setcharsearch()">setcharsearch()</a> </b>
                 用 <code class="special">{dict}</code> 设置当前字符搜索信息，带有以下项目:
 
@@ -8748,10 +8833,12 @@ strlen(<code class="special">{expr}</code>)  返回数值，即字符串 <code c
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetString()-&gt;strlen()</code>
 <code class="example"></code>
-strpart(<code class="special">{src}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])                       <b class="vimtag"> <a name="strpart()">strpart()</a> </b>
+strpart(<code class="special">{src}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code> [, <code class="special">{chars}</code>]])                   <b class="vimtag"> <a name="strpart()">strpart()</a> </b>
                 返回字符串，<code class="special">{src}</code> 从第 <code class="special">{start}</code> 个字节开始字节长度为 <code class="special">{len}</code> 的子
                 串。
-                要以字符而不是字节计算，用  <a href="eval.html#strcharpart()">strcharpart()</a> 。
+                <code class="special">{chars}</code> 存在且为 TRUE 时，<code class="special">{len}</code> 为字符位置的个数 (组合字符不单
+                独统计，因此 "1" 代表一个基本字符并可后跟任意的组合字符)。
+                要以字符而不是字节计算 <code class="special">{start}</code>，用  <a href="eval.html#strcharpart()">strcharpart()</a> 。
 
                 如果选择不存在的字节，不会产生错误。只是那些字节被忽略而已。
                 如果没有提供 <code class="special">{len}</code>，子串从 <code class="special">{start}</code> 开始直到 <code class="special">{src}</code> 的结尾。 
@@ -8760,9 +8847,9 @@ strpart(<code class="special">{src}</code>, <code class="special">{start}</code>
 <code class="example">                        strpart("abcdefg", 5, 4)    == "fg"</code>
 <code class="example">                        strpart("abcdefg", 3)       == "defg"</code>
 <code class="example"></code>
-                <code class="note">注意</code>: 要得到第一个字符，<code class="special">{start}</code> 必须是零。比如，要得到光标开始
-                的三个字节: 
-<code class="example">                        strpart(getline("."), col(".") - 1, 3)</code>
+                <code class="note">注意</code>: 要得到第一个字符，<code class="special">{start}</code> 必须是零。比如，要得到光标所在
+                的字符: 
+<code class="example">                        strpart(getline("."), col(".") - 1, 1, v:true)</code>
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetText()-&gt;strpart(5)</code>
@@ -9626,7 +9713,7 @@ win_id2win(<code class="special">{expr}</code>)                                 
 win_screenpos(<code class="special">{nr}</code>)                                     <b class="vimtag"> <a name="win_screenpos()">win_screenpos()</a> </b>
                 返回两个数值的列表，即窗口 <code class="special">{nr}</code> 的屏幕位置: [row, col]。首个窗
                 口的位置总是 [1, 1]，除非它有标签页行，此时为 [2, 1]。
-                <code class="special">{nr}</code> 可以是窗口号或  <a href="windows.html#window-ID">window-ID</a> 。
+                <code class="special">{nr}</code> 可以是窗口号或  <a href="windows.html#window-ID">window-ID</a> 。零代表当前窗口。
                 如果在当前标签页找不到窗口，返回 [0, 0]。
 
                 也可用作  <a href="eval.html#method">method</a> : 
@@ -10753,6 +10840,8 @@ text...
                         等价于: 
 <code class="example">                                :let x = 1</code>
 <code class="example">                                :lockvar! x</code>
+                        <code class="note">注意</code>: Vim9 脚本中  <a href="eval.html#:const">:const</a>  的工作方式不同，可见
+                         <a href="vim9.html#vim9-const">vim9-const</a> 
                         可用于保证变量之后不会被修改。如果值为列表或字典常量，
                         其中的项目也不能被修改: 
 <code class="example">                                const ll = [1, 2, 3]</code>
@@ -10790,10 +10879,11 @@ text...
 
                         给  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a>  加锁时用到 <code class="special">[depth]</code>。它决定加
                         锁到达的深度:
+                                0       给变量 <code class="special">{name}</code> 加锁，但其值可修改。
                                 1       给  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a>  自身加锁。不
                                         能增加或者删除项目，但你可以修改它们的
                                         值。
-                                2       给这些值加也锁，不能修改项目。如果项目
+                                2       给这些值也加锁，不能修改项目。如果项目
                                         是  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> ，不能增加或
                                         删除其中项目，但仍然可以修改项目值。
                                 3       同 2，但又适用于  <a href="eval.html#List">List</a>  /  <a href="eval.html#Dictionary">Dictionary</a> 
@@ -10801,6 +10891,13 @@ text...
                                         一层。
                         缺省的 <code class="special">[depth]</code> 为 2，<code class="special">{name}</code> 是  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> 
                         时，不能修改项目值。
+
+                        <code class="special">[depth]</code> 为 0 的示例: 
+<code class="example">                                let mylist = [1, 2, 3]</code>
+<code class="example">                                lockvar 0 mylist</code>
+<code class="example">                                let mylist[0] = 77      " OK</code>
+<code class="example">                                call add(mylist, 4]     " OK</code>
+<code class="example">                                let mylist = [7, 8, 9]  " 出错！</code>
                                                                 <b class="vimtag"> <a name="E743">E743</a> </b>
                         要使用没有限制的深度，用 [!] 并省略 <code class="special">[depth]</code>。不过，为
                         了捕获循环，设定最大深度为 100。

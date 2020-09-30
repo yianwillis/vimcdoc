@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年8月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -208,6 +208,9 @@
 键入另一个字符，Vim 才能知道是用 "," 映射还是更长的那个。要避免这个问题，加入
 <code class="special">&lt;nowait&gt;</code> 参数。这样映射一旦匹配就会被使用，Vim 不会等待更多字符的输入。但如果
 那些字符已经输入了，还是会使用的。
+<code class="note">注意</code>这里需要 <code class="special">&lt;nowait&gt;</code> 映射完整匹配且在任何部分匹配之前先找到。以下情形可以:
+- 只有一个匹配的缓冲区局部映射，因为它们总在全局映射之前找到。
+- 有另一个部分匹配的缓冲区局部映射，但在稍早前定义 (先找到最近定义的映射)。
 
                                                 <b class="vimtag"> <a name=":map-%3Csilent%3E">:map-&lt;silent&gt;</a> </b> <b class="vimtag"> <a name=":map-silent">:map-silent</a> </b>
 要在定义一个映射时不在命令行上回显该映射，可以使用 "<code class="special">&lt;silent&gt;</code>" 作为第一个参数，
@@ -285,12 +288,7 @@ getchar() 得到键入的字符并返回之。
 <code class="example"></code>
 <code class="keystroke">CTRL-L</code> 插入下一个数值，<code class="keystroke">CTRL-R</code> 复位计数且返回空字符串，这样就不会插入任何内容。
 
-<code class="note">注意</code> 要使特殊键工作并转义文本中的 CSI 字节需要一些特殊处理。 <a href="map.html#:map">:map</a>  命令已经做
-好了，所以你应该避免做重复的操作。这样不行: 
-<code class="example">        :imap &lt;expr&gt; &lt;F3&gt; "&lt;Char-0x611B&gt;"</code>
-因为 &lt;Char- 序列作为  <a href="map.html#:imap">:imap</a>  的参数被转义，而 <code class="special">&lt;expr&gt;</code> 又做一次。这样就可以: 
-<code class="example">        :imap &lt;expr&gt; &lt;F3&gt; "\u611B"</code>
-在其它文本之前使用单个字节出现的 0x80 是不行的。它会被看作一个特殊键。
+<code class="note">注意</code> 在其它文本之前使用单个字节出现的 0x80 是不行的。它会被看作一个特殊键。
 
 
 1.3 映 射 与 运 行 模 式                                <b class="vimtag"> <a name=":map-modes">:map-modes</a> </b>
@@ -787,33 +785,44 @@ g@<code class="special">{motion}</code>              调用 <a href="options.htm
 
 这里是一例，<code class="special">&lt;F4&gt;</code> 来计算空格数目: 
 <code class="example"></code>
-<code class="example">        nmap &lt;silent&gt; &lt;F4&gt; :set opfunc=CountSpaces&lt;CR&gt;g@</code>
-<code class="example">        vmap &lt;silent&gt; &lt;F4&gt; :&lt;C-U&gt;call CountSpaces(visualmode(), 1)&lt;CR&gt;</code>
+<code class="example">        nnoremap &lt;expr&gt; &lt;F4&gt; CountSpaces()</code>
+<code class="example">        xnoremap &lt;expr&gt; &lt;F4&gt; CountSpaces()</code>
+<code class="example">        " 在一行上按两次 &lt;F4&gt; 也可以</code>
+<code class="example">        nnoremap &lt;expr&gt; &lt;F4&gt;&lt;F4&gt; CountSpaces() .. '_'</code>
 <code class="example"></code>
-<code class="example">        function! CountSpaces(type, ...)</code>
-<code class="example">          let sel_save = &amp;selection</code>
-<code class="example">          let &amp;selection = "inclusive"</code>
-<code class="example">          let reg_save = @@</code>
-<code class="example"></code>
-<code class="example">          if a:0  " 在可视模式里调用，使用 gv 命令。</code>
-<code class="example">            silent exe "normal! gvy"</code>
-<code class="example">          elseif a:type == 'line'</code>
-<code class="example">            silent exe "normal! '[V']y"</code>
-<code class="example">          else</code>
-<code class="example">            silent exe "normal! `[v`]y"</code>
+<code class="example">        function CountSpaces(type = '') abort</code>
+<code class="example">          if a:type == ''</code>
+<code class="example">            set opfunc=CountSpaces</code>
+<code class="example">            return 'g@'</code>
 <code class="example">          endif</code>
 <code class="example"></code>
-<code class="example">          echomsg strlen(substitute(@@, '[^ ]', '', 'g'))</code>
+<code class="example">          let sel_save = &amp;selection</code>
+<code class="example">          let reg_save = getreginfo('"')</code>
+<code class="example">          let cb_save = &amp;clipboard</code>
+<code class="example">          let visual_marks_save = [getpos("'&lt;"), getpos("'&gt;")]</code>
 <code class="example"></code>
-<code class="example">          let &amp;selection = sel_save</code>
-<code class="example">          let @@ = reg_save</code>
+<code class="example">          try</code>
+<code class="example">            set clipboard= selection=inclusive</code>
+<code class="example">            let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\&lt;c-v&gt;`]y"}</code>
+<code class="example">            silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')</code>
+<code class="example">            echom getreg('"')-&gt;count(' ')</code>
+<code class="example">          finally</code>
+<code class="example">            call setreg('"', reg_save)</code>
+<code class="example">            call setpos("'&lt;", visual_marks_save[0])</code>
+<code class="example">            call setpos("'&gt;", visual_marks_save[1])</code>
+<code class="example">            let &amp;clipboard = cb_save</code>
+<code class="example">            let &amp;selection = sel_save</code>
+<code class="example">          endtry</code>
 <code class="example">        endfunction</code>
+<code class="example"></code>
+这里 <code class="special">&lt;expr&gt;</code> 映射的使用是为了可以获取任何前缀计数和寄存器。这可用于避免使用命令
+行，后者会触发 CmdlineEnter 和 CmdlineLeave 自动命令。
 
 <code class="note">注意</code> <a href="options.html#'selection'">'selection'</a> 选项暂时设为 "inclusive"，以便可视模式下用 '[ 到 '] 位置标记
 可以抽出正确的文本。
 
-也要 <code class="note">注意</code> 这里为可视模式提供了专用的映射。它先删除 ":" 在可视模式里插入的
-"'&lt;,'&gt;" 范围，然后调用函数，调用时使用了 visualmode() 和一个额外的参数。
+也要 <code class="note">注意</code> <a href="options.html#'clipboard'">'clipboard'</a> 选项值如果包含  <code class="badlink">unnamed</code>  或  <code class="badlink">unnamedplus</code>  的话，会临时清
+空，以避免覆盖  <code class="badlink">"*</code>  或  <code class="badlink">"+</code>  寄存器。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 缩写                 <b class="vimtag"> <a name="abbreviations">abbreviations</a> </b> <b class="vimtag"> <a name="Abbreviations">Abbreviations</a> </b></h4>
@@ -1309,7 +1318,7 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
                                                 <b class="vimtag"> <a name="%3Cbang%3E">&lt;bang&gt;</a> </b>
         <code class="special">&lt;bang&gt;</code>  (参考 '-bang' 属性) 如果命令执行时带了 ! 修饰符，扩展为 !，否
                 则什么也不扩展。
-                                                <b class="vimtag"> <a name="%3Cmods%3E">&lt;mods&gt;</a> </b> <b class="vimtag"> <a name=":command-modifiers">:command-modifiers</a> </b>
+                                        <b class="vimtag"> <a name="%3Cmods%3E">&lt;mods&gt;</a> </b> <b class="vimtag"> <a name="%3Cq-mods%3E">&lt;q-mods&gt;</a> </b> <b class="vimtag"> <a name=":command-modifiers">:command-modifiers</a> </b>
         <code class="special">&lt;mods&gt;</code>  如果指定，命令修饰符。否则不扩展。支持以下修饰符
                  <a href="windows.html#:aboveleft">:aboveleft</a> 、 <a href="windows.html#:belowright">:belowright</a> 、 <a href="windows.html#:botright">:botright</a> 、 <a href="editing.html#:browse">:browse</a> 、
                  <a href="editing.html#:confirm">:confirm</a> 、 <a href="windows.html#:hide">:hide</a> 、 <a href="editing.html#:keepalt">:keepalt</a> 、 <a href="motion.html#:keepjumps">:keepjumps</a> 、

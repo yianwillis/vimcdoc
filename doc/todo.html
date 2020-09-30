@@ -74,25 +74,58 @@
                                                         <b class="vimtag"> <a name="known-bugs">known-bugs</a> </b>
 ----------------------- 已知漏洞和当前工作 --------------------------
 
+Why does Test_invalid_sid() not work in the GUI?
+
+Add matchfuzzy() and matchfuzzypos() Yegappan, #6947
+    should be ready now
+
 Making everything work:
-- more items in <a href="https://github.com/vim/vim/issues/6507">https://github.com/vim/vim/issues/6507</a>
-- More "goto failed" with check for trylevel.
-- memory leak in test_vim9_script
-- Check that when sourcing a Vim9 script, only the global items can be used.
-- :put with a "=" register argument doesn't work, need to find the expression
-  and compile it. (#6397)
-- At the script level, keep script variables local to the block they are
-  declared in?  Need to remember what variables were declared and delete them
-  when leaving the block.
-- Implement { } block at the script level.
+- Fix memory leak in test_vim9_func (through compile_nested_function and
+  get_lambda_tv())
+- Fix memory leaks in test_vim9_script
+- At the Vim9 script level, keep script variables local to the block they are
+  declared in, like in Javascript (using :let).
+  -&gt; Need to remember what variables were declared and delete them when
+     leaving the block.
+  -&gt; if a function is defined it may need to keep the block-locals
+  Then Implement { } block at the script level.
+- Recognize call to assert_fails() and execute it in the function context?
+  Won't work if the command itself fails, not an expression failure:
+        assert_fails("unknown", "E99:")
+  Use try/catch is complicated:
+    let did_catch = false
+    try
+        unknown
+    catch
+        assert_caught('E99:')
+        did_catch = true
+    endtry
+    assert_true('did_catch')
+  Add a new command,
+    assertfail
+       unknown
+    endassertfail E99:.*unknown
+- Run the same tests in :def and Vim9 script, like in Test_expr7_not()
+- In autocmd: use legacy syntax, not whatever the current script uses?
 - need to check type when a declaration specifies a type: #6507
         let nr: number = <code class="badlink">'asdf'</code>
+- Make sure that in vim9script a function call without namespace only finds
+  the script-local function, not a global one.
+- Make sure that where a callback is expected a function can be used (without
+  quotes). E.g. sort() and map().  Also at the script level.
+- assignment to more complex lval: list[1][2][3] = 8
+- ":put" with ISN_PUT does not handle range correctly, e.g. ":$-2put".
+  Add command to parse range at runtime?
 - Make map() give an error if the resulting type is wrong.
   Add mapnew() to create a new List/Dict for the result, which can have a
   different value type.
+- When defining an :autocmd or :command, how to specify using Vim9 syntax?
+  - always do this when defined in a Vim9 script
+  - add some command modifier.
+- For an :autocmd and :command argument, if a following line starts with "|"
+  append it.  It's like line continuation. (#6702)
 - Implement "export {one, two three}".
 - ISN_CHECKTYPE could use check_argtype()
-- Slice of list: [1, 2, 3][1:2].
 - give error for variable name:
       let p = function('NoSuchFunc')
 - Give runtime error if function argument is wrong.
@@ -104,6 +137,9 @@ Making everything work:
 - Test that a function defined inside a :def function is local to that
   function, g: functions can be defined and script-local functions cannot be
   defined.
+- Does this work already: can use func as reference:
+        def SomeFunc() ...
+        map(list, SomeFunc)
 - Support passing v:none to use the default argument value. (#6504)
 - make 0 == <code class="badlink">'string'</code> fail on the script level, like inside :def.
 - Check that when using a user function name without prefix, it does not find
@@ -114,14 +150,11 @@ Making everything work:
       ret[i] = string(i)
 - Appending to dict item doesn't work:
     let d[i] ..= value
+- Using ".." at script level doesn't convert arguments to a string.
 - Compile replacement of :s command: s/pat/\=expr/
 - Compile redir to local variable: var_redir_start().
 - Compile builtin functions that access local variables:
     islocked()
-- possible memory leak in test_vim9_func through compile_nested_function.
-- memory leaks in test_vim9_expr
-- memory leaks in test_vim9_script
-- memory leaks in test_vim9_cmd
 - When evaluating constants for script variables, some functions could work:
     has(<code class="badlink">'asdf'</code>), len(<code class="badlink">'string'</code>)
 - Implement "as Name" in "import Item as Name from ..."
@@ -138,8 +171,6 @@ Making everything work:
 New syntax and functionality:
 Improve error checking:
 - "echo Func()" is an error if Func() does not return anything.
-Test:
-- Using a Vim9 autoload script (functions must be global).
 Also:
 - For range: make table of first ASCII character with flag to quickly check if
   it can be a Vim9 command. E.g. "+" can, but "." can't.
@@ -148,26 +179,23 @@ Also:
 - Make Foo.Bar() work to call the dict function. (#5676)
 - Error in any command in "vim9script" aborts sourcing.
 - Find a way to test expressions in legacy and Vim9 script without duplication
-- Fix memory leaks for test_vim9_disassemble, test_vim9_expr, test_vim9_script
 - Test each level of expressions properly, with type checking
 - Test try/catch and throw better, also nested.
   Test return inside try/finally jumps to finally and then returns.
-- call autoload function.
-- Implement more expressions, e.g. [a:b]
-- can use func as reference:
-        def SomeFunc() ...
-        map(list, SomeFunc)
 - Test: Function declared inside a :def function is local, disappears at the
   end of the function.  Unless g: is used, just like with variables.
 - implement :type
 - import type declaration?
-- implement class
-- implement interface
-- predefined class: Promise<code class="special">&lt;T&gt;</code>
+- Future work: See  <a href="vim9.html#vim9-classes">vim9-classes</a> 
 - implement enum
 - Make accessing varargs faster: arg[expr]
         EVAL expr
         LOADVARARG (varags idx)
+- Make debugging work - at least per function.  Need to recompile a function
+  to step through it line-by-line?  Evaluate the stack and variables on the
+  stack?
+- Make profiling work - Add ISN_PROFILE instructions after every line?
+- List commands when <a href="options.html#'verbose'">'verbose'</a> is set or :verbose is used.
 Further improvements:
 - compile options that are an expression, e.g. "expr:" in <a href="options.html#'spellsuggest'">'spellsuggest'</a>,
   <a href="options.html#'foldexpr'">'foldexpr'</a>, <a href="options.html#'foldtext'">'foldtext'</a>, <a href="options.html#'printexpr'">'printexpr'</a>, <a href="options.html#'diffexpr'">'diffexpr'</a>, <a href="options.html#'patchexpr'">'patchexpr'</a>, <a href="options.html#'charconvert'">'charconvert'</a>,
@@ -190,6 +218,8 @@ Popup windows:
   positioned?  PopupNew?  Could be used to set some options or move it out of
   the way. (#5737)
   However, it may also cause trouble, changing the popup of another plugin.
+- Width is not computed correctly when minwidth and maxwidth are &amp;columns
+  and padding and a scrollbar are used.  (#6676)
 - Add a way to use popup_menu() synchronously: instead of invoking the
   callback, return the choice. (Ben Jackson, #6534)
 - Use popup (or popup menu) for command line completion
@@ -205,13 +235,11 @@ Popup windows:
 - Figure out the size and position better if wrapping inserts indent
 
 Text properties:
-- :goto does not go to the right place when test properties are present.
+- :goto does not go to the right place when text properties are present.
   (#5930)
 - "cc" does not call inserted_bytes(). (Axel Forsman, #5763)
-- Get E685 with a sequence of commands. (#5674)
 - Combining text property with <a href="options.html#'cursorline'">'cursorline'</a> does not always work (Billie
   Cleek, #5533)
-- Text properties spanning more than one line.  #5683
 - See remarks at top of src/textprop.c
 
 <a href="options.html#'incsearch'">'incsearch'</a> with :s:
@@ -236,7 +264,7 @@ Terminal debugger:
   an already running program. (M. Kelly)
 - When only gdb window exists, on "quit" edit another buffer.
 - Use a sign group
-- Termdebug does not work when Vim was build with mzscheme: gdb hangs just
+- Termdebug does not work when Vim was built with mzscheme: gdb hangs just
   after "run".  Everything else works, including communication channel.  Not
   initializing mzscheme avoid the problem, thus it's not some #ifdef.
 - Add support for lldb?  issue #3565
@@ -288,18 +316,28 @@ Terminal emulator window:
 - When <a href="options.html#'encoding'">'encoding'</a> is not utf-8, or the job is using another encoding, setup
   conversions.
 
-Error numbers available:
-E610, E611, E653
+Error numbers available: E653
+
+Patch to implement the vimtutor with a plugin: #6414
+Was originally written by Felipe Morales.
 
 Remove SPACE_IN_FILENAME ? It is only used for completion.
 
-Patch to use collaction based sorting. (Christian Brabandt, #6229)
+Patch to use collation based sorting. (Christian Brabandt, #6229)
+
+Add <code class="badlink">'termguiattr'</code> option, use "gui=" attributes in the terminal?  Would work
+with <a href="options.html#'termguicolors'">'termguicolors'</a>. #1740
+
+Patch for blockwise paste reporting changes: #6660.
+
+Expanding <code class="special">&lt;mods&gt;</code> should put the tab number from cmdmod.tab before "tab".
+Any way to convert "$" back by using a special value? (#6901)
 
 Can we detect true color support?  <a href="https://gist.github.com/XVilka/8346728">https://gist.github.com/XVilka/8346728</a>
 Try setting a color then request the current color, like using t_u7.
 
 Check out PR #543 (Roland Puntaier).
-Patch for multi-byte characters in langmap and applying a mapping on them.
+Patch for multibyte characters in langmap and applying a mapping on them.
 (Christian Brabandt, 2015 Jun 12, update July 25)
 Is this the right solution?  Need to cleanup langmap behavior:
 - in vgetorpeek() apply langmap to the typeahead buffer and put the result in
@@ -369,6 +407,9 @@ character. (#6154)
 
 undo result wrong: Masato Nishihata, #4798
 
+After recovering from a swap file the undofile should not be used, it causes
+corruption.  (#6631)
+
 When <a href="options.html#'lazyredraw'">'lazyredraw'</a> is set sometimes the title is not updated.
 (Jason Franklin, 2020 Feb 3)  Looks like a race condition.
 
@@ -386,12 +427,12 @@ When <a href="options.html#'fileignorecase'">'fileignorecase'</a> is set ":e tes
 ":find testfile.c" does not ignore case.
 Might be related to #6088.
 
+Error for reverse range when using :vimgrep in file "[id-01] file.txt".
+(#6919)
+
 When changing the crypt key the buffer should be considered modified.
 Like when changing <a href="options.html#'fileformat'">'fileformat'</a>.  Save the old key in save_file_ff().
 (Ninu-Ciprian Marginean)
-
-Patch to implement the vimtutor with a plugin: #6414
-Was originally writtten by Felipe Morales.
 
 Strange sequence of BufWipeout and BufNew events while doing omni-complete.
 (Paul Jolly, #5656)
@@ -415,6 +456,7 @@ Undo puts cursor in wrong line after "cG<code class="special">&lt;Esc&gt;</code>
 Implement completion for "breakadd".  Should expand the second argument, e.g.
 "func", and then function names after ":breakadd func".  Including
 script-local functions.
+Also for ":profile".
 
 :unmap <code class="special">&lt;c-n&gt;</code> gives error but does remove the mapping. (Antony Scriven, 2019
 Dec 19)
@@ -429,6 +471,9 @@ remains equal?  Then %argdel to clean it up.  Do try this with <a href="options.
 Also #4994: window-local options not always restored, related to using :badd.
 Also #5326: netrw buffers are not restored.
 
+Alternate file is not set in the session file.  Use setwintabvar("@#") ?
+(#6714)
+
 When <a href="options.html#'backupdir'">'backupdir'</a> has a path ending in double slash (meaning: use full path of
 the file) combined with <a href="options.html#'patchmode'">'patchmode'</a> the file name is wrong. (#5791)
 
@@ -440,6 +485,7 @@ Should do current file first and not split it up when more results are found.
 
 Undo history wrong when ":next file" re-uses a buffer. (#5426)
 ex_next() should pass flag to do_argfile(), then to do_ecmd().
+Is there a test for this?
 
 Help for ":argadd fname" says that if "fname" is already in the argument list
 that entry is used.  But instead it's always added. (#6210)
@@ -501,7 +547,7 @@ Better: use the "z" prefix.  or ]t) and [t(.
 Modeless selection doesn't work in gvim. (#4783)
 Caused by patch 8.1.1534.
 
-Visual highlight not removed when <code class="badlink">'dipslay'</code> is "lastline" and line doesn't
+Visual highlight not removed when <a href="options.html#'display'">'display'</a> is "lastline" and line doesn't
 fit. (Kevin Lawler, #4457)
 
 Current position in the changelist should be local to the buffer. (#2173)
@@ -1236,8 +1282,6 @@ Suggestion to improve pt-br spell checking. (Marcelo D Montu, 2016 Dec 15,
 
 Error in test_startup_utf8 on Solaris. (Danek Duvall, 2016 Aug 17)
 
-Completion for :!cmd shows each match twice. #1435
-
 GTK: When adding a timer from <a href="options.html#'balloonexpr'">'balloonexpr'</a> it won't fire, because
 g_main_context_iteration() doesn't return.  Need to trigger an event when the
 timer expires.
@@ -1247,7 +1291,7 @@ Screen update bug related to matchparen.  (Chris Heath, 2017 Mar 4, #1532)
 Rule to use "^" for statusline does not work if a space is defined with
 highlighting for both stl and stlnc.  Patch by Ken Hamada (itchyny, 2016 Dec 11)
 
-8   "stl" and "stlnc" in <a href="options.html#'fillchars'">'fillchars'</a> don't work for multi-byte characters.
+8   "stl" and "stlnc" in <a href="options.html#'fillchars'">'fillchars'</a> don't work for multibyte characters.
     Patch by Christian Wellenbrock, 2013 Jul 5.
 
 Using <code class="keystroke">CTRL-G_U</code> in InsertCharPre causes trouble for redo. (Israel Chauca
@@ -1398,7 +1442,7 @@ sort() is not stable when using numeric/float sort (Nikolay Pavlov, 2016 Sep
 - Bug with pattern: '\vblock (\d+)\.\n.*\d+%(\1)@&lt;!\.$'
   (Lech Lorens, 2014 Feb 3)
 - Issue 164: freeze on regexp search.
-- Ignorecase not handled properly for multi-byte characters. (Axel Bender,
+- Ignorecase not handled properly for multibyte characters. (Axel Bender,
   2013 Dec 11)
 - Using \@&gt; and \?. (Brett Stahlman, 2013 Dec 21) Remark from Marcin
   Szamotulski; Remark from Brett 2014 Jan 6 and 7.
@@ -1435,9 +1479,6 @@ Feature request: Complete members of a dictionary. (Luc Hermitte, 2017 Jan 4,
 Undo message is not always properly displayed.  Patch by Ken Takata, 2013 oct
 3.  Doesn't work properly according to Yukihiro Nakadaira.
 Also see #1635.
-
-When <a href="options.html#'keywordprg'">'keywordprg'</a> starts with ":" the argument is still escaped as a shell
-command argument. (Romain Lafourcade, 2016 Oct 16, #1175)
 
 Idea from Sven: record sequence of keys.  Useful to show others what they are
 doing (look over the shoulder), and also to see what happened.
@@ -1507,7 +1548,7 @@ Zero-out krypt key information when no longer in use. (Ben Fritz, 2017 May 15)
 
 Add stronger encryption.  Could use libsodium (NaCl).
 <a href="https://github.com/jedisct1/libsodium/">https://github.com/jedisct1/libsodium/</a>
-Possibly include the needed code so that it can be build everywhere.
+Possibly include the needed code so that it can be built everywhere.
 
 Add a way to restart a timer.  It's similar to timer_stop() and timer_start(),
 but the reference remains valid.
@@ -1613,7 +1654,7 @@ Patch to add :mapgroup, put mappings in a group like augroup.
 Value returned by virtcol() changes depending on how lines wrap.  This is
 inconsistent with the documentation.
 
-Value of virtcol() for '[ and '] depend on multi-byte character.
+Value of virtcol() for '[ and '] depend on multibyte character.
 (Luchr, #277)
 
 Can we cache the syntax attributes, so that updates for <a href="options.html#'relativenumber'">'relativenumber'</a> and
@@ -2145,7 +2186,7 @@ Also for another example (ZyX, 2011 Jan 24)
 
 Build problem with small features on Mac OS X 10.6. (Rainer, 2011 Jan 24)
 
-"0g@$" puts '] on last byte of multi-byte. (ZyX, 2011 Jan 22)
+"0g@$" puts '] on last byte of multibyte. (ZyX, 2011 Jan 22)
 
 Patch for :tabrecently. (Hirokazu Yoshida, 2012 Jan 30)
 
@@ -2652,7 +2693,7 @@ work, the backslash is removed, assuming that it escapes the (. (Valery
 Kondakoff, 2009 May 13)
 
 Win32: Using "gvim --remote-tab-silent elŝuti.txt" doesn't work, the
-multi-byte character isn't passed and edits elsuti.txt.
+multibyte character isn't passed and edits elsuti.txt.
 (Raúl Núñez de Arenas Coronado, 2015 Dec 18)
 
 Problem with <a href="options.html#'langmap'">'langmap'</a> being used on the rhs of a mapping. (Nikolai Weibull,
@@ -2889,9 +2930,6 @@ When $VAR contains a backslash expand('$VAR') removes it. (Teemu Likonen, 2008
 Jun 18)
 
 If the variable "g:x#y#z" exists completion after ":echo g:x#" doesn't work.
-
-Feature request: Command to go to previous tab, like what <code class="keystroke">CTRL-W</code> p does for
-windows. (Adam George)
 
 In debug mode, using <code class="keystroke">CTRL-R</code> = to evaluate a function causes stepping through
 the function. (Hari Krishna Dara, 2006 Jun 28)
@@ -3216,7 +3254,7 @@ Add an option for a minimal text length before inserting a line break for
 7   ATTENTION dialog choices are more logical when "Delete it" appears
     before "Quit".  Patch by Robert Webb, 2004 May 3.
 -   Include flipcase patch: ~/vim/patches/wall.flipcase2 ?  Make it work
-    for multi-byte characters.
+    for multibyte characters.
 -   Win32: add options to print dialog.  Patch from Vipin Aravind.
 -   Patch to add highlighting for whitespace. (Tom Schumm, 2003 Jul 5)
     use the patch that keeps using HLF_8 if HLF_WS has not
@@ -3712,8 +3750,8 @@ Macintosh:
 8   <a href="options.html#'hkmap'">'hkmap'</a> should probably be global-local.
 8   Using ":s" in a function changes the previous replacement string.  Save
     "old_sub" in save_search_patterns()?
-8   Should allow multi-byte characters for the delimiter: ":s+a+b+" where "+"
-    is a multi-byte character.
+8   Should allow multibyte characters for the delimiter: ":s+a+b+" where "+"
+    is a multibyte character.
 8   When appending to a file and <a href="options.html#'patchmode'">'patchmode'</a> isn't empty, a backup file is
     always written, even when the original file already exists.
 9   When getting focus while writing a large file, could warn for this file
@@ -3868,9 +3906,7 @@ Macintosh:
     two lines at a time.  "k" doesn't do this. (Cory T. Echols)
 8   When write_viminfo() is used while there are many orphaned viminfo
     tempfiles writing the viminfo file fails.  Give a clear error message so
-    that the user knows he has to delete the files.
-7   It's possible to redefine a script-local function with ":func
-    <code class="special">&lt;SNR&gt;</code>123_Test()". (Krishna)  Disallow this.
+    that the user knows the files have to be deleted.
 
 
 我无法重现这些 (如果你可以，请告知！):
@@ -4018,7 +4054,7 @@ Macintosh:
     - change to cursor position and curswant
     - if it can be undone (u/<code class="keystroke">CTRL-R</code>) and redone (.)
     - how it works for folded lines
-    - how it works with multi-byte characters
+    - how it works with multibyte characters
 9   In change.txt, remark about Javadoc isn't right.  Right alignment would
     work too.
 8   Spread the windows commands over the other files.  For example, ":stag"
@@ -4041,7 +4077,7 @@ Macintosh:
 -   Support a way to view (and edit) .info files.
 -   Implement a "sticky" help window, some help text lines that are always
     displayed in a window with fixed height. (Guckes)  Use "~/.vimhelp" file,
-    user can edit it to insert his favorite commands, new account can contain a
+    user can edit it to insert favorite commands, new account can contain a
     default contents.
 -   Make <a href="options.html#'winminheight'">'winminheight'</a> a local option, so that the user can set a minimal
     height for the help window (and other windows).
@@ -4254,8 +4290,8 @@ Diff 模式:
 8   Add configure option to be able to disable using the iconv library. (Udo
     Schweigert)
 9   <a href="options.html#'aleph'">'aleph'</a> should be set to 1488 for Unicode. (Zvi Har'El)
-8   Should add test for using various commands with multi-byte characters.
-8   <a href="options.html#'infercase'">'infercase'</a> doesn't work with multi-byte characters.
+8   Should add test for using various commands with multibyte characters.
+8   <a href="options.html#'infercase'">'infercase'</a> doesn't work with multibyte characters.
 8   toupper() function doesn't handle byte count changes.
 7   Searching and composing characters:
     When searching, should order of composing characters be ignored?
@@ -4263,7 +4299,7 @@ Diff 模式:
     characters can be manipulated.
 8   Should implement <a href="options.html#'delcombine'">'delcombine'</a> for command line editing.
 8   Detect overlong UTF-8 sequences and handle them like illegal bytes.
-8   ":s/x/\u\1/" doesn't work, making uppercase isn't done for multi-byte
+8   ":s/x/\u\1/" doesn't work, making uppercase isn't done for multibyte
     characters.
 8   UTF-8: "r" in Visual mode doesn't take composing characters.
 8   UTF-8: When there is a precomposed character in the font, use it instead
@@ -4287,14 +4323,14 @@ Diff 模式:
     convert_input() for Mac GUI.
 -   Add mnemonics from RFC1345 longer than two characters.
     Support <code class="keystroke">CTRL-K</code> _<code class="special">{mnemonic}</code>_
--   Make <a href="options.html#'breakat'">'breakat'</a> accept multi-byte characters.  Problem: can't use a lookup
+-   Make <a href="options.html#'breakat'">'breakat'</a> accept multibyte characters.  Problem: can't use a lookup
     table anymore (breakat_flags[]).
     Simplistic solution: when <a href="options.html#'formatoptions'">'formatoptions'</a> contains "m" also break a line
-    at a multi-byte character &gt;= 0x100.
+    at a multibyte character &gt;= 0x100.
 -   Add the possibility to enter mappings which are used whenever normal text
     could be entered.  E.g., for "f" command.  But not in Normal mode.  Sort
     of opposite of <a href="options.html#'langmap'">'langmap'</a>.  Use ":amap" command?
--   When breaking a line, take properties of multi-byte characters into
+-   When breaking a line, take properties of multibyte characters into
     account.  The "linebreak" program from Bruno Haible can do it:
     ftp://ftp.ilog.fr/pub/Users/haible/gnu/linebreak-0.1.tar.gz
     But it's very complicated...
@@ -5359,11 +5395,11 @@ Java:
 8   Add test script for text object commands "aw", "iW", etc.
 8   Add text object for part of a CamelHumpedWord and under_scored_word.
     (Scott Graham)  "ac" and "au"?
-8   Add a text object for any kind of quoting, also with multi-byte
+8   Add a text object for any kind of quoting, also with multibyte
     characters.  Option to specify what quotes are recognized (default: all)
     use "aq" and "iq".  Use <code class="badlink">'quotepairs'</code> to define pairs of quotes, like
     <a href="options.html#'matchpairs'">'matchpairs'</a>?
-8   Add text object for any kind of parens, also multi-byte ones.
+8   Add text object for any kind of parens, also multibyte ones.
 8   Add a way to make an ":omap" for a user-defined text object.  Requires
     changing the starting position in oap-&gt;start.
 8   Add "gp" and "gP" commands: insert text and make sure there is a single
@@ -5808,7 +5844,7 @@ Viminfo:
     .cpp files.
 -   Support the "abbreviate" command in modelines (Kearns).  Careful for
     characters after <code class="special">&lt;Esc&gt;</code>, that is a security leak.
--   Add option setting to ask user if he wants to have the modelines executed
+-   Add an option setting to ask the user if the modelines are to be executed
     or not.  Same for .exrc in local dir.
 
 
@@ -6139,7 +6175,7 @@ Viminfo:
     regexp which triggers auto-formatting (for one line).
     ":set autoformat=\\s$".
 -   Be able to redefine where a sentence stops.  Use a regexp pattern?
--   Support multi-byte characters for sentences.  Example from Ben Peterson.
+-   Support multibyte characters for sentences.  Example from Ben Peterson.
 7   Add command "g)" to go to the end of a sentence, "g(" to go back to the
     end of a sentence. (Servatius Brandt)
 -   Be able to redefine where a paragraph starts.  For "[[" where the '{' is

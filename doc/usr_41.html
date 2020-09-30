@@ -326,9 +326,9 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 <code class="example">        :echo (10 + 5) * 2</code>
 <code class="section">        30 </code>
 
-用 "." 可以把两个字符串连接起来。例如: 
+用 ".." 可以把两个字符串连接起来 (见  <a href="eval.html#expr6">expr6</a> )。例如: 
 <code class="example"></code>
-<code class="example">        :echo "foo" . "bar"</code>
+<code class="example">        :echo "foo" .. "bar"</code>
 <code class="section">        foobar </code>
 
 一般的，当 ":echo" 命令遇到多个参数时，会在它们之间加入空格。但上例中参数是一
@@ -479,9 +479,9 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 表达式的结果。这是一个创建并执行命令的非常有效的方法。
    例如要跳转到一个由变量表示的标签: 
 <code class="example"></code>
-<code class="example">        :execute "tag " . tag_name</code>
+<code class="example">        :execute "tag " .. tag_name</code>
 <code class="example"></code>
-"." 被用来连接字符串 "tag " 和变量 "tag_name" 的值。假设 "tag_name" 的值为
+".." 被用来连接字符串 "tag " 和变量 "tag_name" 的值。假设 "tag_name" 的值为
 "get_cmd"，那么被将执行的命令将是: 
 <code class="example"></code>
 <code class="example">        :tag get_cmd</code>
@@ -495,7 +495,7 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
    为了使 ":normal" 命令也可以带表达式，可以把 ":execute" 与其连起来使用。
 例: 
 <code class="example"></code>
-<code class="example">        :execute "normal " . normal_commands</code>
+<code class="example">        :execute "normal " .. normal_commands</code>
 <code class="example"></code>
 变量 "normal_commands" 必须包含要执行的普通模式命令。
    必须确保 ":normal" 的参数是一个完整的命令。否则，Vim 碰到参数的结尾就会中止
@@ -509,12 +509,12 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 如果你不想执行字符串，而想执行它作为表达式计算的结果，可以用 eval() 函数: 
 <code class="example"></code>
 <code class="example">        :let optname = "path"</code>
-<code class="example">        :let optval = eval('&amp;' . optname)</code>
+<code class="example">        :let optval = eval('&amp;' .. optname)</code>
 <code class="example"></code>
 "&amp;" 被加到 "path" 前面，这样传给 eval() 的参数成为 "&amp;path"。这时得到的返回值就
 是 <a href="options.html#'path'">'path'</a> 选项的值。
    相同的操作可以这样完成: 
-<code class="example">        :exe 'let optval = &amp;' . optname</code>
+<code class="example">        :exe 'let optval = &amp;' .. optname</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4><b class="vimtag"> <a name="41.6">41.6</a> </b>  使用函数</h4>
@@ -568,8 +568,10 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         strtrans()              将一个字符串变成可显示的格式
         tolower()               将一个字符串转换为小写
         toupper()               将一个字符串转换为大写
+        charclass()             字符的类
         match()                 字符串中的模式匹配处
         matchend()              字符串中的模式匹配结束处
+        matchfuzzy()            模糊匹配字符串列表中的一个字符串
         matchstr()              在一个字符串中匹配一个模式
         matchstrpos()           字符串中满足匹配的模式和位置
         matchlist()             类似 matchstr()，同时返回子匹配
@@ -579,6 +581,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         strchars()              以字符计的字符串长度
         strwidth()              字符串的显示长度
         strdisplaywidth()       字符串的显示长度，处理制表
+        setcellwidths()         设置字符单元宽度覆盖
         substitute()            用一个字符串替换一个匹配的模式
         submatch()              取得 ":s" 和 substitute() 匹配中指定的某个匹配
         strpart()               用字节索引取得字符串的子串
@@ -594,6 +597,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
         execute()               执行 Ex 命令并获取输出
         win_execute()           类似于 execute()，但用于指定窗口
         trim()                  从字符串中删除字符
+        gettext()               查找消息翻译
 
 列表处理:                                               <b class="vimtag"> <a name="list-functions">list-functions</a> </b>
         get()                   得到项目，错误索引不报错
@@ -1079,6 +1083,7 @@ Tags:                                           <b class="vimtag"> <a name="tag-
         settagstack()           修改窗口的标签栈
 
 提示缓冲区:                                     <b class="vimtag"> <a name="promptbuffer-functions">promptbuffer-functions</a> </b>
+        prompt_getprompt()      得到缓冲区的实际提示文本
         prompt_setcallback()    设置缓冲区的提示回调
         prompt_setinterrupt()   设置缓冲区的中断回调
         prompt_setprompt()      设置缓冲区的提示文本
@@ -1236,7 +1241,7 @@ Min 函数可以这样来使用:
 <code class="example">        :    let n = n + len(split(getline(lnum)))</code>
 <code class="example">        :    let lnum = lnum + 1</code>
 <code class="example">        :  endwhile</code>
-<code class="example">        :  echo "found " . n . " words"</code>
+<code class="example">        :  echo "found " .. n .. " words"</code>
 <code class="example">        :endfunction</code>
 <code class="example"></code>
 你可以这样调用上面的函数: 
@@ -1248,7 +1253,7 @@ Min 函数可以这样来使用:
 范围内的每一行，并分别对该行调用此函数。例如: 
 <code class="example"></code>
 <code class="example">        :function  Number()</code>
-<code class="example">        :  echo "line " . line(".") . " contains: " . getline(".")</code>
+<code class="example">        :  echo "line " .. line(".") .. " contains: " .. getline(".")</code>
 <code class="example">        :endfunction</code>
 <code class="example"></code>
 如果你用下面的方式调用该函数: 
@@ -1271,11 +1276,11 @@ Vim 允许你定义参数个数可变的函数。下面的例子给出一个至�
 <code class="example"></code>
 <code class="example">        :function Show(start, ...)</code>
 <code class="example">        :  echohl Title</code>
-<code class="example">        :  echo "start is " . a:start</code>
+<code class="example">        :  echo "start is " .. a:start</code>
 <code class="example">        :  echohl None</code>
 <code class="example">        :  let index = 1</code>
 <code class="example">        :  while index &lt;= a:0</code>
-<code class="example">        :    echo "  Arg " . index . " is " . a:{index}</code>
+<code class="example">        :    echo "  Arg " .. index .. " is " .. a:{index}</code>
 <code class="example">        :    let index = index + 1</code>
 <code class="example">        :  endwhile</code>
 <code class="example">        :  echo ""</code>
@@ -1647,10 +1652,10 @@ self.words。所以你可以把这叫做抽象类。
 <code class="example"></code>
 <code class="example">        :let tmp = tempname()</code>
 <code class="example">        :try</code>
-<code class="example">        :   exe ".,$write " . tmp</code>
-<code class="example">        :   exe "!filter " . tmp</code>
+<code class="example">        :   exe ".,$write " .. tmp</code>
+<code class="example">        :   exe "!filter " .. tmp</code>
 <code class="example">        :   .,$delete</code>
-<code class="example">        :   exe "$read " . tmp</code>
+<code class="example">        :   exe "$read " .. tmp</code>
 <code class="example">        :finally</code>
 <code class="example">        :   call delete(tmp)</code>
 <code class="example">        :endtry</code>
@@ -1951,8 +1956,8 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
 我们来定义一个用来添加新的错误更正的函数: 
 <code class="example"></code>
 <code class="example"> 30     function s:Add(from, correct)</code>
-<code class="example"> 31       let to = input("type the correction for " . a:from . ": ")</code>
-<code class="example"> 32       exe ":iabbrev " . a:from . " " . to</code>
+<code class="example"> 31       let to = input("type the correction for " .. a:from .. ": ")</code>
+<code class="example"> 32       exe ":iabbrev " .. a:from .. " " .. to</code>
 <code class="example"> ..</code>
 <code class="example"> 36     endfunction</code>
 <code class="example"></code>
@@ -2045,7 +2050,7 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
 <code class="example"> 30     function s:Add(from, correct)</code>
 <code class="example"> ..</code>
 <code class="example"> 34       let s:count = s:count + 1</code>
-<code class="example"> 35       echo s:count . " corrections now"</code>
+<code class="example"> 35       echo s:count .. " corrections now"</code>
 <code class="example"> 36     endfunction</code>
 <code class="example"></code>
 起初 s:count 被脚本初始化为 4。当后来 s:Add() 函数被调用时，其值被增加了。在哪
@@ -2086,11 +2091,11 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
 <code class="example"> 28     noremap &lt;SID&gt;Add  :call &lt;SID&gt;Add(expand("&lt;cword&gt;"), 1)&lt;CR&gt;</code>
 <code class="example"> 29</code>
 <code class="example"> 30     function s:Add(from, correct)</code>
-<code class="example"> 31       let to = input("type the correction for " . a:from . ": ")</code>
-<code class="example"> 32       exe ":iabbrev " . a:from . " " . to</code>
+<code class="example"> 31       let to = input("type the correction for " .. a:from .. ": ")</code>
+<code class="example"> 32       exe ":iabbrev " .. a:from .. " " .. to</code>
 <code class="example"> 33       if a:correct | exe "normal viws\&lt;C-R&gt;\" \b\e" | endif</code>
 <code class="example"> 34       let s:count = s:count + 1</code>
-<code class="example"> 35       echo s:count . " corrections now"</code>
+<code class="example"> 35       echo s:count .. " corrections now"</code>
 <code class="example"> 36     endfunction</code>
 <code class="example"> 37</code>
 <code class="example"> 38     if !exists(":Correct")</code>
@@ -2313,7 +2318,7 @@ $VIMRUNTIME 之前！
 插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如: 
 <code class="example"></code>
 <code class="example">        let b:undo_ftplugin = "setlocal fo&lt; com&lt; tw&lt; commentstring&lt;"</code>
-<code class="example">                \ . "| unlet b:match_ignorecase b:match_words b:match_skip"</code>
+<code class="example">                \ .. "| unlet b:match_ignorecase b:match_words b:match_skip"</code>
 <code class="example"></code>
 在 ":setlocal" 命令的选项后使用 "&lt;" 会将其值复位为全局值。这可能是最好的复位
 选项值的方法。
@@ -2419,17 +2424,17 @@ exists("*s:Func")       查看是否已经定义了某个函数。
 <code class="example">                map &lt;F19&gt; :call BufNetWrite('something')&lt;CR&gt;</code>
 <code class="example"></code>
 <code class="example">                let s:did_load = 1</code>
-<code class="example">                exe 'au FuncUndefined BufNet* source ' . expand('&lt;sfile&gt;')</code>
+<code class="example">                exe 'au FuncUndefined BufNet* source ' .. expand('&lt;sfile&gt;')</code>
 <code class="example">                finish</code>
 <code class="example">        endif</code>
 <code class="example"></code>
 <code class="example">        function BufNetRead(...)</code>
-<code class="example">                echo 'BufNetRead(' . string(a:000) . ')'</code>
+<code class="example">                echo 'BufNetRead(' .. string(a:000) .. ')'</code>
 <code class="example">                " 读入功能在此</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
 <code class="example">        function BufNetWrite(...)</code>
-<code class="example">                echo 'BufNetWrite(' . string(a:000) . ')'</code>
+<code class="example">                echo 'BufNetWrite(' .. string(a:000) .. ')'</code>
 <code class="example">                " 写回功能在此</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
