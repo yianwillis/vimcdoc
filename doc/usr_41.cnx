@@ -294,9 +294,9 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 	:echo (10 + 5) * 2
 <	30 ~
 
-用 "." 可以把两个字符串连接起来。例如: >
+用 ".." 可以把两个字符串连接起来 (见 |expr6|)。例如: >
 
-	:echo "foo" . "bar"
+	:echo "foo" .. "bar"
 <	foobar ~
 
 一般的，当 ":echo" 命令遇到多个参数时，会在它们之间加入空格。但上例中参数是一
@@ -449,9 +449,9 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 表达式的结果。这是一个创建并执行命令的非常有效的方法。
    例如要跳转到一个由变量表示的标签: >
 
-	:execute "tag " . tag_name
+	:execute "tag " .. tag_name
 
-"." 被用来连接字符串 "tag " 和变量 "tag_name" 的值。假设 "tag_name" 的值为
+".." 被用来连接字符串 "tag " 和变量 "tag_name" 的值。假设 "tag_name" 的值为
 "get_cmd"，那么被将执行的命令将是: >
 
 	:tag get_cmd
@@ -465,7 +465,7 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
    为了使 ":normal" 命令也可以带表达式，可以把 ":execute" 与其连起来使用。
 例: >
 
-	:execute "normal " . normal_commands
+	:execute "normal " .. normal_commands
 
 变量 "normal_commands" 必须包含要执行的普通模式命令。
    必须确保 ":normal" 的参数是一个完整的命令。否则，Vim 碰到参数的结尾就会中止
@@ -479,12 +479,12 @@ Vim 脚本支持的表达式很丰富，也很容易使用。你可以在这里�
 如果你不想执行字符串，而想执行它作为表达式计算的结果，可以用 eval() 函数: >
 
 	:let optname = "path"
-	:let optval = eval('&' . optname)
+	:let optval = eval('&' .. optname)
 
 "&" 被加到 "path" 前面，这样传给 eval() 的参数成为 "&path"。这时得到的返回值就
 是 'path' 选项的值。
    相同的操作可以这样完成: >
-	:exe 'let optval = &' . optname
+	:exe 'let optval = &' .. optname
 
 ==============================================================================
 *41.6*	使用函数
@@ -539,8 +539,10 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	strtrans()		将一个字符串变成可显示的格式
 	tolower()		将一个字符串转换为小写
 	toupper()		将一个字符串转换为大写
+	charclass()		字符的类
 	match()			字符串中的模式匹配处
 	matchend()		字符串中的模式匹配结束处
+	matchfuzzy()		模糊匹配字符串列表中的一个字符串
 	matchstr()		在一个字符串中匹配一个模式
 	matchstrpos()		字符串中满足匹配的模式和位置
 	matchlist()		类似 matchstr()，同时返回子匹配
@@ -550,6 +552,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	strchars()		以字符计的字符串长度
 	strwidth()		字符串的显示长度
 	strdisplaywidth()	字符串的显示长度，处理制表
+	setcellwidths()		设置字符单元宽度覆盖
 	substitute()		用一个字符串替换一个匹配的模式
 	submatch()		取得 ":s" 和 substitute() 匹配中指定的某个匹配
 	strpart()		用字节索引取得字符串的子串
@@ -565,6 +568,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	execute()		执行 Ex 命令并获取输出
 	win_execute()		类似于 execute()，但用于指定窗口
 	trim()			从字符串中删除字符
+	gettext()		查找消息翻译
 
 列表处理:						*list-functions*
 	get()			得到项目，错误索引不报错
@@ -1050,6 +1054,7 @@ Tags:						*tag-functions*
 	settagstack()		修改窗口的标签栈
 
 提示缓冲区:					*promptbuffer-functions*
+	prompt_getprompt()	得到缓冲区的实际提示文本
 	prompt_setcallback()	设置缓冲区的提示回调
 	prompt_setinterrupt()	设置缓冲区的中断回调
 	prompt_setprompt()	设置缓冲区的提示文本
@@ -1208,7 +1213,7 @@ Min 函数可以这样来使用: >
 	:    let n = n + len(split(getline(lnum)))
 	:    let lnum = lnum + 1
 	:  endwhile
-	:  echo "found " . n . " words"
+	:  echo "found " .. n .. " words"
 	:endfunction
 
 你可以这样调用上面的函数: >
@@ -1220,7 +1225,7 @@ Min 函数可以这样来使用: >
 范围内的每一行，并分别对该行调用此函数。例如: >
 
 	:function  Number()
-	:  echo "line " . line(".") . " contains: " . getline(".")
+	:  echo "line " .. line(".") .. " contains: " .. getline(".")
 	:endfunction
 
 如果你用下面的方式调用该函数: >
@@ -1243,11 +1248,11 @@ Vim 允许你定义参数个数可变的函数。下面的例子给出一个至�
 
 	:function Show(start, ...)
 	:  echohl Title
-	:  echo "start is " . a:start
+	:  echo "start is " .. a:start
 	:  echohl None
 	:  let index = 1
 	:  while index <= a:0
-	:    echo "  Arg " . index . " is " . a:{index}
+	:    echo "  Arg " .. index .. " is " .. a:{index}
 	:    let index = index + 1
 	:  endwhile
 	:  echo ""
@@ -1621,10 +1626,10 @@ self.words。所以你可以把这叫做抽象类。
 
 	:let tmp = tempname()
 	:try
-	:   exe ".,$write " . tmp
-	:   exe "!filter " . tmp
+	:   exe ".,$write " .. tmp
+	:   exe "!filter " .. tmp
 	:   .,$delete
-	:   exe "$read " . tmp
+	:   exe "$read " .. tmp
 	:finally
 	:   call delete(tmp)
 	:endtry
@@ -1927,8 +1932,8 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
 我们来定义一个用来添加新的错误更正的函数: >
 
  30	function s:Add(from, correct)
- 31	  let to = input("type the correction for " . a:from . ": ")
- 32	  exe ":iabbrev " . a:from . " " . to
+ 31	  let to = input("type the correction for " .. a:from .. ": ")
+ 32	  exe ":iabbrev " .. a:from .. " " .. to
  ..
  36	endfunction
 
@@ -2021,7 +2026,7 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
  30	function s:Add(from, correct)
  ..
  34	  let s:count = s:count + 1
- 35	  echo s:count . " corrections now"
+ 35	  echo s:count .. " corrections now"
  36	endfunction
 
 起初 s:count 被脚本初始化为 4。当后来 s:Add() 函数被调用时，其值被增加了。在哪
@@ -2062,11 +2067,11 @@ Unix 上有一个特殊的办法给一行加注释，从而使得 Vim 脚本可�
  28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
  29
  30	function s:Add(from, correct)
- 31	  let to = input("type the correction for " . a:from . ": ")
- 32	  exe ":iabbrev " . a:from . " " . to
+ 31	  let to = input("type the correction for " .. a:from .. ": ")
+ 32	  exe ":iabbrev " .. a:from .. " " .. to
  33	  if a:correct | exe "normal viws\<C-R>\" \b\e" | endif
  34	  let s:count = s:count + 1
- 35	  echo s:count . " corrections now"
+ 35	  echo s:count .. " corrections now"
  36	endfunction
  37
  38	if !exists(":Correct")
@@ -2290,7 +2295,7 @@ $VIMRUNTIME 之前！
 插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如: >
 
 	let b:undo_ftplugin = "setlocal fo< com< tw< commentstring<"
-		\ . "| unlet b:match_ignorecase b:match_words b:match_skip"
+		\ .. "| unlet b:match_ignorecase b:match_words b:match_skip"
 
 在 ":setlocal" 命令的选项后使用 "<" 会将其值复位为全局值。这可能是最好的复位
 选项值的方法。
@@ -2398,17 +2403,17 @@ exists("*s:Func")	查看是否已经定义了某个函数。
 		map <F19> :call BufNetWrite('something')<CR>
 
 		let s:did_load = 1
-		exe 'au FuncUndefined BufNet* source ' . expand('<sfile>')
+		exe 'au FuncUndefined BufNet* source ' .. expand('<sfile>')
 		finish
 	endif
 
 	function BufNetRead(...)
-		echo 'BufNetRead(' . string(a:000) . ')'
+		echo 'BufNetRead(' .. string(a:000) .. ')'
 		" 读入功能在此
 	endfunction
 
 	function BufNetWrite(...)
-		echo 'BufNetWrite(' . string(a:000) . ')'
+		echo 'BufNetWrite(' .. string(a:000) .. ')'
 		" 写回功能在此
 	endfunction
 

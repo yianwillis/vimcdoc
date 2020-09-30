@@ -1,4 +1,4 @@
-*map.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年8月
+*map.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -174,6 +174,9 @@
 键入另一个字符，Vim 才能知道是用 "," 映射还是更长的那个。要避免这个问题，加入
 <nowait> 参数。这样映射一旦匹配就会被使用，Vim 不会等待更多字符的输入。但如果
 那些字符已经输入了，还是会使用的。
+注意这里需要 <nowait> 映射完整匹配且在任何部分匹配之前先找到。以下情形可以:
+- 只有一个匹配的缓冲区局部映射，因为它们总在全局映射之前找到。
+- 有另一个部分匹配的缓冲区局部映射，但在稍早前定义 (先找到最近定义的映射)。
 
 						*:map-<silent>* *:map-silent*
 要在定义一个映射时不在命令行上回显该映射，可以使用 "<silent>" 作为第一个参数，
@@ -251,12 +254,7 @@ getchar() 得到键入的字符并返回之。
 
 CTRL-L 插入下一个数值，CTRL-R 复位计数且返回空字符串，这样就不会插入任何内容。
 
-注意 要使特殊键工作并转义文本中的 CSI 字节需要一些特殊处理。|:map| 命令已经做
-好了，所以你应该避免做重复的操作。这样不行: >
-	:imap <expr> <F3> "<Char-0x611B>"
-因为 <Char- 序列作为 |:imap| 的参数被转义，而 <expr> 又做一次。这样就可以: >
-	:imap <expr> <F3> "\u611B"
-在其它文本之前使用单个字节出现的 0x80 是不行的。它会被看作一个特殊键。
+注意 在其它文本之前使用单个字节出现的 0x80 是不行的。它会被看作一个特殊键。
 
 
 1.3 映 射 与 运 行 模 式				*:map-modes*
@@ -753,33 +751,44 @@ g@{motion}		调用 'operatorfunc' 选项设置的函数。
 
 这里是一例，<F4> 来计算空格数目: >
 
-	nmap <silent> <F4> :set opfunc=CountSpaces<CR>g@
-	vmap <silent> <F4> :<C-U>call CountSpaces(visualmode(), 1)<CR>
+	nnoremap <expr> <F4> CountSpaces()
+	xnoremap <expr> <F4> CountSpaces()
+	" 在一行上按两次 <F4> 也可以
+	nnoremap <expr> <F4><F4> CountSpaces() .. '_'
 
-	function! CountSpaces(type, ...)
-	  let sel_save = &selection
-	  let &selection = "inclusive"
-	  let reg_save = @@
-
-	  if a:0  " 在可视模式里调用，使用 gv 命令。
-	    silent exe "normal! gvy"
-	  elseif a:type == 'line'
-	    silent exe "normal! '[V']y"
-	  else
-	    silent exe "normal! `[v`]y"
+	function CountSpaces(type = '') abort
+	  if a:type == ''
+	    set opfunc=CountSpaces
+	    return 'g@'
 	  endif
 
-	  echomsg strlen(substitute(@@, '[^ ]', '', 'g'))
+	  let sel_save = &selection
+	  let reg_save = getreginfo('"')
+	  let cb_save = &clipboard
+	  let visual_marks_save = [getpos("'<"), getpos("'>")]
 
-	  let &selection = sel_save
-	  let @@ = reg_save
+	  try
+	    set clipboard= selection=inclusive
+	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
+	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
+	    echom getreg('"')->count(' ')
+	  finally
+	    call setreg('"', reg_save)
+	    call setpos("'<", visual_marks_save[0])
+	    call setpos("'>", visual_marks_save[1])
+	    let &clipboard = cb_save
+	    let &selection = sel_save
+	  endtry
 	endfunction
-<
+
+这里 <expr> 映射的使用是为了可以获取任何前缀计数和寄存器。这可用于避免使用命令
+行，后者会触发 CmdlineEnter 和 CmdlineLeave 自动命令。
+
 注意 'selection' 选项暂时设为 "inclusive"，以便可视模式下用 '[ 到 '] 位置标记
 可以抽出正确的文本。
 
-也要 注意 这里为可视模式提供了专用的映射。它先删除 ":" 在可视模式里插入的
-"'<,'>" 范围，然后调用函数，调用时使用了 visualmode() 和一个额外的参数。
+也要 注意 'clipboard' 选项值如果包含 `unnamed` 或 `unnamedplus` 的话，会临时清
+空，以避免覆盖 `"*` 或 `"+` 寄存器。
 
 ==============================================================================
 2. 缩写			*abbreviations* *Abbreviations*
@@ -1278,7 +1287,7 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 						*<bang>*
 	<bang>	(参考 '-bang' 属性) 如果命令执行时带了 ! 修饰符，扩展为 !，否
 		则什么也不扩展。
-						*<mods>* *:command-modifiers*
+					*<mods>* *<q-mods>* *:command-modifiers*
 	<mods>  如果指定，命令修饰符。否则不扩展。支持以下修饰符
 		|:aboveleft|、|:belowright|、|:botright|、|:browse|、
 		|:confirm|、|:hide|、|:keepalt|、|:keepjumps|、

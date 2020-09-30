@@ -1,4 +1,4 @@
-*pi_netrw.txt*  适用于 Vim 8.2 版本。	最近更新: 2020年1月
+*pi_netrw.txt*  适用于 Vim 8.2 版本。	最近更新: 2020年9月
 
 
 	    -----------------------------------------------------
@@ -406,8 +406,13 @@ netrw 提供很多变量，方便你根据自己的喜好定制 netrw。一个�
   *g:netrw_silent*	=0 : 正常方式完成传输
 			=1 : 安静方式完成传输
 
- *g:netrw_use_errorwindow* =1 : netrw 的消息会使用分开的单行窗口。该窗口提供了
-				消息的可靠传送。(缺省)
+ *g:netrw_use_errorwindow* =2: netrw 的消息会使用弹出窗口
+			     移动鼠标并暂停会关闭弹出窗口
+
+			     (如果弹出窗口可用，这是缺省值)
+			=1 : netrw 的消息会使用分开的单行窗口。该窗口提供了
+				消息的可靠传送。
+			     (如果弹出窗口不可用，这是缺省值)
 			 =0 : netrw 的消息使用 echoerr；这种方式下不是所有消息
 			      都保证能看到，但不需要退出窗口。
 
@@ -656,6 +661,8 @@ plugin/netrwPlugin.vim。netrw 的主要脚本定义在 autoload/netrw.vim 中�
 	:wq
 
 |netrw-activate| 进一步说明如何让你的 vim 更好地使用 netrw 这样的插件。
+
+关于 scp: 免密码的方法，参见 |netrw-ssh-hack|。
 
 
 ==============================================================================
@@ -969,7 +976,7 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 	  反转排序顺序..................................|netrw-r|
 
 
-				*netrw-quickmap* *netrw-quickmaps*
+				*netrw-quickmap*  *netrw-quickmaps*
 快 速 参 考 : 映 射				*netrw-browse-maps* {{{2
 >
 	  ----			--------				----
@@ -986,7 +993,7 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 	   a	循环切换普通显示方式、                               |netrw-a|
 		隐藏方式 (不显示匹配 g:netrw_list_hide 的文件) 和
 		显示方式 (只显示匹配 g:netrw_list_hide 的文件)
-	   c	使浏览中的目录成为当前目录                           |netrw-c|
+	   cd	使浏览中的目录成为当前目录                           |netrw-cd|
 	   C	设置编辑窗口                                         |netrw-C|
 	   d	建立新目录                                           |netrw-d|
 	   D	试图删除文件/目录                                    |netrw-D|
@@ -1870,7 +1877,7 @@ Kingston Fung 写下另一个避免不断要求输入密码的方法:
 概念。要想使两个目录相同，可用 "cd" 映射 (按 cd)。该映射会把 Vim 概念的当前目
 录设为当前的浏览目录。
 
-*netrw-c* : 本映射名从 "c" 改成了 cd (见 |netrw-cd|)。
+|netrw-cd|: 本映射名从 "c" 改成了 cd (见 |netrw-cd|)。
           这个改动使 |netrw-cb| 和 |netrw-cB| 映射成为可能。
 
 相关设置变量: |g:netrw_keepdir|
@@ -2442,7 +2449,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
   *g:netrw_keepdir*		=1 (缺省) 浏览目录时不影响当前目录。
 				=0 浏览目录时设置当前目录为该目录。
 				当前的浏览目录保存在 b:netrw_curdir 里 (另见
-				|netrw-c|)
+				|netrw-cd|)
 
   *g:netrw_keepj*		="keepj" (缺省) netrw 试图使 |:jumps| 表不受影
 					 响。
@@ -2758,7 +2765,7 @@ netrw 也可以用本地浏览器 "获得" 文件。netrw 显示的目录不一�
 
 相关主题:
  * 察看当前目录可用 |:pwd|
- * 使得当前浏览目录成为当前目录可见 |netrw-c|
+ * 使得当前浏览目录成为当前目录可见 |netrw-cd|
  * 要自动使得当前浏览目录总成为当前目录可见 |g:netrw_keepdir|。
 
 					*netrw-newfile* *netrw-createfile*
@@ -3340,9 +3347,14 @@ netrw#UserMaps(islocal)。此函数遍历 |g:Netrw_UserMaps| 列表的所有项�
 	   或者
 	     http://vim.sourceforge.net/scripts/script.php?script_id=120
 
-	  Decho.vim 以 "vimball" 形式出现；见 |vimball-intro|。
+	  Decho.vim 以 "vimball" 形式出现；见 |vimball-intro|。应该编辑
+	  Decho.vba.gz 文件并这样执行: >
 
-	2. 修改 <netrw.vim> 文件如下: >
+		vim Decho.vba.gz
+		:so %
+		:q
+<
+	2. 要打开 netrw 中的调试跟踪，修改 <netrw.vim> 文件如下: >
 
 		vim netrw.vim
 		:DechoOn
@@ -3361,23 +3373,60 @@ netrw#UserMaps(islocal)。此函数遍历 |g:Netrw_UserMaps| 列表的所有项�
 	   个单独的标签页或服务器 vim 窗口出现，提示 <netrw.vim> 进行网络文件
 	   读写的一系列步骤。
 
-           要保存文件，用 >
+	   修改 netrw.vimrc 文件以包含 Decho 插件: >
+
+		set nocp
+		so $HOME/.vim/plugin/Decho.vim
+		so $HOME/.vim/plugin/netrwPlugin.vim
+<
+	   应该继续这样运行 vim >
+
+		vim -u netrw.vimrc --noplugins -i NONE [some path here]
+<
+	   以避免此插件和众多选项以及其它插件纠缠在一起。
+
+	   要保存文件: 在 linux 下，输出会在单独的运行服务器窗口中；那里，只需
+	   这样保存文件 >
+
+		:w! DBG
+
+<	   在不支持客户服务器的 vim 下，调试输出则会出现在另一个标签页中: >
+
 		:tabnext
 		:set bt=
 		:w! DBG
-
-<	   进一步，最好你能键入 >
+<
+	   进一步，最好你能键入 >
 		:Dsep <command>
+
 <	   其中的 <command> 是你将要键入的命令，这样就容易把调试跟踪的哪部分和
 	   哪条命令对应赶来。
 
 	   请把该信息发送到 <netrw.vim> 的维护者，还请包括使用的操作系统和 vim
 	   版本 (见 |:version|) (先去掉内嵌的 NOSPAM) >
+
 		NcampObell@SdrPchip.AorgM-NOSPAM
 <
 ==============================================================================
 12. 历史 (英文)						*netrw-history* {{{1
 
+	v170:	Mar 11, 2020	* (reported by Reiner Herrmann) netrw+tree
+				  would not hide with the ^\..* pattern
+				  correctly.
+				* (Marcin Szamotulski) NetrwOptionRestore
+				  did not restore options correctly that
+				  had a single quote in the option string.
+		Apr 13, 2020	* implemented error handling via popup
+				  windows (see |popup_beval()|)
+		Apr 30, 2020	* (reported by Manatsu Takahashi) while
+				  using Lexplore, a modified file could
+				  be overwritten.  Sol'n: will not overwrite,
+				  but will emit an |E37| (although one cannot
+				  add an ! to override)
+		Jun 07, 2020	* (reported by Jo Totland) repeatedly invoking
+				  :Lexplore and quitting it left unused
+				  hidden buffers.  Netrw will now set netrw
+				  buffers created by :Lexplore to |bh|=wipe.
 	v169:	Dec 20, 2019	* (reported by amkarthik) that netrw's x
 				  (|netrw-x|) would throw an error when
 				  attempting to open a local directory.
@@ -3840,4 +3889,4 @@ netrw#UserMaps(islocal)。此函数遍历 |g:Netrw_UserMaps| 列表的所有项�
 
 ==============================================================================
 模式行: {{{1
- vim:tw=78:ts=8:noet:ft=help:norl:fdm=marker
+vim:tw=78:ts=8:ft=help:noet:norl:fdm=marker
