@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年9月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -157,6 +157,26 @@ blob            二进制大对象 (Binary Large Object)。存储任意字符序
 <code class="example">        :" 执行</code>
 要测试字符串非空，应该使用 empty(): 
 <code class="example">        :if !empty("foo")</code>
+<code class="example"></code>
+                                                <b class="vimtag"> <a name="falsy">falsy</a> </b> <b class="vimtag"> <a name="truthy">truthy</a> </b>
+表达式可用作条件，这里忽略类型，而仅仅判断该值是 "某种程序是真的" 或 "某种程度
+是假的"。准假值 (falsy) 为:
+        数值零
+        空字符串、blob、列表或字典
+其它值均为准真值 (truthy)。例如:
+        0       准假值
+        1       准真值
+        -1      准真值
+        0.0     准假值
+        0.1     准真值
+        ''      准假值
+        'x'     准真值
+        []      准假值
+        <code class="special">[0]</code>     准真值
+        <code class="special">{}</code>      准假值
+        #{x: 1} 准真值
+        0z      准假值
+        0z00    准真值
 
                                                         <b class="vimtag"> <a name="non-zero-arg">non-zero-arg</a> </b>
 函数参数和  <a href="eval.html#TRUE">TRUE</a>  行为通常略有差异: 如果参数存在且其值为非零数值、 <a href="eval.html#v:true">v:true</a>  或
@@ -829,10 +849,13 @@ MY_VAR_6                viminfo 文件
 同一层的表达式从左到右进行分析。
 
 
-expr1                                                   <b class="vimtag"> <a name="expr1">expr1</a> </b> <b class="vimtag"> <a name="E109">E109</a> </b>
+expr1                           <b class="vimtag"> <a name="expr1">expr1</a> </b> <b class="vimtag"> <a name="trinary">trinary</a> </b> <b class="vimtag"> <a name="falsy-operator">falsy-operator</a> </b> <b class="vimtag"> <a name="??">??</a> </b> <b class="vimtag"> <a name="E109">E109</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-expr2 ? expr1 : expr1
+三元操作符: expr2 ? expr1 : expr1
+准假值操作符:   expr2 ?? expr1
+
+<code class="section">三元操作符 </code>
 
 '?' 之前的表达式作为数值求值。如果结果为  <a href="eval.html#TRUE">TRUE</a> ，最终的结果是 '?' 和 ':' 之间
 的表达式的值，不然最终的结果是 ':' 之后的表达式的值。例如: 
@@ -850,6 +873,20 @@ expr2 ? expr1 : expr1
 <code class="example">        :\              : lnum</code>
 <code class="example"></code>
 在 ':' 前，你总是应该加上空格，否则它可能被错误用在如 "a:1" 这样的变量里。
+
+<code class="section">准假值操作符 </code>
+
+也有人叫作 "空值合并操作符"，但太复杂了，所以我们就叫它准假值操作符。
+
+先计算 '??' 之前的表达式，如果值为  <a href="eval.html#truthy">truthy</a> ，则把它用作结果。否则，计算 '??'
+之后的表达式并用作结果。最常用于为可能为零或空的表达式指定缺省值: 
+<code class="example">        echo theList ?? '列表为空'</code>
+<code class="example">        echo GetName() ?? '未知'</code>
+<code class="example"></code>
+以下两者类似，但不完全相同: 
+<code class="example">        expr2 ?? expr1</code>
+<code class="example">        expr2 ? expr2 : expr1</code>
+第二行中的 "expr2" 会计算两次。
 
 
 expr2 和 expr3                                          <b class="vimtag"> <a name="expr2">expr2</a> </b> <b class="vimtag"> <a name="expr3">expr3</a> </b>
@@ -2278,7 +2315,7 @@ getcmdtype()                    字符串  返回当前命令行类型
 getcmdwintype()                 字符串  返回当前命令行窗口类型
 getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</code> [, <code class="special">{filtered}</code>])
                                 列表    命令行补全匹配列表
-getcurpos()                     列表    光标位置
+getcurpos([<code class="special">{winnr}</code>])            列表    光标位置
 getcwd([<code class="special">{winnr}</code> [, <code class="special">{tabnr}</code>]])   字符串  当前工作目录
 getenv(<code class="special">{name}</code>)                  字符串  返回环境变量
 getfontname([<code class="special">{name}</code>])           字符串  使用的字体名
@@ -2402,7 +2439,10 @@ matcharg(<code class="special">{nr}</code>)                  列表     <a href=
 matchdelete(<code class="special">{id}</code> [, <code class="special">{win}</code>])     数值    删除 <code class="special">{id}</code> 指定的匹配
 matchend(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
                                 数值    <code class="special">{expr}</code> 里 <code class="special">{pat}</code> 的结束位置
-matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code>)       列表    在 <code class="special">{list}</code> 中模糊匹配 <code class="special">{str}</code>
+matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])
+                                列表    在 <code class="special">{list}</code> 中模糊匹配 <code class="special">{str}</code>
+matchfuzzypos(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])
+                                列表    在 <code class="special">{list}</code> 中模糊匹配 <code class="special">{str}</code>
 matchlist(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
                                 列表    <code class="special">{expr}</code> 里 <code class="special">{pat}</code> 的匹配和子匹配
 matchstr(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])
@@ -2420,7 +2460,7 @@ mzeval(<code class="special">{expr}</code>)                  可变    计算  <
 nextnonblank(<code class="special">{lnum}</code>)            数值    第一个 &gt;= <code class="special">{lnum}</code> 的非空白行的行号
 nr2char(<code class="special">{expr}</code> [, <code class="special">{utf8}</code>])      字符串  ASCII/UTF8 值为 <code class="special">{expr}</code> 的单个字符
 or(<code class="special">{expr}</code>, <code class="special">{expr}</code>)              数值    按位或
-pathshorten(<code class="special">{expr}</code>)             字符串  缩短路径里的目录名
+pathshorten(<code class="special">{expr}</code> [, <code class="special">{len}</code>])   字符串  缩短路径里的目录名
 perleval(<code class="special">{expr}</code>)                可变    计算  <a href="if_perl.html#Perl">Perl</a>  表达式
 popup_atcursor(<code class="special">{what}</code>, <code class="special">{options}</code>) 数值  在光标附近创建弹出窗口
 popup_beval(<code class="special">{what}</code>, <code class="special">{options}</code>)  数值    为 <a href="options.html#'ballooneval'">'ballooneval'</a> 创建弹出窗口
@@ -3165,8 +3205,7 @@ byteidxcomp(<code class="special">{expr}</code>, <code class="special">{nr}</cod
 <code class="example">                        echo byteidxcomp(s, 2)</code>
                 第一个和第三个 echo 返回 3 ('e' 加上组合字符是 3 个字节)，第二
                 个 echo 返回 1 ('e' 是一个字节)。
-                只有当 <a href="options.html#'encoding'">'encoding'</a> 设为某种 Unicode 编码时，才会和 byteidx() 有
-                所不同。
+                仅当 <a href="options.html#'encoding'">'encoding'</a> 为某 Unicode 编码时，才和 byteidx() 有所不同。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetName()-&gt;byteidxcomp(idx)</code>
@@ -4716,11 +4755,16 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
 <code class="example">                        GetPattern()-&gt;getcompletion('color')</code>
 
                                                         <b class="vimtag"> <a name="getcurpos()">getcurpos()</a> </b>
-getcurpos()     返回光标位置。类似于 getpos('.')，但返回列表中包含一个额外的
+getcurpos([<code class="special">{winid}</code>])
+                返回光标位置。类似于 getpos('.')，但返回列表中包含一个额外的
                 "curswant" 项目:
 <code class="section">                    [0, lnum, col, off, curswant] </code>
                 "curswant" 数值是垂直移动光标时的首选列。另见  <a href="eval.html#getpos()">getpos()</a> 。
                 首个 "bufnum" 项目总是为零。
+
+                可选的 <code class="special">{winid}</code> 参数可指定窗口。可以是窗口号或  <a href="windows.html#window-ID">window-ID</a> 。返
+                回最近已知的光标位置，如果缓冲区的当前值不是当前窗口，可能会非
+                法。如果 <code class="special">{winid}</code> 非法，返回零组成的列表。
 
                 可用于保存和恢复光标位置: 
 <code class="example">                        let save_cursor = getcurpos()</code>
@@ -4899,7 +4943,8 @@ getloclist(<code class="special">{nr}</code> [, <code class="special">{what}</co
                                         可用。详见
                                          <a href="quickfix.html#location-list-file-window">location-list-file-window</a> 。
 
-                如果窗口 <code class="special">{nr}</code> 没有位置列表，或者该窗口不存在，返回空字典。
+                如果窗口 <code class="special">{nr}</code> 没有位置列表，返回带缺省值的列表。
+                如果窗口 <code class="special">{nr}</code> 不存在，返回空字典。
 
                 示例 (另见  <a href="quickfix.html#getqflist-examples">getqflist-examples</a> ): 
 <code class="example">                        :echo getloclist(3, {'all': 0})</code>
@@ -6463,10 +6508,19 @@ matchend(<code class="special">{expr}</code>, <code class="special">{pat}</code>
 <code class="example">                        GetText()-&gt;matchend('word')</code>
 <code class="example"></code>
 <code class="example"></code>
-matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code>)                       <b class="vimtag"> <a name="matchfuzzy()">matchfuzzy()</a> </b>
-                返回列表，包含 <code class="special">{list}</code> 中的所有模糊匹配 <code class="special">{str}</code> 的字符串。返回列
-                表中的字符串依匹配分数排序。<code class="special">{str}</code> 视作字符串常数， <code class="emphasis">不</code> 支持正规
-                表达式匹配。<code class="special">{str}</code> 支持的最大长度为 256。
+matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])                    <b class="vimtag"> <a name="matchfuzzy()">matchfuzzy()</a> </b>
+                如果 <code class="special">{list}</code> 为字符串列表，返回列表，包含 <code class="special">{list}</code> 中的所有模糊匹
+                配 <code class="special">{str}</code> 的字符串。返回列表中的字符串依匹配分数排序。
+
+                如果 <code class="special">{list}</code> 为字典列表，则可选 的 <code class="special">{dict}</code> 参数支持以下项目:
+                    key         用于模糊匹配 <code class="special">{str}</code> 项目的键。该项目值必须为字
+                                符串。
+                    text_cb     对 <code class="special">{list}</code> 中每个项目都会调用的  <a href="eval.html#Funcref">Funcref</a> ，用于
+                                获取模糊匹配的文本。此函数应接受字典项目作为参
+                                数，并返回该项目用于模糊匹配的文本。
+
+                <code class="special">{str}</code> 视作字符串常数， <code class="emphasis">不</code> 支持正规表达式匹配。<code class="special">{str}</code> 支持的最大
+                长度为 256。
 
                 如果没有匹配的字符串或有错误，返回空列表。如果 <code class="special">{str}</code> 的长度大
                 于 256，也返回空列表。
@@ -6476,11 +6530,31 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
                 返回 ["clay"]. 
 <code class="example">                   :echo getbufinfo()-&gt;map({_, v -&gt; v.name})-&gt;matchfuzzy("ndl")</code>
                 返回模糊匹配 "ndl" 的缓冲区名的列表。 
+<code class="example">                   :echo getbufinfo()-&gt;matchfuzzy("ndl", {'key' : 'name'})</code>
+                返回模糊匹配 "ndl" 的缓冲区信息字典的列表。 
+<code class="example">                   :echo getbufinfo()-&gt;matchfuzzy("spl",</code>
+<code class="example">                                                \ {'text_cb' : {v -&gt; v.name}})</code>
+                返回模糊匹配 "spl" 的缓冲区信息字典的列表。 
 <code class="example">                   :echo v:oldfiles-&gt;matchfuzzy("test")</code>
                 返回模糊匹配 "test" 的文件名的列表。 
 <code class="example">                   :let l = readfile("buffer.c")-&gt;matchfuzzy("str")</code>
                 返回 "buffer.c" 文件中模糊匹配 "str" 的行的列表。
 
+matchfuzzypos(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])                 <b class="vimtag"> <a name="matchfuzzypos()">matchfuzzypos()</a> </b>
+                和  <a href="eval.html#matchfuzzy()">matchfuzzy()</a>  相同，但返回列表，包含匹配字符串以及匹配
+                <code class="special">{str}</code> 中的字符的每个字符位置组成的列表。
+
+                如果 <code class="special">{str}</code> 在字符串中有多个匹配，只返回最佳匹配的位置。
+
+                如果没有匹配的字符串或有错，返回包含两个空列表项目的列表。
+
+                示例: 
+<code class="example">                        :echo matchfuzzypos(['testing'], 'tsg')</code>
+                返回 [[<code class="badlink">'testing'</code>], [[0, 2, 6]]] 
+<code class="example">                        :echo matchfuzzypos(['clay', 'lacy'], 'la')</code>
+                返回 [[<code class="badlink">'lacy'</code>, <code class="badlink">'clay'</code>], [[0, 1], [1, 2]]] 
+<code class="example">                        :echo [{'text': 'hello', 'id' : 10}]-&gt;matchfuzzypos('ll', {'key' : 'text'})</code>
+                返回 [{<code class="badlink">'id'</code>: 10, <code class="badlink">'text'</code>: <code class="badlink">'hello'</code>}] [[2, 3]]
 
 matchlist(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])                <b class="vimtag"> <a name="matchlist()">matchlist()</a> </b>
                 和  <a href="eval.html#match()">match()</a>  相同，但返回  <a href="eval.html#List">List</a> 。列表第一项是匹配的字符串，和
@@ -6735,12 +6809,16 @@ or(<code class="special">{expr}</code>, <code class="special">{expr}</code>)    
 <code class="example">                        :let bits = bits-&gt;or(0x80)</code>
 <code class="example"></code>
 <code class="example"></code>
-pathshorten(<code class="special">{expr}</code>)                                     <b class="vimtag"> <a name="pathshorten()">pathshorten()</a> </b>
-                缩短路径 <code class="special">{expr}</code> 里的目录名，返回其结果。路径的尾部，即文件名，
-                保持不变。路径的其余部分被缩短为单个字符。保持每个部分引导的
-                '~' 和 '.' 字符不变。例如: 
+pathshorten(<code class="special">{expr}</code> [, <code class="special">{len}</code>])                           <b class="vimtag"> <a name="pathshorten()">pathshorten()</a> </b>
+                缩短路径 <code class="special">{expr}</code> 里的目录名，返回其结果。路径的尾部亦即文件名，
+                保持不变。路径的其余部分被缩短为 <code class="special">{len}</code> 个字符。如果 <code class="special">{len}</code> 省略
+                或小于 1，则假定为 1 (单个字母)。保持每个部分引导的 '~' 和 '.'
+                字符不变。例如: 
 <code class="example">                        :echo pathshorten('~/.vim/autoload/myfile.vim')</code>
 <code class="section">                        ~/.v/a/myfile.vim </code>
+
+<code class="example">                        :echo pathshorten('~/.vim/autoload/myfile.vim', 2)</code>
+<code class="section">                        ~/.vi/au/myfile.vim </code>
                 该路径实际存在与否并不相干。
 
                 也可用作  <a href="eval.html#method">method</a> : 
@@ -9043,7 +9121,9 @@ synIDattr(<code class="special">{synID}</code>, <code class="special">{what}</co
                                 号，以字符串形式出现，term: 空字符串)
                 "bg"            背景色 (细节同 "fg")
                 "font"          字体名 (只适用于 GUI)  <a href="syntax.html#highlight-font">highlight-font</a> 
-                "sp"            特殊颜色 (细节同 "fg")  <a href="syntax.html#highlight-guisp">highlight-guisp</a> 
+                "sp"            用于 GUI 的特殊颜色 (细节同 "fg")
+                                 <a href="syntax.html#highlight-guisp">highlight-guisp</a> 
+                "ul"            用于 cterm 的下划线颜色: 字符串形式出现的数值
                 "fg#"           类似于 "fg"，但只适用于 GUI，而且 GUI 使用的名
                                 字形如 "#RRGGBB"。
                 "bg#"           "bg"，细节同 "fg#"

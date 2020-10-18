@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年9月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -256,6 +256,15 @@
 对于缩写， <a href="eval.html#v:char">v:char</a>  设为激活缩写的那个输入字符。你可以用它来决定如何扩展
 <code class="special">{lhs}</code>。不能修改或插入 v:char。
 
+如果你想映射不做任何事，可使表达式计算返回空串。如果有任何改变需要 Vim 走通主
+循环 (例如刷新显示)，可返回 "\<code class="special">&lt;Ignore&gt;</code>"。这和 "nothing" 类似，但会使 Vim 从等
+待输入的循环中返回。例如: 
+<code class="example">        func s:OpenPopup()</code>
+<code class="example">          call popup_create(... arguments ...)</code>
+<code class="example">          return "\&lt;Ignore&gt;"</code>
+<code class="example">        endfunc</code>
+<code class="example">        nnoremap &lt;expr&gt; &lt;F3&gt; &lt;Sid&gt;OpenPopup()</code>
+<code class="example"></code>
 要非常小心副作用！计算表达式的同时正在获取字符，因此很有可能你使得该命令不再可
 用。为此原因禁止以下行为:
 - 改变缓冲区文本  <a href="eval.html#textlock">textlock</a> 
@@ -754,7 +763,13 @@ xterm 在内建的 termcap 项目中打开了 modifyOtherKeys。如果没有用�
 modifyOtherKeys 打开时可以映射 &lt;C-[&gt; 和 &lt;C-S-{&gt;: 
 <code class="example">        imap &lt;C-[&gt; [[[</code>
 <code class="example">        imap &lt;C-S-{&gt; {{{</code>
-如果没有 modifyOtherKeys，&lt;C-[&gt; 和 &lt;C-S-{&gt; 与 Esc 无法区分。
+如果没有 modifyOtherKeys，&lt;C-[&gt; 和 &lt;C-{&gt; 与 Esc 无法区分。<code class="note">注意</code>这里用 &lt;C-{&gt; 而
+不是 &lt;C-S-[&gt; 或 &lt;C-S-{&gt;。这适用于绝大多数键盘。类似的，使用 &lt;C-}&gt; 而不是
+&lt;C-S-]&gt; 或 &lt;C-S-}&gt;，使用 &lt;C-|&gt; 而不是 &lt;C-S-\&gt; 或 &lt;C-S-|&gt;。<code class="note">注意</code> '|' 在映射中有
+特殊含义，见  <a href="map.html#map-bar">map-bar</a> 。
+
+<code class="note">警告</code>: 如果映射了 &lt;C-[&gt;，有很大可能会破坏任何 Esc 开始的键码。要确保该映射出现
+在其它映射 <code class="emphasis">之后</code> 。
 
 已知的一个副作用是在插入模式中在 <code class="keystroke">CTRL-V</code> 键后插入的是原始转义序列。这可用来检查
 是否打开了 modifyOtherKeys。插入模式下按 <code class="keystroke">CTRL-SHIFT</code>-V <code class="keystroke">CTRL-V</code>，如果得到一个字节
