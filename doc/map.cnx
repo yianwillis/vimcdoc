@@ -1,4 +1,4 @@
-*map.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年9月
+*map.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年10月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -221,6 +221,15 @@
 
 对于缩写，|v:char| 设为激活缩写的那个输入字符。你可以用它来决定如何扩展
 {lhs}。不能修改或插入 v:char。
+
+如果你想映射不做任何事，可使表达式计算返回空串。如果有任何改变需要 Vim 走通主
+循环 (例如刷新显示)，可返回 "\<Ignore>"。这和 "nothing" 类似，但会使 Vim 从等
+待输入的循环中返回。例如: >
+	func s:OpenPopup()
+	  call popup_create(... arguments ...)
+	  return "\<Ignore>"
+	endfunc
+	nnoremap <expr> <F3> <Sid>OpenPopup()
 
 要非常小心副作用！计算表达式的同时正在获取字符，因此很有可能你使得该命令不再可
 用。为此原因禁止以下行为:
@@ -720,7 +729,13 @@ xterm 在内建的 termcap 项目中打开了 modifyOtherKeys。如果没有用�
 modifyOtherKeys 打开时可以映射 <C-[> 和 <C-S-{>: >
 	imap <C-[> [[[
 	imap <C-S-{> {{{
-如果没有 modifyOtherKeys，<C-[> 和 <C-S-{> 与 Esc 无法区分。
+如果没有 modifyOtherKeys，<C-[> 和 <C-{> 与 Esc 无法区分。注意这里用 <C-{> 而
+不是 <C-S-[> 或 <C-S-{>。这适用于绝大多数键盘。类似的，使用 <C-}> 而不是
+<C-S-]> 或 <C-S-}>，使用 <C-|> 而不是 <C-S-\> 或 <C-S-|>。注意 '|' 在映射中有
+特殊含义，见 |map-bar|。
+
+警告: 如果映射了 <C-[>，有很大可能会破坏任何 Esc 开始的键码。要确保该映射出现
+在其它映射_之后_。
 
 已知的一个副作用是在插入模式中在 CTRL-V 键后插入的是原始转义序列。这可用来检查
 是否打开了 modifyOtherKeys。插入模式下按 CTRL-SHIFT-V CTRL-V，如果得到一个字节
