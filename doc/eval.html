@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年10月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年11月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -2505,7 +2505,7 @@ prop_type_change(<code class="special">{name}</code>, <code class="special">{pro
                                 无      改变已有的文本属性类型
 prop_type_delete(<code class="special">{name}</code> [, <code class="special">{props}</code>])
                                 无      删除文本属性类型
-prop_type_get([<code class="special">{name}</code> [, <code class="special">{props}</code>]])
+prop_type_get(<code class="special">{name}</code> [, <code class="special">{props}</code>])
                                 字典    获取文本属性类型的值
 prop_type_list([<code class="special">{props}</code>])       列表    获取文本属性类型的列表
 pum_getpos()                    字典    如果可见，pum 的位置和大小
@@ -6512,7 +6512,11 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
                 如果 <code class="special">{list}</code> 为字符串列表，返回列表，包含 <code class="special">{list}</code> 中的所有模糊匹
                 配 <code class="special">{str}</code> 的字符串。返回列表中的字符串依匹配分数排序。
 
-                如果 <code class="special">{list}</code> 为字典列表，则可选 的 <code class="special">{dict}</code> 参数支持以下项目:
+                可选的 <code class="special">{dict}</code> 参数总是支持以下项目:
+                    matchseq    如果此项目存在且 <code class="special">{str}</code> 包含空白分隔的多个单词，
+                                只返回单词以该序列出现的匹配。
+
+                如果 <code class="special">{list}</code> 为字典列表，则可选的 <code class="special">{dict}</code> 参数还支持以下项目:
                     key         用于模糊匹配 <code class="special">{str}</code> 项目的键。该项目值必须为字
                                 符串。
                     text_cb     对 <code class="special">{list}</code> 中每个项目都会调用的  <a href="eval.html#Funcref">Funcref</a> ，用于
@@ -6521,6 +6525,9 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
 
                 <code class="special">{str}</code> 视作字符串常数， <code class="emphasis">不</code> 支持正规表达式匹配。<code class="special">{str}</code> 支持的最大
                 长度为 256。
+
+                如果 <code class="special">{str}</code> 包含空白分隔的多个单词，返回包含所有这些单词的字符
+                串的列表。
 
                 如果没有匹配的字符串或有错误，返回空列表。如果 <code class="special">{str}</code> 的长度大
                 于 256，也返回空列表。
@@ -6538,7 +6545,12 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
 <code class="example">                   :echo v:oldfiles-&gt;matchfuzzy("test")</code>
                 返回模糊匹配 "test" 的文件名的列表。 
 <code class="example">                   :let l = readfile("buffer.c")-&gt;matchfuzzy("str")</code>
-                返回 "buffer.c" 文件中模糊匹配 "str" 的行的列表。
+                返回 "buffer.c" 文件中模糊匹配 "str" 的行的列表。 
+<code class="example">                   :echo ['one two', 'two one']-&gt;matchfuzzy('two one')</code>
+                返回 ['two one', 'one two']。 
+<code class="example">                   :echo ['one two', 'two one']-&gt;matchfuzzy('two one',</code>
+<code class="example">                                                \ {'matchseq': 1})</code>
+                返回 ['two one']。
 
 matchfuzzypos(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])                 <b class="vimtag"> <a name="matchfuzzypos()">matchfuzzypos()</a> </b>
                 和  <a href="eval.html#matchfuzzy()">matchfuzzy()</a>  相同，但返回列表，包含匹配字符串以及匹配
@@ -7022,7 +7034,7 @@ printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code> 
 
 
 prompt_getprompt(<code class="special">{buf}</code>)                                 <b class="vimtag"> <a name="prompt_getprompt()">prompt_getprompt()</a> </b>
-                返回缓冲区 <code class="special">{buf}</code> 的实际提示文本。<code class="special">{buf}</code> 可以缓冲区名或号。
+                返回缓冲区 <code class="special">{buf}</code> 的实际提示文本。<code class="special">{buf}</code> 可以是缓冲区名或号。
                  <a href="channel.html#prompt-buffer">prompt-buffer</a> 。
 
                 如果缓冲区不存在或不是提示缓冲区，返回空串。
@@ -8507,6 +8519,12 @@ sort(<code class="special">{list}</code> [, <code class="special">{func}</code> 
 
                 如果给出 <code class="special">{func}</code> 且为 '1' 或 'i'，忽略大小写。
 
+                如果给出 <code class="special">{func}</code> 且为 'l'，排序使用当前 locale。关于如何查看或
+                设置排序使用的 locale，参见 `language collate`。例如，
+                "en_US.UTF8" 中 Ö 会排在 O 之后，P 之前，而瑞典 locale
+                "sv_SE.UTF8" 中它会在 Z 之后。
+                locale 通常忽略大小写。
+
                 如果给出 <code class="special">{func}</code> 且为 'n'，按数值顺序排序 (实现细节: 用
                 strtod() 函数来解析数值，字符串、列表、字典和函数引用均视作
                 0)。
@@ -9956,7 +9974,7 @@ winsaveview()   返回  <a href="eval.html#Dictionary">Dictionary</a> ，包含�
                         curswant        垂直移动使用的列
                         topline         窗口的第一行
                         topfill         填充行，只用于比较模式
-                        leftcol         显示的第一列
+                        leftcol         显示的第一列；只用于 <a href="options.html#'wrap'">'wrap'</a> 关闭时
                         skipcol         跳过的列数
                 <code class="note">注意</code> 这里不保存任何选项值。
 
@@ -10632,7 +10650,8 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 <code class="example">        :call foo#bar#func()</code>
 
 <code class="note">注意</code> 如果你不小心调用了应该在 autoload 脚本里定义，但该脚本实际没有定义的函数
-时，每次试图对该函数的调用都会重新载入一次脚本。从而每次都会得到错误信息。
+时，会得到函数消失的错误信息。修正 autoload 脚本后它不会自动重新载入。需要重启
+Vim 或手动载入该脚本。
 
 还有，<code class="note">注意</code> 如果你有两个脚本文件，不能在使用的函数定义之前同时从一个文件里调用
 另一个文件里的函数并且从那个文件里调用这个文件的函数。
