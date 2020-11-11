@@ -3426,7 +3426,8 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 <		'&' 之后的字符提供该选择的快捷键。这样，你可以输入 'c' 来选择
 		"Cancel"。快捷键不一定是第一个字符: >
 			confirm("file has been modified", "&Save\nSave &All")
-<		控制台里，每个选择的第一个字符用作缺省的快捷键。
+<		控制台里，每个选择的第一个字符用作缺省的快捷键。忽略大小写。
+
 		可选的 {default} 参数是用户按 <CR> 使用的选择号。设定 1 使得第
 		一个选项成为缺省，如果是 0，则不设定任何缺省。如果不提供
 		{default}，假设为 1。
@@ -3973,9 +3974,9 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		{expr1} 和 {expr2} 必须都是 |List| 或者都是 |Dictionary|。
 
 		如果都是 |List|: 把 {expr2} 附加到 {expr1} 之后。
-		如果给出 {expr3}，把 {expr2} 里的项目加到 {expr1} 的第 {expr3}
-		个项目之前。如果 {expr3} 为零，插在第一个项目之前。如果
-		{expr3} 等于 len({expr1})，那么 {expr2} 会附加在最后。
+		如果给出 {expr3}，把 {expr2} 里的项目加到 {expr1} 中索引为
+		{expr3} 的项目之前。如果 {expr3} 为零，插在第一个项目之前。如
+		果 {expr3} 等于 len({expr1})，那么 {expr2} 会附加在最后。
 		例如: >
 			:echo sort(extend(mylist, [7, 5]))
 			:call extend(mylist, [2, 3], 1)
@@ -7304,12 +7305,14 @@ reg_recording()						*reg_recording()*
 		串。见 |q|。
 
 reltime([{start} [, {end}]])				*reltime()*
-		返回代表时间值的项目。项目的格式取决于不同的系统。可以把它传递
-		给 |reltimestr()| 来转换为字符串，或 |reltimefloat()| 来转换为
-		浮点数。
-		没有参数，返回当前时间。
-		带一个参数，返回参数指定的时间以来的时间。
-		带两个参数，返回 {start} 和 {end} 之间跨越的时间。
+		返回代表时间值的项目。此项目为项目列表，成员项目取决于不同的系
+		统。Vim 9 脚本中其类型可用 list<any>。
+		可以把此项目传递给 |reltimestr()| 以转换为字符串，或
+		|reltimefloat()| 以转换为浮点数。
+
+		没有参数时，返回当前时间。
+		带一个参数时，返回参数指定的时间以来的时间。
+		带两个参数时，返回 {start} 和 {end} 之间跨越的时间。
 		{start} 和 {end} 参数必须是 reltime() 返回的值。
 
 		也可用作 |method|: >
@@ -8488,11 +8491,20 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 
 		如果给出 {func} 且为 '1' 或 'i'，忽略大小写。
 
-		如果给出 {func} 且为 'l'，排序使用当前 locale。关于如何查看或
-		设置排序使用的 locale，参见 `language collate`。例如，
-		"en_US.UTF8" 中 Ö 会排在 O 之后，P 之前，而瑞典 locale
-		"sv_SE.UTF8" 中它会在 Z 之后。
-		locale 通常忽略大小写。
+		如果给出 {func} 且为 'l'，排序使用当前排序规则 locale。实现细
+		节：用 strcoll() 来进行字符串比较。关于如何查看或设置排序规则
+		locale，参见 |:language|。|v:collate| 也可用于检查当前 locale。
+		按 locale 的排序通常忽略大小写。示例: >
+			" ö 的排位顺序类似于英语 locale 的 o。
+			:language collate en_US.UTF8
+			:echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
+<			['n', 'o', 'O', 'ö', 'p', 'z'] ~
+>
+			" ö 在瑞典 locale 里排在 z 之后。
+			:language collate sv_SE.UTF8
+			:echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
+<			['n', 'o', 'O', 'p', 'z', 'ö'] ~
+		Mac 上此功能不能正常工作。
 
 		如果给出 {func} 且为 'n'，按数值顺序排序 (实现细节: 用
 		strtod() 函数来解析数值，字符串、列表、字典和函数引用均视作
