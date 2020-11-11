@@ -3457,7 +3457,8 @@ confirm(<code class="special">{msg}</code> [, <code class="special">{choices}</c
                 '&amp;' 之后的字符提供该选择的快捷键。这样，你可以输入 'c' 来选择
                 "Cancel"。快捷键不一定是第一个字符: 
 <code class="example">                        confirm("file has been modified", "&amp;Save\nSave &amp;All")</code>
-                控制台里，每个选择的第一个字符用作缺省的快捷键。
+                控制台里，每个选择的第一个字符用作缺省的快捷键。忽略大小写。
+
                 可选的 <code class="special">{default}</code> 参数是用户按 <code class="special">&lt;CR&gt;</code> 使用的选择号。设定 1 使得第
                 一个选项成为缺省，如果是 0，则不设定任何缺省。如果不提供
                 <code class="special">{default}</code>，假设为 1。
@@ -4004,9 +4005,9 @@ extend(<code class="special">{expr1}</code>, <code class="special">{expr2}</code
                 <code class="special">{expr1}</code> 和 <code class="special">{expr2}</code> 必须都是  <a href="eval.html#List">List</a>  或者都是  <a href="eval.html#Dictionary">Dictionary</a> 。
 
                 如果都是  <a href="eval.html#List">List</a> : 把 <code class="special">{expr2}</code> 附加到 <code class="special">{expr1}</code> 之后。
-                如果给出 <code class="special">{expr3}</code>，把 <code class="special">{expr2}</code> 里的项目加到 <code class="special">{expr1}</code> 的第 <code class="special">{expr3}</code>
-                个项目之前。如果 <code class="special">{expr3}</code> 为零，插在第一个项目之前。如果
-                <code class="special">{expr3}</code> 等于 len(<code class="special">{expr1}</code>)，那么 <code class="special">{expr2}</code> 会附加在最后。
+                如果给出 <code class="special">{expr3}</code>，把 <code class="special">{expr2}</code> 里的项目加到 <code class="special">{expr1}</code> 中索引为
+                <code class="special">{expr3}</code> 的项目之前。如果 <code class="special">{expr3}</code> 为零，插在第一个项目之前。如
+                果 <code class="special">{expr3}</code> 等于 len(<code class="special">{expr1}</code>)，那么 <code class="special">{expr2}</code> 会附加在最后。
                 例如: 
 <code class="example">                        :echo sort(extend(mylist, [7, 5]))</code>
 <code class="example">                        :call extend(mylist, [2, 3], 1)</code>
@@ -7335,12 +7336,14 @@ reg_recording()                                         <b class="vimtag"> <a na
                 串。见  <a href="repeat.html#q">q</a> 。
 
 reltime([<code class="special">{start}</code> [, <code class="special">{end}</code>]])                            <b class="vimtag"> <a name="reltime()">reltime()</a> </b>
-                返回代表时间值的项目。项目的格式取决于不同的系统。可以把它传递
-                给  <a href="eval.html#reltimestr()">reltimestr()</a>  来转换为字符串，或  <a href="eval.html#reltimefloat()">reltimefloat()</a>  来转换为
-                浮点数。
-                没有参数，返回当前时间。
-                带一个参数，返回参数指定的时间以来的时间。
-                带两个参数，返回 <code class="special">{start}</code> 和 <code class="special">{end}</code> 之间跨越的时间。
+                返回代表时间值的项目。此项目为项目列表，成员项目取决于不同的系
+                统。Vim 9 脚本中其类型可用 list<code class="special">&lt;any&gt;</code>。
+                可以把此项目传递给  <a href="eval.html#reltimestr()">reltimestr()</a>  以转换为字符串，或
+                 <a href="eval.html#reltimefloat()">reltimefloat()</a>  以转换为浮点数。
+
+                没有参数时，返回当前时间。
+                带一个参数时，返回参数指定的时间以来的时间。
+                带两个参数时，返回 <code class="special">{start}</code> 和 <code class="special">{end}</code> 之间跨越的时间。
                 <code class="special">{start}</code> 和 <code class="special">{end}</code> 参数必须是 reltime() 返回的值。
 
                 也可用作  <a href="eval.html#method">method</a> : 
@@ -8519,11 +8522,20 @@ sort(<code class="special">{list}</code> [, <code class="special">{func}</code> 
 
                 如果给出 <code class="special">{func}</code> 且为 '1' 或 'i'，忽略大小写。
 
-                如果给出 <code class="special">{func}</code> 且为 'l'，排序使用当前 locale。关于如何查看或
-                设置排序使用的 locale，参见 `language collate`。例如，
-                "en_US.UTF8" 中 Ö 会排在 O 之后，P 之前，而瑞典 locale
-                "sv_SE.UTF8" 中它会在 Z 之后。
-                locale 通常忽略大小写。
+                如果给出 <code class="special">{func}</code> 且为 'l'，排序使用当前排序规则 locale。实现细
+                节：用 strcoll() 来进行字符串比较。关于如何查看或设置排序规则
+                locale，参见  <a href="mlang.html#:language">:language</a> 。 <a href="eval.html#v:collate">v:collate</a>  也可用于检查当前 locale。
+                按 locale 的排序通常忽略大小写。示例: 
+<code class="example">                        " ö 的排位顺序类似于英语 locale 的 o。</code>
+<code class="example">                        :language collate en_US.UTF8</code>
+<code class="example">                        :echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')</code>
+<code class="section">                        ['n', 'o', 'O', 'ö', 'p', 'z'] </code>
+
+<code class="example">                        " ö 在瑞典 locale 里排在 z 之后。</code>
+<code class="example">                        :language collate sv_SE.UTF8</code>
+<code class="example">                        :echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')</code>
+<code class="section">                        ['n', 'o', 'O', 'p', 'z', 'ö'] </code>
+                Mac 上此功能不能正常工作。
 
                 如果给出 <code class="special">{func}</code> 且为 'n'，按数值顺序排序 (实现细节: 用
                 strtod() 函数来解析数值，字符串、列表、字典和函数引用均视作
