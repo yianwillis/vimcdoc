@@ -1,4 +1,4 @@
-*autocmd.txt*   适用于 Vim 8.2 版本。	最近更新: 2020年11月
+*autocmd.txt*   适用于 Vim 8.2 版本。	最近更新: 2020年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -58,6 +58,10 @@
 
 特殊模式 <buffer> 或 <buffer=N> 定义局部于缓冲区的自动命令。见
 |autocmd-buflocal|。
+
+如果 `:autocmd` 出现在 Vim9 脚本中 (`:vim9script` 开始的脚本并在 `:def` 函数里
+定义)，那么 {cmd} 会在 Vim9 脚本环境下运行。此处取决于 autocmd 定义所在的位置
+而不是其触发的位置。
 
 注意: 要在 ":autocmd" 命令之后紧跟其他命令，'|' 必须在 {cmd} 之前。可以这样: >
 	:augroup mine | au! BufRead | augroup END
@@ -273,6 +277,9 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |VimLeavePre|		退出 Vim 前，在写入 viminfo 文件之前
 |VimLeave|		退出 Vim 前，在写入 viminfo 文件之后
 
+|VimSuspend|		暂停 Vim 时
+|VimResume|		Vim 在暂停后恢复运行时
+
 	终端
 |TerminalOpen|		建立终端缓冲区后
 |TerminalWinOpen|	在新窗口建立终端缓冲区后
@@ -470,12 +477,14 @@ CmdlineChanged			命令行文本发生改变后。小心不要改动命令行本
 				|cmdwin-char|
 							*CmdlineEnter*
 CmdlineEnter			光标移到命令行后，此时用户可输入命令或搜索字符
-				串。
+				串；这里包括映射中非交互式使用 ":" 的情形，但
+				不包括使用 |<Cmd>| 时。
 				<afile> 设为单个字符，指示命令行的类型。
 				|cmdwin-char|
 							*CmdlineLeave*
 CmdlineLeave			离开命令行前。也用于按 CTRL-C 或 <Esc> 之后放
-				弃命令行时。
+				弃命令行时；这里包括映射中非交互式使用 ":" 的
+				情形，但不包括使用 |<Cmd>| 时。
 				此处命令出错时，命令行本身依旧执行。
 				<afile> 设为单个字符，指示命令行的类型。
 				|cmdwin-char|
@@ -692,6 +701,7 @@ FocusLost			Vim 失去输入焦点时。只有 GUI 和少数几个控制台
 FuncUndefined			调用未定义的用户函数时。可以用来实现在实际调用
 				时才提供动态定义的函数。模式匹配的是函数的名
 				字。<amatch> 和 <afile> 都被设为该函数的名字。
+				|Vim9| 函数编译时不触发。
 				注意: 写 Vim 脚本时，最好采用自动调入函数。
 				见 |autoload-functions|。
 							*GUIEnter*
@@ -973,6 +983,7 @@ VimLeave			退出 Vim 前，刚写入 .viminfo 文件之后。和
 				VimLeavePre 一样，只执行一次。
 				要检测非正常的退出，使用 |v:dying|。
 				退出时如果 v:dying 至少为 2，不触发此事件。
+				要得到退出代码，可用 |v:exiting|。
 							*VimLeavePre*
 VimLeavePre			退出 Vim 时刚写入 .viminfo 文件之前。如果匹配
 				退出时当前缓冲区的名字匹配才会激活。只执行一
@@ -980,9 +991,19 @@ VimLeavePre			退出 Vim 时刚写入 .viminfo 文件之前。如果匹配
 	:autocmd VimLeavePre * call CleanupStuff()
 <				要检测非正常的退出，使用 |v:dying|。
 				退出时如果 v:dying 至少为 2，不触发此事件。
+				要得到退出代码，可用 |v:exiting|。
 							*VimResized*
 VimResized			在 Vim 窗口的大小改变后，因而 'lines' 和/或
 				'columns' 也已随之改变。不过，启动时不用。
+							*VimResume*
+VimResume			在 Vim 实例被暂停和 |VimSuspend| 触发后继续运
+				行时。用于触发 |:checktime| 以确保 Vim 暂停后
+				缓冲区内容不改变: >
+	:autocmd VimResume * checktime
+<							*VimSuspend*
+VimSuspend			在 Vim 实例被暂停时。仅当 Vim 内键入 CTRL-Z 时
+				触发，而不是在 SIGSTOP 或 SIGTSTP 信号被发送到
+				Vim 时。
 							*WinEnter*
 WinEnter			进入别的窗口后。不包括 Vim 启动时的第一个窗
 				口。

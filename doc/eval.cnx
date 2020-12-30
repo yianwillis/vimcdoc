@@ -1,4 +1,4 @@
-*eval.txt*      适用于 Vim 8.2 版本。	最近更新: 2020年11月
+*eval.txt*      适用于 Vim 8.2 版本。	最近更新: 2020年12月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -1656,6 +1656,13 @@ v:dying		通常为零。如果捕获到某个 "致命" 的 signal，设为 1。�
 <		备注: 如果 v:dying 为一而同时又捕捉到另一个致命的 signal，不执
 		行 VimLeave 自动命令。
 
+					*v:exiting* *exiting-variable*
+v:exiting	Vim 退出码。通常为零，非零代表出现某种错误。调用 |VimLeavePre|
+		和 |VimLeave| 自动命令前，此值为 v:null。见 |:q|、|:x| 和
+		|:cquit|。
+		示例: >
+			:au VimLeave * echo "Exit value is " .. v:exiting
+<
 					*v:echospace* *echospace-variable*
 v:echospace	在屏幕行末行上 `:echo` 消息不引发 |hit-enter-prompt| 最多可用
 		的屏幕单元格数目。取决于 'showcmd'、'ruler' 和 'columns'。需要
@@ -2196,6 +2203,8 @@ ch_status({handle} [, {options}])
 changenr()			数值	当前改变号
 char2nr({expr} [, {utf8}])	数值	{expr} 里第一个字符串的 ASCII/UTF8 值
 charclass({string})		数值	{string} 的字符类
+charidx({string}, {idx} [, {countcc}])
+				数值	{string} 中字节 {idx} 对应的字符索引
 chdir({dir})			数值	改变当前目录
 cindent({lnum})			数值	第 {lnum} 行的 C 缩进
 clearmatches([{win}])		无	清除所有的匹配
@@ -2383,7 +2392,7 @@ line2byte({lnum})		数值	行 {lnum} 的字节位置
 lispindent({lnum})		数值	行 {lnum} 的 Lisp 缩进
 list2str({list} [, {utf8}])	字符串	把 {list} 中的数值转成字符串
 listener_add({callback} [, {buf}])
-				数值	add a callback to listen to changes
+				数值	增加监听改动的回调
 listener_flush([{buf}])		无	激活监听器回调
 listener_remove({id})		无	删除监听器回调
 localtime()			数值	当前时间
@@ -2396,8 +2405,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])
 					模式 {mode} 的映射 {name} 的右手边
 mapcheck({name} [, {mode} [, {abbr}]])
 				字符串	检查匹配 {name} 的映射
-mapset({mode}, {abbr}, {dict})
-				无	从 |maparg()| 返回值恢复映射
+mapnew({expr1}, {expr2})	列表/字典  类似于 |map()| 但创建新列表或字典
+mapset({mode}, {abbr}, {dict})	无	从 |maparg()| 返回值恢复映射
 match({expr}, {pat} [, {start} [, {count}]])
 				数值	{expr} 里 {pat} 的匹配位置
 matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
@@ -3151,7 +3160,7 @@ byte2line({byte})					*byte2line()*
 byteidx({expr}, {nr})					*byteidx()*
 		返回字符串 {expr} 里第 {nr} 个字符的字节位置。零代表第一个字
 		符，此时返回零。
-		该函数只对多字节字符有用，不然返回值总是等于 {nr}。
+		如果没有多字节字符，返回值总是等于 {nr}。
 		组合字符不单独计数，其字节长度加到其前导的基础字符上。要将组合
 		字符分别计数，见下 |byteidxcomp()|。例如: >
 			echo matchstr(str, ".", byteidx(str, 3))
@@ -3244,6 +3253,26 @@ charclass({string})					*charclass()*
 			其它	特定 Unicode 类
 		此类用于模式匹配和单词动作。
 
+							*charidx()*
+charidx({string}, {idx} [, {countcc}])
+		返回 {string} 的 {idx} 个字节对应的字符索引。首个字符的索引为
+		零。
+		如果没有多字节字符，返回值自然等于 {idx}。
+		如果 {countcc} 省略或为零，组合字符不单独计算，它们的字节长度
+		被加入前导的基本字符。
+		如果 {countcc} 设为 1，组合字符算作单独的字符。
+		如果参数非法或 {idx} 大于 {string} 末字节的索引，返回 -1。如果
+		首个参数不是字符串、第二个参数不是数值或第三个参数存在且非零或
+		一，报错。
+		关于如何从字符索引来获取字节索引，可见 |byteidx()| 和
+		|byteidxcomp()|。
+		示例: >
+			echo charidx('áb́ć', 3)		返回 1
+			echo charidx('áb́ć', 6, 1)	返回 4
+			echo charidx('áb́ć', 16)		返回 -1
+<
+		也可用作 |method|: >
+			GetName()->charidx(idx)
 
 chdir({dir})						*chdir()*
 		切换当前工作目录为 {dir}。目录改变的作用域取决于当前窗口的目
@@ -4240,7 +4269,8 @@ fnamemodify({fname}, {mods})				*fnamemodify()*
 			:echo fnamemodify("main.c", ":p:h")
 <		返回: >
 			/home/mool/vim/vim/src
-<		注意: 环境变量不能用于 {fname}，需要先用 |expand()| 扩展。
+<		如果 {mods} 为空，返回 {fname}。
+		注意: 环境变量不能用于 {fname}，需要先用 |expand()| 扩展。
 
 		也可用作 |method|: >
 			GetName()->fnamemodify(':p:h')
@@ -4513,8 +4543,10 @@ getbufline({expr}, {lnum} [, {end}])
 getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 		返回缓冲区 {expr} 里的选项或者局部变量 {varname} 的值。注意 必
 		须使用不带 "b:" 的名字。
-		如果 {varname} 为空，返回包含所有缓冲区局部变量的字典。
-		如果 {varname} 为 "&"，返回包含所有缓冲区局部选项的字典。
+		如果 {varname} 为空，返回包含所有缓冲区局部变量的
+		|Dictionary|。
+		如果 {varname} 为 "&"，返回包含所有缓冲区局部选项的
+		|Dictionary|。
 		否则，如果 {varname} 以 "&" 开始，返回单个缓冲区局部选项值。
 		也可用于全局或者局部于缓冲区的选项，但不能用于全局或者局部于窗
 		口的变量，还有局部于窗口的选项。
@@ -4579,7 +4611,10 @@ getchar([expr])						*getchar()*
 		使用括号内粘贴模式时，只返回首个字符。粘贴文本其余部分被丢弃。
 		|xterm-bracketed-paste|。
 
-		这里没有提示，你需要想办法告诉用户，需要输入一个字符。
+		这里没有提示，你需要想办法告诉用户，需要输入一个字符。屏幕不重
+		画，例如在窗口改变大小时也是如此。使用弹出窗口时，最好使用
+		|popup-filter|。
+
 		字符不通过映射。
 		键码被替换。因而，用户输入 <Del> 键时，你得到 <Del> 的键码，而
 		不是原始的字符序列。比如: >
@@ -4913,7 +4948,7 @@ getloclist({nr} [, {what}])				*getloclist()*
 					可用。详见
 					|location-list-file-window|。
 
-		如果窗口 {nr} 没有位置列表，返回带缺省值的列表。
+		如果窗口 {nr} 没有位置列表，返回带缺省值的 |Dictionary|。
 		如果窗口 {nr} 不存在，返回空字典。
 
 		示例 (另见 |getqflist-examples|): >
@@ -5015,8 +5050,8 @@ getpos({expr})	得到 {expr} 的位置。可用的 {expr} 的值见 |line()|。�
 
 
 getqflist([{what}])					*getqflist()*
-		返回列表，包含所有当前快速修复错误。列表的每个项目是包含以下项
-		目的字典:
+		返回 |List|，包含所有当前快速修复错误。列表的每个项目是包含以
+		下项目的字典:
 			bufnr	有此文件名的缓冲区号，bufname() 得到缓冲区名
 			module	模块名
 			lnum	缓冲区里的行号 (第一行是 1)
@@ -6165,9 +6200,13 @@ luaeval({expr} [, {expr}])					*luaeval()*
 <		{仅当编译时加入 |+lua| 特性才有效}
 
 map({expr1}, {expr2})					*map()*
-		{expr1} 必须是 |List| 或 |Dictionary|。
-		{expr1} 里的每个项目被 {expr2} 的计算结果替代。{expr2} 必须是
-		|string| 或 |Funcref|。
+		{expr1} 必须是 |List| 、|Blob| 或 |Dictionary|。
+		{expr1} 里的每个项目被 {expr2} 的计算结果替代。|Blob| 的每个字
+		节被替代。
+		如果项目的类型发生变化，可以考虑用 |mapnew()| 来创建新的列表或
+		字典。Vim9 脚本里这是必须的。
+
+		{expr2} 必须是 |string| 或 |Funcref|。
 
 		如果 {expr2} 是 |string|，{expr2} 内的 |v:val| 包含当前项目的
 		值。|Dictionary| 中 |v:key| 包含当前项目的键。|List| 中
@@ -6199,9 +6238,9 @@ map({expr1}, {expr2})					*map()*
 		|Dictionary|，先建立备份: >
 			:let tlist = map(copy(mylist), ' v:val . "\t"')
 
-<		返回 {expr1}，经过过滤的 |List| 或 |Dictionary|。如果执行
-		{expr2} 有错，不再处理 {expr1} 的其余项目。{expr2} 是函数引用
-		时，忽略函数里的错误，除非该函数用 "abort" 标志位定义。
+<		返回 {expr1}，经过过滤的 |List|、|Blob| 或 |Dictionary|。如果
+		执行 {expr2} 有错，不再处理 {expr1} 的其余项目。{expr2} 是函数
+		引用时，忽略函数里的错误，除非该函数用 "abort" 标志位定义。
 
 		也可用作 |method|: >
 			mylist->map(expr2)
@@ -6291,7 +6330,13 @@ mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 			GetKey()->mapcheck('n')
 
 
-mapset({mode}, {abbr}, {dict})				*mapset()*
+mapnew({expr1}, {expr2})					*mapnew()*
+		类似于 |map()|，但生成并返回新的列表或字典而不是替换 {expr1}
+		里的项目。{expr1} 保持不变。项目仍然可由 {expr2} 改变，如果不
+		想如此，先用 |deepcopy()|。
+
+
+mapset({mode}, {abbr}, {dict})					*mapset()*
 		从 |maparg()| 返回的字典中恢复映射。
 		{mode} 和 {abbr} 应和 |maparg()| 调用时所用之值相同. *E460*
 		{mode} 用于定义映射设置所在的模式，而不是 {dict} 中的 "mode"
@@ -6479,8 +6524,8 @@ matchend({expr}, {pat} [, {start} [, {count}]])			*matchend()*
 
 
 matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
-		如果 {list} 为字符串列表，返回列表，包含 {list} 中的所有模糊匹
-		配 {str} 的字符串。返回列表中的字符串依匹配分数排序。
+		如果 {list} 为字符串列表，返回 |List|，包含 {list} 中的所有模
+		糊匹配 {str} 的字符串。返回列表中的字符串依匹配分数排序。
 
 		可选的 {dict} 参数总是支持以下项目:
 		    matchseq	如果此项目存在且 {str} 包含空白分隔的多个单词，
@@ -6524,7 +6569,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 
 matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 		和 |matchfuzzy()| 相同，但返回列表，包含匹配字符串以及匹配
-		{str} 中的字符的每个字符位置组成的列表。
+		{str} 中的字符的每个字符位置组成的列表。可用 |byteidx()| 把字
+		符位置转为字节位置。
+
 
 		如果 {str} 在字符串中有多个匹配，只返回最佳匹配的位置。
 
@@ -7594,7 +7641,7 @@ screencol()							*screencol()*
 		screencol()") 时会返回命令行内的列号，其在命令执行时永远为 1。
 		要得到文件中的光标位置，可用下面这些映射: >
 			nnoremap <expr> GG ":echom ".screencol()."\n"
-			nnoremap <silent> GG :echom screencol()<CR>
+			nnoremap GG <Cmd>echom screencol()<CR>
 <
 screenpos({winid}, {lnum}, {col})				*screenpos()*
 		返回字典，窗口 {winid} 在缓冲区行 {lnum} 和列 {col} 上的文本字
@@ -7654,9 +7701,12 @@ search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 
 		适用 'ignorecase'、'smartcase' 和 'magic' 标志位。
 
-		如果没给出 'z' 标志位，搜索总是从第零列开始，然后跳过光标之前
-		的匹配。如果 'cpo' 中有 'c' 标志位，下次搜索从匹配之后的位置开
-		始。没有 'c' 标志位则下次搜索从光标之后一列开始。
+		如果没给出 'z' 标志位，前向搜索总是从第零列开始，然后跳过光标
+		之前的匹配。如果 'cpo' 中有 'c' 标志位，下次搜索从匹配之后的位
+		置开始。没有 'c' 标志位则下次搜索从光标后一列开始。这对有重叠
+		的匹配会有关系。
+		反向搜索给出 'z' 标志位时，搜索从第零列开始，所以不会找到当前
+		行的任何匹配 (除非从文件尾回绕)。
 
 		如果给出 {stopline} 参数，搜索在搜索完该行后结束。可用于限制搜
 		索在给出的行范围内。例如: >
@@ -9305,7 +9355,7 @@ tagfiles()	返回 |List|，当前缓冲区用于搜索的标签文件名。这�
 
 
 taglist({expr} [, {filename}])				*taglist()*
-		返回匹配正规表达式 {expr} 的标签列表。
+		返回匹配正规表达式 {expr} 的标签 |List|。
 
 		如果传入 {filename}，用于像 |:tselect| 那样给结果排序。见
 		|tag-priority|。{filename} 必须是文件的完整路径。
@@ -9380,9 +9430,9 @@ term_ 函数文档在这里: |terminal-functions-details|
 
 
 terminalprops()						*terminalprops()*
-		返回 Vim 从 |t_RV| 请求得到的响应中检测到的终端属性的字典。响
-		应本身见 |v:termresponse|。如果 |v:termresponse| 为空，这里的
-		多数值会是 'u'，代表未知。
+		返回 Vim 从 |t_RV| 请求得到的响应中检测到的终端属性的
+		|Dictionary|。响应本身见 |v:termresponse|。如果
+		|v:termresponse| 为空，这里的多数值会是 'u'，代表未知。
 		   cursor_style		是否可发送 |t_RS| **
 		   cursor_blink_mode	是否可发送 |t_RC| **
 		   underline_rgb	|t_8u| 是否可用 **
@@ -9457,6 +9507,8 @@ timer_start({time}, {callback} [, {options}])
 
 		{callback} 是要调用的函数。可以是函数名或 |Funcref|。调用时接
 		受一个参数，即定时器号。只有在 Vim 等待输入时才会调用回调。
+		如果要显示信息，看看 |popup_notification()|，以避免信息显示干
+		扰用户的操作。
 
 		{options} 是字典。支持的项目:
 		   "repeat"	重复调用回调的次数。-1 代表永远。无定义时，调
@@ -9732,8 +9784,8 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 			GetCommand()->win_execute(winid)
 
 win_findbuf({bufnr})					*win_findbuf()*
-		返回包含缓冲区 {bufnr} 的窗口的所有 |window-ID| 的列表。如果
-		没有这样的窗口，返回空列表。
+		返回包含缓冲区 {bufnr} 的窗口的所有 |window-ID| 的 |List|。如
+		果没有这样的窗口，返回空列表。
 
 		也可用作 |method|: >
 			GetBufnr()->win_findbuf()
