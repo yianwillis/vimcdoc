@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2020年9月
+<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2020年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -145,12 +145,14 @@
 类似于终端模式映射，也可建立菜单，但只能用  <a href="gui.html#:tlmenu">:tlmenu</a>  而不是  <a href="gui.html#:tmenu">:tmenu</a> 。
 
                                                         <b class="vimtag"> <a name="options-in-terminal">options-in-terminal</a> </b>
-打开终端窗口并设置其 <a href="options.html#'buftype'">'buftype'</a> 为 "terminal" 后，激活 TerminalOpen 自动命令。
-这样便可以设置为其窗口和缓冲区特定的选项。例如: 
-<code class="example">   au TerminalOpen * if &amp;buftype == 'terminal' | setlocal bufhidden=hide | endif</code>
-这里的 <code class="special">&lt;abuf&gt;</code> 设为终端缓冲区，但如果没有窗口 (隐藏终端)，那么选项会在错误的缓
-冲区上设置，为此上例中还须检查 &amp;buftype。
-
+打开终端窗口并设置其 <a href="options.html#'buftype'">'buftype'</a> 为 "terminal" 后，激活  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a>  自动命
+令。这样便可以设置为其窗口和缓冲区特定的选项。例如: 
+<code class="example">   au TerminalWinOpen * setlocal bufhidden=hide</code>
+<code class="example"></code>
+也有  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  事件，但隐藏终端也触发此事件，此时当前窗口和缓冲区未必用于
+新终端。这里可能需要 <code class="special">&lt;abuf&gt;</code>，它被设为终端缓冲区。例如: 
+<code class="example">    au TerminalOpen * call setbufvar(+expand('&lt;abuf&gt;'), '&amp;colorcolumn', 123)</code>
+<code class="example"></code>
 鼠标事件 (点击和拖曳) 会传给终端。而鼠标移动事件只有 Vim 自身接收到时才会传
 递。对终端而言，这意味着 <a href="options.html#'balloonevalterm'">'balloonevalterm'</a> 打开。
 
@@ -446,6 +448,8 @@ term_dumpdiff(<code class="special">{filename}</code>, <code class="special">{fi
                         a       不同属性
                         +       第一个文件缺失的位置
                         -       第二个文件缺失的位置
+                        &gt;       在第一个文件而不在第二个文件的光标位置
+                        &lt;       在第二个文件而不在第一个文件的光标位置
 
                 "s" 键交换顶部和底部，以方便发现不同之处。
 
@@ -1240,12 +1244,14 @@ Vim 窗口宽度                                            <b class="vimtag"> <
 
 要改变调试开始时的 Vim 窗口宽度并用垂直分割: 
 <code class="example">  let g:termdebug_wide = 163</code>
-这会在使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时设置 &amp;columns 为 163。退出调试器后此值复原。
-如果设置了 g:termdebug_wide 而 &amp;columns 已经大于 g:termdebug_wide，则使用垂直
-分割且不改变 &amp;columns。
-把它设为 1 会保证垂直分割且不会改变 &amp;columns (用于 Vim 不能改变终端大小的场
-合)。
+<code class="example"></code>
+这会在使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时设置 <a href="options.html#'columns'">'columns'</a> 为 163。退出调试器后此值复原。
 
+如果设置了 g:termdebug_wide 而 <a href="options.html#'columns'">'columns'</a> 已设为一个更大的值，则使用垂直分割且
+不改变 <a href="options.html#'columns'">'columns'</a>。
+
+把 g:termdebug_wide 设为 1 会保证垂直分割且不会改变 <a href="options.html#'columns'">'columns'</a>。这可用于 Vim 不
+能改变终端大小的场合。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年10月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 8.2 版本。   最近更新: 2020年12月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -271,7 +271,8 @@
 - 编辑其它缓冲区
 -  <a href="various.html#:normal">:normal</a>  命令
 - 可以移动光标，但事后光标会被恢复
-如果你希望通过映射来完成这些操作，让返回的字符做这些事情。
+如果你希望通过映射来完成这些操作，让返回的字符做这些事情，或使用  <a href="map.html#%3CCmd%3E">&lt;Cmd&gt;</a>  映射
+来代替。
 
 你可以使用 getchar()，丢弃可能有的预输入。例如，如果有以下的映射: 
 <code class="example">  inoremap &lt;expr&gt; &lt;C-L&gt; nr2char(getchar())</code>
@@ -298,6 +299,39 @@ getchar() 得到键入的字符并返回之。
 <code class="keystroke">CTRL-L</code> 插入下一个数值，<code class="keystroke">CTRL-R</code> 复位计数且返回空字符串，这样就不会插入任何内容。
 
 <code class="note">注意</code> 在其它文本之前使用单个字节出现的 0x80 是不行的。它会被看作一个特殊键。
+
+                                                <b class="vimtag"> <a name="%3CCmd%3E">&lt;Cmd&gt;</a> </b> <b class="vimtag"> <a name=":map-cmd">:map-cmd</a> </b>
+特殊文本 <code class="special">&lt;Cmd&gt;</code> 开始一种 "命令映射"，它直接执行命令而不切换模式。以前你在映射的
+<code class="special">{rhs}</code> 可用 ": ...<code class="special">&lt;CR&gt;</code>" 的地方，现在可用 "<code class="special">&lt;Cmd&gt;</code>...<code class="special">&lt;CR&gt;</code>"。
+示例: 
+<code class="example">        noremap x &lt;Cmd&gt;echo mode(1)&lt;CR&gt;</code>
+
+这比可视和操作符等待模式下的  <code class="badlink">:<code class="special">&lt;C-U&gt;</code></code> ，或插入模式下的  <code class="badlink"><code class="special">&lt;C-O&gt;</code>:</code>  更灵活，因为命
+令在当前模式下直接执行，而不是总是进入普通模式。可视模式受到保护，因而不再需要
+ <a href="visual.html#gv">gv</a>  的技巧。在命令行模式下直接执行命令 (否则，需要计时器这类的诀窍)。
+例如要在插入方式半中间使用 <code class="special">&lt;Cmd&gt;</code>: 
+<code class="example">        nnoremap &lt;F3&gt; aText &lt;Cmd&gt;echo mode(1)&lt;CR&gt; Added&lt;Esc&gt;</code>
+<code class="example"></code>
+和 <code class="special">&lt;expr&gt;</code> 映射不同，<code class="special">&lt;Cmd&gt;</code> 命令上没有特殊限制: 执行方式如同调用 (无限制的)
+ <a href="autocmd.html#autocommand">autocommand</a> 。
+
+<code class="note">备注</code>:
+- 既然 <code class="special">&lt;Cmd&gt;</code> 避免了模式切换，就不触发  <a href="autocmd.html#CmdlineEnter">CmdlineEnter</a>  和  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a>  事件，
+  因为不期待用户互动。
+- 同样原因，像 <code class="special">&lt;C-R&gt;</code><code class="special">&lt;C-W&gt;</code> 这样的  <a href="intro.html#keycodes">keycodes</a>  被解释为平凡的不经映射的键。
+- 命令不回显，不需要 <code class="special">&lt;silent&gt;</code>。
+- 可视模式里，可用  <code class="badlink">line('v')</code>  和  <code class="badlink">col('v')</code>  来得到可视区域的一角，光标则在另
+  一角。
+- 选择模式里， <a href="map.html#:map">:map</a>  和  <a href="map.html#:vmap">:vmap</a>  命令映射在可视模式下执行。如果要使选择模式的处
+  理有所不同，用  <a href="map.html#:smap">:smap</a> 。
+
+                                                        <b class="vimtag"> <a name="E1135">E1135</a> </b> <b class="vimtag"> <a name="E1136">E1136</a> </b>
+<code class="special">&lt;Cmd&gt;</code> commands must terminate, that is, they must be followed by <code class="special">&lt;CR&gt;</code> in the
+<code class="special">{rhs}</code> of the mapping definition.   <a href="cmdline.html#Command-line">Command-line</a>  mode is never entered.
+
+                                                        <b class="vimtag"> <a name="E1137">E1137</a> </b>
+<code class="special">&lt;Cmd&gt;</code> commands can have only normal characters and cannot contain special
+characters like function keys.
 
 
 1.3 映 射 与 运 行 模 式                                <b class="vimtag"> <a name=":map-modes">:map-modes</a> </b>
@@ -1060,8 +1094,8 @@ non-id    匹配的前面是一个空格、制表或者行或插入的开始。
 除此以外，在脚本上下文之外使用 "<code class="special">&lt;SID&gt;</code>" 是错误的。
 
 如果你需要在一个复杂的脚本中取得脚本的数字编号，使用此函数: 
-<code class="example">        function s:SID()</code>
-<code class="example">          return matchstr(expand('&lt;sfile&gt;'), '&lt;SNR&gt;\zs\d\+\ze_SID$')</code>
+<code class="example">        function s:ScriptNumber()</code>
+<code class="example">          return matchstr(expand('&lt;SID&gt;'), '&lt;SNR&gt;\zs\d\+\ze_')</code>
 <code class="example">        endfun</code>
 <code class="example"></code>
 列出函数和映射时会显示 "<code class="special">&lt;SNR&gt;</code>"。可以用来它们在哪里被定义。
@@ -1129,11 +1163,11 @@ non-id    匹配的前面是一个空格、制表或者行或插入的开始。
  <a href="various.html#:verbose-cmd">:verbose-cmd</a>  介绍详情。
 
                                                         <b class="vimtag"> <a name="E174">E174</a> </b> <b class="vimtag"> <a name="E182">E182</a> </b>
-:com[mand][!] [<code class="special">{attr}</code>...] <code class="special">{cmd}</code> <code class="special">{rep}</code>
+:com[mand][!] [<code class="special">{attr}</code>...] <code class="special">{cmd}</code> <code class="special">{repl}</code>
                         定义一个用户命令。命令的名字是 <code class="special">{cmd}</code>，而替换的文本是
-                        <code class="special">{rep}</code>。该命令的属性 (参考下面) 是 <code class="special">{attr}</code>。如果该命令已
-                        存在，报错，除非已经指定了一个 !，这种情况下命令被重定
-                        义。
+                        <code class="special">{repl}</code>。该命令的属性 (参考下面) 是 <code class="special">{attr}</code>。如果该命令
+                        已存在，报错，除非已经指定了一个 !，这种情况下命令被重
+                        定义。
                         有一个特例: 再次执行脚本时，该脚本中之前定义的命令会悄
                         然地被替代。
 
@@ -1316,9 +1350,10 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 
 <code class="section">替换文本 </code>
 
-用户自定义命令的替换文本扫描使用 &lt;...&gt; 记法的特殊转义序列。命令行输入的值中，
-转义序列被替换，其它文本不变。最终字符串被作为 Ex 命令来执行。要避免替换，使用
-<code class="special">&lt;lt&gt;</code> 代替初始的 &lt;。这样，要按本义包含 "<code class="special">&lt;bang&gt;</code>"，请使用 "<code class="special">&lt;lt&gt;</code>bang&gt;"。
+对用户自定义命令的替换文本 <code class="special">{repl}</code> 进行扫描，找到使用 &lt;...&gt; 记法的特殊转义序列。
+转义序列被命令行输入提供的值替换，其它文本不变。最终字符串被作为 Ex 命令来执
+行。要避免替换，使用 <code class="special">&lt;lt&gt;</code> 代替初始的 &lt;。这样，要按本义包含 "<code class="special">&lt;bang&gt;</code>"，请使用
+"<code class="special">&lt;lt&gt;</code>bang&gt;"。
 
 有效的转义序列有
 
@@ -1430,6 +1465,9 @@ args"，函数参数)。它在空格和制表处分割命令行参数，每个�
         :Allargs %s/foo/bar/ge|update
 它将调用: 
 <code class="example">        :call Allargs("%s/foo/bar/ge|update")</code>
+
+如果命令在 Vim9 脚本中定义 ( <code class="badlink">:vim9script</code>  开始的脚本并出现在  <a href="vim9.html#:def">:def</a>  函数中)，
+以 Vim9 脚本模式执行 <code class="special">{repl}</code>。这只取决于命令定义的位置，而不是它被调用的位置。
 
 在脚本里定义用户命令时，它可以调用局部于脚本中的函数和使用局部于脚本的映射。用
 户调用用户命令时，该命令将运行在定义它的脚本的上下文里，如果一个命令中使用了
