@@ -1,4 +1,4 @@
-*tips.txt*	适用于 Vim 8.2 版本。	最近更新: 2019年12月
+*tips.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年1月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -30,6 +30,7 @@ http://www.vim.org
 十六进制编辑					|hex-editing|
 在自动命令中使用 <> 记法			|autocmd-<>|
 高亮匹配括号					|match-parens|
+在当前窗口打开帮助				|help-curwin|
 
 ==============================================================================
 编辑 C 程序						*C-editing*
@@ -488,5 +489,29 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见: |$VIMRUNTIME|。
 	autocmd CursorMoved,CursorMovedI * call s:Highlight_Matching_Paren()
 	autocmd InsertEnter * match none
 <
+
+==============================================================================
+在当前窗口打开帮助						*help-curwin*
+
+缺省在分割窗口打开帮助。如果喜欢在当前窗口打开帮助，可用下面的定制命令
+`:HelpCurwin`:
+>
+	command -bar -nargs=? -complete=help HelpCurwin execute s:HelpCurwin(<q-args>)
+	let s:did_open_help = v:false
+
+	function s:HelpCurwin(subject) abort
+	  let mods = 'silent noautocmd keepalt'
+	  if !s:did_open_help
+	    execute mods .. ' help'
+	    execute mods .. ' helpclose'
+	    let s:did_open_help = v:true
+	  endif
+	  if !getcompletion(a:subject, 'help')->empty()
+	    execute mods .. ' edit ' .. &helpfile
+	  endif
+	  return 'help ' .. a:subject
+	endfunction
+<
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

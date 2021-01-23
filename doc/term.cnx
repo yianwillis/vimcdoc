@@ -1,4 +1,4 @@
-*term.txt*      适用于 Vim 8.2 版本。	最近更新: 2020年7月
+*term.txt*      适用于 Vim 8.2 版本。	最近更新: 2021年1月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -175,6 +175,9 @@ termcap" 来检查哪些是支持的，相应的代码为何。多数情况下�
 	:set <Home>=^[[1;*H
 关于这些代码的另一个特性是它们不能被另外的代码覆盖。这就避免了被来自 xterm
 |t_RV| 所包含的代码直接覆盖掉。
+
+另一个特殊值是以 "@;*X" 结尾的 termcap 项目。这用于光标键，那里可用 "CSI X" 或
+"CSI 1 ; 修饰符 X"。所以 "@" 代表或者后面有跟修饰符的 "1"，或者为空。
 							*xterm-scroll-region*
 Sun 和其它的平台上的 xterm 缺省的 termcap 项目不包含区域滚动的项目。在
 /etc/termpcap 的 xterm 项目里增加 ":cs=\E[%i%d;%dr:"，那么一切都没有问题了。
@@ -312,6 +315,10 @@ Vim 增加的 (它们没有标准代码):
 	t_Ri	从栈中恢复图标文本				*t_Ri* *'t_Ri'*
 	t_TE	结束 "raw" 模式					*t_TE* *'t_TE'*
 	t_TI	让终端进入 "raw" 模式				*t_TI* *'t_TI'*
+	t_fd	关闭焦点事件跟踪	 			*t_fd* *'t_fd'*
+		|xterm-focus-event|
+	t_fe	打开焦点事件跟踪	 			*t_fe* *'t_fe'*
+		|xterm-focus-event|
 
 有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
 本。
@@ -468,6 +475,14 @@ xterm 改变窗口大小的功能只用在 allowWindowOps 资源打开时才可�
 
 然后运行 "xrdb -merge .Xresources" 以激活之。用上下文菜单可以检查该值 (按住
 CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾。
+
+							*xterm-focus-event*
+有些包含 xterm 支持的终端支持焦点事件跟踪特性。用 't_fe' 序列打开此功能后，每
+次终端获得或丧失焦点时，终端都会给 Vim 发送特殊的键序列。Vim 对此进行处理，并
+触发焦点事件 (|FocusGained|/|FocusLost|)。退出 "raw" 模式时，'t_fd' 序列会用来
+关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入:
+	`set t_fd=`
+	`set t_fe=`
 
 							*termcap-colors*
 关于颜色的 注意 事项: 't_Co' 选项告诉 Vim 可用的颜色数。如果非零，'t_AB' 和
