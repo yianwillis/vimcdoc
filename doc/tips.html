@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="tips.txt">tips.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2019年12月
+<b class="vimtag"> <a name="tips.txt">tips.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年1月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -65,6 +65,7 @@
 十六进制编辑                                     <a href="tips.html#hex-editing">hex-editing</a> 
 在自动命令中使用 <code class="special">&lt;&gt;</code> 记法                         <a href="tips.html#autocmd-%3C%3E">autocmd-&lt;&gt;</a> 
 高亮匹配括号                                     <a href="tips.html#match-parens">match-parens</a> 
+在当前窗口打开帮助                               <a href="tips.html#help-curwin">help-curwin</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>编辑 C 程序                                             <b class="vimtag"> <a name="C-editing">C-editing</a> </b></h4>
@@ -505,6 +506,29 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见:  <a href="starting.
 <code class="example"></code>
 <code class="example">        autocmd CursorMoved,CursorMovedI * call s:Highlight_Matching_Paren()</code>
 <code class="example">        autocmd InsertEnter * match none</code>
+
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>在当前窗口打开帮助                                              <b class="vimtag"> <a name="help-curwin">help-curwin</a> </b></h4>
+缺省在分割窗口打开帮助。如果喜欢在当前窗口打开帮助，可用下面的定制命令
+ <code class="badlink">:HelpCurwin</code> :
+
+<code class="example">        command -bar -nargs=? -complete=help HelpCurwin execute s:HelpCurwin(&lt;q-args&gt;)</code>
+<code class="example">        let s:did_open_help = v:false</code>
+<code class="example"></code>
+<code class="example">        function s:HelpCurwin(subject) abort</code>
+<code class="example">          let mods = 'silent noautocmd keepalt'</code>
+<code class="example">          if !s:did_open_help</code>
+<code class="example">            execute mods .. ' help'</code>
+<code class="example">            execute mods .. ' helpclose'</code>
+<code class="example">            let s:did_open_help = v:true</code>
+<code class="example">          endif</code>
+<code class="example">          if !getcompletion(a:subject, 'help')-&gt;empty()</code>
+<code class="example">            execute mods .. ' edit ' .. &amp;helpfile</code>
+<code class="example">          endif</code>
+<code class="example">          return 'help ' .. a:subject</code>
+<code class="example">        endfunction</code>
+
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2020年12月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年1月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -82,7 +82,7 @@
                                                         <b class="vimtag"> <a name="Number">Number</a> </b> <b class="vimtag"> <a name="Integer">Integer</a> </b>
 数值            32 位或 64 位带符号整数。 <a href="eval.html#expr-number">expr-number</a> 
                 位数可以  <a href="eval.html#v:numbersize">v:numbersize</a>  得到。
-                示例:  -123  0x10  0177  0b1011
+                示例:  -123  0x10  0o177  0b1011
 
 浮点数          带小数的数值。 <a href="eval.html#floating-point-format">floating-point-format</a>  <b class="vimtag"> <a name="Float">Float</a> </b>
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+float">+float</a>  特性才有效}</code>
@@ -126,8 +126,9 @@ blob            二进制大对象 (Binary Large Object)。存储任意字符序
                                                         <b class="vimtag"> <a name="octal">octal</a> </b>
 只在老式 Vim 脚本中进行字符串到数值的转换，Vim9 脚本不进行转换。转换时，把字符
 串开头的一系列数字位转换成数值。可以识别十六进制 "0xf9"、八进制 "017" 或
-"0o17" 和二进制 "0b10" 形式的数值 (<code class="note">注意</code>:  <a href="eval.html#scriptversion-4">scriptversion-4</a>  不识别 "0" 开头的八
-进制)。如果字符串不以数字开始，则结果为零。
+"0o17" 和二进制 "0b10" 形式的数值
+<code class="note">注意</code>:  <a href="eval.html#scriptversion-4">scriptversion-4</a>  不识别 "0" 开头的八进制。0o 记法需要 8.2.0886 补丁。
+如果字符串不以数字开始，则结果为零。
 例如:
 <code class="section">        字符串 "456"    --&gt;     数值 456 </code>
 <code class="section">        字符串 "6bar"   --&gt;     数值 6 </code>
@@ -320,6 +321,8 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 <code class="example">        :let shortlist = mylist[2:2]    " 单个项目的列表: [3]</code>
 <code class="example">        :let otherlist = mylist[:]      " 复制列表</code>
 <code class="example"></code>
+<code class="note">注意</code>末索引是闭的。如果希望用开的索引，可用  <a href="eval.html#slice()">slice()</a>  方法。
+
 如果首索引在列表末项之后或者末索引小于首索引，返回空列表。没有错误信息。
 
 如果末索引大于等于列表的长度，使用列表长度减一: 
@@ -1079,7 +1082,7 @@ expr7                                                   <b class="vimtag"> <a na
 
 '!' 把  <a href="eval.html#TRUE">TRUE</a>  变为  <a href="eval.html#FALSE">FALSE</a> ， <a href="eval.html#FALSE">FALSE</a>  变为  <a href="eval.html#TRUE">TRUE</a>  (一)。
 '-' 改变数值的符号。
-'+' 保持原值。
+'+' 保持原值。<code class="note">注意</code> "++" 没有效果 (<code class="vim">译者注</code>: 即，不是增量操作符)。
 
 字符串会先转化为数值。
 
@@ -1115,6 +1118,7 @@ Vim9 脚本里:
 
 如果字符串的长度小于索引值，结果为空字符串。负索引总是给出空字符串 (原因: 反向
 兼容)。用 [-1:] 得到最后一个字节或字符。
+Vim9 脚本中，负索引的用法同列表中的相同: 由结尾开始反向计算。
 
 如果 expr8 是  <a href="eval.html#List">List</a> ，返回索引值为 expr1 的项目。可用的索引值见  <a href="eval.html#list-index">list-index</a> 。
 如果索引越界，产生错误。例如: 
@@ -1133,6 +1137,8 @@ expr8[expr1a : expr1b]  子字符串或子列表                <b class="vimtag
 算索引值。如果 expr8 为数值，先转换为字符串。
 
 在 Vim9 脚本里索引为字符索引。要使用字节索引，可用  <a href="eval.html#strpart()">strpart()</a> 。
+
+索引 expr1b 包含在内，亦即是闭的。要用开的索引值，可用  <a href="eval.html#slice()">slice()</a>  函数。
 
 如果省略 expr1a，用零。如果省略 expr1b，用字符串的长度减一。
 
@@ -1227,7 +1233,7 @@ expr8-&gt;<code class="special">{lambda}</code>([args])
 number
 </section><hr class="singleline" /><section class=inner>
 number                  数值常数                        <b class="vimtag"> <a name="expr-number">expr-number</a> </b>
-                                <b class="vimtag"> <a name="hex-number">hex-number</a> </b> <b class="vimtag"> <a name="octal-number">octal-number</a> </b> <b class="vimtag"> <a name="binary-number">binary-number</a> </b>
+                        <b class="vimtag"> <a name="0x">0x</a> </b> <b class="vimtag"> <a name="hex-number">hex-number</a> </b> <b class="vimtag"> <a name="0o">0o</a> </b> <b class="vimtag"> <a name="octal-number">octal-number</a> </b> <b class="vimtag"> <a name="binary-number">binary-number</a> </b>
 
 十进制、十六进制 (0x 或 0X 开始)、二进制 (0b 或 0B 开始) 和 八进制 (0、0o 或
 0O 开始)。
@@ -1456,7 +1462,7 @@ lambda expression                               <b class="vimtag"> <a name="expr
 
 匿名函数表达式使用的内部名形如 '<code class="special">&lt;lambda&gt;</code>42'。如果有关于某匿名函数的错误，可以
 用下述命令查看它的定义: 
-<code class="example">        :function {'&lt;lambda&gt;42'}</code>
+<code class="example">        :function &lt;lambda&gt;42</code>
 另见:  <a href="eval.html#numbered-function">numbered-function</a> 
 
 </section><hr class="doubleline" /><section class=inner>
@@ -2234,12 +2240,13 @@ ch_status(<code class="special">{handle}</code> [, <code class="special">{option
 changenr()                      数值    当前改变号
 char2nr(<code class="special">{expr}</code> [, <code class="special">{utf8}</code>])      数值    <code class="special">{expr}</code> 里第一个字符串的 ASCII/UTF8 值
 charclass(<code class="special">{string}</code>)             数值    <code class="special">{string}</code> 的字符类
+charcol(<code class="special">{expr}</code>)                 数值    光标或位置标记的列号
 charidx(<code class="special">{string}</code>, <code class="special">{idx}</code> [, <code class="special">{countcc}</code>])
                                 数值    <code class="special">{string}</code> 中字节 <code class="special">{idx}</code> 对应的字符索引
 chdir(<code class="special">{dir}</code>)                    数值    改变当前目录
 cindent(<code class="special">{lnum}</code>)                 数值    第 <code class="special">{lnum}</code> 行的 C 缩进
 clearmatches([<code class="special">{win}</code>])           无      清除所有的匹配
-col(<code class="special">{expr}</code>)                     数值    光标或位置标记的列号
+col(<code class="special">{expr}</code>)                     数值    光标或位置标记的列字节索引
 complete(<code class="special">{startcol}</code>, <code class="special">{matches}</code>) 无      设置插入模式补全
 complete_add(<code class="special">{expr}</code>)            数值    增加补全匹配
 complete_check()                数值    补全时检查输入的键
@@ -2281,6 +2288,9 @@ expand(<code class="special">{expr}</code> [, <code class="special">{nosuf}</cod
 expandcmd(<code class="special">{expr}</code>)               字符串  像  <a href="editing.html#:edit">:edit</a>  那样扩展 <code class="special">{expr}</code>
 extend(<code class="special">{expr1}</code>, <code class="special">{expr2}</code> [, <code class="special">{expr3}</code>])
                                 列表/字典 把 <code class="special">{expr2}</code> 里的项目插入 <code class="special">{expr1}</code>
+extendnew(<code class="special">{expr1}</code>, <code class="special">{expr2}</code> [, <code class="special">{expr3}</code>])
+                                列表/字典 和  <a href="eval.html#extend()">extend()</a>  类似，但建立新列表或字
+                                        典
 feedkeys(<code class="special">{string}</code> [, <code class="special">{mode}</code>])   数值    给预输入缓冲区加入键序列
 filereadable(<code class="special">{file}</code>)            数值    如果 <code class="special">{file}</code> 是个可读文件则为  <a href="eval.html#TRUE">TRUE</a> 
 filewritable(<code class="special">{file}</code>)            数值    如果 <code class="special">{file}</code> 是个可写文件则为  <a href="eval.html#TRUE">TRUE</a> 
@@ -2317,6 +2327,7 @@ getbufvar(<code class="special">{expr}</code>, <code class="special">{varname}</
 getchangelist([<code class="special">{expr}</code>])         列表    改变列表项目的列表
 getchar([expr])                 数值    让用户输入一个字符
 getcharmod()                    数值    最近输入字符的修饰符
+getcharpos(<code class="special">{expr}</code>)              列表    光标、位置标记等的位置
 getcharsearch()                 字典    最近字符搜索选项
 getcmdline()                    字符串  返回当前命令行
 getcmdpos()                     数值    返回命令行的光标位置
@@ -2325,6 +2336,7 @@ getcmdwintype()                 字符串  返回当前命令行窗口类型
 getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</code> [, <code class="special">{filtered}</code>])
                                 列表    命令行补全匹配列表
 getcurpos([<code class="special">{winnr}</code>])            列表    光标位置
+getcursorcharpos([<code class="special">{winnr}</code>])     列表    光标的字符位置
 getcwd([<code class="special">{winnr}</code> [, <code class="special">{tabnr}</code>]])   字符串  当前工作目录
 getenv(<code class="special">{name}</code>)                  字符串  返回环境变量
 getfontname([<code class="special">{name}</code>])           字符串  使用的字体名
@@ -2525,6 +2537,7 @@ pyxeval(<code class="special">{expr}</code>)                 可变    计算  <
 rand([<code class="special">{expr}</code>])                  数值    得到伪随机数
 range(<code class="special">{expr}</code> [, <code class="special">{max}</code> [, <code class="special">{stride}</code>]])
                                 列表    从 <code class="special">{expr}</code> 到 <code class="special">{max}</code> 的序列
+readblob(<code class="special">{fname}</code>)               blob    从 <code class="special">{fname}</code> 读取  <a href="eval.html#Blob">Blob</a> 
 readdir(<code class="special">{dir}</code> [, <code class="special">{expr}</code> [, <code class="special">{dict}</code>]])
                                 列表    <code class="special">{dir}</code> 中 <code class="special">{expr}</code> 所选择的文件名
 readdirex(<code class="special">{dir}</code> [, <code class="special">{expr}</code> [, <code class="special">{dict}</code>]])
@@ -2587,8 +2600,10 @@ setbufvar(<code class="special">{expr}</code>, <code class="special">{varname}</
                                 无      设置缓冲区 <code class="special">{expr}</code> 的 <code class="special">{varname}</code> 为
                                         <code class="special">{val}</code>
 setcellwidths(<code class="special">{list}</code>)           无      设置字符单元宽度覆盖
+setcharpos(<code class="special">{expr}</code>, <code class="special">{list}</code>)      数值    设置 <code class="special">{expr}</code> 的位置为 <code class="special">{list}</code>
 setcharsearch(<code class="special">{dict}</code>)           字典    从 <code class="special">{dict}</code> 设置字符搜索选项
 setcmdpos(<code class="special">{pos}</code>)                数值    设置命令行的光标位置
+setcursorcharpos(<code class="special">{list}</code>)        数值    移动光标到 <code class="special">{list}</code> 指定的位置
 setenv(<code class="special">{name}</code>, <code class="special">{val}</code>)           无      设置环境变量
 setfperm(<code class="special">{fname}</code>, <code class="special">{mode}</code>)       数值    设置 <code class="special">{fname}</code> 文件权限为 <code class="special">{mode}</code>
 setline(<code class="special">{lnum}</code>, <code class="special">{line}</code>)         数值    设置第 <code class="special">{lnum}</code> 行的内容为 <code class="special">{line}</code>
@@ -2632,6 +2647,8 @@ sign_unplacelist(<code class="special">{list}</code>)        列表    撤销一
 simplify(<code class="special">{filename}</code>)            字符串  尽可能简化文件名
 sin(<code class="special">{expr}</code>)                     浮点    <code class="special">{expr}</code> 的正弦值
 sinh(<code class="special">{expr}</code>)                    浮点    <code class="special">{expr}</code> 的双曲正弦值
+slice(<code class="special">{expr}</code>, <code class="special">{start}</code> [, <code class="special">{end}</code>])  字符串、列表或 blob
+                                        字符串、列表或 blob 的切片
 sort(<code class="special">{list}</code> [, <code class="special">{func}</code> [, <code class="special">{dict}</code>]])
                                 列表    排序 <code class="special">{list}</code>，用比较函数 <code class="special">{func}</code>
 sound_clear()                   无      停止播放所有声音
@@ -2765,7 +2782,8 @@ tr(<code class="special">{src}</code>, <code class="special">{fromstr}</code>, <
 trim(<code class="special">{text}</code> [, <code class="special">{mask}</code> [, <code class="special">{dir}</code>]])
                                 字符串  从 <code class="special">{text}</code> 中删除 <code class="special">{mask}</code> 中的字符
 trunc(<code class="special">{expr}</code>)                   浮点    浮点数 <code class="special">{expr}</code> 截断小数点
-type(<code class="special">{name}</code>)                    数值    变量 <code class="special">{name}</code> 的类型
+type(<code class="special">{expr}</code>)                    数值    值 <code class="special">{expr}</code> 的类型
+typename(<code class="special">{expr}</code>)                字符串  <code class="special">{expr}</code> 类型的描述
 undofile(<code class="special">{name}</code>)                字符串  对应 <code class="special">{name}</code> 的撤销文件名
 undotree()                      列表    撤销文件树
 uniq(<code class="special">{list}</code> [, <code class="special">{func}</code> [, <code class="special">{dict}</code>]])
@@ -3284,6 +3302,17 @@ charclass(<code class="special">{string}</code>)                                
                         其它    特定 Unicode 类
                 此类用于模式匹配和单词动作。
 
+                                                        <b class="vimtag"> <a name="charcol()">charcol()</a> </b>
+charcol(<code class="special">{expr}</code>) 同  <a href="eval.html#col()">col()</a> ，但返回 <code class="special">{expr}</code> 给出列的位置字符索引而不是字节索引。
+
+                示例:
+                如果光标在第五行文本 "여보세요" 的 '세' 时: 
+<code class="example">                        charcol('.')            返回 3</code>
+<code class="example">                        col('.')                返回 7</code>
+<code class="example"></code>
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPos()-&gt;col()</code>
+
                                                         <b class="vimtag"> <a name="charidx()">charidx()</a> </b>
 charidx(<code class="special">{string}</code>, <code class="special">{idx}</code> [, <code class="special">{countcc}</code>])
                 返回 <code class="special">{string}</code> 的 <code class="special">{idx}</code> 个字节对应的字符索引。首个字符的索引为
@@ -3356,7 +3385,8 @@ col(<code class="special">{expr}</code>)     返回数值，即 <code class="spe
                 于指定列号为 "$" 以得到特定行的末列列号。如果 "lnum" 或 "col"
                 超出范围，col() 返回零。
                 要得到行号用  <a href="eval.html#line()">line()</a> 。两者都要用  <a href="eval.html#getpos()">getpos()</a> 。
-                要得到屏幕列的位置，用  <a href="eval.html#virtcol()">virtcol()</a> 。
+                要得到屏幕列的位置，用  <a href="eval.html#virtcol()">virtcol()</a> 。要得到字符位置，用
+                 <a href="eval.html#charcol()">charcol()</a> 。
                 <code class="note">注意</code> 只能使用当前文件的位置标记。
                 例如: 
 <code class="example">                        col(".")                光标所在列</code>
@@ -3622,6 +3652,8 @@ cursor(<code class="special">{list}</code>)
                         [<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{off}</code>, <code class="special">{curswant}</code>]
                 和  <a href="eval.html#getpos()">getpos()</a>  和  <a href="eval.html#getcurpos()">getcurpos()</a>  的返回值类似，但没有第一项。
 
+                要用字符计数来定位光标，用  <a href="eval.html#setcursorcharpos()">setcursorcharpos()</a> 。
+
                 不改变跳转表。
                 如果 <code class="special">{lnum}</code> 超过缓冲区的行数，光标定位在缓冲区的末行。
                 如果 <code class="special">{lnum}</code> 为零，光标留在当前行。
@@ -3678,8 +3710,8 @@ delete(<code class="special">{fname}</code> [, <code class="special">{flags}</co
 
                 符号链接本身被删除，而不是它链接到的文件。
 
-                返回类型为数值。如果成功删除文件，返回 0，如果删除失败或部分失
-                败，返回 -1。
+                返回类型为数值。如果成功删除文件，返回 0/false，如果删除失败或
+                部分失败，返回 -1/御前。
 
                 从  <a href="eval.html#List">List</a>  里删除项目请用  <a href="eval.html#remove()">remove()</a> 。
                 要删除缓冲区的行用  <a href="change.html#:delete">:delete</a>  或  <a href="eval.html#deletebufline()">deletebufline()</a> 。
@@ -4065,6 +4097,12 @@ extend(<code class="special">{expr1}</code>, <code class="special">{expr2}</code
 <code class="example">                        mylist-&gt;extend(otherlist)</code>
 <code class="example"></code>
 <code class="example"></code>
+extendnew(<code class="special">{expr1}</code>, <code class="special">{expr2}</code> [, <code class="special">{expr3}</code>])                 <b class="vimtag"> <a name="extendnew()">extendnew()</a> </b>
+                和  <a href="eval.html#extend()">extend()</a>  类似，但不是新增项目到 <code class="special">{expr1}</code>，而是创建并返回新
+                列表或字典。<code class="special">{expr1}</code> 保持不变。项目仍然可用 <code class="special">{expr2}</code> 改变，如果
+                不想如此，可先用  <a href="eval.html#deepcopy()">deepcopy()</a> 。
+
+
 feedkeys(<code class="special">{string}</code> [, <code class="special">{mode}</code>])                           <b class="vimtag"> <a name="feedkeys()">feedkeys()</a> </b>
                 将 <code class="special">{string}</code> 里的字符放在队列里等候处理，就像它们来自映射或者用
                 户输入一样。
@@ -4687,6 +4725,19 @@ getcharmod()                                            <b class="vimtag"> <a na
                 只有没有包含字符本身的修饰符被返回。因而，Shift-a 产生没有修饰
                 符的 "A"。
 
+                                                        <b class="vimtag"> <a name="getcharpos()">getcharpos()</a> </b>
+getcharpos(<code class="special">{expr}</code>)
+                得到  <code class="special">{expr}</code> 的位置。和  <a href="eval.html#getpos()">getpos()</a>  相同，但返回列表的列号是字
+                符索引而不是字节索引。
+
+                示例:
+                如果光标在第五行文本 "여보세요" 的 '세' 时: 
+<code class="example">                        getcharpos('.')         返回 [0, 5, 3, 0]</code>
+<code class="example">                        getpos('.')             返回 [0, 5, 7, 0]</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetMark()-&gt;getcharpos()</code>
+<code class="example"></code>
 getcharsearch()                                         <b class="vimtag"> <a name="getcharsearch()">getcharsearch()</a> </b>
                 以 <code class="special">{dict}</code> 形式返回当前字符搜索信息，带有以下项目:
 
@@ -4795,8 +4846,10 @@ getcurpos([<code class="special">{winid}</code>])
                 返回光标位置。类似于 getpos('.')，但返回列表中包含一个额外的
                 "curswant" 项目:
 <code class="section">                    [0, lnum, col, off, curswant] </code>
-                "curswant" 数值是垂直移动光标时的首选列。另见  <a href="eval.html#getpos()">getpos()</a> 。
-                首个 "bufnum" 项目总是为零。
+                "curswant" 数值是垂直移动光标时的首选列。另见
+                 <a href="eval.html#getcursorcharpos()">getcursorcharpos()</a>  和  <a href="eval.html#getpos()">getpos()</a> 。
+                首个 "bufnum" 项目总是为零。<code class="badlink">'col'</code> 返回的是光标的字节位置。要得
+                到字符位置，用  <a href="eval.html#getcursorcharpos()">getcursorcharpos()</a> 。
 
                 可选的 <code class="special">{winid}</code> 参数可指定窗口。可以是窗口号或  <a href="windows.html#window-ID">window-ID</a> 。返
                 回最近已知的光标位置，如果缓冲区的当前值不是当前窗口，可能会非
@@ -4808,6 +4861,22 @@ getcurpos([<code class="special">{winid}</code>])
 <code class="example">                        call setpos('.', save_cursor)</code>
                 <code class="note">注意</code> 这只适用于同一窗口内的移动。要恢复更多状态，见
                  <a href="eval.html#winrestview()">winrestview()</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetWinid()-&gt;getcurpos()</code>
+<code class="example"></code>
+                                                        <b class="vimtag"> <a name="getcursorcharpos()">getcursorcharpos()</a> </b>
+getcursorcharpos([<code class="special">{winid}</code>])
+                同  <a href="eval.html#getcurpos()">getcurpos()</a> ，但返回列表中的列号是字符索引而不是字节索引。
+
+                示例:
+                如果光标在第三行文本 "여보세요" 的 '보' 时: 
+<code class="example">                        getcursorcharpos()      返回 [0, 3, 2, 0, 3]</code>
+<code class="example">                        getcurpos()             返回 [0, 3, 4, 0, 3]</code>
+<code class="example"></code>
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetWinid()-&gt;getcursorcharpos()</code>
+<code class="example"></code>
                                                         <b class="vimtag"> <a name="getcwd()">getcwd()</a> </b>
 getcwd([<code class="special">{winnr}</code> [, <code class="special">{tabnr}</code>]])
                 返回字符串，当前工作目录的名字。
@@ -5070,11 +5139,13 @@ getpos(<code class="special">{expr}</code>)  得到 <code class="special">{expr}
                 置。
                 <code class="note">注意</code> '&lt; 和 '&gt; 和可视模式有关: "V" (可视行模式) 时 '&lt; 的列为
                 零，'&gt; 的列为一大数。
+                返回列表中的列号是行内的字节位置。要得行内的字符位置，用
+                 <a href="eval.html#getcharpos()">getcharpos()</a> 。
                 可以用来保存和恢复光标位置: 
 <code class="example">                        let save_a_mark = getpos("'a")</code>
 <code class="example">                        ...</code>
 <code class="example">                        call setpos("'a", save_a_mark)</code>
-                另见  <a href="eval.html#getcurpos()">getcurpos()</a>  和  <a href="eval.html#setpos()">setpos()</a> 。
+                另见  <a href="eval.html#getcharpos()">getcharpos()</a> 、 <a href="eval.html#getcurpos()">getcurpos()</a>  和  <a href="eval.html#setpos()">setpos()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetMark()-&gt;getpos()</code>
@@ -5468,8 +5539,8 @@ has(<code class="special">{feature}</code> [, <code class="special">{check}</cod
 
 
 has_key(<code class="special">{dict}</code>, <code class="special">{key}</code>)                                  <b class="vimtag"> <a name="has_key()">has_key()</a> </b>
-                返回数值，如果  <a href="eval.html#Dictionary">Dictionary</a>  <code class="special">{dict}</code> 有键为 <code class="special">{key}</code> 的项目则为 1，
-                不然为零。
+                返回数值，如果  <a href="eval.html#Dictionary">Dictionary</a>  <code class="special">{dict}</code> 有键为 <code class="special">{key}</code> 的项目则为
+                TRUE，不然为 FALSE。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mydict-&gt;has_key(key)</code>
@@ -5512,11 +5583,12 @@ haslocaldir([<code class="special">{winnr}</code> [, <code class="special">{tabn
 <code class="example"></code>
 hasmapto(<code class="special">{what}</code> [, <code class="special">{mode}</code> [, <code class="special">{abbr}</code>]])                  <b class="vimtag"> <a name="hasmapto()">hasmapto()</a> </b>
                 返回数值，如果存在某映射，其右边的表达式 (被映射到的部分) 的某
-                处包含 <code class="special">{what}</code>，并且该映射在 <code class="special">{mode}</code> 指定的模式下存在，返回 1。
+                处包含 <code class="special">{what}</code>，并且该映射在 <code class="special">{mode}</code> 指定的模式下存在，返回
+                TRUE。
                 如果提供 <code class="special">{abbr}</code> 且为  <a href="eval.html#TRUE">TRUE</a> ，使用缩写而不是映射。不要忘记指定
                 插入和/或命令行模式。
                 同时检查全局映射和局部于当前缓冲区的映射以寻找匹配。
-                如果没有匹配的映射，返回 0。
+                如果没有匹配的映射，返回 FALSE。
                 <code class="special">{mode}</code> 识别下列字符:
                         n       普通模式
                         v       可视和选择模式
@@ -5551,7 +5623,7 @@ histadd(<code class="special">{history}</code>, <code class="special">{item}</co
                 <code class="special">{history}</code> 字符串无须是完整名字，一个字符就够了。
                 如果 <code class="special">{item}</code> 已经在历史里存在，它会被调整位置，从而成为最新的一
                 项。
-                返回结果为数值: 如果操作成功则为 1，不然返回 0。
+                返回结果为数值: 如果操作成功则为 TRUE，不然返回 FALSE。
 
                 例如: 
 <code class="example">                        :call histadd("input", strftime("%Y %b %d"))</code>
@@ -5571,7 +5643,7 @@ histdel(<code class="special">{history}</code> [, <code class="special">{item}</
                 如果 <code class="special">{item}</code> 的计算结果为数值，它被解释为索引值，见
                  <a href="cmdline.html#:history-indexing">:history-indexing</a> 。如果该索引存在，删除相应的项目。
 
-                返回结果为数值: 如果操作成功则为 1，不然返回 0。
+                返回结果为数值: 如果操作成功则为 TRUE，不然返回 FALSE。
 
                 例如:
                 清除表达式寄存器历史: 
@@ -5622,8 +5694,9 @@ histnr(<code class="special">{history}</code>)                                  
 <code class="example">                        GetHistory()-&gt;histnr()</code>
 
 hlexists(<code class="special">{name}</code>)                                        <b class="vimtag"> <a name="hlexists()">hlexists()</a> </b>
-                返回数值。只要名为 <code class="special">{name}</code> 的高亮组用某种方法定义过，返回非零。
-                不一定要为该组定义过高亮属性。一些语法项目可能已经使用该组。
+                返回数值。只要名为 <code class="special">{name}</code> 的高亮组用某种方法定义过，返回
+                TRUE。不一定要为该组定义过高亮属性。一些语法项目可能已经使用该
+                组。
                                                         <b class="vimtag"> <a name="highlight_exists()">highlight_exists()</a> </b>
                 已废弃的名字: highlight_exists()。
 
@@ -5764,13 +5837,13 @@ inputlist(<code class="special">{textlist}</code>)                              
 inputrestore()                                          <b class="vimtag"> <a name="inputrestore()">inputrestore()</a> </b>
                 恢复前一个  <a href="eval.html#inputsave()">inputsave()</a>  保存的预输入。应该和  <a href="eval.html#inputsave()">inputsave()</a>  调
                 用的次数相同，不过调用更多次也无妨。
-                如果没有可以恢复的，返回 1，不然返回 0。
+                如果没有可以恢复的，返回 TRUE，不然返回 FALSE。
 
 inputsave()                                             <b class="vimtag"> <a name="inputsave()">inputsave()</a> </b>
                 保存预输入 (也包括映射的) 并清除之，使得下一个提示能从用户得到
                 输入。在提示之后应该跟上配套的 inputrestore()。可以多次使用，
                 此时应该有同样多次的 inputrestore() 调用。
-                如果内存不足，返回 1，不然返回 0。
+                如果内存不足，返回 TRUE，不然返回 FALSE。
 
 inputsecret(<code class="special">{prompt}</code> [, <code class="special">{text}</code>])                        <b class="vimtag"> <a name="inputsecret()">inputsecret()</a> </b>
                 该函数和  <a href="eval.html#input()">input()</a>  函数类似，但有两个例外:
@@ -6177,7 +6250,7 @@ listener_flush([<code class="special">{buf}</code>])                            
 <code class="example"></code>
 listener_remove(<code class="special">{id}</code>)                                   <b class="vimtag"> <a name="listener_remove()">listener_remove()</a> </b>
                 删除之前用 listener_add() 加的监听器。
-                如果 <code class="special">{id}</code> 找不到返回零，<code class="special">{id}</code> 已删除时返回一。
+                如果 <code class="special">{id}</code> 找不到返回 FALSE，<code class="special">{id}</code> 已删除时返回 TRUE。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetListenerId()-&gt;listener_remove()</code>
@@ -6599,22 +6672,21 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
                 返回 ['two one']。
 
 matchfuzzypos(<code class="special">{list}</code>, <code class="special">{str}</code> [, <code class="special">{dict}</code>])                 <b class="vimtag"> <a name="matchfuzzypos()">matchfuzzypos()</a> </b>
-                和  <a href="eval.html#matchfuzzy()">matchfuzzy()</a>  相同，但返回列表，包含匹配字符串以及匹配
-                <code class="special">{str}</code> 中的字符的每个字符位置组成的列表。可用  <a href="eval.html#byteidx()">byteidx()</a>  把字
-                符位置转为字节位置。
-
+                和  <a href="eval.html#matchfuzzy()">matchfuzzy()</a>  相同，但返回列表，包含匹配字符串的列表、匹配
+                <code class="special">{str}</code> 中的字符的字符位置的列表、和匹配分数的列表。可用
+                 <a href="eval.html#byteidx()">byteidx()</a>  把字符位置转为字节位置。
 
                 如果 <code class="special">{str}</code> 在字符串中有多个匹配，只返回最佳匹配的位置。
 
-                如果没有匹配的字符串或有错，返回包含两个空列表项目的列表。
+                如果没有匹配的字符串或有错，返回包含三个空列表项目的列表。
 
                 示例: 
 <code class="example">                        :echo matchfuzzypos(['testing'], 'tsg')</code>
-                返回 [[<code class="badlink">'testing'</code>], [[0, 2, 6]]] 
+                返回 [[<code class="badlink">'testing'</code>], [[0, 2, 6]], <code class="special">[99]</code>] 
 <code class="example">                        :echo matchfuzzypos(['clay', 'lacy'], 'la')</code>
-                返回 [[<code class="badlink">'lacy'</code>, <code class="badlink">'clay'</code>], [[0, 1], [1, 2]]] 
+                返回 [[<code class="badlink">'lacy'</code>, <code class="badlink">'clay'</code>], [[0, 1], [1, 2]], [153, 133]] 
 <code class="example">                        :echo [{'text': 'hello', 'id' : 10}]-&gt;matchfuzzypos('ll', {'key' : 'text'})</code>
-                返回 [{<code class="badlink">'id'</code>: 10, <code class="badlink">'text'</code>: <code class="badlink">'hello'</code>}] [[2, 3]]
+                返回 [[{<code class="badlink">'id'</code>: 10, <code class="badlink">'text'</code>: <code class="badlink">'hello'</code>}], [[2, 3]], <code class="special">[127]</code>]
 
 matchlist(<code class="special">{expr}</code>, <code class="special">{pat}</code> [, <code class="special">{start}</code> [, <code class="special">{count}</code>]])                <b class="vimtag"> <a name="matchlist()">matchlist()</a> </b>
                 和  <a href="eval.html#match()">match()</a>  相同，但返回  <a href="eval.html#List">List</a> 。列表第一项是匹配的字符串，和
@@ -6666,7 +6738,9 @@ matchstrpos(<code class="special">{expr}</code>, <code class="special">{pat}</co
 
 
                                                         <b class="vimtag"> <a name="max()">max()</a> </b>
-max(<code class="special">{expr}</code>)     返回 <code class="special">{expr}</code> 所有项目的最大值。
+max(<code class="special">{expr}</code>)     返回 <code class="special">{expr}</code> 所有项目的最大值。例如: 
+<code class="example">                        echo max([apples, pears, oranges])</code>
+<code class="example"></code>
                 <code class="special">{expr}</code> 可以是  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> 。如果是字典，返回字典中所
                 有值的最大值。
                 如果 <code class="special">{expr}</code> 不是列表或字典，或者其中某个项目不能用作数值，出
@@ -6730,7 +6804,9 @@ menu_info(<code class="special">{name}</code> [, <code class="special">{mode}</c
 <code class="example"></code>
 <code class="example"></code>
                                                         <b class="vimtag"> <a name="min()">min()</a> </b>
-min(<code class="special">{expr}</code>)     返回 <code class="special">{expr}</code> 所有项目的最小值。
+min(<code class="special">{expr}</code>)     返回 <code class="special">{expr}</code> 所有项目的最小值。例如: 
+<code class="example">                        echo min([apples, pears, oranges])</code>
+<code class="example"></code>
                 <code class="special">{expr}</code> 可以是  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> 。如果是字典，返回字典中所
                 有值的最小值。
                 如果 <code class="special">{expr}</code> 不是列表或字典，或者其中某个项目不能用作数值，出
@@ -6745,20 +6821,20 @@ mkdir(<code class="special">{name}</code> [, <code class="special">{path}</code>
 
                 如果 <code class="special">{path}</code> 为 "p"，必要时建立中间的目录。否则它必须是 ""。
 
-                如果给出 <code class="special">{prot}</code>，它用于设置新目录的权限。缺省为 0755
-                (rwxr-xr-x: 用户自己可读写，其它人可读)。用 0700 使其它人不可
+                如果给出 <code class="special">{prot}</code>，它用于设置新目录的权限。缺省为 0o755
+                (rwxr-xr-x: 用户自己可读写，其它人可读)。用 0o700 使其它人不可
                 读。这只用于 <code class="special">{name}</code> 的最后部分。所以，如果建立 /tmp/foo/bar，
-                /tmp/foo 创建时的权限是 0755。
+                /tmp/foo 创建时的权限是 0o755。
                 示例: 
-<code class="example">                        :call mkdir($HOME . "/tmp/foo/bar", "p", 0700)</code>
+<code class="example">                        :call mkdir($HOME . "/tmp/foo/bar", "p", 0o700)</code>
 <code class="example"></code>
                 该函数在沙盘里不可用  <a href="eval.html#sandbox">sandbox</a> 。
 
                 如果目录已存在且传递了 "p" 标志位，不报错 (从补丁 8.0.1708
                 起)。如果没有 "p" 位就会失败。
 
-                此函数返回数值，如果调用成功则为 1，如果目录创建失败或部分失败
-                则为 0。
+                此函数返回数值，如果调用成功则为 TRUE，如果目录创建失败或部分
+                失败则为 FALSE。
 
                 不一定在所有系统上都可用。要检查这一点，使用: 
 <code class="example">                        :if exists("*mkdir")</code>
@@ -7227,6 +7303,13 @@ rand([<code class="special">{expr}</code>])                                     
 <code class="example">                        :echo rand(seed)</code>
 <code class="example">                        :echo rand(seed) % 16  " 随机数 0 - 15</code>
 
+
+readblob(<code class="special">{fname}</code>)                                       <b class="vimtag"> <a name="readblob()">readblob()</a> </b>
+                以二进制方式读取文件 <code class="special">{fname}</code>，并返回  <a href="eval.html#Blob">Blob</a> 。
+                文件不能打开时报错，返回空  <a href="eval.html#Blob">Blob</a> 。
+                另见  <a href="eval.html#readfile()">readfile()</a>  和  <a href="eval.html#writefile()">writefile()</a> 。
+
+
 readdir(<code class="special">{directory}</code> [, <code class="special">{expr}</code> [, <code class="special">{dict}</code>]])                      <b class="vimtag"> <a name="readdir()">readdir()</a> </b>
                 返回 <code class="special">{directory}</code> 中的文件和目录名的列表。如果不需要复杂的处
                 理，如限制匹配的数目等等，也可用  <a href="eval.html#glob()">glob()</a> 。
@@ -7325,6 +7408,7 @@ readdirex(<code class="special">{directory}</code> [, <code class="special">{exp
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetDirName()-&gt;readdirex()</code>
 
+
                                                         <b class="vimtag"> <a name="readfile()">readfile()</a> </b>
 readfile(<code class="special">{fname}</code> [, <code class="special">{type}</code> [, <code class="special">{max}</code>]])
                 读入文件 <code class="special">{fname}</code> 并返回  <a href="eval.html#List">List</a> 。，文件每行一项。在 NL 字符处断
@@ -7334,8 +7418,6 @@ readfile(<code class="special">{fname}</code> [, <code class="special">{type}</c
                 如果 <code class="special">{type}</code> 包含 "b"，使用二进制模式:
                 - 如果末行以 NL 结尾，附加额外的一个空列表项。
                 - 不删除 CR 字符。
-                如果 <code class="special">{type}</code> 包含 "B"，返回  <a href="eval.html#Blob">Blob</a> ，包含未经修改的文件二进制数
-                据。
                 否则:
                 - NL 之前的 CR 字符被删除。
                 - 末行是否以 NL 结尾没有影响。
@@ -7350,6 +7432,8 @@ readfile(<code class="special">{fname}</code> [, <code class="special">{type}</c
                 如果 <code class="special">{max}</code> 为零，返回空列表。
                 <code class="note">注意</code> 如果没有 <code class="special">{max}</code>，把整个文件读到内存。
                 也要 <code class="note">注意</code> 这里不识别编码。如果需要，把文件读到缓冲区里。
+                已废弃 (用  <a href="eval.html#readblob()">readblob()</a>  代之): 如果 <code class="special">{type}</code> 包含 "B"，返回
+                 <a href="eval.html#Blob">Blob</a> ，包含未经修改的文件二进制数据。
                 如果文件不能打开，给出错误信息，并返回空列表。
                 另见  <a href="eval.html#writefile()">writefile()</a> 。
 
@@ -7895,7 +7979,7 @@ searchcount([<code class="special">{options}</code>])                           
                                                 算时匹配文本的最大计数。如果搜
                                                 索超过总数，"total" 值成为
                                                 `maxcount + 1`
-                                                (缺省: 0)
+                                                (缺省: 99)
                   pos            <a href="eval.html#List">List</a>           重计算结果时的
                                                 `[lnum, col, off]` 值。
                                                 这会改变 "current" 返回值。见
@@ -8024,6 +8108,7 @@ server2client(<code class="special">{clientid}</code>, <code class="special">{st
                 发送应答字符串到 <code class="special">{clientid}</code>。最近刚发送过字符串的 <code class="special">{clientid}</code>
                 可以通过 expand("<code class="special">&lt;client&gt;</code>") 得到。
                 <code class="notvi">{仅当在编译时加入  <a href="various.html#+clientserver">+clientserver</a>  特性才有效}</code>
+                返回零代表成功，-1 代表失败。
                 <code class="note">备注</code>:
                 该 id 应在接受下一个命令前保存。也就是，在接收命令返回之前 (译
                 者注: 似应为 "之后") 和任何等待输入的命令之前。
@@ -8099,7 +8184,20 @@ setcellwidths(<code class="special">{list}</code>)                              
                 可用 $VIMRUNTIME/tools/emoji_list.vim 脚本来查看已知表情字符的
                 效果。
 
+setcharpos(<code class="special">{expr}</code>, <code class="special">{list}</code>)                              <b class="vimtag"> <a name="setcharpos()">setcharpos()</a> </b>
+                同  <a href="eval.html#setpos()">setpos()</a> ，但使用指定列号作为行内字符索引，而不是字节索
+                引。
 
+                示例:
+                在第 8 行的文本 "여보세요" 上: 
+<code class="example">                        call setcharpos('.', [0, 8, 4, 0])</code>
+                定位光标在第四个字符 '요' 上。 
+<code class="example">                        call setpos('.', [0, 8, 4, 0])</code>
+                定位光标在第二个字符 '보' 上。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetPosition()-&gt;setcharpos('.')</code>
+<code class="example"></code>
 setcharsearch(<code class="special">{dict}</code>)                                   <b class="vimtag"> <a name="setcharsearch()">setcharsearch()</a> </b>
                 用 <code class="special">{dict}</code> 设置当前字符搜索信息，带有以下项目:
 
@@ -8127,10 +8225,25 @@ setcmdpos(<code class="special">{pos}</code>)                                   
                 置。对于  <a href="cmdline.html#c_CTRL-R_%20">c_CTRL-R_=</a> ，在计算表达式之后但在插入返回的文本之前
                 设置位置。
                 如果数值太大，光标放在行尾。如果小于 1，结果没有定义。
-                如果成功，返回 0，如果不在编辑命令行，返回 1。
+                如果成功，返回 FALSE，如果不在编辑命令行，返回 TRUE。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetPos()-&gt;setcmdpos()</code>
+<code class="example"></code>
+setcursorcharpos(<code class="special">{lnum}</code>, <code class="special">{col}</code> [, <code class="special">{off}</code>])               <b class="vimtag"> <a name="setcursorcharpos()">setcursorcharpos()</a> </b>
+setcursorcharpos(<code class="special">{list}</code>)
+                同  <a href="eval.html#cursor()">cursor()</a> ，但使用指定列号作为行内的字符索引，而不是字节索
+                引。
+
+                示例:
+                在第 4 行的文本 "여보세요" 上: 
+<code class="example">                        call setcursorcharpos(4, 3)</code>
+                定位光标在第三个字符 '세' 上。 
+<code class="example">                        call cursor(4, 3)</code>
+                定位光标在第一个字符 '여' 上。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetCursorPos()-&gt;setcursorcharpos()</code>
 <code class="example"></code>
 setenv(<code class="special">{name}</code>, <code class="special">{val}</code>)                                           <b class="vimtag"> <a name="setenv()">setenv()</a> </b>
                 设置环境变量 <code class="special">{name}</code> 值为 <code class="special">{val}</code>。
@@ -8165,7 +8278,9 @@ setline(<code class="special">{lnum}</code>, <code class="special">{text}</code>
                 <code class="special">{lnum}</code> 的用法同  <a href="eval.html#getline()">getline()</a> 。
                 如果 <code class="special">{lnum}</code> 正好在末行之下，在末行之下添加 <code class="special">{text}</code>。
 
-                如果成功，返回 0。如果失败 (多数是因为 <code class="special">{lnum}</code> 不合法) 返回 1。
+                如果成功，返回 FALSE。如果失败 (多数是因为 <code class="special">{lnum}</code> 不合法) 返回
+                TRUE。
+
                 例如: 
 <code class="example">                        :call setline(5, strftime("%c"))</code>
 <code class="example"></code>
@@ -8225,7 +8340,8 @@ setpos(<code class="special">{expr}</code>, <code class="special">{list}</code>)
                 不修改跳转表。
 
                 "lnum" 和 "col" 是缓冲区里的位置。第一列为 1。"lnum" 为零则删
-                除位置标记。"col" 如小于 1，则以 1 代替。
+                除位置标记。"col" 如小于 1，则以 1 代替。要使用字符计数而不是
+                字节计数，用  <a href="eval.html#setcharpos()">setcharpos()</a> 。
 
                 除非使用了 <a href="options.html#'virtualedit'">'virtualedit'</a>，不用 "off" 值。这是从对应字符开始位
                 置以屏幕列计的位移。例如，在制表之中或最后一个字符之后的某个位
@@ -8241,7 +8357,7 @@ setpos(<code class="special">{expr}</code>, <code class="special">{list}</code>)
                 如果位置可以设置，返回 0，否则返回 -1。如果 <code class="special">{expr}</code> 不合法，报
                 错。
 
-                另见  <a href="eval.html#getpos()">getpos()</a>  和  <a href="eval.html#getcurpos()">getcurpos()</a> 。
+                另见  <a href="eval.html#setcharpos()">setcharpos()</a> 、 <a href="eval.html#getpos()">getpos()</a>  和  <a href="eval.html#getcurpos()">getcurpos()</a> 。
 
                 这并不能恢复垂直移动使用的列；如果用它设置了光标位置， <a href="motion.html#j">j</a>  和
                  <a href="motion.html#k">k</a>  动作会跳转到上次的列上！ <a href="eval.html#cursor()">cursor()</a>  也可设置首选列。另见
@@ -8560,6 +8676,17 @@ sinh(<code class="special">{expr}</code>)                                       
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+float">+float</a>  特性才有效}</code>
 
 
+slice(<code class="special">{expr}</code>, <code class="special">{start}</code> [, <code class="special">{end}</code>])                        <b class="vimtag"> <a name="slice()">slice()</a> </b>
+                类似  <a href="eval.html#slice">slice</a>  表达式 "expr[start : end]"，但 "end" 的用法是闭
+                的。而且对字符串而言，索引使用的是字符索引而不是字节索引，就像
+                 <a href="vim9.html#vim9script">vim9script</a>  里的处理方式一样。
+                如果 <code class="special">{end}</code> 省略，分片会继续到末项为止。
+                如果 <code class="special">{end}</code> 为 -1，则末项会被排除。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetList()-&gt;slice(offset)</code>
+<code class="example"></code>
+<code class="example"></code>
 sort(<code class="special">{list}</code> [, <code class="special">{func}</code> [, <code class="special">{dict}</code>]])                      <b class="vimtag"> <a name="sort()">sort()</a> </b> <b class="vimtag"> <a name="E702">E702</a> </b>
                 给 <code class="special">{list}</code> 项目排序，原地直接修改列表。返回 <code class="special">{list}</code>。
 
@@ -9680,6 +9807,14 @@ type(<code class="special">{expr}</code>)    返回数值，代表 <code class="
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mylist-&gt;type()</code>
 <code class="example"></code>
+<code class="example"></code>
+typename(<code class="special">{expr}</code>)                                        <b class="vimtag"> <a name="typename()">typename()</a> </b>
+                返回 <code class="special">{expr}</code> 类型的字符串描述。
+                例如: 
+<code class="example">                        echo typename([1, 2, 3])</code>
+<code class="example">                        list&lt;number&gt;</code>
+<code class="example"></code>
+<code class="example"></code>
 undofile(<code class="special">{name}</code>)                                        <b class="vimtag"> <a name="undofile()">undofile()</a> </b>
                 返回用于名为 <code class="special">{name}</code> 的文件的撤销文件名。使用 <a href="options.html#'undodir'">'undodir'</a> 选项并
                 寻找实际存在的目录。并不检查该撤销文件是否存在。
@@ -9807,9 +9942,10 @@ win_execute(<code class="special">{id}</code>, <code class="special">{command}</
                 示例: 
 <code class="example">                        call win_execute(winid, 'set syntax=python')</code>
                 和  <a href="eval.html#setwinvar()">setwinvar()</a>  相同但不触发自动命令也不实际显示语法高亮。
+
                                                         <b class="vimtag"> <a name="E994">E994</a> </b>
                 不是所有的命令都允许在弹出窗口中使用。
-                窗口 <code class="special">{id}</code> 不存在时不报错。
+                窗口 <code class="special">{id}</code> 不存在时不报错，且返回空字符串。
 
                 也可用作  <a href="eval.html#method">method</a> ，基是作为第二个参数传递的: 
 <code class="example">                        GetCommand()-&gt;win_execute(winid)</code>
@@ -9852,7 +9988,7 @@ win_gettype([<code class="special">{nr}</code>])                                
 
 win_gotoid(<code class="special">{expr}</code>)                                      <b class="vimtag"> <a name="win_gotoid()">win_gotoid()</a> </b>
                 转到 ID 为 <code class="special">{expr}</code> 的窗口。可能会改变当前标签页。
-                如果成功返回 1，如果找不到这样的窗口，返回零。
+                如果成功返回 TRUE，如果找不到这样的窗口，返回 FALSE。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetWinid()-&gt;win_gotoid()</code>
@@ -11335,7 +11471,7 @@ text...
 
                                                         <b class="vimtag"> <a name=":exe">:exe</a> </b> <b class="vimtag"> <a name=":execute">:execute</a> </b>
 :exe[cute] <code class="special">{expr1}</code> ..   计算 <code class="special">{expr1}</code>，返回的字符串作为 Ex 命令执行。
-                        多个参数用空格连接。如果不想有额外的空格，使用 "." 操
+                        多个参数用空格连接。如果不想有额外的空格，使用 ".." 操
                         作符来连接字符串使之成为一个参数。
                         <code class="special">{expr1}</code> 用作被处理的命令，命令行编辑的键不会被识别。
                         后面不能跟注释。

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="pattern.txt">pattern.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年9月
+<b class="vimtag"> <a name="pattern.txt">pattern.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2021年1月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -374,13 +374,16 @@ Vim 会自动为你选择合适的引擎。不过，如果你遇过问题或者�
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 魔术                                                         <b class="vimtag"> <a name="%2Fmagic">/magic</a> </b></h4>
-某些字符在模式中是按本义出现的。它们匹配自身。然而，当前面有一个反斜杠时，这些
-字符具有特殊的含义。
+某些字符，例如字母，在模式中是按本义出现的。它们匹配自身。然而，当前面有一个反
+斜杠时，这些字符具有特殊的含义。例如，"a" 匹配字母 "a"，而 "\a" 匹配任何字母字
+符。
 
 另外一些字符即使没有反斜杠也代表特殊的意思。它们反而需要一个反斜杠来匹配按本义
-出现的自身。
+出现的自身。例如 "." 匹配任何字符，而 "\." 匹配点号。
 
-一个字符是否按本义出现取决于 <a href="options.html#'magic'">'magic'</a> 选项以及下面将解释的条目。
+一个字符是否按本义出现取决于 <a href="options.html#'magic'">'magic'</a> 选项以及下面将解释的用于模式的条目。
+<a href="options.html#'magic'">'magic'</a> 选项应该总被置位，只不过为了和 Vi 兼容也可关闭。完整性起见，以下会提到
+<a href="options.html#'nomagic'">'nomagic'</a> 的效果，但建议不要使用。
                                                         <b class="vimtag"> <a name="%2F\m">/\m</a> </b> <b class="vimtag"> <a name="%2F\M">/\M</a> </b>
 使用 "\m" 会使得其后的模式的解释方式就如同设定了 <a href="options.html#'magic'">'magic'</a> 选项一样。而且将忽略
 <a href="options.html#'magic'">'magic'</a> 选项的实际值。
@@ -395,22 +398,21 @@ Vim 会自动为你选择合适的引擎。不过，如果你遇过问题或者�
 示例:
 <code class="section">在这之后: \v       \m       \M       \V         匹配 </code>
                 <a href="options.html#'magic'">'magic'</a> <a href="options.html#'nomagic'">'nomagic'</a>
-          $        $        $        \$         匹配行尾
+          a        a        a        a          'a'  (按本义)
+          \a       \a       \a       \a         字母字符
           .        .        \.       \.         匹配任何字符
+          \.       \.       .        .          英文句号 (按本义)
+          $        $        $        \$         匹配行尾
           *        *        \*       \*         前面匹配原的任意次重复
           ~        ~        \~       \~         最近替代字符串
-          ()       \(\)     \(\)     \(\)       组成为单个匹配原
-          |        \|       \|       \|         分隔可选分支
-          \a       \a       \a       \a         字母字符
+          ()       \(\)     \(\)     \(\)       当作单个匹配原的组
+          |        \|       \|       \|         空: 分隔可选分支
           \\       \\       \\       \\         反斜杠 (按本义)
-          \.       \.       .        .          英文句号 (按本义)
           \{       {        {        {          '{'  (按本义)
-          a        a        a        a          'a'  (按本义)
 
 <code class="notvi">{仅 Vim 支持 \m，\M，\v 和 \V}</code>
 
-建议始终将 <a href="options.html#'magic'">'magic'</a> 选项保持在缺省值 - <a href="options.html#'magic'">'magic'</a>。这可以避免移植性的麻烦。要使模
-式不受该选项值的影响，在模式前面加上 "\m" 或 "\M"。
+要使模式不受 <a href="options.html#'magic'">'magic'</a> 选项值的影响，在模式前面加上 "\m" 或 "\M"。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 模式项总览                                           <b class="vimtag"> <a name="pattern-overview">pattern-overview</a> </b></h4>                                                <b class="vimtag"> <a name="E865">E865</a> </b> <b class="vimtag"> <a name="E866">E866</a> </b> <b class="vimtag"> <a name="E867">E867</a> </b> <b class="vimtag"> <a name="E869">E869</a> </b>
@@ -1062,7 +1064,7 @@ x       一个没有特殊含义的单个字符，匹配其自身
                 \b      <code class="special">&lt;BS&gt;</code>
                 \n      换行符，见上  <a href="pattern.html#%2F[\n]">/[\n]</a> 
                 \d123   字符的十进制表示
-                \o40    字符的八进制表示，最大值为 0377
+                \o40    字符的八进制表示，最大值为 0o377
                 \x20    字符的十六进制表示，最大值为 0xff
                 \u20AC  多字节字符的十六进制表示，最大值为 0xffff
                 \U1234  多字节字符的十六进制表示，最大值为 0xffffffff
@@ -1095,7 +1097,7 @@ x       一个没有特殊含义的单个字符，匹配其自身
 
 \%d123  匹配十进制指定的字符。后面必须跟着非数位。
 \%o40   匹配八进制指定的字符，至多 0377。
-        小于 040 的数必须后面跟着非八进制的数位或非数位。
+        小于 0o40 的数必须后面跟着非八进制的数位或非数位。
 \%x2a   匹配不超过两位十六进制数位指定的字符。
 \%u20AC 匹配不超过四位十六进制数位指定的字符。
 \%U1234abcd     匹配不超过八位十六进制数位指定的字符，直到 0x7fffffff
