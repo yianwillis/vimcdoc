@@ -1,4 +1,4 @@
-*change.txt*    适用于 Vim 8.2 版本。	最近更新: 2020年12月
+*change.txt*    适用于 Vim 8.2 版本。	最近更新: 2021年4月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -554,6 +554,8 @@ MS-Windows 上，使用 GetTempFileName() 系统函数。
 			`:substitute` 和 'c'、'g'、'i'、'I' 和 'r' 标志位之间
 			的空格不是必需的，但在脚本里为了避免混淆起见，最好保留
 			它。
+			另见下面所述的两字母和三字母的重复 :substitute 的命令
+			|:substitute-repeat|。
 
 :[range]~[&][flags] [count]					*:~*
 			使用最后一次 :substitute 相同的替代字符串，但使用最近
@@ -758,20 +760,24 @@ magic	nomagic	  动作    ~
 		*:sge* *:sgi* *:sgI* *:sgl* *:sgn* *:sgp* *:sgr* *:sI* *:si*
 		*:sic* *:sIc* *:sie* *:sIe* *:sIg* *:sIl* *:sin* *:sIn* *:sIp*
 		*:sip* *:sIr* *:sir* *:sr* *:src* *:srg* *:sri* *:srI* *:srl*
-		*:srn* *:srp*
+		*:srn* *:srp* *:substitute-repeat*
 2-字母和 3-字母的 :substitute 命令 ~
+
+这些命令重复之前的 `:substitute` 命令，但带上指定标志位。首个字母总是 "s"，后
+跟一个或两个可能的标志位字符。例如，`:sce` 相当于 `:s///ce`。此表列出所有可能
+的组合，不是所有的标志位组合都可以，因为有些命令是其它命令的缩写。
 
      :substitute 命令列表
      |      c    e    g    i    I    n    p    l    r
-     | c  :sc  :sce :scg :sci :scI :scn :scp :scl  ---
+     | c  :sc  :sce :scg :sci :scI :scn :scp :scl
      | e
      | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
-     | i  :sic :sie  --- :si  :siI :sin :sip  --- :sir
+     | i  :sic :sie      :si  :siI :sin :sip      :sir
      | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
      | n
      | p
      | l
-     | r  :src  --- :srg :sri :srI :srn :srp :srl :sr
+     | r  :src      :srg :sri :srI :srn :srp :srl :sr
 
 例外:
      :scr  是  `:scriptnames`
@@ -1373,19 +1379,26 @@ C 注释的例子是 >
 号分隔选项字符。
 
 字符	 在 'formatoptions' 里代表的含义   ~
-
+							*fo-t*
 t	使用 'textwidth' 自动回绕文本
+							*fo-c*
 c	使用 'textwidth' 自动回绕注释，自动插入当前注释前导符。
+							*fo-r*
 r	在插入模式按回车时，自动插入当前注释前导符。
+							*fo-o*
 o	在普通模式按 'o' 或者 'O' 时，自动插入当前注释前导符。
+							*fo-q*
 q	允许 "gq" 排版时排版注释。
 	注意 排版不会影响空行或者只有注释前导符的行。这样的行开启一个新段落，
 	注释前导符的改变也是如此。
+							*fo-w*
 w	拖尾的空格指示下一行继续同一个段落。而以非空白字符结束的行结束一个段
 	落。
+							*fo-a*
 a	自动排版段落。每当文本被插入或者删除时，段落都会自动进行排版。参见
 	|auto-format|。
 	如果 'c' 标志位存在，该设置只对识别的注释有效。
+							*fo-n*
 n	在对文本排版时，识别编号的列表。实际上，这里使用了 'formatlistpat' 选
 	项，所以可以使用任何类型的列表。出现在数字之后的文本缩进距离被应用到后
 	面的行。数字之后可以有可选的 '.'、':'、')'、']' 或者 '}'。
@@ -1394,6 +1407,7 @@ n	在对文本排版时，识别编号的列表。实际上，这里使用了 'f
 		1. 第一项
 		   回绕文字
 		2. 第二项
+<							*fo-2*
 2	在对文本排版时，将段落第二行而非第一行的缩进距离应用到其后的行上。这适
 	用于第一行有特殊缩进需要的段落。注意 'autoindent' 也必须置位。
 	示例: >
@@ -1401,27 +1415,37 @@ n	在对文本排版时，识别编号的列表。实际上，这里使用了 'f
 		second line of the same paragraph
 		third line.
 <	也适用于注释内部，并忽略注释前导符。
+							*fo-v*
 v	Vi-兼容的插入模式自动回绕: 只有在当前输入命令键入的空白上才会分行。
 	(注意: 这并不能 100% Vi 兼容。Vi 在这方面有些 "意想不到的特性"，换而言
 	之，漏洞。它使用屏幕列而非实际的列。)
+							*fo-b*
 b	和 'v' 类似，但只有在键入空白时还没抵达或者刚到回绕边界的时候才会自动
 	回绕。如果一行在开始插入之前已经超过 'textwidth' 指定的长度，或者在到
 	达 'textwidth' 之时没有输入过空白，Vim 不会自动回绕。
+							*fo-l*
 l	插入模式不分行: 当一行已经超过 'textwidth' 时，插入命令不会自动排版。
+							*fo-m*
 m	可以在任何值高于 255 的多字节字符上分行。这对亚洲文本尤其有用，因为每
 	个字符都是单独的单位。
+							*fo-M*
 M	在连接行时，不要在多字节字符之前或之后插入空格。优先于 'B' 标志位。
+							*fo-B*
 B	在连接行时，不要在两个多字节字符之间插入空格。有 'M' 标志位时无效。
+							*fo-1*
 1	不要在单字母单词后分行。如有可能，在它之前分行。
+							*fo-]*
 ]	严格遵循 'textwidth' 选项。置位此标志位时，除非断行禁则
 	(line-break-prohibition rules) 使得行长不可能保留在限定的文本宽度以
 	内，行长不允许超出限定的文本宽度。此标志位主要用于 CJK 文本，并且仅在
 	'encoding' 是 "utf-8" 时才生效。
+							*fo-j*
 j	在合适的场合，连接行时删除注释前导符。例如，连接:
 		int i;   // the index ~
 		         // in the list ~
 	结果是:
 		int i;   // the index in the list ~
+							*fo-p*
 p	不在句号后的单个空白上断行。它的目的是和 'joinspaces' 和 |cpo-J| 相补
 	充，用于两个空格分隔的日常语句。例如，如果 'textwidth' 设为 28: >
 		Surely you're joking, Mr. Feynman!
