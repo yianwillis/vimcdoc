@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年1月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -302,7 +302,7 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">列表连接 </code>
-
+                                                        <b class="vimtag"> <a name="list-concatenation">list-concatenation</a> </b>
 两个列表可以用 "+" 操作符连接: 
 <code class="example">        :let longlist = mylist + [5, 6]</code>
 <code class="example">        :let mylist += [7, 8]</code>
@@ -433,7 +433,8 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 <code class="example"></code>
 <code class="section">For 循环 </code>
 
- <a href="eval.html#:for">:for</a>  循环为每个列表项目执行命令。一个变量被依次设为每个列表项目。例如: 
+ <a href="eval.html#:for">:for</a>  循环为每个列表、字符串或 Blob 中的项目执行命令。一个变量被依次设为每个
+列表项目。例如: 
 <code class="example">        :for item in mylist</code>
 <code class="example">        :   call Doit(item)</code>
 <code class="example">        :endfor</code>
@@ -462,6 +463,13 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 <code class="example">        :      echo "remainder: " . string(rest)</code>
 <code class="example">        :   endif</code>
 <code class="example">        :endfor</code>
+<code class="example"></code>
+对 Blob 而言，每次访问一个字节。
+
+对字符串而言，每次访问一个字符，包含组合字符在内。例如: 
+<code class="example">        for c in text</code>
+<code class="example">          echo 'This character is ' .. c</code>
+<code class="example">        endfor</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">列表的相关函数 </code>
@@ -1111,8 +1119,8 @@ expr8[expr1]            字符串或  <a href="eval.html#List">List</a>  的项�
 <code class="example">        :let c = getline(line("."))[col(".") - 1]</code>
 <code class="example"></code>
 Vim9 脚本里:
-如果 expr8 是字符串，结果是字符串，包含 expr8 里第 expr1 个单个字符。要用字节
-索引，使用  <a href="eval.html#strpart()">strpart()</a> 。
+如果 expr8 是字符串，结果是字符串，包含 expr8 里第 expr1 个单个字符 (包含任何
+的组合字符)。要用字节索引，使用  <a href="eval.html#strpart()">strpart()</a> 。
 
 索引 0 给出第一个字节。要小心: 文本列号可是从 1 开始的！
 
@@ -1136,7 +1144,8 @@ expr8[expr1a : expr1b]  子字符串或子列表                <b class="vimtag
 在老式 Vim 脚本里，索引是字节索引。这里不识别多字节编码，需用  <a href="eval.html#byteidx()">byteidx()</a>  来计
 算索引值。如果 expr8 为数值，先转换为字符串。
 
-在 Vim9 脚本里索引为字符索引。要使用字节索引，可用  <a href="eval.html#strpart()">strpart()</a> 。
+在 Vim9 脚本里索引为字符索引，包含组合字符。要使用字节索引，可用  <a href="eval.html#strpart()">strpart()</a> 。
+要用字符索引但不带组合字符，可用  <a href="eval.html#strcharpart()">strcharpart()</a> 。
 
 索引 expr1b 包含在内，亦即是闭的。要用开的索引值，可用  <a href="eval.html#slice()">slice()</a>  函数。
 
@@ -1425,8 +1434,11 @@ lambda expression                               <b class="vimtag"> <a name="expr
 
 参数可选。例如: 
 <code class="example">        :let F = {-&gt; 'error function'}</code>
-<code class="example">        :echo F()</code>
+<code class="example">        :echo F('ignored')</code>
         error function
+
+<code class="note">注意</code> Vim9 脚本中可用另一种匿名函数:  <a href="vim9.html#vim9-lambda">vim9-lambda</a> 。
+
                                                         <b class="vimtag"> <a name="closure">closure</a> </b>
 匿名函数表达式可能访问外层变量和参数。这通常被称为闭包。下例中匿名函数可以使用
 已存在于函数作用域的 "i" 和 "a:arg"。在函数返回后它们依然有效: 
@@ -1459,6 +1471,7 @@ lambda expression                               <b class="vimtag"> <a name="expr
 
 <code class="note">注意</code> execute() 是如何用来执行 Ex 命令的。这不怎样好看。
 
+在 Vim9 脚本中可用命令块，见  <a href="vim9.html#inline-function">inline-function</a> 。
 
 匿名函数表达式使用的内部名形如 '<code class="special">&lt;lambda&gt;</code>42'。如果有关于某匿名函数的错误，可以
 用下述命令查看它的定义: 
@@ -1888,6 +1901,12 @@ v:null          空字符串。用于在 JSON 里填入 "null"。见  <a href="e
 <code class="section">                        v:null </code>
                 这样 eval() 可以把该字符串解析回相同的值。只读。
 
+                                        <b class="vimtag"> <a name="v:numbermax">v:numbermax</a> </b> <b class="vimtag"> <a name="numbermax-variable">numbermax-variable</a> </b>
+v:numbermax     数值的最大值。
+
+                                        <b class="vimtag"> <a name="v:numbermin">v:numbermin</a> </b> <b class="vimtag"> <a name="numbermin-variable">numbermin-variable</a> </b>
+v:numbermin     数值的最小值 (为负数)。
+
                                         <b class="vimtag"> <a name="v:numbersize">v:numbersize</a> </b> <b class="vimtag"> <a name="numbersize-variable">numbersize-variable</a> </b>
 v:numbersize    数值型的位数。通常为 64，但在某些系统上可能为 32。
 
@@ -2181,6 +2200,7 @@ assert_inrange(<code class="special">{lower}</code>, <code class="special">{uppe
                                 数值    断言 <code class="special">{actual}</code> 在指定范围内
 assert_match(<code class="special">{pat}</code>, <code class="special">{text}</code> [, <code class="special">{msg}</code>])
                                 数值    断言 <code class="special">{pat}</code> 匹配 <code class="special">{text}</code>
+assert_nobeep(<code class="special">{cmd}</code>)            数值    断言 <code class="special">{cmd}</code> 不导致响铃
 assert_notequal(<code class="special">{exp}</code>, <code class="special">{act}</code> [, <code class="special">{msg}</code>])
                                 数值    断言 <code class="special">{exp}</code> 不等于 <code class="special">{act}</code>
 assert_notmatch(<code class="special">{pat}</code>, <code class="special">{text}</code> [, <code class="special">{msg}</code>])
@@ -2300,6 +2320,8 @@ finddir(<code class="special">{name}</code> [, <code class="special">{path}</cod
 findfile(<code class="special">{name}</code> [, <code class="special">{path}</code> [, <code class="special">{count}</code>]])
                                 字符串  在 <code class="special">{path}</code> 里寻找文件 <code class="special">{name}</code>
 flatten(<code class="special">{list}</code> [, <code class="special">{maxdepth}</code>])  列表    展平 <code class="special">{list}</code>，最多到 <code class="special">{maxdepth}</code> 层
+flattennew(<code class="special">{list}</code> [, <code class="special">{maxdepth}</code>])
+                                列表    展平 <code class="special">{list}</code> 的一个备份
 float2nr(<code class="special">{expr}</code>)                数值    转换浮点数 <code class="special">{expr}</code> 为数值
 floor(<code class="special">{expr}</code>)                   浮点    <code class="special">{expr}</code> 向下取整
 fmod(<code class="special">{expr1}</code>, <code class="special">{expr2}</code>)          浮点    <code class="special">{expr1}</code> / <code class="special">{expr2}</code> 的浮点余数
@@ -2311,6 +2333,7 @@ foldlevel(<code class="special">{lnum}</code>)               数值    <code cla
 foldtext()                      字符串  关闭的折叠显示的行
 foldtextresult(<code class="special">{lnum}</code>)          字符串  <code class="special">{lnum}</code> 所在的关闭的折叠的文本
 foreground()                    数值    把 Vim 窗口带到前台
+fullcommand(<code class="special">{name}</code>)             字符串  得到 <code class="special">{name}</code> 的完整命令
 funcref(<code class="special">{name}</code> [, <code class="special">{arglist}</code>] [, <code class="special">{dict}</code>])
                                 函数引用  函数 <code class="special">{name}</code> 的引用
 function(<code class="special">{name}</code> [, <code class="special">{arglist}</code>] [, <code class="special">{dict}</code>])
@@ -2671,10 +2694,11 @@ str2list(<code class="special">{expr}</code> [, <code class="special">{utf8}</co
                                         值
 str2nr(<code class="special">{expr}</code> [, <code class="special">{base}</code> [, <code class="special">{quoted}</code>]])
                                 数值    把字符串转换为数值
-strcharpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])
+strcharlen(<code class="special">{expr}</code>)              数值    字符串 <code class="special">{expr}</code> 的字符长度
+strcharpart(<code class="special">{str}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code> [, <code class="special">{skipcc}</code>]])
                                 字符串  <code class="special">{str}</code> 从第 <code class="special">{start}</code> 字符开始的 <code class="special">{len}</code> 个
                                         字符
-strchars(<code class="special">{expr}</code> [, <code class="special">{skipcc}</code>])   数值    <code class="special">{expr}</code> 字符串的字符长度
+strchars(<code class="special">{expr}</code> [, <code class="special">{skipcc}</code>])   数值    <code class="special">{expr}</code> 字符串的字符计数
 strdisplaywidth(<code class="special">{expr}</code> [, <code class="special">{col}</code>]) 数值  <code class="special">{expr}</code> 字符串的显示长度
 strftime(<code class="special">{format}</code> [, <code class="special">{time}</code>])   字符串  使用指定格式排版时间
 strgetchar(<code class="special">{str}</code>, <code class="special">{index}</code>)      数值    从 <code class="special">{str}</code> 取得字符 <code class="special">{index}</code>
@@ -2882,6 +2906,7 @@ append(<code class="special">{lnum}</code>, <code class="special">{text}</code>)
                 缓冲区第 <code class="special">{lnum}</code> 行之下。
                 否则，把 <code class="special">{text}</code> 作为单个文本行，附加于当前缓冲区第 <code class="special">{lnum}</code> 行之
                 下。
+                接受任何项目，并转换为字符串。
                 <code class="special">{lnum}</code> 可以为零，用于在第一行前插入一行。如果失败 (<code class="special">{lnum}</code> 越
                 界)，返回 1，成功则返回 0。例如: 
 <code class="example">                        :let failed = append(line('$'), "# THE END")</code>
@@ -4241,7 +4266,8 @@ findfile(<code class="special">{name}</code> [, <code class="special">{path}</co
 flatten(<code class="special">{list}</code> [, <code class="special">{maxdepth}</code>])                                  <b class="vimtag"> <a name="flatten()">flatten()</a> </b>
                 展平 <code class="special">{list}</code>，最多到 <code class="special">{maxdepth}</code> 层。不给出 <code class="special">{maxdepth}</code> 时返回完
                 全无嵌套的  <a href="eval.html#List">List</a> ，如同 <code class="special">{maxdepth}</code> 为非常大的数值。
-                <code class="special">{list}</code> 在原位被修改，如果不想如此，请先创建备份。
+                <code class="special">{list}</code> 在原位被修改，如果不想如此，可用  <a href="eval.html#flattennew()">flattennew()</a> 。
+                Vim9 脚本中不能用 flatten()，必须使用  <a href="eval.html#flattennew()">flattennew()</a> 。
                                                                 <b class="vimtag"> <a name="E900">E900</a> </b>
                 <code class="special">{maxdepth}</code> 代表展平嵌套列表的最深层数。
                 <code class="special">{maxdepth}</code> 为零时，不修改 <code class="special">{list}</code>。
@@ -4254,6 +4280,10 @@ flatten(<code class="special">{list}</code> [, <code class="special">{maxdepth}<
                         [1, 2, 3, 4, 5] 
 <code class="example">                        :echo flatten([1, [2, [3, 4]], 5], 1)</code>
                         [1, 2, [3, 4], 5]
+
+flattennew(<code class="special">{list}</code> [, <code class="special">{maxdepth}</code>])                       <b class="vimtag"> <a name="flattennew()">flattennew()</a> </b>
+                同  <a href="eval.html#flatten()">flatten()</a> ，但先创建 <code class="special">{list}</code> 的备份。
+
 
 float2nr(<code class="special">{expr}</code>)                                        <b class="vimtag"> <a name="float2nr()">float2nr()</a> </b>
                 返回数值，即 <code class="special">{expr}</code> 省略小数点部分的结果。
@@ -4399,6 +4429,21 @@ foreground()    把 Vim 窗口带到前台。用于从客户发送到 Vim 服务
                 前台。这时应使用  <a href="eval.html#remote_foreground()">remote_foreground()</a> 。
                 {仅当使用 Win32、Athena、Motif 和 GTK GUI 版本和 Win32 控制台
                 版本时才有效}
+
+fullcommand(<code class="special">{name}</code>)                                             <b class="vimtag"> <a name="fullcommand()">fullcommand()</a> </b>
+                获取简短缩写命令的完整命令名；关于命令缩写，详见  <a href="usr_20.html#20.2">20.2</a> 。
+
+                <code class="special">{name}</code> 可以  <a href="cmdline.html#:">:</a>  开始，也可以包含 <code class="special">[range]</code>，这些部分被跳过，且不
+                会返回。
+                如果命令不存在或有二义性 (出现于用户定义函数)，返回空串。
+                Returns an empty string if a command doesn't exist or if it's
+                ambiguous (for user-defined functions).
+
+                例如  <code class="badlink">fullcommand('s')</code> 、`fullcommand(<code class="badlink">'sub'</code>)`、
+                 <code class="badlink">fullcommand(':%substitute')</code>  都返回 "substitute"。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetName()-&gt;fullcommand()</code>
 
                                                 <b class="vimtag"> <a name="funcref()">funcref()</a> </b>
 funcref(<code class="special">{name}</code> [, <code class="special">{arglist}</code>] [, <code class="special">{dict}</code>])
@@ -4555,6 +4600,12 @@ getbufinfo([<code class="special">{dict}</code>])
                                         <code class="notvi">{仅当编译时加入  <a href="various.html#+viminfo">+viminfo</a>  特性才有效}</code>
                         listed          若缓冲区在列表内，则为 TRUE。
                         lnum            在当前窗口里打开本缓冲区时所用的行号。
+                                        仅当该缓冲区在此窗口中曾经显示过才有
+                                        效。
+                                        如果要某个窗口最近已知的光标位置的行
+                                        号，可用  <a href="eval.html#line()">line()</a> : 
+<code class="example">                                                :echo line('.', {winid})</code>
+
                         linecount       缓冲区行数 (仅当缓冲区载入后才有效)
                         loaded          若缓冲区已载入则为 TRUE。
                         name            缓冲区文件的完整列表。
@@ -4729,6 +4780,8 @@ getcharmod()                                            <b class="vimtag"> <a na
 getcharpos(<code class="special">{expr}</code>)
                 得到  <code class="special">{expr}</code> 的位置。和  <a href="eval.html#getpos()">getpos()</a>  相同，但返回列表的列号是字
                 符索引而不是字节索引。
+                如果  <a href="eval.html#getpos()">getpos()</a>  返回很大的列号，如 2147483647，那么
+                getcharpos() 会返回末字符的字符索引。
 
                 示例:
                 如果光标在第五行文本 "여보세요" 的 '세' 时: 
@@ -5141,6 +5194,7 @@ getpos(<code class="special">{expr}</code>)  得到 <code class="special">{expr}
                 零，'&gt; 的列为一大数。
                 返回列表中的列号是行内的字节位置。要得行内的字符位置，用
                  <a href="eval.html#getcharpos()">getcharpos()</a> 。
+                列号可为一很大值，如 2147483647，这种情况代表 "在行尾之后"。
                 可以用来保存和恢复光标位置: 
 <code class="example">                        let save_a_mark = getpos("'a")</code>
 <code class="example">                        ...</code>
@@ -5243,6 +5297,7 @@ getreg([<code class="special">{regname}</code> [, 1 [, <code class="special">{li
                 如果 <code class="special">{regname}</code> 对应的寄存器没有设过，返回空列表。
 
                 如果没有指定 <code class="special">{regname}</code>，使用  <a href="eval.html#v:register">v:register</a> 。
+                 <a href="vim9.html#Vim9-script">Vim9-script</a>  中 <code class="special">{regname}</code> 必须为单个字符。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetRegname()-&gt;getreg()</code>
@@ -5263,6 +5318,7 @@ getreginfo([<code class="special">{regname}</code>])                            
                 如果 <code class="special">{regname}</code> 非法或对应的寄存器没有设过，返回空列表。
                 如果没有指定 <code class="special">{regname}</code>，使用  <a href="eval.html#v:register">v:register</a> 。
                 返回的字典可传递给  <a href="eval.html#setreg()">setreg()</a> 。
+                 <a href="vim9.html#Vim9-script">Vim9-script</a>  中 <code class="special">{regname}</code> 必须为单个字符。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetRegname()-&gt;getreginfo()</code>
@@ -5276,6 +5332,7 @@ getregtype([<code class="special">{regname}</code>])                            
                     ""                  空或者未知的寄存器
                 &lt;<code class="keystroke">CTRL-V</code>&gt; 是一个字符，其值为 0x16。
                 如果没有指定 <code class="special">{regname}</code>，使用  <a href="eval.html#v:register">v:register</a> 。
+                 <a href="vim9.html#Vim9-script">Vim9-script</a>  中 <code class="special">{regname}</code> 必须为单个字符。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetRegname()-&gt;getregtype()</code>
@@ -5375,7 +5432,7 @@ getwininfo([<code class="special">{winid}</code>])                              
                 如果没有给出 <code class="special">{winid}</code>，返回所有标签页的所有窗口的信息。
 
                 每个列表项是包含以下项目的  <a href="eval.html#Dictionary">Dictionary</a> :
-                        botline         最近显示的缓冲区行
+                        botline         最近完整显示的缓冲区行
                         bufnr           窗口中的缓冲区号
                         height          窗口高度 (不计窗口工具条 winbar)
                         loclist         1 如果显示了位置列表
@@ -5390,11 +5447,11 @@ getwininfo([<code class="special">{winid}</code>])                              
                         width           窗口宽度
                         winbar          1 如果窗口有工具条，0 反之
                         wincol          窗口最左侧屏幕列，
-                                         <a href="eval.html#win_screenpos()">win_screenpos()</a>  中的 col
+                                         <a href="eval.html#win_screenpos()">win_screenpos()</a>  中的 "col"
                         winid            <a href="windows.html#window-ID">window-ID</a> 
                         winnr           窗口号
                         winrow          窗口最顶侧屏幕行，
-                                         <a href="eval.html#win_screenpos()">win_screenpos()</a>  中的 row`
+                                         <a href="eval.html#win_screenpos()">win_screenpos()</a>  中的 "row"
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetWinnr()-&gt;getwininfo()</code>
@@ -6560,7 +6617,7 @@ matchaddpos(<code class="special">{group}</code>, <code class="special">{pos}</c
                 重画屏幕。主要用于需要快速增加或删除匹配的场合，如匹配括号的高
                 亮。
 
-                <code class="special">{pos}</code> 列表包含以下项目之一:
+                <code class="special">{pos}</code> 是位置的列表。每个位置为以下之一:
                 - 数值。该行整行被高亮。首行的行号为 1。
                 - 单个数值的列表。如 <code class="special">[23]</code>。该行整行被高亮。
                 - 包含两个数值的列表，如 [23, 11]。前面的数是行号，后面的是列
@@ -6569,7 +6626,7 @@ matchaddpos(<code class="special">{group}</code>, <code class="special">{pos}</c
                 - 包含三个数值的列表，如 [23, 11, 3]。同上，但第三个数给出高亮
                   字节计的长度。
 
-                最多可有 8 个位置。
+                <code class="special">{pos}</code> 中最多可有 8 个位置。
 
                 示例: 
 <code class="example">                        :highlight MyGroup ctermbg=green guibg=green</code>
@@ -6577,8 +6634,7 @@ matchaddpos(<code class="special">{group}</code>, <code class="special">{pos}</c
                 模式的删除: 
 <code class="example">                        :call matchdelete(m)</code>
 <code class="example"></code>
-                 <a href="eval.html#matchaddpos()">matchaddpos()</a>  加入的匹配在  <a href="eval.html#getmatches()">getmatches()</a>  返回时带有项目
-                "pos1"、"pos2"，等等，其值为 <code class="special">{pos}</code> 项目提供的列表。
+                 <a href="eval.html#getmatches()">getmatches()</a>  返回  <a href="eval.html#matchaddpos()">matchaddpos()</a>  加入的匹配。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetGroup()-&gt;matchaddpos([23, 11])</code>
@@ -8277,6 +8333,8 @@ setline(<code class="special">{lnum}</code>, <code class="special">{text}</code>
 
                 <code class="special">{lnum}</code> 的用法同  <a href="eval.html#getline()">getline()</a> 。
                 如果 <code class="special">{lnum}</code> 正好在末行之下，在末行之下添加 <code class="special">{text}</code>。
+                <code class="special">{text}</code> 可以是任何类型或任何类型的列表，每个项目会被转换为字符
+                串。
 
                 如果成功，返回 FALSE。如果失败 (多数是因为 <code class="special">{lnum}</code> 不合法) 返回
                 TRUE。
@@ -8460,6 +8518,7 @@ setqflist(<code class="special">{list}</code> [, <code class="special">{action}<
 setreg(<code class="special">{regname}</code>, <code class="special">{value}</code> [, <code class="special">{options}</code>])
                 设置寄存器 <code class="special">{regname}</code> 的值为 <code class="special">{value}</code>。
                 如果 <code class="special">{regname}</code> 为 "" 或 "@"，使用无名寄存器 '"'。
+                 <a href="vim9.html#Vim9-script">Vim9-script</a>  中 <code class="special">{regname}</code> 必须为单个字符。
 
                 <code class="special">{value}</code> 可以是  <a href="eval.html#getreg()">getreg()</a>  或  <a href="eval.html#getreginfo()">getreginfo()</a>  返回的任何类型，包
                 括  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dict">Dict</a> 。
@@ -8679,7 +8738,7 @@ sinh(<code class="special">{expr}</code>)                                       
 slice(<code class="special">{expr}</code>, <code class="special">{start}</code> [, <code class="special">{end}</code>])                        <b class="vimtag"> <a name="slice()">slice()</a> </b>
                 类似  <a href="eval.html#slice">slice</a>  表达式 "expr[start : end]"，但 "end" 的用法是闭
                 的。而且对字符串而言，索引使用的是字符索引而不是字节索引，就像
-                 <a href="vim9.html#vim9script">vim9script</a>  里的处理方式一样。
+                 <a href="vim9.html#vim9script">vim9script</a>  里的处理方式一样。另外，不计算组合字符。
                 如果 <code class="special">{end}</code> 省略，分片会继续到末项为止。
                 如果 <code class="special">{end}</code> 为 -1，则末项会被排除。
 
@@ -8992,9 +9051,22 @@ str2nr(<code class="special">{expr}</code> [, <code class="special">{base}</code
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetText()-&gt;str2nr()</code>
 <code class="example"></code>
-strcharpart(<code class="special">{src}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code>])                   <b class="vimtag"> <a name="strcharpart()">strcharpart()</a> </b>
+strcharlen(<code class="special">{expr}</code>)                                      <b class="vimtag"> <a name="strcharlen()">strcharlen()</a> </b>
+                返回数值，给出字符串 <code class="special">{expr}</code> 中的字符数。忽略组合字符。
+                 <a href="eval.html#strchars()">strchars()</a>  可计算组合字符分别计算的字符数目。
+
+                另见  <a href="eval.html#strlen()">strlen()</a> 、 <a href="eval.html#strdisplaywidth()">strdisplaywidth()</a>  和  <a href="eval.html#strwidth()">strwidth()</a> 。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetText()-&gt;strcharlen()</code>
+<code class="example"></code>
+<code class="example"></code>
+strcharpart(<code class="special">{src}</code>, <code class="special">{start}</code> [, <code class="special">{len}</code> [, <code class="special">{skipcc}</code>]])              <b class="vimtag"> <a name="strcharpart()">strcharpart()</a> </b>
                 和  <a href="eval.html#strpart()">strpart()</a>  类似，但用字符索引和长度而不是字节索引和长度。
-                使用字符索引时如果字符不存在，假定有一个字符存在。例如: 
+                <code class="special">{skipcc}</code> 省略或为零时，组合字符也算一个字符。
+                <code class="special">{skipcc}</code> 设为 1 时，计算时忽略组合字符，这和  <a href="eval.html#slice()">slice()</a>  类似。
+                使用字符索引时如果字符不存在，返回值里忽略之但算作一个字符。例
+                如: 
 <code class="example">                        strcharpart('abc', -1, 2)</code>
                 返回 'a'。
 
@@ -9005,6 +9077,7 @@ strchars(<code class="special">{expr}</code> [, <code class="special">{skipcc}</
                 返回数值，给出字符串 <code class="special">{expr}</code> 中的字符数。
                 <code class="special">{skipcc}</code> 省略或为零时，组合字符也算一个字符。
                 <code class="special">{skipcc}</code> 设为 1 时，计算时忽略组合字符。
+                 <a href="eval.html#strcharlen()">strcharlen()</a>  的行为总是如此。
                 另见  <a href="eval.html#strlen()">strlen()</a> 、 <a href="eval.html#strdisplaywidth()">strdisplaywidth()</a>  和  <a href="eval.html#strwidth()">strwidth()</a> 。
 
                 <code class="special">{skipcc}</code> 只在 7.4.755 之后才出现。为了后向兼容，可以这样定义
@@ -10340,7 +10413,7 @@ gui_mac                 编译时加入了 Macintosh GUI。
 gui_motif               编译时加入了 Motif GUI。
 gui_photon              编译时加入了 Photon GUI。
 gui_running             Vim 在 GUI 上运行，或者 GUI 将很快启动。
-gui_win32               编译时加入了 MS Windows Win32 GUI。
+gui_win32               编译时加入了 MS-Windows Win32 GUI。
 gui_win32s              同上，使用了 Win32s 系统 (Windows 3.1)
 haiku                   Vim 的 Haiku 版本。
 hangul_input            编译时加入了韩语输入的支持。 <a href="hangulin.html#hangul">hangul</a> 
@@ -11167,8 +11240,8 @@ text...
                         到它被解锁为止)。
                         加锁的变量可以删除: 
 <code class="example">                                :lockvar v</code>
-<code class="example">                                :let v = 'asdf'         " fails!</code>
-<code class="example">                                :unlet v</code>
+<code class="example">                                :let v = 'asdf'   " 失败！</code>
+<code class="example">                                :unlet v          " 没问题</code>
                                                         <b class="vimtag"> <a name="E741">E741</a> </b> <b class="vimtag"> <a name="E940">E940</a> </b>
                         如果试图修改加锁的变量，你会得到错误信息: "E741: Value
                         is locked: <code class="special">{name}</code>"。
@@ -11454,6 +11527,11 @@ text...
                         要得到铃声: 
 <code class="example">                :exe "normal \&lt;Esc&gt;"</code>
 
+
+:echoc[onsole] <code class="special">{expr1}</code> ..                               <b class="vimtag"> <a name=":echoc">:echoc</a> </b> <b class="vimtag"> <a name=":echoconsole">:echoconsole</a> </b>
+                        用于测试: 类似于  <a href="eval.html#:echomsg">:echomsg</a>  但在 GUI 中运行且原来从终
+                        端启动时，把文本写到标准输出。
+
                                                         <b class="vimtag"> <a name=":eval">:eval</a> </b>
 :eval <code class="special">{expr}</code>            计算 <code class="special">{expr}</code> 并忽略其返回值。例如: 
 <code class="example">                                :eval Getlist()-&gt;Filter()-&gt;append('$')</code>
@@ -11477,7 +11555,7 @@ text...
                         后面不能跟注释。
                         示例: 
 <code class="example">                :execute "buffer" nextbuf</code>
-<code class="example">                :execute "normal" count . "w"</code>
+<code class="example">                :execute "normal" count .. "w"</code>
 
                         ":execute" 可以用来把命令附加到不能接受 '|' 的命令后
                         面。比如: 
@@ -11491,8 +11569,8 @@ text...
                         要谨慎对待文件名中特殊字符的正确转义。 <a href="eval.html#fnameescape()">fnameescape()</a> 
                         可用于 Vim 命令， <a href="eval.html#shellescape()">shellescape()</a>  可用于  <a href="various.html#:!">:!</a>  命令。示
                         例: 
-<code class="example">                :execute "e " . fnameescape(filename)</code>
-<code class="example">                :execute "!ls " . shellescape(filename, 1)</code>
+<code class="example">                :execute "e " .. fnameescape(filename)</code>
+<code class="example">                :execute "!ls " .. shellescape(filename, 1)</code>
 
                         <code class="note">注意</code>: 执行的字符串可以是任何命令行，但开始或结束一个
                         "if"、"while" 和 "for" 命令不能保证没有问题，因为跳过

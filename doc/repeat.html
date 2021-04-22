@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2021年1月
+<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2021年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -321,12 +321,13 @@ q                       停止记录。(<code class="note">注意</code> 实现�
                         错误。你可能要重写脚本以支持旧版本的 Vim 或更新 Vim 版
                         本。版本间的变化见  <a href="eval.html#vimscript-version">vimscript-version</a> 。
 
-:vim9script <code class="special">[noclear]</code>                           <b class="vimtag"> <a name=":vim9">:vim9</a> </b> <b class="vimtag"> <a name=":vim9script">:vim9script</a> </b>
+:vim9s[cript] <code class="special">[noclear]</code>                         <b class="vimtag"> <a name=":vim9s">:vim9s</a> </b> <b class="vimtag"> <a name=":vim9script">:vim9script</a> </b>
                         标记本脚本文件包含  <a href="vim9.html#Vim9-script">Vim9-script</a>  命令。另见
                          <a href="vim9.html#vim9-namespace">vim9-namespace</a> 。
                         必须为文件的首个命令。
                         关于 <code class="special">[noclear]</code> 见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
                         不带  <a href="various.html#+eval">+eval</a>  特性时，这会改变一些命令的语法。
+                         <a href="vim9.html#:vim9cmd">:vim9cmd</a>  可用于执行使用 Vim9 语法和语义的单个命令。
 
                                                 <b class="vimtag"> <a name=":scr">:scr</a> </b> <b class="vimtag"> <a name=":scriptnames">:scriptnames</a> </b>
 :scr[iptnames]          列出所有执行过的脚本名字，以它们初次执行之顺序排列。排
@@ -585,9 +586,9 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
    opt/fooextra/doc/tags                " 帮助标签
 
 这样用户就可以: 
-<code class="example">        mkdir ~/.vim/pack/myfoobar</code>
-<code class="example">        cd ~/.vim/pack/myfoobar</code>
-<code class="example">        git clone https://github.com/you/foobar.git</code>
+<code class="example">        mkdir ~/.vim/pack</code>
+<code class="example">        cd ~/.vim/pack</code>
+<code class="example">        git clone https://github.com/you/foobar.git myfoobar</code>
 <code class="example"></code>
 这里 "myfoobar" 是用户可选的名字，唯一的条件是和其它软件包的名字不同。
 
@@ -774,8 +775,8 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
 <code class="example">        breakadd file */explorer.vim</code>
 只匹配 ".../plugin/explorer.vim"。
 
-对函数名的匹配基于 ":function" 输出结果里它的显示方式。对于局部函数，这意味着
-函数名前会附加上类似 "<code class="special">&lt;SNR&gt;</code>99_" 的字符串。
+匹配所用的函数名可参见 ":function" 的输出结果。不过，对于局部函数，会忽略形如
+"<code class="special">&lt;SNR&gt;</code>99_" 的脚本特定前缀，以便在不知脚本 ID 时可以查找局部于脚本的函数。
 
 <code class="note">注意</code>函数先被载入然后再执行。载入时，检查 "file" 断点，而执行时检查 "func" 断
 点。
@@ -823,10 +824,11 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>8. 刨视                                                 <b class="vimtag"> <a name="profile">profile</a> </b> <b class="vimtag"> <a name="profiling">profiling</a> </b></h4>
-进行刨视意味着 Vim 测量执行函数和/或脚本时使用的时间。为此，需要  <a href="various.html#+profile">+profile</a>  特
-性。只有 Vim 编译时使用了 "huge" (巨大) 特性包才会包含此特性。
+刨视功能会使 Vim 测量执行函数和/或脚本时使用的时间。为此，需要  <a href="various.html#+profile">+profile</a>  特
+性。Vim 编译中使用 "huge" (巨大) 特性包时会包含此特性。
 
-你也可以用  <a href="eval.html#reltime()">reltime()</a>  函数来测量时间。这只需要  <a href="various.html#+reltime">+reltime</a>  特性，它更常出现。
+你也可以用  <a href="eval.html#reltime()">reltime()</a>  函数来测量时间。这只需要  <a href="various.html#+reltime">+reltime</a>  特性，它在更多特性
+包中出现。
 
 关于语法高亮的刨视可见  <a href="syntax.html#:syntime">:syntime</a> 。
 
@@ -867,8 +869,12 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
                 停止对指定参数的刨视， <a href="repeat.html#:breakdel">:breakdel</a>  说明其中的参数。
 
 
-刨视总是用 ":profile start fname" 开始。Vim 退出时写入结果文件。这里是输出的示
-例，加上行号是为了方便解释:
+刨视总是用 ":profile start fname" 开始。Vim 退出时写入结果文件。例如，要刨视一
+个特定函数: 
+<code class="example">        profile start /tmp/vimprofile</code>
+<code class="example">        profile func MyFunc</code>
+<code class="example"></code>
+这里是输出的示例，加上行号是为了方便解释:
 
 <code class="section">  1 FUNCTION  Test2() </code>
 <code class="section">  2 Called 1 time </code>

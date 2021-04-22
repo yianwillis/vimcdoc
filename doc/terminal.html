@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2021年1月
+<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2021年4月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -148,11 +148,25 @@
 打开终端窗口并设置其 <a href="options.html#'buftype'">'buftype'</a> 为 "terminal" 后，激活  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a>  自动命
 令。这样便可以设置为其窗口和缓冲区特定的选项。例如: 
 <code class="example">   au TerminalWinOpen * setlocal bufhidden=hide</code>
-<code class="example"></code>
-也有  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  事件，但隐藏终端也触发此事件，此时当前窗口和缓冲区未必用于
-新终端。这里可能需要 <code class="special">&lt;abuf&gt;</code>，它被设为终端缓冲区。例如: 
-<code class="example">    au TerminalOpen * call setbufvar(+expand('&lt;abuf&gt;'), '&amp;colorcolumn', 123)</code>
-<code class="example"></code>
+这只适用于未隐藏的终端。
+
+要同时支持隐藏和非隐藏终端，可用以下设置，它适用于缓冲区局部和窗口局部选项: 
+<code class="example">   au TerminalWinOpen,BufWinEnter * if &amp;buftype == 'terminal'</code>
+<code class="example">        \ | setlocal bufhidden=hide colorcolumn=123</code>
+<code class="example">        \ | endif</code>
+<code class="note">注意</code>对隐藏终端而言，直到终端不再隐藏时才会设置以上选项。
+
+也有  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  事件，请记住隐藏终端也触发此事件，此时当前窗口和缓冲区未必
+用于新终端。
+这里可能需要 <code class="special">&lt;abuf&gt;</code>，它被设为终端缓冲区。例如: 
+<code class="example">    au TerminalOpen * call setbufvar(expand('&lt;abuf&gt;')-&gt;str2nr(),</code>
+<code class="example">            \ '&amp;termwinscroll', 1000)</code>
+对窗口局部选项而言，选项的设置要延迟到终端窗口创建时 (只适用于隐藏终端): 
+<code class="example">    au TerminalOpen * exe printf(</code>
+<code class="example">        \    'au BufWinEnter &lt;buffer=%d&gt; ++once setlocal colorcolumn=%d',</code>
+<code class="example">        \       expand('&lt;abuf&gt;')-&gt;str2nr(), 123)</code>
+非隐藏终端可用  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a> 。
+
 鼠标事件 (点击和拖曳) 会传给终端。而鼠标移动事件只有 Vim 自身接收到时才会传
 递。对终端而言，这意味着 <a href="options.html#'balloonevalterm'">'balloonevalterm'</a> 打开。
 
@@ -638,6 +652,7 @@ term_scrape(<code class="special">{buf}</code>, <code class="special">{row}</cod
                     "attr"      单元格的属性，可用  <a href="terminal.html#term_getattr()">term_getattr()</a>  获取个别
                                 标志位
                     "width"     单元格宽度: 1 或 2
+                双宽单元格只对应一个项目，这意味着列表长度可能小于终端的宽度。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetBufnr()-&gt;term_scrape(row)</code>
