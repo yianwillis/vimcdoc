@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -81,7 +81,7 @@
 - 一个是为 ':' 命令准备的
 - 一个是为搜索字符串准备的
 - 一个是为表达式准备的
-- 一个是为输入行准备的，用来输入  <a href="eval.html#input()">input()</a>  函数。
+- 一个是为输入行准备的，用来输入  <a href="builtin.html#input()">input()</a>  函数。
 - 一个是为调试模式下的命令准备的
 
 这些记录是完全分开的。每一种输入模式只能访问与之相关的一个记录。
@@ -113,6 +113,7 @@
 <code class="keystroke">CTRL-SHIFT</code>-V                            <b class="vimtag"> <a name="c_CTRL-SHIFT-V">c_CTRL-SHIFT-V</a> </b> <b class="vimtag"> <a name="c_CTRL-SHIFT-Q">c_CTRL-SHIFT-Q</a> </b>
 <code class="keystroke">CTRL-SHIFT</code>-Q    与 <code class="keystroke">CTRL-V</code> 类似，除非激活了  <a href="map.html#modifyOtherKeys">modifyOtherKeys</a> ，此时插入带修饰符
                 的键的转义序列。
+                GUI 里插入  <a href="intro.html#key-notation">key-notation</a> ，不经简化。
 
                                                         <b class="vimtag"> <a name="c_%3CLeft%3E">c_&lt;Left&gt;</a> </b> <b class="vimtag"> <a name="c_Left">c_Left</a> </b>
 <code class="special">&lt;Left&gt;</code>          光标左移
@@ -185,6 +186,9 @@
                                 如果结果为  <a href="eval.html#List">List</a>  列表，其中的每一项当作一行。
                                 当然其中内容也可包含换行符。
                                 如果结果为浮点数，自动转换为字符串。
+                                <code class="note">注意</code> 如果只想要移动光标而不插入内容，要确保表
+                                达式计算为空串。例如: 
+<code class="example">                                        &lt;C-R&gt;&lt;C-R&gt;=setcmdpos(2)[-1]&lt;CR&gt;</code>
                 与寄存器相关的内容请参见  <a href="change.html#registers">registers</a> 。
                 实现细节: 如果使用  <a href="eval.html#expression">expression</a>  寄存器并且调用 setcmdpos()，那
                 么在插入返回的文本之前设置光标位置。使用 <code class="keystroke">CTRL-R</code> <code class="keystroke">CTRL-R</code> 在插入
@@ -222,16 +226,16 @@
                 式，用 <code class="special">&lt;Enter&gt;</code> 键提交表达式。这项功能在映射里十分有用。参见
                  <a href="eval.html#expression">expression</a> 。
                 欲了解插入表达式结果的相关信息，请参阅  <a href="cmdline.html#c_CTRL-R_%20">c_CTRL-R_=</a> 。
-                 <a href="eval.html#getcmdline()">getcmdline()</a> 、 <a href="eval.html#getcmdline()">getcmdline()</a>  和  <a href="eval.html#getcmdpos()">getcmdpos()</a>  函数在这里很有
+                 <a href="builtin.html#getcmdline()">getcmdline()</a> 、 <a href="builtin.html#getcmdline()">getcmdline()</a>  和  <a href="builtin.html#getcmdpos()">getcmdpos()</a>  函数在这里很有
                 用。
                 缺省，光标的位置不会改变，除非光标正位于行末，那么它还会停留在
                 行末。
-                不过，可以用  <a href="eval.html#setcmdpos()">setcmdpos()</a>  来自行设置光标的位置。
+                不过，可以用  <a href="builtin.html#setcmdpos()">setcmdpos()</a>  来自行设置光标的位置。
                 使用沙盘  <a href="eval.html#sandbox">sandbox</a>  计算表达式以避免讨厌的副作用。
                 例如: 
 <code class="example">                        :cmap &lt;F7&gt; &lt;C-\&gt;eAppendSome()&lt;CR&gt;</code>
 <code class="example">                        :func AppendSome()</code>
-<code class="example">                           :let cmd = getcmdline() . " Some()"</code>
+<code class="example">                           :let cmd = getcmdline() .. " Some()"</code>
 <code class="example">                           :" place the cursor on the )</code>
 <code class="example">                           :call setcmdpos(strlen(cmd))</code>
 <code class="example">                           :return cmd</code>
@@ -644,6 +648,14 @@ Ex 命令有几个特别的地方:
 
 一些基本的内容在用户手册的  <a href="usr_10.html#10.3">10.3</a>  里解释过。
 
+ <a href="vim9.html#Vim9">Vim9</a>  脚本里要表示范围，必须在前加上冒号，以免和继续行起歧义。例如，"+" 可以
+用作范围，也可以是表达式的继续: 
+<code class="example">        var result = start</code>
+<code class="example">        + print</code>
+如果 "+" 用作范围，须在前加上冒号: 
+<code class="example">        var result = start</code>
+<code class="example">        :+ print</code>
+
                                                 <b class="vimtag"> <a name=":,">:,</a> </b> <b class="vimtag"> <a name=":;">:;</a> </b>
 当范围被 ';' 分割时，在解释下一个行限定符之前，光标的位置会被设置为前一个行限
 定符确定的行值。这种情况不会发生在 ',' 上。例如: 
@@ -658,21 +670,21 @@ Ex 命令有几个特别的地方:
 若行限定符的个数多于命令需要的数量，则第一个 (或前几个) 限定符被忽略。
 
 行号可以用下列符号限定:                         <b class="vimtag"> <a name=":range">:range</a> </b> <b class="vimtag"> <a name="{address}">{address}</a> </b>
-        <code class="special">{number}</code>        行号
+        <code class="special">{number}</code>        行号  <b class="vimtag"> <a name="E1247">E1247</a> </b>
         .               当前行                                    <b class="vimtag"> <a name=":.">:.</a> </b>
         $               文件的最后一行                            <b class="vimtag"> <a name=":$">:$</a> </b>
         %               相当于 1,$ (整个文件)                     <b class="vimtag"> <a name=":%">:%</a> </b>
         't              标记 t 的位置 (小写)                      <b class="vimtag"> <a name=":'">:'</a> </b>
         'T              标记 T 的位置 (大写)；如果标记存在于另一个文件中，则不
                         能在范围里应用。
-        /<code class="special">{pattern}</code>[/]   下一个 匹配 <code class="special">{pattern}</code> 的行                <b class="vimtag"> <a name=":%2F">:/</a> </b>
-        ?<code class="special">{pattern}</code>[?]   前一个 匹配 <code class="special">{pattern}</code> 的行                <b class="vimtag"> <a name=":?">:?</a> </b>
-        \/              下一个 与前次搜索模式匹配的行
-        \?              前一个 与前次搜索模式匹配的行
-        \&amp;              下一个 与前次替代模式匹配的行
+        /<code class="special">{pattern}</code>[/]   下一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":%2F">:/</a> </b>
+        ?<code class="special">{pattern}</code>[?]   前一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":?">:?</a> </b>
+        \/              下一个与前次搜索模式匹配的行
+        \?              前一个与前次搜索模式匹配的行
+        \&amp;              下一个与前次替代模式匹配的行
 
 这些符号后面可以跟 (一个或多个) '+' 或 '-' 和一个可选的数字。该数字会与前面的
-行号相加或相减。若该数字省略，则认为是 1。
+行号相加或相减。若该数字省略，则认为是 1。如果 '+' 或 '-' 前为空，使用当前行。
 
 在 <code class="special">{pattern}</code> 之后需要由 "/" 或 "?" 来分隔匹配模式与其之后的内容。
 
@@ -696,7 +708,7 @@ Ex 命令有几个特别的地方:
 <code class="example"></code>
 有些命令后面可以跟一个数量。这个数量被用作从上一个行限定符 (默认值是当前光标所
 在的行) 开始计算的行数。可以使用范围但是不使用文件名作为参数的命令可以接受这种
-数量参数 (因为文件名也可能是一个数字)。
+数量参数 (因为文件名也可能是一个数字)。此数量不能为负。
 
 例如: 
 <code class="example">        :s/x/X/g 5      用 'X' 替换当前行和下面四行里的 'x'。</code>
@@ -725,15 +737,18 @@ Ex 命令有几个特别的地方:
 <code class="example">                3:d&lt;CR&gt;         被翻译成: .,.+2d&lt;CR&gt;</code>
 
 
-可视模式和范围                                          <b class="vimtag"> <a name="v_:">v_:</a> </b>
-                                                        <b class="vimtag"> <a name=":star-visual-range">:star-visual-range</a> </b>
+可视模式和范围
+                                                        <b class="vimtag"> <a name="v_:">v_:</a> </b>
 <code class="special">{Visual}</code>:       将可视模式中选择的区域用作命令行模式的范围。 <code class="badlink">:'&lt;,'&gt;</code>  被用来表
                 示这种范围。这样就可以在不同的选择区域上，从命令历史列表里选择
                 相似的命令来重复执行操作。
+
+:*                                              <b class="vimtag"> <a name=":star">:star</a> </b> <b class="vimtag"> <a name=":star-visual-range">:star-visual-range</a> </b>
                 如果已经退出可视模式，更简短的方法是用  <code class="badlink">:*</code>  来得到可视区域的范
                 围。需要 <a href="options.html#'cpo'">'cpo'</a> 里不出现 "*"，参见  <a href="options.html#cpo-star">cpo-star</a> 。否则，只能通过输
                 入  <code class="badlink">:'&lt;,'&gt;</code>  得到。
 
+                关于 "*" 何时会出现在 <a href="options.html#'cpo'">'cpo'</a> 里，可见  <code class="badlink">:star-compatible</code> 。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>5. Ex 命令行的标志位                                    <b class="vimtag"> <a name="ex-flags">ex-flags</a> </b></h4>
@@ -751,11 +766,11 @@ Ex 命令有几个特别的地方:
 可以使用 <code class="keystroke">CTRL-R</code> 命令。例如，"%" 表示当前文件名，而 <code class="keystroke">CTRL-R</code> % 则立即插入当前文件
 名。见  <a href="cmdline.html#c_CTRL-R">c_CTRL-R</a> 。
 
-<code class="note">备注</code>: 在 Vim 脚本中要避免特殊字符的效果，可用  <a href="eval.html#fnameescape()">fnameescape()</a> 。另见  <a href="editing.html#`%20">`=</a> 。
+<code class="note">备注</code>: 在 Vim 脚本中要避免特殊字符的效果，可用  <a href="builtin.html#fnameescape()">fnameescape()</a> 。另见  <a href="editing.html#`%20">`=</a> 。
 
 
 在 Ex 命令中，下列字符在可以使用文件名的地方有特殊的意义。它们同样可以用到表达
-式函数  <a href="eval.html#expand()">expand()</a>  中。
+式函数  <a href="builtin.html#expand()">expand()</a>  中。
         %       被当前文件名取代。                              <b class="vimtag"> <a name=":_%">:_%</a> </b> <b class="vimtag"> <a name="c_%">c_%</a> </b>
         #       被轮换文件名取代。                              <b class="vimtag"> <a name=":_%23">:_#</a> </b> <b class="vimtag"> <a name="c_%23">c_#</a> </b>
                 每个窗口都会分别记住。
@@ -814,13 +829,15 @@ Ex 命令有几个特别的地方:
                    的文件不在缓冲区里)。 <b class="vimtag"> <a name="E496">E496</a> </b>
                                                         <b class="vimtag"> <a name=":%3Camatch%3E">:&lt;amatch&gt;</a> </b> <b class="vimtag"> <a name="%3Camatch%3E">&lt;amatch&gt;</a> </b>
         <code class="special">&lt;amatch&gt;</code>   在执行自动命令时，被激发自动命令的实际匹配代替。 <b class="vimtag"> <a name="E497">E497</a> </b>
-                   只有在文件名不用于匹配 (对于 FileType、Syntax 和
-                   SpellFileMissing 事件) 时，才与 <code class="special">&lt;afile&gt;</code> 不同。
+                   文件名不用于匹配 (对于 FileType、Syntax 和 SpellFileMissing
+                   事件) 时，与 <code class="special">&lt;afile&gt;</code> 不同。
+                   文件名用于匹配时，被扩展为完整路径。
                                                         <b class="vimtag"> <a name=":%3Csfile%3E">:&lt;sfile&gt;</a> </b> <b class="vimtag"> <a name="%3Csfile%3E">&lt;sfile&gt;</a> </b>
-        <code class="special">&lt;sfile&gt;</code>    执行 ":source" 命令时，替换为正在被 "source" 执行的文件名。
+        <code class="special">&lt;sfile&gt;</code>    执行  <a href="repeat.html#:source">:source</a>  命令时，替换为正在被 "source" 执行的文件名。
                    <b class="vimtag"> <a name="E498">E498</a> </b>
-                   执行函数时，替换为调用堆栈，如同 <code class="special">&lt;stack&gt;</code>。(后向兼容，建议使
-                   用 <code class="special">&lt;stack&gt;</code>)。
+                   执行老式函数时，替换为调用堆栈，如同 <code class="special">&lt;stack&gt;</code>。(后向兼容，建
+                   议使用 <code class="special">&lt;stack&gt;</code> 或 <code class="special">&lt;script&gt;</code>)。
+                   Vim9 脚本里，函数中使用 <code class="special">&lt;sfile&gt;</code> 会报错 <b class="vimtag"> <a name="E1245">E1245</a> </b> 。
                    <code class="note">注意</code>，如果 <code class="special">&lt;sfile&gt;</code> 用在函数里，那么文件名修饰符
                    (filename-modifiers) 就没用了。
                                                         <b class="vimtag"> <a name=":%3Cstack%3E">:&lt;stack&gt;</a> </b> <b class="vimtag"> <a name="%3Cstack%3E">&lt;stack&gt;</a> </b>
@@ -828,21 +845,26 @@ Ex 命令有几个特别的地方:
                    而脚本行用 "script <code class="special">{file-name}</code>[<code class="special">{lnum}</code>]"，项目间以 ".." 区
                    隔。例如:
                    "function <code class="special">{function-name1}</code>[<code class="special">{lnum}</code>]..<code class="special">{function-name2}</code>[<code class="special">{lnum}</code>]"
+                   无调用堆栈时会报错 <b class="vimtag"> <a name="E489">E489</a> </b> 。
+                                                        <b class="vimtag"> <a name=":%3Cscript%3E">:&lt;script&gt;</a> </b> <b class="vimtag"> <a name="%3Cscript%3E">&lt;script&gt;</a> </b>
+        <code class="special">&lt;script&gt;</code>   执行  <a href="repeat.html#:source">:source</a>  命令时，替换为执行文件的文件名。执行函数时，
+                   替换为函数定义所在的脚本的文件名。
+                   不能确定文件名时会报错 <b class="vimtag"> <a name="E1274">E1274</a> </b> 。
                                                         <b class="vimtag"> <a name=":%3Cslnum%3E">:&lt;slnum&gt;</a> </b> <b class="vimtag"> <a name="%3Cslnum%3E">&lt;slnum&gt;</a> </b>
-        <code class="special">&lt;slnum&gt;</code>    执行 ":source" 命令时，替换为行号。 <b class="vimtag"> <a name="E842">E842</a> </b>
+        <code class="special">&lt;slnum&gt;</code>    执行  <a href="repeat.html#:source">:source</a>  命令时，替换为行号。 <b class="vimtag"> <a name="E842">E842</a> </b>
                    执行函数时，这是相对函数开始处的行号。
                                                         <b class="vimtag"> <a name=":%3Csflnum%3E">:&lt;sflnum&gt;</a> </b> <b class="vimtag"> <a name="%3Csflnum%3E">&lt;sflnum&gt;</a> </b>
         <code class="special">&lt;sflnum&gt;</code>   执行脚本时，替换为行号。
                    和 <code class="special">&lt;slnum&gt;</code> 不同在于不管什么情况，<code class="special">&lt;sflnum&gt;</code> 都会被替换为脚本
                    的行号。 <b class="vimtag"> <a name="E961">E961</a> </b>
                                                         <b class="vimtag"> <a name=":%3Cclient%3E">:&lt;client&gt;</a> </b> <b class="vimtag"> <a name="%3Cclient%3E">&lt;client&gt;</a> </b>
-        <code class="special">&lt;client&gt;</code>    <a href="eval.html#server2client()">server2client()</a>  中替换为最近收到信息的 <code class="special">{clientid}</code>。
+        <code class="special">&lt;client&gt;</code>    <a href="builtin.html#server2client()">server2client()</a>  中替换为最近收到信息的 <code class="special">{clientid}</code>。
 
                                                          <b class="vimtag"> <a name="filename-modifiers">filename-modifiers</a> </b>
 <b class="vimtag"> <a name=":_%:">:_%:</a> </b> <b class="vimtag"> <a name="::8">::8</a> </b> <b class="vimtag"> <a name="::p">::p</a> </b> <b class="vimtag"> <a name="::.">::.</a> </b> <b class="vimtag"> <a name="::%7E">::~</a> </b> <b class="vimtag"> <a name="::h">::h</a> </b> <b class="vimtag"> <a name="::t">::t</a> </b> <b class="vimtag"> <a name="::r">::r</a> </b> <b class="vimtag"> <a name="::e">::e</a> </b> <b class="vimtag"> <a name="::s">::s</a> </b> <b class="vimtag"> <a name="::gs">::gs</a> </b> <b class="vimtag"> <a name="::S">::S</a> </b>
      <b class="vimtag"> <a name="%:8">%:8</a> </b> <b class="vimtag"> <a name="%:p">%:p</a> </b> <b class="vimtag"> <a name="%:.">%:.</a> </b> <b class="vimtag"> <a name="%:%7E">%:~</a> </b> <b class="vimtag"> <a name="%:h">%:h</a> </b> <b class="vimtag"> <a name="%:t">%:t</a> </b> <b class="vimtag"> <a name="%:r">%:r</a> </b> <b class="vimtag"> <a name="%:e">%:e</a> </b> <b class="vimtag"> <a name="%:s">%:s</a> </b> <b class="vimtag"> <a name="%:gs">%:gs</a> </b> <b class="vimtag"> <a name="%:S">%:S</a> </b>
 可以在 "%"，"#"，"#n"，"<code class="special">&lt;cfile&gt;</code>"，"<code class="special">&lt;sfile&gt;</code>"，"<code class="special">&lt;afile&gt;</code>" 或 "<code class="special">&lt;abuf&gt;</code>" 之后使用文
-件名修饰符。这些修饰符也可以和  <a href="eval.html#fnamemodify()">fnamemodify()</a>  函数一起用。
+件名修饰符。这些修饰符也可以和  <a href="builtin.html#fnamemodify()">fnamemodify()</a>  函数一起用。
 
 此类修饰符必须按如下顺序给出:
         :p      给出文件名的全路径。必须是第一个修饰符。也会将 "~/" (Unix 和
@@ -882,7 +904,7 @@ Ex 命令有几个特别的地方:
                 整路径。
         :gs?pat?sub?
                 用 "sub" 替换所有的 "pat"。其余和 ":s" 一样。
-        :S      转义所有外壳命令使用的特殊字符 (见  <a href="eval.html#shellescape()">shellescape()</a> )。必须是最
+        :S      转义所有外壳命令使用的特殊字符 (见  <a href="builtin.html#shellescape()">shellescape()</a> )。必须是最
                 后一个修饰符。示例: 
 <code class="example">                    :!dir &lt;cfile&gt;:S</code>
 <code class="example">                    :call system('chmod +w -- ' . expand('%:S'))</code>
@@ -1000,7 +1022,7 @@ Ex 命令有几个特别的地方:
 
 可以用 ":"，"/" 和其他命令使用命令行，但却不能再打开另一个命令行窗口。这里不允
 许嵌套。
-                                                        <b class="vimtag"> <a name="E11">E11</a> </b>
+                                                        <b class="vimtag"> <a name="E11">E11</a> </b> <b class="vimtag"> <a name="E1188">E1188</a> </b>
 命令行窗口不是普通的窗口。你不能移动到别的窗口或编辑别的缓冲区。在命令行窗口
 里，所有此类操作都被禁止。当然你 <code class="emphasis">可以</code> 执行在命令行窗口里输入的任何命令。关闭窗
 口时，其它的文本编辑都被舍弃。
@@ -1047,8 +1069,8 @@ Ex 命令有几个特别的地方:
 
 如果 <a href="options.html#'wildchar'">'wildchar'</a> 选项设置为 <code class="special">&lt;Tab&gt;</code>，并且命令行窗口用于 Ex 命令，那么会在命令行窗
 口里加入两个映射用于命令补全，如下: 
-<code class="example">        :imap &lt;buffer&gt; &lt;Tab&gt; &lt;C-X&gt;&lt;C-V&gt;</code>
-<code class="example">        :nmap &lt;buffer&gt; &lt;Tab&gt; a&lt;C-X&gt;&lt;C-V&gt;</code>
+<code class="example">        :inoremap &lt;buffer&gt; &lt;Tab&gt; &lt;C-X&gt;&lt;C-V&gt;</code>
+<code class="example">        :nnoremap &lt;buffer&gt; &lt;Tab&gt; a&lt;C-X&gt;&lt;C-V&gt;</code>
 <code class="note">注意</code>，在普通模式里敲 <code class="special">&lt;Tab&gt;</code> 键会在下一个字符上补全。这样的话，就可以在行尾进行
 补全了。
 如果你不想要这些映射，可用下面的命令将它们禁用: 
@@ -1060,7 +1082,7 @@ Ex 命令有几个特别的地方:
 你可以拽动命令行窗口自己的状态栏以及命令行窗口之上的状态栏来改变命令行窗口的大
 小，但对其它窗口无效。
 
- <a href="eval.html#getcmdwintype()">getcmdwintype()</a>  函数返回正在编辑的命令行的种类，其值见  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 。
+ <a href="builtin.html#getcmdwintype()">getcmdwintype()</a>  函数返回正在编辑的命令行的种类，其值见  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 。
 
 
 自 动 命 令
@@ -1082,7 +1104,7 @@ Ex 命令有几个特别的地方:
         /       正向查找字符串
         ?       反向查找字符串
         =       "= 表达式  <a href="eval.html#expr-register">expr-register</a> 
-        @        <a href="eval.html#input()">input()</a>  字符串
+        @        <a href="builtin.html#input()">input()</a>  字符串
         -        <a href="insert.html#:insert">:insert</a>  或  <a href="insert.html#:append">:append</a>  的文本
 
  vim:tw=78:ts=8:noet:ft=help:norl:

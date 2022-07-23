@@ -5,7 +5,7 @@
 <!--[if lt IE 9]>
   <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
 <![endif]-->
-<title>VIM 中文帮助: 编辑同一文本的两到四个版本</title>
+<title>VIM 中文帮助: 编辑同一文本的两到八个版本</title>
 <link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
 <link rel="canonical" href="https://yianwillis.github.io/vimcdoc/doc/diff.html" />
 <script type="text/javascript" src="vimcdoc.js"></script>
@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="diff.txt">diff.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="diff.txt">diff.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -314,8 +314,8 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 
 查 找 不 同                                             <b class="vimtag"> <a name="diff-diffexpr">diff-diffexpr</a> </b>
 
- <a href="options.html#'diffexpr'">'diffexpr'</a> 选项可以用来设定非标准的 "diff" 程序，用来比较文件间的异同。
- <b class="vimtag"> <a name="E959">E959</a> </b>
+<a href="options.html#'diffexpr'">'diffexpr'</a> 选项可以用来设定不同于内部 diff 支持或标准 "diff" 程序的方法来比较
+文件间的异同。<b class="vimtag"> <a name="E959">E959</a> </b>
 
 当 <a href="options.html#'diffexpr'">'diffexpr'</a> 为空的时候，Vim 使用以下命令在 file1 和 file2 中查找不同之处: 
 <code class="example"></code>
@@ -323,8 +323,11 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 <code class="example"></code>
 其中的 "&gt;" 会用 <a href="options.html#'shellredir'">'shellredir'</a> 的值替换。
 
-"diff" 的输出必须是普通的 "ed" 风格或合并风格 (unified) 的 diff。 <code class="emphasis">不要</code>  使用上
-下文 (context) 风格的 diff。下面就是一个 Vim 所期望的 "ed" 风格的范例: 
+"diff" 的输出必须是普通的 "ed" 风格或合并风格 (unified) 的 diff。 <code class="emphasis">不能</code> 用上下
+文 (context) 风格的 diff。而且合并风格的 diff 不能指定上下文行。"diff -u" <code class="emphasis">不</code> 
+行，要用 "diff -U0"。
+
+下面就是一个 Vim 所期望的 "ed" 风格的范例: 
 <code class="example"></code>
 <code class="example">        1a2</code>
 <code class="example">        &gt; bbb</code>
@@ -344,7 +347,7 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 
         v:fname_in              原始文件
         v:fname_new             同一文件的新版
-        v:fname_out             产生的 diff 文件
+        v:fname_out             生成的 diff 文件的输出位置
 
 另外，<a href="options.html#'diffexpr'">'diffexpr'</a> 应负责实现 <a href="options.html#'diffopt'">'diffopt'</a> 选项中的 "icase" 和 "iwhite" 。
 而且，<a href="options.html#'diffexpr'">'diffexpr'</a> 不能更改 <a href="options.html#'lines'">'lines'</a> 和 <a href="options.html#'columns'">'columns'</a> 的值。
@@ -355,13 +358,13 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 <code class="example">        function MyDiff()</code>
 <code class="example">           let opt = ""</code>
 <code class="example">           if &amp;diffopt =~ "icase"</code>
-<code class="example">             let opt = opt . "-i "</code>
+<code class="example">             let opt = opt .. "-i "</code>
 <code class="example">           endif</code>
 <code class="example">           if &amp;diffopt =~ "iwhite"</code>
-<code class="example">             let opt = opt . "-b "</code>
+<code class="example">             let opt = opt .. "-b "</code>
 <code class="example">           endif</code>
-<code class="example">           silent execute "!diff -a --binary " . opt . v:fname_in . " " . v:fname_new .</code>
-<code class="example">                \  " &gt; " . v:fname_out</code>
+<code class="example">           silent execute "!diff -a --binary " .. opt .. v:fname_in .. " " .. v:fname_new ..</code>
+<code class="example">                \  " &gt; " .. v:fname_out</code>
 <code class="example">           redraw!</code>
 <code class="example">        endfunction</code>
 
@@ -370,6 +373,13 @@ dp              同 ":diffput"，但没有范围。<code class="note">注意</co
 "--binary" 参数使得文件以二进制模式读入，这样在 DOS 上 <code class="keystroke">CTRL-Z</code> 就不会结束文本。
 
  <code class="badlink">redraw!</code>  命令不一定必要，取决于执行外壳命令时是否会在屏幕上显示东西。
+
+如果 <a href="options.html#'diffexpr'">'diffexpr'</a> 表达式以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 代替
+之。例如: 
+<code class="example">                set diffexpr=s:MyDiffExpr()</code>
+<code class="example">                set diffexpr=&lt;SID&gt;SomeDiffExpr()</code>
+否则，表达式在设置此选项的脚本的上下文内进行计算，这样保证了局部于脚本的项目可
+用。
 
                                                 <b class="vimtag"> <a name="E810">E810</a> </b> <b class="vimtag"> <a name="E97">E97</a> </b>
 Vim 将测试 diff 的输出看上去是否完全正确。如果不正确，你将得到一个错误信息。可
@@ -408,8 +418,8 @@ MS-Windows 自安装的 Vim 包含了 diff 程序。如果没有，您可以自�
 <code class="example"></code>
 <code class="example">        set patchexpr=MyPatch()</code>
 <code class="example">        function MyPatch()</code>
-<code class="example">           :call system("patch -o " . v:fname_out . " " . v:fname_in .</code>
-<code class="example">           \  " &lt; " . v:fname_diff)</code>
+<code class="example">           :call system("patch -o " .. v:fname_out .. " " .. v:fname_in ..</code>
+<code class="example">           \  " &lt; " .. v:fname_diff)</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
 请确定使用 "patch" 程序时不会有不想要的副作用。比如，要留心那些生成的额外的文
@@ -418,6 +428,14 @@ MS-Windows 自安装的 Vim 包含了 diff 程序。如果没有，您可以自�
 使用 <a href="options.html#'patchexpr'">'patchexpr'</a> 的值之前， Vim 将改变当前目录到 "/tmp" 或别的临时目录。这是为
 了让当前目录下的文件不被意外的打补丁。Vim 也将删除以 v:fname_in 开始以 ".rej"
 和 ".orig" 结尾的文件。
+
+如果 <a href="options.html#'patchexpr'">'patchexpr'</a> 表达式以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 代
+替之。例如: 
+<code class="example">                set patchexpr=s:MyPatchExpr()</code>
+<code class="example">                set patchexpr=&lt;SID&gt;SomePatchExpr()</code>
+否则，表达式在设置此选项的脚本的上下文内进行计算，这样保证了局部于脚本的项目可
+用。
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

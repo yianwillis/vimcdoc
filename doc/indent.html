@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="indent.txt">indent.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="indent.txt">indent.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -54,9 +54,6 @@ Vim 有很多自动缩进 C 风格程序的选项。不少编程语言，如 Jav
 其它类型的排版和缩进，大体可参阅  <a href="change.html#format-comments">format-comments</a> 、 <a href="change.html#fo-table">fo-table</a> 、 <a href="change.html#gq">gq</a>  和
  <a href="change.html#formatting">formatting</a> 。
 
-<code class="note">备注</code> 如果编译时没有指定  <a href="various.html#+smartindent">+smartindent</a>  或者  <a href="various.html#+cindent">+cindent</a>  特性，这些选项将不起作
-用。
-
 实际上主要有四种可用缩进的方式，如果同时指定或对 <a href="options.html#'indentexpr'">'indentexpr'</a> 而言非空，列于后
 者优先于列于前者:
 <a href="options.html#'autoindent'">'autoindent'</a>    沿用上一行的缩进。
@@ -70,11 +67,12 @@ Vim 有很多自动缩进 C 风格程序的选项。不少编程语言，如 Jav
 <code class="note">注意</code> <a href="options.html#'cindent'">'cindent'</a> 缩进不一定对所有的代码都起作用。Vim 不是 C 编译器: 它不能识别出
 所有的语法。一个要求是顶层函数必须在第一列中含有 '{'。否则它们容易与声明混淆。
 
-这四个选项控制 C 程序缩进:
+这五个选项控制 C 程序缩进:
 <a href="options.html#'cindent'">'cindent'</a>       使 Vim 对 C 程序自动缩进。
 <a href="options.html#'cinkeys'">'cinkeys'</a>       指定在插入模式下按哪个键可以再次缩进。
 <a href="options.html#'cinoptions'">'cinoptions'</a>    设定你喜好的缩进模式。
 <a href="options.html#'cinwords'">'cinwords'</a>      定义在下一行中开始一个额外缩进的关键字。
+<code class="badlink">'cinscopedecls'</code> 定义识别为 C++ 作用域声明的字符串。
 
 如果 <a href="options.html#'lisp'">'lisp'</a> 选项没被打开并且 <a href="options.html#'equalprg'">'equalprg'</a> 为空，"=" 操作符将使用 Vim 的内建算法
 而不调用外部程序。
@@ -293,8 +291,8 @@ Vim 将那个数字乘以 <a href="options.html#'shiftwidth'">'shiftwidth'</a>: 
 
                                                         <b class="vimtag"> <a name="cino-g">cino-g</a> </b>
         gN    将 C++ 作用域声明置于其所在代码块的 N 个字符后。(缺省为
-              <a href="options.html#'shiftwidth'">'shiftwidth'</a>)。作用域声明可以是 "public:"、"protected:" 或者
-              "private:"。
+              <a href="options.html#'shiftwidth'">'shiftwidth'</a>)。缺省，作用域声明可以是 "public:"、"protected:" 或
+              者 "private:"。此列表可用 <code class="badlink">'cinscopedecls'</code> 选项修改。
 
                 cino=               cino=g0 
 <code class="example">                  {                   {</code>
@@ -577,18 +575,16 @@ CLOJURE                                 <b class="vimtag"> <a name="ft-clojure-i
 
 Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括号的使用，还有部分是
 社群习惯的差异。这些惯例又不是普遍遵循的。因为这样，Closure 缩进脚本提供了若干
-可配置的选项，如下所述。
+可配置的选项。
 
-如果当前的 vim 不支持 searchpairpos()，缩进脚本回到普通 <a href="options.html#'lisp'">'lisp'</a> 缩进方式并忽略
-以下所述的选项。
+(如果当前的 vim 不支持  <a href="builtin.html#searchpairpos()">searchpairpos()</a> ，缩进脚本回到普通 <a href="options.html#'lisp'">'lisp'</a> 缩进方式并忽
+略以下所述的选项。)
 
                                                         <b class="vimtag"> <a name="g:clojure_maxlines">g:clojure_maxlines</a> </b>
 
-设置 searchpairpos() 的最大检索距离。较大的值牺牲性能以换取处理更长表达式
-(form) 的正确性。0 会使检索没有限制。
+设置  <a href="builtin.html#searchpairpos()">searchpairpos()</a>  的最大检索距离。较大的值牺牲性能以换取处理更长表达式
+(form) 的正确性。0 会使检索没有限制。缺省值是 300。
 
-<code class="example">        " 缺省</code>
-<code class="example">        let g:clojure_maxlines = 100</code>
 
                                                 <b class="vimtag"> <a name="g:clojure_fuzzy_indent">g:clojure_fuzzy_indent</a> </b>
                                         <b class="vimtag"> <a name="g:clojure_fuzzy_indent_patterns">g:clojure_fuzzy_indent_patterns</a> </b>
@@ -613,12 +609,8 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 <code class="example">        let g:clojure_fuzzy_indent_blacklist =</code>
 <code class="example">                \ ['-fn$', '\v^with-%(meta|out-str|loading-context)$']</code>
 <code class="example"></code>
-<code class="example">        " 旧式的逗号分隔字符串版本；建议采用上面的列表格式。注意这里的模式总是</code>
-<code class="example">        " 隐含假定以 ^ 开始，以 $ 结束</code>
-<code class="example">        let g:clojure_fuzzy_indent_patterns = 'with.*,def.*,let.*'</code>
-
  <a href="indent.html#g:clojure_fuzzy_indent_patterns">g:clojure_fuzzy_indent_patterns</a>  和  <a href="indent.html#g:clojure_fuzzy_indent_blacklist">g:clojure_fuzzy_indent_blacklist</a>  是模式
-的列表  <a href="eval.html#Lists">Lists</a> ，用于匹配 Lisp 列表 (list) 的头部去掉引号和限定词部分的符号。这
+的列表，用于匹配 Lisp 列表 (list) 的头部去掉限定词部分的符号。这
 意味着形如 "^foo" 的模式会匹配以下的候选: "foobar"、"my.ns/foobar" 和
 "#'foobar"。
 
@@ -657,10 +649,6 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 <code class="example">           enim ad minim veniam, quis nostrud exercitation ullamco laboris</code>
 <code class="example">           nisi ut aliquip ex ea commodo consequat.")</code>
 
-缺省关闭此选项。
-
-<code class="example">        " 缺省</code>
-<code class="example">        let g:clojure_align_multiline_strings = 0</code>
 
                                                 <b class="vimtag"> <a name="g:clojure_align_subforms">g:clojure_align_subforms</a> </b>
 
@@ -671,17 +659,12 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 <code class="example">          bar</code>
 <code class="example">          baz)</code>
 
-置位此选项改变此行为，使得所有的子表达式在同一列对齐，这模拟了 clojure-mode.el
-的缺省行为:
+设置此选项为 '1' 改变此行为，使得所有的子表达式在同一列对齐，这模拟了
+clojure-mode.el 的缺省行为:
 
 <code class="example">        (foo</code>
 <code class="example">         bar</code>
 <code class="example">         baz)</code>
-
-缺省关闭此选项。
-
-<code class="example">        " Default</code>
-<code class="example">        let g:clojure_align_subforms = 0</code>
 
 
 FORTRAN                                                 <b class="vimtag"> <a name="ft-fortran-indent">ft-fortran-indent</a> </b>
@@ -737,6 +720,15 @@ HTML                            <b class="vimtag"> <a name="ft-html-indent">ft-h
       "zero"    零缩进
       "auto"    自动缩进 (和匹块标签相同的缩进)
       "inc"     自动缩进 + 一个缩进位置
+
+可以设置起始 &lt;tag 行之后 HTML 属性的缩进: 
+<code class="example"></code>
+<code class="example">      :let g:html_indent_attribute = 1</code>
+
+<code class="section">      值        含义 </code>
+      1         自动缩进，比 &lt;tag 多一层缩进
+      2         自动缩进，多两层缩进 (缺省)
+      &gt; 2       自动缩进，更多层的缩进
 
 缺省，给许多标签之后的内容增加缩进 (见脚本里的 "Add Indent Tags")。可以加入更
 多类似的标签: 
@@ -830,7 +822,7 @@ PHP 缩进可以通过修改若干全局变量的值来对几个方面进行改�
 
                                                         <b class="vimtag"> <a name="PHP_outdentphpescape">PHP_outdentphpescape</a> </b>
 要使 PHP 标签和和包围它的非 PHP 代码使用相同的缩进 (只影响 PHP 转义标签): 
-:let g:PHP_outdentphpescape = 0
+<code class="example">    :let g:PHP_outdentphpescape = 0</code>
 </section><hr class="singleline" /><section class=inner>
 
                                                         <b class="vimtag"> <a name="PHP_removeCRwhenUnix">PHP_removeCRwhenUnix</a> </b>
@@ -930,7 +922,7 @@ PYTHON                                                  <b class="vimtag"> <a na
 续行的缩进: 
 <code class="example">        let g:pyindent_continue = 'shiftwidth() * 2'</code>
 <code class="example"></code>
-此方法使用  <a href="eval.html#searchpair()">searchpair()</a>  往回找未闭合的括号。这有时会较慢，因此有 150 毫秒的
+此方法使用  <a href="builtin.html#searchpair()">searchpair()</a>  往回找未闭合的括号。这有时会较慢，因此有 150 毫秒的
 超时。如果你<code class="note">注意</code>到缩进不正确，可以设置长一些的超时，以毫秒计: 
 <code class="example">        let g:pyindent_searchpair_timeout = 500</code>
 <code class="example"></code>
@@ -1134,6 +1126,7 @@ VHDL                                                    <b class="vimtag"> <a na
 
 VIM                                                     <b class="vimtag"> <a name="ft-vim-indent">ft-vim-indent</a> </b>
 
+                                                        <b class="vimtag"> <a name="g:vim_indent_cont">g:vim_indent_cont</a> </b>
 对于缩进 Vim 脚本，有个变量可以指定续行的缩进距离，续行就是以反斜杠开始的行: 
 <code class="example"></code>
 <code class="example">        :let g:vim_indent_cont = shiftwidth() * 3</code>

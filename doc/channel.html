@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2020年11月
+<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -61,6 +61,7 @@ Netbeans 接口也使用通道。 <a href="netbeans.html#netbeans">netbeans</a>
 12. 作业选项                             <a href="channel.html#job-options">job-options</a> 
 13. 控制作业                             <a href="channel.html#job-control">job-control</a> 
 14. 使用提示缓冲区                       <a href="channel.html#prompt-buffer">prompt-buffer</a> 
+15. 语言服务器协议                       <a href="channel.html#language-server-protocol">language-server-protocol</a> 
 
 <code class="notvi">{仅当编译时带有  <a href="various.html#+channel">+channel</a>  特性时才有通道功能}</code>
         可以这样查看: `has(<code class="badlink">'channel'</code>)`
@@ -86,8 +87,9 @@ Netbeans 接口也使用通道。 <a href="netbeans.html#netbeans">netbeans</a>
 套接字和管道可用以下协议:
 RAW     无规范，Vim 不知信息如何终止
 NL      每条信息由 NL (换行) 字符终止
-JSON    JSON 编码  <a href="eval.html#json_encode()">json_encode()</a> 
-JS      JavaScript 风格类 JSON 的编码  <a href="eval.html#js_encode()">js_encode()</a> 
+JSON    JSON 编码  <a href="builtin.html#json_encode()">json_encode()</a> 
+JS      JavaScript 风格类 JSON 的编码  <a href="builtin.html#js_encode()">js_encode()</a> 
+LSP     语言服务器协议编码  <a href="channel.html#language-server-protocol">language-server-protocol</a> 
 
 常用组合有:
 - 使用 NL 模式的管道连接的作业。例如，运行风格检查器并接收错误与<code class="note">警告</code>。
@@ -122,7 +124,7 @@ T1 中可见原始的消息流。Vim 发送的是:
 
 要处理异步通信，需要提供回调函数: 
 <code class="example">        func MyHandler(channel, msg)</code>
-<code class="example">          echo "from the handler: " . a:msg</code>
+<code class="example">          echo "from the handler: " .. a:msg</code>
 <code class="example">        endfunc</code>
 <code class="example">        call ch_sendexpr(channel, 'hello!', {'callback': "MyHandler"})</code>
 Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应时会调用 MyHandler。
@@ -145,10 +147,14 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 <code class="example"></code>
 可用  <a href="channel.html#ch_status()">ch_status()</a>  看到通道是否已打开。
 
-<code class="special">{address}</code> 的格式为 "hostname:port"。例如 "localhost:8765"。
-
-使用 IPv6 地址时，用方括号包围。如 "[2001:db8::1]:8765"。
-
+                                        <b class="vimtag"> <a name="channel-address">channel-address</a> </b>
+<code class="special">{address}</code> 可以是域名或 IP 地址后跟端口号，也可以是带 "unix:" 前缀的 Unix-域套
+接字路径。例如 
+<code class="example">    www.example.com:80   " 域名 + port</code>
+<code class="example">    127.0.0.1:1234       " IPv4 + port</code>
+<code class="example">    [2001:db8::1]:8765   " IPv6 + port</code>
+<code class="example">    unix:/tmp/my-socket  " Unix-域套接字路径</code>
+<code class="example"></code>
 <code class="special">{options}</code> 是可选项目的字典:                             <b class="vimtag"> <a name="channel-open-options">channel-open-options</a> </b>
 
 "mode" 可以是:                                          <b class="vimtag"> <a name="channel-mode">channel-mode</a> </b>
@@ -156,20 +162,21 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
         "js"   - JS (JavaScript) 编码，比 JSON 经济。
         "nl"   - Nl 字符结尾的消息
         "raw"  - 原始消息
+        "lsp"  - 语言服务器协议编码
                                                 <b class="vimtag"> <a name="channel-callback">channel-callback</a> </b> <b class="vimtag"> <a name="E921">E921</a> </b>
-"callback"      消息收到时，如果还未被处理，调用本函数。接受两个参数: 通道和收
-                到的消息。例如: 
+"callback"      消息收到时，如果还未被处理 (如 ID 为零的 JSON 消息)，调用本函
+                数。接受两个参数: 通道和收到的消息。例如: 
 <code class="example">        func Handle(channel, msg)</code>
-<code class="example">          echo 'Received: ' . a:msg</code>
+<code class="example">          echo '收到: ' .. a:msg</code>
 <code class="example">        endfunc</code>
 <code class="example">        let channel = ch_open("localhost:8765", {"callback": "Handle"})</code>
 
-                "mode" 如果是 "json" 或 "js"，"msg" 参数是转换到 Vim 类型的收
-                到消息的正文。
+                "mode" 如果是 "json"、"js" 或 "lsp"，"msg" 参数是转换到 Vim 类
+                型的收到消息的正文。
                 "mode" 如果是 "nl"，"msg" 参数是单个消息，不包含 NL。
                 "mode" 如果是 "raw"，"msg" 参数是作为字符串的整个消息。
 
-                对所有的回调: 可用  <a href="eval.html#function()">function()</a>  绑定它到参数和/或字典。也可用
+                对所有的回调: 可用  <a href="builtin.html#function()">function()</a>  绑定它到参数和/或字典。也可用
                 "dict.function" 形式来绑定到字典。
 
                 只有在 "安全" 时才会调用回调函数，通常是 Vim 等待用户输入字符
@@ -182,6 +189,17 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
                 函数调用时，不会再有更多数据传到回调函数。不过，如果回调在让
                 Vim 检查消息，close_cb 调用时可能还在回调处理中。插件必须以某
                 种方式能处理这种情况，不过知道没有更多数据会传来还是有用的。
+                如果不确定有无消息可读，可用 try/catch 块: 
+<code class="example">                        try</code>
+<code class="example">                          let msg = ch_readraw(a:channel)</code>
+<code class="example">                        catch</code>
+<code class="example">                          let msg = 'no message'</code>
+<code class="example">                        endtry</code>
+<code class="example">                        try</code>
+<code class="example">                          let err = ch_readraw(a:channel, #{part: 'err'})</code>
+<code class="example">                        catch</code>
+<code class="example">                          let err = 'no error'</code>
+<code class="example">                        endtry</code>
                                                         <b class="vimtag"> <a name="channel-drop">channel-drop</a> </b>
 "drop"          指定如何丢弃消息:
                     "auto"      没有回调来处理消息时。"close_cb" 也考虑在内。
@@ -241,7 +259,7 @@ JSON 模式可以以同步方式发送消息:
 <code class="example">    let response = ch_evalexpr(channel, {expr})</code>
 此时，等待对方回复响应。
 
-JS 模式也是如此，但消息使用 JavasScript 编码。其中的区别，见  <a href="eval.html#js_encode()">js_encode()</a> 。
+JS 模式也是如此，但消息使用 JavasScript 编码。其中的区别，见  <a href="builtin.html#js_encode()">js_encode()</a> 。
 
 要发送消息，但不立即处理响应或让通道通过回调来处理响应: 
 <code class="example">    call ch_sendexpr(channel, {expr})</code>
@@ -299,7 +317,7 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
     ["call",   <code class="special">{函数名}</code>, <code class="special">{参数列表}</code>]
 
 适用于所有以上命令: 小心命令的后果！很容易干扰用户正在进行的操作。要避免麻烦，
-通过  <a href="eval.html#mode()">mode()</a>  检查编辑器是否在你期待的状态下。例如，要发送键序列作为文本插入，
+通过  <a href="builtin.html#mode()">mode()</a>  检查编辑器是否在你期待的状态下。例如，要发送键序列作为文本插入，
 而不是作为命令执行:
 <code class="section">    ["ex","if mode() == 'i' | call feedkeys('ClassName') | endif"] </code>
 
@@ -325,7 +343,7 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
 脚本内的函数:
 <code class="section">        ["ex","call myscript#MyFunc(arg)"] </code>
 
-也可以用 "call  <a href="eval.html#feedkeys()">feedkeys()</a> " 插入任何键序列。
+也可以用 "call  <a href="builtin.html#feedkeys()">feedkeys()</a> " 插入任何键序列。
 
 如果有错，通道日志 (如果设置的话) 会有记录。v:errmsg 设为错误信息。
 
@@ -385,10 +403,11 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
 <code class="example">    call ch_sendraw(channel, {string})</code>
 进程会发返响应，会调用通道处理函数。
 
+                                                <b class="vimtag"> <a name="channel-onetime-callback">channel-onetime-callback</a> </b>
 可发送信息并使响应异步地被指定函数处理: 
 <code class="example">    call ch_sendraw(channel, {string}, {'callback': 'MyHandler'})</code>
 <code class="example"></code>
-<code class="special">{string}</code> 也可以是 JSON，用  <a href="eval.html#json_encode()">json_encode()</a>  可创建， <a href="eval.html#json_decode()">json_decode()</a>  可用来处理
+<code class="special">{string}</code> 也可以是 JSON，用  <a href="builtin.html#json_encode()">json_encode()</a>  可创建， <a href="builtin.html#json_decode()">json_decode()</a>  可用来处理
 收到的 JSON 信息。
 
 原始通道不可使用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  或  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a> 。
@@ -415,11 +434,12 @@ Vim 的字符串不可含有 NUL 字符。要收发 NUL 字符，请见  <a href
 
 <code class="note">注意</code> 如果没有回调，消息会被丢弃。要避免之，给通道加入一个关闭回调函数。
 
-要读取 RAW 通道所有可用的输出: 
+要读取 RAW 通道所有可用的正常输出: 
 <code class="example">        let output = ch_readraw(channel)</code>
-可读取错误输出: 
+要读取 RAW 通道所有可用的错误输出: 
 <code class="example">        let output = ch_readraw(channel, {"part": "err"})</code>
-<code class="example"></code>
+<code class="note">注意</code> 通道使用 NL 模式时，ch_readraw() 每次调用只返回一行。
+
 ch_read() 和 ch_readraw() 都适用通道 timeout。如果在该时间内没有任何消息可读，
 返回空字符串。要指定其他的超时，使用以毫秒计的 "timeout" 选项:
 <code class="section">        {"timeout": 123} </code>
@@ -469,12 +489,13 @@ ch_evalexpr(<code class="special">{handle}</code>, <code class="special">{expr}<
                 发送 <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。<code class="special">{expr}</code> 用通道类型进行编码。不能于
                 原始通道。见  <a href="channel.html#channel-use">channel-use</a> 。
                 <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                使用 "lsp" 通道模式时，<code class="special">{expr}</code> 必须为  <a href="eval.html#Dict">Dict</a> 。
                                                                 <b class="vimtag"> <a name="E917">E917</a> </b>
                 <code class="special">{options}</code> 必须是字典。不能有 "callback" 项目。可以有 "timeout"
                 项目来指明此特定请求的超时。
 
                 ch_evalexpr() 等待响应并返回经解码的表达式。如果有错或超时，
-                返回空字符串。
+                返回空  <a href="eval.html#String">String</a> ，或者用 "lsp" 通道模式时，返回空  <a href="eval.html#Dict">Dict</a> 。
 
                 <code class="note">注意</code> 在等待响应时，Vim 在处理其它的信息。要确保这不会有问题。
 
@@ -497,7 +518,7 @@ ch_evalraw(<code class="special">{handle}</code>, <code class="special">{string}
 <code class="example">                        GetChannel()-&gt;ch_evalraw(rawstring)</code>
 <code class="example"></code>
 ch_getbufnr(<code class="special">{handle}</code>, <code class="special">{what}</code>)                            <b class="vimtag"> <a name="ch_getbufnr()">ch_getbufnr()</a> </b>
-                返回 <code class="special">{handle}</code> 用于 <code class="special">{what}</code> 的缓冲区号。
+                返回 <code class="special">{handle}</code> 用于字符串 <code class="special">{what}</code> 的缓冲区号。
                 <code class="special">{handle}</code> 可以是通道或带有通道的作业。
                 <code class="special">{what}</code> 可以是 "err"，代表 stderr，"out" 代表 stdout，或空，代
                 表套接字输出。
@@ -523,10 +544,15 @@ ch_info(<code class="special">{handle}</code>)                                  
                 用于 ch_open() 打开的通道时:
                    "hostname"     地址的机器名
                    "port"         地址的端口号
+                   "path"         Unix-域套接字的路径
                    "sock_status"  "open" 或 "closed"
                    "sock_mode"    "NL"、"RAW"、"JSON" 或 "JS"
                    "sock_io"      "socket"
                    "sock_timeout" 毫秒计的超时
+
+                <code class="note">注意</code> "path" 只在使用 Unix-域套接字时出现，常规地址只会出现
+                "hostname" 和 "port"。
+
                 用于 job_start() 打开的通道时:
                    "out_status"   "open"、"buffered" 或 "closed"
                    "out_mode"     "NL"、"RAW"、"JSON" 或 "JS"
@@ -537,7 +563,7 @@ ch_info(<code class="special">{handle}</code>)                                  
                    "err_io"       "out"、"null"、"pipe"、"file" 或 "buffer"
                    "err_timeout"  毫秒计的超时
                    "in_status"    "open" 或 "closed"
-                   "in_mode"      "NL"、"RAW"、"JSON" 或 "JS"
+                   "in_mode"      "NL"、"RAW"、"JSON"、"JS" 或 "LSP"
                    "in_io"        "null"、"pipe"、"file" 或 "buffer"
                    "in_timeout"   毫秒计的超时
 
@@ -546,7 +572,8 @@ ch_info(<code class="special">{handle}</code>)                                  
 <code class="example"></code>
 <code class="example"></code>
 ch_log(<code class="special">{msg}</code> [, <code class="special">{handle}</code>])                                      <b class="vimtag"> <a name="ch_log()">ch_log()</a> </b>
-                如果用  <a href="channel.html#ch_logfile()">ch_logfile()</a>  打开日志，把 <code class="special">{msg}</code> 写入通道日志文件中。
+                如果用  <a href="channel.html#ch_logfile()">ch_logfile()</a>  打开日志，把字符串 <code class="special">{msg}</code> 写入通道日志文
+                件中。
                 如果传入 <code class="special">{handle}</code>，使用该通道号写入信息。
                 <code class="special">{handle}</code> 可以是通道或带有通道的作业。所用的通道号对应的通道必
                 须已打开。
@@ -559,14 +586,17 @@ ch_logfile(<code class="special">{fname}</code> [, <code class="special">{mode}<
                 启动通道活动记录，写入 <code class="special">{fname}</code>。
                 如果 <code class="special">{fname}</code> 为空字符串，停止记录。
 
-                如果 <code class="special">{mode}</code> 省略或为 "a"，附加到文件。
-                如果 <code class="special">{mode}</code> 为 "w"，用新文件开始。
+                如果 <code class="special">{mode}</code> 省略或包含 "a" 或为 "o"，附加到文件。
+                如果 <code class="special">{mode}</code> 包含 "w" 而不包含 "a"，用新文件开始。
+                如果 <code class="special">{mode}</code> 包含 "o"，记录所有终端输出。否则，只记录部分有意义
+                的终端输出。
 
                 用  <a href="channel.html#ch_log()">ch_log()</a>  来写入日志信息。每条消息后都会刷新文件，Unix 上
                 可用 "tail -f" 实时监控。
 
-                要尽早打开日志以看到启动时终端接收的内容，可用  <a href="starting.html#--cmd">--cmd</a> : 
-<code class="example">                        vim --cmd "call ch_logfile('logfile', 'w')"</code>
+                要尽早打开日志以看到启动时终端接收的内容，可用  <code class="badlink">--log</code>  (此时使
+                用 "ao" 模式): 
+<code class="example">                        vim --log logfile</code>
 
                 此函数在  <a href="eval.html#sandbox">sandbox</a>  中不可用。
                 <code class="note">注意</code>: 通道在文件中保存通信内容，小心其中可能包含机密和敏感的隐
@@ -580,7 +610,7 @@ ch_open(<code class="special">{address}</code> [, <code class="special">{options
                 打开通道到 <code class="special">{address}</code>。见  <a href="channel.html#channel">channel</a> 。
                 返回通道。错误检查可用  <a href="channel.html#ch_status()">ch_status()</a> 。
 
-                <code class="special">{address}</code> 形如 "hostname:port"，例如 "localhost:8765"。
+                <code class="special">{address}</code> 为字符串，接受的形式可见  <a href="channel.html#channel-address">channel-address</a> 。
 
                 使用 IPv6 地址时，用方括号包围。如 "[2001:db8::1]:8765"。
 
@@ -622,6 +652,14 @@ ch_sendexpr(<code class="special">{handle}</code>, <code class="special">{expr}<
                 发送 <code class="special">{expr}</code> 到 <code class="special">{handle}</code> 上。<code class="special">{expr}</code> 用通道类型进行编码。不能于
                 原始通道。见  <a href="channel.html#channel-use">channel-use</a> 。                    <b class="vimtag"> <a name="E912">E912</a> </b>
                 <code class="special">{handle}</code> 可以是通道或带有通道的作业。
+                使用 "lsp" 通道模式时，<code class="special">{expr}</code> 必须是  <a href="eval.html#Dict">Dict</a> 。
+
+                通道模式是 "lsp" 时，返回字典。否则返回空串。如果 <code class="special">{options}</code> 里
+                有 "callback" 项目，返回的字典包含请求消息的 ID。此 ID 可用来
+                给 LSP 服务器发送撤销请求 (如有需要)。出错时返回空字典。
+
+                如果不指望 <code class="special">{expr}</code> 收到响应消息，不要指定 <code class="special">{options}</code> 的
+                "callback" 项目。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetChannel()-&gt;ch_sendexpr(expr)</code>
@@ -703,7 +741,7 @@ ch_status(<code class="special">{handle}</code> [, <code class="special">{option
 <code class="example">    let job = job_start(command, {"callback": "MyHandler"})</code>
 <code class="example"></code>
 取决于系统，启动新的作业可能把 Vim 放到后台，使启动的作业获得焦点。要避免之，
-可使用  <a href="eval.html#foreground()">foreground()</a>  函数。但如果调用太早，可能无效，可在回调处理函数中使用，
+可使用  <a href="builtin.html#foreground()">foreground()</a>  函数。但如果调用太早，可能无效，可在回调处理函数中使用，
 或使用定时器使之推迟到作业启动后。
 
 可以用 ch_evalraw() 给命令发送信息。如果通道使用 JSON 或 JS 模式，可用
@@ -723,7 +761,7 @@ ch_evalexpr()。
 <code class="example">            \ {'in_io': 'buffer', 'in_name': 'mybuffer'})</code>
 
                                                         <b class="vimtag"> <a name="E915">E915</a> </b> <b class="vimtag"> <a name="E918">E918</a> </b>
-缓冲区是通过名字来查找的，类似于  <a href="eval.html#bufnr()">bufnr()</a> 。该缓冲区必须存在并在 job_start()
+缓冲区是通过名字来查找的，类似于  <a href="builtin.html#bufnr()">bufnr()</a> 。该缓冲区必须存在并在 job_start()
 调用时己载入。
 
 缺省读入整个缓冲区。可通过 "in_top" 和 "in_bot" 选项改变。
@@ -778,7 +816,7 @@ ch_evalexpr()。
 job_getchannel(<code class="special">{job}</code>)                                    <b class="vimtag"> <a name="job_getchannel()">job_getchannel()</a> </b>
                 获取 <code class="special">{job}</code> 使用的通道句柄。
                 要确认作业没有通道: 
-<code class="example">                        if string(job_getchannel()) == 'channel fail'</code>
+<code class="example">                        if string(job_getchannel(job)) == 'channel fail'</code>
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetJob()-&gt;job_getchannel()</code>
@@ -820,7 +858,7 @@ job_setoptions(<code class="special">{job}</code>, <code class="special">{option
 <code class="example"></code>
 <code class="example"></code>
 job_start(<code class="special">{command}</code> [, <code class="special">{options}</code>])                      <b class="vimtag"> <a name="job_start()">job_start()</a> </b>
-                启动作业，返回 Job 对象。不同于  <a href="eval.html#system()">system()</a>  和  <a href="various.html#:!cmd">:!cmd</a> ，不等待
+                启动作业，返回 Job 对象。不同于  <a href="builtin.html#system()">system()</a>  和  <a href="various.html#:!cmd">:!cmd</a> ，不等待
                 作业完成。
                 要在终端窗口中启动作业，可见  <a href="terminal.html#term_start()">term_start()</a> 。
 
@@ -1086,7 +1124,7 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 
 <code class="section">写入文件 </code>
                                                         <b class="vimtag"> <a name="E920">E920</a> </b>
-文件建立的缺省权限为 600 (用户可读写，其它人不能访问)。可用  <a href="eval.html#setfperm()">setfperm()</a>  改
+文件建立的缺省权限为 600 (用户可读写，其它人不能访问)。可用  <a href="builtin.html#setfperm()">setfperm()</a>  改
 变。
 
 如果文件已存在，文件内容被清空。
@@ -1117,19 +1155,19 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 通过设置 <a href="options.html#'buftype'">'buftype'</a> 为 "prompt" 创立提示缓冲区。通常只在缓冲区新建时使用。
 
 用户可以在缓冲区的末行上编辑和输入一行文本行。在该提示行上输入 Enter 后，激活
- <a href="eval.html#prompt_setcallback()">prompt_setcallback()</a>  设置的回调。通常，它会把该行发送给作业。另一个回调会从
+ <a href="builtin.html#prompt_setcallback()">prompt_setcallback()</a>  设置的回调。通常，它会把该行发送给作业。另一个回调会从
 作业接收输出，并在缓冲区中显示结果。显示位置在提示文本之下 (但在下一个提示文本
 的上方)。
 
 只有末行提示文本之后的文本可进行编辑。普通模式命令不可修改缓冲区其余部分。但通
-过调用如  <a href="eval.html#append()">append()</a>  等的函数，还是可以的。使用其它命令可能搞乱缓冲区。
+过调用如  <a href="builtin.html#append()">append()</a>  等的函数，还是可以的。使用其它命令可能搞乱缓冲区。
 
 设置 <a href="options.html#'buftype'">'buftype'</a> 为 "prompt" 时，Vim 并不自动启动插入模式。如想开始插入模式，用
  <a href="insert.html#:startinsert">:startinsert</a> ，这样用户可以开始行输入。
 
-通过  <a href="eval.html#prompt_setprompt()">prompt_setprompt()</a>  函数可设置提示文本。如果没有用
- <a href="eval.html#prompt_setprompt()">prompt_setprompt()</a> ，缺省用 "% "。要获取缓冲区的实际提示文本，可用
- <a href="eval.html#prompt_getprompt()">prompt_getprompt()</a> 。
+通过  <a href="builtin.html#prompt_setprompt()">prompt_setprompt()</a>  函数可设置提示文本。如果没有用
+ <a href="builtin.html#prompt_setprompt()">prompt_setprompt()</a> ，缺省用 "% "。要获取缓冲区的实际提示文本，可用
+ <a href="builtin.html#prompt_getprompt()">prompt_getprompt()</a> 。
 
 用户可用普通模式浏览缓冲区，以便查看旧作业的输出或进行文本复制。
 
@@ -1154,7 +1192,7 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 <code class="example"></code>
 <code class="example">        " 处理外壳输出的函数: 附加到提示行之上。</code>
 <code class="example">        func GotOutput(channel, msg)</code>
-<code class="example">          call append(line("$") - 1, "- " . a:msg)</code>
+<code class="example">          call append(line("$") - 1, "- " .. a:msg)</code>
 <code class="example">        endfunc</code>
 <code class="example"></code>
 <code class="example">        " 处理外壳退出的函数: 关闭窗口。</code>
@@ -1168,7 +1206,6 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 <code class="example">                \ err_cb: function('GotOutput'),</code>
 <code class="example">                \ exit_cb: function('JobExit'),</code>
 <code class="example">                \ })</code>
-<code class="example">        let shell_ch = job_getchannel(shell_job)</code>
 <code class="example"></code>
 <code class="example">        new</code>
 <code class="example">        set buftype=prompt</code>
@@ -1179,7 +1216,183 @@ output..."。缺省是加入该信息。"err_msg" 则对错误通道同样办理
 <code class="example">        " 开始接受外壳命令</code>
 <code class="example">        startinsert</code>
 
+同一例子，使用  <a href="vim9.html#Vim9">Vim9</a>  脚本: 
+<code class="example"></code>
+<code class="example">        vim9script</code>
+<code class="example"></code>
+<code class="example">        # 建立通道日志，以记录发生的事件。</code>
+<code class="example">        ch_logfile('logfile', 'w')</code>
+<code class="example"></code>
+<code class="example">        var shell_job: job</code>
+<code class="example"></code>
+<code class="example">        # 处理键入文本行的函数。</code>
+<code class="example">        def TextEntered(text: string)</code>
+<code class="example">          # 给文本附加 Enter，发送到外壳。</code>
+<code class="example">          ch_sendraw(shell_job, text .. "\n")</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        # 处理外壳输出的函数: 附加到提示行之上。</code>
+<code class="example">        def GotOutput(channel: channel, msg: string)</code>
+<code class="example">          append(line("$") - 1, "- " .. msg)</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        # 处理外壳退出的函数: 关闭窗口。</code>
+<code class="example">        def JobExit(job: job, status: number)</code>
+<code class="example">          quit!</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        # 在后台启动外壳。</code>
+<code class="example">        shell_job = job_start(["/bin/sh"], {</code>
+<code class="example">                                 out_cb: GotOutput,</code>
+<code class="example">                                 err_cb: GotOutput,</code>
+<code class="example">                                 exit_cb: JobExit,</code>
+<code class="example">                                 })</code>
+<code class="example"></code>
+<code class="example">        new</code>
+<code class="example">        set buftype=prompt</code>
+<code class="example">        var buf = bufnr('')</code>
+<code class="example">        prompt_setcallback(buf, TextEntered)</code>
+<code class="example">        prompt_setprompt(buf, "shell command: ")</code>
+<code class="example"></code>
+<code class="example">        # 开始接受外壳命令</code>
+<code class="example">        startinsert</code>
+<code class="example"></code>
+</section><hr class="doubleline" /><section class=inner>
+<h4>15. 语言服务器协议                              <b class="vimtag"> <a name="language-server-protocol">language-server-protocol</a> </b></h4>
+可在这里获取语言服务器规范:
 
+    <a href="https://microsoft.github.io/language-server-protocol/specification">https://microsoft.github.io/language-server-protocol/specification</a>
+
+每个 LSP 协议消息以简单 HTTP 头开始，后跟 JSON-RPC 格式编码的负载。JSON-RPC 格
+式描述可见:
+
+    <a href="https://www.jsonrpc.org/specification">https://www.jsonrpc.org/specification</a>
+
+连接到 LSP 服务器并使用  <a href="channel.html#channel-mode">channel-mode</a>  设为 "lsp"，可以把 Vim  <a href="eval.html#Dict">Dict</a>  形式的
+LSP 请求/通告消息编码为 LSP JSON-RPC 消息并发送至服务器，然后接收 LSP JSON-RPC
+形式的响应/通告消息并解码为 Vim  <a href="eval.html#Dict">Dict</a> 。
+
+ <a href="channel.html#channel-mode">channel-mode</a>  设为 "lsp" 时，对通道接收到的消息，Vim 会处理 HTTP 头部，并把
+JSON-RPC 负载解码为 Vim  <a href="eval.html#Dict">Dict</a>  类型，并调用  <a href="channel.html#channel-callback">channel-callback</a>  函数或指定的
+ <a href="channel.html#channel-onetime-callback">channel-onetime-callback</a>  函数。用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  或  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数在
+通道上发送消息时，Vim 会附加 HTTP 头部，并把 Vim 表达式编码为 JSON。
+参见  <a href="builtin.html#json_encode()">json_encode()</a>  和  <a href="builtin.html#json_decode()">json_decode()</a>  说明 Vim 编码和解码内建类型到 JSON 的
+详情。
+
+要用 <a href="options.html#'lsp'">'lsp'</a> 模式打开通道，把  <a href="channel.html#ch_open()">ch_open()</a>  的 <code class="special">{options}</code> 参数的 <code class="badlink">'mode'</code> 项目设为
+<a href="options.html#'lsp'">'lsp'</a>。示例: 
+<code class="example"></code>
+<code class="example">    let ch = ch_open(..., #{mode: 'lsp'})</code>
+<code class="example"></code>
+要用 <a href="options.html#'lsp'">'lsp'</a> 模式打开通道并使用作业，把  <a href="channel.html#job_start()">job_start()</a>  的 <code class="special">{options}</code> 参数的
+'in_mode' 和 'out_mode' 项目设为 <a href="options.html#'lsp'">'lsp'</a>。示例: 
+<code class="example"></code>
+<code class="example">    let cmd = ['clangd', '--background-index', '--clang-tidy']</code>
+<code class="example">    let opts = {}</code>
+<code class="example">    let opts.in_mode = 'lsp'</code>
+<code class="example">    let opts.out_mode = 'lsp'</code>
+<code class="example">    let opts.err_mode = 'nl'</code>
+<code class="example">    let opts.out_cb = function('LspOutCallback')</code>
+<code class="example">    let opts.err_cb = function('LspErrCallback')</code>
+<code class="example">    let opts.exit_cb = function('LspExitCallback')</code>
+<code class="example">    let job = job_start(cmd, opts)</code>
+<code class="example"></code>
+<code class="note">注意</code> 如果作业使用 stdout 来输出 LSP 消息，而用 stderr 来输出非-LSP 消息，
+通道-回调函数就可以正确处理两种消息格式，不然，你可用上面展示的方式来分别指定
+"out_cb" 和 "err_cb" 的回调函数。
+
+要同步发送 JSON-RPC 请求到服务器，可用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  函数。此函数会等待并返
+回经解码的服务器的响应消息。可用  <a href="channel.html#channel-timeout">channel-timeout</a>  或 <code class="special">{options}</code> 参数的
+<a href="options.html#'timeout'">'timeout'</a> 字段来控制等待响应的时间。如果响应超时，返回空  <a href="eval.html#Dict">Dict</a> 。例如: 
+<code class="example"></code>
+<code class="example">    let req = {}</code>
+<code class="example">    let req.method = 'textDocument/definition'</code>
+<code class="example">    let req.params = {}</code>
+<code class="example">    let req.params.textDocument = #{uri: 'a.c'}</code>
+<code class="example">    let req.params.position = #{line: 10, character: 3}</code>
+<code class="example">    let defs = ch_evalexpr(ch, req, #{timeout: 100})</code>
+<code class="example">    if defs-&gt;empty()</code>
+<code class="example">        ... &lt;handle failure&gt;</code>
+<code class="example">    endif</code>
+<code class="example"></code>
+<code class="note">注意</code> 请求消息不应指定 <code class="badlink">'id'</code> 字段。即使指定，Vim 会用内部生成的标识符取而代之。
+Vim 目前只支持数值类型的 <code class="badlink">'id'</code> 字段。不管 RPC 请求是成功还是失败，回调函数都会
+被调用。
+
+要发送 JSON-RPC 请求到服务器并异步处理其响应，可用  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数并提供
+回调函数。如果请求消息指定了 "id" 字段，Vim 会用内部生成的标识符取而代之。此函
+数返回字典，其中包含消息所用的标识符。这可用于给 LSP 服务器发送撤销请求 (如有
+需要)。例如: 
+<code class="example"></code>
+<code class="example">    let req = {}</code>
+<code class="example">    let req.method = 'textDocument/hover'</code>
+<code class="example">    let req.id = 200</code>
+<code class="example">    let req.params = {}</code>
+<code class="example">    let req.params.textDocument = #{uri: 'a.c'}</code>
+<code class="example">    let req.params.position = #{line: 10, character: 3}</code>
+<code class="example">    let resp = ch_sendexpr(ch, req, #{callback: 'HoverFunc'})</code>
+<code class="example"></code>
+要撤销  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数发送给服务器的尚未完成的异步 LSP 请求，用发送此请求
+的  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数返回的 ID 来调用  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  以给服务器发送撤销消
+息。例如: 
+<code class="example"></code>
+<code class="example">    " 发送 completion 请求</code>
+<code class="example">    let req = {}</code>
+<code class="example">    let req.method = 'textDocument/completion'</code>
+<code class="example">    let req.params = {}</code>
+<code class="example">    let req.params.textDocument = #{uri: 'a.c'}</code>
+<code class="example">    let req.params.position = #{line: 10, character: 3}</code>
+<code class="example">    let reqstatus = ch_sendexpr(ch, req, #{callback: 'LspComplete'})</code>
+<code class="example">    " 发送撤销通告</code>
+<code class="example">    let notif = {}</code>
+<code class="example">    let notif.method = '$/cancelRequest'</code>
+<code class="example">    let notif.id = reqstatus.id</code>
+<code class="example">    call ch_sendexpr(ch, notif)</code>
+<code class="example"></code>
+要给服务器发送 JSON-RPC 通告消息，用  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数。因为服务器不会为通
+告发送响应消息，不需要指定 "callback" 项目。例如: 
+<code class="example"></code>
+<code class="example">    call ch_sendexpr(ch, #{method: 'initialized'})</code>
+<code class="example"></code>
+要响应服务器发送的 JSON-RPC 请求消息，用  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数。在响应消息里，
+复制服务器请求消息里的 <code class="badlink">'id'</code> 字段值。例如: 
+<code class="example"></code>
+<code class="example">    let resp = {}</code>
+<code class="example">    let resp.id = req.id</code>
+<code class="example">    let resp.result = 1</code>
+<code class="example">    call ch_sendexpr(ch, resp)</code>
+<code class="example"></code>
+来自服务器的 JSON-RPC 通告消息会用  <a href="channel.html#channel-callback">channel-callback</a>  函数递送。
+
+取决于用例，可在同一通道上使用 ch_evalexpr()、ch_sendexpr() 和 ch_sendraw() 函
+数。
+
+LSP 请求消息有以下格式 (以 Vim 字典形式表示)。"params" 字段可选: 
+<code class="example"></code>
+<code class="example">    {</code>
+<code class="example">        "jsonrpc": "2.0",</code>
+<code class="example">        "id": &lt;number&gt;,</code>
+<code class="example">        "method": &lt;string&gt;,</code>
+<code class="example">        "params": &lt;list|dict&gt;</code>
+<code class="example">    }</code>
+<code class="example"></code>
+LSP 响应消息有以下格式 (以 Vim 字典形式表示)。"result" 和 "error" 字段可选: 
+<code class="example"></code>
+<code class="example">    {</code>
+<code class="example">        "jsonrpc": "2.0",</code>
+<code class="example">        "id": &lt;number&gt;,</code>
+<code class="example">        "result": &lt;vim type&gt;</code>
+<code class="example">        "error": &lt;dict&gt;</code>
+<code class="example">    }</code>
+<code class="example"></code>
+LSP 通告消息有以下格式 (以 Vim 字典形式表示)。"params" 字段可选: 
+<code class="example"></code>
+<code class="example">    {</code>
+<code class="example">        "jsonrpc": "2.0",</code>
+<code class="example">        "method": &lt;string&gt;,</code>
+<code class="example">        "params": &lt;list|dict&gt;</code>
+<code class="example">    }</code>
+<code class="example"></code>
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

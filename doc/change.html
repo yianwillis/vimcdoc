@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -252,6 +252,8 @@ Vim 把其后的字符插入在行尾 (和插入模式相同)。在替换模式�
 :<code class="special">{range}</code>c[hange][!]     用另外的文本替换若干文本行。输入只包含 "." 的行结束替
                         换。如果没有 <code class="special">{range}</code>，该命令只置换当前行。
                         加上 [!] 后，在本命令的执行期间切换 <a href="options.html#'autoindent'">'autoindent'</a>。
+                        此命令在  <a href="vim9.html#Vim9">Vim9</a>  脚本里不支持，因为它太容易和变量名混淆
+                        了。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 简单修改                                             <b class="vimtag"> <a name="simple-change">simple-change</a> </b></h4>
@@ -553,8 +555,9 @@ Vim 使用临时文件来处理过滤、执行比较和用于 tempname()。Unix 
 文件被其他用户读取等)。Vim 退出时，自动删除该目录及之下的所有文件。如果 Vim 本
 身设置了 setuid 位，这样或许会有问题。临时文件由 setuid 用户拥有，但过滤程序以
 原来用户的权限执行。
-MS-Windows 上，使用以下目录中首个可用者: $TMP、$TEMP、c:\TMP、c:\TEMP。
-Unix 上，使用的目录依次为: $TMPDIR、/tmp、当前目录、$HOME。
+在以下目录首个可用者建立存放临时文件的目录:
+        Unix:    $TMPDIR、/tmp、当前目录、$HOME。
+        Windows: $TMP、$TEMP、c:\TMP、c:\TEMP
 MS-Windows 上，使用 GetTempFileName() 系统函数。
 其它系统上使用 tmpnam() 库函数。
 
@@ -698,16 +701,18 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
 <code class="special">{pattern}</code> 之后的分隔符也可省略。例如: 
 <code class="example">        :%s/TESTING</code>
 删除所有行上的 "TESTING"，但每行只删一个。
-
-为了和 Vi 的兼容性，有两个例外:
+                                                                <b class="vimtag"> <a name="E1270">E1270</a> </b>
+为了和 Vi 的兼容性，老式脚本有两个例外:
 "\/<code class="special">{string}</code>/" 和 "\?<code class="special">{string}</code>?" 等同于 "//<code class="special">{string}</code>/r"。
 "\&amp;<code class="special">{string}</code>&amp;" 等同于 "//<code class="special">{string}</code>/"。
-                                                <b class="vimtag"> <a name="pattern-delimiter">pattern-delimiter</a> </b> <b class="vimtag"> <a name="E146">E146</a> </b>
-除了用 '/' 来包围模式和替代字符串之外，你可以使用任何其他的单字节字符，除了
-字母、数字、'\'、'"' 或 '|' 之外。这可以用于 '/' 是搜索模式或替代字符串一部
-分的场合。例如: 
+                                <b class="vimtag"> <a name="pattern-delimiter">pattern-delimiter</a> </b> <b class="vimtag"> <a name="E146">E146</a> </b> <b class="vimtag"> <a name="E1241">E1241</a> </b> <b class="vimtag"> <a name="E1242">E1242</a> </b>
+除了用 '/' 来包围模式和替代字符串之外，你可以使用其它的单字节字符，用于 '/' 是
+搜索模式或替代字符串一部分的场合。例如: 
 <code class="example">        :s+/+//+</code>
 <code class="example"></code>
+除了字母、数字、'\'、'"' 或 '|' 之外，可用大部分的字符。Vim9 脚本里也不能用
+'#'，因为它被识别为注释的开始。
+
 关于模式的定义，参见  <a href="pattern.html#pattern">pattern</a> 。在可视列块模式下，如果模式中使用了  <a href="pattern.html#%2F\%V">/\%V</a> ，那
 么替代只在列块内进行，否则它作用于整行。
 
@@ -749,7 +754,7 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
       \x          其中 x 是上面没提到的任何一个字符:
                   保留作将来的扩展
 
-这里的特殊含义也用于  <a href="eval.html#substitute()">substitute()</a>  函数的第三个参数 <code class="special">{sub}</code>，除了若干例外:
+这里的特殊含义也用于  <a href="builtin.html#substitute()">substitute()</a>  函数的第三个参数 <code class="special">{sub}</code>，除了若干例外:
   - % 总是插入百分号，与 <a href="options.html#'cpoptions'">'cpoptions'</a> 无关。
   - 总是假定有魔术性，与 <a href="options.html#'magic'">'magic'</a> 无关。
   - ~ 总是插入波浪符。
@@ -829,21 +834,21 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
 字符被用作换行符，双引号字符串 "\n" 也可以。在 <code class="special">&lt;NL&gt;</code> 之前加上反斜杠得到一个真正
 的 <code class="special">&lt;NL&gt;</code> 字符 (在文件里成为 NUL)。
 
-"\=" 记法也可用于  <a href="eval.html#substitute()">substitute()</a>  函数的第三个参数 <code class="special">{sub}</code> 之内，这时，
+"\=" 记法也可用于  <a href="builtin.html#substitute()">substitute()</a>  函数的第三个参数 <code class="special">{sub}</code> 之内，这时，
  <a href="change.html#sub-replace-special">sub-replace-special</a>  指出的特殊含义完全不适用。具体说，<code class="special">&lt;CR&gt;</code> 和 <code class="special">&lt;NL&gt;</code> 不用作换
 行，而分别是回车和新行。
 
 如果结果是  <a href="eval.html#List">List</a> ，连接其中的项目并以换行符分隔。这样，每个项目单独成为一行，
 当然本身就包含换行符的除外。
 
- <a href="eval.html#submatch()">submatch()</a>  函数可用来获取匹配文本。完整的匹配可以用 "submatch(0)" 得到。首个
+ <a href="builtin.html#submatch()">submatch()</a>  函数可用来获取匹配文本。完整的匹配可以用 "submatch(0)" 得到。首个
 括号里的匹配可以用 "submatch(1)"，余者类似。
 
 小心: 分隔符不能出现在表达式里！可以考虑使用 "@" 或者 ":" 那样的字符。执行结果
 里出现分隔符不成问题。
 
 例如: 
-<code class="example">        :s@\n@\="\r" . expand("$HOME") . "\r"@</code>
+<code class="example">        :s@\n@\="\r" .. expand("$HOME") .. "\r"@</code>
 把换行符替代为包含 $HOME 值的一个新行。 
 <code class="example"></code>
 <code class="example">        s/E/\="\&lt;Char-0x20ac&gt;"/g</code>
@@ -933,6 +938,10 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                         作)。如果你想要 "Y" 执行从光标到行尾的操作 (更合乎逻
                         辑，但是与 Vi 不兼容)，用 ":map Y y$"。
 
+                                                        <b class="vimtag"> <a name="zy">zy</a> </b>
+["x]zy<code class="special">{motion}</code>          抽出 <code class="special">{motion}</code> 跨越的文本 [到寄存器 x]。 和  <a href="change.html#y">y</a>  的仅有
+                        不同是在选择文本列块时，见  <a href="change.html#v_zy">v_zy</a> 。
+
                                                         <b class="vimtag"> <a name="v_y">v_y</a> </b>
 <code class="special">{Visual}</code>["x]y           抽出高亮文本 [到寄存器 x] (关于 <code class="special">{Visual}</code> 见
                          <a href="visual.html#Visual-mode">Visual-mode</a> )。
@@ -940,6 +949,11 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                                                         <b class="vimtag"> <a name="v_Y">v_Y</a> </b>
 <code class="special">{Visual}</code>["x]Y           抽出高亮行 [到寄存器 x] (关于 <code class="special">{Visual}</code> 见
                          <a href="visual.html#Visual-mode">Visual-mode</a> )。
+
+                                                        <b class="vimtag"> <a name="v_zy">v_zy</a> </b>
+<code class="special">{Visual}</code>["x]zy          抽出高亮文本 [到寄存器 x]。不会抽出选中的列块的每行尾
+                        部拖尾的空白。和  <a href="change.html#zp">zp</a>  的组合特别有用。(关于 <code class="special">{Visual}</code>
+                        见  <a href="visual.html#Visual-mode">Visual-mode</a> )
 
                                                         <b class="vimtag"> <a name=":y">:y</a> </b> <b class="vimtag"> <a name=":yank">:yank</a> </b> <b class="vimtag"> <a name="E850">E850</a> </b>
 :<code class="special">[range]</code>y[ank] <code class="special">[x]</code>      抽出 <code class="special">[range]</code> 所指定的行 [到寄存器 x]。仅当包含
@@ -949,7 +963,7 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                         从 <code class="special">[range]</code> 的最后一行开始 (缺省: 当前行
                          <a href="cmdline.html#cmdline-ranges">cmdline-ranges</a> ) 抽出 <code class="special">{count}</code> 行 [到寄存器 x]。
 
-                                                        <b class="vimtag"> <a name="p">p</a> </b> <b class="vimtag"> <a name="put">put</a> </b> <b class="vimtag"> <a name="E353">E353</a> </b>
++                                               <b class="vimtag"> <a name="p">p</a> </b> <b class="vimtag"> <a name="put">put</a> </b> <b class="vimtag"> <a name="E353">E353</a> </b> <b class="vimtag"> <a name="E1240">E1240</a> </b>
 ["x]p                   放置文本 [从寄存器 x] 在光标之后 <code class="special">[count]</code> 次。
 
                                                         <b class="vimtag"> <a name="P">P</a> </b>
@@ -983,7 +997,7 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                         寄存器也可以是 '='，跟随一个可选的表达式。表达式继续到
                         该命令结束为止。需在 '|' 和 '"' 字符前加上反斜杠不让它
                         们终止你的命令行。例如: 
-<code class="example">                                :put ='path' . \",/test\"</code>
+<code class="example">                                :put ='path' .. \",/test\"</code>
                         '=' 之后如果没有表达式，Vim 会使用前一个表达式。用
                         ":dis =" 可以察看。
 
@@ -999,6 +1013,10 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
 ["x][p              或                                  <b class="vimtag"> <a name="[p">[p</a> </b> <b class="vimtag"> <a name="[%3CMiddleMouse%3E">[&lt;MiddleMouse&gt;</a> </b>
 ["x][<code class="special">&lt;MiddleMouse&gt;</code>      类似 "P"，但调整当前行的缩进。只有在 <a href="options.html#'mouse'">'mouse'</a> 包含 'n'
                         或者 'a' 时鼠标才会工作。
+
+["x]zp              或                                  <b class="vimtag"> <a name="zp">zp</a> </b> <b class="vimtag"> <a name="zP">zP</a> </b>
+["x]zP                  类似 "p" 和 "P"，但粘贴列块时不附加拖尾空白。这样插入
+                        的文本就不总是矩阵。和  <a href="change.html#v_zy">v_zy</a>  的组合特别有用。
 
 你可以用这些命令把文本从一个地方复制到另一个地方。首先，把文本用抽出、删除或者
 修改命令取到一个寄存器里，然后用放置命令把寄存器的内容插入。你可以用这些命令把
@@ -1019,9 +1037,12 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
 存器的内容。这是否如你所愿取决于选择的类型和寄存器里文本的类型。对于列块选择而
 言，也取决于列块的大小和头尾是否在已存在的字符上。(实现细节: 实际上先在选择区
 之后放置寄存器的内容，然后再删除选择区的内容。)
-前次选择的文本被放在无名寄存器中。如果希望把相同的文本重复放入可视选择区多次，
-请选用其它寄存器。例如，先抽出要复制的文本，再可视化选择要替换的文本，然后使用
-"0p。重复任意多次均可，而每次无名寄存器都会被改变。
+用  <a href="change.html#p">p</a>  时前次选择的文本被放在无名寄存器 (可能同时也在选择和/或剪贴板) 中。可用
+于把该文本放置到他处。但不能重复相同操作。
+用  <a href="change.html#P">P</a>  时无名寄存器不改变 (同样选择或剪贴板也不会改变)，可以重复相同的改变，但
+删除的文本不能再用。如果需要，可以用  <a href="change.html#p">p</a>  并选用其它寄存器。例如，先抽出要复制
+的文本，再可视化选择要替换的文本，然后使用 "0p。重复任意多次均可，而每次无名寄
+存器都会被改变。
 
 应用面向列块的可视模式命令抽出单行到寄存器时，粘贴该寄存器到某一可视选择的区域
 会把该行复制到选择的每一行上 (也即，把选择的列块区域替代为被复制行的列块)。
@@ -1032,6 +1053,8 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
 样，插入的文本看上去和抽出或删除时看起来一样。为了使之可能，Vim 可能需要把一些
 <code class="special">&lt;Tab&gt;</code> 字符替换成空格。不过，如果列块的宽度不是 <code class="special">&lt;Tab&gt;</code> 宽度的整数倍并且插入列块
 之后文本里包含 <code class="special">&lt;Tab&gt;</code> 的时候，那些文本可能就不会那么整齐。
+
+用  <a href="change.html#zP">zP</a> / <a href="change.html#zp">zp</a>  来粘贴已抽出的面向列块的寄存器，而不附加拖尾的空白。
 
 <code class="note">注意</code> 在一个面向字符的抽出命令之后，Vim 把光标停留在最接近缓冲区开头的首个被抽
 出的字符之上。这意味着 "yl" 不会移动光标，但是 "yh" 把光标向左移一格。
@@ -1085,8 +1108,8 @@ Vim 只有在你指定的时候才使用这些寄存器。指定为小写字母�
 一个换行符。
 
 5. 只读寄存器 ":、". 和 "%
-它们是 '%'、'#' (<code class="vim">译者注</code>: 原文如此)、':' 和 '.'。你只能在 "p"、"P"、":put" 命令
-和 <code class="keystroke">CTRL-R</code> 的时候使用它们。
+它们是 '%'、':' 和 '.'。你只能在 "p"、"P"、":put" 命令和 <code class="keystroke">CTRL-R</code> 的时候使用它
+们。
                                                 <b class="vimtag"> <a name="quote_.">quote_.</a> </b> <b class="vimtag"> <a name="quote.">quote.</a> </b> <b class="vimtag"> <a name="E29">E29</a> </b>
         ".      包含最近插入的文本 (和插入模式命令 <code class="keystroke">CTRL-A</code> 和 <code class="keystroke">CTRL-@</code> 插入的一
                 样)。<code class="note">注意</code>: 它不适用于命令行上的 <code class="keystroke">CTRL-R</code>。后者的工作方式稍有不
@@ -1170,6 +1193,8 @@ MS-Windows 上，"* 和 "+ 的使用实际上是等价的，可见  <a href="gui
 
                                                         <b class="vimtag"> <a name=":t">:t</a> </b>
 :t                      和 :copy 等价。
+                        此命令在  <a href="vim9.html#Vim9">Vim9</a>  脚本里不支持，因为它太容易和变量名混淆
+                        了。
 
 :<code class="special">[range]</code>m[ove] <code class="special">{address}</code>                        <b class="vimtag"> <a name=":m">:m</a> </b> <b class="vimtag"> <a name=":mo">:mo</a> </b> <b class="vimtag"> <a name=":move">:move</a> </b> <b class="vimtag"> <a name="E134">E134</a> </b>
                         把 <code class="special">[range]</code> 指定的行移动到 <code class="special">{address}</code> 给出的行之下。
@@ -1415,7 +1440,10 @@ c       使用 <a href="options.html#'textwidth'">'textwidth'</a> 自动回绕�
                                                         <b class="vimtag"> <a name="fo-r">fo-r</a> </b>
 r       在插入模式按回车时，自动插入当前注释前导符。
                                                         <b class="vimtag"> <a name="fo-o">fo-o</a> </b>
-o       在普通模式按 'o' 或者 'O' 时，自动插入当前注释前导符。
+o       在普通模式按 'o' 或者 'O' 时，自动插入当前注释前导符。如果特定处不想要
+        注释，可以用 <code class="keystroke">CTRL-U</code> 快速删除之。  <a href="insert.html#i_CTRL-U">i_CTRL-U</a> 
+                                                        <b class="vimtag"> <a name="fo-%2F">fo-/</a> </b>
+/       包含 'o' 时: 不为语句后的 // 注释插入注释前导符，除非 // 在行首出现。
                                                         <b class="vimtag"> <a name="fo-q">fo-q</a> </b>
 q       允许 "gq" 排版时排版注释。
         <code class="note">注意</code> 排版不会影响空行或者只有注释前导符的行。这样的行开启一个新段落，
@@ -1560,7 +1588,7 @@ p       不在句号后的单个空白上断行。它的目的是和 <a href="op
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>7. 文本排序                                             <b class="vimtag"> <a name="sorting">sorting</a> </b></h4>
-Vim 有排序函数和排序命令。排序函数可见:  <a href="eval.html#sort()">sort()</a> ， <a href="eval.html#uniq()">uniq()</a> 。
+Vim 有排序函数和排序命令。排序函数可见:  <a href="builtin.html#sort()">sort()</a> ， <a href="builtin.html#uniq()">uniq()</a> 。
 
                                                         <b class="vimtag"> <a name=":sor">:sor</a> </b> <b class="vimtag"> <a name=":sort">:sort</a> </b>
 :<code class="special">[range]</code>sor[t][!] <code class="special">[b]</code>[f][i][l][n][o][r][u][x] [/<code class="special">{pattern}</code>/]

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2019年12月
+<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -92,7 +92,7 @@
 么是空行，要么以 <a href="options.html#'foldignore'">'foldignore'</a> 选项里包含的字符开始。在查找 <a href="options.html#'foldignore'">'foldignore'</a> 里包含
 的字符时，空白字符会被忽略。对于 C，该选项使用 "#" 来略过要预处理的那些行。
 
-当你想用另一种方式来略过行时，使用 "expr" 方法。在 <a href="options.html#'foldexpr'">'foldexpr'</a> 中  <a href="eval.html#indent()">indent()</a>  函
+当你想用另一种方式来略过行时，使用 "expr" 方法。在 <a href="options.html#'foldexpr'">'foldexpr'</a> 中  <a href="builtin.html#indent()">indent()</a>  函
 数被用来取得一行的缩进。
 
 
@@ -140,6 +140,11 @@
 最好避免使用 "="，"a" 和 "s" 作为返回值，因为 Vim 不得不经常向后回溯以得到折叠
 级别。这会降低执行速度。
 
+<a href="options.html#'foldexpr'">'foldexpr'</a> 表达式以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始时，它们被脚本 ID 替换
+( <a href="eval.html#local-function">local-function</a> )。例如: 
+<code class="example">                set foldexpr=s:MyFoldExpr()</code>
+<code class="example">                set foldexpr=&lt;SID&gt;SomeFoldExpr()</code>
+
 使用 "a1" 和 "s1" 的一例: 用于多行 C 注释，以 "/*" 开始的行返回 "a1" 以开始折
 叠，包含 "*/" 的一行返回 "s1" 使该行之后结束折叠: 
 <code class="example">  if match(thisline, '/\*') &gt;= 0</code>
@@ -151,7 +156,7 @@
 <code class="example">  endif</code>
 不过，此代码不适用于单行注释，字符串等。
 
- <a href="eval.html#foldlevel()">foldlevel()</a>  计算相对于上一折叠级别的折叠级别。但要<code class="note">注意</code>，如果该级别未知，
+ <a href="builtin.html#foldlevel()">foldlevel()</a>  计算相对于上一折叠级别的折叠级别。但要<code class="note">注意</code>，如果该级别未知，
 foidlevel() 返回 -1。它返回的级别对应于该行开始的位置，尽管折叠本身可能在该行
 结束。
 
@@ -462,13 +467,15 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 <code class="example">    :function MyFoldText()</code>
 <code class="example">    :  let line = getline(v:foldstart)</code>
 <code class="example">    :  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')</code>
-<code class="example">    :  return v:folddashes . sub</code>
+<code class="example">    :  return v:folddashes .. sub</code>
 <code class="example">    :endfunction</code>
 <code class="example"></code>
 <a href="options.html#'foldtext'">'foldtext'</a> 的计算是在沙盘  <a href="eval.html#sandbox">sandbox</a>  里完成的。其中的当前窗口设为要显示该行的窗
-口。错误被忽略。
+口。上下文设为上次设置此选项所在的脚本。
 
-默认值是  <a href="eval.html#foldtext()">foldtext()</a> 。对于大多数类型的折叠它可以返回适合的文字。如果你不喜欢
+错误被忽略。要方便调试可设 <a href="options.html#'debug'">'debug'</a> 选项为 "throw"。
+
+默认值是  <a href="builtin.html#foldtext()">foldtext()</a> 。对于大多数类型的折叠它可以返回适合的文字。如果你不喜欢
 它，你可以自己指定 <a href="options.html#'foldtext'">'foldtext'</a> 表达式。可以使用以下这些 Vim 变量:
         v:foldstart     折叠首行的行号
         v:foldend       折叠末行的行号
@@ -479,6 +486,11 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 
 结果行被截短以适合窗口的宽度，永远不会回绕。
 当在文字后有空余时，用 <a href="options.html#'fillchars'">'fillchars'</a> 来填充。
+
+<a href="options.html#'foldtext'">'foldtext'</a> 表达式以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始时，它们被脚本 ID 替换
+( <a href="eval.html#local-function">local-function</a> )。例如: 
+<code class="example">                set foldtext=s:MyFoldText()</code>
+<code class="example">                set foldtext=&lt;SID&gt;SomeFoldText()</code>
 
 <code class="note">备注</code>: 对那些 ":set" 命令作特殊处理的字符在其前面须加上反斜杠。如: 空格，反斜杠
 和双引号。 <a href="options.html#option-backslash">option-backslash</a> 
@@ -494,6 +506,8 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 束。当折叠嵌套时，嵌套的折叠出现在被包含的折叠右方一个字符位置。
 
 一个关闭的折叠由 '+' 表示。
+
+这些字符可用 <a href="options.html#'fillchars'">'fillchars'</a> 选项调整。
 
 当折叠栏太窄而不能显示所有折叠时，显示一数字来表示嵌套的级别。
 
