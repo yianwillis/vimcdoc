@@ -1,4 +1,4 @@
-*insert.txt*    适用于 Vim 8.2 版本。	最近更新: 2020年11月
+*insert.txt*    适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -67,8 +67,8 @@ CTRL-W		删除光标前的单词 (关于连接行，见 |i_backspacing|)。关�
 						*i_CTRL-U*
 CTRL-U		删除当前行上光标前的所有输入字符。如果没有新输入的字符而
 		'backspace' 不为空，删除当前行上光标前的所有字符。
+		打开 C-缩进时，如果行被清空，调整缩进。
 		关于连接行，见 |i_backspacing|。
-
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> 或 CTRL-I 插入制表。如果打开 'expandtab' 选项，等价数目的空格被插入 (使
 		用 CTRL-V <Tab> 避免这种扩展: 如果 CTRL-V 被映射，可以使用
@@ -231,7 +231,7 @@ start	    允许退格删除插入开始之前的位置；CTRL-W 和 CTRL-U 在�
 如果 'backspace' 为空，则使用 Vi 兼容的退格方式。不能退格删除自动缩进、回到第
 一列之前、或者超过插入开始的地方。
 
-为了后向兼容起见，取值 "0"、"1" 和 "2" 也是允许的，见 |'backspace'|。
+为了后向兼容起见，取值 "0"、"1"、”2“ 和 "3" 也是允许的，见 |'backspace'|。
 
 如果 'backspace' 选项的确包含 "eol"，光标在第一列，而使用了这三个键中的一个，
 当前行会和上一行连接。这实际上删除了光标之前的 <EOL>。
@@ -529,6 +529,8 @@ CTRL-G j 和 CTRL-G k 命令可用来在同一列前插入文本。例如: >
 12. 拼写建议						|i_CTRL-X_s|
 13. 'complete' 的关键字					|i_CTRL-N| |i_CTRL-P|
 
+此外，|i_CTRL-X_CTRL-Z| 停止补全而不改动现有的文本。
+
 除了 CTRL-N 和 CTRL-P 以外，所有这些都通过 CTRL-X 模式完成。这是插入和替换模式
 的一个子模式。你可以键入 CTRL-X 后跟一个 CTRL-X 命令来进入 CTRL-X 模式。要退出
 CTRL-X 模式，输入非合法的 CTRL-X 模式命令就行了。合法的键包括 CTRL-X 命令自
@@ -551,7 +553,7 @@ CTRL-X 模式，输入非合法的 CTRL-X 模式命令就行了。合法的键�
 是 CTRL-F 而 ^X 是 CTRL-X)。能够使得 CTRL-X 模式退出的键 (任何不是合法 CTRL-X
 模式命令的键) 则经过映射。另外，通过 'complete' 的补全也应用映射。
 
-							*E578* *E565*
+								*E565*
 注意: 补全激活时，不能递归使用插入模式，也不能改变缓冲区文本。以某种方式调用
 ":normal i.." 的映射将产生 E565 错误。
 
@@ -655,7 +657,7 @@ CTRL-N 开始一个扩展，而 CTRL-P 回到单个字符 "M"，然后后面的�
 
 如果上次的扩展因为超过 'textwidth' 被分割，则只会使用当前行的文本。
 
-如果匹配在行尾，那么会插入下一行的首个单词，而且显示消息 "word from next
+如果匹配在行尾，那么会插入下一行的首个单词，而且显示消息 "Word from other
 line"。如果该词被接受，那么下个 CTRL-X CTRL-P 或者 CTRL-X CTRL-N 会搜索那些以
 该单词开始的行。
 
@@ -669,11 +671,14 @@ CTRL-X CTRL-K		根据 'dictionary' 选项给出的文件搜索光标前关键字
 			在用到第一个匹配之前，会先找到所有的匹配。缺省，
 			'dictionary' 选项为空。
 			关于哪里能找到单词列表的建议，见 'dictionary' 选项。
+			适用 'ignorecase'、'smartcase' 和 'infercase'。
 
 	CTRL-K	或
 	CTRL-N		正向搜索下一个匹配的关键字。替换前次匹配的关键字。
 
 	CTRL-P		反向搜索下一个匹配的关键字。替换前次匹配的关键字。
+
+补全 'thesaurus' 的单词					*compl-thesaurus*
 
 							*i_CTRL-X_CTRL-T*
 CTRL-X CTRL-T		和 CTRL-X CTRL-K 类似，但稍有不同。它使用 'thesaurus'
@@ -681,17 +686,56 @@ CTRL-X CTRL-T		和 CTRL-X CTRL-K 类似，但稍有不同。它使用 'thesaurus
 			配，同一行里其余单词也会被列为匹配，即使它们并不补全单
 			词。这样一个单词可以被完全替换。
 
-			举一个例子，假想 'thesaurus' 文件有一行形如: >
-				angry furious mad enraged
-<			把光标放在字母 "ang" 之后并输入 CTRL-X CTRL-T 会匹配单
-			词 "angry"；继续按会把单词改为 "furious"、"mad" 等等。
-			其它的用法包括在两种语言之间的翻译，或者用关键字给 API
-			函数归类等等。
-
 	CTRL-T	或
 	CTRL-N		正向搜索下一个匹配的关键字。替换前次匹配的关键字。
 
 	CTRL-P		反向搜索下一个匹配的关键字。替换前次匹配的关键字。
+
+'thesaurus' 选项使用的文件中，每行应该包含相近意思的单词，以非关键字字符分隔
+(建议使用空白)。最大的行长为 510 个字节。
+
+举一个例子，假想 'thesaurus' 文件有一行形如: >
+	angry furious mad enraged
+把光标放在字母 "ang" 之后并输入 CTRL-X CTRL-T 会匹配单词 "angry"；继续按会把单
+词改为 "furious"、"mad" 等等。
+
+其它的用法包括在两种语言之间的翻译，或者用关键字给 API 函数归类等等。
+
+
+此 github 议题附加了英语单词列表:
+https://github.com/vim/vim/issues/629#issuecomment-443293282
+解包 thesaurus_pkg.zip，把 thesaurus.txt 文件放在某处，如
+~/.vim/thesaurus/english.txt，然后把 'thesaurus' 选项设为此文件名。
+
+
+用 'thesaurusfunc' 补全关键字				*compl-thesaurusfunc*
+
+如果设置了 'thesaurusfunc' 选项，执行用户指定函数来生成补全匹配的列表，忽略
+'thesaurus' 选项。|complete-functions| 有关于如何调用函数和返回何种值的说明。
+
+以下是使用 "aiksaurus" 命令的例子 (Magnus Groß 提供): >
+
+    func Thesaur(findstart, base)
+      if a:findstart
+        return searchpos('\<', 'bnW', line('.'))[1] - 1
+      endif
+      let res = []
+      let h = ''
+      for l in systemlist('aiksaurus ' .. shellescape(a:base))
+	if l[:3] == '=== '
+	  let h = '(' .. substitute(l[4:], ' =*$', ')', '')
+	elseif l ==# 'Alphabetically similar known words are: '
+	  let h = "\U0001f52e"
+	elseif l[0] =~ '\a' || (h ==# "\U0001f52e" && l[0] ==# "\t")
+	  call extend(res, map(split(substitute(l, '^\t', '', ''), ', '), {_, val -> {'word': val, 'menu': h}}))
+	endif
+      endfor
+      return res
+    endfunc
+
+    if exists('+thesaurusfunc')
+      set thesaurusfunc=Thesaur
+    endif
 
 
 补全当前文件及其头文件内的关键字			*compl-keyword*
@@ -840,9 +884,15 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
 			两个 CTRL-X 为止。
 
 
+停止补全						*compl-stop*
+
+							*i_CTRL-X_CTRL-Z*
+CTRL-X CTRL-Z		停止补全而不改变原有的文本。
+
+
 寻 找 补 全 的 函 数					*complete-functions*
 
-这里指 'completefunc' 和 'omnifunc'。
+这里指 'completefunc'、'thesaurusfunc' 和 'omnifunc'。
 
 函数被调用两次，使用不同的方式:
 - 首先，调用函数以寻找补全文本的开始位置。
@@ -866,7 +916,7 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
    a:base	补全必须匹配的文本；即第一次调用定位的文本 (可以为空)
 
 函数必须返回匹配单词的列表。这些匹配通常包含 "a:base" 文本。如果没有匹配，返回
-空列表。
+空列表。注意 第一次调用后，光标可能移动过，文本也可能有所改动。
 
 要知道关于匹配词的信息，返回包含匹配列表的一个字典。字典包含以下项目:
 	words		包含匹配单词的列表 (必需)。
@@ -965,7 +1015,7 @@ info 弹出被创建后，可在 |popup_findinfo()| 里找到，其属性可由
 返回的列表里包含这些匹配！搜索匹配的同时，时不时地调用 |complete_check()| 来使
 得用户仍然可以按键。如果该函数返回非零，搜索停止。
 
-							*E839* *E840*
+							*E840*
 该函数可以移动光标，结束后光标会恢复。
 该函数不允许移动到其他窗口，也不允许删除文本。
 
@@ -983,7 +1033,7 @@ info 弹出被创建后，可在 |popup_findinfo()| 里找到，其属性可由
 	    " 寻找匹配 "a:base" 的月份
 	    let res = []
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call add(res, m)
 	      endif
 	    endfor
@@ -1005,7 +1055,7 @@ info 弹出被创建后，可在 |popup_findinfo()| 里找到，其属性可由
 	  else
 	    " 寻找匹配 "a:base" 的月份
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call complete_add(m)
 	      endif
 	      sleep 300m	" simulate searching for next match
@@ -1110,11 +1160,15 @@ PmenuThumb	滚动条拇指 (thumb) |hl-PmenuThumb|
 
 C							*ft-c-omni*
 
-C 代码补全需要标签文件。你应该使用 Exuberant ctags 软件，因为它会加入补全所需
-要的额外信息。你可以在这里找到它:  http://ctags.sourceforge.net/ 推荐使用 5.6
-或以后版本。
+C 代码补全需要标签文件。你应该使用 Universal/Exuberant ctags 软件，因为它会加
+入补全所需要的额外信息。你可以在这里找到它:
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
-对于 5.5.4 版本，你应该打上增加 "typename:" 字段的补丁:
+推荐使用 Universal Ctags，Exuberant Ctags 已不再开发。
+
+对 Exuberant ctags 而言，建议使用 5.6 或更新版本。对于 5.5.4 版本，你应该打上
+增加 "typename:" 字段的补丁:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 可以在这里找到 MS-Windows 上已经编译好的可执行版本:
 	http://ctags.sourceforge.net/
@@ -1216,8 +1270,11 @@ DOM 兼容性
 
 PHP							*ft-php-omni*
 
-PHP 代码的补全需要标签文件才能对外部文件的数据和类进行补全。应该使用 Exuberant
-ctags 5.5.4 版本或更新的版本。在这里可以找到它: http://ctags.sourceforge.net/
+PHP 代码的补全需要标签文件才能对外部文件的数据和类进行补全。应该使用
+Universal/Exuberant ctags 5.5.4 版本或更新的版本。在这里可以找到它:
+
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
 脚本对以下项目进行补全:
 
@@ -1566,6 +1623,8 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。
 如果打开 'autoindent'，新行的缩进从上一行得到。打开 'smartindent' 或 'cindent'
 时，行的缩进根据 C 程序的要求自动调整。
 
+可设置 'formatoptions'，开启新行时自动复制注释头部。
+
 'textwidth' 可以设置一行的最大宽度。如果一行过长，在添加字符时会自动添加换行
 符。
 
@@ -1577,11 +1636,15 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。
 :{range}a[ppend][!]	在指定行下方添加若干行。如果没有给出 {range}，文本会在
 			当前行之后插入。
 			加入 [!] 切换此命令执行时的 'autoindent'。
+			此命令在 |Vim9| 脚本里不支持，因为它太容易和变量名混淆
+			了。
 
 							*:i* *:in* *:insert*
 :{range}i[nsert][!]	在指定行上方添加若干行。如果没有给出 {range}，文本会在
 			当前行之前插入。
 			加入 [!] 切换此命令执行时的 'autoindent'。
+			此命令在 |Vim9| 脚本里不支持，因为它太容易和变量名混淆
+			了。
 
 这两个命令会继续要求行，直到你输入了只包含 "." 的一行。小心反斜杠开始的行，见
 |line-continuation|。

@@ -1,4 +1,4 @@
-*if_lua.txt*    适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*if_lua.txt*    适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Luis Carvalho
@@ -159,10 +159,16 @@ Lua 通过 "vim" 模块和 Vim 进行接口。输入行范围的首末行分别�
 					:lua print(type(l), vim.type(l))
 					:" list
 <
-	vim.command({cmd})	执行 vim (ex 模式) 命令 {cmd}。
+	vim.command({cmds})	执行 {cmds} 里一行或多行的 Ex 模式命令。
 				示例: >
 					:lua vim.command"set tw=60"
 					:lua vim.command"normal ddp"
+					lua << trim END
+					  vim.command([[
+					      new Myfile.js
+					      call search('start')
+					  ]])
+					END
 <
 	vim.eval({expr})	计算表达式 {expr} (见 |expression|)，把结果转
 				化为 Lua 格式并返回。Vim 字符串和数值被直接转
@@ -191,6 +197,43 @@ Lua 通过 "vim" 模块和 Vim 进行接口。输入行范围的首末行分别�
 <
 	vim.lua_version		Vim 编译所带的 Lua 版本，形如
 				{major}.{minor}.{patch}，如 "5.1.4"。
+
+	vim.version()		返回 Lua 表，提供Vim 版本信息。
+				此表有以下键:
+					major - 主 Vim 版本号。
+					minor - 次 Vim 版本号。
+					patch - 包含的最新补丁号。
+
+                                                        *lua-vim-variables*
+Lua 可以方便地和合乎惯例地引用下面所述的 `vim.*` Lua 表来访问 Vim 编辑器的全局
+字典 |g:| |w:| |b:| |t:| |v:|。这样在 Lua 里读取和修改全局 Vim 脚本变量就十分
+方便。
+
+示例: >
+
+    vim.g.foo = 5     -- 设置 g:foo Vim 脚本变量。
+    print(vim.g.foo)  -- 获取和显示 g:foo Vim 脚本变量。
+    vim.g.foo = nil   -- 删除 (:unlet) Vim 脚本变量。
+
+vim.g                                                   *vim.g*
+        全局 (|g:|) 编辑器变量集。
+        无对应值的键返回 `nil`。
+
+vim.b                                                   *vim.b*
+        当前缓冲区的缓冲区作用域 (|b:|) 变量集。
+        非法或未设置的键返回 `nil`。
+
+vim.w                                                   *vim.w*
+        当前窗口的窗口作用域 (|w:|) 变量集。
+        非法或未设置的键返回 `nil`。
+
+vim.t                                                   *vim.t*
+        当前标签页的标签页作用域 (|t:|) 变量集。
+        非法或未设置的键返回 `nil`。
+
+vim.v                                                   *vim.v*
+        |v:| 变量。
+        非法或未设置的键返回 `nil`。
 
 ==============================================================================
 3. 列表用户数据						*lua-list*

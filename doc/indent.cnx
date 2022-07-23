@@ -1,4 +1,4 @@
-*indent.txt*    适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*indent.txt*    适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -20,9 +20,6 @@ Vim 有很多自动缩进 C 风格程序的选项。不少编程语言，如 Jav
 其它类型的排版和缩进，大体可参阅 |format-comments|、|fo-table|、|gq| 和
 |formatting|。
 
-备注 如果编译时没有指定 |+smartindent| 或者 |+cindent| 特性，这些选项将不起作
-用。
-
 实际上主要有四种可用缩进的方式，如果同时指定或对 'indentexpr' 而言非空，列于后
 者优先于列于前者:
 'autoindent'	沿用上一行的缩进。
@@ -36,11 +33,12 @@ Vim 有很多自动缩进 C 风格程序的选项。不少编程语言，如 Jav
 注意 'cindent' 缩进不一定对所有的代码都起作用。Vim 不是 C 编译器: 它不能识别出
 所有的语法。一个要求是顶层函数必须在第一列中含有 '{'。否则它们容易与声明混淆。
 
-这四个选项控制 C 程序缩进:
+这五个选项控制 C 程序缩进:
 'cindent'	使 Vim 对 C 程序自动缩进。
 'cinkeys'	指定在插入模式下按哪个键可以再次缩进。
 'cinoptions'	设定你喜好的缩进模式。
 'cinwords'	定义在下一行中开始一个额外缩进的关键字。
+'cinscopedecls'	定义识别为 C++ 作用域声明的字符串。
 
 如果 'lisp' 选项没被打开并且 'equalprg' 为空，"=" 操作符将使用 Vim 的内建算法
 而不调用外部程序。
@@ -259,8 +257,8 @@ Vim 将那个数字乘以 'shiftwidth': "1s" 是 'shiftwidth'，"2s" 是 'shiftw
 <
 							*cino-g*
 	gN    将 C++ 作用域声明置于其所在代码块的 N 个字符后。(缺省为
-	      'shiftwidth')。作用域声明可以是 "public:"、"protected:" 或者
-	      "private:"。
+	      'shiftwidth')。缺省，作用域声明可以是 "public:"、"protected:" 或
+	      者 "private:"。此列表可用 'cinscopedecls' 选项修改。
 
 		cino=		    cino=g0 >
 		  {		      {
@@ -544,19 +542,17 @@ CLOJURE					*ft-clojure-indent* *clojure-indent*
 
 Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括号的使用，还有部分是
 社群习惯的差异。这些惯例又不是普遍遵循的。因为这样，Closure 缩进脚本提供了若干
-可配置的选项，如下所述。
+可配置的选项。
 
-如果当前的 vim 不支持 searchpairpos()，缩进脚本回到普通 'lisp' 缩进方式并忽略
-以下所述的选项。
+(如果当前的 vim 不支持 |searchpairpos()|，缩进脚本回到普通 'lisp' 缩进方式并忽
+略以下所述的选项。)
 
 							*g:clojure_maxlines*
 
-设置 searchpairpos() 的最大检索距离。较大的值牺牲性能以换取处理更长表达式
-(form) 的正确性。0 会使检索没有限制。
->
-	" 缺省
-	let g:clojure_maxlines = 100
-<
+设置 `searchpairpos()` 的最大检索距离。较大的值牺牲性能以换取处理更长表达式
+(form) 的正确性。0 会使检索没有限制。缺省值是 300。
+
+
 						*g:clojure_fuzzy_indent*
 					*g:clojure_fuzzy_indent_patterns*
 					*g:clojure_fuzzy_indent_blacklist*
@@ -580,12 +576,8 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 	let g:clojure_fuzzy_indent_blacklist =
 		\ ['-fn$', '\v^with-%(meta|out-str|loading-context)$']
 
-	" 旧式的逗号分隔字符串版本；建议采用上面的列表格式。注意这里的模式总是
-	" 隐含假定以 ^ 开始，以 $ 结束
-	let g:clojure_fuzzy_indent_patterns = 'with.*,def.*,let.*'
-<
 |g:clojure_fuzzy_indent_patterns| 和 |g:clojure_fuzzy_indent_blacklist| 是模式
-的列表 |Lists|，用于匹配 Lisp 列表 (list) 的头部去掉引号和限定词部分的符号。这
+的列表，用于匹配 Lisp 列表 (list) 的头部去掉限定词部分的符号。这
 意味着形如 "^foo" 的模式会匹配以下的候选: "foobar"、"my.ns/foobar" 和
 "#'foobar"。
 
@@ -624,11 +616,7 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 	   enim ad minim veniam, quis nostrud exercitation ullamco laboris
 	   nisi ut aliquip ex ea commodo consequat.")
 <
-缺省关闭此选项。
->
-	" 缺省
-	let g:clojure_align_multiline_strings = 0
-<
+
 						*g:clojure_align_subforms*
 
 缺省括号内的复合表达式以函数调用形式出现，头部子表达式在单独一行上，后续的子表
@@ -638,17 +626,12 @@ Clojure 的缩进和传统的 Lisp 有所不同，部分由于方括号和尖括
 	  bar
 	  baz)
 <
-置位此选项改变此行为，使得所有的子表达式在同一列对齐，这模拟了 clojure-mode.el
-的缺省行为:
+设置此选项为 '1' 改变此行为，使得所有的子表达式在同一列对齐，这模拟了
+clojure-mode.el 的缺省行为:
 >
 	(foo
 	 bar
 	 baz)
-<
-缺省关闭此选项。
->
-	" Default
-	let g:clojure_align_subforms = 0
 <
 
 FORTRAN							*ft-fortran-indent*
@@ -704,6 +687,15 @@ HTML				*ft-html-indent* *html-indent* *html-indenting*
       "zero"	零缩进
       "auto"	自动缩进 (和匹块标签相同的缩进)
       "inc"	自动缩进 + 一个缩进位置
+
+可以设置起始 <tag 行之后 HTML 属性的缩进: >
+
+      :let g:html_indent_attribute = 1
+<
+      值	含义 ~
+      1		自动缩进，比 <tag 多一层缩进
+      2		自动缩进，多两层缩进 (缺省)
+      > 2	自动缩进，更多层的缩进
 
 缺省，给许多标签之后的内容增加缩进 (见脚本里的 "Add Indent Tags")。可以加入更
 多类似的标签: >
@@ -797,7 +789,7 @@ PHP 缩进可以通过修改若干全局变量的值来对几个方面进行改�
 
 							*PHP_outdentphpescape*
 要使 PHP 标签和和包围它的非 PHP 代码使用相同的缩进 (只影响 PHP 转义标签): >
-:let g:PHP_outdentphpescape = 0
+    :let g:PHP_outdentphpescape = 0
 -------------
 
 							*PHP_removeCRwhenUnix*
@@ -1101,6 +1093,7 @@ VHDL							*ft-vhdl-indent*
 
 VIM							*ft-vim-indent*
 
+							*g:vim_indent_cont*
 对于缩进 Vim 脚本，有个变量可以指定续行的缩进距离，续行就是以反斜杠开始的行: >
 
 	:let g:vim_indent_cont = shiftwidth() * 3

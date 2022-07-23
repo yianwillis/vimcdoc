@@ -1,4 +1,4 @@
-*if_pyth.txt*   适用于 Vim 8.2 版本。	最近更新: 2020年4月
+*if_pyth.txt*   适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Paul Moore
@@ -23,6 +23,9 @@ Vim 的 Python 编程接口					*python* *Python*
 Vim 的 Python 2.x 接口仅当 |+python| 特性被编译进 Vim 时才有效。
 Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 可以同时使用两者，但请阅读 |python-2-and-3|。
+
+备注: Python 2 太老也不再开发了。强烈推荐使用 Python 3。如果不再工作，Python
+2 支持有朝一日会被停止。
 
 ==============================================================================
 1. 命令							*python-commands*
@@ -58,6 +61,10 @@ Vim 的 Python 3 接口仅当 |+python3| 特性被编译进 Vim 时才有效。
 	:python print(sys.version)
 
 没必要 import sys，缺省就会。
+
+							*python-environment*
+Vim 设置的环境变量不总是在 Python 里可用。取决于 Vim 和 Python 是如何编译的。
+另见 https://docs.python.org/3/library/os.html#os.environ
 
 备注: Python 对于缩进是非常敏感的。要确保 "class" 所在行及 "EOF" 没有任何缩
 进。
@@ -742,6 +749,16 @@ Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的
 从 python 抛出 SystemExit 例外不是退出 vim 的好方法，要用: >
 	:py vim.command("qall!")
 <
+							*E1266*
+Python 3 不能载入必需的模块时出现此错误。这意味着没有正确安装 Python 3，或者设
+置有问题。请检查以下项目:
+1. 确证正确安装了 Python 3。然后检查 python 版本。
+2. 检查 'pythonthreedll' 选项。
+3. 检查 'pythonthreehome' 选项。
+4. 如果没设置过 'pythonthreedll'，检查 PATH 环境变量。
+   MS-Windows 上，可用 where.exe 来查找载入了哪个 dll。例如 >
+	where.exe python310.dll
+5. 检查 PYTHONPATH 和 PYTHONHOME 环境变量。
 
 							*has-python*
 以下方法可用来测试哪个 Python 版本可用: >
@@ -775,7 +792,7 @@ Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的
 ==============================================================================
 11. Python X						*python_x* *pythonx*
 
-大多数 python 代码可以用 python 2.6+ 和 python 3 兼容的方式编写，因而我们提供
+大多数 python 代码可以用 Python 2.6+ 和 Python 3 兼容的方式编写，因而我们提供
 了 pyx+ 函数和命令。其工作方式和 Python 2 和 3 变种完全相同，但根据
 'pyxversion' 设置选择 Python 版本。
 
@@ -811,7 +828,7 @@ Vim 的配置脚本根据一个特定的 Python 标准库 (termios) 对所有的
 							*has-pythonx*
 可以这样测试 pyx* 系列命令是否可用: >
 	if has('pythonx')
-	  echo 'pyx* 命令可用. (Python ' . &pyx . ')'
+	  echo 'pyx* 命令可用. (Python ' .. &pyx .. ')'
 	endif
 
 如果编译时只有 |+python| 或 |+python3| 之一，has() 返回 1。

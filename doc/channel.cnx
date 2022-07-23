@@ -1,4 +1,4 @@
-*channel.txt*	适用于 Vim 8.2 版本。	最近更新: 2020年11月
+*channel.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -26,6 +26,7 @@ Netbeans 接口也使用通道。|netbeans|
 12. 作业选项				|job-options|
 13. 控制作业				|job-control|
 14. 使用提示缓冲区			|prompt-buffer|
+15. 语言服务器协议			|language-server-protocol|
 
 {仅当编译时带有 |+channel| 特性时才有通道功能}
 	可以这样查看: `has('channel')`
@@ -54,6 +55,7 @@ RAW	无规范，Vim 不知信息如何终止
 NL	每条信息由 NL (换行) 字符终止
 JSON	JSON 编码 |json_encode()|
 JS	JavaScript 风格类 JSON 的编码 |js_encode()|
+LSP	语言服务器协议编码 |language-server-protocol|
 
 常用组合有:
 - 使用 NL 模式的管道连接的作业。例如，运行风格检查器并接收错误与警告。
@@ -89,7 +91,7 @@ T1 中可见原始的消息流。Vim 发送的是:
 
 要处理异步通信，需要提供回调函数: >
 	func MyHandler(channel, msg)
-	  echo "from the handler: " . a:msg
+	  echo "from the handler: " .. a:msg
 	endfunc
 	call ch_sendexpr(channel, 'hello!', {'callback': "MyHandler"})
 Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应时会调用 MyHandler。
@@ -113,9 +115,13 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 
 可用 |ch_status()| 看到通道是否已打开。
 
-{address} 的格式为 "hostname:port"。例如 "localhost:8765"。
-
-使用 IPv6 地址时，用方括号包围。如 "[2001:db8::1]:8765"。
+					*channel-address*
+{address} 可以是域名或 IP 地址后跟端口号，也可以是带 "unix:" 前缀的 Unix-域套
+接字路径。例如 >
+    www.example.com:80   " 域名 + port
+    127.0.0.1:1234       " IPv4 + port
+    [2001:db8::1]:8765   " IPv6 + port
+    unix:/tmp/my-socket  " Unix-域套接字路径
 
 {options} 是可选项目的字典:				*channel-open-options*
 
@@ -124,16 +130,17 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 	"js"   - JS (JavaScript) 编码，比 JSON 经济。
 	"nl"   - Nl 字符结尾的消息
 	"raw"  - 原始消息
+	"lsp"  - 语言服务器协议编码
 						*channel-callback* *E921*
-"callback"	消息收到时，如果还未被处理，调用本函数。接受两个参数: 通道和收
-		到的消息。例如: >
+"callback"	消息收到时，如果还未被处理 (如 ID 为零的 JSON 消息)，调用本函
+		数。接受两个参数: 通道和收到的消息。例如: >
 	func Handle(channel, msg)
-	  echo 'Received: ' . a:msg
+	  echo '收到: ' .. a:msg
 	endfunc
 	let channel = ch_open("localhost:8765", {"callback": "Handle"})
 <
-		"mode" 如果是 "json" 或 "js"，"msg" 参数是转换到 Vim 类型的收
-		到消息的正文。
+		"mode" 如果是 "json"、"js" 或 "lsp"，"msg" 参数是转换到 Vim 类
+		型的收到消息的正文。
 		"mode" 如果是 "nl"，"msg" 参数是单个消息，不包含 NL。
 		"mode" 如果是 "raw"，"msg" 参数是作为字符串的整个消息。
 
@@ -150,7 +157,18 @@ Vim 不会等待响应。这样，服务器就可以稍后发送响应，响应�
 		函数调用时，不会再有更多数据传到回调函数。不过，如果回调在让
 		Vim 检查消息，close_cb 调用时可能还在回调处理中。插件必须以某
 		种方式能处理这种情况，不过知道没有更多数据会传来还是有用的。
-							*channel-drop*
+		如果不确定有无消息可读，可用 try/catch 块: >
+			try
+			  let msg = ch_readraw(a:channel)
+			catch
+			  let msg = 'no message'
+			endtry
+			try
+			  let err = ch_readraw(a:channel, #{part: 'err'})
+			catch
+			  let err = 'no error'
+			endtry
+<							*channel-drop*
 "drop"		指定如何丢弃消息:
 		    "auto"	没有回调来处理消息时。"close_cb" 也考虑在内。
 		    "never"	所有消息都会保存。
@@ -356,6 +374,7 @@ JSON 或 JS 通道也可以用 ch_sendraw() 和 ch_evalraw()。调用者必须�
     call ch_sendraw(channel, {string})
 进程会发返响应，会调用通道处理函数。
 
+						*channel-onetime-callback*
 可发送信息并使响应异步地被指定函数处理: >
     call ch_sendraw(channel, {string}, {'callback': 'MyHandler'})
 
@@ -387,10 +406,11 @@ Vim 的字符串不可含有 NUL 字符。要收发 NUL 字符，请见 |in_io-b
 
 注意 如果没有回调，消息会被丢弃。要避免之，给通道加入一个关闭回调函数。
 
-要读取 RAW 通道所有可用的输出: >
+要读取 RAW 通道所有可用的正常输出: >
 	let output = ch_readraw(channel)
-可读取错误输出: >
+要读取 RAW 通道所有可用的错误输出: >
 	let output = ch_readraw(channel, {"part": "err"})
+注意 通道使用 NL 模式时，ch_readraw() 每次调用只返回一行。
 
 ch_read() 和 ch_readraw() 都适用通道 timeout。如果在该时间内没有任何消息可读，
 返回空字符串。要指定其他的超时，使用以毫秒计的 "timeout" 选项:
@@ -442,12 +462,13 @@ ch_evalexpr({handle}, {expr} [, {options}])			*ch_evalexpr()*
 		发送 {expr} 到 {handle} 上。{expr} 用通道类型进行编码。不能于
 		原始通道。见 |channel-use|。
 		{handle} 可以是通道或带有通道的作业。
+		使用 "lsp" 通道模式时，{expr} 必须为 |Dict|。
 								*E917*
 		{options} 必须是字典。不能有 "callback" 项目。可以有 "timeout"
 		项目来指明此特定请求的超时。
 
 		ch_evalexpr() 等待响应并返回经解码的表达式。如果有错或超时，
-		返回空字符串。
+		返回空 |String|，或者用 "lsp" 通道模式时，返回空 |Dict|。
 
 		注意 在等待响应时，Vim 在处理其它的信息。要确保这不会有问题。
 
@@ -470,7 +491,7 @@ ch_evalraw({handle}, {string} [, {options}])		*ch_evalraw()*
 			GetChannel()->ch_evalraw(rawstring)
 
 ch_getbufnr({handle}, {what})				 *ch_getbufnr()*
-		返回 {handle} 用于 {what} 的缓冲区号。
+		返回 {handle} 用于字符串 {what} 的缓冲区号。
 		{handle} 可以是通道或带有通道的作业。
 		{what} 可以是 "err"，代表 stderr，"out" 代表 stdout，或空，代
 		表套接字输出。
@@ -496,10 +517,15 @@ ch_info({handle})						*ch_info()*
 		用于 ch_open() 打开的通道时:
 		   "hostname"	  地址的机器名
 		   "port"	  地址的端口号
+		   "path"	  Unix-域套接字的路径
 		   "sock_status"  "open" 或 "closed"
 		   "sock_mode"	  "NL"、"RAW"、"JSON" 或 "JS"
 		   "sock_io"	  "socket"
 		   "sock_timeout" 毫秒计的超时
+
+		注意 "path" 只在使用 Unix-域套接字时出现，常规地址只会出现
+		"hostname" 和 "port"。
+
 		用于 job_start() 打开的通道时:
 		   "out_status"	  "open"、"buffered" 或 "closed"
 		   "out_mode"	  "NL"、"RAW"、"JSON" 或 "JS"
@@ -510,7 +536,7 @@ ch_info({handle})						*ch_info()*
 		   "err_io"	  "out"、"null"、"pipe"、"file" 或 "buffer"
 		   "err_timeout"  毫秒计的超时
 		   "in_status"	  "open" 或 "closed"
-		   "in_mode"	  "NL"、"RAW"、"JSON" 或 "JS"
+		   "in_mode"	  "NL"、"RAW"、"JSON"、"JS" 或 "LSP"
 		   "in_io"	  "null"、"pipe"、"file" 或 "buffer"
 		   "in_timeout"	  毫秒计的超时
 
@@ -519,7 +545,8 @@ ch_info({handle})						*ch_info()*
 
 
 ch_log({msg} [, {handle}])					*ch_log()*
-		如果用 |ch_logfile()| 打开日志，把 {msg} 写入通道日志文件中。
+		如果用 |ch_logfile()| 打开日志，把字符串 {msg} 写入通道日志文
+		件中。
 		如果传入 {handle}，使用该通道号写入信息。
 		{handle} 可以是通道或带有通道的作业。所用的通道号对应的通道必
 		须已打开。
@@ -532,14 +559,17 @@ ch_logfile({fname} [, {mode}])					*ch_logfile()*
 		启动通道活动记录，写入 {fname}。
 		如果 {fname} 为空字符串，停止记录。
 
-		如果 {mode} 省略或为 "a"，附加到文件。
-		如果 {mode} 为 "w"，用新文件开始。
+		如果 {mode} 省略或包含 "a" 或为 "o"，附加到文件。
+		如果 {mode} 包含 "w" 而不包含 "a"，用新文件开始。
+		如果 {mode} 包含 "o"，记录所有终端输出。否则，只记录部分有意义
+		的终端输出。
 
 		用 |ch_log()| 来写入日志信息。每条消息后都会刷新文件，Unix 上
 		可用 "tail -f" 实时监控。
 
-		要尽早打开日志以看到启动时终端接收的内容，可用 |--cmd|: >
-			vim --cmd "call ch_logfile('logfile', 'w')"
+		要尽早打开日志以看到启动时终端接收的内容，可用 |--log| (此时使
+		用 "ao" 模式): >
+			vim --log logfile
 <
 		此函数在 |sandbox| 中不可用。
 		注意: 通道在文件中保存通信内容，小心其中可能包含机密和敏感的隐
@@ -553,7 +583,7 @@ ch_open({address} [, {options}])				*ch_open()*
 		打开通道到 {address}。见 |channel|。
 		返回通道。错误检查可用 |ch_status()|。
 
-		{address} 形如 "hostname:port"，例如 "localhost:8765"。
+		{address} 为字符串，接受的形式可见 |channel-address|。
 
 		使用 IPv6 地址时，用方括号包围。如 "[2001:db8::1]:8765"。
 
@@ -595,6 +625,14 @@ ch_sendexpr({handle}, {expr} [, {options}])			*ch_sendexpr()*
 		发送 {expr} 到 {handle} 上。{expr} 用通道类型进行编码。不能于
 		原始通道。见 |channel-use|。			*E912*
 		{handle} 可以是通道或带有通道的作业。
+		使用 "lsp" 通道模式时，{expr} 必须是 |Dict|。
+
+		通道模式是 "lsp" 时，返回字典。否则返回空串。如果 {options} 里
+		有 "callback" 项目，返回的字典包含请求消息的 ID。此 ID 可用来
+		给 LSP 服务器发送撤销请求 (如有需要)。出错时返回空字典。
+
+		如果不指望 {expr} 收到响应消息，不要指定 {options} 的
+		"callback" 项目。
 
 		也可用作 |method|: >
 			GetChannel()->ch_sendexpr(expr)
@@ -754,7 +792,7 @@ ch_evalexpr()。
 job_getchannel({job})					 *job_getchannel()*
 		获取 {job} 使用的通道句柄。
 		要确认作业没有通道: >
-			if string(job_getchannel()) == 'channel fail'
+			if string(job_getchannel(job)) == 'channel fail'
 <
 		也可用作 |method|: >
 			GetJob()->job_getchannel()
@@ -1133,7 +1171,7 @@ CTRL-W 键可用于开始窗口命令，例如，CTRL-W w 可切换到下一个�
 
 	" 处理外壳输出的函数: 附加到提示行之上。
 	func GotOutput(channel, msg)
-	  call append(line("$") - 1, "- " . a:msg)
+	  call append(line("$") - 1, "- " .. a:msg)
 	endfunc
 
 	" 处理外壳退出的函数: 关闭窗口。
@@ -1147,7 +1185,6 @@ CTRL-W 键可用于开始窗口命令，例如，CTRL-W w 可切换到下一个�
 		\ err_cb: function('GotOutput'),
 		\ exit_cb: function('JobExit'),
 		\ })
-	let shell_ch = job_getchannel(shell_job)
 
 	new
 	set buftype=prompt
@@ -1158,6 +1195,183 @@ CTRL-W 键可用于开始窗口命令，例如，CTRL-W w 可切换到下一个�
 	" 开始接受外壳命令
 	startinsert
 <
+同一例子，使用 |Vim9| 脚本: >
 
+	vim9script
 
+	# 建立通道日志，以记录发生的事件。
+	ch_logfile('logfile', 'w')
+
+	var shell_job: job
+
+	# 处理键入文本行的函数。
+	def TextEntered(text: string)
+	  # 给文本附加 Enter，发送到外壳。
+	  ch_sendraw(shell_job, text .. "\n")
+	enddef
+
+	# 处理外壳输出的函数: 附加到提示行之上。
+	def GotOutput(channel: channel, msg: string)
+	  append(line("$") - 1, "- " .. msg)
+	enddef
+
+	# 处理外壳退出的函数: 关闭窗口。
+	def JobExit(job: job, status: number)
+	  quit!
+	enddef
+
+	# 在后台启动外壳。
+	shell_job = job_start(["/bin/sh"], {
+				 out_cb: GotOutput,
+				 err_cb: GotOutput,
+				 exit_cb: JobExit,
+				 })
+
+	new
+	set buftype=prompt
+	var buf = bufnr('')
+	prompt_setcallback(buf, TextEntered)
+	prompt_setprompt(buf, "shell command: ")
+
+	# 开始接受外壳命令
+	startinsert
+
+==============================================================================
+15. 语言服务器协议				*language-server-protocol*
+
+可在这里获取语言服务器规范:
+
+    https://microsoft.github.io/language-server-protocol/specification
+
+每个 LSP 协议消息以简单 HTTP 头开始，后跟 JSON-RPC 格式编码的负载。JSON-RPC 格
+式描述可见:
+
+    https://www.jsonrpc.org/specification
+
+连接到 LSP 服务器并使用 |channel-mode| 设为 "lsp"，可以把 Vim |Dict| 形式的
+LSP 请求/通告消息编码为 LSP JSON-RPC 消息并发送至服务器，然后接收 LSP JSON-RPC
+形式的响应/通告消息并解码为 Vim |Dict|。
+
+|channel-mode| 设为 "lsp" 时，对通道接收到的消息，Vim 会处理 HTTP 头部，并把
+JSON-RPC 负载解码为 Vim |Dict| 类型，并调用 |channel-callback| 函数或指定的
+|channel-onetime-callback| 函数。用 |ch_evalexpr()| 或 |ch_sendexpr()| 函数在
+通道上发送消息时，Vim 会附加 HTTP 头部，并把 Vim 表达式编码为 JSON。
+参见 |json_encode()| 和 |json_decode()| 说明 Vim 编码和解码内建类型到 JSON 的
+详情。
+
+要用 'lsp' 模式打开通道，把 |ch_open()| 的 {options} 参数的 'mode' 项目设为
+'lsp'。示例: >
+
+    let ch = ch_open(..., #{mode: 'lsp'})
+
+要用 'lsp' 模式打开通道并使用作业，把 |job_start()| 的 {options} 参数的
+'in_mode' 和 'out_mode' 项目设为 'lsp'。示例: >
+
+    let cmd = ['clangd', '--background-index', '--clang-tidy']
+    let opts = {}
+    let opts.in_mode = 'lsp'
+    let opts.out_mode = 'lsp'
+    let opts.err_mode = 'nl'
+    let opts.out_cb = function('LspOutCallback')
+    let opts.err_cb = function('LspErrCallback')
+    let opts.exit_cb = function('LspExitCallback')
+    let job = job_start(cmd, opts)
+
+注意 如果作业使用 stdout 来输出 LSP 消息，而用 stderr 来输出非-LSP 消息，
+通道-回调函数就可以正确处理两种消息格式，不然，你可用上面展示的方式来分别指定
+"out_cb" 和 "err_cb" 的回调函数。
+
+要同步发送 JSON-RPC 请求到服务器，可用 |ch_evalexpr()| 函数。此函数会等待并返
+回经解码的服务器的响应消息。可用 |channel-timeout| 或 {options} 参数的
+'timeout' 字段来控制等待响应的时间。如果响应超时，返回空 |Dict|。例如: >
+
+    let req = {}
+    let req.method = 'textDocument/definition'
+    let req.params = {}
+    let req.params.textDocument = #{uri: 'a.c'}
+    let req.params.position = #{line: 10, character: 3}
+    let defs = ch_evalexpr(ch, req, #{timeout: 100})
+    if defs->empty()
+        ... <handle failure>
+    endif
+
+注意 请求消息不应指定 'id' 字段。即使指定，Vim 会用内部生成的标识符取而代之。
+Vim 目前只支持数值类型的 'id' 字段。不管 RPC 请求是成功还是失败，回调函数都会
+被调用。
+
+要发送 JSON-RPC 请求到服务器并异步处理其响应，可用 |ch_sendexpr()| 函数并提供
+回调函数。如果请求消息指定了 "id" 字段，Vim 会用内部生成的标识符取而代之。此函
+数返回字典，其中包含消息所用的标识符。这可用于给 LSP 服务器发送撤销请求 (如有
+需要)。例如: >
+
+    let req = {}
+    let req.method = 'textDocument/hover'
+    let req.id = 200
+    let req.params = {}
+    let req.params.textDocument = #{uri: 'a.c'}
+    let req.params.position = #{line: 10, character: 3}
+    let resp = ch_sendexpr(ch, req, #{callback: 'HoverFunc'})
+
+要撤销 |ch_sendexpr()| 函数发送给服务器的尚未完成的异步 LSP 请求，用发送此请求
+的 |ch_sendexpr()| 函数返回的 ID 来调用 |ch_sendexpr()| 以给服务器发送撤销消
+息。例如: >
+
+    " 发送 completion 请求
+    let req = {}
+    let req.method = 'textDocument/completion'
+    let req.params = {}
+    let req.params.textDocument = #{uri: 'a.c'}
+    let req.params.position = #{line: 10, character: 3}
+    let reqstatus = ch_sendexpr(ch, req, #{callback: 'LspComplete'})
+    " 发送撤销通告
+    let notif = {}
+    let notif.method = '$/cancelRequest'
+    let notif.id = reqstatus.id
+    call ch_sendexpr(ch, notif)
+
+要给服务器发送 JSON-RPC 通告消息，用 |ch_sendexpr()| 函数。因为服务器不会为通
+告发送响应消息，不需要指定 "callback" 项目。例如: >
+
+    call ch_sendexpr(ch, #{method: 'initialized'})
+
+要响应服务器发送的 JSON-RPC 请求消息，用 |ch_sendexpr()| 函数。在响应消息里，
+复制服务器请求消息里的 'id' 字段值。例如: >
+
+    let resp = {}
+    let resp.id = req.id
+    let resp.result = 1
+    call ch_sendexpr(ch, resp)
+
+来自服务器的 JSON-RPC 通告消息会用 |channel-callback| 函数递送。
+
+取决于用例，可在同一通道上使用 ch_evalexpr()、ch_sendexpr() 和 ch_sendraw() 函
+数。
+
+LSP 请求消息有以下格式 (以 Vim 字典形式表示)。"params" 字段可选: >
+
+    {
+	"jsonrpc": "2.0",
+	"id": <number>,
+	"method": <string>,
+	"params": <list|dict>
+    }
+
+LSP 响应消息有以下格式 (以 Vim 字典形式表示)。"result" 和 "error" 字段可选: >
+
+    {
+	"jsonrpc": "2.0",
+	"id": <number>,
+	"result": <vim type>
+	"error": <dict>
+    }
+
+LSP 通告消息有以下格式 (以 Vim 字典形式表示)。"params" 字段可选: >
+
+    {
+	"jsonrpc": "2.0",
+	"method": <string>,
+	"params": <list|dict>
+    }
+
+<
  vim:tw=78:ts=8:noet:ft=help:norl:

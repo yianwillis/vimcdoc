@@ -1,4 +1,4 @@
-*diff.txt*      适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*diff.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -284,8 +284,8 @@ dp		同 ":diffput"，但没有范围。注意 不适用于可视模式。
 
 查 找 不 同						*diff-diffexpr*
 
- 'diffexpr' 选项可以用来设定非标准的 "diff" 程序，用来比较文件间的异同。
- *E959*
+'diffexpr' 选项可以用来设定不同于内部 diff 支持或标准 "diff" 程序的方法来比较
+文件间的异同。*E959*
 
 当 'diffexpr' 为空的时候，Vim 使用以下命令在 file1 和 file2 中查找不同之处: >
 
@@ -293,8 +293,11 @@ dp		同 ":diffput"，但没有范围。注意 不适用于可视模式。
 
 其中的 ">" 会用 'shellredir' 的值替换。
 
-"diff" 的输出必须是普通的 "ed" 风格或合并风格 (unified) 的 diff。_不要_ 使用上
-下文 (context) 风格的 diff。下面就是一个 Vim 所期望的 "ed" 风格的范例: >
+"diff" 的输出必须是普通的 "ed" 风格或合并风格 (unified) 的 diff。_不能_用上下
+文 (context) 风格的 diff。而且合并风格的 diff 不能指定上下文行。"diff -u"_不_
+行，要用 "diff -U0"。
+
+下面就是一个 Vim 所期望的 "ed" 风格的范例: >
 
 	1a2
 	> bbb
@@ -314,7 +317,7 @@ dp		同 ":diffput"，但没有范围。注意 不适用于可视模式。
 
 	v:fname_in		原始文件
 	v:fname_new		同一文件的新版
-	v:fname_out		产生的 diff 文件
+	v:fname_out		生成的 diff 文件的输出位置
 
 另外，'diffexpr' 应负责实现 'diffopt' 选项中的 "icase" 和 "iwhite" 。
 而且，'diffexpr' 不能更改 'lines' 和 'columns' 的值。
@@ -325,13 +328,13 @@ dp		同 ":diffput"，但没有范围。注意 不适用于可视模式。
 	function MyDiff()
 	   let opt = ""
 	   if &diffopt =~ "icase"
-	     let opt = opt . "-i "
+	     let opt = opt .. "-i "
 	   endif
 	   if &diffopt =~ "iwhite"
-	     let opt = opt . "-b "
+	     let opt = opt .. "-b "
 	   endif
-	   silent execute "!diff -a --binary " . opt . v:fname_in . " " . v:fname_new .
-		\  " > " . v:fname_out
+	   silent execute "!diff -a --binary " .. opt .. v:fname_in .. " " .. v:fname_new ..
+		\  " > " .. v:fname_out
 	   redraw!
 	endfunction
 <
@@ -340,6 +343,13 @@ dp		同 ":diffput"，但没有范围。注意 不适用于可视模式。
 "--binary" 参数使得文件以二进制模式读入，这样在 DOS 上 CTRL-Z 就不会结束文本。
 
 `redraw!` 命令不一定必要，取决于执行外壳命令时是否会在屏幕上显示东西。
+
+如果 'diffexpr' 表达式以 s: 或 |<SID>| 开始，用脚本 ID (|local-function|) 代替
+之。例如: >
+		set diffexpr=s:MyDiffExpr()
+		set diffexpr=<SID>SomeDiffExpr()
+否则，表达式在设置此选项的脚本的上下文内进行计算，这样保证了局部于脚本的项目可
+用。
 
 						*E810* *E97*
 Vim 将测试 diff 的输出看上去是否完全正确。如果不正确，你将得到一个错误信息。可
@@ -378,8 +388,8 @@ http://gnuwin32.sourceforge.net/packages/diffutils.htm。
 
 	set patchexpr=MyPatch()
 	function MyPatch()
-	   :call system("patch -o " . v:fname_out . " " . v:fname_in .
-	   \  " < " . v:fname_diff)
+	   :call system("patch -o " .. v:fname_out .. " " .. v:fname_in ..
+	   \  " < " .. v:fname_diff)
 	endfunction
 
 请确定使用 "patch" 程序时不会有不想要的副作用。比如，要留心那些生成的额外的文
@@ -388,5 +398,13 @@ http://gnuwin32.sourceforge.net/packages/diffutils.htm。
 使用 'patchexpr' 的值之前， Vim 将改变当前目录到 "/tmp" 或别的临时目录。这是为
 了让当前目录下的文件不被意外的打补丁。Vim 也将删除以 v:fname_in 开始以 ".rej"
 和 ".orig" 结尾的文件。
+
+如果 'patchexpr' 表达式以 s: 或 |<SID>| 开始，用脚本 ID (|local-function|) 代
+替之。例如: >
+		set patchexpr=s:MyPatchExpr()
+		set patchexpr=<SID>SomePatchExpr()
+否则，表达式在设置此选项的脚本的上下文内进行计算，这样保证了局部于脚本的项目可
+用。
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,4 +1,4 @@
-*fold.txt*      适用于 Vim 8.2 版本。	最近更新: 2019年12月
+*fold.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -106,6 +106,11 @@
 最好避免使用 "="，"a" 和 "s" 作为返回值，因为 Vim 不得不经常向后回溯以得到折叠
 级别。这会降低执行速度。
 
+'foldexpr' 表达式以 s: 或 |<SID>| 开始时，它们被脚本 ID 替换
+(|local-function|)。例如: >
+		set foldexpr=s:MyFoldExpr()
+		set foldexpr=<SID>SomeFoldExpr()
+<
 使用 "a1" 和 "s1" 的一例: 用于多行 C 注释，以 "/*" 开始的行返回 "a1" 以开始折
 叠，包含 "*/" 的一行返回 "s1" 使该行之后结束折叠: >
   if match(thisline, '/\*') >= 0
@@ -430,11 +435,13 @@ zk		向上移动到前一折叠的结束处。关闭的折叠也被计入。
     :function MyFoldText()
     :  let line = getline(v:foldstart)
     :  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-    :  return v:folddashes . sub
+    :  return v:folddashes .. sub
     :endfunction
 
 'foldtext' 的计算是在沙盘 |sandbox| 里完成的。其中的当前窗口设为要显示该行的窗
-口。错误被忽略。
+口。上下文设为上次设置此选项所在的脚本。
+
+错误被忽略。要方便调试可设 'debug' 选项为 "throw"。
 
 默认值是 |foldtext()|。对于大多数类型的折叠它可以返回适合的文字。如果你不喜欢
 它，你可以自己指定 'foldtext' 表达式。可以使用以下这些 Vim 变量:
@@ -448,6 +455,11 @@ zk		向上移动到前一折叠的结束处。关闭的折叠也被计入。
 结果行被截短以适合窗口的宽度，永远不会回绕。
 当在文字后有空余时，用 'fillchars' 来填充。
 
+'foldtext' 表达式以 s: 或 |<SID>| 开始时，它们被脚本 ID 替换
+(|local-function|)。例如: >
+		set foldtext=s:MyFoldText()
+		set foldtext=<SID>SomeFoldText()
+<
 备注: 对那些 ":set" 命令作特殊处理的字符在其前面须加上反斜杠。如: 空格，反斜杠
 和双引号。|option-backslash|
 
@@ -462,6 +474,8 @@ zk		向上移动到前一折叠的结束处。关闭的折叠也被计入。
 束。当折叠嵌套时，嵌套的折叠出现在被包含的折叠右方一个字符位置。
 
 一个关闭的折叠由 '+' 表示。
+
+这些字符可用 'fillchars' 选项调整。
 
 当折叠栏太窄而不能显示所有折叠时，显示一数字来表示嵌套的级别。
 

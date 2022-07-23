@@ -1,4 +1,4 @@
-*gui.txt*       适用于 Vim 8.2 版本。	最近更新: 2020年10月
+*gui.txt*       适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -25,8 +25,8 @@ Vim 的图形用户界面					*gui* *GUI*
 1. 启动 GUI					*gui-start* *E229* *E233*
 
 首先，需要确定你确实有包含 GUI 代码的 Vim 版本。你可以用 ":version" 命令检查这
-一点。它应该输出 "with xxx GUI"，而 "xxx" 是 X11-Motif、X11-Athena、Photon、
-GTK、GTK2、GTK3 等，或者 "MS-Windows 32 bit GUI version"。
+一点。它应该输出 "with xxx GUI"，而 "xxx" 是 X11-Motif、Photon、GTK2、GTK3
+等，或者 "MS-Windows 32 bit GUI version"。
 
 如何启动 GUI 决定于你的系统。多数情况下，你可以这样启动 Vim 的 GUI 版本:
     gvim [options] [files...]
@@ -89,8 +89,8 @@ GUI 启动时，开展以下初始化操作 (按照给出的顺序):
 若干选项只有在 GUI 版本的 Vim 里才有意义。它们是 'guicursor'、'guifont'、
 'guipty' 和 'guioptions'。和其它选项一样，文档可见 |options.txt|。
 
-如果使用 Motif 或者 Athena 版本的 GUI (不适用于 GTK+ 或 Win32 版本)，可以使用
-若干 X 资源。见 |gui-resources|。
+如果使用 Motif 版本的 GUI (不适用于 GTK+ 或 Win32 版本)，可以使用若干 X 资源。
+见 |gui-resources|。
 
 另外一个在不同场合下设置颜色的方法是使用高亮组。"Normal" 组用来设置背景和前景
 色。示例 (看上去很悦目): >
@@ -121,14 +121,15 @@ GUI 启动时，开展以下初始化操作 (按照给出的顺序):
 						    *:win* *:winsize* *E465*
 :win[size] {width} {height}
 		设置窗口高度为 {width} 宽 {height} 高，以字符计。
-		已废弃，应使用 ":set lines=11 columns=22"。
+		建议使用 ":set lines=11 columns=22" 来代替，因为容易理解这些数
+		值的意义。
 		如果你得到比期待中少的行数，检查 'guiheadroom' 选项。
 
 如果你运行 X 窗口系统，你可以这样得到关于 Vim 运行所在的窗口的信息: >
 	:!xwininfo -id $WINDOWID
 	:!xprop -id $WINDOWID
-	:execute '!xwininfo -id ' . v:windowid
-	:execute '!xprop -id ' . v:windowid
+	:execute '!xwininfo -id ' .. v:windowid
+	:execute '!xprop -id ' .. v:windowid
 <
 							*gui-IME* *iBus*
 在 X 里依赖于 XIM 框架输入国际字符的输入法，尤其是 iBus，已知会给 gvim 带来一
@@ -194,7 +195,7 @@ GUI 启动时，开展以下初始化操作 (按照给出的顺序):
 多时间，或者你不希望光标跳到别的行上，在 'guioptions' 里包含 'h' 标志位。这
 样，滚动限于当前光标所在文本行上。
 
-							*athena-intellimouse*
+							*motif-intellimouse*
 如果你有 Intellimouse 鼠标并且 X 服务器支持滚轮，那你就可以用滚轮在 gvim 里上
 下滚动文本。XFree86 4.0 和以后的版本都没有问题，一些老的版本里你需要加上补丁。
 见 |scroll-mouse-wheel|。
@@ -216,6 +217,7 @@ Intellimouse 的一点信息，还有补丁和 X 服务器可执行文件的链�
 'mousefocus'	窗口焦点随鼠标指针改变 |gui-mouse-focus|
 'mousemodel'	哪个鼠标按钮执行什么动作
 'mousehide'	输入文本时隐藏鼠标指针
+'mousemoveevent' 允许鼠标移动事件，这样就可用 <MouseMove> 映射
 'selectmode'	开始选择模式还是可视模式
 
 一个设置这些选项的快速方法是使用 ":behave" 命令。
@@ -342,13 +344,15 @@ CTRL-O : CTRL-Y <CR>。如果 'guioptions' 包含 a 或 A (X11 上的缺省值)�
 这些映射使得选择的使用方式符合和 Motif 应用方式，Shift + 鼠标左键允许扩展可视
 区域，而不是鼠标右键。
 
+<MouseMove> 可被映射，但要先打开 'mousemoveevent'，此映射才可用。
+
 带修饰符的鼠标映射不适用于无模式的选择。
 
 
 3.7 拖放							*drag-n-drop*
 
-你可以拖放一个或多个文件到 Vim 窗口里，这样，它们就会被打开，如果执行了
-|:drop| 命令那样。
+你可以拖放一个或多个文件到 Vim 窗口里，这样就如同执行了 |:drop| 命令那样打开那
+些文件。可用 *drop_file* 特性来检查是否支持拖放: `has('drop_file')`。
 
 如果这么做的时候你按住 Shift，Vim 改变到第一个放下的文件所在的目录。如果你按住
 Ctrl，Vim 总会为文件分割出一个新的窗口。不然，只有当前缓冲区被改变的时候才会这
@@ -531,8 +535,12 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
-注意这里使用 'cpoptions' 里的 '<' 和 'k' 标志位 (如果包含了它们，<> 形式和原始
-的键码都不会被识别)。
+特殊文本 <Cmd> 启动 "命令菜单"，可以直接执行命令而不用切换模式。原来要用
+":...<CR>" 的地方，现在可用 "<Cmd>...<CR>" 代替。详见 |<Cmd>|。例如: >
+	anoremenu File.Next <Cmd>next<CR>
+
+注意 这里使用 'cpoptions' 里的 '<' 和 'k' 标志位 (如果包含了它们，<> 形式和原
+始的键码都不会被识别)。
 
 注意 命令行模式下的 <Esc> 执行该命令，和映射的情况相同。这是 Vi 兼容的行为。使
 用 CTRL-C 退出命令行模式。
@@ -632,8 +640,8 @@ Win32 GUI 版本模拟 Motif 的可撕下菜单。实际上，Motif 用户很容
 单点，用单个冒号就可以了。
 
 							*gui-toolbar*
-目前，只有 Win32、Athena、Motif、GTK+ (X11) 和 Photon GUI 才有工具栏。适当的时
-候，在其它 GUI 上也会开放这一功能。缺省的工具栏在 menu.vim 里定义。
+目前，只有 Win32、Motif、GTK+ (X11) 和 Photon GUI 才有工具栏。适当的时候，在其
+它 GUI 上也会开放这一功能。缺省的工具栏在 menu.vim 里定义。
 工具栏显示与否有 'guioptions' 里的 'T' 字母控制。你可以同时有菜单和工具栏，或
 者只用其中一项，甚至全不要。其外观通过 'toolbar' 选项控制。你可以在图像、文本
 或者两者兼有之间选择。
@@ -735,9 +743,8 @@ Vim 会继续留在可视模式。最好用 `:nnoremenu` 来避免副作用。
 分割窗口时，并不在新窗口中复制窗口工具条。
 
 							*popup-menu*
-在 Win32、GTK+、Motif、Athena 和 Photon GUI 上，你可以定义特殊的 "PopUp" 菜
-单。如果 'mousemodel' 设为 popup 或者 popup_setpos，这将是按下鼠标右键时显示的
-菜单。
+在 Win32、GTK+、Motif 和 Photon GUI 上，可以定义特殊的 "PopUp" 菜单。如果
+'mousemodel' 设为 popup 或者 popup_setpos，这将是按下鼠标右键时显示的菜单。
 示例: >
     nnoremenu 1.40 PopUp.&Paste	"+gP
     menu PopUp
