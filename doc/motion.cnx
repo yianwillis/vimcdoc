@@ -1,4 +1,4 @@
-*motion.txt*    适用于 Vim 8.2 版本。	最近更新: 2020年11月
+*motion.txt*    适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -30,7 +30,8 @@
 键，因为他们不知道 hjkl 键做什么。看看键盘的布局就很容易记住 hjkl 的意义。把 j
 想象成一个向下的箭头就可以了。
 
-置位 'virtualedit' 选项使得光标可以移动到还没有字符或者半个字符的位置。
+置位 'virtualedit' 选项使得光标可以移动到还没有字符或者在占据多列的字符中间某
+个位置 (如在制表符内部)。
 
 ==============================================================================
 1. 动作和操作符						*operator*
@@ -55,9 +56,13 @@
 	|<|	<	左移
 	|zf|	zf	定义折叠
 	|g@|	g@	调用 'operatorfunc' 选项定义的函数
-
+						*motion-count-multiplied*
 如果动作包括一个次数而操作符之前也有一个的话，两者相乘。因此，"2d3w" 删除六个
 单词。
+						*operator-doubled*
+重叠操作符使之成为行操作。如果使用计数，不管是在首字符之前还是之后，操作对象是
+对应的行数。因此，`3dd` 删除三行。首字符之前和之后的计数会相乘，因此 `2y3y` 抽
+出六行。
 
 大多数情况下，光标在应用操作符后停在被操作的文本的起始处。例如，"yfe" 不移动光
 标，而 "yFe" 则向左移动光标到抽出的文本的起始的那个 "e" 上。
@@ -328,6 +333,7 @@ w			正向 [count] 个单词。|exclusive| 开动作。
 
 <C-Right>	或					*<C-Right>* *W*
 W			正向 [count] 个字串。|exclusive| 开动作。
+			如果 <C-Right> 不工作，检查一下 |arrow_modifiers|。
 
 							*e*
 e			正向到第 [count] 个单词的尾部。|inclusive| 闭动作。
@@ -342,6 +348,7 @@ b			反向 [count] 个单词。|exclusive| 开动作。
 
 <C-Left>	或					*<C-Left>* *B*
 B			反向 [count] 个字串。|exclusive| 开动作。
+			如果 <C-Left> 不工作，检查一下 |arrow_modifiers|。
 
 							*ge*
 ge			反向到第 [count] 个单词的尾部。|inclusive| 闭动作。
@@ -375,34 +382,34 @@ gE			反向到第 [count] 个字串的尾部。|inclusive| 闭动作。
 5. 文本对象动作					*object-motions*
 
 							*(*
-(			反向 [count] 个句子。|exclusive| 开动作。
+(			反向 [count] 个 |sentence|。|exclusive| 开动作。
 
 							*)*
-)			正向 [count] 个句子。|exclusive| 开动作。
+)			正向 [count] 个 |sentence|。|exclusive| 开动作。
 
 							*{*
-{			反向 [count] 个段落。|exclusive| 开动作。
+{			反向 [count] 个 |paragraph|。|exclusive| 开动作。
 
 							*}*
-}			正向 [count] 个段落。|exclusive| 开动作。
+}			正向 [count] 个 |paragraph|。|exclusive| 开动作。
 
 							*]]*
-]]			正向 [count] 个小节或到后一个出现在首列的 '{'。如果用
-			于操作符后，则同时停留在首列的 '}' 的下方。|exclusive|
-			开动作。
+]]			正向 [count] 个 |section| 或到后一个出现在首列的 '{'。
+			如果用于操作符后，则同时停留在首列的 '}' 的下方。
+			|exclusive| 开动作。
 			注意 |exclusive-linewise| 常常适用。
 
 							*][*
-][			正向 [count] 个小节或到后一个出现在首列的 '}'。
+][			正向 [count] 个 |section| 或到后一个出现在首列的 '}'。
 			|exclusive| 开动作。
 			注意 |exclusive-linewise| 常常适用。
 
 							*[[*
-[[			反向 [count] 个小节或到前一个出现在首列的 '{'。
+[[			反向 [count] 个 |section| 或到前一个出现在首列的 '{'。
 			|exclusive| 开动作。
 			注意 |exclusive-linewise| 常常适用。
 							*[]*
-[]			反向 [count] 个小节或到前一个出现在首列的 '}'。
+[]			反向 [count] 个 |section| 或到前一个出现在首列的 '}'。
 			|exclusive| 开动作。
 			注意 |exclusive-linewise| 常常适用。
 
@@ -674,6 +681,8 @@ m<  或  m>		设置 |'<| 或者 |'>| 标记。可以用在改变 `gv` 命令选�
 
 						*:k*
 :[range]k{a-zA-Z'}	和 :mark 相同，但是标记名之前的空格可以省略。
+			此命令在 |Vim9| 脚本里不支持，因为它太容易和变量名混淆
+			了。
 
 						*'* *'a* *`* *`a*
 '{a-z}  `{a-z}		跳转到当前缓冲区的位置标记 {a-z}。
@@ -862,7 +871,7 @@ g'{mark}  g`{mark}
 				:let lnum = line(".")
 				:keepjumps normal gg
 				:call SetLastChange()
-				:keepjumps exe "normal " . lnum . "G"
+				:keepjumps exe "normal " .. lnum .. "G"
 <
 			注意 必须为每个命令使用 ":keepjumps"。如果在命令里调用
 			了函数，则该函数里的命令仍然可能改变跳转表。另外，
@@ -880,12 +889,10 @@ g'{mark}  g`{mark}
 							*CTRL-O*
 CTRL-O			转到跳转表里第 [count] 个较旧的光标位置 (不是动作命
 			令)。
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 <Tab>		或					*CTRL-I* *<Tab>*
 CTRL-I			转到跳转表里第 [count] 个较新的光标位置 (不是动作命
 			令)。
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 			备注: 在 GUI 和支持 |modifyOtherKeys| 的终端里，可以分
 			别对 CTRL-I 和 <Tab> 进行映射，条件是 CTRL-I 映射出现
@@ -893,17 +900,14 @@ CTRL-I			转到跳转表里第 [count] 个较新的光标位置 (不是动作命
 
 							*:ju* *:jumps*
 :ju[mps]		打出跳转表 (不是动作命令)。
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 							*:cle* *:clearjumps*
 :cle[arjumps]		清除当前窗口的跳转表。
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 							*jumplist*
 跳转表用来记住跳转的位置。用 CTRL-O 和 CTRL-I 命令，你可以跳回到较早前的跳转位
 置，然后在跳回来。这样，你就可以在这个列表上下移动。每个窗口有独立的跳转表，每
 个表最多能存储 100 项。
-{仅当编译时加入 |+jumplist| 特性才有效}
 
 例如，假定在三个跳转命令之后你有如下的跳转表:
 
@@ -915,6 +919,9 @@ CTRL-I			转到跳转表里第 [count] 个较新的光标位置 (不是动作命
 
 "file/text" 列显示文件名，如果是当前文件，则显示跳转所在的文本 (为了能在窗口里
 显示，去掉开头的缩排空白并截断过长的行)。
+
+">" 标记指示跳转表的当前位置。如果用 |:filter| 过滤 |:jumps| 命令，该标记可能
+不显示。
 
 你现在位于第 1167 行。如果你用 CTRL-O 命令，光标会到第 1154 行。结果如下:
 
@@ -971,13 +978,11 @@ g;			转到改变表里第 [count] 个较旧的位置。
 			个。
 			如果没有较旧的改变，给出一个错误消息。
 			(不是动作命令)
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 							*g,* *E663*
 g,			转到改变表里第 [count] 个较新的位置。
 			和 |g;| 类似，但朝向相反的方向。
 			(不是动作命令)
-			{仅当编译时加入 |+jumplist| 特性才有效}
 
 使用次数的时候你向后或向前跳转到尽可能接近该次数的位置。这样，你可以用 "999g;"
 跳到还能记住的最初的改变所在的位置。改变的最大项目数和跳转表 |jumplist| 一致。

@@ -1,4 +1,4 @@
-*os_dos.txt*    适用于 Vim 8.2 版本。	最近更新: 2020年1月
+*os_dos.txt*    适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -17,6 +17,7 @@
 7. 中止键			|dos-CTRL-Break|
 8. 临时文件			|dos-temp-files|
 9. 默认的外壳选项		|dos-shell|
+10. PowerShell			|dos-powershell|
 
 ==============================================================================
 1. 文件位置						*dos-locations*
@@ -276,8 +277,75 @@ Win32 版本:
 	<shell> -c "命令 >file"
 32 位 DOS 版本，DJGPP 在内部执行。
 
-Vim 启动的时候检查 'shell' 选项的值是否能匹配 "sh" 子串 (在任何位置)。如果是，
-Vim 就按照上面的描述设置 'shellcmdflag' 和 'shellquote' 或 'shellxquote' 选
-项。
+启动的时候如果 Vim 不能识别出标准 Windows 外壳，会检查 'shell' 选项的值是否能
+匹配 "sh" 子串 (在任何位置)。如果是，Vim 就按照上面的描述设置 'shellcmdflag'
+和 'shellquote' 或 'shellxquote' 选项。
+
+==============================================================================
+10. PowerShell					*dos-powershell* *dos-pwsh*
+
+Vim 支持 PowerShell Desktop 和 PowerShell Core。PowerShell Desktop 是随
+Windows 安装的 PowerShell 版本，而 PowerShell Core 是跨平台的可单独下载的版
+本。要判断使用的是何版本，可在 PowerShell 提示行上输入 -
+$PSVersionTable.PSEdition
+
+如果 'shell' 文件名包含了 "powershell"，VIM 在启动时设置 'shellcmdflag'、
+'shellxquote'、'shellpipe' 和 'shellredir' 选项为以下值:
+
+'shellcmdflag'	-Command
+'shellxquote'	"
+'shellpipe'	2>&1 | Out-File -Encoding default
+'shellredir'	2>&1 | Out-File -Encoding default
+
+如果 'shell' 文件名包含了 "pwsh"，VIM 在启动时设置 'shellcmdflag'、
+'shellxquote'、'shellpipe' 和 'shellredir' 选项为以下值:
+
+'shellcmdflag'	-c
+'shellxquote'	"
+'shellpipe'	>%s 2>&1
+'shellredir'	>%s 2>&1
+
+如果你觉得 PowerShell 命令花了太长时间，试试在 'shellcmdflag' 开始处加上
+"-NoProfile"。注意 这会跳过 profile 里的 PowerShell 环境设置。
+
+如果通过 'shell' 执行 PowerShell 脚本有问题，试试在 'shellcmdflag' 开始处加上
+"-ExecutionPolicy RemoteSigned -Command"。PowerShell 的执行政策设置详见在线
+Windows 文档。
+
+|option-backslash| 说明 'shellcmdflag' 里有多个标志位时如何包含空格。
+
+'shellpipe' 和 'shellredir' 选项值重新编码 PowerShell Desktop 的 UTF-16LE 输出
+为当前配置的控制台代码页。把 "default" 改为下面值之一，则可以强制输出为不同编
+码:
+
+	unicode		 - UTF-16LE (PowerShell 5.1 的缺省输出)
+	bigendianunicode - UTF-16
+	utf8		 - UTF-8
+	utf7		 - UTF-7 (无 BOM)
+	utf32		 - UTF-32
+	ascii		 - 7-位 ASCII 字符集
+	default		 - 系统活跃代码页 (通常为 ANSI)
+	oem		 - 系统当前 OEM 代码页
+
+备注 上述的多字符 Unicode 编码除非特别注明，包含前导的 BOM。
+
+缺省 PowerShell Core 的输出使用不带 BOM 的 UTF-8 编码。如果要强制 PowerShell
+Core 输出为其它编码，设置 'shellredir' 和 'shellpipe' 为
+"2>&1 | Out-File -Encoding encoding"，其中 encoding 是以下之一:
+
+	ascii		 - 7-位 ASCII 字符集
+	bigendianunicode - UTF-16BE
+	bigendianutf32	 - UTF-32BE
+	oem		 - 系统当前 OEM 代码页
+	unicode		 - UTF-16LE
+	utf7		 - UTF-7
+	utf8		 - UTF-8
+	utf8BOM		 - UTF-8 带 BOM
+	utf8NoBOM	 - UTF-8 不带 BOM (PowerShell Core 的缺省输出)
+	utf32		 - UTF-32
+
+从 PowerShell Core 6.2 开始，Encoding 参数也支持指定已注册代码页的数值 ID
+(-Encoding 1251) 或字符串名 (-Encoding "windows-1251")。详见 .NET 文档的
+Encoding.CodePage 部分。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
