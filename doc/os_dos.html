@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="os_dos.txt">os_dos.txt</a> </b>    适用于 Vim 8.2 版本。   最近更新: 2020年1月
+<b class="vimtag"> <a name="os_dos.txt">os_dos.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -52,6 +52,7 @@
 7. 中止键                        <a href="os_dos.html#dos-CTRL-Break">dos-CTRL-Break</a> 
 8. 临时文件                      <a href="os_dos.html#dos-temp-files">dos-temp-files</a> 
 9. 默认的外壳选项                <a href="os_dos.html#dos-shell">dos-shell</a> 
+10. PowerShell                   <a href="os_dos.html#dos-powershell">dos-powershell</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 文件位置                                             <b class="vimtag"> <a name="dos-locations">dos-locations</a> </b></h4>
@@ -302,9 +303,75 @@ Win32 版本:
         <code class="special">&lt;shell&gt;</code> -c "命令 &gt;file"
 32 位 DOS 版本，DJGPP 在内部执行。
 
-Vim 启动的时候检查 <a href="options.html#'shell'">'shell'</a> 选项的值是否能匹配 "sh" 子串 (在任何位置)。如果是，
-Vim 就按照上面的描述设置 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a> 和 <a href="options.html#'shellquote'">'shellquote'</a> 或 <a href="options.html#'shellxquote'">'shellxquote'</a> 选
-项。
+启动的时候如果 Vim 不能识别出标准 Windows 外壳，会检查 <a href="options.html#'shell'">'shell'</a> 选项的值是否能
+匹配 "sh" 子串 (在任何位置)。如果是，Vim 就按照上面的描述设置 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a>
+和 <a href="options.html#'shellquote'">'shellquote'</a> 或 <a href="options.html#'shellxquote'">'shellxquote'</a> 选项。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>10. PowerShell                                  <b class="vimtag"> <a name="dos-powershell">dos-powershell</a> </b> <b class="vimtag"> <a name="dos-pwsh">dos-pwsh</a> </b></h4>
+Vim 支持 PowerShell Desktop 和 PowerShell Core。PowerShell Desktop 是随
+Windows 安装的 PowerShell 版本，而 PowerShell Core 是跨平台的可单独下载的版
+本。要判断使用的是何版本，可在 PowerShell 提示行上输入 -
+$PSVersionTable.PSEdition
+
+如果 <a href="options.html#'shell'">'shell'</a> 文件名包含了 "powershell"，VIM 在启动时设置 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a>、
+<a href="options.html#'shellxquote'">'shellxquote'</a>、<a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a> 选项为以下值:
+
+<a href="options.html#'shellcmdflag'">'shellcmdflag'</a>  -Command
+<a href="options.html#'shellxquote'">'shellxquote'</a>   "
+<a href="options.html#'shellpipe'">'shellpipe'</a>     2&gt;&amp;1 | Out-File -Encoding default
+<a href="options.html#'shellredir'">'shellredir'</a>    2&gt;&amp;1 | Out-File -Encoding default
+
+如果 <a href="options.html#'shell'">'shell'</a> 文件名包含了 "pwsh"，VIM 在启动时设置 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a>、
+<a href="options.html#'shellxquote'">'shellxquote'</a>、<a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a> 选项为以下值:
+
+<a href="options.html#'shellcmdflag'">'shellcmdflag'</a>  -c
+<a href="options.html#'shellxquote'">'shellxquote'</a>   "
+<a href="options.html#'shellpipe'">'shellpipe'</a>     &gt;%s 2&gt;&amp;1
+<a href="options.html#'shellredir'">'shellredir'</a>    &gt;%s 2&gt;&amp;1
+
+如果你觉得 PowerShell 命令花了太长时间，试试在 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a> 开始处加上
+"-NoProfile"。<code class="note">注意</code> 这会跳过 profile 里的 PowerShell 环境设置。
+
+如果通过 <a href="options.html#'shell'">'shell'</a> 执行 PowerShell 脚本有问题，试试在 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a> 开始处加上
+"-ExecutionPolicy RemoteSigned -Command"。PowerShell 的执行政策设置详见在线
+Windows 文档。
+
+ <a href="options.html#option-backslash">option-backslash</a>  说明 <a href="options.html#'shellcmdflag'">'shellcmdflag'</a> 里有多个标志位时如何包含空格。
+
+<a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a> 选项值重新编码 PowerShell Desktop 的 UTF-16LE 输出
+为当前配置的控制台代码页。把 "default" 改为下面值之一，则可以强制输出为不同编
+码:
+
+        unicode          - UTF-16LE (PowerShell 5.1 的缺省输出)
+        bigendianunicode - UTF-16
+        utf8             - UTF-8
+        utf7             - UTF-7 (无 BOM)
+        utf32            - UTF-32
+        ascii            - 7-位 ASCII 字符集
+        default          - 系统活跃代码页 (通常为 ANSI)
+        oem              - 系统当前 OEM 代码页
+
+<code class="note">备注</code> 上述的多字符 Unicode 编码除非特别注明，包含前导的 BOM。
+
+缺省 PowerShell Core 的输出使用不带 BOM 的 UTF-8 编码。如果要强制 PowerShell
+Core 输出为其它编码，设置 <a href="options.html#'shellredir'">'shellredir'</a> 和 <a href="options.html#'shellpipe'">'shellpipe'</a> 为
+"2&gt;&amp;1 | Out-File -Encoding encoding"，其中 encoding 是以下之一:
+
+        ascii            - 7-位 ASCII 字符集
+        bigendianunicode - UTF-16BE
+        bigendianutf32   - UTF-32BE
+        oem              - 系统当前 OEM 代码页
+        unicode          - UTF-16LE
+        utf7             - UTF-7
+        utf8             - UTF-8
+        utf8BOM          - UTF-8 带 BOM
+        utf8NoBOM        - UTF-8 不带 BOM (PowerShell Core 的缺省输出)
+        utf32            - UTF-32
+
+从 PowerShell Core 6.2 开始，Encoding 参数也支持指定已注册代码页的数值 ID
+(-Encoding 1251) 或字符串名 (-Encoding "windows-1251")。详见 .NET 文档的
+Encoding.CodePage 部分。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
