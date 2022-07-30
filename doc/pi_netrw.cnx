@@ -1,4 +1,4 @@
-*pi_netrw.txt*  适用于 Vim 8.2 版本。	最近更新: 2020年9月
+*pi_netrw.txt*  适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 	    -----------------------------------------------------
@@ -56,6 +56,7 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       水平分割窗口方式浏览................................|netrw-o|
       在新标签页中浏览....................................|netrw-t|
       垂直分割窗口方式浏览................................|netrw-v|
+      修改文件权限........................................|netrw-gp|
       改变列表方式.(瘦 宽 长 树)..........................|netrw-i|
       切换到收入书签的目录................................|netrw-gb|
       切换到较早访问的目录................................|netrw-u|
@@ -881,7 +882,7 @@ NetReadFixup() 函数:
      fun! NetReadFixup(method, line1, line2)
        if method == 3   " ftp (无 <.netrc>)
         let fourblanklines= line2 - 3
-        silent fourblanklines.",".line2."g/^\s*/d"
+        silent fourblanklines .. "," .. line2 .. "g/^\s*/d"
        endif
      endfunction
     endif
@@ -1002,8 +1003,9 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
 	   gf	强制作文件处理                                       |netrw-gf|
 	   gh	快速隐藏/显示点文件                                  |netrw-gh|
 	   gn	置顶光标下的目录                                     |netrw-gn|
+	   gp	修改只限本地文件的权限                               |netrw-gp|
 	   i	在瘦、长、宽和树状列表方式循环                       |netrw-i|
-	   I	切换横幅的显示			                     |netrw-I|
+	   I	切换横幅的显示                                       |netrw-I|
 	   mb	把当前目录加入书签                                   |netrw-mb|
 	   mc	把带标记文件复制到标记目标目录中                     |netrw-mc|
 	   md	对带标记文件进行比较 (不超过 3 个)                   |netrw-md|
@@ -1372,6 +1374,8 @@ netrw 用下面的方法决定使用哪个特殊处理程序:
     如果 g:netrw_browsex_viewer == '-'，那么取而代之的是调用
     netrwFileHandlers#Invoke() (见 |netrw_filehandler|)。
 
+  如果你想用的察看器不支持远程 URL 目录的处理，可把
+  |g:netrw_browsex_support_remote| 设为 0。
   * 对 Windows 32 或 64 来说，使用 URL 和 FileProtocolHandler dll。
   * 对 Gnome (带 gnome-open) 来说: 使用 gnome-open。
   * 对 KDE (带 kfmclient) 来说: 使用 kfmclient。
@@ -1761,7 +1765,7 @@ Netrw 提供帮助函数 'netrw_gitignore#Hide()'，和 |g:netrw_list_hide| 一�
 	例如: let g:netrw_list_hide= netrw_gitignore#Hide('my_gitignore_file')
 		函数可以接受使用 git-ignore 模式的额外文件。
 
-	例如: g:netrw_list_hide= netrw_gitignore#Hide() . '.*\.swp$'
+	例如: let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
 		混合 'netrw_gitignore#Hide' 和定制的模式。
 <
 
@@ -2323,12 +2327,24 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 <				那么 netrwFileHandler() 将寻找处理该扩展名的脚
 				本/函数 (见 |netrw_filehandler|)。
 
+  *g:netrw_browsex_support_remote*
+				指定的查阅器是否支持远程 URL。 (见
+				|netrw-handler|)。
+
   *g:netrw_chgperm*		Unix/Linux: "chmod PERM FILENAME"
 				Windows:    "cacls FILENAME /e /p PERM"
 				用以改变文件的访问权限。
 
+  *g:netrw_clipboard*		=1
+				缺省，netrw 会试图保持剪贴板的值不变。但有些用
+				户报告说这样有速度问题；因此，此选项如果设为
+				零，这些用户可以停止 netrw 对剪贴板内容的保存
+				和恢复 (后者只在必要时才进行)。这意味着如果正
+				常的 netrw 操作 (不小心) 改变了剪贴板，不会恢
+				复到之前的状态。
+
   *g:netrw_compress*		="gzip"
-				    用此命令压缩带标记文件
+				用此命令压缩带标记文件
 
   *g:Netrw_corehandler*		可用来指定 netrw 浏览器的 "x" 命令处理
 				<core> 文件的额外处理。如果定义，
@@ -2351,12 +2367,22 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 				 =2        cul u-cuc        cul u-cuc
 				 =3        cul u-cuc        cul   cuc
 				 =4        cul   cuc        cul   cuc
+				 =5      U-cul U-cuc      U-cul U-cuc
+				 =6      U-cul U-cuc        cul U-cuc
+				 =7        cul U-cuc        cul U-cuc
+				 =8        cul U-cuc        cul   cuc
 
 				其中
-				  u-cul : 用户使用的 |'cursorline'|
-				  u-cuc : 用户使用的 |'cursorcolumn'|
+				  u-cul : 用户使用的 |'cursorline'| 初始设置
+				  u-cuc : 用户使用的 |'cursorcolumn'| 初始设置
+				  U-cul : 用户使用的 |'cursorline'| 当前设置
+				  U-cuc : 用户使用的 |'cursorcolumn'| 当前设置
 				  cul   : 局部设置的 |'cursorline'|
 				  cuc   : 局部设置的 |'cursorcolumn'|
+
+				  "初始设置" 是 netrw 上次看到
+				  |g:netrw_cursor| >= 5 或 netrw 最初运行的时
+				  候的 |'cuc'| 和 |'cul'| 设置
 
   *g:netrw_decompress*		= { ".gz"  : "gunzip" ,
 				    ".bz2" : "bunzip2" ,
@@ -2480,7 +2506,7 @@ NETRW 浏 览 器 变 量		*netrw-browser-options* *netrw-browser-var* {{{2
 
 				示例:
 				 let g:netrw_list_hide= '.*\.swp$'
-				 let g:netrw_list_hide= netrw_gitignore#Hide().'.*\.swp$'
+				 let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
 				缺省: ""
 
   *g:netrw_localcopycmd*	="cp"           Linux/Unix/MacOS/Cygwin
@@ -2773,6 +2799,8 @@ netrw 也可以用本地浏览器 "获得" 文件。netrw 显示的目录不一�
 
 要在 netrw 当前目录打开一个新文件，按 "%"。此映射询问用户新的文件名；然后在
 netrw 当前目录 (即 b:netrw_curdir) 就会建立以此命名的的空文件。
+
+如果使用 Lexplore (|netrw-:Lexplore|)，新文件在 |g:netrw_chgwin| 窗口中生成。
 
 相关主题:               |netrw-d|
 
@@ -3410,6 +3438,32 @@ netrw#UserMaps(islocal)。此函数遍历 |g:Netrw_UserMaps| 列表的所有项�
 ==============================================================================
 12. 历史 (英文)						*netrw-history* {{{1
 
+	v171:	Oct 09, 2020	* included code in s:NetrwOptionsSafe()
+				  to allow |'bh'| to be set to delete when
+				  rather than hide when g:netrw_fastbrowse
+				  was zero.
+				* Installed |g:netrw_clipboard| setting
+				* Installed option bypass for |'guioptions'|
+				  a/A settings
+				* Changed popup_beval() to |popup_atcursor|()
+				  in netrw#ErrorMsg (lacygoill). Apparently
+				  popup_beval doesn't reliably close the
+				  popup when the mouse is moved.
+				* VimEnter() now using win_execute to examine
+				  buffers for an attempt to open a directory.
+				  Avoids issues with popups/terminal from
+				  command line. (lacygoill)
+		Jun 28, 2021	* (zeertzjq) provided a patch for use of
+				  xmap,xno instead of vmap,vno in
+				  netrwPlugin.vim. Avoids entanglement with
+				  select mode.
+		Jul 14, 2021	* Fixed problem addressed by tst976; opening
+				  a file using tree mode, going up a
+				  directory, and opening a file there was
+				  opening the file in the wrong directory.
+		Jul 28, 2021	* (Ingo Karkat) provided a patch fixing an
+				  E488 error with netrwPlugin.vim
+				  (occurred for vim versions < 8.02)
 	v170:	Mar 11, 2020	* (reported by Reiner Herrmann) netrw+tree
 				  would not hide with the ^\..* pattern
 				  correctly.

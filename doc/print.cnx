@@ -1,4 +1,4 @@
-*print.txt*     适用于 Vim 8.2 版本。	最近更新: 2020年1月
+*print.txt*     适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -120,25 +120,25 @@ ghostscript 的程序用在别的打印机上。
 错，返回零或空字符串。
 非 MS-Windows 或 VMS 系统的缺省就是简单地使用 "lpr" 来打印文件: >
 
-    system('lpr' . (&printdevice == '' ? '' : ' -P' . &printdevice)
-	. ' ' . v:fname_in) . delete(v:fname_in) + v:shell_error
+    system('lpr' .. (&printdevice == '' ? '' : ' -P' .. &printdevice)
+	.. ' ' .. v:fname_in) .. delete(v:fname_in) + v:shell_error
 <
 在 MS-Windows 机器上，缺省是把文件复制到当前指定的 printdevice 上: >
 
-    system('copy' . ' ' . v:fname_in . (&printdevice == ''
-		? ' LPT1:' : (' \"' . &printdevice . '\"')))
-		. delete(v:fname_in)
+    system('copy' .. ' ' .. v:fname_in .. (&printdevice == ''
+		? ' LPT1:' : (' \"' .. &printdevice .. '\"')))
+		.. delete(v:fname_in)
 <
 在 VMS 机器上，缺省是把文件发送到缺省或者当前指定的 printdevice 上: >
 
-    system('print' . (&printdevice == '' ? '' : ' /queue=' .
-		&printdevice) . ' ' . v:fname_in) . delete(v:fname_in)
+    system('print' .. (&printdevice == '' ? '' : ' /queue=' ..
+		&printdevice) .. ' ' .. v:fname_in) .. delete(v:fname_in)
 <
 如果你改变此选项，使用函数是避免转义所有的空格的简便方法。例如: >
 
 	:set printexpr=PrintFile(v:fname_in)
 	:function PrintFile(fname)
-	:  call system("ghostview " . a:fname)
+	:  call system("ghostview " .. a:fname)
 	:  call delete(a:fname)
 	:  return v:shell_error
 	:endfunc
@@ -149,6 +149,11 @@ ghostscript 的程序用在别的打印机上。
 如果表达式计算失败，或者产生非零值，你会得到错误信息。那种情况下，Vim 会删除文
 件。非 MS-Windows 的缺省值里使用一个技巧: 加上 "v:shell_error" 会在 system()
 调用失败时返回非零值。
+
+以 s: 或 |<SID>| 开始的表达式，用脚本 ID (|local-function|) 替代之。例如: >
+		set printexpr=s:MyPrintFile()
+		set printexpr=<SID>SomePrintFile()
+<否则，表达式在设置本选项的脚本的上下文里计算，这样就可用局部于脚本的项目。
 
 为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
@@ -616,7 +621,7 @@ psnup 工具把一个 Vim 生成的 PostScript 文件转化为一个 n-路版本
 ==============================================================================
 8. 换页字符						*printing-formfeed*
 
-缺省，Vim 不对换页 |formfeed| 控制字符作任何特殊处理。设置 'printoptions' 的
+缺省，Vim 不对换页 formfeed 控制字符作任何特殊处理。设置 'printoptions' 的
 formfeed 项，使得 Vim 可以识别换页字符，从而在新的一页里打出当前行。换页字符
 提供了较为原始的打印控制。不过，还是有若干事情需要注意。
 

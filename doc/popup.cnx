@@ -1,4 +1,4 @@
-*popup.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年1月
+*popup.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -125,7 +125,8 @@ Vim 试图在你指定的位置显示弹出。有些情况下，弹出会超出 
 
 在弹出窗口中运行终端是个特例。那里许多规则有变化:	*E863*
 - 终端窗口总占据焦点，不可能切换到其它窗口。
-- 作业结束时，弹出窗口会关闭。
+- 作业结束时，弹出窗口在终端-普通模式中显示缓冲区。可用 `:q` 或使用
+  "term_finish" 值 "close" 来关闭之。
 - 可用 `popup_close()` 关闭弹出窗口，终端缓冲区此时会被隐藏。
 - 不可打开第二个带终端的弹出窗口。 *E861*
 - 缺省 Pmenu 色彩只用于边框和填充。要改变终端本身的颜色，在创建终端前设置
@@ -227,14 +228,20 @@ popup_close({id} [, {result}])				*popup_close()*
 		也可用作 |method|: >
 			GetPopup()->popup_close()
 
+
 popup_create({what}, {options})				*popup_create()*
-		打开弹出窗口显示 {what}，后者可以是以下之一:
+		打开弹出窗口显示 {what}，后者可以是以下之一: *E450*
 		- 缓冲区号
 		- 字符串
 		- 字符串列表
 		- 带文本属性的文本行的列表
 		如果 {what} 不是缓冲区号，建立缓冲区并设 'buftype' 为
 		"popup"。一旦弹出关闭，此缓冲区会被真正删除。
+
+		如果 {what} 是缓冲区号，而载入该缓冲区会用到某个已有的交换文
+		件，该缓冲区以只读方式安静地打开，就像有 |SwapExists| 自动命令
+		来设置 |v:swapchoice| 为 'o' 一样。这是因为这里假定缓冲区只用
+		于查看。
 
 		{options} 为有许多可能项目的字典。详见
 		|popup_create-arguments|。
@@ -248,6 +255,7 @@ popup_create({what}, {options})				*popup_create()*
 
 		也可用作 |method|: >
 			GetText()->popup_create({})
+
 
 popup_dialog({what}, {options})				*popup_dialog()*
 		就像 |popup_create()| 但带以下缺省选项: >
@@ -270,6 +278,7 @@ popup_dialog({what}, {options})				*popup_dialog()*
 
 		也可用作 |method|: >
 			GetText()->popup_dialog({})
+
 
 popup_filter_menu({id}, {key})				*popup_filter_menu()*
 		弹出可用的过滤。可用以下键值:
@@ -340,6 +349,7 @@ popup_getoptions({id})					*popup_getoptions()*
 		也可用作 |method|: >
 			GetPopup()->popup_getoptions()
 
+
 popup_getpos({id})					*popup_getpos()*
 		返回弹出 {id} 的位置和大小。返回以下项目的字典:
 		    col		弹出的屏幕列，从一开始
@@ -365,6 +375,7 @@ popup_getpos({id})					*popup_getpos()*
 		也可用作 |method|: >
 			GetPopup()->popup_getpos()
 
+
 popup_hide({id})						*popup_hide()*
 		如果 {id} 是显示中的弹出，现在隐藏之。如果弹出有过滤，在弹出隐
 		藏期间不调用过滤。
@@ -374,6 +385,7 @@ popup_hide({id})						*popup_hide()*
 
 		也可用作 |method|: >
 			GetPopup()->popup_hide()
+
 
 popup_list()						 *popup_list()*
 		返回存在的所有弹出的 |window-ID| 列表。
@@ -413,6 +425,7 @@ popup_menu({what}, {options})				 *popup_menu()*
 
 <		也可用作 |method|: >
 			GetChoices()->popup_menu({})
+
 
 popup_move({id}, {options})					*popup_move()*
 		移动弹出 {id} 到 {options} 指定的位置。
@@ -457,11 +470,6 @@ popup_notification({what}, {options})			 *popup_notification()*
 		也可用作 |method|: >
 			GetText()->popup_notification({})
 
-popup_show({id})						*popup_show()*
-		如果 {id} 是隐藏的弹出，现在显示之。
-		{id} 可见 `popup_hide()`。
-		如果 {id} 是 info 弹出，会定位在当前弹出菜单项边上。
-
 
 popup_setoptions({id}, {options})			*popup_setoptions()*
 		用 {options} 里的项目来覆盖弹出 {id} 的选项。
@@ -497,6 +505,7 @@ popup_setoptions({id}, {options})			*popup_setoptions()*
 		也可用作 |method|: >
 			GetPopup()->popup_setoptions(options)
 
+
 popup_settext({id}, {text})				*popup_settext()*
 		设置弹出窗口 {id} 缓冲区的文本。{text} 和 |popup_create()| 提
 		供的相同，除了不接受缓冲区号以外。
@@ -504,6 +513,13 @@ popup_settext({id}, {text})				*popup_settext()*
 
 		也可用作 |method|: >
 			GetPopup()->popup_settext('hello')
+
+
+popup_show({id})						*popup_show()*
+		如果 {id} 是隐藏的弹出，现在显示之。
+		{id} 可见 `popup_hide()`。
+		如果 {id} 是 info 弹出，它会定位在当前弹出菜单项的边上。
+
 
 ==============================================================================
 3. 用法							*popup-usage*
@@ -576,6 +592,8 @@ POPUP_CREATE() 参 数				 *popup_create-arguments*
 	drag		为 TRUE 时弹出可用鼠标在边框上拖曳。弹出无边框时无效。
 			一旦开始拖曳，"pos" 如果为 "center" 就会被改为
 			"topleft"。
+	dragall		为 TRUE 时弹出可以在所有位置上拖曳。此时要在弹出里选
+			择文本就会很困难。
 	resize		为 TRUE 时弹出可用鼠标抓住右下角来调整大小。弹出无边框
 			时无效。
 	close		为 "button" 时，在右上角显示 X，出现在任何边框、填充或
@@ -762,6 +780,8 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 	cursor keys	选择另一项
 	Tab		接受当前建议值
 
+按了 CTRL-C 后关闭弹出，不调用过滤。
+
 鼠标点击产生 <LeftMouse>。坐标可由 |getmousepos()| 得到。
 
 Vim 提供标准过滤 |popup_filter_menu()| 和 |popup_filter_yesno()|。
@@ -823,97 +843,100 @@ Vim 提供标准过滤 |popup_filter_menu()| 和 |popup_filter_yesno()|。
 ==============================================================================
 4. 示例							*popup-examples*
 
-TODO: 更多有意思的例子
+以下例子使用 |Vim9| 脚本。
+
 					*popup_dialog-example*
 提示用户按 y/Y 或 n/N: >
 
-	func MyDialogHandler(id, result)
-	   if a:result
-	      " ... 按了 'y' 或 'Y'
-	   endif
-	endfunc
-
-	call popup_dialog('Continue? y/n', #{
-		\ filter: 'popup_filter_yesno',
-		\ callback: 'MyDialogHandler',
-		\ })
+	popup_dialog('Continue? y/n', {
+		 filter: 'popup_filter_yesno',
+		 callback: (id, result) => {
+				if result == 1
+				  echomsg "按了 'y' 或 'Y'"
+				else
+				  echomsg "_没_按 'y' 或 'Y'"
+				endif
+			     },
+		 padding: [2, 4, 2, 4],
+		 })
 <
 					*popup_menu-shortcut-example*
 用快捷键扩展 popup_filter_menu(): >
 
-	call popup_menu(['Save', 'Cancel', 'Discard'], #{
-		\ filter: 'MyMenuFilter',
-		\ callback: 'MyMenuHandler',
-		\ })
-
-	func MyMenuFilter(id, key)
-	  " 处理快捷键
-	  if a:key == 'S'
-	     call popup_close(a:id, 1)
-	     return 1
-	  endif
-	  if a:key == 'C'
-	     call popup_close(a:id, 2)
-	     return 1
-	  endif
-	  if a:key == 'D'
-	     call popup_close(a:id, 3)
-	     return 1
-	  endif
-
-	  " 没有快捷键，传递给通用过滤
-	  return popup_filter_menu(a:id, a:key)
-	endfunc
+	popup_menu(['Save', 'Cancel', 'Discard'], {
+	    callback: (_, result) => {
+		echo 'dialog result is' result
+	    },
+	    filter: (id, key) => {
+		# 处理快捷键
+		if key == 'S' || key == 's'
+		    popup_close(id, 1)
+		elseif key == 'C' || key == 'c'
+		    popup_close(id, 2)
+		elseif key == 'D' || key == 'd'
+		    popup_close(id, 3)
+		else
+		    # 没有快捷键，传递给通用过滤
+		    return popup_filter_menu(id, key)
+		endif
+		return true
+	    },
+	})
 <
 					*popup_beval_example*
 使用弹出窗口用作 'ballooneval' 的例子: >
 
 	set ballooneval balloonevalterm
 	set balloonexpr=BalloonExpr()
-	let s:winid = 0
-	let s:last_text = ''
+	var winid: number
+	var last_text: string
 
-	func BalloonExpr()
-	  if s:winid && popup_getpos(s:winid) != {}
-	    " 上次的弹出窗口还在显示
-	    if v:beval_text == s:last_text
-	      " 还是相同的文本，保留原有的弹出
-	      return ''
+	def BalloonExpr(): string
+	    # 这里你用 "v:beval_text" 来查找些有意思的文本
+	    var text = v:beval_text
+	    if winid > 0 && popup_getpos(winid) != null_dict
+		# 上次的弹出窗口还在显示
+		if text == last_text
+		    # 还是相同的文本，保留原有的弹出
+		    return null_string
+		endif
+		popup_close(winid)
 	    endif
-	    call popup_close(s:winid)
-	  endif
-	  let s:winid = popup_beval(v:beval_text, #{mousemoved: 'word'})
-	  let s:last_text = v:beval_text
-	  return ''
-	endfunc
-<
+
+	    winid = popup_beval(text, {})
+	    last_text = text
+	    return null_string
+	enddef
+
 如果要异步获取文本，表达式函数返回空串，而一旦文本可用，调用 popup_beval()。下
 例用定时器调用来模拟: >
 
 	set ballooneval balloonevalterm
 	set balloonexpr=BalloonExpr()
-	let s:winid = 0
-	let s:balloonText = ''
+	var winid: number
+	var last_text: string
 
-	func BalloonExpr()
-	  if s:winid && popup_getpos(s:winid) != {}
-	    " 上次的弹出窗口还在显示
-	    if  v:beval_text == s:balloonText
-	      " 还是相同的文本，保留原有的弹出
-	      return ''
+	def BalloonExpr(): string
+	    var text = v:beval_text
+	    if winid > 0 && popup_getpos(winid) != null_dict
+		# 上次的弹出窗口还在显示
+		if text == last_text
+		    # 还是相同的文本，保留原有的弹出
+		    return null_string
+		endif
+		popup_close(winid)
 	    endif
-	    call popup_close(s:winid)
-	    let s:winid = 0
-	  endif
-	  " 模拟异步查询要显示的文本
-	  let s:balloonText = v:beval_text
-	  call timer_start(100, 'ShowPopup')
-	  return ''
-	endfunc
 
-	func ShowPopup(id)
-	  let s:winid = popup_beval(s:balloonText, #{mousemoved: 'word'})
-	endfunc
+	    # 模拟要花半秒的对要显示的文本的异步查询。
+	    # text to display.
+	    last_text = text
+	    timer_start(500, 'ShowPopup')
+	    return null_string
+	enddef
+
+	def ShowPopup(timerid: number)
+	    winid = popup_beval('Result: ' .. last_text, {})
+	enddef
 <
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,4 +1,4 @@
-*starting.txt*  适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*starting.txt*  适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -225,6 +225,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		也禁止 delete()、rename()、mkdir()、 job_start() 等等。
 		也禁止 Python、Ruby 和 Lua 接口，因为它们可用来执行外壳命令。
 		Perl 使用安全模块。
+		如果 $SHELL 的最后部分是 "nologin" 或 "false"，会使用 Unix 受
+		限模式。
 		注意 用户仍然可能找到空子来执行外壳命令，这越来越困难了。
 
 							*-g*
@@ -235,8 +237,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		的时候才有意义。对于 gvim 而言，即使能够，也不启动 GUI。
 
 							*-e*
--e		启动 Vim 进入 Ex 模式 |Q|，只有在可执行文件不叫 "ex" 的时候才
-		有意义。
+-e		启动 Vim 进入 Ex 模式，见 |Ex-mode|，只有在可执行文件不叫 "ex"
+		的时候才有意义。
 
 							*-E*
 -E		启动 Vim 进入增强的 Ex 模式 |gQ|。只有在可执行文件不叫 "exim"
@@ -298,6 +300,18 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		示例: >
 			vim -V20vimlog foobar
 <
+-V[N]{filename}
+		Like -V and set 'verbosefile' to {filename}.  The result is
+		that messages are not displayed but written to the file
+		{filename}.  {filename} must not start with a digit.
+		Example: >
+			vim -V20vimlog foobar
+<
+--log {filename}					*--log*
+		开始日志并写入项目到 {filename}。
+		相当于在启动的很早阶段调用了 `ch_logfile({filename}, 'ao')`。
+		{仅当编译时加入 |+channel| 特性才有效}
+
 							*-D*
 -D		调试。在执行脚本的第一个命令的时候进入调试模式。|debug-mode|
 		{仅当编译时加入 |+eval| 特性才有效}
@@ -361,6 +375,12 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		和因此发生的两秒延迟。
 		同时也避免了 "Reading from stdin..." 信息。
 		同时也避免了 "N files to edit" 信息。
+
+--gui-dialog-file {name}				*--gui-dialog-file*
+		使用 GUI 时，原来要显示对话框的地方，会把对话框的标题和消息写
+		到文件 {name} 里。按照需要会创建或附加到文件。只用于测试，用于
+		避免显示不可见的对话框导致测试停滞。
+		无 GUI 时忽略此参数。
 
 							*--ttyfail*
 --ttyfail	标准输入或标准输出不是终端 (tty) 时立即退出。
@@ -474,6 +494,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 		新执行之。如果 "scriptout" 文件已经存在，新的字符会附加在其
 		后。另见 |complex-repeat|。
 		{scriptout} 不能以数字开始。
+		如果要以人类可读的方式记录键入的内容，可用 |ch_logfile()|。它
+		会添加 "未经处理键输入" 行。另见 |--log|。
 
 							*-W*
 -W {scriptout}	和 -w 类似，但不是附加，而是覆盖已经存在的文件。
@@ -616,6 +638,7 @@ Evim 里，以下选项被改变，不同于缺省值:
 	:set guioptions-=a	只限于非 Unix: 不要自动选择
 
 键盘映射:
+	<CTRL-Q>	退出，如有改动使用 `:confirm` 提示
 	<Down>		在屏幕行而不是文件行间移动
 	<Up>		同上
 	Q		同 "gq"，排版，而不是 Ex 模式
@@ -626,7 +649,6 @@ Evim 里，以下选项被改变，不同于缺省值:
 	<C-Insert>	同上
 	CTRL-V		粘贴到剪贴板 (在任何模式下都可以)
 	<S-Insert>	同上
-	CTRL-Q		做以前 CTRL-V 做的事
 	CTRL-Z		撤销
 	CTRL-Y		重做
 	<M-Space>	系统菜单
@@ -641,6 +663,8 @@ Evim 里，以下选项被改变，不同于缺省值:
 - 在文本文件里，'textwidth' 设为 78
 
 一个提示: 如果你想进入普通模式并可以输入一串命令，使用 CTRL-L。|i_CTRL-L|
+
+没有办法停止 "容易模式"，只能退出 Vim。
 
 ==============================================================================
 4. 初始化					*initialization* *startup*
@@ -888,7 +912,7 @@ Vim 启动时，'compatible' 选项是打开的。Vim 开始初始化的时候�
 
 
 没有 .vimrc 文件里的缺省值 ~
-							*defaults.vim*
+							*defaults.vim* *E1187*
 如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUNTIME/defaults.vim 脚本。
 这会关闭 'compatible'，打开语法高亮和一些更多的设置。详见该脚本。注意: 这从
 Vim 8.0 开始，不是 Vim 7.4。(准确地说，由 7.4.2111 补丁加入)。
@@ -1166,7 +1190,7 @@ $VIM 目录 (MS-Windows)。你也可以使用自动命令 |autocommand| 和/或�
 
 在恢复会话后，当前会话的完整文件名可以通过内部变量 "v:this_session" 得到
 |this_session-variable|。映射示例: >
-  :nmap <F2> :wa<Bar>exe "mksession! " . v:this_session<CR>:so ~/sessions/
+  :nmap <F2> :wa<Bar>exe "mksession! " .. v:this_session<CR>:so ~/sessions/
 这会保存当前会话，并启动载入另外一个会话的命令。
 
 会话包含所有标签页，除非从 'sessionoptions' 里删除了 "tabpages"。|tab-page|
