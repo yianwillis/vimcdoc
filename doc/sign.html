@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="sign.txt">sign.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="sign.txt">sign.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Gordon Prieur</code>
@@ -78,6 +78,7 @@
 <code class="example"></code>
 <code class="example">        :highlight SignColumn guibg=darkgrey</code>
 
+打开 <a href="options.html#'cursorline'">'cursorline'</a> 时，使用 CursorLineSign 高亮组  <a href="syntax.html#hl-CursorLineSign">hl-CursorLineSign</a> 。
                                                         <b class="vimtag"> <a name="sign-identifier">sign-identifier</a> </b>
 已放置的标号以一个数值识别，称为标号标识符。此标识符用于跳转到标号或删除标号。
 标识符在用  <a href="sign.html#:sign-place">:sign-place</a>  命令或  <a href="sign.html#sign_place()">sign_place()</a>  函数放置标号时分配。每个标号标
@@ -110,7 +111,7 @@
 <h4>2. 命令                                         <b class="vimtag"> <a name="sign-commands">sign-commands</a> </b> <b class="vimtag"> <a name=":sig">:sig</a> </b> <b class="vimtag"> <a name=":sign">:sign</a> </b></h4>
 这里提供了一例，在当前文件的第 23 行显示 "piet" 标号，以文字 "&gt;&gt;" 标明。 
 <code class="example">        :sign define piet text=&gt;&gt; texthl=Search</code>
-<code class="example">        :exe ":sign place 2 line=23 name=piet file=" . expand("%:p")</code>
+<code class="example">        :exe ":sign place 2 line=23 name=piet file=" .. expand("%:p")</code>
 <code class="example"></code>
 删除标号的命令: 
 <code class="example">        :sign unplace 2</code>
@@ -144,12 +145,20 @@
         linehl=<code class="special">{group}</code>
                 用以显示整个标号行的高亮组。多用于定义背景色。
 
+        numhl=<code class="special">{group}</code>
+                放置标号的行的行号使用的高亮组。优先于  <a href="syntax.html#hl-LineNr">hl-LineNr</a> 、
+                 <a href="syntax.html#hl-LineNrAbove">hl-LineNrAbove</a> 、 <a href="syntax.html#hl-LineNrBelow">hl-LineNrBelow</a>  和  <a href="syntax.html#hl-CursorLineNr">hl-CursorLineNr</a> 。
+
         text=<code class="special">{text}</code>                                             <b class="vimtag"> <a name="E239">E239</a> </b>
                 没有图标或者不用 GUI 时显示的文本。只允许可显示字符，而且必须
                 占据一到两个显示单元。
 
         texthl=<code class="special">{group}</code>
                 显示文本项目的高亮组。
+
+        culhl=<code class="special">{group}</code>
+                打开 <a href="options.html#'cursorline'">'cursorline'</a> 时，光标在标号所在的行时文本项目使用的高亮
+                组。
 
         示例: 
 <code class="example">                :sign define MySign text=&gt;&gt; texthl=Search linehl=DiffText</code>
@@ -372,8 +381,11 @@ sign_define(<code class="special">{list}</code>)
                 支持以下的值:
                    icon         用于标号的位图文件完整路径。
                    linehl       用于标号放置所在的整行的高亮组。
+                   numhl        放置标号的行的行号使用的高亮组。
                    text         没有图标或不使用 GUI 时显示的文本。
                    texthl       文本项目使用的高亮组
+                   culhl        打开 <a href="options.html#'cursorline'">'cursorline'</a> 时，光标在标号所在的行时文本
+                                项目使用的高亮组。
 
                 如果名为 <code class="special">{name}</code> 的标号已存在，更新标号的属性。
 
@@ -406,10 +418,14 @@ sign_getdefined([<code class="special">{name}</code>])                          
 
                 返回值的每个列表项是包含以下项目的字典:
                    icon         标号的位图文件完整路径
-                   linehl       标号放置所在的整行的高亮组。
+                   linehl       标号放置所在的整行的高亮组；有设置此项目才存在
                    name         标号名
+                   numhl        放置标号的行的行号使用的高亮组；有设置此项目才
+                                存在
                    text         没有图标或不使用 GUI 时显示的文本。
-                   texthl       文本项目使用的高亮组
+                   texthl       文本项目使用的高亮组；有设置此项目才存在
+                   culhl        打开 <a href="options.html#'cursorline'">'cursorline'</a> 时，光标在标号所在的行时文本
+                                项目使用的高亮组；有设置此项目才存在
 
                 如果没有标号或 <code class="special">{name}</code> 找不到，返回空列表。
 
@@ -423,12 +439,12 @@ sign_getdefined([<code class="special">{name}</code>])                          
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetSignList()-&gt;sign_getdefined()</code>
 <code class="example"></code>
-sign_getplaced([<code class="special">{expr}</code> [, <code class="special">{dict}</code>]])                     <b class="vimtag"> <a name="sign_getplaced()">sign_getplaced()</a> </b>
+sign_getplaced([<code class="special">{buf}</code> [, <code class="special">{dict}</code>]])                      <b class="vimtag"> <a name="sign_getplaced()">sign_getplaced()</a> </b>
                 返回一个或所有缓冲区里放置的标号的列表。类似于
                  <a href="sign.html#:sign-place-list">:sign-place-list</a>  命令。
 
-                如果给出可选的缓冲区名 <code class="special">{expr}</code>，只返回该缓冲区里放置的标号列
-                表。<code class="special">{expr}</code> 的用法见  <a href="builtin.html#bufname()">bufname()</a> 。可选的 <code class="special">{dict}</code> 可包含以下项目:
+                如果给出可选的缓冲区名 <code class="special">{buf}</code>，只返回该缓冲区里放置的标号列表。
+                <code class="special">{buf}</code> 的用法见  <a href="builtin.html#bufname()">bufname()</a> 。可选的 <code class="special">{dict}</code> 可包含以下项目:
                    group        只选择此组内的标号
                    id           选择带此标识符的标号
                    lnum         选择放置在此行的标号。<code class="special">{lnum}</code> 的用法见
@@ -477,11 +493,12 @@ sign_getplaced([<code class="special">{expr}</code> [, <code class="special">{di
 <code class="example">                        GetBufname()-&gt;sign_getplaced()</code>
 
                                                         <b class="vimtag"> <a name="sign_jump()">sign_jump()</a> </b>
-sign_jump(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{expr}</code>)
-                打开缓冲区 <code class="special">{expr}</code> 或跳转到包含 <code class="special">{expr}</code> 的窗口，并定位光标到组
+sign_jump(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{buf}</code>)
+                打开缓冲区 <code class="special">{buf}</code> 或跳转到包含 <code class="special">{buf}</code> 的窗口，并定位光标到组
                 <code class="special">{group}</code> 里的标号 <code class="special">{id}</code>。类似于  <a href="sign.html#:sign-jump">:sign-jump</a>  命令。
 
-                <code class="special">{expr}</code> 的用法见  <a href="builtin.html#bufname()">bufname()</a> 。
+                <code class="special">{group}</code> 为空串时使用全局组。
+                <code class="special">{buf}</code> 的用法见  <a href="builtin.html#bufname()">bufname()</a> 。
 
                 返回标号的行号。如果参数非法返回 -1。
 
@@ -493,8 +510,8 @@ sign_jump(<code class="special">{id}</code>, <code class="special">{group}</code
 <code class="example">                        GetSignid()-&gt;sign_jump()</code>
 
                                                         <b class="vimtag"> <a name="sign_place()">sign_place()</a> </b>
-sign_place(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{name}</code>, <code class="special">{expr}</code> [, <code class="special">{dict}</code>])
-                把 <code class="special">{name}</code> 指定的标号放在文件 <code class="special">{fname}</code> 或缓冲区 <code class="special">{expr}</code> 的第
+sign_place(<code class="special">{id}</code>, <code class="special">{group}</code>, <code class="special">{name}</code>, <code class="special">{buf}</code> [, <code class="special">{dict}</code>])
+                把 <code class="special">{name}</code> 指定的标号放在文件 <code class="special">{fname}</code> 或缓冲区 <code class="special">{buf}</code> 的第
                 <code class="special">{lnum}</code> 行，并给标号指定 <code class="special">{id}</code> 和 <code class="special">{group}</code>。类似于  <a href="sign.html#:sign-place">:sign-place</a> 
                 命令。
 
@@ -504,10 +521,10 @@ sign_place(<code class="special">{id}</code>, <code class="special">{group}</cod
                  <a href="sign.html#sign-identifier">sign-identifier</a>  和  <a href="sign.html#sign-group">sign-group</a> 。
 
                 <code class="special">{name}</code> 指定已定义的标号。
-                <code class="special">{expr}</code> 指定缓冲区名或号。可接受的值见  <a href="builtin.html#bufname()">bufname()</a> 。
+                <code class="special">{buf}</code> 指定缓冲区名或号。可接受的值见  <a href="builtin.html#bufname()">bufname()</a> 。
 
                 可选的 <code class="special">{dict}</code> 参数支持以下项目:
-                        lnum            放置标号的文件或缓冲区 <code class="special">{expr}</code> 的行号。
+                        lnum            放置标号的文件或缓冲区 <code class="special">{buf}</code> 的行号。
                                         可接受的值见  <a href="builtin.html#line()">line()</a> 。
                         priority        标号优先级。详见  <a href="sign.html#sign-priority">sign-priority</a> 。
 

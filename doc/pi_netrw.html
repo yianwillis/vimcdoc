@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="pi_netrw.txt">pi_netrw.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2020年9月
+<b class="vimtag"> <a name="pi_netrw.txt">pi_netrw.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
 </section><hr class="singleline" /><section class=inner>
@@ -90,6 +90,7 @@ Copyright: Copyright (C) 2017 Charles E Campbell    <b class="vimtag"> <a name="
       水平分割窗口方式浏览................................ <a href="pi_netrw.html#netrw-o">netrw-o</a> 
       在新标签页中浏览.................................... <a href="pi_netrw.html#netrw-t">netrw-t</a> 
       垂直分割窗口方式浏览................................ <a href="pi_netrw.html#netrw-v">netrw-v</a> 
+      修改文件权限........................................ <a href="pi_netrw.html#netrw-gp">netrw-gp</a> 
       改变列表方式.(瘦 宽 长 树).......................... <a href="pi_netrw.html#netrw-i">netrw-i</a> 
       切换到收入书签的目录................................ <a href="pi_netrw.html#netrw-gb">netrw-gb</a> 
       切换到较早访问的目录................................ <a href="pi_netrw.html#netrw-u">netrw-u</a> 
@@ -908,7 +909,7 @@ NetReadFixup() 函数:
 <code class="example">     fun! NetReadFixup(method, line1, line2)</code>
 <code class="example">       if method == 3   " ftp (无 &lt;.netrc&gt;)</code>
 <code class="example">        let fourblanklines= line2 - 3</code>
-<code class="example">        silent fourblanklines.",".line2."g/^\s*/d"</code>
+<code class="example">        silent fourblanklines .. "," .. line2 .. "g/^\s*/d"</code>
 <code class="example">       endif</code>
 <code class="example">     endfunction</code>
 <code class="example">    endif</code>
@@ -1028,6 +1029,7 @@ netrw 远程浏览时就同时使用 ftp。相反，如果指定其它协议，�
            gf   强制作文件处理                                        <a href="pi_netrw.html#netrw-gf">netrw-gf</a> 
            gh   快速隐藏/显示点文件                                   <a href="pi_netrw.html#netrw-gh">netrw-gh</a> 
            gn   置顶光标下的目录                                      <a href="pi_netrw.html#netrw-gn">netrw-gn</a> 
+           gp   修改只限本地文件的权限                                <a href="pi_netrw.html#netrw-gp">netrw-gp</a> 
            i    在瘦、长、宽和树状列表方式循环                        <a href="pi_netrw.html#netrw-i">netrw-i</a> 
            I    切换横幅的显示                                        <a href="pi_netrw.html#netrw-I">netrw-I</a> 
            mb   把当前目录加入书签                                    <a href="pi_netrw.html#netrw-mb">netrw-mb</a> 
@@ -1398,6 +1400,8 @@ netrw 用下面的方法决定使用哪个特殊处理程序:
     如果 g:netrw_browsex_viewer == '-'，那么取而代之的是调用
     netrwFileHandlers#Invoke() (见  <a href="pi_netrw.html#netrw_filehandler">netrw_filehandler</a> )。
 
+  如果你想用的察看器不支持远程 URL 目录的处理，可把
+   <a href="pi_netrw.html#g:netrw_browsex_support_remote">g:netrw_browsex_support_remote</a>  设为 0。
   * 对 Windows 32 或 64 来说，使用 URL 和 FileProtocolHandler dll。
   * 对 Gnome (带 gnome-open) 来说: 使用 gnome-open。
   * 对 KDE (带 kfmclient) 来说: 使用 kfmclient。
@@ -1787,7 +1791,7 @@ Netrw 提供帮助函数 'netrw_gitignore#Hide()'，和  <a href="pi_netrw.html#
 <code class="example">        例如: let g:netrw_list_hide= netrw_gitignore#Hide('my_gitignore_file')</code>
 <code class="example">                函数可以接受使用 git-ignore 模式的额外文件。</code>
 <code class="example"></code>
-<code class="example">        例如: g:netrw_list_hide= netrw_gitignore#Hide() . '.*\.swp$'</code>
+<code class="example">        例如: let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'</code>
 <code class="example">                混合 'netrw_gitignore#Hide' 和定制的模式。</code>
 
 
@@ -2349,12 +2353,24 @@ NETRW 浏 览 器 变 量            <b class="vimtag"> <a name="netrw-browser-o
                                 那么 netrwFileHandler() 将寻找处理该扩展名的脚
                                 本/函数 (见  <a href="pi_netrw.html#netrw_filehandler">netrw_filehandler</a> )。
 
+  <b class="vimtag"> <a name="g:netrw_browsex_support_remote">g:netrw_browsex_support_remote</a> </b>
+                                指定的查阅器是否支持远程 URL。 (见
+                                 <a href="pi_netrw.html#netrw-handler">netrw-handler</a> )。
+
   <b class="vimtag"> <a name="g:netrw_chgperm">g:netrw_chgperm</a> </b>             Unix/Linux: "chmod PERM FILENAME"
                                 Windows:    "cacls FILENAME /e /p PERM"
                                 用以改变文件的访问权限。
 
+  <b class="vimtag"> <a name="g:netrw_clipboard">g:netrw_clipboard</a> </b>           =1
+                                缺省，netrw 会试图保持剪贴板的值不变。但有些用
+                                户报告说这样有速度问题；因此，此选项如果设为
+                                零，这些用户可以停止 netrw 对剪贴板内容的保存
+                                和恢复 (后者只在必要时才进行)。这意味着如果正
+                                常的 netrw 操作 (不小心) 改变了剪贴板，不会恢
+                                复到之前的状态。
+
   <b class="vimtag"> <a name="g:netrw_compress">g:netrw_compress</a> </b>            ="gzip"
-                                    用此命令压缩带标记文件
+                                用此命令压缩带标记文件
 
   <b class="vimtag"> <a name="g:Netrw_corehandler">g:Netrw_corehandler</a> </b>         可用来指定 netrw 浏览器的 "x" 命令处理
                                 <code class="special">&lt;core&gt;</code> 文件的额外处理。如果定义，
@@ -2377,12 +2393,22 @@ NETRW 浏 览 器 变 量            <b class="vimtag"> <a name="netrw-browser-o
                                  =2        cul u-cuc        cul u-cuc
                                  =3        cul u-cuc        cul   cuc
                                  =4        cul   cuc        cul   cuc
+                                 =5      U-cul U-cuc      U-cul U-cuc
+                                 =6      U-cul U-cuc        cul U-cuc
+                                 =7        cul U-cuc        cul U-cuc
+                                 =8        cul U-cuc        cul   cuc
 
                                 其中
-                                  u-cul : 用户使用的  <a href="options.html#'cursorline'">'cursorline'</a> 
-                                  u-cuc : 用户使用的  <a href="options.html#'cursorcolumn'">'cursorcolumn'</a> 
+                                  u-cul : 用户使用的  <a href="options.html#'cursorline'">'cursorline'</a>  初始设置
+                                  u-cuc : 用户使用的  <a href="options.html#'cursorcolumn'">'cursorcolumn'</a>  初始设置
+                                  U-cul : 用户使用的  <a href="options.html#'cursorline'">'cursorline'</a>  当前设置
+                                  U-cuc : 用户使用的  <a href="options.html#'cursorcolumn'">'cursorcolumn'</a>  当前设置
                                   cul   : 局部设置的  <a href="options.html#'cursorline'">'cursorline'</a> 
                                   cuc   : 局部设置的  <a href="options.html#'cursorcolumn'">'cursorcolumn'</a> 
+
+                                  "初始设置" 是 netrw 上次看到
+                                   <a href="pi_netrw.html#g:netrw_cursor">g:netrw_cursor</a>  &gt;= 5 或 netrw 最初运行的时
+                                  候的  <a href="options.html#'cuc'">'cuc'</a>  和  <a href="options.html#'cul'">'cul'</a>  设置
 
   <b class="vimtag"> <a name="g:netrw_decompress">g:netrw_decompress</a> </b>          = { ".gz"  : "gunzip" ,
                                     ".bz2" : "bunzip2" ,
@@ -2506,7 +2532,7 @@ NETRW 浏 览 器 变 量            <b class="vimtag"> <a name="netrw-browser-o
 
                                 示例:
                                  let g:netrw_list_hide= '.*\.swp$'
-                                 let g:netrw_list_hide= netrw_gitignore#Hide().'.*\.swp$'
+                                 let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
                                 缺省: ""
 
   <b class="vimtag"> <a name="g:netrw_localcopycmd">g:netrw_localcopycmd</a> </b>        ="cp"           Linux/Unix/MacOS/Cygwin
@@ -2799,6 +2825,8 @@ netrw 也可以用本地浏览器 "获得" 文件。netrw 显示的目录不一�
 
 要在 netrw 当前目录打开一个新文件，按 "%"。此映射询问用户新的文件名；然后在
 netrw 当前目录 (即 b:netrw_curdir) 就会建立以此命名的的空文件。
+
+如果使用 Lexplore ( <a href="pi_netrw.html#netrw-:Lexplore">netrw-:Lexplore</a> )，新文件在  <a href="pi_netrw.html#g:netrw_chgwin">g:netrw_chgwin</a>  窗口中生成。
 
 相关主题:                <a href="pi_netrw.html#netrw-d">netrw-d</a> 
 
@@ -3433,6 +3461,32 @@ netrw#UserMaps(islocal)。此函数遍历  <a href="pi_netrw.html#g:Netrw_UserMa
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>12. 历史 (英文)                                         <b class="vimtag"> <a name="netrw-history">netrw-history</a> </b> {{{1</h4>
+        v171:   Oct 09, 2020    * included code in s:NetrwOptionsSafe()
+                                  to allow  <a href="options.html#'bh'">'bh'</a>  to be set to delete when
+                                  rather than hide when g:netrw_fastbrowse
+                                  was zero.
+                                * Installed  <a href="pi_netrw.html#g:netrw_clipboard">g:netrw_clipboard</a>  setting
+                                * Installed option bypass for  <a href="options.html#'guioptions'">'guioptions'</a> 
+                                  a/A settings
+                                * Changed popup_beval() to  <code class="badlink">popup_atcursor</code> ()
+                                  in netrw#ErrorMsg (lacygoill). Apparently
+                                  popup_beval doesn't reliably close the
+                                  popup when the mouse is moved.
+                                * VimEnter() now using win_execute to examine
+                                  buffers for an attempt to open a directory.
+                                  Avoids issues with popups/terminal from
+                                  command line. (lacygoill)
+                Jun 28, 2021    * (zeertzjq) provided a patch for use of
+                                  xmap,xno instead of vmap,vno in
+                                  netrwPlugin.vim. Avoids entanglement with
+                                  select mode.
+                Jul 14, 2021    * Fixed problem addressed by tst976; opening
+                                  a file using tree mode, going up a
+                                  directory, and opening a file there was
+                                  opening the file in the wrong directory.
+                Jul 28, 2021    * (Ingo Karkat) provided a patch fixing an
+                                  E488 error with netrwPlugin.vim
+                                  (occurred for vim versions &lt; 8.02)
         v170:   Mar 11, 2020    * (reported by Reiner Herrmann) netrw+tree
                                   would not hide with the ^\..* pattern
                                   correctly.

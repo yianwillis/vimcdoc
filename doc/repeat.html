@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -88,6 +88,10 @@
                                                         <b class="vimtag"> <a name=":v">:v</a> </b> <b class="vimtag"> <a name=":vglobal">:vglobal</a> </b>
 :<code class="special">[range]</code>v[global]/<code class="special">{pattern}</code>/<code class="special">[cmd]</code>
                         同 :g!。
+
+示例: 
+<code class="example">        :g/^Obsolete/d _</code>
+ <a href="change.html#:d">:d</a>  之后使用下划线可以避免破坏寄存器或剪贴板。速度也更快。
 
 除了用 '/' 来包围 <code class="special">{pattern}</code> 以外，你可以用任何其它单字节字符，但不包括字母、
 '\'、'"' 或 '|'。这对你想在搜索模式或者替代字符串里包含 '/' 很有用。
@@ -156,13 +160,11 @@ q                       停止记录。(<code class="note">注意</code> 实现�
                                                         <b class="vimtag"> <a name="@@">@@</a> </b> <b class="vimtag"> <a name="E748">E748</a> </b>
 @@                      执行上次执行的 @{0-9a-z":*} <code class="special">[count]</code> 次。
 
-:<code class="special">[addr]</code>*{0-9a-z".=+}                                            <b class="vimtag"> <a name=":@">:@</a> </b>
+                                                                <b class="vimtag"> <a name=":@">:@</a> </b>
 :<code class="special">[addr]</code>@{0-9a-z".=*+}   把寄存器 {0-9a-z".=*+} 里的内容看成一个 Ex 命令执行。
                         首先，把光标放在 <code class="special">[addr]</code> 行 (缺省是当前行) 上。如果
                         <a href="options.html#'cpoptions'">'cpoptions'</a> 设定了 'e' 标志位而寄存器的内容最后一行没
                         有 <code class="special">&lt;CR&gt;</code>，会自动加上。
-                        <code class="note">注意</code> ":*" 命令只有在 <a href="options.html#'cpoptions'">'cpoptions'</a> 设置 '*' 标志位时才会
-                        识别。如果用 <a href="options.html#'nocompatible'">'nocompatible'</a>，这 <code class="emphasis">并</code> 非缺省。
                         ":@=" 使用最近使用的表达式。表达式执行的结果被当作 Ex
                         命令执行。
                         这些命令里，不识别映射。
@@ -170,6 +172,12 @@ q                       停止记录。(<code class="note">注意</code> 实现�
                         字符 (\)，此行会和前行合并。这可用于抽取和执行 Vim 脚
                         本片段。
                         将来: 会对地址范围里每一行执行寄存器的命令。
+
+:<code class="special">[addr]</code>*{0-9a-z".=+}                                    <b class="vimtag"> <a name=":star-compatible">:star-compatible</a> </b>
+                        <a href="options.html#'cpoptions'">'cpoptions'</a> 设置 '*' 标志位  <a href="options.html#cpo-star">cpo-star</a>  时，":*" 命令和
+                        ":@" 相同。如果用 <a href="options.html#'nocompatible'">'nocompatible'</a>，这 <code class="emphasis">并</code> 非缺省。
+                        <a href="options.html#'cpoptions'">'cpoptions'</a> 没有 '*" 标志位时，":*" 相当于 ":'&lt;,'&gt;"，
+                        选择可视区域  <a href="cmdline.html#:star">:star</a> 。
 
                                                         <b class="vimtag"> <a name=":@:">:@:</a> </b>
 :<code class="special">[addr]</code>@:               先把光标放在 <code class="special">[addr]</code> 行 (缺省是当前行) 上，然后重复上次
@@ -186,8 +194,33 @@ q                       停止记录。(<code class="note">注意</code> 实现�
                                         <b class="vimtag"> <a name=":so">:so</a> </b> <b class="vimtag"> <a name=":source">:source</a> </b> <b class="vimtag"> <a name="load-vim-script">load-vim-script</a> </b>
 :so[urce] <code class="special">{file}</code>        从 <code class="special">{file}</code> 里读取 Ex 命令，即 ":" 开头的命令，并执行。
                         激活  <a href="autocmd.html#SourcePre">SourcePre</a>  自动命令。
+                                                        <b class="vimtag"> <a name=":source-range">:source-range</a> </b>
+:<code class="special">[range]</code>so[urce] [++clear]
+                        从当前缓冲区的行 <code class="special">[range]</code> 里读取 Ex 命令。
 
-                                                        <b class="vimtag"> <a name=":source!">:source!</a> </b>
+                        从当前缓冲区执行命令时，使用相同的脚本 ID  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> ，即
+                        使多次执行缓冲区也是如此。如果执行缓冲区多于一次，缓冲
+                        区里的函数被再次定义。
+
+                        要在 Vim9 脚本上下文下执行不以  <a href="repeat.html#:vim9script">:vim9script</a>  命令开始
+                        的行范围，可用  <a href="vim9.html#:vim9cmd">:vim9cmd</a>  修饰符。如果使用可视选择然后
+                        按 ":"，形如 "'&lt;,'&gt;" 的范围会在冒号之前出现: 
+<code class="example">                                :'&lt;,'&gt;vim9cmd source</code>
+                        否则范围应出现在修饰符之后，和所有 Vim9 范围一样，必须
+                        用冒号前缀: 
+<code class="example">                                :vim9cmd :5,9source</code>
+<code class="example"></code>
+                        在 Vim9 脚本上下文下，执行缓冲区的一段行范围时，不清除
+                        之前定义的局部于脚本的变量和函数。这相当于用
+                        ":vim9script noclear" 命令来引导该范围。"++clear" 参数
+                        可用于执行脚本前清除局部于脚本的变量和函数。这相当于用
+                        不带 "noclear" 参数的  <a href="repeat.html#:vim9script">:vim9script</a>  命令来引导该范围。
+                        详见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
+                        例如: 
+<code class="example">                                :4,5source</code>
+<code class="example">                                :10,18source ++clear</code>
+<code class="example"></code>
+<code class="example">                                                        *:source!*</code>
 :so[urce]! <code class="special">{file}</code>       从 <code class="special">{file}</code> 里读取 Vim 命令，就像你在普通模式下键入的命
                         令一样。
                         如果要执行的命令在  <a href="repeat.html#:global">:global</a> 、 <a href="editing.html#:argdo">:argdo</a> 、 <a href="windows.html#:windo">:windo</a>  或
@@ -255,7 +288,8 @@ q                       停止记录。(<code class="note">注意</code> 实现�
 
                         如果加入可选的 !，不载入插件文件或 ftdetect 脚本，只把
                         匹配的目录加入 <a href="options.html#'runtimepath'">'runtimepath'</a>。这可用于 .vimrc。插件会
-                        随后在初始化时载入，见  <a href="starting.html#load-plugins">load-plugins</a> 。
+                        随后在初始化时才载入，见  <a href="starting.html#load-plugins">load-plugins</a>  (<code class="note">注意</code> 载入顺序
+                        会倒转，因为每个目录会在其他目录前插入)。
                         <code class="note">注意</code> 要载入 ftdetect 脚本，需要在所有的  <code class="badlink">packadd!</code>  命
                         令 <code class="emphasis">之后</code> 才能写 `filetype plugin indent on`。
 
@@ -313,7 +347,7 @@ q                       停止记录。(<code class="note">注意</code> 实现�
 
 
 :scriptv[ersion] <code class="special">{version}</code>              <b class="vimtag"> <a name=":scriptv">:scriptv</a> </b> <b class="vimtag"> <a name=":scriptversion">:scriptversion</a> </b>
-                                                                <b class="vimtag"> <a name="E999">E999</a> </b> <b class="vimtag"> <a name="E984">E984</a> </b>
+                                                        <b class="vimtag"> <a name="E999">E999</a> </b> <b class="vimtag"> <a name="E984">E984</a> </b> <b class="vimtag"> <a name="E1040">E1040</a> </b>
                         指定同一文件中其后的行所使用的 Vim 版本。只适用于被执
                         行脚本的顶层，不适用于函数体内。
 
@@ -323,15 +357,17 @@ q                       停止记录。(<code class="note">注意</code> 实现�
 
 :vim9s[cript] <code class="special">[noclear]</code>                         <b class="vimtag"> <a name=":vim9s">:vim9s</a> </b> <b class="vimtag"> <a name=":vim9script">:vim9script</a> </b>
                         标记本脚本文件包含  <a href="vim9.html#Vim9-script">Vim9-script</a>  命令。另见
-                         <a href="vim9.html#vim9-namespace">vim9-namespace</a> 。
-                        必须为文件的首个命令。
+                         <a href="vim9.html#vim9-namespace">vim9-namespace</a> 。<b class="vimtag"> <a name="E1038">E1038</a> </b>
+                        必须为文件的首个命令。<b class="vimtag"> <a name="E1039">E1039</a> </b>
                         关于 <code class="special">[noclear]</code> 见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
                         不带  <a href="various.html#+eval">+eval</a>  特性时，这会改变一些命令的语法。
                          <a href="vim9.html#:vim9cmd">:vim9cmd</a>  可用于执行使用 Vim9 语法和语义的单个命令。
 
                                                 <b class="vimtag"> <a name=":scr">:scr</a> </b> <b class="vimtag"> <a name=":scriptnames">:scriptnames</a> </b>
-:scr[iptnames]          列出所有执行过的脚本名字，以它们初次执行之顺序排列。排
+:scr[iptnames]          列出所有执行过的脚本名字，以它们初次遇到之顺序排列。排
                         列的次序号码被用作相应的脚本 ID  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> 。
+                        被 `import autoload` 但还未执行的脚本会在脚本 ID 后显
+                        示 "A"。
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  特性才有功能}</code>
 
 :scr[iptnames][!] <code class="special">{scriptId}</code>                    <b class="vimtag"> <a name=":script">:script</a> </b>
@@ -361,8 +397,8 @@ q                       停止记录。(<code class="note">注意</code> 实现�
 序列有用。你甚至可以把它和 ':map' 命令混合使用，从而用一个功能键来储存复杂的功
 能。
 
-':source' 命令从文件里逐行读取 Ex 命令。如果其间需要键盘输入，你需要自己键入。
-'source!' 命令从脚本里逐字读取命令，就像你自己敲入每一个字符一样。
+':source' 命令从文件或缓冲区里逐行读取 Ex 命令。如果其间需要键盘输入，你需要自
+己键入。'source!' 命令从脚本里逐字读取命令，就像你自己敲入每一个字符一样。
 
 示例: 如果你给出一个 ':!ls' 命令，你得到一个  <a href="message.html#hit-enter">hit-enter</a>  提示。如果你用
 ':source' 执行包含 '!ls' 一行的文件，你必须按一个回车。不过如果你用 ':source!'
@@ -422,6 +458,8 @@ Mac Classic: 用 ":source" 执行的文件通常每行以 <code class="special">
 <code class="example">                \ "very long regexp"</code>
 <code class="example">                \ keepend</code>
 <code class="example"></code>
+ <a href="vim9.html#Vim9">Vim9</a>  脚本常可省略反斜杠，但不总是可以。见  <code class="badlink">vim9-line-continuation</code> 。
+
 在用 ":append" 和 ":insert" 命令时，有一个问题: 
 <code class="example">   :1append</code>
 <code class="example">   \asdf</code>
@@ -673,6 +711,9 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
 
 调试模式有自己的命令行历史。
 
+<code class="note">注意</code>: Vim9 脚本里在脚本层写的命令如在下行继续，但不像以前那样，用反斜杠来继续
+行的话，在调试提示之前只显示首行。
+
 函数行的行号是相对于函数开始的地方的。如果你要知道你在哪里，在另外一个 Vim 里
 编辑包含这个函数的文件，先找到函数的开始处，然后用 "99j"，其中的 "99" 用实际的
 行号代替。
@@ -718,6 +759,13 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
   知道你要重复什么)。
 - 如果你想调用相同的名字的 Ex 命令，在前面附加一个冒号: ":cont"、":next"、
   ":finish" (或者它们的缩写)。
+                                                        <b class="vimtag"> <a name="vim9-debug">vim9-debug</a> </b>
+调试编译过的 :def 函数时，"step" 会在每个执行的行而不是每个单独的指令前停下。
+这和不经编译的函数的工作方式基本相同。但局部变量的访问有限制，可用: 
+<code class="example">        echo varname</code>
+但大概没有别的什么了。
+执行不对应特定的字节码指令而像普通的 Ex 命令那样执行的命令时，"step" 会在经编
+译的上下文里停止一次，以便检视局部变量，然后在刚刚要执行命令之前再停一次。
 
 堆栈回溯显示函数调用的层级，例如:
 <code class="section">        &gt;bt </code>
@@ -752,8 +800,11 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
 :breaka[dd] expr <code class="special">{expression}</code>
                 设置断点，任何时候 <code class="special">{expression}</code> 的计算值发生改变时中断。如: 
 <code class="example">                        :breakadd expr g:lnum</code>
-<code class="example"></code>
                 会在任何时候全局变量 lnum 改变时中断。
+
+                不显示计算中的可能错误，可使用还不存在的变量名。这意味着你不会
+                <code class="note">注意</code>到表达式可能的错误。
+
                 <code class="note">注意</code> 如果观察  <a href="eval.html#script-variable">script-variable</a> ，则脚本切换时会发生中断，因为
                 脚本变量只在其定义所在的脚本里有效。如果其它脚本调用此脚本，则
                 任何该变量变成可见或不可见的时候，中断都会发生。
@@ -840,17 +891,22 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
 <code class="example"></code>
 <code class="example"></code>
 :prof[ile] start <code class="special">{fname}</code>                        <b class="vimtag"> <a name=":prof">:prof</a> </b> <b class="vimtag"> <a name=":profile">:profile</a> </b> <b class="vimtag"> <a name="E750">E750</a> </b>
-                启动刨视，退出时把结果写到 <code class="special">{fname}</code> 文件。
+                启动刨视，退出时或执行 `:profile stop` 或 `:profile dump` 命令
+                时把结果写到 <code class="special">{fname}</code> 文件。
                 扩展 <code class="special">{fname}</code> 中的 "~/" 和环境变量。
                 如果 <code class="special">{fname}</code> 已存在，安静地覆盖它。
                 变量  <a href="eval.html#v:profiling">v:profiling</a>  设为一。
 
+:prof[ile] stop
+                写入收集到的刨视信息到日志文件，并停止刨视。可用
+                `:profile start` 命令来清除刨视统计信息并重新开始刨视。
+
 :prof[ile] pause
-                直到下个 ":profile continue" 为止，停止刨视。可用来执行一些不
+                直到下个 `:profile continue` 为止，停止刨视。可用来执行一些不
                 需计算的操作 (例如，执行外部命令)。不能嵌套。
 
 :prof[ile] continue
-                在 ":profile pause" 之后出现，恢复刨视。
+                在 `:profile pause` 之后出现，恢复刨视。
 
 :prof[ile] func <code class="special">{pattern}</code>
                 刨视匹配模式 <code class="special">{pattern}</code> 的函数。
@@ -864,11 +920,16 @@ Vim 启动时，处理完 .vimrc 后，扫描 <a href="options.html#'packpath'">
                 <code class="note">注意</code> 只有在此命令后载入脚本完成时才会开始刨视。脚本自身不可以
                 启动 :profile 命令。
 
+:prof[ile] dump
+                立即写入刨视的当前状态到日志文件。执行此命令后，Vim 继续收集刨
+                视统计信息。
 
 :profd[el] ...                                          <b class="vimtag"> <a name=":profd">:profd</a> </b> <b class="vimtag"> <a name=":profdel">:profdel</a> </b>
-                停止对指定参数的刨视， <a href="repeat.html#:breakdel">:breakdel</a>  说明其中的参数。
-
-
+                停止对指定参数的刨视， <a href="repeat.html#:breakdel">:breakdel</a>  说明其中的参数。例如: 
+<code class="example">                        profdel func MyFunc</code>
+<code class="example">                        profdel file MyScript.vim</code>
+<code class="example">                        profdel here</code>
+<code class="example"></code>
 刨视总是用 ":profile start fname" 开始。Vim 退出时写入结果文件。例如，要刨视一
 个特定函数: 
 <code class="example">        profile start /tmp/vimprofile</code>

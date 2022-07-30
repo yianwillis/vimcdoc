@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="pattern.txt">pattern.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2021年1月
+<b class="vimtag"> <a name="pattern.txt">pattern.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -54,6 +54,7 @@
 8. 组合字符                      <a href="pattern.html#patterns-composing">patterns-composing</a> 
 9. 与 Perl 匹配模式的比较        <a href="pattern.html#perl-patterns">perl-patterns</a> 
 10. 高亮显示匹配                 <a href="pattern.html#match-highlight">match-highlight</a> 
+11. 模糊匹配                     <a href="pattern.html#fuzzy-matching">fuzzy-matching</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 查找命令                                     <b class="vimtag"> <a name="search-commands">search-commands</a> </b></h4>
@@ -82,21 +83,7 @@
                                                         <b class="vimtag"> <a name="?%3CCR%3E">?&lt;CR&gt;</a> </b>
 ?<code class="special">&lt;CR&gt;</code>                   反向查找第 <code class="special">[count]</code> 次出现处，使用上次的模式
                          <a href="pattern.html#last-pattern">last-pattern</a>  以及上次的  <a href="pattern.html#{offset}">{offset}</a> 。
-
-??<code class="special">{offset}</code><code class="special">&lt;CR&gt;</code>          反向查找第 <code class="special">[count]</code> 次出现处，使用上次的模式
-                         <a href="pattern.html#last-pattern">last-pattern</a>  以及新偏移  <a href="pattern.html#{offset}">{offset}</a> 。若 <code class="special">{offset}</code> 为
-                        空，不使用任何偏移。
-
-                                                        <b class="vimtag"> <a name="n">n</a> </b>
-n                       将上次的 "/" 或 "?" 重复 <code class="special">[count]</code> 次。
-                        如果光标不移动，搜索重复 count + 1 次。
-                         <a href="pattern.html#last-pattern">last-pattern</a> 
-
-                                                        <b class="vimtag"> <a name="N">N</a> </b>
-N                       将上次的 "/" 或 "?" 在相反方向上重复 <code class="special">[count]</code> 次。
-                         <a href="pattern.html#last-pattern">last-pattern</a> 
-
-                                                        <b class="vimtag"> <a name="star">star</a> </b> <b class="vimtag"> <a name="E348">E348</a> </b> <b class="vimtag"> <a name="E349">E349</a> </b>
+<b class="vimtag"> <a name="star">star</a> </b> <b class="vimtag"> <a name="E348">E348</a> </b> <b class="vimtag"> <a name="E349">E349</a> </b>
 *                       正向查找第 <code class="special">[count]</code> 次出现距离当前光标最近的单词的地
                         方。用于查找的单词是以下最先符合条件的:
                                 1. 光标所在的关键字  <a href="options.html#'iskeyword'">'iskeyword'</a> 
@@ -131,7 +118,7 @@ gd                      跳转 (goto) 至局部声明 (declaration)。当光标�
                         <code class="note">注意</code> 这并非总有效。Vim 不会做语法分析。它仅仅查找关键
                         字的匹配。如果头文件也需要搜索的话，可以使用
                          <a href="tagsrch.html#include-search">include-search</a>  列出的命令。
-                        这个命令之后，可以使用  <a href="pattern.html#n">n</a>  正向查找下一个匹配 (不能反
+                        这个命令之后，可以使用  <code class="badlink">n</code>  正向查找下一个匹配 (不能反
                         向)。
 
                                                         <b class="vimtag"> <a name="gD">gD</a> </b>
@@ -174,8 +161,11 @@ gD                      跳转 (goto) 至全局声明 (Declaration)。当光标�
 <code class="note">注意</code>: 计数不考虑偏移。
 
 如果没找到匹配，会报错: <b class="vimtag"> <a name="E486">E486</a> </b> Pattern not found
-<code class="note">注意</code> 为 Vi 兼容起见， <a href="repeat.html#:global">:global</a>  命令会把此错误当作一个普通的消息。 <a href="change.html#:s">:s</a>  命令的
-"e" 标志位可用来避免此错误  <a href="change.html#:s_flags">:s_flags</a> 。
+<code class="note">注意</code> 为 Vi 兼容起见，老式脚本里， <a href="repeat.html#:global">:global</a>  命令会把此错误当作一个普通的消息
+"Pattern not found"。
+在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，找不到模式里会报错 E486，而  <a href="repeat.html#:vglobal">:vglobal</a>  如果模式匹配每一行，
+会报 <b class="vimtag"> <a name="E538">E538</a> </b> 。
+ <a href="change.html#:s">:s</a>  命令的 "e" 标志位可用来避免此错误  <a href="change.html#:s_flags">:s_flags</a> 。
 
                                         <b class="vimtag"> <a name="search-offset">search-offset</a> </b> <b class="vimtag"> <a name="{offset}">{offset}</a> </b>
 这些命令查找一个指定的模式。而 "/" 和 "?" 命令还可以指定一个额外的偏移量。有两
@@ -302,7 +292,7 @@ TOP"。此时，消息可以用设定 <a href="options.html#'shortmess'">'shortm
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 模式的定义                           <b class="vimtag"> <a name="search-pattern">search-pattern</a> </b> <b class="vimtag"> <a name="pattern">pattern</a> </b> <b class="vimtag"> <a name="[pattern]">[pattern]</a> </b></h4>                                        <b class="vimtag"> <a name="regular-expression">regular-expression</a> </b> <b class="vimtag"> <a name="regexp">regexp</a> </b> <b class="vimtag"> <a name="Pattern">Pattern</a> </b>
-                                        <b class="vimtag"> <a name="E76">E76</a> </b> <b class="vimtag"> <a name="E383">E383</a> </b> <b class="vimtag"> <a name="E476">E476</a> </b>
+                                        <b class="vimtag"> <a name="E383">E383</a> </b> <b class="vimtag"> <a name="E476">E476</a> </b>
 
 头一道菜已经在用户手册的第 27 章  <a href="usr_27.html#usr_27.txt">usr_27.txt</a>  上过了。
 
@@ -842,16 +832,22 @@ $       在模式终点或 "\|"、"\)" 或 "\n" (打开 <a href="options.html#'m
         警 告: 如果使用模式后移动了位置标记，结果不再有效。Vim 并不自动更新匹
         配。这和 "\%#" 里移动光标的情形类似  <a href="pattern.html#%2F\%%23">/\%#</a> 。
 
-                                                <b class="vimtag"> <a name="%2F\%l">/\%l</a> </b> <b class="vimtag"> <a name="%2F\%%3El">/\%&gt;l</a> </b> <b class="vimtag"> <a name="%2F\%%3Cl">/\%&lt;l</a> </b> <b class="vimtag"> <a name="E951">E951</a> </b>
+                                        <b class="vimtag"> <a name="%2F\%l">/\%l</a> </b> <b class="vimtag"> <a name="%2F\%%3El">/\%&gt;l</a> </b> <b class="vimtag"> <a name="%2F\%%3Cl">/\%&lt;l</a> </b> <b class="vimtag"> <a name="E951">E951</a> </b> <b class="vimtag"> <a name="E1204">E1204</a> </b>
 \%23l   匹配指定的行。
 \%&lt;23l  匹配指定行的上方 (行号更小)。
 \%&gt;23l  匹配指定行的下方 (行号更大)。
-        这三个匹配原可以用来匹配缓冲区内的特定行。"23" 可以是任何行号。第一行
+\%.l    匹配光标行。
+\%&lt;.l   匹配光标行的上方。
+\%&gt;.l   匹配光标行的下方。
+        这六个匹配原可以用来匹配缓冲区内的特定行。"23" 可以是任何行号。第一行
         为 1。
-        警 告: 当插入和删除行时 Vim 不会自动更新匹配。这意味着语法高亮很快就会
-        有问题。
+        <code class="note">警告</code>: 当插入和删除行时 Vim 不会自动更新匹配。这意味着语法高亮很快就会
+        有问题。同样地引用光标位置 (".") 而移动光标时也是如此，显示不会自动随
+        移动更新。要更新可用  <a href="various.html#CTRL-L">CTRL-L</a>  命令 (全屏被刷新)。
         例如，要高亮显示光标所在行: 
-<code class="example">                :exe '/\%' . line(".") . 'l.*'</code>
+<code class="example">                :exe '/\%' . line(".") . 'l'</code>
+        另一法是: 
+<code class="example">                /\%.l</code>
         当设定 <a href="options.html#'hlsearch'">'hlsearch'</a> 时，移动光标并作若干更改，你就能清楚地看到更新在何时
         进行。
 
@@ -859,13 +855,19 @@ $       在模式终点或 "\|"、"\)" 或 "\n" (打开 <a href="options.html#'m
 \%23c   匹配指定的列。
 \%&lt;23c  匹配指定列之前。
 \%&gt;23c  匹配指定列之后。
-        这三个匹配原可以用来匹配缓冲区或字符串中的特定列。"23" 可以是任何列
+\%.c    匹配光标列。
+\%&lt;.c   匹配光标列之前。
+\%&gt;.c   匹配光标列之后。
+        这六个匹配原可以用来匹配缓冲区或字符串中的特定列。"23" 可以是任何列
         号。第一列为 1。事实上，列以字节计算 (因此对多字节字符来说是不准确
         的)。
-        警 告: 当插入和删除字符时 Vim 并不自动更新匹配。这意味着语法高亮很快就
-        会有问题。
+        <code class="note">警告</code>: 当插入和删除字符时 Vim 并不自动更新匹配。这意味着语法高亮很快就
+        会有问题。同样地引用光标位置 (".") 而移动光标时也是如此，显示不会自动
+        随移动更新。要更新可用  <a href="various.html#CTRL-L">CTRL-L</a>  命令 (全屏被刷新)。
         例如，要高亮显示光标所在列: 
-<code class="example">                :exe '/\%' . col(".") . 'c'</code>
+<code class="example">                :exe '/\%' .. col(".") .. 'c'</code>
+        另一法是: 
+<code class="example">                /\%.c</code>
         当设定 <a href="options.html#'hlsearch'">'hlsearch'</a> 时，移动光标并作若干更改，你就能清楚地看到更新在何时
         进行。
         一个匹配第 44 列单个字节的例子: 
@@ -876,19 +878,25 @@ $       在模式终点或 "\|"、"\)" 或 "\n" (打开 <a href="options.html#'m
 \%23v   匹配指定虚拟列。
 \%&lt;23v  匹配指定虚拟列之前。
 \%&gt;23v  匹配指定虚拟列之后。
-        这三个匹配原可以用来匹配缓冲区或字符串中指定的虚拟列。如果不是在匹配窗
+\%.v    匹配光标所在虚拟列。
+\%&lt;.v   匹配光标所在虚拟列之前。
+\%&gt;.v   匹配光标所在虚拟列之后。
+        这六个匹配原可以用来匹配缓冲区或字符串中指定的虚拟列。如果不是在匹配窗
         口内的缓冲区，使用当前窗口的选项值 (如 <a href="options.html#'tabstop'">'tabstop'</a>)。
         "23" 可以是任何列号。第一列为 1。
         <code class="note">注意</code> 某些虚拟列位置永远无法被匹配，因为它们在制表符或其它占用超过一个
         屏幕位置的特殊字符的中间某处。
-        警 告: 当插入和删除字符时 Vim 并不自动更新高亮的匹配。这意味着语法高亮
-        很快就会有问题。
+        <code class="note">警告</code>: 当插入和删除字符时 Vim 并不自动更新高亮的匹配。这意味着语法高亮
+        很快就会有问题。同样地引用光标位置 (".") 而移动光标时也是如此，显示不
+        会自动随移动更新。要更新可用  <a href="various.html#CTRL-L">CTRL-L</a>  命令 (全屏被刷新)。
         例如，要高亮显示所有位于虚拟第 72 列之后的字符: 
 <code class="example">                /\%&gt;72v.*</code>
         当设定 <a href="options.html#'hlsearch'">'hlsearch'</a> 时，移动光标并作若干更改，你就能清楚地看到更新在何时
         进行。
         要匹配直到第 17 列的文本: 
 <code class="example">                /^.*\%17v</code>
+        要匹配当前虚拟列 (光标所在位置) 之后的所有字符: 
+<code class="example">                /\%&gt;.v.*</code>
         这里不包括第 17 列，因为这是  <a href="pattern.html#%2Fzero-width">/zero-width</a>  匹配。要包含该列，应用: 
 <code class="example">                /^.*\%17v.</code>
         下例同上，但如果第 17 列没有字符也同样匹配: 
@@ -953,6 +961,8 @@ $       在模式终点或 "\|"、"\)" 或 "\n" (打开 <a href="options.html#'m
 
 \(\)    一个由转义的括号括起来的模式。                  <b class="vimtag"> <a name="%2F\(">/\(</a> </b> <b class="vimtag"> <a name="%2F\(\)">/\(\)</a> </b> <b class="vimtag"> <a name="%2F\)">/\)</a> </b>
         例: "\(^a\)" 匹配行首的 'a'。
+        最多只能有十个子表达式。用 "\%(" 可以添加更多括起的模式，但这些不算子
+        表达式。
         <b class="vimtag"> <a name="E51">E51</a> </b> <b class="vimtag"> <a name="E54">E54</a> </b> <b class="vimtag"> <a name="E55">E55</a> </b> <b class="vimtag"> <a name="E872">E872</a> </b> <b class="vimtag"> <a name="E873">E873</a> </b>
 
 \1      匹配和第一个 \( 和 \) 之间的子表达式的匹配文本  <b class="vimtag"> <a name="%2F\1">/\1</a> </b> <b class="vimtag"> <a name="E65">E65</a> </b>
@@ -973,7 +983,7 @@ x       一个没有特殊含义的单个字符，匹配其自身
                                                         <b class="vimtag"> <a name="%2F\">/\</a> </b> <b class="vimtag"> <a name="%2F\\">/\\</a> </b>
 \x      一个反斜杠带一个没有特殊含义的单个字符，保留作将来的扩展
 
-[]      (<a href="options.html#'nomagic'">'nomagic'</a> 的情形: \[])         <b class="vimtag"> <a name="%2F[]">/[]</a> </b> <b class="vimtag"> <a name="%2F\[]">/\[]</a> </b> <b class="vimtag"> <a name="%2F\_[]">/\_[]</a> </b> <b class="vimtag"> <a name="%2Fcollection">/collection</a> </b>
+[]      (<a href="options.html#'nomagic'">'nomagic'</a> 的情形: \[])         <b class="vimtag"> <a name="%2F[]">/[]</a> </b> <b class="vimtag"> <a name="%2F\[]">/\[]</a> </b> <b class="vimtag"> <a name="%2F\_[]">/\_[]</a> </b> <b class="vimtag"> <a name="%2Fcollection">/collection</a> </b> <b class="vimtag"> <a name="E76">E76</a> </b>
 \_[]
         一个集合。一组由方括号括起来的字符。匹配集合中的任何一个字符。
 <code class="section">        示例            匹配 </code>
@@ -1096,7 +1106,7 @@ x       一个没有特殊含义的单个字符，匹配其自身
                                 <b class="vimtag"> <a name="%2F\%d">/\%d</a> </b> <b class="vimtag"> <a name="%2F\%x">/\%x</a> </b> <b class="vimtag"> <a name="%2F\%o">/\%o</a> </b> <b class="vimtag"> <a name="%2F\%u">/\%u</a> </b> <b class="vimtag"> <a name="%2F\%U">/\%U</a> </b> <b class="vimtag"> <a name="E678">E678</a> </b>
 
 \%d123  匹配十进制指定的字符。后面必须跟着非数位。
-\%o40   匹配八进制指定的字符，至多 0377。
+\%o40   匹配八进制指定的字符，至多 0o377。
         小于 0o40 的数必须后面跟着非八进制的数位或非数位。
 \%x2a   匹配不超过两位十六进制数位指定的字符。
 \%u20AC 匹配不超过四位十六进制数位指定的字符。
@@ -1279,6 +1289,33 @@ Vim 和 Perl 匹配一个字符串中的换行符时有所不同:
                 先。
                 ":3match" 命令用于  <a href="pi_paren.html#matchparen">matchparen</a>  插件。建议使用 ":match" 进行手
                 动的搜索，而 ":2match" 用于其它的插件。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>11. 模糊匹配                                            <b class="vimtag"> <a name="fuzzy-matching">fuzzy-matching</a> </b></h4>
+模糊匹配指使用非精确的搜索字符串匹配字符串的方法。模糊匹配会匹配某字符串，如果
+搜索字符串的每个字符都出现在该字符串某个位置，且以相同顺序出现。忽略大小写。匹
+配的字符串中，搜索字符串两个连续的字符之间可以有其它字符。如果搜索字符串有多个
+单词，每个单词分别匹配。这意味着搜索字符串里这些单词可以在字符串中以任何顺序出
+现。
+
+模糊匹配为每个匹配的字符串按照以下标准打分:
+    - 按顺序的匹配字符数目。
+    - 两个连续的匹配字符之间的字符数 (间隔)。
+    - 在某个单词开始处的匹配数目
+    - 从驼峰式大写字符 (例如 CamelCase 里的 Case) 开始的匹配数目
+    - 路径分隔符或连字符之后的匹配数目。
+    - 字符串中不匹配字符的数目。
+优先返回最高分的匹配字符串。
+
+例如，用模糊匹配来搜索 "get pat" 字符串，会匹配如下字符串
+"GetPattern"、"PatternGet"、"getPattern"、"patGetter"、"getSomePattern"、
+"MatchpatternGet" 等等。
+
+函数  <a href="builtin.html#matchfuzzy()">matchfuzzy()</a>  和  <a href="builtin.html#matchfuzzypos()">matchfuzzypos()</a>  可用于在字符串列表中模糊匹配某个字符
+串。matchfuzzy() 函数返回匹配字符串的列表。而 matchfuzzypos() 函数返回包含匹配、
+匹配位置和模糊匹配分数的列表。
+
+ <a href="quickfix.html#:vimgrep">:vimgrep</a>  的 "f" 标志位打开模糊匹配。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

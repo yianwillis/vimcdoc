@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="starting.txt">starting.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="starting.txt">starting.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -259,6 +259,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 也禁止 delete()、rename()、mkdir()、 job_start() 等等。
                 也禁止 Python、Ruby 和 Lua 接口，因为它们可用来执行外壳命令。
                 Perl 使用安全模块。
+                如果 $SHELL 的最后部分是 "nologin" 或 "false"，会使用 Unix 受
+                限模式。
                 <code class="note">注意</code> 用户仍然可能找到空子来执行外壳命令，这越来越困难了。
 
                                                         <b class="vimtag"> <a name="-g">-g</a> </b>
@@ -269,8 +271,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 的时候才有意义。对于 gvim 而言，即使能够，也不启动 GUI。
 
                                                         <b class="vimtag"> <a name="-e">-e</a> </b>
--e              启动 Vim 进入 Ex 模式  <a href="intro.html#Q">Q</a> ，只有在可执行文件不叫 "ex" 的时候才
-                有意义。
+-e              启动 Vim 进入 Ex 模式，见  <a href="intro.html#Ex-mode">Ex-mode</a> ，只有在可执行文件不叫 "ex"
+                的时候才有意义。
 
                                                         <b class="vimtag"> <a name="-E">-E</a> </b>
 -E              启动 Vim 进入增强的 Ex 模式  <a href="intro.html#gQ">gQ</a> 。只有在可执行文件不叫 "exim"
@@ -331,6 +333,18 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 不显示，而是写到文件 <code class="special">{filename}</code>。<code class="special">{filename}</code> 不能以数字开始。
                 示例: 
 <code class="example">                        vim -V20vimlog foobar</code>
+
+-V[N]<code class="special">{filename}</code>
+                Like -V and set <a href="options.html#'verbosefile'">'verbosefile'</a> to <code class="special">{filename}</code>.  The result is
+                that messages are not displayed but written to the file
+                <code class="special">{filename}</code>.  <code class="special">{filename}</code> must not start with a digit.
+                Example: 
+<code class="example">                        vim -V20vimlog foobar</code>
+
+--log <code class="special">{filename}</code>                                        <b class="vimtag"> <a name="--log">--log</a> </b>
+                开始日志并写入项目到 <code class="special">{filename}</code>。
+                相当于在启动的很早阶段调用了 `ch_logfile(<code class="special">{filename}</code>, <code class="badlink">'ao'</code>)`。
+                <code class="notvi">{仅当编译时加入  <a href="various.html#+channel">+channel</a>  特性才有效}</code>
 
                                                         <b class="vimtag"> <a name="-D">-D</a> </b>
 -D              调试。在执行脚本的第一个命令的时候进入调试模式。 <a href="repeat.html#debug-mode">debug-mode</a> 
@@ -395,6 +409,12 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 和因此发生的两秒延迟。
                 同时也避免了 "Reading from stdin..." 信息。
                 同时也避免了 "N files to edit" 信息。
+
+--gui-dialog-file <code class="special">{name}</code>                                <b class="vimtag"> <a name="--gui-dialog-file">--gui-dialog-file</a> </b>
+                使用 GUI 时，原来要显示对话框的地方，会把对话框的标题和消息写
+                到文件 <code class="special">{name}</code> 里。按照需要会创建或附加到文件。只用于测试，用于
+                避免显示不可见的对话框导致测试停滞。
+                无 GUI 时忽略此参数。
 
                                                         <b class="vimtag"> <a name="--ttyfail">--ttyfail</a> </b>
 --ttyfail       标准输入或标准输出不是终端 (tty) 时立即退出。
@@ -508,6 +528,8 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                 新执行之。如果 "scriptout" 文件已经存在，新的字符会附加在其
                 后。另见  <a href="repeat.html#complex-repeat">complex-repeat</a> 。
                 <code class="special">{scriptout}</code> 不能以数字开始。
+                如果要以人类可读的方式记录键入的内容，可用  <a href="channel.html#ch_logfile()">ch_logfile()</a> 。它
+                会添加 "未经处理键输入" 行。另见  <a href="starting.html#--log">--log</a> 。
 
                                                         <b class="vimtag"> <a name="-W">-W</a> </b>
 -W <code class="special">{scriptout}</code>  和 -w 类似，但不是附加，而是覆盖已经存在的文件。
@@ -648,6 +670,7 @@ Evim 里，以下选项被改变，不同于缺省值:
         :set guioptions-=a      只限于非 Unix: 不要自动选择
 
 键盘映射:
+        &lt;<code class="keystroke">CTRL-Q</code>&gt;        退出，如有改动使用  <a href="editing.html#:confirm">:confirm</a>  提示
         <code class="special">&lt;Down&gt;</code>          在屏幕行而不是文件行间移动
         <code class="special">&lt;Up&gt;</code>            同上
         Q               同 "gq"，排版，而不是 Ex 模式
@@ -658,7 +681,6 @@ Evim 里，以下选项被改变，不同于缺省值:
         <code class="special">&lt;C-Insert&gt;</code>      同上
         <code class="keystroke">CTRL-V</code>          粘贴到剪贴板 (在任何模式下都可以)
         <code class="special">&lt;S-Insert&gt;</code>      同上
-        <code class="keystroke">CTRL-Q</code>          做以前 <code class="keystroke">CTRL-V</code> 做的事
         <code class="keystroke">CTRL-Z</code>          撤销
         <code class="keystroke">CTRL-Y</code>          重做
         <code class="special">&lt;M-Space&gt;</code>       系统菜单
@@ -673,6 +695,8 @@ Evim 里，以下选项被改变，不同于缺省值:
 - 在文本文件里，<a href="options.html#'textwidth'">'textwidth'</a> 设为 78
 
 一个提示: 如果你想进入普通模式并可以输入一串命令，使用 <code class="keystroke">CTRL-L</code>。 <a href="insert.html#i_CTRL-L">i_CTRL-L</a> 
+
+没有办法停止 "容易模式"，只能退出 Vim。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 初始化                                       <b class="vimtag"> <a name="initialization">initialization</a> </b> <b class="vimtag"> <a name="startup">startup</a> </b></h4>
@@ -919,7 +943,7 @@ Vim 启动时，<a href="options.html#'compatible'">'compatible'</a> 选项是�
 
 
 <code class="section">没有 .vimrc 文件里的缺省值 </code>
-                                                        <b class="vimtag"> <a name="defaults.vim">defaults.vim</a> </b>
+                                                        <b class="vimtag"> <a name="defaults.vim">defaults.vim</a> </b> <b class="vimtag"> <a name="E1187">E1187</a> </b>
 如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUNTIME/defaults.vim 脚本。
 这会关闭 <a href="options.html#'compatible'">'compatible'</a>，打开语法高亮和一些更多的设置。详见该脚本。<code class="note">注意</code>: 这从
 Vim 8.0 开始，不是 Vim 7.4。(准确地说，由 7.4.2111 补丁加入)。
@@ -1192,7 +1216,7 @@ $VIM 目录 (MS-Windows)。你也可以使用自动命令  <a href="autocmd.html
 
 在恢复会话后，当前会话的完整文件名可以通过内部变量 "v:this_session" 得到
  <a href="eval.html#this_session-variable">this_session-variable</a> 。映射示例: 
-<code class="example">  :nmap &lt;F2&gt; :wa&lt;Bar&gt;exe "mksession! " . v:this_session&lt;CR&gt;:so ~/sessions/</code>
+<code class="example">  :nmap &lt;F2&gt; :wa&lt;Bar&gt;exe "mksession! " .. v:this_session&lt;CR&gt;:so ~/sessions/</code>
 这会保存当前会话，并启动载入另外一个会话的命令。
 
 会话包含所有标签页，除非从 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 里删除了 "tabpages"。 <a href="tabpage.html#tab-page">tab-page</a> 
