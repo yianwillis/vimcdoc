@@ -1,4 +1,4 @@
-*testing.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*testing.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -44,6 +44,7 @@ test_alloc_fail({id}, {countdown}, {repeat})		*test_alloc_fail()*
 		也可用作 |method|: >
 			GetAllocId()->test_alloc_fail()
 
+
 test_autochdir()					*test_autochdir()*
 		设置标志位，在 Vim 启动过程结束之前，打开 'autochdir' 的效果。
 
@@ -55,9 +56,13 @@ test_feedinput({string})				*test_feedinput()*
 		也可用作 |method|: >
 			GetText()->test_feedinput()
 
+
 test_garbagecollect_now()			 *test_garbagecollect_now()*
 		类似于 garbagecollect()，但立即执行。只能通过直接调用，以避免
-		内部保存任何结构，而调用任何函数前，|v:testing| 必须置位。
+		内部保存任何结构，而调用任何函数前，必须置位 |v:testing| 。
+		*E1142*
+		不能在 :def 函数里调用，因为堆栈上的变量会被释放。
+
 
 test_garbagecollect_soon()			 *test_garbagecollect_soon()*
 		就像在 main 循环中那样，设置标志位来调用垃圾清理器。仅用于测
@@ -70,7 +75,107 @@ test_getvalue({name})					*test_getvalue()*
 
 		也可用作 |method|: >
 			GetName()->test_getvalue()
+<
+						*test_gui_event()*
+test_gui_event({event}, {args})
+		生成 GUI {event}，使用参数 {args}，用于测试 Vim 功能。只在 GUI
+		运行时才能用此函数。
 
+		{event} 是字符串，支持的值是:
+		    "dropfiles"	在窗口上放置一个或多个文件。
+		    "findrepl"  搜索和替代文本。
+		    "mouse"	鼠标按钮点击事件。
+		    "scrollbar" 移动或拖动滚动条。
+		    "tabline"	用鼠标选择标签页。
+		    "tabmenu"	选择标签页行的菜单项。
+
+		{args} 为字典，包含事件需要的参数。
+
+		"dropfiles":
+		  在指定窗口上放置一个或多个文件。{args} 里支持的项目是:
+		    files:	文件名列表
+		    row:	窗口行号
+		    col:	窗口列号
+		    modifiers:	键修饰符。支持的值是:
+				    0x4	Shift
+				    0x8	Alt
+				   0x10	Ctrl
+		  文件会加入 |argument-list|，在窗口里编辑 {files} 的首个文
+		  件。详见 |drag-n-drop|。仅当 |drop_file| 特性存在时才能使用
+		  此事件。
+
+		"findrepl":
+		  {仅当 GUI 有查找/替代对话框时才可用}
+		  执行文本的搜索和替代。{args} 里支持的项目是:
+		    find_text:	搜索的文本。
+		    repl_text:	替代文本。
+		    flags:	控制搜索/替代的标志位。支持的值是:
+				    1	搜索下个字符串 (搜索对话框)
+				    2	搜索下个字符串 (替代对话框)
+				    3	替代字符串一次
+				    4	替代全部字符串
+				    8	只匹配完整单词
+				   16	匹配大小写
+		    forward:	设为 1 时正向搜索。
+
+		"mouse":
+		  注入鼠标按钮点击或鼠标移动事件。{args} 里支持的项目是:
+		    button:	鼠标按钮。支持的值是:
+				    0	鼠标右键
+				    1	鼠标中键
+				    2	鼠标左键
+				    3	鼠标键释放
+				    4	鼠标滚轮下滚
+				    5	鼠标滚轮上滚
+				    6	鼠标滚轮左滚
+				    7	鼠标滚轮右滚
+		    row:	鼠标点击行号。Vim 窗口的首行为 1，末行为
+				'lines'。
+		    col:	鼠标点击列号。{col} 的最大值为 'columns'。
+		    multiclick:	设为 1 时注入多点击鼠标事件。
+		    modifiers:	键修饰符。支持的值是:
+				    4	按了 shift
+				    8	按了 alt
+				   16	按了 ctrl
+		    move:	可选；如果给出且为 TRUE，生成鼠标移动事件。
+				只使用 {args} 里 row: 和 col: 且为必须；取决于
+				”cell"，它们被解释为像素或屏幕单元格。
+				仅当置位了 'mousemoveevent' 或弹出窗口使用鼠标
+				移动事件时才生成事件。
+		    cell:	可选: 如果给出且为 TRUE，"move" 使用屏幕单元格
+				而不是像素位置
+
+		"scrollbar":
+		  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可用。
+		  {args} 里支持的项目是:
+		    which:	滚动条。支持的值是:
+				    left  当前窗口的左侧滚动条
+				    right 当前窗口的右侧滚动条
+				    hor   水平滚动条
+		    value:	滚动量。对垂直滚动条而言，{value} 可取值 1 到
+				缓冲区行数。对水平滚动条而言，{value} 可取值 1
+				到最大的行长，假定 'wrap' 未置位。
+		    dragging:	为 1 时拖动滚动条，为 0 时点击滚动条。
+
+		"tabline":
+		  在标签页行上注入鼠标点击事件以选择标签页。{args} 里支持的项
+		  目是:
+		    tabnr:	标签页号
+
+		"tabmenu":
+		  注入事件以选择标签页行的菜单项。{args} 里支持的项目是:
+		    tabnr:	标签页号
+		    item: 	标签页菜单项号。1 代表首个菜单项，2 代表第二个
+				项目，依此类推。
+
+		注入 GUI 事件后，可能应调用 |feedkeys()| 以处理这些事件，如: >
+			call feedkeys("y", 'Lx!')
+<
+		成功加入事件后返回 TRUE，出错时返回 FALSE。
+
+		也可用作 |method|: >
+			GetEvent()->test_gui_event({args})
+<
 test_ignore_error({expr})			 *test_ignore_error()*
 		忽略包含 {expr} 的任何错误。显示正常的消息来替代。
 		只用于测试，因为那里 try/catch 不能用于捕捉错误 (因为跳过了下
@@ -81,6 +186,7 @@ test_ignore_error({expr})			 *test_ignore_error()*
 		也可用作 |method|: >
 			GetErrorText()->test_ignore_error()
 
+
 test_null_blob()					*test_null_blob()*
 		返回 null |Blob|。仅用于测试。
 
@@ -89,8 +195,10 @@ test_null_channel()					*test_null_channel()*
 		返回 null |Channel|。仅用于测试。
 		{仅当编译时加入 |+channel| 特性才有效}
 
+
 test_null_dict()					*test_null_dict()*
 		返回 null |Dict|。仅用于测试。
+
 
 test_null_function()					*test_null_function()*
 		返回 null |Funcref|。仅用于测试。
@@ -100,20 +208,17 @@ test_null_job()						*test_null_job()*
 		返回 null |Job|。仅用于测试。
 		{仅当编译时加入 |+job| 特性才有效}
 
+
 test_null_list()					*test_null_list()*
 		返回 null |List|。仅用于测试。
+
 
 test_null_partial()					*test_null_partial()*
 		返回 null |Partial|。仅用于测试。
 
+
 test_null_string()					*test_null_string()*
 		返回 null |String|。仅用于测试。
-
-test_unknown()						*test_unknown()*
-		返回未知类型的值。仅用于测试。
-
-test_void()						*test_void()*
-		返回 void 类型的值。仅用于测试。
 
 
 test_option_not_set({name})				*test_option_not_set()*
@@ -132,21 +237,26 @@ test_option_not_set({name})				*test_option_not_set()*
 test_override({name}, {val})				*test_override()*
 		覆盖 Vim 内部处理的部分行为，用于运行测试。只能用于 Vim 测试！
 		如果 {val} 非零，打开覆盖行为，{val} 为零时，关闭覆盖行为。
-		目前支持的名字是:
+		{name} 目前支持的值是:
 
-		名字	     {val} 非零的效果 ~
-		redraw       屏蔽 redrawing() 函数
-		redraw_flag  忽略 RedrawingDisabled 标志位
+		{name}	     {val} 非零的效果 ~
+		alloc_lines  在已分配内存内为每个缓冲区行复制备份，以便
+			     valgrind 可以发现内存访问错误
+		autoload     `import autoload` 会立即载入脚本，而不是延迟到项
+			     目使用时
 		char_avail   屏蔽 char_avail() 函数
-		starting     复位 "starting" 变量，见下
 		nfa_fail     使 NFA 正规表达式引擎失败以强制回归到旧引擎
 		no_query_mouse  "dec" 终端不查询鼠标位置
 		no_wait_return	置位 "no_wait_return" 标志位。不被 "ALL" 复
 				位。
+		redraw       屏蔽 redrawing() 函数
+		redraw_flag  忽略 RedrawingDisabled 标志位
+		starting     复位 "starting" 变量，见下
+		term_props   检测到版本字符串时，复位所有终端属性
 		ui_delay     用于 ui_delay() 的以毫秒计的时间；覆盖缺省使用的
 			     不多于 3 秒的消息等待时间
-		term_props   检测到版本字符串时，复位所有终端属性
 		uptime 	     覆盖 sysinfo.uptime
+		vterm_title  用终端窗口运行中的作业来设置窗口标题
 		ALL	     复位所有覆盖 (不使用 {val})
 
 		"starting" 用于假定初始化已经完成的测试。因为测试的运行是通过
@@ -160,6 +270,7 @@ test_override({name}, {val})				*test_override()*
 <		也可用作 |method|: >
 			GetOverrideVal()-> test_override('starting')
 
+
 test_refcount({expr})					*test_refcount()*
 		返回 {expr} 的引用计数。如果 {expr} 是没有引用计数的类型，返回
 		-1。仅用于测试。
@@ -167,21 +278,6 @@ test_refcount({expr})					*test_refcount()*
 		也可用作 |method|: >
 			GetVarname()->test_refcount()
 
-
-test_scrollbar({which}, {value}, {dragging})		*test_scrollbar()*
-		模拟使用滚动条 {which} 移动到位置 {value}。{which} 可以是:
-			left	当前窗口的左侧滚动条
-			right	当前窗口的右侧滚动条
-			hor	水平滚动条
-
-		对垂直滚动条而言，{value} 可取值 1 到缓冲区行数。对水平滚动条
-		而言，{value} 可取值 1 到最大的行长，假定 'wrap' 未置位。
-
-		{dragging} 如果非零，行为就像拖动滚动条，否则像点击滚动条。
-		只能用于确实存在的 {which} 滚动条，显然只能用于 GUI。
-
-		也可用作 |method|: >
-			GetValue()->test_scrollbar('right', 0)
 
 test_setmouse({row}, {col})				*test_setmouse()*
 		设置下个鼠标活动所用的鼠标位置。
@@ -199,9 +295,19 @@ test_settime({expr})					*test_settime()*
 		也可用作 |method|: >
 			GetTime()->test_settime()
 
+
 test_srand_seed([seed])					*test_srand_seed()*
 		[seed] 给出时用来设置 `srand()` 使用的种子值。不给出时，删除此
 		测试用种子。
+
+
+test_unknown()						*test_unknown()*
+		返回未知类型的值。仅用于测试。
+
+
+test_void()						*test_void()*
+		返回 void 类型的值。仅用于测试。
+
 
 ==============================================================================
 3. 断言函数					*assert-functions-details*
@@ -259,7 +365,7 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 		执行 {cmd}，如果_不_出错或错误信息中找不到 {error}，加入错误信
 		息到 |v:errors|。另见 |assert-return|。
-
+							*E856*
 		{error} 如为字符串，必须按本义在首个报告的错误中找到。这里最普
 		遍的情况是使用错误代码并带上冒号，如 "E123:"。 >
 			assert_fails('bad cmd', 'E987:')
@@ -274,10 +380,10 @@ assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 			assert_fails('cmd', ['', 'E987:'])
 <
 		{msg} 为空时不使用之。可用于传入 {lnum} 参数而获得缺省信息。
-
+							*E1115*
 		{lnum} 存在且非负，且 {error} 参数存在且匹配时，则和错误报告所
 		在的行号相比较。这可以是函数中的行号或脚本中的行号。
-
+							*E1116*
 		{context} 存在时，用作模式来匹配 {lnum} 所在的上下文 (脚本名或
 		函数名)。
 
@@ -354,7 +460,7 @@ assert_notmatch({pattern}, {actual} [, {msg}])
 
 
 assert_report({msg})					*assert_report()*
-		直接报告测试失败，用 {msg}。总返回一。
+		直接报告测试失败，用字符串 {msg}。总返回一。
 
 		也可用作 |method|: >
 			GetMessage()->assert_report()

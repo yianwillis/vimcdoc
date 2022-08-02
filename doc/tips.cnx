@@ -1,4 +1,4 @@
-*tips.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年1月
+*tips.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -92,14 +92,14 @@ Vim 里面有不少功能可以帮助你们编辑 C 程序。以下是一个概�
   .." 来创建它。
 
 把这些添加写你的 .vimrc 文件中: >
-	map _u :call ID_search()<Bar>execute "/\\<" . g:word . "\\>"<CR>
-	map _n :n<Bar>execute "/\\<" . g:word . "\\>"<CR>
+	map _u :call ID_search()<Bar>execute "/\\<" .. g:word .. "\\>"<CR>
+	map _n :n<Bar>execute "/\\<" .. g:word .. "\\>"<CR>
 
 	function! ID_search()
 	  let g:word = expand("<cword>")
-	  let x = system("lid --key=none ". g:word)
+	  let x = system("lid --key=none " .. g:word)
 	  let x = substitute(x, "\n", " ", "g")
-	  execute "next " . x
+	  execute "next " .. x
 	endfun
 
 使用的时候，把光标放在一个单词上，敲入 "_u"，然后 vim 会读入含有这个单词的文
@@ -329,12 +329,12 @@ digraph.c
 一个空行。使用表达式命令，以便对映射的部分进行注释: >
 
 	:let m =     ":map _f  :set ai<CR>"   " 需要置位 'autoindent'
-	:let m = m . "{O<Esc>"		      " 在项目上面加入空行
-	:let m = m . "}{)^W"		      " 跳转到 bullet 之后的文本
-	:let m = m . "i     <CR>     <Esc>"   " 为缩进加空格
-	:let m = m . "gq}"		      " 排版 bullet 之后的文本
-	:let m = m . "{dd"		      " 删除空行
-	:let m = m . "5lDJ"		      " 把文本放到 bullet 之后
+	:let m ..= "{O<Esc>"		      " 在项目上面加入空行
+	:let m ..= "}{)^W"		      " 跳转到 bullet 之后的文本
+	:let m ..= "i     <CR>     <Esc>"     " 为缩进加空格
+	:let m ..= "gq}"		      " 排版 bullet 之后的文本
+	:let m ..= "{dd"		      " 删除空行
+	:let m ..= "5lDJ"		      " 把文本放到 bullet 之后
 	:execute m			      |" 定义这个 mapping
 
 (<> 记法 |<>|。注意 必须按照字面逐个输入。^W 是 "^" 和 "W"，而不是 CTRL-W。如
@@ -473,15 +473,15 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见: |$VIMRUNTIME|。
 	    let c = '\['
 	    let c2 = '\]'
 	  endif
-	  let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' .
+	  let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' ..
 		\ '=~?  "string\\|comment"'
 	  execute 'if' s_skip '| let s_skip = 0 | endif'
 
 	  let [m_lnum, m_col] = searchpairpos(c, '', c2, s_flags, s_skip)
 
 	  if m_lnum > 0 && m_lnum >= line('w0') && m_lnum <= line('w$')
-	    exe 'match Search /\(\%' . c_lnum . 'l\%' . c_col .
-		  \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+	    exe 'match Search /\(\%' .. c_lnum .. 'l\%' .. c_col ..
+		  \ 'c\)\|\(\%' .. m_lnum .. 'l\%' .. m_col .. 'c\)/'
 	    let s:paren_hl_on = 1
 	  endif
 	endfunction
@@ -508,6 +508,7 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见: |$VIMRUNTIME|。
 	  endif
 	  if !getcompletion(a:subject, 'help')->empty()
 	    execute mods .. ' edit ' .. &helpfile
+	    set buftype=help
 	  endif
 	  return 'help ' .. a:subject
 	endfunction

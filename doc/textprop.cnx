@@ -1,4 +1,4 @@
-*textprop.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*textprop.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -92,6 +92,8 @@ prop_type_list([{props}])		获取属性类型的列表
 操作文本属性:
 
 prop_add({lnum}, {col}, {props})	新增文本属性
+prop_add_list({props}, [[{lnum}, {col}, {end-lnum}, {end-col}], ...])
+					在多个位置新增文本属性。
 prop_clear({lnum} [, {lnum-end} [, {bufnr}]])
 					删除所有文本属性
 prop_find({props} [, {direction}])	搜索文本属性
@@ -109,12 +111,12 @@ prop_add({lnum}, {col}, {props})
 		{props} 是带以下域的字典:
 		   length	以字节计的文本长度，只能用于不在另一行继续的属
 				性；可为零
-		   end_lnum	文本结尾的行号
+		   end_lnum	文本结尾的行号 (闭区间)
 		   end_col	文本刚刚结束之后的列；如果 "length" 存在则不
 				用；如果 {col} 和 "end_col" 相等，且
 				"end_lnum" 省略或等于 {lnum}，这是个零宽度的文
 				本属性
-		   bufnr	加入属性的缓冲区；省略是使用当前缓冲区
+		   bufnr	加入属性的缓冲区；省略时使用当前缓冲区
 		   id		用户定义的属性 ID；必须为数值；省略时使用零
 		   type		文本属性类型名
 		除 "type" 外，所有域均是可选的。
@@ -134,6 +136,30 @@ prop_add({lnum}, {col}, {props})
 
 		也可用作 |method|: >
 			GetLnum()->prop_add(col, props)
+<
+						*prop_add_list()*
+prop_add_list({props}, [[{lnum}, {col}, {end-lnum}, {end-col}], ...])
+		类似于 prop_add()，但在多个位置上附属文本属性。
+
+		{props} 是包含以下字段的字典:
+		   bufnr	加入属性的缓冲区；省略时使用当前缓冲区
+		   id		用户定义的属性 ID；必须为数值；省略时使用零
+		   type		文本属性类型名
+		除 "type" 外，所有域均是可选的。
+
+		第二个参数是列表的列表，其中每个列表指定文本的一组开始和结束位
+		置。前两个项目 {lnum} 和 {col} 指定附属属性的文本的开始位置，
+		而后两个项目 {end-lnum} 和 {end-col} 指定紧跟文本之后的那个位
+		置。
+
+		示例:
+			call prop_add_list(#{type: 'MyProp', id: 2},
+					\ [[1, 4, 1, 7],
+					\  [1, 15, 1, 20],
+					\  [2, 30, 3, 30]]
+
+		也可用作 |method|: >
+			GetProp()->prop_add_list([[1, 1, 1, 2], [1, 4, 1, 8]])
 
 
 prop_clear({lnum} [, {lnum-end} [, {props}]])		*prop_clear()*
@@ -149,7 +175,6 @@ prop_clear({lnum} [, {lnum-end} [, {props}]])		*prop_clear()*
 <
 							*prop_find()*
 prop_find({props} [, {direction}])
-		{尚未实现}
 		搜索 {props} 指定的文本属性:
 		   id		带此 ID 的属性
 		   type		带此类型名的属性
@@ -172,19 +197,54 @@ prop_find({props} [, {direction}])
 prop_list({lnum} [, {props}])				*prop_list()*
 		返回行 {lnum} 上的所有文本属性的列表。
 
-		如果 {props} 包含 "bufnr" 项目，使用此缓冲区，否则使用当前缓冲
-		区。
+		{props} 支持以下可选项目:
+		   bufnr	使用此缓冲区，否则使用当前缓冲区
+		   end_lnum	返回 {lnum} 和 {end_lnum} (闭区间) 之间所有行
+				的文本属性。
+				负值是相对于缓冲区末行的位移；-1 指向缓冲区末
+				行。
+		   types	属性类型名的列表。只返回匹配其中之一类型名的文
+				本属性。
+		   ids		属性标识符列表。只返回带有其中之一标识符的文本
+				属性。
 
 		属性以开始列和优先级排序。每个属性是带下列项的字典:
+		   lnum		起始行号。仅当返回 {lnum} 和 {end_lnum} 之间的
+				文本属性时才存在。
 		   col		开始列
 		   length	以字节计的长度，如果包含换行符加一
 		   id		属性 ID
 		   type		属性类型名，如果类型已删除则省略
+		   type_bufnr	此类型在其中有定义的缓冲区号；类型为全局时为 0
 		   start	为 TRUE 时属性从这行开始
 		   end		为 TRUE 时属性在这行结束
 
 		如果 "start" 为零，属性从前面行开始，本行是继续行。
 		如果 "end" 为零，属性从下面行继续。包含此行之后的换行符。
+
+		出错时返回空列表。
+
+		示例:
+		   " 返回放置在第 5 行上的文本属性
+		   echo prop_list(5)
+		   " 返回放置在缓冲区 4 的第 20 行上的文本属性
+		   echo prop_list(20, {'bufnr': 4})
+		   " 返回放置在 1 到 20 行之间的文本属性
+		   echo prop_list(1, {'end_lnum': 20})
+		   " 返回所有类型为 'myprop' 的文本属性
+		   echo prop_list(1, {'types': ['myprop'],
+						\ 'end_lnum': -1})
+		   " 返回所有类型为 'prop1' 或 'prop2' 的文本属性
+		   echo prop_list(1, {'types': ['prop1', 'prop2'],
+						\ 'end_lnum': -1})
+		   " 返回所有 ID 为 8 的文本属性
+		   echo prop_list(1, {'ids': [8], 'end_lnum': line('$')})
+		   " 返回所有 ID 为 10 和 20 的文本属性
+		   echo prop_list(1, {'ids': [10, 20], 'end_lnum': -1})
+		   " 返回所有在缓冲区 4，类型为 'myprop' 且 ID 为 100 的文本属
+		   " 性。
+		   echo prop_list(1, {'bufnr': 4, 'types': ['myprop'],
+					\ 'ids': [100], 'end_lnum': -1})
 
 		也可用作 |method|: >
 			GetLnum()->prop_list()
@@ -193,6 +253,8 @@ prop_list({lnum} [, {props}])				*prop_list()*
 prop_remove({props} [, {lnum} [, {lnum-end}]])
 		删除 {lnum} 上的匹配文本属性。如果给出 {lnum-end}，删除从行
 		{lnum} 到 {lnum-end} (闭区间) 所有匹配的文本属性。
+		{lnum} 省略时删除所有行的匹配文本属性 (这需要遍历所有行，所以
+		行数很多的缓冲区上这会有点慢)。
 
 		{props} 是包含下列域的字典:
 		   id		删除带此 ID 的文本属性

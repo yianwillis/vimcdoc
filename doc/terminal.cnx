@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -40,6 +40,7 @@
       代码中步进				|termdebug-stepping|
       检视变量					|termdebug-variables|
       其它命令					|termdebug-commands|
+      事件					|termdebug-events|
       提示模式					|termdebug-prompt|
       通信					|termdebug-communication|
       定制					|termdebug-customizing|
@@ -95,7 +96,7 @@ CTRL-W 可用来在窗口间切换和执行其它 CTRL-W 命令，如:
 							*t_CTRL-\_CTRL-N*
 特殊键组合 CTRL-\ CTRL-N 可用于切换到普通模式，其它模式下也都如此。
 							*t_CTRL-W_CTRL-C*
-CTRL-W CTRL-C 可可用强制结束作业。MS-Windows 上 CTRL-BREAK 也会杀掉作业。
+CTRL-W CTRL-C 可可用强制结束作业。MS-Windows 上 CTRL-Break 也会杀掉作业。
 
 直接按 CTRL-C 的效果取决于 pty 的相应配置。简单命令会导致 SIGINT 发送给作业，
 结果是中止作业。其它命令可能会忽略 SIGINT 或自行处理 CTRL-C (Vim 就是如此)。
@@ -148,8 +149,6 @@ CTRL-W CTRL-C 可可用强制结束作业。MS-Windows 上 CTRL-BREAK 也会杀�
 
 要使用其它颜色，使用 Terminal 高亮组，例如: >
     hi Terminal ctermbg=lightgrey ctermfg=blue guibg=lightgrey guifg=blue
-高亮需在终端创建前就定义好。之后再设置或设置 'wincolor' 只会在终端中运行的程序
-显示文本或清除终端时才会有效。
 可用 `term_start()` 的 "term_highlight" 选项来指定另一个组名来代替 Terminal。
 
 							*g:terminal_ansi_colors*
@@ -207,7 +206,7 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 			++norestore	不把此终端窗口加到会话文件中。
 			++shell		不直接执行 {command}，而使用外壳，就像
 					`:!command` 那样	*E279*
-					{仅能用于 Unix，就目前来说}
+					{仅能用于 Unix 和 MS-Windows}
 			++kill={how}	关闭终端窗口的尝试使用 {how} 信号杀死
 					作业。相关值见 |term_setkill()|。
 			++rows={height} 使用 {height} 作为终端窗口高度。如果终
@@ -635,18 +634,6 @@ term_sendkeys({buf}, {keys})				*term_sendkeys()*
 			GetBufnr()->term_sendkeys(keys)
 
 
-term_setapi({buf}, {expr})				*term_setapi()*
-		设置终端 {buf} 中的 |terminal-api| 函数使用的函数名前缀。
-		例如: >
-		    :call term_setapi(buf, "Myapi_")
-		    :call term_setapi(buf, "")
-<
-		缺省是 "Tapi_"。{expr} 为空串时 {buf} 不能使用 |terminal-api|
-		函数。
-
-		也可用作 |method|，基用于 {buf}: >
-			GetBufnr()->term_setapi({expr})
-
 term_setansicolors({buf}, {colors})			*term_setansicolors()*
 		设置终端 {buf} 使用的 ANSI 颜色调色板。
 		{colors} 必须是 16 种合法的色彩名或十六进制色彩代码的列表，如
@@ -679,6 +666,20 @@ term_setansicolors({buf}, {colors})			*term_setansicolors()*
 			GetBufnr()->term_setansicolors(colors)
 
 <		{仅当编译时打开 GUI 和/或 |+termguicolors| 特性时才有效}
+
+
+term_setapi({buf}, {expr})				*term_setapi()*
+		设置终端 {buf} 中的 |terminal-api| 函数使用的函数名前缀。
+		例如: >
+		    :call term_setapi(buf, "Myapi_")
+		    :call term_setapi(buf, "")
+<
+		缺省是 "Tapi_"。{expr} 为空串时 {buf} 不能使用 |terminal-api|
+		函数。
+
+		也可用作 |method|，基用于 {buf}: >
+			GetBufnr()->term_setapi({expr})
+
 
 term_setkill({buf}, {how})				*term_setkill()*
 		退出 Vim 或用其它方式试图关闭终端窗口时，{how} 定义终端中的作
@@ -740,7 +741,8 @@ term_start({cmd} [, {options}])			*term_start()*
 
 		以下是额外的选项:
 		   "term_name"	     缓冲区名，缺省是命令名。
-		   "term_rows"	     终端使用的垂直尺寸，缺省是 'termwinsize'
+		   "term_rows"	     终端使用的垂直尺寸，缺省是
+				     'termwinsize'；合法范围是零到 1000
 		   "term_cols"	     终端使用的水平尺寸，缺省是 'termwinsize'
 		   "vertical"	     垂直分割窗口；备注 另一窗口位置可用命令行
 				     修饰符来定义，如 |:belowright|。
@@ -830,8 +832,8 @@ Job 到 Vim: JSON API ~
 <		会调用以下定义的函数: >
 			function Tapi_Impression(bufnum, arglist)
 			  if len(a:arglist) == 2
-			    echomsg "impression " . a:arglist[0]
-			    echomsg "count " . a:arglist[1]
+			    echomsg "impression " .. a:arglist[0]
+			    echomsg "count " .. a:arglist[1]
 			  endif
 			endfunc
 <		如果用 |:echo|，重画可能被删除其输出，用 `:echomsg` 就会保证在
@@ -1004,7 +1006,7 @@ gdb 窗口	终端窗口，其中执行 "gdb vim"。这里你可以直接和 gdb 
 
 program 窗口	用于执行程序的终端窗口，。gdb 里 "run" 时，程序 I/O 会在此窗口
 		中发生，这样不会和控制的 gdb 有干扰。
-		缓冲区名是 "gdb program"。
+		缓冲区名是 "debugged program"。
 
 当前窗口用于显示源代码。gdb 暂停时，如有可能会显示源代码的位置。标号用来高亮当
 前位置，使用高亮组 debugPC。
@@ -1022,7 +1024,7 @@ program 窗口	用于执行程序的终端窗口，。gdb 里 "run" 时，程序
 	:TermdebugCommand vim --clean -c ':set nu'
 
 `:Termdebug` 和 `:TermdebugCommand` 两者都支持可选的 "!" 感叹号参数，它会立即
-启动命令而不暂停在 gdb 窗口中 (光标会留在待调试的窗口)。示例: >
+启动命令而不在 gdb 窗口中暂停 (光标会留在待调试的窗口)。示例: >
 	:TermdebugCommand! vim --clean
 
 要把 gdb 和已经在运行的可执行程序或 core 文件绑定，传递额外的参数。如: >
@@ -1091,6 +1093,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入: >
 - CTRL-C	中断程序
 - next		执行当前行并停在下一行
 - step		执行当前行并停在下个语句上，进入函数
+- until		执行直到跨过当前光标行或跨过指定位置或当前堆栈框架返回为止
 - finish	执行直到退出当前函数为止
 - where		显示堆栈
 - frame N	转到第 N 堆栈框架
@@ -1108,6 +1111,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入: >
 
  *:Step*	执行 gdb "step" 命令
  *:Over*	执行 gdb "next" 命令 (`:Next` 是 Vim 的命令)
+ *:Until*	执行 gdb "until" 命令
  *:Finish*	执行 gdb "finish" 命令
  *:Continue*	执行 gdb "continue" 命令
  *:Stop*	中断程序
@@ -1153,6 +1157,28 @@ breakpoint"。
  *:Source*     跳转到源代码窗口，如果还没有则创建之
  *:Asm*	     跳转到反汇编窗口，如果还没有则创建之
 
+事件 ~
+							*termdebug-events*
+可用四个自动命令: >
+	au User TermdebugStartPre  echomsg '调试启动中'
+	au User TermdebugStartPost echomsg '调试已开始'
+	au User TermdebugStopPre   echomsg '调试中止中'
+	au User TermdebugStopPost  echomsg '调试已中止'
+<
+						*TermdebugStartPre*
+TermdebugStartPre		开始调试前。
+				如果调试器已运行或调试器命令不能执行，不触发。
+						*TermdebugStartPost*
+TermdebugStartPost		调试初始化结束后。
+				给 `:Termdebug` 或 `:TermdebugCommand` 加 "!"
+				感叹号时，此事件在 gdb 运行提供的命令前触发。
+						*TermdebugStopPre*
+TermdebugStopPre		调试结束前，此时 gdb 已终止，最有可能在 gdb 窗
+				口里输入 "quit" 命令后发生。
+						*TermdebugStopPost*
+TermdebugStopPost		调试结束后，gdb 相关的窗口已关闭，真正删除了调
+				试缓冲区，恢复了调试之前的状态。
+
 
 提示模式 ~
 						*termdebug-prompt*
@@ -1166,18 +1192,24 @@ breakpoint"。
 
 						*termdebug_use_prompt*
 即使 |+terminal| 特性可用，也可使用提示模式，用: >
+	let g:termdebug_config['use_prompt'] = 1
+或者如果没有 g:termdebug_config 的话: >
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
 K 键通常映射为 :Evaluate。如果不想如此: >
+	let g:termdebug_config['map_K'] = 0
+或者如果没有 g:termdebug_config 的话: >
 	let g:termdebug_map_K = 0
-
 <
 						*termdebug_disasm_window*
-要缺省显示 Asm 窗口，把它设为 1。设为任何大于 1 的值时，Asm 窗口会设为此高
-度: >
+要缺省显示 Asm 窗口，设置此标志位为 1。
+"disarm_window_height" 项目可用于设置窗口高度: >
+	let g:termdebug_config['disasm_window'] = 1
+	let g:termdebug_config['disasm_window_height'] = 15
+或者如果没有 g:termdebug_config 的话: >
 	let g:termdebug_disasm_window = 15
-<
+设为任何大于 1 的值时，Asm 窗口会设为此高度。
 
 通信 ~
 						*termdebug-communication*
@@ -1190,19 +1222,40 @@ CTRL-C 并不中断。因此 `:Continue` 命令用 "continue" 而不是通信通
 
 
 定制 ~
+				*termdebug-customizing* *g:termdebug_config*
+过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
+g:termdebug_config 存在，不使用其它的全局变量。
 
-GDB 命令						 *termdebug-customizing*
 
-要改变 gdb 命令的名字，在调用 `:Termdebug` 前设置 "termdebugger" 变量: >
-	let termdebugger = "mygdb"
-<							*gdb-version*
+GDB 命令 ~
+							*g:termdebugger*
+要改变 gdb 命令的名字，在调用 `:Termdebug` 前设置 g:termdebug_config 的
+"debugger" 项目或 "g:termdebugger" 变量: >
+	let g:termdebug_config['command'] = "mygdb"
+或者如果没有 g:termdebug_config 的话: >
+	let g:termdebugger = "mygdb"
+
+如果命令需要参数，用列表: >
+	let g:termdebug_config['command'] = ['rr', 'replay', '--']
+或者如果没有 g:termdebug_config 的话: >
+	let g:termdebugger = ['rr', 'replay', '--']
+
+会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
+滤参数列表: >
+	let g:termdebug_config['command_filter'] = MyDebugFilter
+
+如果不想加入参数，但需要设置 "pty"，可提供一个函数添加必须的参数: >
+	let g:termdebug_config['command_add_args'] = MyAddArguments
+调用此函数时，首个参数是目前已知的参数列表，第二个参数是 pty 名。
+							*gdb-version*
 只能用和 gdb 完全兼容的调试器。Vim 使用 GDB/MI 接口。"new-ui" 命令需要 gdb
 7.12 或更新的版本。如见此错误:
 	Undefined command: "new-ui". Try "help".~
 你的 gdb 版本太老了。
 
 
-颜色						*hl-debugPC* *hl-debugBreakpoint*
+颜色 ~
+						*hl-debugPC* *hl-debugBreakpoint*
 
 标号的颜色可用以下高亮组调整:
 - debugPC		当前位置
@@ -1217,7 +1270,8 @@ GDB 命令						 *termdebug-customizing*
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
 
-快捷键							*termdebug_shortcuts*
+快捷键 ~
+							*termdebug_shortcuts*
 
 可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
 窗口中使用。例如: >
@@ -1225,7 +1279,8 @@ GDB 命令						 *termdebug-customizing*
 参数是 gdb 命令。
 
 
-弹出式菜单						*termdebug_popup*
+弹出式菜单 ~
+							*termdebug_popup*
 
 缺省 Termdebug 插件设置 'mousemodel' 为 "popup_setpos"，并在弹出式菜单里加入以
 下项目:
@@ -1233,21 +1288,26 @@ GDB 命令						 *termdebug-customizing*
 	Clear breakpoint	`:Clear`
 	Evaluate		`:Evaluate`
 如果不想要，可以这样关闭之: >
+	let g:termdebug_config['popup'] = 0
+或者如果没有 g:termdebug_config 的话: >
 	let g:termdebug_popup = 0
 
 
-Vim 窗口宽度						*termdebug_wide*
+Vim 窗口宽度 ~
+							*termdebug_wide*
 
 要改变调试开始时的 Vim 窗口宽度并用垂直分割: >
-  let g:termdebug_wide = 163
+	let g:termdebug_config['wide'] = 163
+或者如果没有 g:termdebug_config 的话: >
+	let g:termdebug_wide = 163
 
 这会在使用 `:Termdebug` 时设置 'columns' 为 163。退出调试器后此值复原。
 
-如果设置了 g:termdebug_wide 而 'columns' 已设为一个更大的值，则使用垂直分割且
-不改变 'columns'。
+如果设置了宽度而 'columns' 已设为一个更大的值，则使用垂直分割且不改变
+'columns'。
 
-把 g:termdebug_wide 设为 1 会保证垂直分割且不会改变 'columns'。这可用于 Vim 不
-能改变终端大小的场合。
+把宽度设为 1 会保证垂直分割且不会改变 'columns'。这可用于 Vim 不能改变终端大小
+的场合。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

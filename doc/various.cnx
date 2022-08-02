@@ -1,4 +1,4 @@
-*various.txt*   适用于 Vim 8.2 版本。	最近更新: 2021年4月
+*various.txt*   适用于 Vim 9.0 版本。	最近更新: 2022年7月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -95,6 +95,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 :[range]P[rint] [count] [flags]
 			和 ":print" 相同。Vi 里加入这个功能，很明显地，是给那
 			些按 Shift 键太久的人用的 ...
+			|Vim9| 脚本不支持此命令。
 			备注: 用户命令可以覆盖此命令。
 			|ex-flags| 说明 [flags]。
 
@@ -144,8 +145,13 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			不指定任何标记相当于指定 "+"。如果标记是 "="，当前行会
 			被连字符组成的两行包围。
 
-:[range]z#[+-^.=][count]				*:z#*
-			和 ":z" 类似，但显示行号。
+							*:z!*
+:[range]z![+-^.=][count]
+			和 ":z" 类似，但如果没有 [count]，缺省为 Vim 窗口高度
+			减一。
+
+:[range]z[!]#[+-^.=][count]				*:z#*
+			和 ":z" 或 ":z!" 类似，但显示行号。
 
 							*:=*
 := [flags]		显示末行的行号。
@@ -205,10 +211,10 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			时，该命令不能使用。这是因为编译器把标准输入设为非交互
 			模式。
 
-							*:!cmd* *:!* *E34*
+							*:!cmd* *:!*
 :!{cmd}			在外壳里执行 {cmd} 命令。也可参见 'shell' 和
 			'shelltype' 选项。
-
+							*E34*
 			{cmd} 里的任何 '!' 都被前一个外部命令所取代 (参见
 			'cpoptions')，除非之前有反斜杠。这时反斜杠被去掉。例
 			如: "!ls" 之后的 "!echo ! \! \\!" 实际执行
@@ -226,7 +232,7 @@ g8			显示光标下字符 (假定其为 |UTF-8| 编码) 的各字节的十六
 			号的文件名: >
 				:!ls '%'
 <			总是可以这样做，但要多打点字: >
-				:exe "!ls " . shellescape(expand("%"))
+				:exe "!ls " .. shellescape(expand("%"))
 <			要得到按本义出现的 "%" 或 "#"，在它之前附加反斜杠。例
 			如，要列出所有以 "%" 开头的文件: >
 				:!ls \%*
@@ -290,7 +296,7 @@ B  *++builtin_terms*	最大内建终端项支持 |builtin-terms|
 N  *+byte_offset*	支持 'statusline' 选项的 'o' 标志位、"go" 和 ":goto"
 			命令。
 m  *+channel*		进程间通信 |channel|
-N  *+cindent*		|'cindent'|，C 缩进
+6  *+cindent*		|'cindent'|，C 缩进
 N  *+clientserver*	Unix 和 Win32: 远程调用 |clientserver|
    *+clipboard*		编译时加入了剪贴板支持 |clipboard|
    *+clipboard_working*	编译时加入了剪贴板支持 |clipboard| 且可用
@@ -314,7 +320,7 @@ N  *+digraphs*		|digraphs| *E196*
    *+dnd*		"~ 寄存器的拖放支持 |quote_~|。
 B  *+emacs_tags*	|emacs-tags| 文件
 N  *+eval*		表达式计算 |eval.txt|
-N  *+ex_extra*		现在总是打开，用于 Vim 附加的 Ex 命令
+T  *+ex_extra*		现在总是打开，用于 Vim 附加的 Ex 命令
 N  *+extra_search*	|'hlsearch'| 和 |'incsearch'| 选项。
 -  *+farsi*		已删除: |farsi| 波斯语
 N  *+file_in_path*	|gf|、|CTRL-W_f| 和 |<cfile>|
@@ -325,7 +331,7 @@ N  *+folding*		折叠 |folding|
    *+fork*		只对 Unix 有效: |fork| 外壳命令
    *+float*		浮点数支持
 N  *+gettext*		消息翻译 |multi-lang|
-   *+GUI_Athena*	只对 Unix 有效: Athena |GUI|
+-  *+GUI_Athena*	只对 Unix 有效: Athena |GUI|
    *+GUI_neXtaw*	只对 Unix 有效: neXtaw |GUI|
    *+GUI_GTK*		只对 Unix 有效: GTK+ |GUI|
    *+GUI_Motif*		只对 Unix 有效: Motif |GUI|
@@ -336,13 +342,13 @@ m  *+hangul_input*	韩语输入支持 |hangul|
 T  *+insert_expand*	|insert_expand| 插入模式补全
 m  *+ipv6*		IPv6 网络 |channel| 支持
 m  *+job*		启动和终止作业 |job|
-S  *+jumplist*		跳转表 |jumplist|
+T  *+jumplist*		跳转表 |jumplist|；8.2.3795 开始总是打开
 B  *+keymap*		键盘映射表 |'keymap'|
 N  *+lambda*		|lambda| 和 |closure|
 B  *+langmap*		语言映射表 |'langmap'|
 N  *+libcall*		函数库调用 |libcall()|
 N  *+linebreak*		|'linebreak'|、|'breakat'| 和 |'showbreak'|
-N  *+lispindent*	|'lisp'|
+t  *+lispindent*	|'lisp'|
 T  *+listcmds*		Vim 的缓冲区列表相关命令 |buffer-hidden| 和参数列表
 			|:argdelete|
 T  *+localmap*		支持缓冲区的局部映射 |:map-local|
@@ -355,6 +361,7 @@ T  *+mouse*		鼠标处理 |mouse-using|
 N  *+mouseshape*	鼠标形状 |'mouseshape'|
 B  *+mouse_dec*		只对 Unix 有效: Dec 终端鼠标处理 |dec-mouse|
 N  *+mouse_gpm*		只对 Unix 有效: Linux 终端鼠标处理 |gpm-mouse|
+m  *+mouse_gpm/dyn*	同 |+mouse_gpm| 相同，带可选的库依赖 |/dyn|
 N  *+mouse_jsbterm*	JSB 鼠标处理 |jsbterm-mouse|
 B  *+mouse_netterm*	只对 Unix 有效: netterm 终端鼠标处理 |netterm-mouse|
 N  *+mouse_pterm*	只对 QNX 有效: pterm 终端鼠标处理 |qnx-terminal|
@@ -368,7 +375,7 @@ N  *+multi_lang*	非英语语言支持 |multi-lang|
 m  *+mzscheme*		Mzscheme 接口 |mzscheme|
 m  *+mzscheme/dyn*	Mzscheme 接口 |mzscheme-dynamic| |/dyn|
 m  *+netbeans_intg*	|netbeans|
-   *+num64*		64-位数值支持 |Number|
+T  *+num64*		64-位数值支持 |Number|
 			8.2.0271 开始总是打开，v:numbersize 可用来检查数值型的
 			实际大小。
 m  *+ole*		只对 Win32 GUI 有效: |ole-interface|
@@ -393,7 +400,8 @@ m  *+ruby*		Ruby 接口 |ruby|
 m  *+ruby/dyn*		Ruby 接口 |ruby-dynamic| |/dyn|
 T  *+scrollbind*	滚动绑定 |'scrollbind'|
 B  *+signs*		标号 |:sign|
-N  *+smartindent*	|'smartindent'|
+t  *+smartindent*	|'smartindent'|
+B  *+sodium*		编译里加入了 libsodium，用于更好的加密支持
 B  *+sound*		|sound_playevent()|、|sound_playfile()| 函数等等
 N  *+spell*		拼写检查支持，见 |spell|
 N  *+startuptime*	|--startuptime| 参数
@@ -415,14 +423,15 @@ N  *+textobjects*	文本对象 |text-objects| 选择
 N  *+textprop*		|text-properties|
    *+tgetent*		只对非 Unix 有效: 可以使用外部 termcap
 N  *+timers*		|timer_start()| 函数
-N  *+title*		设置窗口 |'title'| 和 'icon'
+T  *+title*		设置窗口 |'title'| 和 'icon'；总是打开
 N  *+toolbar*		GUI 工具栏 |gui-toolbar|
 T  *+user_commands*	用户定义命令。|user-commands|
 			8.1.1210 开始总是打开。
 B  *+vartabs*		可变宽度制表位。|'vartabstop'|
+T  *+vertsplit*		垂直分割窗口 |:vsplit|；8.0.1118 开始总是打开。
+T  *+vim9script*	|Vim9| 支持
 N  *+viminfo*		|'viminfo'|
-   *+vertsplit*		垂直分割窗口 |:vsplit|；8.0.1118 开始总是打开。
-N  *+virtualedit*	|'virtualedit'| 8.1.826 开始总是打开。
+T  *+virtualedit*	|'virtualedit'| 8.1.826 开始总是打开。
 T  *+visual*		可视模式 |Visual-mode| 7.4.200 开始总是打开。
 T  *+visualextra*	额外的可视模式命令 |blockwise-operators|
 T  *+vreplace*		|gR| 和 |gr|
@@ -481,31 +490,37 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 :redi[r] @">		重定向消息到无名寄存器。为了后向兼容，寄存器名后的 '>'
 			可以省略。
 :redi[r] @">>		附加消息到无名寄存器。
-
-:redi[r] => {var}	重定向消息到变量。如果变量不存在，建立之。如果变量已经
-			存在，它被初始化为空字符串，而且保持为空，直到重定向结
-			束为止。只能使用字符串变量。重定向开始后，如果变量被删
-			除或加锁或类型被改变，那么将来的命令输出消息会报错。
+							*E1092*
+:redi[r] => {var}	重定向消息到变量。
+			老式脚本里: 如果变量不存在，建立之。如果变量已经存在，
+			它被初始化为空字符串。重定向开始后，如果变量被删除或加
+			锁或类型被改变，那么之后的命令输出消息会报错。使用局部
+			变量 (函数里的 l:var 或脚本里的 s:var) 时，另一个
+			`:redir` 会使当前的重定向结束，作用域可能会改变而赋值
+			失败。
+			Vim9 脚本里: 变量必须已声明为字符串类型。
+			此变量保持为空，直到重定向结束为止。
+			只能使用字符串变量。
 			要得到一个命令的输出，可用 |execute()| 函数而不是重定
 			向。
 
 :redi[r] =>> {var}	附加消息到已有的变量。只能使用字符串变量。
-
+								 *E1185*
 :redi[r] END		结束消息的重定向。
 
 							*:filt* *:filter*
-:filt[er][!] {pat} {command}
-:filt[er][!] /{pat}/ {command}
-			找到 {command} 的输出里匹配 {pat} 的行。例如，要只列出
-			xml 文件: >
+:filt[er][!] {pattern} {command}
+:filt[er][!] /{pattern}/ {command}
+			找到 {command} 的输出里匹配 {pattern} 的行。例如，要只
+			列出 xml 文件: >
 				:filter /\.xml$/ oldfiles
-<			如果给出 [!]，只限 {command} 的输出里_不_匹配 {pat} 的
-			行。
+<			如果给出 [!]，只限 {command} 的输出里_不_匹配
+			{pattern} 的行。
 
-			{pat} 是 Vim 搜索模式。不一定要用 / 包围，可以用任何非
-			ID 字符 (见 |'isident'|)，只要不在 {pat} 里出现。如果
-			不使用包围字符，模式里不能包含竖杠字符。此处不考虑
-			'ignorecase'。
+			{pattern} 是 Vim 搜索模式。不一定要用 / 包围，可以用任
+			何非 ID 字符 (见 |'isident'|)，只要不在 {pattern} 里出
+			现。如果不使用包围字符，模式里不能包含竖杠字符。此处不
+			考虑 'ignorecase'。
 
 			模式匹配输出的相关部分，不一定是整行。只有部分命令支持
 			过滤，先试试看能不能用。一些支持过滤的命令:
@@ -522,7 +537,7 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 					   过滤
 			   |:oldfiles|   - 按文件名过滤
 			   |:registers|  - 按寄存器内容过滤 (不能用于多行)
-			   |:set|        - 按变量名过滤
+			   |:set|        - 按选项名过滤
 
 			只过滤正常信息，不过滤错误信息。
 
@@ -561,7 +576,7 @@ N  *+X11*		只对 Unix 有效: 可以恢复窗口标题 |X11|
 			用此命令可以在用了 |:silent| 之后还是可以给出消息。下
 			例中，|:silent| 用于避免读入文件时给出消息，而
 			|:unsilent| 用于列出每个文件的第一行。 >
-		:silent argdo unsilent echo expand('%') . ": " . getline(1)
+		:silent argdo unsilent echo expand('%') .. ": " .. getline(1)
 <
 
 						*:verb* *:verbose*
@@ -630,7 +645,7 @@ K			运行程序，查找光标下的关键字。该程序的名字由
 			|+netbeans_intg| 特性才有效}
 
 							*:sl!* *:sleep!*
-:[N]sl[eep]! [N] [m]	同上，但隐藏光标。
+:[N]sl[eep]! [N][m]	同上，但隐藏光标。
 
 							*:xrestore* *:xr*
 :xr[estore] [display]	重新初始化 X11 服务器的连接。X 服务器重启后有用，例如
