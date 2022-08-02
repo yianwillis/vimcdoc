@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -77,6 +77,7 @@ test_alloc_fail(<code class="special">{id}</code>, <code class="special">{countd
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetAllocId()-&gt;test_alloc_fail()</code>
 <code class="example"></code>
+<code class="example"></code>
 test_autochdir()                                        <b class="vimtag"> <a name="test_autochdir()">test_autochdir()</a> </b>
                 设置标志位，在 Vim 启动过程结束之前，打开 <a href="options.html#'autochdir'">'autochdir'</a> 的效果。
 
@@ -88,9 +89,13 @@ test_feedinput(<code class="special">{string}</code>)                           
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetText()-&gt;test_feedinput()</code>
 <code class="example"></code>
+<code class="example"></code>
 test_garbagecollect_now()                        <b class="vimtag"> <a name="test_garbagecollect_now()">test_garbagecollect_now()</a> </b>
                 类似于 garbagecollect()，但立即执行。只能通过直接调用，以避免
-                内部保存任何结构，而调用任何函数前， <a href="eval.html#v:testing">v:testing</a>  必须置位。
+                内部保存任何结构，而调用任何函数前，必须置位  <a href="eval.html#v:testing">v:testing</a>  。
+                <b class="vimtag"> <a name="E1142">E1142</a> </b>
+                不能在 :def 函数里调用，因为堆栈上的变量会被释放。
+
 
 test_garbagecollect_soon()                       <b class="vimtag"> <a name="test_garbagecollect_soon()">test_garbagecollect_soon()</a> </b>
                 就像在 main 循环中那样，设置标志位来调用垃圾清理器。仅用于测
@@ -103,7 +108,107 @@ test_getvalue(<code class="special">{name}</code>)                              
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetName()-&gt;test_getvalue()</code>
-<code class="example"></code>
+
+                                                <b class="vimtag"> <a name="test_gui_event()">test_gui_event()</a> </b>
+test_gui_event(<code class="special">{event}</code>, <code class="special">{args}</code>)
+                生成 GUI <code class="special">{event}</code>，使用参数 <code class="special">{args}</code>，用于测试 Vim 功能。只在 GUI
+                运行时才能用此函数。
+
+                <code class="special">{event}</code> 是字符串，支持的值是:
+                    "dropfiles" 在窗口上放置一个或多个文件。
+                    "findrepl"  搜索和替代文本。
+                    "mouse"     鼠标按钮点击事件。
+                    "scrollbar" 移动或拖动滚动条。
+                    "tabline"   用鼠标选择标签页。
+                    "tabmenu"   选择标签页行的菜单项。
+
+                <code class="special">{args}</code> 为字典，包含事件需要的参数。
+
+                "dropfiles":
+                  在指定窗口上放置一个或多个文件。<code class="special">{args}</code> 里支持的项目是:
+                    files:      文件名列表
+                    row:        窗口行号
+                    col:        窗口列号
+                    modifiers:  键修饰符。支持的值是:
+                                    0x4 Shift
+                                    0x8 Alt
+                                   0x10 Ctrl
+                  文件会加入  <a href="editing.html#argument-list">argument-list</a> ，在窗口里编辑 <code class="special">{files}</code> 的首个文
+                  件。详见  <a href="gui.html#drag-n-drop">drag-n-drop</a> 。仅当  <a href="gui.html#drop_file">drop_file</a>  特性存在时才能使用
+                  此事件。
+
+                "findrepl":
+                  <code class="notvi">{仅当 GUI 有查找/替代对话框时才可用}</code>
+                  执行文本的搜索和替代。<code class="special">{args}</code> 里支持的项目是:
+                    find_text:  搜索的文本。
+                    repl_text:  替代文本。
+                    flags:      控制搜索/替代的标志位。支持的值是:
+                                    1   搜索下个字符串 (搜索对话框)
+                                    2   搜索下个字符串 (替代对话框)
+                                    3   替代字符串一次
+                                    4   替代全部字符串
+                                    8   只匹配完整单词
+                                   16   匹配大小写
+                    forward:    设为 1 时正向搜索。
+
+                "mouse":
+                  注入鼠标按钮点击或鼠标移动事件。<code class="special">{args}</code> 里支持的项目是:
+                    button:     鼠标按钮。支持的值是:
+                                    0   鼠标右键
+                                    1   鼠标中键
+                                    2   鼠标左键
+                                    3   鼠标键释放
+                                    4   鼠标滚轮下滚
+                                    5   鼠标滚轮上滚
+                                    6   鼠标滚轮左滚
+                                    7   鼠标滚轮右滚
+                    row:        鼠标点击行号。Vim 窗口的首行为 1，末行为
+                                <a href="options.html#'lines'">'lines'</a>。
+                    col:        鼠标点击列号。<code class="special">{col}</code> 的最大值为 <a href="options.html#'columns'">'columns'</a>。
+                    multiclick: 设为 1 时注入多点击鼠标事件。
+                    modifiers:  键修饰符。支持的值是:
+                                    4   按了 shift
+                                    8   按了 alt
+                                   16   按了 ctrl
+                    move:       可选；如果给出且为 TRUE，生成鼠标移动事件。
+                                只使用 <code class="special">{args}</code> 里 row: 和 col: 且为必须；取决于
+                                ”cell"，它们被解释为像素或屏幕单元格。
+                                仅当置位了 <a href="options.html#'mousemoveevent'">'mousemoveevent'</a> 或弹出窗口使用鼠标
+                                移动事件时才生成事件。
+                    cell:       可选: 如果给出且为 TRUE，"move" 使用屏幕单元格
+                                而不是像素位置
+
+                "scrollbar":
+                  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可用。
+                  <code class="special">{args}</code> 里支持的项目是:
+                    which:      滚动条。支持的值是:
+                                    left  当前窗口的左侧滚动条
+                                    right 当前窗口的右侧滚动条
+                                    hor   水平滚动条
+                    value:      滚动量。对垂直滚动条而言，<code class="special">{value}</code> 可取值 1 到
+                                缓冲区行数。对水平滚动条而言，<code class="special">{value}</code> 可取值 1
+                                到最大的行长，假定 <a href="options.html#'wrap'">'wrap'</a> 未置位。
+                    dragging:   为 1 时拖动滚动条，为 0 时点击滚动条。
+
+                "tabline":
+                  在标签页行上注入鼠标点击事件以选择标签页。<code class="special">{args}</code> 里支持的项
+                  目是:
+                    tabnr:      标签页号
+
+                "tabmenu":
+                  注入事件以选择标签页行的菜单项。<code class="special">{args}</code> 里支持的项目是:
+                    tabnr:      标签页号
+                    item:       标签页菜单项号。1 代表首个菜单项，2 代表第二个
+                                项目，依此类推。
+
+                注入 GUI 事件后，可能应调用  <a href="builtin.html#feedkeys()">feedkeys()</a>  以处理这些事件，如: 
+<code class="example">                        call feedkeys("y", 'Lx!')</code>
+
+                成功加入事件后返回 TRUE，出错时返回 FALSE。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetEvent()-&gt;test_gui_event({args})</code>
+
 test_ignore_error(<code class="special">{expr}</code>)                        <b class="vimtag"> <a name="test_ignore_error()">test_ignore_error()</a> </b>
                 忽略包含 <code class="special">{expr}</code> 的任何错误。显示正常的消息来替代。
                 只用于测试，因为那里 try/catch 不能用于捕捉错误 (因为跳过了下
@@ -114,6 +219,7 @@ test_ignore_error(<code class="special">{expr}</code>)                        <b
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetErrorText()-&gt;test_ignore_error()</code>
 <code class="example"></code>
+<code class="example"></code>
 test_null_blob()                                        <b class="vimtag"> <a name="test_null_blob()">test_null_blob()</a> </b>
                 返回 null  <a href="eval.html#Blob">Blob</a> 。仅用于测试。
 
@@ -122,8 +228,10 @@ test_null_channel()                                     <b class="vimtag"> <a na
                 返回 null  <a href="eval.html#Channel">Channel</a> 。仅用于测试。
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+channel">+channel</a>  特性才有效}</code>
 
+
 test_null_dict()                                        <b class="vimtag"> <a name="test_null_dict()">test_null_dict()</a> </b>
                 返回 null  <a href="eval.html#Dict">Dict</a> 。仅用于测试。
+
 
 test_null_function()                                    <b class="vimtag"> <a name="test_null_function()">test_null_function()</a> </b>
                 返回 null  <a href="eval.html#Funcref">Funcref</a> 。仅用于测试。
@@ -133,20 +241,17 @@ test_null_job()                                         <b class="vimtag"> <a na
                 返回 null  <a href="eval.html#Job">Job</a> 。仅用于测试。
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+job">+job</a>  特性才有效}</code>
 
+
 test_null_list()                                        <b class="vimtag"> <a name="test_null_list()">test_null_list()</a> </b>
                 返回 null  <a href="eval.html#List">List</a> 。仅用于测试。
+
 
 test_null_partial()                                     <b class="vimtag"> <a name="test_null_partial()">test_null_partial()</a> </b>
                 返回 null  <a href="eval.html#Partial">Partial</a> 。仅用于测试。
 
+
 test_null_string()                                      <b class="vimtag"> <a name="test_null_string()">test_null_string()</a> </b>
                 返回 null  <a href="eval.html#String">String</a> 。仅用于测试。
-
-test_unknown()                                          <b class="vimtag"> <a name="test_unknown()">test_unknown()</a> </b>
-                返回未知类型的值。仅用于测试。
-
-test_void()                                             <b class="vimtag"> <a name="test_void()">test_void()</a> </b>
-                返回 void 类型的值。仅用于测试。
 
 
 test_option_not_set(<code class="special">{name}</code>)                             <b class="vimtag"> <a name="test_option_not_set()">test_option_not_set()</a> </b>
@@ -165,21 +270,26 @@ test_option_not_set(<code class="special">{name}</code>)                        
 test_override(<code class="special">{name}</code>, <code class="special">{val}</code>)                            <b class="vimtag"> <a name="test_override()">test_override()</a> </b>
                 覆盖 Vim 内部处理的部分行为，用于运行测试。只能用于 Vim 测试！
                 如果 <code class="special">{val}</code> 非零，打开覆盖行为，<code class="special">{val}</code> 为零时，关闭覆盖行为。
-                目前支持的名字是:
+                <code class="special">{name}</code> 目前支持的值是:
 
-<code class="section">                名字         <code class="special">{val}</code> 非零的效果 </code>
-                redraw       屏蔽 redrawing() 函数
-                redraw_flag  忽略 RedrawingDisabled 标志位
+<code class="section">                <code class="special">{name}</code>       <code class="special">{val}</code> 非零的效果 </code>
+                alloc_lines  在已分配内存内为每个缓冲区行复制备份，以便
+                             valgrind 可以发现内存访问错误
+                autoload     `import autoload` 会立即载入脚本，而不是延迟到项
+                             目使用时
                 char_avail   屏蔽 char_avail() 函数
-                starting     复位 "starting" 变量，见下
                 nfa_fail     使 NFA 正规表达式引擎失败以强制回归到旧引擎
                 no_query_mouse  "dec" 终端不查询鼠标位置
                 no_wait_return  置位 "no_wait_return" 标志位。不被 "ALL" 复
                                 位。
+                redraw       屏蔽 redrawing() 函数
+                redraw_flag  忽略 RedrawingDisabled 标志位
+                starting     复位 "starting" 变量，见下
+                term_props   检测到版本字符串时，复位所有终端属性
                 ui_delay     用于 ui_delay() 的以毫秒计的时间；覆盖缺省使用的
                              不多于 3 秒的消息等待时间
-                term_props   检测到版本字符串时，复位所有终端属性
                 uptime       覆盖 sysinfo.uptime
+                vterm_title  用终端窗口运行中的作业来设置窗口标题
                 ALL          复位所有覆盖 (不使用 <code class="special">{val}</code>)
 
                 "starting" 用于假定初始化已经完成的测试。因为测试的运行是通过
@@ -193,6 +303,7 @@ test_override(<code class="special">{name}</code>, <code class="special">{val}</
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetOverrideVal()-&gt; test_override('starting')</code>
 <code class="example"></code>
+<code class="example"></code>
 test_refcount(<code class="special">{expr}</code>)                                   <b class="vimtag"> <a name="test_refcount()">test_refcount()</a> </b>
                 返回 <code class="special">{expr}</code> 的引用计数。如果 <code class="special">{expr}</code> 是没有引用计数的类型，返回
                 -1。仅用于测试。
@@ -200,21 +311,6 @@ test_refcount(<code class="special">{expr}</code>)                              
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetVarname()-&gt;test_refcount()</code>
 <code class="example"></code>
-<code class="example"></code>
-test_scrollbar(<code class="special">{which}</code>, <code class="special">{value}</code>, <code class="special">{dragging}</code>)            <b class="vimtag"> <a name="test_scrollbar()">test_scrollbar()</a> </b>
-                模拟使用滚动条 <code class="special">{which}</code> 移动到位置 <code class="special">{value}</code>。<code class="special">{which}</code> 可以是:
-                        left    当前窗口的左侧滚动条
-                        right   当前窗口的右侧滚动条
-                        hor     水平滚动条
-
-                对垂直滚动条而言，<code class="special">{value}</code> 可取值 1 到缓冲区行数。对水平滚动条
-                而言，<code class="special">{value}</code> 可取值 1 到最大的行长，假定 <a href="options.html#'wrap'">'wrap'</a> 未置位。
-
-                <code class="special">{dragging}</code> 如果非零，行为就像拖动滚动条，否则像点击滚动条。
-                只能用于确实存在的 <code class="special">{which}</code> 滚动条，显然只能用于 GUI。
-
-                也可用作  <a href="eval.html#method">method</a> : 
-<code class="example">                        GetValue()-&gt;test_scrollbar('right', 0)</code>
 <code class="example"></code>
 test_setmouse(<code class="special">{row}</code>, <code class="special">{col}</code>)                             <b class="vimtag"> <a name="test_setmouse()">test_setmouse()</a> </b>
                 设置下个鼠标活动所用的鼠标位置。
@@ -232,9 +328,19 @@ test_settime(<code class="special">{expr}</code>)                               
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetTime()-&gt;test_settime()</code>
 <code class="example"></code>
+<code class="example"></code>
 test_srand_seed([seed])                                 <b class="vimtag"> <a name="test_srand_seed()">test_srand_seed()</a> </b>
                 <code class="special">[seed]</code> 给出时用来设置  <a href="builtin.html#srand()">srand()</a>  使用的种子值。不给出时，删除此
                 测试用种子。
+
+
+test_unknown()                                          <b class="vimtag"> <a name="test_unknown()">test_unknown()</a> </b>
+                返回未知类型的值。仅用于测试。
+
+
+test_void()                                             <b class="vimtag"> <a name="test_void()">test_void()</a> </b>
+                返回 void 类型的值。仅用于测试。
+
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 断言函数                                     <b class="vimtag"> <a name="assert-functions-details">assert-functions-details</a> </b></h4>
@@ -291,7 +397,7 @@ assert_exception(<code class="special">{error}</code> [, <code class="special">{
 assert_fails(<code class="special">{cmd}</code> [, <code class="special">{error}</code> [, <code class="special">{msg}</code> [, <code class="special">{lnum}</code> [, <code class="special">{context}</code>]]]])
                 执行 <code class="special">{cmd}</code>，如果 <code class="emphasis">不</code> 出错或错误信息中找不到 <code class="special">{error}</code>，加入错误信
                 息到  <a href="eval.html#v:errors">v:errors</a> 。另见  <a href="eval.html#assert-return">assert-return</a> 。
-
+                                                        <b class="vimtag"> <a name="E856">E856</a> </b>
                 <code class="special">{error}</code> 如为字符串，必须按本义在首个报告的错误中找到。这里最普
                 遍的情况是使用错误代码并带上冒号，如 "E123:"。 
 <code class="example">                        assert_fails('bad cmd', 'E987:')</code>
@@ -306,10 +412,10 @@ assert_fails(<code class="special">{cmd}</code> [, <code class="special">{error}
 <code class="example">                        assert_fails('cmd', ['', 'E987:'])</code>
 
                 <code class="special">{msg}</code> 为空时不使用之。可用于传入 <code class="special">{lnum}</code> 参数而获得缺省信息。
-
+                                                        <b class="vimtag"> <a name="E1115">E1115</a> </b>
                 <code class="special">{lnum}</code> 存在且非负，且 <code class="special">{error}</code> 参数存在且匹配时，则和错误报告所
                 在的行号相比较。这可以是函数中的行号或脚本中的行号。
-
+                                                        <b class="vimtag"> <a name="E1116">E1116</a> </b>
                 <code class="special">{context}</code> 存在时，用作模式来匹配 <code class="special">{lnum}</code> 所在的上下文 (脚本名或
                 函数名)。
 
@@ -386,7 +492,7 @@ assert_notmatch(<code class="special">{pattern}</code>, <code class="special">{a
 <code class="example"></code>
 <code class="example"></code>
 assert_report(<code class="special">{msg}</code>)                                    <b class="vimtag"> <a name="assert_report()">assert_report()</a> </b>
-                直接报告测试失败，用 <code class="special">{msg}</code>。总返回一。
+                直接报告测试失败，用字符串 <code class="special">{msg}</code>。总返回一。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetMessage()-&gt;assert_report()</code>

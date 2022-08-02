@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="term.txt">term.txt</a> </b>      适用于 Vim 8.2 版本。   最近更新: 2021年1月
+<b class="vimtag"> <a name="term.txt">term.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -139,6 +139,38 @@ Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'
 <code class="example">          exec "set t_PE=\e[201~"</code>
 <code class="example">        endif</code>
 
+                                                        <b class="vimtag"> <a name="tmux-integration">tmux-integration</a> </b>
+在 tmux 里执行 Vim 时如果有问题，下面有一些提示。可以注释掉对你不适用的部分
+(取决于 tmux 运行所在的终端): 
+<code class="example"></code>
+<code class="example">    if !has('gui_running') &amp;&amp; &amp;term =~ '^\%(screen\|tmux\)'</code>
+<code class="example">        " 更好鼠标支持，见 :help 'ttymouse'</code>
+<code class="example">        set ttymouse=sgr</code>
+<code class="example"></code>
+<code class="example">        " 打开真彩，见 :help xterm-true-color</code>
+<code class="example">        let &amp;termguicolors = v:true</code>
+<code class="example">        let &amp;t_8f = "\&lt;Esc&gt;[38;2;%lu;%lu;%lum"</code>
+<code class="example">        let &amp;t_8b = "\&lt;Esc&gt;[48;2;%lu;%lu;%lum"</code>
+<code class="example"></code>
+<code class="example">        " 打开括号内的粘贴模式，见 :help xterm-bracketed-paste</code>
+<code class="example">        let &amp;t_BE = "\&lt;Esc&gt;[?2004h"</code>
+<code class="example">        let &amp;t_BD = "\&lt;Esc&gt;[?2004l"</code>
+<code class="example">        let &amp;t_PS = "\&lt;Esc&gt;[200~"</code>
+<code class="example">        let &amp;t_PE = "\&lt;Esc&gt;[201~"</code>
+<code class="example"></code>
+<code class="example">        " 打开焦点事件跟踪，见 :help xterm-focus-event</code>
+<code class="example">        let &amp;t_fe = "\&lt;Esc&gt;[?1004h"</code>
+<code class="example">        let &amp;t_fd = "\&lt;Esc&gt;[?1004l"</code>
+<code class="example">        execute "set &lt;FocusGained&gt;=\&lt;Esc&gt;[I"</code>
+<code class="example">        execute "set &lt;FocusLost&gt;=\&lt;Esc&gt;[O"</code>
+<code class="example"></code>
+<code class="example">        " 打开带修饰符的光标键，见 :help arrow_modifiers</code>
+<code class="example">        execute "silent! set &lt;xUp&gt;=\&lt;Esc&gt;[@;*A"</code>
+<code class="example">        execute "silent! set &lt;xDown&gt;=\&lt;Esc&gt;[@;*B"</code>
+<code class="example">        execute "silent! set &lt;xRight&gt;=\&lt;Esc&gt;[@;*C"</code>
+<code class="example">        execute "silent! set &lt;xLeft&gt;=\&lt;Esc&gt;[@;*D"</code>
+<code class="example">    endif</code>
+
                                                         <b class="vimtag"> <a name="cs7-problem">cs7-problem</a> </b>
 <code class="note">注意</code>: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
 Solaris 2.5 上 "stty cs8 parenb"，使用 "stty cs7 parenb" 恢复就会有这个问题。
@@ -212,6 +244,16 @@ termcap" 来检查哪些是支持的，相应的代码为何。多数情况下�
 
 另一个特殊值是以 "@;*X" 结尾的 termcap 项目。这用于光标键，那里可用 "CSI X" 或
 "CSI 1 ; 修饰符 X"。所以 "@" 代表或者后面有跟修饰符的 "1"，或者为空。
+                                                        <b class="vimtag"> <a name="arrow_modifiers">arrow_modifiers</a> </b>
+若干终端模拟器 (alacritty、gnome、konsole 等等) 为带修饰符的键发送特殊代码，但
+这些键在 termcap/terminfo 数据库里没有对应项目。可在 vimrc 里添加若干行使其工
+作。例如，要在 gnome terminal 里支持带 Control 修饰符的光标键: 
+<code class="example">        if &amp;term =~ 'gnome'</code>
+<code class="example">           execute "set &lt;xUp&gt;=\&lt;Esc&gt;[@;*A"</code>
+<code class="example">           execute "set &lt;xDown&gt;=\&lt;Esc&gt;[@;*B"</code>
+<code class="example">           execute "set &lt;xRight&gt;=\&lt;Esc&gt;[@;*C"</code>
+<code class="example">           execute "set &lt;xLeft&gt;=\&lt;Esc&gt;[@;*D"</code>
+<code class="example">        endif</code>
                                                         <b class="vimtag"> <a name="xterm-scroll-region">xterm-scroll-region</a> </b>
 Sun 和其它的平台上的 xterm 缺省的 termcap 项目不包含区域滚动的项目。在
 /etc/termpcap 的 xterm 项目里增加 ":cs=\E[%i%d;%dr:"，那么一切都没有问题了。
@@ -302,8 +344,11 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 
 Vim 增加的 (它们没有标准代码):
         t_AU    设置下划线色 (ANSI)                             <b class="vimtag"> <a name="t_AU">t_AU</a> </b> <b class="vimtag"> <a name="'t_AU'">'t_AU'</a> </b>
-        t_Ce    下曲 (undercurl) 结束                           <b class="vimtag"> <a name="t_Ce">t_Ce</a> </b> <b class="vimtag"> <a name="'t_Ce'">'t_Ce'</a> </b>
-        t_Cs    下曲模式                                        <b class="vimtag"> <a name="t_Cs">t_Cs</a> </b> <b class="vimtag"> <a name="'t_Cs'">'t_Cs'</a> </b>
+        t_Ce    下曲 (undercurl) 和下划线结束                   <b class="vimtag"> <a name="t_Ce">t_Ce</a> </b> <b class="vimtag"> <a name="'t_Ce'">'t_Ce'</a> </b>
+        t_Cs    下曲 (波浪状下划线) 模式                        <b class="vimtag"> <a name="t_Cs">t_Cs</a> </b> <b class="vimtag"> <a name="'t_Cs'">'t_Cs'</a> </b>
+        t_Us    双下划线模式                                    <b class="vimtag"> <a name="t_Us">t_Us</a> </b> <b class="vimtag"> <a name="'t_Us'">'t_Us'</a> </b>
+        t_ds    点状下划线模式                                  <b class="vimtag"> <a name="t_ds">t_ds</a> </b> <b class="vimtag"> <a name="'t_ds'">'t_ds'</a> </b>
+        t_Ds    虚线下划线模式                                  <b class="vimtag"> <a name="t_Ds">t_Ds</a> </b> <b class="vimtag"> <a name="'t_Ds'">'t_Ds'</a> </b>
         t_Te    删除线结束                                      <b class="vimtag"> <a name="t_Te">t_Te</a> </b> <b class="vimtag"> <a name="'t_Te'">'t_Te'</a> </b>
         t_Ts    删除线模式                                      <b class="vimtag"> <a name="t_Ts">t_Ts</a> </b> <b class="vimtag"> <a name="'t_Ts'">'t_Ts'</a> </b>
         t_IS    开始设置图标文本                                <b class="vimtag"> <a name="t_IS">t_IS</a> </b> <b class="vimtag"> <a name="'t_IS'">'t_IS'</a> </b>
@@ -316,9 +361,9 @@ Vim 增加的 (它们没有标准代码):
         t_SR    开始替换模式 (下划线光标)                       <b class="vimtag"> <a name="t_SR">t_SR</a> </b> <b class="vimtag"> <a name="'t_SR'">'t_SR'</a> </b>
         t_EI    结束插入或替换模式 (块形光标)                   <b class="vimtag"> <a name="t_EI">t_EI</a> </b> <b class="vimtag"> <a name="'t_EI'">'t_EI'</a> </b>
                  <a href="term.html#termcap-cursor-shape">termcap-cursor-shape</a> 
-        t_RV    请求终端版本字符串 (适用于 xterm)               <b class="vimtag"> <a name="t_RV">t_RV</a> </b> <b class="vimtag"> <a name="'t_RV'">'t_RV'</a> </b>
-                其响应存于  <a href="eval.html#v:termresponse">v:termresponse</a> 
-                 <a href="term.html#xterm-8bit">xterm-8bit</a>   <a href="options.html#'ttymouse'">'ttymouse'</a>   <a href="term.html#xterm-codes">xterm-codes</a> 
+        t_RV    请求终端版本字符串 (适用于 xterm 和其它终端模   <b class="vimtag"> <a name="t_RV">t_RV</a> </b> <b class="vimtag"> <a name="'t_RV'">'t_RV'</a> </b>
+                拟器) 其响应存于  <a href="eval.html#v:termresponse">v:termresponse</a>   <a href="term.html#xterm-8bit">xterm-8bit</a> 
+                 <a href="options.html#'ttymouse'">'ttymouse'</a>   <a href="term.html#xterm-codes">xterm-codes</a> 
         t_u7    请求光标位置 (适用于 xterm)                     <b class="vimtag"> <a name="t_u7">t_u7</a> </b> <b class="vimtag"> <a name="'t_u7'">'t_u7'</a> </b>
                 见  <a href="options.html#'ambiwidth'">'ambiwidth'</a> 
                 其响应存于  <code class="badlink">v:term7resp</code> 
@@ -348,9 +393,9 @@ Vim 增加的 (它们没有标准代码):
         t_Ri    从栈中恢复图标文本                              <b class="vimtag"> <a name="t_Ri">t_Ri</a> </b> <b class="vimtag"> <a name="'t_Ri'">'t_Ri'</a> </b>
         t_TE    结束 "raw" 模式                                 <b class="vimtag"> <a name="t_TE">t_TE</a> </b> <b class="vimtag"> <a name="'t_TE'">'t_TE'</a> </b>
         t_TI    让终端进入 "raw" 模式                           <b class="vimtag"> <a name="t_TI">t_TI</a> </b> <b class="vimtag"> <a name="'t_TI'">'t_TI'</a> </b>
-        t_fd    关闭焦点事件跟踪                                <b class="vimtag"> <a name="t_fd">t_fd</a> </b> <b class="vimtag"> <a name="'t_fd'">'t_fd'</a> </b>
-                 <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
         t_fe    打开焦点事件跟踪                                <b class="vimtag"> <a name="t_fe">t_fe</a> </b> <b class="vimtag"> <a name="'t_fe'">'t_fe'</a> </b>
+                 <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
+        t_fd    关闭焦点事件跟踪                                <b class="vimtag"> <a name="t_fd">t_fd</a> </b> <b class="vimtag"> <a name="'t_fd'">'t_fd'</a> </b>
                  <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
 
 有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
@@ -479,8 +524,13 @@ keypad 键在没有映射时和等价的普通键等价。但有一个特例: �
 xterm 里直接取得键码。响应的内容用于调整各种 t_ 代码。这样，xterm 可能根据所处
 的模式 (8-位、VT102、VT220，等等) 产生不同代码的问题就避免了。结果是，<code class="special">&lt;xF1&gt;</code> 这
 样的代码就不需要了。
-<code class="note">注意</code>: 这只能在启动时完成。如果 xterm 选项在 Vim 启动以后被改变，这些转义序列就
-不再能识别了。
+
+<a href="term.html#'t_Co'">'t_Co'</a> 是其中一个可修改的代码，色彩数。这会触发重画。如果有问题，尽早复位
+<a href="options.html#'xtermcodes'">'xtermcodes'</a> 选项: 
+<code class="example">        set noxtermcodes</code>
+<code class="example"></code>
+<code class="note">注意</code>: 请求键码只能在启动时完成。如果 xterm 选项在 Vim 启动以后被改变，这些转义
+序列就不再能识别了。
 
                                                         <b class="vimtag"> <a name="xterm-true-color">xterm-true-color</a> </b>
 只要终端支持，Vim 支持终端真彩 (使用  <a href="syntax.html#highlight-guifg">highlight-guifg</a>  和  <a href="syntax.html#highlight-guibg">highlight-guibg</a> )。
@@ -516,6 +566,12 @@ CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾�
 关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入:
         `set t_fd=`
         `set t_fe=`
+如果终端支持但 Vim 不识别此终端，需要你自己设置这些选项: 
+<code class="example">        let &amp;t_fe = "\&lt;Esc&gt;[?1004h"</code>
+<code class="example">        let &amp;t_fd = "\&lt;Esc&gt;[?1004l"</code>
+<code class="example">        execute "set &lt;FocusGained&gt;=\&lt;Esc&gt;[I"</code>
+<code class="example">        execute "set &lt;FocusLost&gt;=\&lt;Esc&gt;[O"</code>
+Vim 启动时如果显示出现乱码，那么这些设置有问题。
 
                                                         <b class="vimtag"> <a name="termcap-colors">termcap-colors</a> </b>
 关于颜色的 <code class="note">注意</code> 事项: <a href="term.html#'t_Co'">'t_Co'</a> 选项告诉 Vim 可用的颜色数。如果非零，<a href="term.html#'t_AB'">'t_AB'</a> 和
@@ -526,6 +582,9 @@ GUI 运行时，<a href="term.html#'t_Co'">'t_Co'</a> 设为 16777216。
                                 <b class="vimtag"> <a name="termcap-cursor-shape">termcap-cursor-shape</a> </b> <b class="vimtag"> <a name="termcap-cursor-color">termcap-cursor-color</a> </b>
 Vim 进入插入模式时，发送 <a href="term.html#'t_SI'">'t_SI'</a> 转义序列。Vim 进入替换模式而 <a href="term.html#'t_SR'">'t_SR'</a> 已设置时，
 发送 <a href="term.html#'t_SR'">'t_SR'</a> 转义序列，否则发送 <a href="term.html#'t_SI'">'t_SI'</a>。当离开插入或替换模式时，发送 <a href="term.html#'t_EI'">'t_EI'</a>。
+<code class="note">备注</code>: 没设置 <a href="term.html#'t_EI'">'t_EI'</a> 时，不会发送 <a href="term.html#'t_SI'">'t_SI'</a> 和 <a href="term.html#'t_SR'">'t_SR'</a>。而没设置 <a href="term.html#'t_SI'">'t_SI'</a> 或 <a href="term.html#'t_SR'">'t_SR'</a>
+时，<a href="term.html#'t_EI'">'t_EI'</a> 只会发送一次。
+
 这可以用来改变插入模式下光标的形状或颜色。它们不是标准的 termcap/terminfo 项
 目，你需要自己设定。
 一个 xterm 的例子，改变光标颜色: 
@@ -611,7 +670,7 @@ xterm 用户 <code class="note">注意</code>: shift + 光标键一般不工作�
 :mod[e] <code class="special">[mode]</code>
 
 如果不带参数，该命令检测屏幕大小并重画屏幕。
-[mode] 过去用于 MS-DOS，现在已经不能用了。
+[mode] 过去用于 MS-DOS，现在已经不能用了。 <a href="vim9.html#Vim9">Vim9</a>  不支持此命令。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 慢速和快速终端                               <b class="vimtag"> <a name="slow-fast-terminal">slow-fast-terminal</a> </b></h4>                                                <b class="vimtag"> <a name="slow-terminal">slow-terminal</a> </b>
@@ -693,9 +752,9 @@ Esc。
 另一个办法是临时地用 ":sh" 来运行外壳，复制文本，然后退出外壳。此时 <a href="options.html#'mouse'">'mouse'</a> 仍
 应设为 "a"。
                                                         <b class="vimtag"> <a name="xterm-clipboard">xterm-clipboard</a> </b>
-Athena 和 Motif GUI 版本上，如果在终端运行但是可以访问 X-server (设置了
-DISPLAY)，那么复制和粘贴和 GUI 上的行为相似。如果不是，那么鼠标中键会插入无名
-寄存器。这种情况下，这里是如何复制和粘贴一段文本的方法:
+Motif GUI 版本上，如果在终端运行但是可以访问 X-server (设置了 DISPLAY)，那么复
+制和粘贴和 GUI 上的行为相似。如果不是，那么鼠标中键会插入无名寄存器。这种情况
+下，这里是如何复制和粘贴一段文本的方法:
 
 用鼠标和可视模式复制/粘贴 (<a href="options.html#'mouse'">'mouse'</a> 选项必须设置，见上):
 1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放左
@@ -822,7 +881,7 @@ Vim 之前在外壳上执行 "stty cs8 -istrip -parenb"。
 MS-Windows 和 xterm 上，双击相隔的时间可以通过 <a href="options.html#'mousetime'">'mousetime'</a> 选项设置。其他系统
 上，该值只能在 Vim 之外定义。
 一个使用双击跳转到光标所在的标签的例子: 
-<code class="example">        :map &lt;2-LeftMouse&gt; :exe "tag ". expand("&lt;cword&gt;")&lt;CR&gt;</code>
+<code class="example">        :map &lt;2-LeftMouse&gt; :exe "tag " .. expand("&lt;cword&gt;")&lt;CR&gt;</code>
 <code class="example"></code>
 使用双击拖动鼠标 (按下按钮、抬起按钮、按下按钮、然后拖动) 会导致完整的多个单词
 被选择，直到按钮被释放为止。这时选择重新以字符为单位。

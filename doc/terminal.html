@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 8.2 版本。   最近更新: 2021年4月
+<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年7月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -75,6 +75,7 @@
       代码中步进                                 <a href="terminal.html#termdebug-stepping">termdebug-stepping</a> 
       检视变量                                   <a href="terminal.html#termdebug-variables">termdebug-variables</a> 
       其它命令                                   <a href="terminal.html#termdebug-commands">termdebug-commands</a> 
+      事件                                       <a href="terminal.html#termdebug-events">termdebug-events</a> 
       提示模式                                   <a href="terminal.html#termdebug-prompt">termdebug-prompt</a> 
       通信                                       <a href="terminal.html#termdebug-communication">termdebug-communication</a> 
       定制                                       <a href="terminal.html#termdebug-customizing">termdebug-customizing</a> 
@@ -129,7 +130,7 @@
                                                         <b class="vimtag"> <a name="t_CTRL-\_CTRL-N">t_CTRL-\_CTRL-N</a> </b>
 特殊键组合 <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 可用于切换到普通模式，其它模式下也都如此。
                                                         <b class="vimtag"> <a name="t_CTRL-W_CTRL-C">t_CTRL-W_CTRL-C</a> </b>
-<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code> 可可用强制结束作业。MS-Windows 上 <code class="keystroke">CTRL-BREAK</code> 也会杀掉作业。
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code> 可可用强制结束作业。MS-Windows 上 <code class="keystroke">CTRL-Break</code> 也会杀掉作业。
 
 直接按 <code class="keystroke">CTRL-C</code> 的效果取决于 pty 的相应配置。简单命令会导致 SIGINT 发送给作业，
 结果是中止作业。其它命令可能会忽略 SIGINT 或自行处理 <code class="keystroke">CTRL-C</code> (Vim 就是如此)。
@@ -182,8 +183,6 @@
 
 要使用其它颜色，使用 Terminal 高亮组，例如: 
 <code class="example">    hi Terminal ctermbg=lightgrey ctermfg=blue guibg=lightgrey guifg=blue</code>
-高亮需在终端创建前就定义好。之后再设置或设置 <a href="options.html#'wincolor'">'wincolor'</a> 只会在终端中运行的程序
-显示文本或清除终端时才会有效。
 可用  <a href="terminal.html#term_start()">term_start()</a>  的 "term_highlight" 选项来指定另一个组名来代替 Terminal。
 
                                                         <b class="vimtag"> <a name="g:terminal_ansi_colors">g:terminal_ansi_colors</a> </b>
@@ -241,7 +240,7 @@ GUI 模式或使用 <a href="options.html#'termguicolors'">'termguicolors'</a> �
                         ++norestore     不把此终端窗口加到会话文件中。
                         ++shell         不直接执行 <code class="special">{command}</code>，而使用外壳，就像
                                          <code class="badlink">:!command</code>  那样        <b class="vimtag"> <a name="E279">E279</a> </b>
-                                        <code class="notvi">{仅能用于 Unix，就目前来说}</code>
+                                        <code class="notvi">{仅能用于 Unix 和 MS-Windows}</code>
                         ++kill=<code class="special">{how}</code>    关闭终端窗口的尝试使用 <code class="special">{how}</code> 信号杀死
                                         作业。相关值见  <a href="terminal.html#term_setkill()">term_setkill()</a> 。
                         ++rows=<code class="special">{height}</code> 使用 <code class="special">{height}</code> 作为终端窗口高度。如果终
@@ -668,18 +667,6 @@ term_sendkeys(<code class="special">{buf}</code>, <code class="special">{keys}</
 <code class="example">                        GetBufnr()-&gt;term_sendkeys(keys)</code>
 <code class="example"></code>
 <code class="example"></code>
-term_setapi(<code class="special">{buf}</code>, <code class="special">{expr}</code>)                              <b class="vimtag"> <a name="term_setapi()">term_setapi()</a> </b>
-                设置终端 <code class="special">{buf}</code> 中的  <a href="terminal.html#terminal-api">terminal-api</a>  函数使用的函数名前缀。
-                例如: 
-<code class="example">                    :call term_setapi(buf, "Myapi_")</code>
-<code class="example">                    :call term_setapi(buf, "")</code>
-
-                缺省是 "Tapi_"。<code class="special">{expr}</code> 为空串时 <code class="special">{buf}</code> 不能使用  <a href="terminal.html#terminal-api">terminal-api</a> 
-                函数。
-
-                也可用作  <a href="eval.html#method">method</a> ，基用于 <code class="special">{buf}</code>: 
-<code class="example">                        GetBufnr()-&gt;term_setapi({expr})</code>
-<code class="example"></code>
 term_setansicolors(<code class="special">{buf}</code>, <code class="special">{colors}</code>)                     <b class="vimtag"> <a name="term_setansicolors()">term_setansicolors()</a> </b>
                 设置终端 <code class="special">{buf}</code> 使用的 ANSI 颜色调色板。
                 <code class="special">{colors}</code> 必须是 16 种合法的色彩名或十六进制色彩代码的列表，如
@@ -713,6 +700,20 @@ term_setansicolors(<code class="special">{buf}</code>, <code class="special">{co
 <code class="example"></code>
                 <code class="notvi">{仅当编译时打开 GUI 和/或  <a href="various.html#+termguicolors">+termguicolors</a>  特性时才有效}</code>
 
+
+term_setapi(<code class="special">{buf}</code>, <code class="special">{expr}</code>)                              <b class="vimtag"> <a name="term_setapi()">term_setapi()</a> </b>
+                设置终端 <code class="special">{buf}</code> 中的  <a href="terminal.html#terminal-api">terminal-api</a>  函数使用的函数名前缀。
+                例如: 
+<code class="example">                    :call term_setapi(buf, "Myapi_")</code>
+<code class="example">                    :call term_setapi(buf, "")</code>
+
+                缺省是 "Tapi_"。<code class="special">{expr}</code> 为空串时 <code class="special">{buf}</code> 不能使用  <a href="terminal.html#terminal-api">terminal-api</a> 
+                函数。
+
+                也可用作  <a href="eval.html#method">method</a> ，基用于 <code class="special">{buf}</code>: 
+<code class="example">                        GetBufnr()-&gt;term_setapi({expr})</code>
+<code class="example"></code>
+<code class="example"></code>
 term_setkill(<code class="special">{buf}</code>, <code class="special">{how}</code>)                              <b class="vimtag"> <a name="term_setkill()">term_setkill()</a> </b>
                 退出 Vim 或用其它方式试图关闭终端窗口时，<code class="special">{how}</code> 定义终端中的作
                 业是否被中止。
@@ -773,7 +774,8 @@ term_start(<code class="special">{cmd}</code> [, <code class="special">{options}
 
                 以下是额外的选项:
                    "term_name"       缓冲区名，缺省是命令名。
-                   "term_rows"       终端使用的垂直尺寸，缺省是 <a href="options.html#'termwinsize'">'termwinsize'</a>
+                   "term_rows"       终端使用的垂直尺寸，缺省是
+                                     <a href="options.html#'termwinsize'">'termwinsize'</a>；合法范围是零到 1000
                    "term_cols"       终端使用的水平尺寸，缺省是 <a href="options.html#'termwinsize'">'termwinsize'</a>
                    "vertical"        垂直分割窗口；<code class="note">备注</code> 另一窗口位置可用命令行
                                      修饰符来定义，如  <a href="windows.html#:belowright">:belowright</a> 。
@@ -862,8 +864,8 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
                 会调用以下定义的函数: 
 <code class="example">                        function Tapi_Impression(bufnum, arglist)</code>
 <code class="example">                          if len(a:arglist) == 2</code>
-<code class="example">                            echomsg "impression " . a:arglist[0]</code>
-<code class="example">                            echomsg "count " . a:arglist[1]</code>
+<code class="example">                            echomsg "impression " .. a:arglist[0]</code>
+<code class="example">                            echomsg "count " .. a:arglist[1]</code>
 <code class="example">                          endif</code>
 <code class="example">                        endfunc</code>
                 如果用  <a href="eval.html#:echo">:echo</a> ，重画可能被删除其输出，用  <a href="eval.html#:echomsg">:echomsg</a>  就会保证在
@@ -1033,7 +1035,7 @@ gdb 窗口        终端窗口，其中执行 "gdb vim"。这里你可以直接�
 
 program 窗口    用于执行程序的终端窗口，。gdb 里 "run" 时，程序 I/O 会在此窗口
                 中发生，这样不会和控制的 gdb 有干扰。
-                缓冲区名是 "gdb program"。
+                缓冲区名是 "debugged program"。
 
 当前窗口用于显示源代码。gdb 暂停时，如有可能会显示源代码的位置。标号用来高亮当
 前位置，使用高亮组 debugPC。
@@ -1051,7 +1053,7 @@ program 窗口    用于执行程序的终端窗口，。gdb 里 "run" 时，程
 <code class="example">        :TermdebugCommand vim --clean -c ':set nu'</code>
 <code class="example"></code>
  <a href="terminal.html#:Termdebug">:Termdebug</a>  和  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  两者都支持可选的 "!" 感叹号参数，它会立即
-启动命令而不暂停在 gdb 窗口中 (光标会留在待调试的窗口)。示例: 
+启动命令而不在 gdb 窗口中暂停 (光标会留在待调试的窗口)。示例: 
 <code class="example">        :TermdebugCommand! vim --clean</code>
 <code class="example"></code>
 要把 gdb 和已经在运行的可执行程序或 core 文件绑定，传递额外的参数。如: 
@@ -1120,6 +1122,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入:
 - <code class="keystroke">CTRL-C</code>        中断程序
 - next          执行当前行并停在下一行
 - step          执行当前行并停在下个语句上，进入函数
+- until         执行直到跨过当前光标行或跨过指定位置或当前堆栈框架返回为止
 - finish        执行直到退出当前函数为止
 - where         显示堆栈
 - frame N       转到第 N 堆栈框架
@@ -1137,6 +1140,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入:
 
  <b class="vimtag"> <a name=":Step">:Step</a> </b>        执行 gdb "step" 命令
  <b class="vimtag"> <a name=":Over">:Over</a> </b>        执行 gdb "next" 命令 ( <a href="editing.html#:Next">:Next</a>  是 Vim 的命令)
+ <b class="vimtag"> <a name=":Until">:Until</a> </b>       执行 gdb "until" 命令
  <b class="vimtag"> <a name=":Finish">:Finish</a> </b>      执行 gdb "finish" 命令
  <b class="vimtag"> <a name=":Continue">:Continue</a> </b>    执行 gdb "continue" 命令
  <b class="vimtag"> <a name=":Stop">:Stop</a> </b>        中断程序
@@ -1182,6 +1186,28 @@ breakpoint"。
  <b class="vimtag"> <a name=":Source">:Source</a> </b>     跳转到源代码窗口，如果还没有则创建之
  <b class="vimtag"> <a name=":Asm">:Asm</a> </b>      跳转到反汇编窗口，如果还没有则创建之
 
+<code class="section">事件 </code>
+                                                        <b class="vimtag"> <a name="termdebug-events">termdebug-events</a> </b>
+可用四个自动命令: 
+<code class="example">        au User TermdebugStartPre  echomsg '调试启动中'</code>
+<code class="example">        au User TermdebugStartPost echomsg '调试已开始'</code>
+<code class="example">        au User TermdebugStopPre   echomsg '调试中止中'</code>
+<code class="example">        au User TermdebugStopPost  echomsg '调试已中止'</code>
+
+                                                <b class="vimtag"> <a name="TermdebugStartPre">TermdebugStartPre</a> </b>
+TermdebugStartPre               开始调试前。
+                                如果调试器已运行或调试器命令不能执行，不触发。
+                                                <b class="vimtag"> <a name="TermdebugStartPost">TermdebugStartPost</a> </b>
+TermdebugStartPost              调试初始化结束后。
+                                给  <a href="terminal.html#:Termdebug">:Termdebug</a>  或  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  加 "!"
+                                感叹号时，此事件在 gdb 运行提供的命令前触发。
+                                                <b class="vimtag"> <a name="TermdebugStopPre">TermdebugStopPre</a> </b>
+TermdebugStopPre                调试结束前，此时 gdb 已终止，最有可能在 gdb 窗
+                                口里输入 "quit" 命令后发生。
+                                                <b class="vimtag"> <a name="TermdebugStopPost">TermdebugStopPost</a> </b>
+TermdebugStopPost               调试结束后，gdb 相关的窗口已关闭，真正删除了调
+                                试缓冲区，恢复了调试之前的状态。
+
 
 <code class="section">提示模式 </code>
                                                 <b class="vimtag"> <a name="termdebug-prompt">termdebug-prompt</a> </b>
@@ -1195,18 +1221,24 @@ breakpoint"。
 
                                                 <b class="vimtag"> <a name="termdebug_use_prompt">termdebug_use_prompt</a> </b>
 即使  <a href="various.html#+terminal">+terminal</a>  特性可用，也可使用提示模式，用: 
+<code class="example">        let g:termdebug_config['use_prompt'] = 1</code>
+或者如果没有 g:termdebug_config 的话: 
 <code class="example">        let g:termdebug_use_prompt = 1</code>
 
                                                 <b class="vimtag"> <a name="termdebug_map_K">termdebug_map_K</a> </b>
 K 键通常映射为 :Evaluate。如果不想如此: 
+<code class="example">        let g:termdebug_config['map_K'] = 0</code>
+或者如果没有 g:termdebug_config 的话: 
 <code class="example">        let g:termdebug_map_K = 0</code>
-<code class="example"></code>
 
                                                 <b class="vimtag"> <a name="termdebug_disasm_window">termdebug_disasm_window</a> </b>
-要缺省显示 Asm 窗口，把它设为 1。设为任何大于 1 的值时，Asm 窗口会设为此高
-度: 
+要缺省显示 Asm 窗口，设置此标志位为 1。
+"disarm_window_height" 项目可用于设置窗口高度: 
+<code class="example">        let g:termdebug_config['disasm_window'] = 1</code>
+<code class="example">        let g:termdebug_config['disasm_window_height'] = 15</code>
+或者如果没有 g:termdebug_config 的话: 
 <code class="example">        let g:termdebug_disasm_window = 15</code>
-
+设为任何大于 1 的值时，Asm 窗口会设为此高度。
 
 <code class="section">通信 </code>
                                                 <b class="vimtag"> <a name="termdebug-communication">termdebug-communication</a> </b>
@@ -1219,11 +1251,31 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 
 
 <code class="section">定制 </code>
+                                <b class="vimtag"> <a name="termdebug-customizing">termdebug-customizing</a> </b> <b class="vimtag"> <a name="g:termdebug_config">g:termdebug_config</a> </b>
+过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
+g:termdebug_config 存在，不使用其它的全局变量。
 
-GDB 命令                                                 <b class="vimtag"> <a name="termdebug-customizing">termdebug-customizing</a> </b>
 
-要改变 gdb 命令的名字，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置 "termdebugger" 变量: 
-<code class="example">        let termdebugger = "mygdb"</code>
+<code class="section">GDB 命令 </code>
+                                                        <b class="vimtag"> <a name="g:termdebugger">g:termdebugger</a> </b>
+要改变 gdb 命令的名字，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置 g:termdebug_config 的
+"debugger" 项目或 "g:termdebugger" 变量: 
+<code class="example">        let g:termdebug_config['command'] = "mygdb"</code>
+或者如果没有 g:termdebug_config 的话: 
+<code class="example">        let g:termdebugger = "mygdb"</code>
+<code class="example"></code>
+如果命令需要参数，用列表: 
+<code class="example">        let g:termdebug_config['command'] = ['rr', 'replay', '--']</code>
+或者如果没有 g:termdebug_config 的话: 
+<code class="example">        let g:termdebugger = ['rr', 'replay', '--']</code>
+<code class="example"></code>
+会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
+滤参数列表: 
+<code class="example">        let g:termdebug_config['command_filter'] = MyDebugFilter</code>
+<code class="example"></code>
+如果不想加入参数，但需要设置 "pty"，可提供一个函数添加必须的参数: 
+<code class="example">        let g:termdebug_config['command_add_args'] = MyAddArguments</code>
+调用此函数时，首个参数是目前已知的参数列表，第二个参数是 pty 名。
                                                         <b class="vimtag"> <a name="gdb-version">gdb-version</a> </b>
 只能用和 gdb 完全兼容的调试器。Vim 使用 GDB/MI 接口。"new-ui" 命令需要 gdb
 7.12 或更新的版本。如见此错误:
@@ -1231,7 +1283,8 @@ GDB 命令                                                 <b class="vimtag"> <a
 你的 gdb 版本太老了。
 
 
-颜色                                            <b class="vimtag"> <a name="hl-debugPC">hl-debugPC</a> </b> <b class="vimtag"> <a name="hl-debugBreakpoint">hl-debugBreakpoint</a> </b>
+<code class="section">颜色 </code>
+                                                <b class="vimtag"> <a name="hl-debugPC">hl-debugPC</a> </b> <b class="vimtag"> <a name="hl-debugBreakpoint">hl-debugBreakpoint</a> </b>
 
 标号的颜色可用以下高亮组调整:
 - debugPC               当前位置
@@ -1246,7 +1299,8 @@ GDB 命令                                                 <b class="vimtag"> <a
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
 
-快捷键                                                  <b class="vimtag"> <a name="termdebug_shortcuts">termdebug_shortcuts</a> </b>
+<code class="section">快捷键 </code>
+                                                        <b class="vimtag"> <a name="termdebug_shortcuts">termdebug_shortcuts</a> </b>
 
 可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
 窗口中使用。例如: 
@@ -1254,7 +1308,8 @@ GDB 命令                                                 <b class="vimtag"> <a
 参数是 gdb 命令。
 
 
-弹出式菜单                                              <b class="vimtag"> <a name="termdebug_popup">termdebug_popup</a> </b>
+<code class="section">弹出式菜单 </code>
+                                                        <b class="vimtag"> <a name="termdebug_popup">termdebug_popup</a> </b>
 
 缺省 Termdebug 插件设置 <a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup_setpos"，并在弹出式菜单里加入以
 下项目:
@@ -1262,21 +1317,26 @@ GDB 命令                                                 <b class="vimtag"> <a
         Clear breakpoint         <a href="terminal.html#:Clear">:Clear</a> 
         Evaluate                 <a href="terminal.html#:Evaluate">:Evaluate</a> 
 如果不想要，可以这样关闭之: 
+<code class="example">        let g:termdebug_config['popup'] = 0</code>
+或者如果没有 g:termdebug_config 的话: 
 <code class="example">        let g:termdebug_popup = 0</code>
 <code class="example"></code>
 <code class="example"></code>
-Vim 窗口宽度                                            <b class="vimtag"> <a name="termdebug_wide">termdebug_wide</a> </b>
+<code class="section">Vim 窗口宽度 </code>
+                                                        <b class="vimtag"> <a name="termdebug_wide">termdebug_wide</a> </b>
 
 要改变调试开始时的 Vim 窗口宽度并用垂直分割: 
-<code class="example">  let g:termdebug_wide = 163</code>
+<code class="example">        let g:termdebug_config['wide'] = 163</code>
+或者如果没有 g:termdebug_config 的话: 
+<code class="example">        let g:termdebug_wide = 163</code>
 <code class="example"></code>
 这会在使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时设置 <a href="options.html#'columns'">'columns'</a> 为 163。退出调试器后此值复原。
 
-如果设置了 g:termdebug_wide 而 <a href="options.html#'columns'">'columns'</a> 已设为一个更大的值，则使用垂直分割且
-不改变 <a href="options.html#'columns'">'columns'</a>。
+如果设置了宽度而 <a href="options.html#'columns'">'columns'</a> 已设为一个更大的值，则使用垂直分割且不改变
+<a href="options.html#'columns'">'columns'</a>。
 
-把 g:termdebug_wide 设为 1 会保证垂直分割且不会改变 <a href="options.html#'columns'">'columns'</a>。这可用于 Vim 不
-能改变终端大小的场合。
+把宽度设为 1 会保证垂直分割且不会改变 <a href="options.html#'columns'">'columns'</a>。这可用于 Vim 不能改变终端大小
+的场合。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:
