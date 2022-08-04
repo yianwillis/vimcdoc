@@ -1,0 +1,121 @@
+*usr_50.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+
+		     VIM 用户手册 - by Bram Moolenaar
+				译者: Willis
+
+			      高级 Vim 脚本编写
+
+
+|50.1|	例外
+|50.2|	带可变数目参数的函数
+|50.3|	恢复视窗
+
+           下一章: |usr_51.txt|  创建插件
+           前一章: |usr_45.txt|  选择你的语言 (locale)
+             目录: |usr_toc.txt|
+
+==============================================================================
+*50.1*	例外
+
+让我们从一个例子开始: >
+
+	try
+	   read ~/templates/pascal.tmpl
+	catch /E484:/
+	   echo "Sorry, the Pascal template file cannot be found."
+	endtry
+
+如果该文件不存在的话，`read` 命令就会失败。这段代码可以捕捉到该错误并向用户给
+出一个友好的信息，而不是一个一般的出错信息。
+
+在 `try` 和 `endtry` 之间的命令产生的错误将被转变成为例外。例外以字符串的形式
+出现。当错误发生时，该字符串包含出错信息。而每一个出错信息都有一个对应的错误
+码。在上面的例子中，我们捕捉到的错误包括 "E484:"。Vim 确保这个错误码始终不变
+(文字可能会变，例如被翻译)。
+
+除了使出错信息更友好之外，Vim 也会继续执行 `:endtry` 之后的命令。否则，一旦遇
+到未捕获的错误，脚本/函数/映射的执行会立即中止。
+
+当 `read` 命令引起其它错误时，模式 "E484:" 不会被匹配。因此该例外不会被捕获，
+结果是一个一般的出错信息而且执行被中止。
+
+你可能想这样做: >
+
+	try
+	   read ~/templates/pascal.tmpl
+	catch
+	   echo "Sorry, the Pascal template file cannot be found."
+	endtry
+
+这意味着所有的错误都将被捕获。然而这样你就完全无法得到那些指出不同问题的错误信
+息，比如说 "E21: Cannot make changes, 'modifiable' is off"。捕获所有错误请三思
+而后行！
+
+另一个有用的机制是 `finally` 命令: >
+
+	var tmp = tempname()
+	try
+	   exe ":.,$write " .. tmp
+	   exe "!filter " .. tmp
+	   :.,$delete
+	   exe ":$read " .. tmp
+	finally
+	   delete(tmp)
+	endtry
+
+这个例子将自光标处到文件尾的所有行通过过滤器 "filter"。该程序的参数是文件名。
+无论过滤器是否正常工作、`try` 和 `finally` 之间发生了什么错误、或者用户按
+CTRL-C 中断了过滤器，`delete(tmp)` 命令始终被执行。这可以确保你在任何情况下不
+会留下一个临时文件。
+
+`finally` 本身并不捕获例外，错误仍然会中止后续行的执行。
+
+关于例外处理更多的讨论可以阅读参考手册: |exception-handling|。
+
+==============================================================================
+*50.2*	带可变数目参数的函数
+
+Vim 允许你定义参数个数可变的函数。下面的例子给出一个至少有一个参数 (start)，但
+可以多达 20 个附加参数的函数: >
+
+	def Show(start: string, ...items: list<string>)
+
+函数中的变量 "items" 会是包含额外参数的列表。用法就像普通的列表，如: >
+
+	def Show(start: string, ...items: list<string>)
+	  echohl Title
+	  echo "start is " .. start
+	  echohl None
+	  for index in range(len(items))
+	    echon $"  Arg {index} is {items[index]}"
+	  endfor
+	  echo
+	enddef
+
+可以这样调用: >
+
+	Show('Title', 'one', 'two', 'three')
+<	start is Title  Arg 0 is one  Arg 1 is two  Arg 2 is three ~
+
+上例中 `echohl` 命令被用来给出接下来的 `echo` 命令如何高亮输出。`echohl None`
+终止高亮。`echon` 命令除了不输出换行符外，和 `echo` 一样。
+
+如果调用时只给出一个参数，"items" 列表会为空。
+`range(len(items))` 返回索引的列表，可以在其上用 `for` 循环，这方面后面会继续
+解释。
+
+==============================================================================
+*50.3*	恢复视窗
+
+有时你想跳转到别处，作些修改，然后跳回到原先的位置和视图。例如要修改文件头部的
+一部分。可用两个函数实现: >
+
+	var view = winsaveview()
+	# 移动并作修改
+	winrestview(view)
+
+==============================================================================
+
+下一章: |usr_51.txt|  创建插件
+
+版权: 参见 |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

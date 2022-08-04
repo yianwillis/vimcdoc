@@ -1,0 +1,624 @@
+*usr_51.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+
+		     VIM 用户手册 - by Bram Moolenaar
+				译者: Willis
+
+			      编写插件
+
+
+插件可用于定义指定类型文件的设置，语法高亮和许多其它特性。本章解释如何编写最常
+见的 Vim 插件。
+
+|51.1|	编写通用插件
+|51.2|	编写文件类型插件
+|51.3|	编写编译器插件
+|51.4|	发布 Vim 脚本
+
+           下一章: |usr_52.txt|  编写大型插件
+           前一章: |usr_50.txt|  高级 Vim 脚本编写
+             目录: |usr_toc.txt|
+
+==============================================================================
+*51.1*	编写通用插件					*write-plugin*
+
+用约定方式编写的脚本能够被除作者外的很多人使用。这样的脚本叫做插件。Vim 用户只
+要把你写的脚本放在 plugin 目录下就可以立即使用了: |add-plugin|。
+
+实际上有两种插件:
+
+    全局插件: 适用于所有类型的文件。
+文件类型插件: 仅适用于某种类型的文件。
+
+这一节将介绍第一种。很多的东西也同样适用于编写文件类型插件。仅适用于编写文件类
+型插件的知识将在下一节 |write-filetype-plugin| 做介绍。
+
+这里我们用 |Vim9| 语法，编写新插件的推荐方式。请确保文件以 `vim9script` 命令开
+始。
+
+
+插 件 名
+
+首先你得给你的插件起个名字。这个名字应该很清楚地表示该插件的用途。同时应该避免
+同别的插件用同样的名字而用途不同。
+
+一个纠正打字错误的插件可能被命名为 "typecorrect.vim"。我们将用这个名字来举例。
+
+为了使一个插件能被所有人使用，要注意一些事项。下面我们将一步步的讲解。最后会给
+出这个插件的完整示例。
+
+
+插 件 体
+
+让我们从做实际工作的插件体开始: >
+
+ 12	iabbrev teh the
+ 13	iabbrev otehr other
+ 14	iabbrev wnat want
+ 15	iabbrev synchronisation
+ 16		\ synchronization
+
+当然，真正的清单会比这长的多。
+
+上面的行号只是为了方便解释，不要把它们也加入到你的插件文件中去！
+
+
+首 行
+>
+  1	vim9script noclear
+
+`vim9script` 必须是第一个命令，建议放在文件的首行上。
+
+我们编写的脚本会有 `finish` 命令在第二次载入时立即退出。使用 "noclear" 参数可
+以避免脚本定义的项目丢失。更多细节可见 |vim9-reload|。
+
+
+插 件 头
+
+你很可能对这个插件做新的修改并很快就有了好几个版本。并且当你发布文件的时候，别
+人也想知道是谁编写了这样好的插件或者给作者提点意见。所以，在你的插件头部加上一
+些描述性的注释是很必要的: >
+
+  2	# Vim global plugin for correcting typing mistakes
+  3	# Last Change:	2021 Dec 30
+  4	# Maintainer:	Bram Moolenaar <Bram@vim.org>
+
+关于版权和许可: 由于插件很有用，而且几乎不值得限制其发行，请考虑对你的插件使用
+公共领域 (public domain) 或 Vim 许可 |license|。在文件顶部放上说明就行了。例
+如: >
+
+  5	# License:	This file is placed in the public domain.
+
+
+禁 止 加 载
+
+有可能一个用户并不总希望加载这个插件。或者系统管理员在系统的插件目录中已经把这
+个插件删除了，而用户希望使用它自己安装的插件。用户应该有机会选择不加载指定的插
+件。下面的一段代码就是用来实现这个目的的: >
+
+  7	if exists("g:loaded_typecorrect")
+  8	  finish
+  9	endif
+ 10	g:loaded_typecorrect = 1
+
+这同时也避免了同一个脚本被加载两次以上。因为那样函数会无意义地被重新定义，自动
+命令被多次加入也会引起问题。
+
+建议使用的名字以 "g:loaded_" 开头，然后是插件的文件名，按原义输入。之前加上
+"g:" 使此变量成为全局的，这样其它地方可以检查插件功能是否已存在。如果没有 "g:"
+这将是局部于函数的变量。
+
+`finish` 阻止 Vim 继续读入文件的其余部分，这比用 if-endif 包围整个文件要快得
+多，因为 Vim 会需要解析所有这些命令以找到 `endif`。
+
+
+映 射
+
+现在让我们把这个插件变得更有趣些: 我们将加入一个映射用来校正当前光标下的单词。
+我们当然可以任意选一个键组合，但是用户可能已经将其定义为其它的什么功能了。为了
+使用户能够自己定义在插件中的键盘映射使用的键，我们可以使用 <Leader> 标识: >
+
+ 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+
+那个 "<Plug>TypecorrAdd;" 会做实际的工作，后面我们还会做更多解释。
+
+用户可以将 "g:mapleader" 变量设为他所希望的开始插件映射的键组合。比如假设用户
+这样做: >
+
+	g:mapleader = "_"
+
+映射将定义为 "_a"。如果用户没有这样做，Vim 将使用缺省值反斜杠。这样就会定义一
+个映射 - "\a"。
+
+注意 其中用到了 <unique>，这会使得 Vim 在映射已经存在时给出错误信息。
+|:map-<unique>|
+
+但是如果用户希望定义自己的键操作呢？我们可以用下面的方法来解决: >
+
+ 19	if !hasmapto('<Plug>TypecorrAdd;')
+ 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 21	endif
+
+我们先检查对 "<Plug>TypecorrAdd;" 的映射是否存在。仅当不存在时我们才定义映射
+"<Leader>a"。这样用户就可以在他自己的 vimrc 文件中加入: >
+
+	map ,c  <Plug>TypecorrAdd;
+
+那么键序列就会是 ",c" 而不是 "_a" 或者 "\a" 了。
+
+
+分 割
+
+如果一个脚本变得相当长，你通常希望将其分割成几部分。常见做法是函数或映射。但同
+时，你又不希望脚本之间这些函数或映射相互干扰。例如，你定义了一个函数 Add()，但
+另一个脚本可能也试图定一同名的函数。为了避免这样的情况发生，我们要使函数局部于
+脚本。幸运地是，|Vim9| 脚本里这已经是缺省。在老式脚本里需要在名字的前面加上
+"s:"。
+
+我们来定义一个用来添加新的错误更正的函数: >
+
+ 28	def Add(from: string, correct: bool)
+ 29	  var to = input($"type the correction for {from}: ")
+ 30	  exe $":iabbrev {from} {to}"
+ ...
+ 34	enddef
+
+这样我们就可以在这个脚本之内调用函数 Add()。如果另一个脚本也定义 Add()，该
+函数将只能在其所定义的脚本内部被调用。独立于这两个函数的全局的 g:Add() 函数也
+可以存在。
+
+映射则可用 <SID>。它产生一个脚本 ID。在我们的错误更正插件中我们可以做以下的定
+义: >
+
+ 22	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ ...
+ 26	noremap <SID>Add  :call <SID>Add(expand("<cword>"), true)<CR>
+
+这样当用户键入 "\a" 时，将触发下面的次序: >
+
+	\a  ->  <Plug>TypecorrAdd;  ->  <SID>Add  ->  :call <SID>Add(...)
+
+如果另一个脚本也定义了映射 <SID>Add，该脚本将产生另一个脚本 ID。所以它定义的映
+射也与前面定义的不同。
+
+注意 在这里我们用了 <SID>Add() 而不是 Add()。这是因为该映射将被用户键入，因
+此是从脚本上下文的外部调用的。<SID> 被翻译成该脚本的 ID。这样 Vim 就知道在哪个
+脚本里寻找相应的 Add() 函数了。
+
+这的确是有点复杂，但又是使多个插件一起工作所必需的。基本规则是: 在映射中使用
+<SID>Add()；在其它地方 (该脚本内部，自动命令，用户命令) 使用 Add()。
+
+我们还可以增加菜单项目来完成映射同样的功能: >
+
+ 24	noremenu <script> Plugin.Add\ Correction      <SID>Add
+
+建议把插件定义的菜单项都加入到 "Plugin" 菜单下。上面的情况只定义了一个菜单选
+项。当有多个选项时，可以创建一个子菜单。例如，一个提供 CVS 操作的插件可以添加
+"Plugin.CVS" 子菜单，并在其中定义 "Plugin.CVS.checkin"，"Plugin.CVS.checkout"
+等菜单项。
+
+注意 为了避免其它映射引起麻烦，在第 28 行使用了 ":noremap"。比如有人可能重新映
+射了 ":call"。在第 24 也用到了 ":noremap"，但我们又希望重新映射 "<SID>Add"。这
+就是为什么在这儿要用 "<script>"。它允许只执行局部于脚本的映射。
+|:map-<script>| 同样的道理也适用于第 26 行的 ":noremenu"。|:menu-<script>|
+
+
+<SID> 和 <Plug>						*using-<Plug>*
+
+<SID> 和 <Plug> 都是用来避免映射的键序列和那些仅仅用于其它映射的映射起冲突。
+注意 <SID> 和 <Plug> 的区别:
+
+<Plug>	在脚本外部是可见的。它被用来定义那些用户可能定义映射的映射。<Plug> 是
+	无法用键盘输入的特殊代码。
+	使用结构: <Plug> 脚本名 映射名，可以使得其它插件使用同样次序的字符来定
+	义映射的几率变得非常小。
+	在我们上面的例子中，脚本名是 "Typecorr"，映射名是 "Add"。我们加上一个
+	分号作为终止符。结果是 "<Plug>TypecorrAdd;"。只有脚本名和映射名的第一
+	个字符是大写的，所以我们可以清楚地看到映射名从什么地方开始。
+
+<SID>	是脚本的 ID，用来唯一的代表一个脚本。Vim 在内部将 <SID> 翻译为
+	"<SNR>123_"，其中 "123" 可以是任何数字。这样一个函数 "<SID>Add()" 可能
+	在一个脚本中被命名为 "<SNR>11_Add()"，而在另一个脚本中被命名为
+	"<SNR>22_Add()"。如果你用 ":function" 命令来获得系统中的函数列表你就可
+	以看到了。映射中对 <SID> 的翻译是完全一样的。这样你才有可能通过一个映
+	射来调用某个脚本中的局部函数。
+
+
+用 户 命 令
+
+现在让我们来定义一个用来添加更正的用户命令: >
+
+ 36	if !exists(":Correct")
+ 37	  command -nargs=1  Correct  :call Add(<q-args>, false)
+ 38	endif
+
+这个用户命令只在系统中没有同样名称的命令时才被定义。否则我们会得到一个错误。用
+":command!" 来覆盖现存的用户命令是个坏主意。这很可能使用户不明白自己定义的命令
+为什么不起作用。|:command|
+如果确实发生了，可以找到谁该被骂: >
+
+	verbose command Correct
+
+
+脚 本 变 量
+
+当一个变量前面带有 "s:" 时，我们将它称为脚本变量。该变量只能在脚本内部被使用。
+在脚本以外该变量是不可见的。这样就避免了在不同的脚本中使用同一个变量名的麻烦。
+该变量在 Vim 的运行期间都是可用的。当再次调用 (source) 该脚本时使用的是同一个
+变量。|s:var|
+
+|Vim9| 脚本的好处是变量缺省都是脚本局部的。可以加 "s" 前缀，但没必要。脚本里的
+函数也可直接用脚本变量而无需前缀 (为此，必须在函数前先声明)。
+
+脚本局部变量也可以在脚本定义的函数、自动命令和用户命令中使用。所以它们是插件各
+部分共享信息而不用担心外泄的最佳途径。在我们的例子中我们可以加入几行用来统计更
+正的个数: >
+
+ 17	var count = 4
+ ...
+ 28	def Add(from: string, correct: bool)
+ ...
+ 32	  count += 1
+ 33	  echo "you now have " .. count .. " corrections"
+ 34	enddef
+
+起初 "count" 被脚本声明以及初始化为 4。当后来 Add() 函数被调用时，其值被增加
+了。在哪里调用函数无关紧要。只要它是定义在该脚本以内的，就可以使用脚本中的局部
+变量。
+
+
+结 果
+
+下面就是完整的例子: >
+
+  1	vim9script noclear
+  2	# Vim global plugin for correcting typing mistakes
+  3	# Last Change:	2021 Dec 30
+  4	# Maintainer:	Bram Moolenaar <Bram@vim.org>
+  5	# License:	This file is placed in the public domain.
+  6
+  7	if exists("g:loaded_typecorrect")
+  8	  finish
+  9	endif
+ 10	g:loaded_typecorrect = 1
+ 11
+ 12	iabbrev teh the
+ 13	iabbrev otehr other
+ 14	iabbrev wnat want
+ 15	iabbrev synchronisation
+ 16		\ synchronization
+ 17	var count = 4
+ 18
+ 19	if !hasmapto('<Plug>TypecorrAdd;')
+ 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 21	endif
+ 22	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ 23
+ 24	noremenu <script> Plugin.Add\ Correction      <SID>Add
+ 25
+ 26	noremap <SID>Add  :call <SID>Add(expand("<cword>"), true)<CR>
+ 27
+ 28	def Add(from: string, correct: bool)
+ 29	  var to = input("type the correction for " .. from .. ": ")
+ 30	  exe ":iabbrev " .. from .. " " .. to
+ 31	  if correct | exe "normal viws\<C-R>\" \b\e" | endif
+ 32	  count += 1
+ 33	  echo "you now have " .. count .. " corrections"
+ 34	enddef
+ 35
+ 36	if !exists(":Correct")
+ 37	  command -nargs=1  Correct  call Add(<q-args>, false)
+ 38	endif
+
+第 31 行还没有解释过。它将新定义的更正用在当前光标下的单词上。|:normal| 被用来
+使用新的缩写。注意 虽然这个函数是被一个以 ":noremap" 定义的映射调用的，这里的
+映射和缩写还是被展开使用了。
+
+
+文 档						 *write-local-help*
+
+给你的插件写一些文档是个好主意。特别是当用户可以自定义其中的某些功能时尤为必
+要。关于如何安装文档，请查阅 |add-local-help|。
+
+下面是一个插件帮助文档的简单例子，名叫 "typecorrect.txt": >
+
+  1	*typecorrect.txt*	Plugin for correcting typing mistakes
+  2
+  3	If you make typing mistakes, this plugin will have them corrected
+  4	automatically.
+  5
+  6	There are currently only a few corrections.  Add your own if you like.
+  7
+  8	Mappings:
+  9	<Leader>a   or   <Plug>TypecorrAdd;
+ 10		Add a correction for the word under the cursor.
+ 11
+ 12	Commands:
+ 13	:Correct {word}
+ 14		Add a correction for {word}.
+ 15
+ 16							*typecorrect-settings*
+ 17	This plugin doesn't have any settings.
+
+其实只有第一行是文档的格式所必需的。Vim 将从该帮助文件中提取该行并加入到
+help.txt 的 "LOCAL ADDITIONS:" |local-additions| (本地附加文档) 一节中。第一个
+"*" 一定要在第一行的第一列。加入你的帮助文件之后用 ":help" 来检查一下各项是否
+很好的对齐了。
+
+你可以为你的帮助文档在 ** 之间加入更多的标签。但请注意不要使用现存的帮助标签。
+你最好能在标签内使用插件名用以区别，比如上例中的 "typecorrect-settings"。
+
+建议使用 || 来引用帮助系统中的其它部分。这可以使用户很容易得找到相关联的帮助。
+
+
+小 结							*plugin-special*
+
+关于插件的小结:
+
+var name		脚本的局部变量。
+
+<SID>			脚本 ID，用于局部于脚本的映射和函数。
+
+hasmapto()		用来检测插件定义的映射是否已经存在的函数。
+
+<Leader>		"mapleader" 的值。用户可以通过该变量定义插件所定义映射
+			的起始字符。
+
+map <unique>		如果一个映射已经存在的话，给出警告信息。
+
+noremap <script>	在映射右边仅执行脚本的局部映射，而不检查全局映射。
+
+exists(":Cmd")		检查一个用户命令是否存在。
+
+==============================================================================
+*51.2*	编写文件类型插件	*write-filetype-plugin* *ftplugin*
+
+文件类型插件和全局插件其实很相似。但是它的选项设置和映射等仅对当前缓冲区有效。
+这类插件的用法请参阅 |add-filetype-plugin|。
+
+请先阅读上面 |51.1| 关于全局插件的叙述。其中所讲的对文件类型插件也都适用。这
+里只讲述一些不同之处。最根本的区别是文件类型插件只应该对当前缓冲区生效。
+
+
+禁 用
+
+如果你在编写一个提供很多人使用的文件类型插件，这些用户应该有机会选择不加载该插
+件。你应该在插件的顶端加上: >
+
+	# Only do this when not done yet for this buffer
+	if exists("b:did_ftplugin")
+	  finish
+	endif
+	b:did_ftplugin = 1
+
+这同时也避免了同一插件在同一缓冲区内被多次执行的错误 (当使用不带参数的 ":edit"
+命令时就会发生)。
+
+现在用户只要编写一个如下几行的文件类型插件就可以完全避免加载缺省的文件类型插件
+了: >
+
+	vim9script
+	b:did_ftplugin = 1
+
+当然这要求该文件类型插件所处的文件类型插件目录在 'runtimepath' 所处的位置在
+$VIMRUNTIME 之前！
+
+如果你的确希望使用缺省的插件，但是又想自行支配其中的某一选项，你可以用一个类似
+下例的插件: >
+
+	set textwidth=70
+
+现在将这个文件存入那个 "after" 目录中。这样它就会在调用 Vim 本身的 "vim.vim"
+文件类型插件之后被调用 |after-directory|。对于 Unix 系统而言，该目录会是
+"~/.vim/after/ftplugin/vim.vim"。注意 缺省的插件设置了 "b:did_ftplugin"，而此
+脚本忽略之。
+
+
+选 项
+
+为了确保文件类型插件仅仅影响当前缓冲区，应该使用 >
+
+	setlocal
+
+命令来设置选项。还要注意只设定缓冲区的局部选项 (查查有关选项的帮助)。当
+`:setlocal` 被用于设置全局选项或者某窗口的局部选项时，会影响到多个缓冲区，这是
+文件类型插件应该避免的。
+
+当一个选项的值是多个标志位或项目的 "合" 时，考虑使用 "+=" 和 "-="，这样可以保
+留现有的值。注意 用户可能已经改变了该选项的值了。通常先将选项的值复位成缺省值
+再做改动是个好主意。例: >
+
+	setlocal formatoptions& formatoptions+=ro
+
+
+映 射
+
+为了确保键盘映射只对当前缓冲区生效，应该使用 >
+
+	map <buffer>
+
+命令。这还应该和上面讲述的两步映射法连起来使用。下面是一个例子: >
+
+	if !hasmapto('<Plug>JavaImport;')
+	  map <buffer> <unique> <LocalLeader>i <Plug>JavaImport;
+	endif
+	noremap <buffer> <unique> <Plug>JavaImport; oimport ""<Left><Esc>
+
+|hasmapto()| 被用来检查用户是否已经定义了一个对 <Plug>JavaImport; 的映射。如果
+没有，该文件类型插件就定义缺省的映射。因为缺省映射是以 |<LocalLeader>| 开始，
+就使得用户可以自己定义映射的起始字符。缺省的是反斜杠。
+"<unique>" 的用途是当已经存在的了这样的映射或者和已经存在的映射有重叠的时候给
+出错误信息。
+|:noremap| 被用来防止其他用户定义的映射干扰。不过，":noremap <script>" 仍然可
+以允许进行脚本中以 <SID> 开头的映射。
+
+一定要给用户保留禁止一个文件类型插件内的映射而不影响其它功能的能力。下面通过
+一个邮件文件类型插件来演示如何做到这一点: >
+
+	# 增加映射，除非用户反对。
+	if !exists("g:no_plugin_maps") && !exists("g:no_mail_maps")
+	  # Quote text by inserting "> "
+	  if !hasmapto('<Plug>MailQuote;')
+	    vmap <buffer> <LocalLeader>q <Plug>MailQuote;
+	    nmap <buffer> <LocalLeader>q <Plug>MailQuote;
+	  endif
+	  vnoremap <buffer> <Plug>MailQuote; :s/^/> /<CR>
+	  nnoremap <buffer> <Plug>MailQuote; :.,$s/^/> /<CR>
+	endif
+
+其中用到了两个全局变量:
+|g:no_plugin_maps|	禁止所有文件类型插件中的映射
+|g:no_mail_maps|	禁止 "mail" 文件类型插件的映射
+
+
+用 户 命 令
+
+在使用 |:command| 命令时，如果加上 "-buffer" 开关，就可以为某一类型的文件加入
+一个用户命令，而该命令又只能用于一个缓冲区。例: >
+
+	command -buffer  Make  make %:r.s
+
+
+变 量
+
+文件类型插件对每一个该类型的文件都会被调用。脚本局部变量会被所有的调用共享。如
+果你想定义一个仅对某个缓冲区生效的变量，使用缓冲区局部变量 |b:var|。
+
+
+函 数
+
+一个函数只需要定义一次就行了。可是文件类型插件会在每次打开相应类型的文件时都被
+调用。下面的结构可以确保函数只被定义一次: >
+
+	if !exists("*Func")
+	  def Func(arg)
+	    ...
+	  enddef
+	endif
+<
+不要忘记 `vim9script` 命令要用 "noclear"，以免脚本再次载入时删除函数。
+
+
+撤 销						*undo_indent* *undo_ftplugin*
+
+当用户执行 ":setfiletype xyz" 时，之前的文件类型命令应该被撤销。在你的文件类型
+插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如: >
+
+	b:undo_ftplugin = "setlocal fo< com< tw< commentstring<"
+		\ .. "| unlet b:match_ignorecase b:match_words b:match_skip"
+
+在 ":setlocal" 命令的选项后使用 "<" 会将其值复位为全局值。这可能是最好的复位
+选项值的方法。
+
+要撤销缩进脚本的效果，必须相应地设定 b:undo_indent 变量。
+
+这两个变量使用老式脚本语法，而不是 |Vim9| 语法。
+
+
+文 件 名
+
+文件类型必须被包括在插件文件名中 |ftplugin-name|。可以使用以下三种形式之一:
+
+	.../ftplugin/stuff.vim
+	.../ftplugin/stuff_foo.vim
+	.../ftplugin/stuff/bar.vim
+
+"stuff" 是文件类型，"foo" 和 "bar" 是任意名字。
+
+
+文 件 类 型 检 测					*plugin-filetype*
+
+如果 Vim 还不能检测到你的文件类型，你需要在单独的文件里创立一个文件类型检测的
+代码段。通常，它的形式是一个自动命令，它在文件名字匹配某模式时设置文件类型。例
+如: >
+
+	au BufNewFile,BufRead *.foo			set filetype=foofoo
+
+把这个一行的文件写到 'runtimepath' 里第一个目录下的 "ftdetect/foofoo.vim"。
+Unix 上应该是 "~/.vim/ftdetect/foofoo.vim"。惯例是，使用文件类型的名字作为脚本
+的名字。
+
+如果你愿意，你可以使用更复杂的检查。比如检查文件的内容以确定使用的语言。另见
+|new-filetype|。
+
+
+小 结						*ftplugin-special*
+
+以下是有关文件类型插件一些特殊环节:
+
+<LocalLeader>		"maplocalleader" 的值，用户可以通过它来自定义文件类型
+			插件中映射的起始字符。
+
+map <buffer>		定义一个仅对缓冲区有效的局部映射。
+
+noremap <script>	仅重映射脚本中以 <SID> 开始的映射。
+
+setlocal		设定仅对当前缓冲区有效的选项。
+
+command -buffer		定义一个仅对缓冲区有效的局部命令。
+
+exists("*s:Func")	查看是否已经定义了某个函数。
+
+参阅所有插件的特殊环节 |plugin-special|。
+
+==============================================================================
+*51.3*	编写编译器插件				*write-compiler-plugin*
+
+编译器插件可以用来设定于某一特定编译器相关的选项。用户可以使用 |:compiler| 命
+令来加载之。主要是用以设定 'errorformat' 及 'makeprg' 选项。
+
+最简单的方法就是学习一个例子。下面的命令将编辑所有缺省安装的编译器插件: >
+
+	next $VIMRUNTIME/compiler/*.vim
+
+用 `:next` 可以查阅下一个插件文件。
+
+这类文件有两个特别之处。一是允许用户否决或者增强缺省文件的机制。缺省的文件以下
+面的代码开始: >
+
+	vim9script
+	if exists("g:current_compiler")
+	  finish
+	endif
+	g:current_compiler = "mine"
+
+当你写了编译器文件并把它放到你个人的运行时目录 (例如，Unix 上 ~/.vim/compiler)
+时，你需要设置 "current_compiler" 变量，使得缺省文件不进行设置。
+							*:CompilerSet*
+第二个特别之处是: 用 ":set" 命令来配合 ":compiler!" 而用 ":setlocal" 来配合
+":compiler"。Vim 为此定义了 ":CompilerSet" 用户命令。然而旧版本的 Vim 没有，因
+此你的插件应该提供该命令。下面是一个例子: >
+
+  if exists(":CompilerSet") != 2
+    command -nargs=* CompilerSet setlocal <args>
+  endif
+  CompilerSet errorformat&		" use the default 'errorformat'
+  CompilerSet makeprg=nmake
+
+当你为 Vim 发布版本或者整个系统编写编译器插件时，应该使用上面提到的机制。这样
+当用户插件已经定义了 "current_compiler" 的时候什么也不做。
+
+当你为了自行定义缺省插件的一些设定而编写编译器插件时，不要检查
+"current_compiler"。这个插件应该在最后加载，因此其所在目录应该在 'runtimepath'
+的最后。对于 Unix 来说可能是 ~/.vim/after/compiler。
+
+==============================================================================
+*51.4*	发布 Vim 脚本					*distribute-script*
+
+Vim 用户可以在 Vim 网站上寻找脚本: http://www.vim.org。如果你实现了对别人也有
+用的功能，让大家一起分享！
+
+另一个地方是 github。但那里你需要知道怎么去找。优点是绝大多数插件管理员都从
+github 获取插件。用你喜欢的搜索引擎去找找吧。
+
+Vim 脚本应该可以用于任何系统。不过，它们不一定有 tar 或 gzip 命令。如果你想把
+文件打包和/或进行压缩，建议使用 "zip" 工具。
+
+最理想的可移植方法是让 Vim 自己给脚本打包，用 Vimball 工具。见 |vimball|。
+
+最好你能加入一行内容，实现自动更新。见 |glvs-plugins|。
+
+==============================================================================
+
+下一章: |usr_52.txt|  编写大型插件
+
+版权: 参见 |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:
