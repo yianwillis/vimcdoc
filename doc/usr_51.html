@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<![endif]-->
+<title>VIM 中文用户手册: 创建插件</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<link rel="canonical" href="https://yianwillis.github.io/vimcdoc/doc/usr_51.html" />
+<script type="text/javascript" src="vimcdoc.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<nav id=banner>
+<form action=tags.html target="tag_iframe">
+  <input type="text" name="tag" id="tag" placeholder="标签搜索">
+</form>
+<iframe name="tag_iframe" src=""></iframe>
+<a href="help.html">帮助总览</a> &middot;
+<hr/>
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="eval.html#functions">函数列表</a> &middot;
+<a href="quickref.html#option-list">选项列表</a> &middot;
+<hr/>
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a> &middot;
+</nav>
+
+<header>
+<h2>usr_51</h2>
+</header>
+<article id=outer>
+<section class=inner>
+<b class="vimtag"> <a name="usr_51.txt">usr_51.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年8月
+
+                     <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+
+                              编写插件
+
+
+插件可用于定义指定类型文件的设置，语法高亮和许多其它特性。本章解释如何编写最常
+见的 Vim 插件。
+
+ <a href="usr_51.html#51.1">51.1</a>   编写通用插件
+ <a href="usr_51.html#51.2">51.2</a>   编写文件类型插件
+ <a href="usr_51.html#51.3">51.3</a>   编写编译器插件
+ <a href="usr_51.html#51.4">51.4</a>   发布 Vim 脚本
+
+           下一章:  <a href="usr_52.html#usr_52.txt">usr_52.txt</a>   编写大型插件
+           前一章:  <a href="usr_50.html#usr_50.txt">usr_50.txt</a>   高级 Vim 脚本编写
+             目录:  <a href="usr_toc.html#usr_toc.txt">usr_toc.txt</a> 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="51.1">51.1</a> </b>  编写通用插件                                    <b class="vimtag"> <a name="write-plugin">write-plugin</a> </b></h4>
+用约定方式编写的脚本能够被除作者外的很多人使用。这样的脚本叫做插件。Vim 用户只
+要把你写的脚本放在 plugin 目录下就可以立即使用了:  <a href="usr_05.html#add-plugin">add-plugin</a> 。
+
+实际上有两种插件:
+
+    全局插件: 适用于所有类型的文件。
+文件类型插件: 仅适用于某种类型的文件。
+
+这一节将介绍第一种。很多的东西也同样适用于编写文件类型插件。仅适用于编写文件类
+型插件的知识将在下一节  <a href="usr_51.html#write-filetype-plugin">write-filetype-plugin</a>  做介绍。
+
+这里我们用  <a href="vim9.html#Vim9">Vim9</a>  语法，编写新插件的推荐方式。请确保文件以  <a href="vim9.html#vim9script">vim9script</a>  命令开
+始。
+
+
+插 件 名
+
+首先你得给你的插件起个名字。这个名字应该很清楚地表示该插件的用途。同时应该避免
+同别的插件用同样的名字而用途不同。
+
+一个纠正打字错误的插件可能被命名为 "typecorrect.vim"。我们将用这个名字来举例。
+
+为了使一个插件能被所有人使用，要<code class="note">注意</code>一些事项。下面我们将一步步的讲解。最后会给
+出这个插件的完整示例。
+
+
+插 件 体
+
+让我们从做实际工作的插件体开始: 
+<code class="example"></code>
+<code class="example"> 12     iabbrev teh the</code>
+<code class="example"> 13     iabbrev otehr other</code>
+<code class="example"> 14     iabbrev wnat want</code>
+<code class="example"> 15     iabbrev synchronisation</code>
+<code class="example"> 16             \ synchronization</code>
+<code class="example"></code>
+当然，真正的清单会比这长的多。
+
+上面的行号只是为了方便解释，不要把它们也加入到你的插件文件中去！
+
+
+首 行
+
+<code class="example">  1     vim9script noclear</code>
+<code class="example"></code>
+ <a href="vim9.html#vim9script">vim9script</a>  必须是第一个命令，建议放在文件的首行上。
+
+我们编写的脚本会有  <code class="badlink">finish</code>  命令在第二次载入时立即退出。使用 "noclear" 参数可
+以避免脚本定义的项目丢失。更多细节可见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
+
+
+插 件 头
+
+你很可能对这个插件做新的修改并很快就有了好几个版本。并且当你发布文件的时候，别
+人也想知道是谁编写了这样好的插件或者给作者提点意见。所以，在你的插件头部加上一
+些描述性的注释是很必要的: 
+<code class="example"></code>
+<code class="example">  2     # Vim global plugin for correcting typing mistakes</code>
+<code class="example">  3     # Last Change:  2021 Dec 30</code>
+<code class="example">  4     # Maintainer:   Bram Moolenaar &lt;Bram@vim.org&gt;</code>
+<code class="example"></code>
+关于版权和许可: 由于插件很有用，而且几乎不值得限制其发行，请考虑对你的插件使用
+公共领域 (public domain) 或 Vim 许可  <a href="uganda.html#license">license</a> 。在文件顶部放上说明就行了。例
+如: 
+<code class="example"></code>
+<code class="example">  5     # License:      This file is placed in the public domain.</code>
+<code class="example"></code>
+<code class="example"></code>
+禁 止 加 载
+
+有可能一个用户并不总希望加载这个插件。或者系统管理员在系统的插件目录中已经把这
+个插件删除了，而用户希望使用它自己安装的插件。用户应该有机会选择不加载指定的插
+件。下面的一段代码就是用来实现这个目的的: 
+<code class="example"></code>
+<code class="example">  7     if exists("g:loaded_typecorrect")</code>
+<code class="example">  8       finish</code>
+<code class="example">  9     endif</code>
+<code class="example"> 10     g:loaded_typecorrect = 1</code>
+<code class="example"></code>
+这同时也避免了同一个脚本被加载两次以上。因为那样函数会无意义地被重新定义，自动
+命令被多次加入也会引起问题。
+
+建议使用的名字以 "g:loaded_" 开头，然后是插件的文件名，按原义输入。之前加上
+"g:" 使此变量成为全局的，这样其它地方可以检查插件功能是否已存在。如果没有 "g:"
+这将是局部于函数的变量。
+
+ <code class="badlink">finish</code>  阻止 Vim 继续读入文件的其余部分，这比用 if-endif 包围整个文件要快得
+多，因为 Vim 会需要解析所有这些命令以找到  <code class="badlink">endif</code> 。
+
+
+映 射
+
+现在让我们把这个插件变得更有趣些: 我们将加入一个映射用来校正当前光标下的单词。
+我们当然可以任意选一个键组合，但是用户可能已经将其定义为其它的什么功能了。为了
+使用户能够自己定义在插件中的键盘映射使用的键，我们可以使用 <code class="special">&lt;Leader&gt;</code> 标识: 
+<code class="example"></code>
+<code class="example"> 20       map &lt;unique&gt; &lt;Leader&gt;a  &lt;Plug&gt;TypecorrAdd;</code>
+<code class="example"></code>
+那个 "<code class="special">&lt;Plug&gt;</code>TypecorrAdd;" 会做实际的工作，后面我们还会做更多解释。
+
+用户可以将 "g:mapleader" 变量设为他所希望的开始插件映射的键组合。比如假设用户
+这样做: 
+<code class="example"></code>
+<code class="example">        g:mapleader = "_"</code>
+<code class="example"></code>
+映射将定义为 "_a"。如果用户没有这样做，Vim 将使用缺省值反斜杠。这样就会定义一
+个映射 - "\a"。
+
+<code class="note">注意</code> 其中用到了 <code class="special">&lt;unique&gt;</code>，这会使得 Vim 在映射已经存在时给出错误信息。
+ <a href="map.html#:map-%3Cunique%3E">:map-&lt;unique&gt;</a> 
+
+但是如果用户希望定义自己的键操作呢？我们可以用下面的方法来解决: 
+<code class="example"></code>
+<code class="example"> 19     if !hasmapto('&lt;Plug&gt;TypecorrAdd;')</code>
+<code class="example"> 20       map &lt;unique&gt; &lt;Leader&gt;a  &lt;Plug&gt;TypecorrAdd;</code>
+<code class="example"> 21     endif</code>
+<code class="example"></code>
+我们先检查对 "<code class="special">&lt;Plug&gt;</code>TypecorrAdd;" 的映射是否存在。仅当不存在时我们才定义映射
+"<code class="special">&lt;Leader&gt;</code>a"。这样用户就可以在他自己的 vimrc 文件中加入: 
+<code class="example"></code>
+<code class="example">        map ,c  &lt;Plug&gt;TypecorrAdd;</code>
+<code class="example"></code>
+那么键序列就会是 ",c" 而不是 "_a" 或者 "\a" 了。
+
+
+分 割
+
+如果一个脚本变得相当长，你通常希望将其分割成几部分。常见做法是函数或映射。但同
+时，你又不希望脚本之间这些函数或映射相互干扰。例如，你定义了一个函数 Add()，但
+另一个脚本可能也试图定一同名的函数。为了避免这样的情况发生，我们要使函数局部于
+脚本。幸运地是， <a href="vim9.html#Vim9">Vim9</a>  脚本里这已经是缺省。在老式脚本里需要在名字的前面加上
+"s:"。
+
+我们来定义一个用来添加新的错误更正的函数: 
+<code class="example"></code>
+<code class="example"> 28     def Add(from: string, correct: bool)</code>
+<code class="example"> 29       var to = input($"type the correction for {from}: ")</code>
+<code class="example"> 30       exe $":iabbrev {from} {to}"</code>
+<code class="example"> ...</code>
+<code class="example"> 34     enddef</code>
+<code class="example"></code>
+这样我们就可以在这个脚本之内调用函数 Add()。如果另一个脚本也定义 Add()，该
+函数将只能在其所定义的脚本内部被调用。独立于这两个函数的全局的 g:Add() 函数也
+可以存在。
+
+映射则可用 <code class="special">&lt;SID&gt;</code>。它产生一个脚本 ID。在我们的错误更正插件中我们可以做以下的定
+义: 
+<code class="example"></code>
+<code class="example"> 22     noremap &lt;unique&gt; &lt;script&gt; &lt;Plug&gt;TypecorrAdd;  &lt;SID&gt;Add</code>
+<code class="example"> ...</code>
+<code class="example"> 26     noremap &lt;SID&gt;Add  :call &lt;SID&gt;Add(expand("&lt;cword&gt;"), true)&lt;CR&gt;</code>
+<code class="example"></code>
+这样当用户键入 "\a" 时，将触发下面的次序: 
+<code class="example"></code>
+<code class="example">        \a  -&gt;  &lt;Plug&gt;TypecorrAdd;  -&gt;  &lt;SID&gt;Add  -&gt;  :call &lt;SID&gt;Add(...)</code>
+<code class="example"></code>
+如果另一个脚本也定义了映射 <code class="special">&lt;SID&gt;</code>Add，该脚本将产生另一个脚本 ID。所以它定义的映
+射也与前面定义的不同。
+
+<code class="note">注意</code> 在这里我们用了 <code class="special">&lt;SID&gt;</code>Add() 而不是 Add()。这是因为该映射将被用户键入，因
+此是从脚本上下文的外部调用的。<code class="special">&lt;SID&gt;</code> 被翻译成该脚本的 ID。这样 Vim 就知道在哪个
+脚本里寻找相应的 Add() 函数了。
+
+这的确是有点复杂，但又是使多个插件一起工作所必需的。基本规则是: 在映射中使用
+<code class="special">&lt;SID&gt;</code>Add()；在其它地方 (该脚本内部，自动命令，用户命令) 使用 Add()。
+
+我们还可以增加菜单项目来完成映射同样的功能: 
+<code class="example"></code>
+<code class="example"> 24     noremenu &lt;script&gt; Plugin.Add\ Correction      &lt;SID&gt;Add</code>
+<code class="example"></code>
+建议把插件定义的菜单项都加入到 "Plugin" 菜单下。上面的情况只定义了一个菜单选
+项。当有多个选项时，可以创建一个子菜单。例如，一个提供 CVS 操作的插件可以添加
+"Plugin.CVS" 子菜单，并在其中定义 "Plugin.CVS.checkin"，"Plugin.CVS.checkout"
+等菜单项。
+
+<code class="note">注意</code> 为了避免其它映射引起麻烦，在第 28 行使用了 ":noremap"。比如有人可能重新映
+射了 ":call"。在第 24 也用到了 ":noremap"，但我们又希望重新映射 "<code class="special">&lt;SID&gt;</code>Add"。这
+就是为什么在这儿要用 "<code class="special">&lt;script&gt;</code>"。它允许只执行局部于脚本的映射。
+ <a href="map.html#:map-%3Cscript%3E">:map-&lt;script&gt;</a>  同样的道理也适用于第 26 行的 ":noremenu"。 <a href="gui.html#:menu-%3Cscript%3E">:menu-&lt;script&gt;</a> 
+
+
+<code class="special">&lt;SID&gt;</code> 和 <code class="special">&lt;Plug&gt;</code>                                         <b class="vimtag"> <a name="using-%3CPlug%3E">using-&lt;Plug&gt;</a> </b>
+
+<code class="special">&lt;SID&gt;</code> 和 <code class="special">&lt;Plug&gt;</code> 都是用来避免映射的键序列和那些仅仅用于其它映射的映射起冲突。
+<code class="note">注意</code> <code class="special">&lt;SID&gt;</code> 和 <code class="special">&lt;Plug&gt;</code> 的区别:
+
+<code class="special">&lt;Plug&gt;</code>  在脚本外部是可见的。它被用来定义那些用户可能定义映射的映射。<code class="special">&lt;Plug&gt;</code> 是
+        无法用键盘输入的特殊代码。
+        使用结构: <code class="special">&lt;Plug&gt;</code> 脚本名 映射名，可以使得其它插件使用同样次序的字符来定
+        义映射的几率变得非常小。
+        在我们上面的例子中，脚本名是 "Typecorr"，映射名是 "Add"。我们加上一个
+        分号作为终止符。结果是 "<code class="special">&lt;Plug&gt;</code>TypecorrAdd;"。只有脚本名和映射名的第一
+        个字符是大写的，所以我们可以清楚地看到映射名从什么地方开始。
+
+<code class="special">&lt;SID&gt;</code>   是脚本的 ID，用来唯一的代表一个脚本。Vim 在内部将 <code class="special">&lt;SID&gt;</code> 翻译为
+        "<code class="special">&lt;SNR&gt;</code>123_"，其中 "123" 可以是任何数字。这样一个函数 "<code class="special">&lt;SID&gt;</code>Add()" 可能
+        在一个脚本中被命名为 "<code class="special">&lt;SNR&gt;</code>11_Add()"，而在另一个脚本中被命名为
+        "<code class="special">&lt;SNR&gt;</code>22_Add()"。如果你用 ":function" 命令来获得系统中的函数列表你就可
+        以看到了。映射中对 <code class="special">&lt;SID&gt;</code> 的翻译是完全一样的。这样你才有可能通过一个映
+        射来调用某个脚本中的局部函数。
+
+
+用 户 命 令
+
+现在让我们来定义一个用来添加更正的用户命令: 
+<code class="example"></code>
+<code class="example"> 36     if !exists(":Correct")</code>
+<code class="example"> 37       command -nargs=1  Correct  :call Add(&lt;q-args&gt;, false)</code>
+<code class="example"> 38     endif</code>
+<code class="example"></code>
+这个用户命令只在系统中没有同样名称的命令时才被定义。否则我们会得到一个错误。用
+":command!" 来覆盖现存的用户命令是个坏主意。这很可能使用户不明白自己定义的命令
+为什么不起作用。 <a href="map.html#:command">:command</a> 
+如果确实发生了，可以找到谁该被骂: 
+<code class="example"></code>
+<code class="example">        verbose command Correct</code>
+<code class="example"></code>
+<code class="example"></code>
+脚 本 变 量
+
+当一个变量前面带有 "s:" 时，我们将它称为脚本变量。该变量只能在脚本内部被使用。
+在脚本以外该变量是不可见的。这样就避免了在不同的脚本中使用同一个变量名的麻烦。
+该变量在 Vim 的运行期间都是可用的。当再次调用 (source) 该脚本时使用的是同一个
+变量。 <a href="eval.html#s:var">s:var</a> 
+
+ <a href="vim9.html#Vim9">Vim9</a>  脚本的好处是变量缺省都是脚本局部的。可以加 "s" 前缀，但没必要。脚本里的
+函数也可直接用脚本变量而无需前缀 (为此，必须在函数前先声明)。
+
+脚本局部变量也可以在脚本定义的函数、自动命令和用户命令中使用。所以它们是插件各
+部分共享信息而不用担心外泄的最佳途径。在我们的例子中我们可以加入几行用来统计更
+正的个数: 
+<code class="example"></code>
+<code class="example"> 17     var count = 4</code>
+<code class="example"> ...</code>
+<code class="example"> 28     def Add(from: string, correct: bool)</code>
+<code class="example"> ...</code>
+<code class="example"> 32       count += 1</code>
+<code class="example"> 33       echo "you now have " .. count .. " corrections"</code>
+<code class="example"> 34     enddef</code>
+<code class="example"></code>
+起初 "count" 被脚本声明以及初始化为 4。当后来 Add() 函数被调用时，其值被增加
+了。在哪里调用函数无关紧要。只要它是定义在该脚本以内的，就可以使用脚本中的局部
+变量。
+
+
+结 果
+
+下面就是完整的例子: 
+<code class="example"></code>
+<code class="example">  1     vim9script noclear</code>
+<code class="example">  2     # Vim global plugin for correcting typing mistakes</code>
+<code class="example">  3     # Last Change:  2021 Dec 30</code>
+<code class="example">  4     # Maintainer:   Bram Moolenaar &lt;Bram@vim.org&gt;</code>
+<code class="example">  5     # License:      This file is placed in the public domain.</code>
+<code class="example">  6</code>
+<code class="example">  7     if exists("g:loaded_typecorrect")</code>
+<code class="example">  8       finish</code>
+<code class="example">  9     endif</code>
+<code class="example"> 10     g:loaded_typecorrect = 1</code>
+<code class="example"> 11</code>
+<code class="example"> 12     iabbrev teh the</code>
+<code class="example"> 13     iabbrev otehr other</code>
+<code class="example"> 14     iabbrev wnat want</code>
+<code class="example"> 15     iabbrev synchronisation</code>
+<code class="example"> 16             \ synchronization</code>
+<code class="example"> 17     var count = 4</code>
+<code class="example"> 18</code>
+<code class="example"> 19     if !hasmapto('&lt;Plug&gt;TypecorrAdd;')</code>
+<code class="example"> 20       map &lt;unique&gt; &lt;Leader&gt;a  &lt;Plug&gt;TypecorrAdd;</code>
+<code class="example"> 21     endif</code>
+<code class="example"> 22     noremap &lt;unique&gt; &lt;script&gt; &lt;Plug&gt;TypecorrAdd;  &lt;SID&gt;Add</code>
+<code class="example"> 23</code>
+<code class="example"> 24     noremenu &lt;script&gt; Plugin.Add\ Correction      &lt;SID&gt;Add</code>
+<code class="example"> 25</code>
+<code class="example"> 26     noremap &lt;SID&gt;Add  :call &lt;SID&gt;Add(expand("&lt;cword&gt;"), true)&lt;CR&gt;</code>
+<code class="example"> 27</code>
+<code class="example"> 28     def Add(from: string, correct: bool)</code>
+<code class="example"> 29       var to = input("type the correction for " .. from .. ": ")</code>
+<code class="example"> 30       exe ":iabbrev " .. from .. " " .. to</code>
+<code class="example"> 31       if correct | exe "normal viws\&lt;C-R&gt;\" \b\e" | endif</code>
+<code class="example"> 32       count += 1</code>
+<code class="example"> 33       echo "you now have " .. count .. " corrections"</code>
+<code class="example"> 34     enddef</code>
+<code class="example"> 35</code>
+<code class="example"> 36     if !exists(":Correct")</code>
+<code class="example"> 37       command -nargs=1  Correct  call Add(&lt;q-args&gt;, false)</code>
+<code class="example"> 38     endif</code>
+<code class="example"></code>
+第 31 行还没有解释过。它将新定义的更正用在当前光标下的单词上。 <a href="various.html#:normal">:normal</a>  被用来
+使用新的缩写。<code class="note">注意</code> 虽然这个函数是被一个以 ":noremap" 定义的映射调用的，这里的
+映射和缩写还是被展开使用了。
+
+
+文 档                                            <b class="vimtag"> <a name="write-local-help">write-local-help</a> </b>
+
+给你的插件写一些文档是个好主意。特别是当用户可以自定义其中的某些功能时尤为必
+要。关于如何安装文档，请查阅  <a href="usr_05.html#add-local-help">add-local-help</a> 。
+
+下面是一个插件帮助文档的简单例子，名叫 "typecorrect.txt": 
+<code class="example"></code>
+<code class="example">  1     *typecorrect.txt*       Plugin for correcting typing mistakes</code>
+<code class="example">  2</code>
+<code class="example">  3     If you make typing mistakes, this plugin will have them corrected</code>
+<code class="example">  4     automatically.</code>
+<code class="example">  5</code>
+<code class="example">  6     There are currently only a few corrections.  Add your own if you like.</code>
+<code class="example">  7</code>
+<code class="example">  8     Mappings:</code>
+<code class="example">  9     &lt;Leader&gt;a   or   &lt;Plug&gt;TypecorrAdd;</code>
+<code class="example"> 10             Add a correction for the word under the cursor.</code>
+<code class="example"> 11</code>
+<code class="example"> 12     Commands:</code>
+<code class="example"> 13     :Correct {word}</code>
+<code class="example"> 14             Add a correction for {word}.</code>
+<code class="example"> 15</code>
+<code class="example"> 16                                                     *typecorrect-settings*</code>
+<code class="example"> 17     This plugin doesn't have any settings.</code>
+<code class="example"></code>
+其实只有第一行是文档的格式所必需的。Vim 将从该帮助文件中提取该行并加入到
+help.txt 的 "LOCAL ADDITIONS:"  <code class="badlink">local-additions</code>  (本地附加文档) 一节中。第一个
+"*" 一定要在第一行的第一列。加入你的帮助文件之后用 ":help" 来检查一下各项是否
+很好的对齐了。
+
+你可以为你的帮助文档在 ** 之间加入更多的标签。但请<code class="note">注意</code>不要使用现存的帮助标签。
+你最好能在标签内使用插件名用以区别，比如上例中的 "typecorrect-settings"。
+
+建议使用 || 来引用帮助系统中的其它部分。这可以使用户很容易得找到相关联的帮助。
+
+
+小 结                                                   <b class="vimtag"> <a name="plugin-special">plugin-special</a> </b>
+
+关于插件的小结:
+
+var name                脚本的局部变量。
+
+<code class="special">&lt;SID&gt;</code>                   脚本 ID，用于局部于脚本的映射和函数。
+
+hasmapto()              用来检测插件定义的映射是否已经存在的函数。
+
+<code class="special">&lt;Leader&gt;</code>                "mapleader" 的值。用户可以通过该变量定义插件所定义映射
+                        的起始字符。
+
+map <code class="special">&lt;unique&gt;</code>            如果一个映射已经存在的话，给出<code class="note">警告</code>信息。
+
+noremap <code class="special">&lt;script&gt;</code>        在映射右边仅执行脚本的局部映射，而不检查全局映射。
+
+exists(":Cmd")          检查一个用户命令是否存在。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="51.2">51.2</a> </b>  编写文件类型插件        <b class="vimtag"> <a name="write-filetype-plugin">write-filetype-plugin</a> </b> <b class="vimtag"> <a name="ftplugin">ftplugin</a> </b></h4>
+文件类型插件和全局插件其实很相似。但是它的选项设置和映射等仅对当前缓冲区有效。
+这类插件的用法请参阅  <a href="usr_05.html#add-filetype-plugin">add-filetype-plugin</a> 。
+
+请先阅读上面  <a href="usr_51.html#51.1">51.1</a>  关于全局插件的叙述。其中所讲的对文件类型插件也都适用。这
+里只讲述一些不同之处。最根本的区别是文件类型插件只应该对当前缓冲区生效。
+
+
+禁 用
+
+如果你在编写一个提供很多人使用的文件类型插件，这些用户应该有机会选择不加载该插
+件。你应该在插件的顶端加上: 
+<code class="example"></code>
+<code class="example">        # Only do this when not done yet for this buffer</code>
+<code class="example">        if exists("b:did_ftplugin")</code>
+<code class="example">          finish</code>
+<code class="example">        endif</code>
+<code class="example">        b:did_ftplugin = 1</code>
+<code class="example"></code>
+这同时也避免了同一插件在同一缓冲区内被多次执行的错误 (当使用不带参数的 ":edit"
+命令时就会发生)。
+
+现在用户只要编写一个如下几行的文件类型插件就可以完全避免加载缺省的文件类型插件
+了: 
+<code class="example"></code>
+<code class="example">        vim9script</code>
+<code class="example">        b:did_ftplugin = 1</code>
+<code class="example"></code>
+当然这要求该文件类型插件所处的文件类型插件目录在 <a href="options.html#'runtimepath'">'runtimepath'</a> 所处的位置在
+$VIMRUNTIME 之前！
+
+如果你的确希望使用缺省的插件，但是又想自行支配其中的某一选项，你可以用一个类似
+下例的插件: 
+<code class="example"></code>
+<code class="example">        set textwidth=70</code>
+<code class="example"></code>
+现在将这个文件存入那个 "after" 目录中。这样它就会在调用 Vim 本身的 "vim.vim"
+文件类型插件之后被调用  <a href="options.html#after-directory">after-directory</a> 。对于 Unix 系统而言，该目录会是
+"~/.vim/after/ftplugin/vim.vim"。<code class="note">注意</code> 缺省的插件设置了 "b:did_ftplugin"，而此
+脚本忽略之。
+
+
+选 项
+
+为了确保文件类型插件仅仅影响当前缓冲区，应该使用 
+<code class="example"></code>
+<code class="example">        setlocal</code>
+<code class="example"></code>
+命令来设置选项。还要<code class="note">注意</code>只设定缓冲区的局部选项 (查查有关选项的帮助)。当
+ <a href="options.html#:setlocal">:setlocal</a>  被用于设置全局选项或者某窗口的局部选项时，会影响到多个缓冲区，这是
+文件类型插件应该避免的。
+
+当一个选项的值是多个标志位或项目的 "合" 时，考虑使用 "+=" 和 "-="，这样可以保
+留现有的值。<code class="note">注意</code> 用户可能已经改变了该选项的值了。通常先将选项的值复位成缺省值
+再做改动是个好主意。例: 
+<code class="example"></code>
+<code class="example">        setlocal formatoptions&amp; formatoptions+=ro</code>
+<code class="example"></code>
+<code class="example"></code>
+映 射
+
+为了确保键盘映射只对当前缓冲区生效，应该使用 
+<code class="example"></code>
+<code class="example">        map &lt;buffer&gt;</code>
+<code class="example"></code>
+命令。这还应该和上面讲述的两步映射法连起来使用。下面是一个例子: 
+<code class="example"></code>
+<code class="example">        if !hasmapto('&lt;Plug&gt;JavaImport;')</code>
+<code class="example">          map &lt;buffer&gt; &lt;unique&gt; &lt;LocalLeader&gt;i &lt;Plug&gt;JavaImport;</code>
+<code class="example">        endif</code>
+<code class="example">        noremap &lt;buffer&gt; &lt;unique&gt; &lt;Plug&gt;JavaImport; oimport ""&lt;Left&gt;&lt;Esc&gt;</code>
+<code class="example"></code>
+ <a href="builtin.html#hasmapto()">hasmapto()</a>  被用来检查用户是否已经定义了一个对 <code class="special">&lt;Plug&gt;</code>JavaImport; 的映射。如果
+没有，该文件类型插件就定义缺省的映射。因为缺省映射是以  <a href="map.html#%3CLocalLeader%3E">&lt;LocalLeader&gt;</a>  开始，
+就使得用户可以自己定义映射的起始字符。缺省的是反斜杠。
+"<code class="special">&lt;unique&gt;</code>" 的用途是当已经存在的了这样的映射或者和已经存在的映射有重叠的时候给
+出错误信息。
+ <a href="map.html#:noremap">:noremap</a>  被用来防止其他用户定义的映射干扰。不过，":noremap <code class="special">&lt;script&gt;</code>" 仍然可
+以允许进行脚本中以 <code class="special">&lt;SID&gt;</code> 开头的映射。
+
+一定要给用户保留禁止一个文件类型插件内的映射而不影响其它功能的能力。下面通过
+一个邮件文件类型插件来演示如何做到这一点: 
+<code class="example"></code>
+<code class="example">        # 增加映射，除非用户反对。</code>
+<code class="example">        if !exists("g:no_plugin_maps") &amp;&amp; !exists("g:no_mail_maps")</code>
+<code class="example">          # Quote text by inserting "&gt; "</code>
+<code class="example">          if !hasmapto('&lt;Plug&gt;MailQuote;')</code>
+<code class="example">            vmap &lt;buffer&gt; &lt;LocalLeader&gt;q &lt;Plug&gt;MailQuote;</code>
+<code class="example">            nmap &lt;buffer&gt; &lt;LocalLeader&gt;q &lt;Plug&gt;MailQuote;</code>
+<code class="example">          endif</code>
+<code class="example">          vnoremap &lt;buffer&gt; &lt;Plug&gt;MailQuote; :s/^/&gt; /&lt;CR&gt;</code>
+<code class="example">          nnoremap &lt;buffer&gt; &lt;Plug&gt;MailQuote; :.,$s/^/&gt; /&lt;CR&gt;</code>
+<code class="example">        endif</code>
+<code class="example"></code>
+其中用到了两个全局变量:
+ <a href="filetype.html#g:no_plugin_maps">g:no_plugin_maps</a>       禁止所有文件类型插件中的映射
+ <a href="filetype.html#g:no_mail_maps">g:no_mail_maps</a>         禁止 "mail" 文件类型插件的映射
+
+
+用 户 命 令
+
+在使用  <a href="map.html#:command">:command</a>  命令时，如果加上 "-buffer" 开关，就可以为某一类型的文件加入
+一个用户命令，而该命令又只能用于一个缓冲区。例: 
+<code class="example"></code>
+<code class="example">        command -buffer  Make  make %:r.s</code>
+<code class="example"></code>
+<code class="example"></code>
+变 量
+
+文件类型插件对每一个该类型的文件都会被调用。脚本局部变量会被所有的调用共享。如
+果你想定义一个仅对某个缓冲区生效的变量，使用缓冲区局部变量  <a href="eval.html#b:var">b:var</a> 。
+
+
+函 数
+
+一个函数只需要定义一次就行了。可是文件类型插件会在每次打开相应类型的文件时都被
+调用。下面的结构可以确保函数只被定义一次: 
+<code class="example"></code>
+<code class="example">        if !exists("*Func")</code>
+<code class="example">          def Func(arg)</code>
+<code class="example">            ...</code>
+<code class="example">          enddef</code>
+<code class="example">        endif</code>
+
+不要忘记  <a href="vim9.html#vim9script">vim9script</a>  命令要用 "noclear"，以免脚本再次载入时删除函数。
+
+
+撤 销                                           <b class="vimtag"> <a name="undo_indent">undo_indent</a> </b> <b class="vimtag"> <a name="undo_ftplugin">undo_ftplugin</a> </b>
+
+当用户执行 ":setfiletype xyz" 时，之前的文件类型命令应该被撤销。在你的文件类型
+插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如: 
+<code class="example"></code>
+<code class="example">        b:undo_ftplugin = "setlocal fo&lt; com&lt; tw&lt; commentstring&lt;"</code>
+<code class="example">                \ .. "| unlet b:match_ignorecase b:match_words b:match_skip"</code>
+<code class="example"></code>
+在 ":setlocal" 命令的选项后使用 "&lt;" 会将其值复位为全局值。这可能是最好的复位
+选项值的方法。
+
+要撤销缩进脚本的效果，必须相应地设定 b:undo_indent 变量。
+
+这两个变量使用老式脚本语法，而不是  <a href="vim9.html#Vim9">Vim9</a>  语法。
+
+
+文 件 名
+
+文件类型必须被包括在插件文件名中  <a href="usr_05.html#ftplugin-name">ftplugin-name</a> 。可以使用以下三种形式之一:
+
+        .../ftplugin/stuff.vim
+        .../ftplugin/stuff_foo.vim
+        .../ftplugin/stuff/bar.vim
+
+"stuff" 是文件类型，"foo" 和 "bar" 是任意名字。
+
+
+文 件 类 型 检 测                                       <b class="vimtag"> <a name="plugin-filetype">plugin-filetype</a> </b>
+
+如果 Vim 还不能检测到你的文件类型，你需要在单独的文件里创立一个文件类型检测的
+代码段。通常，它的形式是一个自动命令，它在文件名字匹配某模式时设置文件类型。例
+如: 
+<code class="example"></code>
+<code class="example">        au BufNewFile,BufRead *.foo                     set filetype=foofoo</code>
+<code class="example"></code>
+把这个一行的文件写到 <a href="options.html#'runtimepath'">'runtimepath'</a> 里第一个目录下的 "ftdetect/foofoo.vim"。
+Unix 上应该是 "~/.vim/ftdetect/foofoo.vim"。惯例是，使用文件类型的名字作为脚本
+的名字。
+
+如果你愿意，你可以使用更复杂的检查。比如检查文件的内容以确定使用的语言。另见
+ <a href="filetype.html#new-filetype">new-filetype</a> 。
+
+
+小 结                                           <b class="vimtag"> <a name="ftplugin-special">ftplugin-special</a> </b>
+
+以下是有关文件类型插件一些特殊环节:
+
+<code class="special">&lt;LocalLeader&gt;</code>           "maplocalleader" 的值，用户可以通过它来自定义文件类型
+                        插件中映射的起始字符。
+
+map <code class="special">&lt;buffer&gt;</code>            定义一个仅对缓冲区有效的局部映射。
+
+noremap <code class="special">&lt;script&gt;</code>        仅重映射脚本中以 <code class="special">&lt;SID&gt;</code> 开始的映射。
+
+setlocal                设定仅对当前缓冲区有效的选项。
+
+command -buffer         定义一个仅对缓冲区有效的局部命令。
+
+exists("*s:Func")       查看是否已经定义了某个函数。
+
+参阅所有插件的特殊环节  <a href="usr_51.html#plugin-special">plugin-special</a> 。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="51.3">51.3</a> </b>  编写编译器插件                          <b class="vimtag"> <a name="write-compiler-plugin">write-compiler-plugin</a> </b></h4>
+编译器插件可以用来设定于某一特定编译器相关的选项。用户可以使用  <a href="quickfix.html#:compiler">:compiler</a>  命
+令来加载之。主要是用以设定 <a href="options.html#'errorformat'">'errorformat'</a> 及 <a href="options.html#'makeprg'">'makeprg'</a> 选项。
+
+最简单的方法就是学习一个例子。下面的命令将编辑所有缺省安装的编译器插件: 
+<code class="example"></code>
+<code class="example">        next $VIMRUNTIME/compiler/*.vim</code>
+<code class="example"></code>
+用  <a href="editing.html#:next">:next</a>  可以查阅下一个插件文件。
+
+这类文件有两个特别之处。一是允许用户否决或者增强缺省文件的机制。缺省的文件以下
+面的代码开始: 
+<code class="example"></code>
+<code class="example">        vim9script</code>
+<code class="example">        if exists("g:current_compiler")</code>
+<code class="example">          finish</code>
+<code class="example">        endif</code>
+<code class="example">        g:current_compiler = "mine"</code>
+<code class="example"></code>
+当你写了编译器文件并把它放到你个人的运行时目录 (例如，Unix 上 ~/.vim/compiler)
+时，你需要设置 "current_compiler" 变量，使得缺省文件不进行设置。
+                                                        <b class="vimtag"> <a name=":CompilerSet">:CompilerSet</a> </b>
+第二个特别之处是: 用 ":set" 命令来配合 ":compiler!" 而用 ":setlocal" 来配合
+":compiler"。Vim 为此定义了 ":CompilerSet" 用户命令。然而旧版本的 Vim 没有，因
+此你的插件应该提供该命令。下面是一个例子: 
+<code class="example"></code>
+<code class="example">  if exists(":CompilerSet") != 2</code>
+<code class="example">    command -nargs=* CompilerSet setlocal &lt;args&gt;</code>
+<code class="example">  endif</code>
+<code class="example">  CompilerSet errorformat&amp;              " use the default 'errorformat'</code>
+<code class="example">  CompilerSet makeprg=nmake</code>
+<code class="example"></code>
+当你为 Vim 发布版本或者整个系统编写编译器插件时，应该使用上面提到的机制。这样
+当用户插件已经定义了 "current_compiler" 的时候什么也不做。
+
+当你为了自行定义缺省插件的一些设定而编写编译器插件时，不要检查
+"current_compiler"。这个插件应该在最后加载，因此其所在目录应该在 <a href="options.html#'runtimepath'">'runtimepath'</a>
+的最后。对于 Unix 来说可能是 ~/.vim/after/compiler。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="51.4">51.4</a> </b>  发布 Vim 脚本                                   <b class="vimtag"> <a name="distribute-script">distribute-script</a> </b></h4>
+Vim 用户可以在 Vim 网站上寻找脚本: <a href="http://www.vim.org">http://www.vim.org</a>。如果你实现了对别人也有
+用的功能，让大家一起分享！
+
+另一个地方是 github。但那里你需要知道怎么去找。优点是绝大多数插件管理员都从
+github 获取插件。用你喜欢的搜索引擎去找找吧。
+
+Vim 脚本应该可以用于任何系统。不过，它们不一定有 tar 或 gzip 命令。如果你想把
+文件打包和/或进行压缩，建议使用 "zip" 工具。
+
+最理想的可移植方法是让 Vim 自己给脚本打包，用 Vimball 工具。见  <a href="pi_vimball.html#vimball">vimball</a> 。
+
+最好你能加入一行内容，实现自动更新。见  <a href="pi_getscript.html#glvs-plugins">glvs-plugins</a> 。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>下一章:  <a href="usr_52.html#usr_52.txt">usr_52.txt</a>   编写大型插件
+
+版权: 参见  <a href="usr_01.html#manual-copyright">manual-copyright</a>   vim:tw=78:ts=8:noet:ft=help:norl:
+</section>
+</article>
+<footer>
+Generated by vim2html
+</footer>
+</body>
+</html>

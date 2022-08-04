@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<![endif]-->
+<title>VIM 中文用户手册: 高级 Vim 脚本编写</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<link rel="canonical" href="https://yianwillis.github.io/vimcdoc/doc/usr_50.html" />
+<script type="text/javascript" src="vimcdoc.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<nav id=banner>
+<form action=tags.html target="tag_iframe">
+  <input type="text" name="tag" id="tag" placeholder="标签搜索">
+</form>
+<iframe name="tag_iframe" src=""></iframe>
+<a href="help.html">帮助总览</a> &middot;
+<hr/>
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="eval.html#functions">函数列表</a> &middot;
+<a href="quickref.html#option-list">选项列表</a> &middot;
+<hr/>
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a> &middot;
+</nav>
+
+<header>
+<h2>usr_50</h2>
+</header>
+<article id=outer>
+<section class=inner>
+<b class="vimtag"> <a name="usr_50.txt">usr_50.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年8月
+
+                     <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+
+                              高级 Vim 脚本编写
+
+
+ <a href="usr_50.html#50.1">50.1</a>   例外
+ <a href="usr_50.html#50.2">50.2</a>   带可变数目参数的函数
+ <a href="usr_50.html#50.3">50.3</a>   恢复视窗
+
+           下一章:  <a href="usr_51.html#usr_51.txt">usr_51.txt</a>   创建插件
+           前一章:  <a href="usr_45.html#usr_45.txt">usr_45.txt</a>   选择你的语言 (locale)
+             目录:  <a href="usr_toc.html#usr_toc.txt">usr_toc.txt</a> 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="50.1">50.1</a> </b>  例外</h4>
+让我们从一个例子开始: 
+<code class="example"></code>
+<code class="example">        try</code>
+<code class="example">           read ~/templates/pascal.tmpl</code>
+<code class="example">        catch /E484:/</code>
+<code class="example">           echo "Sorry, the Pascal template file cannot be found."</code>
+<code class="example">        endtry</code>
+<code class="example"></code>
+如果该文件不存在的话， <code class="badlink">read</code>  命令就会失败。这段代码可以捕捉到该错误并向用户给
+出一个友好的信息，而不是一个一般的出错信息。
+
+在  <code class="badlink">try</code>  和  <code class="badlink">endtry</code>  之间的命令产生的错误将被转变成为例外。例外以字符串的形式
+出现。当错误发生时，该字符串包含出错信息。而每一个出错信息都有一个对应的错误
+码。在上面的例子中，我们捕捉到的错误包括 "E484:"。Vim 确保这个错误码始终不变
+(文字可能会变，例如被翻译)。
+
+除了使出错信息更友好之外，Vim 也会继续执行  <a href="eval.html#:endtry">:endtry</a>  之后的命令。否则，一旦遇
+到未捕获的错误，脚本/函数/映射的执行会立即中止。
+
+当  <code class="badlink">read</code>  命令引起其它错误时，模式 "E484:" 不会被匹配。因此该例外不会被捕获，
+结果是一个一般的出错信息而且执行被中止。
+
+你可能想这样做: 
+<code class="example"></code>
+<code class="example">        try</code>
+<code class="example">           read ~/templates/pascal.tmpl</code>
+<code class="example">        catch</code>
+<code class="example">           echo "Sorry, the Pascal template file cannot be found."</code>
+<code class="example">        endtry</code>
+<code class="example"></code>
+这意味着所有的错误都将被捕获。然而这样你就完全无法得到那些指出不同问题的错误信
+息，比如说 "E21: Cannot make changes, <a href="options.html#'modifiable'">'modifiable'</a> is off"。捕获所有错误请三思
+而后行！
+
+另一个有用的机制是  <code class="badlink">finally</code>  命令: 
+<code class="example"></code>
+<code class="example">        var tmp = tempname()</code>
+<code class="example">        try</code>
+<code class="example">           exe ":.,$write " .. tmp</code>
+<code class="example">           exe "!filter " .. tmp</code>
+<code class="example">           :.,$delete</code>
+<code class="example">           exe ":$read " .. tmp</code>
+<code class="example">        finally</code>
+<code class="example">           delete(tmp)</code>
+<code class="example">        endtry</code>
+<code class="example"></code>
+这个例子将自光标处到文件尾的所有行通过过滤器 "filter"。该程序的参数是文件名。
+无论过滤器是否正常工作、 <code class="badlink">try</code>  和  <code class="badlink">finally</code>  之间发生了什么错误、或者用户按
+<code class="keystroke">CTRL-C</code> 中断了过滤器， <code class="badlink">delete(tmp)</code>  命令始终被执行。这可以确保你在任何情况下不
+会留下一个临时文件。
+
+ <code class="badlink">finally</code>  本身并不捕获例外，错误仍然会中止后续行的执行。
+
+关于例外处理更多的讨论可以阅读参考手册:  <a href="eval.html#exception-handling">exception-handling</a> 。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="50.2">50.2</a> </b>  带可变数目参数的函数</h4>
+Vim 允许你定义参数个数可变的函数。下面的例子给出一个至少有一个参数 (start)，但
+可以多达 20 个附加参数的函数: 
+<code class="example"></code>
+<code class="example">        def Show(start: string, ...items: list&lt;string&gt;)</code>
+<code class="example"></code>
+函数中的变量 "items" 会是包含额外参数的列表。用法就像普通的列表，如: 
+<code class="example"></code>
+<code class="example">        def Show(start: string, ...items: list&lt;string&gt;)</code>
+<code class="example">          echohl Title</code>
+<code class="example">          echo "start is " .. start</code>
+<code class="example">          echohl None</code>
+<code class="example">          for index in range(len(items))</code>
+<code class="example">            echon $"  Arg {index} is {items[index]}"</code>
+<code class="example">          endfor</code>
+<code class="example">          echo</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+可以这样调用: 
+<code class="example"></code>
+<code class="example">        Show('Title', 'one', 'two', 'three')</code>
+<code class="section">        start is Title  Arg 0 is one  Arg 1 is two  Arg 2 is three </code>
+
+上例中  <code class="badlink">echohl</code>  命令被用来给出接下来的  <code class="badlink">echo</code>  命令如何高亮输出。`echohl None`
+终止高亮。 <code class="badlink">echon</code>  命令除了不输出换行符外，和  <code class="badlink">echo</code>  一样。
+
+如果调用时只给出一个参数，"items" 列表会为空。
+ <code class="badlink">range(len(items))</code>  返回索引的列表，可以在其上用  <code class="badlink">for</code>  循环，这方面后面会继续
+解释。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="50.3">50.3</a> </b>  恢复视窗</h4>
+有时你想跳转到别处，作些修改，然后跳回到原先的位置和视图。例如要修改文件头部的
+一部分。可用两个函数实现: 
+<code class="example"></code>
+<code class="example">        var view = winsaveview()</code>
+<code class="example">        # 移动并作修改</code>
+<code class="example">        winrestview(view)</code>
+<code class="example"></code>
+</section><hr class="doubleline" /><section class=inner>
+<h4></h4>下一章:  <a href="usr_51.html#usr_51.txt">usr_51.txt</a>   创建插件
+
+版权: 参见  <a href="usr_01.html#manual-copyright">manual-copyright</a>   vim:tw=78:ts=8:noet:ft=help:norl:
+</section>
+</article>
+<footer>
+Generated by vim2html
+</footer>
+</body>
+</html>
