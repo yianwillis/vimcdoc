@@ -1,4 +1,4 @@
-*todo.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年7月
+*todo.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年8月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -39,6 +39,26 @@ https://github.com/vim/vim/issues/1234
 							*known-bugs*
 ----------------------- 已知漏洞和当前工作 --------------------------
 
+PR to consider:
+- stricter parsing for has('patch-x.y.z')  #10752
+- cmdheight=0  #10675  Does it work properly?
+- add splitscroll  #10682  Useful?  Any trouble? Null Chilly says it's OK.
+    suggestion: names instead of numbers for the option value
+    problem depending on whether window is focused or not
+
+Support virtual text:  #7553
+- Remove and free text when textprop is removed with negative ID.
+- "gj" does not work correctly
+- no virtual text when 'signcolumn' is set to "yes"  #10794
+- placement at the end of the line: after the text (text_align: "end"), right
+  aligned (text_align: "right"); choice: truncate when not enough space or
+  wrap to next line (text_wrap: "yes"); Also: fill with space to text wraps to
+  start of next screen line (text_align: "below")
+  Also consider an empty line, should fix #10786.  Also check inserting text.
+- win_lbr_chartabsize() TODO item: count screen cells
+- wrong cursor position (Yegappan, July 27)
+- many tests
+
 Further Vim9 improvements, possibly after launch:
 - Use Vim9 for more runtime files.
 - Check performance with callgrind and kcachegrind.
@@ -69,10 +89,16 @@ Further Vim9 improvements, possibly after launch:
 - Implement as part of an expression: ++expr, --expr, expr++, expr--.
 
 Update list of features to vote on:
-- multiple cursors
-- built-in LSP support
-- virtual text, using text properties
-- start first line halfway, scroll per screen line
+- Remove Athena item (won't happen)
+- Remove "add open mode" (won't happen)
+- Remove "editing of a hidden buffer" (done)
+- Change "add IDE features" to "improve terminal debugger"
+- Change "diff/merge capability for CVS" to "CVS and git"
+- Remove "pre-compile them" from "improve the performance of Vim scripts"
+- Add: multiple cursors, edit text in more than one place at a time
+- Add: fast syntax highlighting with parser instead of regex patterns
+- Add: virtual text, text properties can insert text in the line
+- Add: start first line halfway, scroll per wrapped screen line
 
 Popup windows:
 - Preview popup not properly updated when it overlaps with completion menu.
@@ -118,8 +144,6 @@ Text properties:
   if the priority is above a certain value?  (#7392)
   Combining text property with 'cursorline' does not always work (Billie
   Cleek, #5533)
-- "C" works OK.  "dd" fails to delete text property in a buffer with a single
-  line.
 - Add text property that shifts text to make room for annotation (e.g.
   variable type).  Like the opposite of conceal.  Requires fixing the cursor
   positioning and mouse clicks as with conceal mode.
@@ -201,9 +225,6 @@ Terminal emulator window:
 Patches considered for including:
 - Add "-n" option to xxd. #10599  needs a test
 - allow for nesting of timeout, sketch in #10595
-- Patch to implement the vimtutor with a plugin: #6414
-  Was originally written by Felipe Morales.
-- Patch to make fillchars global-local. (#5206)
 
 Autoconf: must use autoconf 2.69, later version generates lots of warnings
 - try using autoconf 2.71 and fix all "obsolete" warnings
@@ -223,6 +244,13 @@ feature is supported or not.  Replaces the xterm mechanism to request each
 entry separately. #6609
 Multiplexers (screen, tmux) can request it to the underlying terminal, and
 pass it on with modifications.
+
+Using "A" and "o" in manually created fold (in empty buffer) does not behave
+consistenly (James McCoy, #10698)
+
+When scheme can't be found by configure there is no clear "not found" message:
+    configure:5769: checking MzScheme install prefix
+    configure:5781: result:
 
 Can "CSI nr X" be used instead of outputting spaces?  Is it faster?  #8002
 
@@ -1159,9 +1187,6 @@ cmap using execute() has side effects. (Killthemule, 2016 Aug 17, #983)
 :map X may print invalid data. (Nikolay Pavlov, 2017 Jul 3, #1816)
 
 Patch to order results from taglist(). (Duncan McDougall, 2016 Oct 25)
-
-Syntax highlighting for messages with RFC3339 timestamp (#946)
-Did maintainer reply?
 
 ml_get errors when reloading file. (Chris Desjardins, 2016 Apr 19)
 Also with latest version.
@@ -3758,7 +3783,10 @@ Diff 模式:
 语法高亮:
     Long term goal: faster, better, etc.  Options:
     - use treesitter, NeoVim uses it - Many people don't like it.
-    - use TextMate, vscode uses it.  #9087 - possibly a long term solution
+    - use TextMate, vscode uses it.  #9087 - Other people don't like it.
+      Vscode is asked to switch to treesitter:
+      https://github.com/microsoft/vscode/issues/50140
+    - sublime grammar?
 8   Make ":syn off" use 'runtimepath' instead of $VIMRUNTIME. (Gary Johnson)
     Should do the same for ":syn on" and ":syn manual".
 8   Support "containedin" argument for ":syn include", so that the defined
