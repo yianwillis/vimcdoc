@@ -77,11 +77,11 @@ Vim9 脚本语法和语义用于:
 - 上述上下文中定义的自动命令
 -   <code class="badlink">vim9cmd</code>  命令修饰符前缀的命令
 
-Vim9 脚本文件里如果用了  <a href="eval.html#:function">:function</a> ，会用老式的语法并使用最高的
- <a href="eval.html#scriptversion">scriptversion</a> 。这容易混淆，所以不鼓励。
+Vim9 脚本文件里使用  <a href="eval.html#:function">:function</a>  时，仍然会用老式语法并使用最高的
+ <a href="eval.html#scriptversion">scriptversion</a> 。不过，这容易混淆，不鼓励。
 
-Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，它们会继续工作。可用一
-些  <a href="vim9.html#:def">:def</a>  函数来编写要求快速的代码。
+Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，它们会继续工作。但可用
+一些  <a href="vim9.html#:def">:def</a>  函数来编写要求快速的代码。
 
 :vim9<code class="special">[cmd]</code> <code class="special">{cmd}</code>                                <b class="vimtag"> <a name=":vim9">:vim9</a> </b> <b class="vimtag"> <a name=":vim9cmd">:vim9cmd</a> </b> <b class="vimtag"> <a name="E1164">E1164</a> </b>
                 使用 Vim9 脚本语法和语义计算和执行 <code class="special">{cmd}</code>。在键入命令和老式脚本
@@ -134,7 +134,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 - 不可用花括号名字。
 - 命令前的范围必须用冒号前缀: 
 <code class="example">        :%s/this/that</code>
-- 用 "@r" 来执行寄存器不再可以，需要冒号前缀或使用  <a href="eval.html#:exe">:exe</a> : 
+- 不再可以用 "@r" 来执行寄存器，需要冒号前缀或使用  <a href="eval.html#:exe">:exe</a> : 
 <code class="example">        :exe @a</code>
 - 除非特别指出，使用最高的  <a href="eval.html#scriptversion">scriptversion</a> 。
 - 定义表达式映射时，在定义所在的脚本上下文里计算表达式。
@@ -150,7 +150,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。没有必要重写旧脚本，�
 号真正的意思，因为字符串和注释都可以后跟任意文本。为避免混淆，现在只识别 # 注
 释。这和外壳脚本和 Python 程序完全相同。
 
-Vi 里 # 是带数字列出文本的命令。Vim9 脚本可用  <a href="various.html#:number">:number</a>  代替。 
+Vi 里 # 是带行号列出文本的命令。Vim9 脚本可用  <a href="various.html#:number">:number</a>  代替。 
 <code class="example">        :101 number</code>
 <code class="example"></code>
 为提高可读性，命令和开始注释的 # 之间必须有一个空格: 
@@ -197,7 +197,7 @@ compiled: <code class="special">{name}</code>"。
 <code class="example"></code>
  <a href="vim9.html#:def">:def</a>  不像  <a href="eval.html#:function">:function</a>  那样有 "range"、"abort"、"dict" 或 "closure" 这样的选
 项。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止 (除非命令使用了  <code class="badlink">:slient!</code> 或错误在  <a href="eval.html#:try">:try</a>  块里
-捕获)，不接受范围也不能是 "dict" 函数，总可以有闭包。
+捕获)，不接受范围、不能是 "dict" 函数，而且总可以有闭包。
                                                 <b class="vimtag"> <a name="vim9-no-dict-function">vim9-no-dict-function</a> </b>
 以后会加入类，以替代 "字典函数" 机制。现在你需要显式传递入字典: 
 <code class="example">        def DictFunc(self: dict&lt;any&gt;, arg: string)</code>
@@ -206,7 +206,7 @@ compiled: <code class="special">{name}</code>"。
 <code class="example">        var ad = {item: 'value', func: DictFunc}</code>
 <code class="example">        ad.func(ad, 'item')</code>
 <code class="example"></code>
-但可用老式字典函数: 
+但可以调用老式字典函数: 
 <code class="example">        func Legacy() dict</code>
 <code class="example">          echo self.value</code>
 <code class="example">        endfunc</code>
@@ -237,7 +237,7 @@ compiled: <code class="special">{name}</code>"。
 参数 "_" (下划线) 可用于忽略参数值。用于回调中不需要提供参数值但要给出一个参数
 以匹配调用的场合。例如，使用 map() 时需要两个参数，键和值，要忽略键: 
 <code class="example">        map(numberList, (_, v) =&gt; v * 2)</code>
-多次使用 "_" 参数不会报错。也不需要指定类型。
+"_" 参数多次使用不会报错。也不需要指定类型。
 
 
 <code class="section">函数和变量缺省局部于脚本 </code>
@@ -261,7 +261,7 @@ compiled: <code class="special">{name}</code>"。
 <code class="example">          var Fok = function(Inner)     # 正确</code>
 <code class="example">          var Fbad = function('Inner')  # 不行</code>
 <code class="example"></code>
-细节: 这是因为 "Inner" 实际会变成函数引用，指向一个内部生成名字的函数。
+细节: 这是因为 "Inner" 实际会变成函数引用，指向一个名字内部生成的函数。
 
 函数内不可以定义局部于脚本的函数。可以定义局部函数并赋值给局部于脚本的函数引用
 (函数必须在脚本级别声明)。可以用 "g:" 前缀来定义全局函数。
@@ -284,15 +284,15 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 
 老式函数里必须使用 "s:"，见前。不管脚本是 Vim9 还是老式的都是如此。
 
-在所有情况下，函数必须先定义，然后才能使用。这是函数调用时，或是  <a href="vim9.html#:defcompile">:defcompile</a> 
-导致调用被编译时，或是调用它的函数在被编译的时候。
+在所有情况下，函数必须先定义，然后才能使用。所谓使用，是指函数调用时，或
+ <a href="vim9.html#:defcompile">:defcompile</a>  导致调用被编译时，或调用它的函数被编译时 (以确定返回类型)。
 
-其结果是，无命名空间的函数和变量通常可在定义所在或导入的脚本内访问。全局函数和
-变量可以在任何地方定义 (要找到需要点运气！用  <a href="various.html#:verbose">:verbose</a>  常常可以看到它上次是在
-哪里设置的)。
+其结果是，无命名空间的函数和变量通常可在其定义所在或导入的脚本内找到。而全局函
+数和变量可以在任何地方定义 (要找到需要点运气！用  <a href="various.html#:verbose">:verbose</a>  往往可以看到它上次
+是在哪里设置的)。
                                                         <b class="vimtag"> <a name="E1102">E1102</a> </b>
 全局函数还是可以在几乎任何时候定义和删除。vim9 脚本里，局部于脚本的函数在脚本
-载入时定义一次，且不能自己删除或替代 (但重载脚本可以)。
+载入时定义一次，且不能自己删除或替代 (但脚本重载时是会的)。
 
 编译函数时和遇到函数调用时如果函数 (还) 未定义，不触发  <a href="autocmd.html#FuncUndefined">FuncUndefined</a>  自动命
 令。如果需要，可用自动载入函数，或调用老式函数，那里会触发  <a href="autocmd.html#FuncUndefined">FuncUndefined</a> 。
@@ -321,11 +321,10 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 <code class="example">        ....</code>
 <code class="example"></code>
 <code class="example"></code>
-<code class="example"></code>
 <code class="section">用 :var、:final 和 :const 声明变量 </code>
                                 <b class="vimtag"> <a name="vim9-declaration">vim9-declaration</a> </b> <b class="vimtag"> <a name=":var">:var</a> </b> <b class="vimtag"> <a name="E1079">E1079</a> </b>
                                 <b class="vimtag"> <a name="E1017">E1017</a> </b> <b class="vimtag"> <a name="E1020">E1020</a> </b> <b class="vimtag"> <a name="E1054">E1054</a> </b> <b class="vimtag"> <a name="E1087">E1087</a> </b> <b class="vimtag"> <a name="E1108">E1108</a> </b> <b class="vimtag"> <a name="E1124">E1124</a> </b>
-局部变量需用  <a href="vim9.html#:var">:var</a>  定义。局部常量需用  <a href="vim9.html#:final">:final</a>  或  <a href="eval.html#:const">:const</a>  定义。我们把两者都
+局部变量须用  <a href="vim9.html#:var">:var</a>  定义。局部常量须用  <a href="vim9.html#:final">:final</a>  或  <a href="eval.html#:const">:const</a>  定义。我们把两者都
 称为 "变量"。
 
 变量可以局部于脚本、函数或代码块: 
@@ -411,7 +410,7 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 
  <a href="builtin.html#exists()">exists()</a>  和  <a href="builtin.html#exists_compiled()">exists_compiled()</a>  函数不能用局部变量或参数。
                                 <b class="vimtag"> <a name="E1006">E1006</a> </b> <b class="vimtag"> <a name="E1041">E1041</a> </b> <b class="vimtag"> <a name="E1167">E1167</a> </b> <b class="vimtag"> <a name="E1168">E1168</a> </b> <b class="vimtag"> <a name="E1213">E1213</a> </b>
-变量、函数和函数参数不能隐藏之前在同一脚本文件里定义或导入的变量和函数。
+变量、函数和函数参数不能隐藏在同一脚本文件里之前定义或导入的变量和函数。
 变量可以隐藏 Ex 命令，如有需要请给变量换名。
 
 全局变量必须带上 "g:" 前缀，即使脚本级别的也是如此。 
@@ -437,8 +436,8 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">          endif</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-如果你这么做，编译时会报错 "PluginFunc" 不存在，即使 "g:loaded_plugin" 不存
-在: 
+但如果像下面这么做，编译时会报错 "PluginFunc" 不存在，即使 "g:loaded_plugin"
+不存在: 
 <code class="example">        def CallPluginFunc()</code>
 <code class="example">          if exists('g:loaded_plugin')</code>
 <code class="example">            PluginFunc()   # 报错，函数找不到</code>
@@ -456,7 +455,7 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 因为 `&amp;opt = value` 现在用来给选项 "opt" 赋值，所以不再能用 ":&amp;" 来重复
  <a href="change.html#:substitute">:substitute</a>  命令了。
                                                         <b class="vimtag"> <a name="vim9-unpack-ignore">vim9-unpack-ignore</a> </b>
-解包赋值里下划线可用于忽略列表项目，类似于函数参数的忽略方法: 
+解包赋值里，下划线可用于忽略列表项目，类似于函数参数的忽略方法: 
 <code class="example">        [a, _, c] = theList</code>
 要忽略其余项目: 
 <code class="example">        [a, b; _] = longList</code>
@@ -468,9 +467,9 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 
 <code class="section">常量 </code>
                                                 <b class="vimtag"> <a name="vim9-const">vim9-const</a> </b> <b class="vimtag"> <a name="vim9-final">vim9-final</a> </b>
-常量如何工作因语言而异。有些把不能重新赋其它值的变量当作常量。JavaScript 是一
-个例子。其它语言则会使值也不可更改，因此如果常量使用了列表，列表本身也不可改
-变。Vim9 可以兼有两者。
+常量如何工作因语言而异。有些语言把不能重新赋其它值的变量当作常量。JavaScript
+是一个例子。其它语言则会使值也不可更改，因此如果常量使用了列表，列表本身也不可
+改变。Vim9 可以兼有两者。
                                                         <b class="vimtag"> <a name="E1021">E1021</a> </b>
 可用  <a href="eval.html#:const">:const</a>  使变量及其值为常量。可用于复合结构以确保其不会被修改。示例: 
 <code class="example">        const myList = [1, 2]</code>
@@ -501,7 +500,7 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">        writefile(lines, 'file')</code>
  <a href="eval.html#:call">:call</a>  还可用，但不鼓励。
 
-只要以标识符开始或不可能是 Ex 命令，方法可直接调用而无需  <a href="eval.html#eval">eval</a> 。函数的 "(" 或
+方法只要以标识符开始或不可能是 Ex 命令，可直接调用而无需  <a href="eval.html#eval">eval</a> 。函数的 "(" 或
 "-&gt;" 必须后跟内容，不能有换行。例如: 
 <code class="example">        myList-&gt;add(123)</code>
 <code class="example">        g:myList-&gt;add(123)</code>
@@ -515,16 +514,16 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 在罕见情形下函数名和 Ex 命令有二义性，用 ":" 前缀来明确你想用的是 Ex 命令。例
 如，既有  <a href="change.html#:substitute">:substitute</a>  命令，又有  <a href="builtin.html#substitute()">substitute()</a>  函数。如果一行以
  <code class="badlink">substitute(</code>  开始，会假定使用函数，要使用命令版本，加上冒号前缀: 
-<code class="example">        :substitute(pattern (replacement (</code>
+<code class="example">        :substitute(模式 (替代 (</code>
 <code class="example"></code>
-如果表达式以 "!" 开始，解读为外壳命令，而不是条件取反。因此这是外壳命令: 
+如果表达式以 "!" 开始，解读为外壳命令，而不是条件取反。因而，以下是外壳命令: 
 <code class="example">        !shellCommand-&gt;something</code>
 要用 "!" 进行取反，把表达式放在括号里: 
 <code class="example">        (!expression)-&gt;Method()</code>
 <code class="example"></code>
 <code class="note">注意</code> 尽管变量在使用前必须先定义，函数在定义前就可以调用。为了允许函数间能相互
 依赖，这是有必要的。但因此效率会稍稍低些，因为函数需要依名查找。且函数名的拼写
-错误只有在函数进行调用时才能发现。
+错误只有在函数被调用时才能发现。
 
 
 <code class="section">省略 function() </code>
@@ -535,15 +534,14 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">        var Funcref = MyFunction</code>
 <code class="example"></code>
 而使用  <a href="builtin.html#function()">function()</a>  时，返回类型是 "func"，一个可带任何数量参数和任何返回类型
-(包括 void) 的函数。函数此时可以延后定义，但参数必须用引号。
+(包括 void) 的函数。如果  <a href="builtin.html#function()">function()</a>  的参数用上引号，函数可以延后定义。
 
 
 <code class="section">匿名函数使用 =&gt; 而不是 -&gt; </code>
-
                                                         <b class="vimtag"> <a name="vim9-lambda">vim9-lambda</a> </b>
-在老式脚本里，"-&gt;" 同时用于函数调用和用于匿名函数，这里可能有混淆。另外，找到
-"{" 时解析器需要知道它是匿名函数还是字典的开始，现在由于参数类型的使用，这里的
-情况更复杂。
+在老式脚本里，"-&gt;" 既用于函数调用，也用于匿名函数，这里可能产生混淆。另外，找
+到 "{" 时解析器需要知道它是匿名函数还是字典的开始，现在由于参数类型的使用，这
+里的情况更复杂。
 
 为避免这些问题，Vim9 脚本的匿名函数使用不同的语法，这和 JavaScript 类似: 
 <code class="example">        var Lambda = (arg) =&gt; expression</code>
@@ -564,9 +562,9 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">                \       v)</code>
 <code class="example">                \       =&gt; v &gt; 0)</code>
                                         <b class="vimtag"> <a name="vim9-lambda-arguments">vim9-lambda-arguments</a> </b> <b class="vimtag"> <a name="E1172">E1172</a> </b>
-在老式脚本里，匿名函数调用时可带任意多个额外参数，没办法提供不要这么做的<code class="note">警告</code>。
-在 Vim9 脚本里参数数目必须匹配。如果要接受任何参数，或任何额外参数，可用
-"..._"，这使函数接受  <a href="vim9.html#vim9-variable-arguments">vim9-variable-arguments</a> 。例如: 
+在老式脚本里，匿名函数调用时可带任意多个额外参数，没办法<code class="note">警告</code>不要这么做。在
+Vim9 脚本里参数数目必须匹配。如果要接受任何参数，或任何额外参数，可用 "..._"，
+这使函数接受  <a href="vim9.html#vim9-variable-arguments">vim9-variable-arguments</a> 。例如: 
 <code class="example">        var Callback = (..._) =&gt; 'anything'</code>
 <code class="example">        echo Callback(1, 2, 3)  # 显示 "anything"</code>
 <code class="example"></code>
@@ -576,25 +574,24 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">                g:was_called = 'yes'</code>
 <code class="example">                return expression</code>
 <code class="example">            }</code>
-可用于计数器，例如: 
+比如可用来实现计数器: 
 <code class="example">        var count = 0</code>
 <code class="example">        var timer = timer_start(500, (_) =&gt; {</code>
 <code class="example">                 count += 1</code>
 <code class="example">                 echom 'Handler called ' .. count</code>
 <code class="example">             }, {repeat: 3})</code>
 <code class="example"></code>
-<code class="example"></code>
 结尾的 "}" 必须位于行首。后面可跟其它字符，例如: 
 <code class="example">        var d = mapnew(dict, (k, v): string =&gt; {</code>
 <code class="example">             return 'value'</code>
 <code class="example">           })</code>
-"{" 之后不能跟随命令，那里只可以出现注释。
+"{" 之后不能跟随命令，那里只可以有注释。
 
                                                 <b class="vimtag"> <a name="command-block">command-block</a> </b> <b class="vimtag"> <a name="E1026">E1026</a> </b>
 定义用户命令时也可用代码块。在代码块内使用 Vim9 语法。
 
-如果语句包含字典，其结束花括号不能写在行首。否则，被解析为代码块的结束。这样不
-行: 
+如果语句包含字典，其结束花括号不能写在行首。否则，被解析为代码块的结束。下面这
+样不行: 
 <code class="example">        command NewCommand {</code>
 <code class="example">             g:mydict = {</code>
 <code class="example">               'key': 'value',</code>
@@ -607,8 +604,8 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">           }</code>
 <code class="example"></code>
 理据: "}" 不能在命令之后出现，因为需要对命令进行解析才能找到它。为了一致起见，
-"{" 之后也不能跟随命令。不幸的是，这就意味着 "() =&gt; {  command  }" 不可以了，
-必须使用换行。
+"{" 之后也不能跟随命令。不幸的是，这就意味着不接受 "() =&gt; {  command  }"，必须
+使用换行。
 
                                                         <b class="vimtag"> <a name="vim9-curly">vim9-curly</a> </b>
 为了不让字典常量的 "{" 被识别为语句块，把它包围在括号里: 
@@ -651,7 +648,7 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">                        ? PosFunc(arg)</code>
 <code class="example">                        : NegFunc(arg)</code>
 <code class="example"></code>
-对进行方法调用的 "-&gt;" 和进行成员访问的点号，之前可断行: 
+方法调用的 "-&gt;" 和成员访问的句号之前都可断行: 
 <code class="example">        var result = GetBuilder()</code>
 <code class="example">                        -&gt;BuilderSetWidth(333)</code>
 <code class="example">                        -&gt;BuilderSetHeight(777)</code>
@@ -659,7 +656,7 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">        var result = MyDict</code>
 <code class="example">                        .member</code>
 <code class="example"></code>
-命令里如果有参数是一组命令，行首的 | 字符指示行的继续: 
+命令里如果有一组命令作为参数，行首的 | 字符指示行的继续: 
 <code class="example">        autocmd BufNewFile *.match if condition</code>
 <code class="example">                |   echo 'match'</code>
 <code class="example">                | endif</code>
@@ -675,15 +672,16 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="example">           | 这样可以</code>
 <code class="example">        END</code>
 <code class="example">        set cpo-=C</code>
-如果 here 文档出现在函数内，<a href="options.html#'cpoptions'">'cpoptions'</a> 必须在 :def 设置，在 :enddef 后恢复。
+如果 here 文档在函数内出现，<a href="options.html#'cpoptions'">'cpoptions'</a> 必须在 :def 前设置，在 :enddef 后恢
+复。
 
 在续行还需要反斜杠的地方，如断开长 Ex 命令时，注释可用 '#\ ' 开始: 
 <code class="example">        syn region Text</code>
 <code class="example">              \ start='foo'</code>
 <code class="example">              #\ 注释</code>
 <code class="example">              \ end='bar'</code>
-就像在老式脚本里可用 '"\ ' 一样。如果续行不需要反斜杠且行以竖线开始时，也要这
-样: 
+就像在老式脚本里可用 '"\ ' 一样。即使续行不需要反斜杠和以竖线开始行的情况，也
+要如此: 
 <code class="example">        au CursorHold * echom 'BEFORE bar'</code>
 <code class="example">              #\ 一些注释</code>
 <code class="example">              | echom 'AFTER bar'</code>
@@ -706,20 +704,20 @@ Vim9 脚本中不能用  <a href="eval.html#:let">:let</a> 。已有的变量可
 <code class="note">注意</code>  <a href="editing.html#+cmd">+cmd</a>  参数不需要冒号: 
 <code class="example">        edit +6 fname</code>
 <code class="example"></code>
-函数声明也可以在参数间被分割为多行: 
+函数声明中也可以在参数间换行: 
 <code class="example">        def MyFunc(</code>
 <code class="example">                text: string,</code>
 <code class="example">                separator = '-'</code>
 <code class="example">                ): string</code>
 <code class="example"></code>
-因为续行不容易识别，命令的解析必须更严格。例如，因为首行有错，第二行会看作一个
-单独的命令: 
+因为续行不容易识别，命令的解析必须更严格。例如，因为首行有错，下面的第二行会看
+作一个单独的命令: 
 <code class="example">        popup_create(some invalid expression, {</code>
 <code class="example">           exit_cb: Func})</code>
 现在，"exit_cb: Func})" 实际是一个合法的命令: 保存任何改动到文件 "_cb: Func})"
 并退出。为了避免此种错误，Vim9 脚本中在多数命令名和参数间必须有空白。 <b class="vimtag"> <a name="E1144">E1144</a> </b>
 
-不过，不能识别作为命令参数的命令。例如，在 "windo echo expr" 之后，不能识别
+不过，不能识别作为命令参数的命令里的续行。例如 "windo echo expr" 里不能识别
 "expr" 内部的换行。
 
 
@@ -846,8 +844,8 @@ Vim9 脚本强制空白的正确使用。以下不再允许:
 老式脚本里，遇到错误时，Vim 会继续执行后续行。这会引起一长串错误，需要 <code class="keystroke">CTRL-C</code>
 才能停止。Vim9 脚本的命令执行会在第一个错误处停止。例如: 
 <code class="example">        vim9script</code>
-<code class="example">        var x = does-not-exist</code>
-<code class="example">        echo '不执行'</code>
+<code class="example">        var x = 不-存-在</code>
+<code class="example">        echo '不会执行'</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">For 循环 </code>
@@ -948,8 +946,8 @@ Vim9 脚本可以使用如下预定义值:
 <code class="example">        null_string</code>
  <a href="vim9.html#true">true</a>  等价于  <a href="eval.html#v:true">v:true</a> 、 <a href="vim9.html#false">false</a>  等价于  <a href="eval.html#v:false">v:false</a>  而  <a href="vim9.html#null">null</a>  等价于  <a href="eval.html#v:null">v:null</a> 。
 
- <a href="vim9.html#null">null</a>  类型为 "special"，而其它的 "null_" 类型可根据其名推定。经常 null 值和空
-值处理方式相同，但不绝对。这些值可用于清除局部于脚本的变量，因为它们不能用
+ <a href="vim9.html#null">null</a>  类型为 "special"，而其它的 "null_" 的类型可根据其名推定。null 值和空值
+处理方式通常相同，但不绝对。这些值可用于清除局部于脚本的变量，因为它们不能用
  <a href="eval.html#:unlet">:unlet</a>  删除。例如: 
 <code class="example">        var theJob = job_start(...)</code>
 <code class="example">        # 让作业自己做事</code>
@@ -964,17 +962,17 @@ Vim9 脚本可以使用如下预定义值:
 比较总返回  <a href="vim9.html#false">false</a> 。这和老式脚本不同，那里把  <a href="vim9.html#null">null</a>  和零或  <a href="vim9.html#false">false</a>  比较会返回
  <a href="vim9.html#true">true</a> 。
 
-转换布尔型为字符串时使用  <a href="vim9.html#false">false</a>  和  <a href="vim9.html#true">true</a> ，而不是老式脚本里那样用  <a href="eval.html#v:false">v:false</a> 
-和  <a href="eval.html#v:true">v:true</a> 。 <a href="eval.html#v:none">v:none</a>  没有对应的  <code class="badlink">none</code>  替代，在其他语言中它没有类似的结构。
+转换布尔型为字符串时使用  <a href="vim9.html#false">false</a>  和  <a href="vim9.html#true">true</a> ，而不像老式脚本那样用  <a href="eval.html#v:false">v:false</a>  和
+ <a href="eval.html#v:true">v:true</a> 。 <a href="eval.html#v:none">v:none</a>  没有对应的  <code class="badlink">none</code>  替代，在其他语言中它没有类似的结构。
 
-字符串用 <code class="special">[idx]</code> 索引 或 [idx : idx] 取片段时使用的是字符索引而非字节索引。组合
+字符串用 <code class="special">[idx]</code> 索引 或 [idx : idx] 取切片时使用的是字符索引而非字节索引。组合
 字符包含在内。例如: 
 <code class="example">        echo 'bár'[1]</code>
 在老式脚本里，这会得到字符 0xc3 (一个非法字节)，在 Vim9 脚本里这会得到字符串
 'á'。
 负索引从结尾处开始计算，"[-1]" 代表末字符。要排除末字符，用  <a href="builtin.html#slice()">slice()</a> 。
-如果要分别计算组合字符，可用  <a href="builtin.html#strcharpart()">strcharpart()</a> 。
-如果索引超出范围，返回空字符串。
+如果要组合字符分别计算，可用  <a href="builtin.html#strcharpart()">strcharpart()</a> 。
+索引超出范围时，返回空字符串。
 
 老式脚本中，接受 "++var" 和 "--var"，不报错也没有效果。Vim9 脚本中则会报错。
 
@@ -1017,7 +1015,7 @@ Ex 命令范围需要冒号前缀。
 <code class="example">        g /pattern/cmd    # 非法命令 - 出错</code>
 <code class="example">        s /pattern/repl   # 非法命令 - 出错</code>
 <code class="example"></code>
- <a href="vim9.html#:def">:def</a>  定义的函数会对整个函数进行编译。老式函数可以随时放弃，因而以下的行不会
+ <a href="vim9.html#:def">:def</a>  定义的函数会对整个函数进行编译。老式函数可以中途放弃，因而以下的行不会
 被立即解析: 
 <code class="example">        func Maybe()</code>
 <code class="example">          if !has('feature')</code>
@@ -1025,7 +1023,7 @@ Ex 命令范围需要冒号前缀。
 <code class="example">          endif</code>
 <code class="example">          use-feature</code>
 <code class="example">        endfunc</code>
-Vim9 函数作为一个整体被编译: 
+而 Vim9 函数会作为一个整体被编译: 
 <code class="example">        def Maybe()</code>
 <code class="example">          if !has('feature')</code>
 <code class="example">            return</code>
@@ -1051,13 +1049,13 @@ Vim9 函数作为一个整体被编译:
 <code class="example">        enddef</code>
 为此也可用  <a href="builtin.html#exists_compiled()">exists_compiled()</a>  函数。
                                                         <b class="vimtag"> <a name="vim9-user-command">vim9-user-command</a> </b>
-编译函数的另一个副作用是在编译时对用户命令的存在与否进行检查。如果用户命令在之
-后定义，会报错。这样可以: 
+编译函数的另一个副作用是编译时要对用户命令的存在与否进行检查。如果用户命令在之
+后定义，会报错。下面这样可以: 
 <code class="example">        command -nargs=1 MyCommand echom &lt;q-args&gt;</code>
 <code class="example">        def Works()</code>
 <code class="example">          MyCommand 123</code>
 <code class="example">        enddef</code>
-这样会报错，"MyCommand" 无定义: 
+但这样会报错，"MyCommand" 无定义: 
 <code class="example">        def Works()</code>
 <code class="example">          command -nargs=1 MyCommand echom &lt;q-args&gt;</code>
 <code class="example">          MyCommand 123</code>
@@ -1075,7 +1073,7 @@ Vim9 函数作为一个整体被编译:
 <code class="example"></code>
 <code class="section">其它差异 </code>
 
-模式使用假定 <a href="options.html#'magic'">'magic'</a> 置位，除非被显式覆盖。
+除非被显式覆盖，模式的用法假定置位了 <a href="options.html#'magic'">'magic'</a>。
 不使用 <a href="options.html#'edcompatible'">'edcompatible'</a> 选项值。
 不使用 <a href="options.html#'gdefault'">'gdefault'</a> 选项值。
 
@@ -1113,9 +1111,8 @@ Vim9 函数作为一个整体被编译:
                         第二三种形式是可选参数。如果调用者省略参数，使用
                         <code class="special">{value}</code> 值。
 
-                        此函数在实际调用时、使用  <a href="vim9.html#:disassemble">:disassemble</a>  或
-                         <a href="vim9.html#:defcompile">:defcompile</a>  时被编译为指令序列。语法和类型错误会在那
-                        里发生。
+                        此函数在实际调用、使用  <a href="vim9.html#:disassemble">:disassemble</a>  或  <a href="vim9.html#:defcompile">:defcompile</a> 
+                        时被编译为指令序列。那时才会报告语法和类型错误。
 
                         在  <a href="vim9.html#:def">:def</a>  或  <a href="eval.html#:function">:function</a>  里可以嵌套另一个  <a href="vim9.html#:def">:def</a> ，最多
                         可达 50 层。
@@ -1131,10 +1128,10 @@ Vim9 函数作为一个整体被编译:
 <a href="https://github.com/lacygoill/wiki/blob/master/vim/vim9.md">https://github.com/lacygoill/wiki/blob/master/vim/vim9.md</a>
 
 如果函数定义所在的是 Vim9 脚本，可不经 "s:" 前缀直接访问局部于脚本的变量。这些
-变量必须在函数编译之前定义。如果函数定义所在的是老式脚本，那么编译时不存在的局
-部于脚本的变量必须通过 "s:" 前缀才能访问。
+变量必须在函数编译之前定义。如果函数定义是在老式脚本里，那么编译时不存在的脚本
+局部变量必须通过 "s:" 前缀才能访问。
                                                         <b class="vimtag"> <a name="E1269">E1269</a> </b>
- <a href="vim9.html#Vim9">Vim9</a>  脚本里的脚本局部变量必须在脚本级别声明。不能在函数里创建，包含老式函数
+ <a href="vim9.html#Vim9">Vim9</a>  脚本里的脚本局部变量必须在脚本级别声明。不能在函数里创建，包括老式函数
 也不行。
 
                                                 <b class="vimtag"> <a name=":defc">:defc</a> </b> <b class="vimtag"> <a name=":defcompile">:defcompile</a> </b>
@@ -1150,8 +1147,8 @@ Vim9 函数作为一个整体被编译:
 
                                                 <b class="vimtag"> <a name=":disa">:disa</a> </b> <b class="vimtag"> <a name=":disassemble">:disassemble</a> </b>
 :disa[ssemble] <code class="special">{func}</code>   显示 <code class="special">{func}</code> 生成的指令序列。用于调试和测试。 <b class="vimtag"> <a name="E1061">E1061</a> </b>
-                        <code class="note">注意</code> <code class="special">{func}</code> 的命令行补全可在之前附加 "s:" 来查找局部于
-                        脚本的函数。
+                        <code class="note">注意</code> <code class="special">{func}</code> 的命令行补全可通过前加 "s:" 来查找局部于脚
+                        本的函数。
 
 :disa[ssemble] profile <code class="special">{func}</code>
                         类似于  <a href="vim9.html#:disassemble">:disassemble</a>  但指令用于刨视。
@@ -1161,7 +1158,7 @@ Vim9 函数作为一个整体被编译:
 
 <code class="section">局限 </code>
 
-字符串表达式计算时，局部变量不可见。例如: 
+计算字符串表达式时，局部变量不可见。例如: 
 <code class="example">        def MapList(): list&lt;string&gt;</code>
 <code class="example">          var list = ['aa', 'bb', 'cc', 'dd']</code>
 <code class="example">          return range(1, 2)-&gt;map('list[v:val]')</code>
@@ -1173,13 +1170,13 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 <code class="example">          return range(1, 2)-&gt;map((_, v) =&gt; list[v])</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-对于未编译的命令，如  <a href="editing.html#:edit">:edit</a> ，可用反引号扩展，这时可用局部作用域。例如: 
+对于未编译的命令，如  <a href="editing.html#:edit">:edit</a> ，可用反引号扩展，这时局部作用域可用。例如: 
 <code class="example">        def Replace()</code>
 <code class="example">          var fname = 'blah.txt'</code>
 <code class="example">          edit `=fname`</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-循环里的定义的闭包会分享相同的上下文。例如: 
+同一循环里定义的所有闭包会分享相同的上下文。例如: 
 <code class="example">        var flist: list&lt;func&gt;</code>
 <code class="example">        for i in range(5)</code>
 <code class="example">          var inloop = i</code>
@@ -1188,9 +1185,9 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 <code class="example">        echo range(5)-&gt;map((i, _) =&gt; flist[i]())</code>
 <code class="example">        # 返回: [4, 4, 4, 4, 4]</code>
                                                         <b class="vimtag"> <a name="E1271">E1271</a> </b>
-闭包必须在定义所在的上下文里编译，以便找到此上下文里的变量。大多数情况下没有问
-题，但函数在编译后用  <code class="badlink">breakadd</code>  标记进行调试时除外。请在编译外层函数前就定义好
-断点。
+闭包必须在其定义所在的上下文里进行编译，以便找到此上下文里的变量。大多数情况下
+没有问题，但函数在编译后用  <code class="badlink">breakadd</code>  标记进行调试时除外。请在编译外层函数前就
+定义好断点。
 
 "inloop" 变量只存在一次，所有放入列表的闭包都会指向相同的实例，最后该值为 4。
 这样是高效率的，即使循环很多次也是。如果你确实要为每个闭包提供单独的上下文，调
@@ -1235,7 +1232,8 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 <code class="example">        return len(text)</code>
 <code class="example"></code>
 - 把用于声明变量的  <code class="badlink">let</code>  改为  <code class="badlink">var</code> 。
-- 删除用于给变量赋值的  <code class="badlink">let</code> 。用于已经声明过的局部变量和 b: w: g: 和 t: 变量。
+- 删除用于给变量赋值的  <code class="badlink">let</code> 。这包括已经声明过的局部变量和 b: w: g: 和 t: 变
+  量。
 
   例如，老式函数: 
 <code class="example">          let lnum = 1</code>
@@ -1345,8 +1343,8 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 <code class="section">变量类型和类型转换 </code>
                                                         <b class="vimtag"> <a name="variable-types">variable-types</a> </b>
 
-Vim9 脚本或  <a href="vim9.html#:def">:def</a>  函数中声明的变量有类型，或者显式指定，或者通过初始化推导得
-出。
+Vim9 脚本或  <a href="vim9.html#:def">:def</a>  函数中声明的变量有类型，或者通过显式指定，或者通过初始化推
+导得出。
 
 全局、缓冲区、窗口和标签页变量没有特定类型，其值可在任何时候改变，类型的改变亦
 然。因此，编译后的代码假定其为 "any" 类型。
@@ -1449,8 +1447,8 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 <code class="example">        map(mylist, (i, v) =&gt; 'item ' .. i)</code>
 <code class="example">        # typename(mylist) == "list&lt;string&gt;"，没有出错</code>
 <code class="example"></code>
-和直接使用列表常量和通过变量声明有一个细微的区别。因为类型推导的缘故，列表常量
-初始化变量的同时也设置了声明的类型: 
+直接使用列表常量和通过变量声明有一个细微的区别。因为类型推导的缘故，列表常量初
+始化变量的同时也设置了声明的类型: 
 <code class="example">        var mylist = [1, 2, 3]</code>
 <code class="example">        # typename(mylist) == "list&lt;number&gt;"</code>
 <code class="example">        echo map(mylist, (i, v) =&gt; 'item ' .. i)  # 出错！</code>
@@ -1494,10 +1492,10 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 文件这样开始: 
 <code class="example">        vim9script</code>
 <code class="example">        var myvar = 'yes'</code>
-那么 "myvar" 只存在于此文件中。如果没有  <a href="vim9.html#vim9script">vim9script</a> ，可被其它脚本和函数用
- <code class="badlink">g:myvar</code>  访问。
+那么 "myvar" 只存在于此文件中。如果没有  <a href="vim9.html#vim9script">vim9script</a> ，其它脚本和函数可用
+ <code class="badlink">g:myvar</code>  进行访问。
                                                         <b class="vimtag"> <a name="E1101">E1101</a> </b>
-文件层级的变量和老式脚本里的局部 "s:" 变量非常类似，但省略 "s:"。而且不能被删
+文件级别的变量和老式脚本里的局部 "s:" 变量非常类似，但省略 "s:"。而且不能被删
 除。
 
 和以前一样，Vim9 脚本中仍然可用全局 "g:" 命名空间。还有 "w:"、"b:" 和 "t:" 命
@@ -1561,9 +1559,9 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 如果名字太长或有二义性，以下形式可用于指定别名: 
 <code class="example">        import {longfilename} as {name}</code>
 
-这里 <code class="special">{name}</code> 成为导入命名空间的指定脚本局部名。因此 <code class="special">{name}</code> 必须由字母、数位和
-"_" 组成，就像  <a href="eval.html#internal-variables">internal-variables</a>  那样。<code class="special">{longfilename}</code> 表达式的计算结果必须
-为文件名。例如: 
+这里 <code class="special">{name}</code> 成为代表被导入命名空间的特定的脚本局部名。因此 <code class="special">{name}</code> 必须由字母、
+数位和 "_" 组成，就像  <a href="eval.html#internal-variables">internal-variables</a>  那样。<code class="special">{longfilename}</code> 表达式的计算结
+果必须为文件名。例如: 
 <code class="example">        import "thatscript.vim.v2" as that</code>
                                                 <b class="vimtag"> <a name="E1060">E1060</a> </b> <b class="vimtag"> <a name="E1258">E1258</a> </b> <b class="vimtag"> <a name="E1259">E1259</a> </b> <b class="vimtag"> <a name="E1260">E1260</a> </b>
 这样你就可用 "that.item" 等等。可以自由选择名字 "that"。请用可以识别导入脚本的
@@ -1580,7 +1578,7 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 对变量不可以，因为值会被复制一次，而修改变量会改变备份，而不是原先的变量。所以，
 只能用带句号的全名。
 
- <a href="vim9.html#:import">:import</a>  不能在函数内使用。导入项目应该存在于脚本级别，且只能导入一次。
+ <a href="vim9.html#:import">:import</a>  不能在函数内使用。导入项目应该出现在脚本级别，且只能导入一次。
 
  <code class="badlink">import</code>  之后的脚本名可以是:
 - 相对路径，以 "." 或 ".." 开始。这会找到相对于脚本文件自身所在位置的文件。可
@@ -1650,18 +1648,18 @@ vim9 脚本从另一个脚本导入函数时，用  <a href="map.html#%3CSID%3E"
 <code class="example">        command -nargs=1 SearchForStuff search.Stuff(&lt;f-args&gt;)</code>
 <code class="example"></code>
     应放在 .../plugin/anyname.vim。 "anyname.vim" 可自由选择其名字。
-   "SearchForStff" 命令现在可用了。
+   现在就可用 "SearchForStff" 命令了。
 
     <a href="vim9.html#:import">:import</a>  的 "autoload" 参数意味着直到其中项目被实际用到，脚本暂缓载入。这
    类脚本可在 <a href="options.html#'runtimepath'">'runtimepath'</a> 的 "autoload" 目录下找到，而不是 "import" 目录。此
    处，也可用相对或绝对名字，见下。
 
-2. 主要代码放在自动载入脚本里。 
+2. 主要代码放在自动载入脚本。 
 <code class="example">        vim9script</code>
 <code class="example">        export def Stuff(arg: string)</code>
 <code class="example">          ...</code>
 <code class="example"></code>
-    在 .../autoload/for/search.vim 里。
+    放在 .../autoload/for/search.vim 里。
 
    "search.vim" 脚本放在 "/autoload/for/" 目录下的效果是 "for#search#" 会加在
    每个导出的项目之前。前缀由文件名获取，就像老式自动载入脚本里你会手动做的一
@@ -1683,7 +1681,7 @@ vim9 脚本从另一个脚本导入函数时，用  <a href="map.html#%3CSID%3E"
 
 编译  <a href="vim9.html#:def">:def</a>  函数时，如果遇到自动载入脚本中的函数，不载入该脚本，直到  <a href="vim9.html#:def">:def</a>  函
 数被调用时才载入。这意味着只有在运行时才看到错误，因为参数和返回类型此时尚未
-知。如果用带 '#' 字符的名字，那么 <code class="emphasis">确实会</code> 载入自动载入脚本。
+知。但如果直接用带 '#' 字符的名字，那么 <code class="emphasis">确实会</code> 载入自动载入脚本。
 
 小心不要意外触发自动载入脚本的载入。例如，设置选项时如果用到函数名，要用字符串
 而非函数引用: 
