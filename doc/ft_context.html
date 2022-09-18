@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<![endif]-->
+<title>VIM 中文帮助: ft_context</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<link rel="canonical" href="https://yianwillis.github.io/vimcdoc/doc/ft_context.html" />
+<script type="text/javascript" src="vimcdoc.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<nav id=banner>
+<form action=tags.html target="tag_iframe">
+  <input type="text" name="tag" id="tag" placeholder="标签搜索">
+</form>
+<iframe name="tag_iframe" src=""></iframe>
+<a href="help.html">帮助总览</a> &middot;
+<hr/>
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="eval.html#functions">函数列表</a> &middot;
+<a href="quickref.html#option-list">选项列表</a> &middot;
+<hr/>
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a> &middot;
+</nav>
+
+<header>
+<h2>ft_context</h2>
+</header>
+<article id=outer>
+<section class=inner>
+<b class="vimtag"> <a name="ft_context.txt">ft_context.txt</a> </b>        适用于 Vim 9.0 版本。   最近更新: 2022年9月
+
+这是 ConTeXt 文件类型插件的文档。
+
+<code class="note">注意</code>: 此插件需要 +vim9script。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>内 容                                                   <b class="vimtag"> <a name="context.vim">context.vim</a> </b> <b class="vimtag"> <a name="ft-context">ft-context</a> </b></h4>
+1. 介绍                                  <a href="ft_context.html#ft-context-intro">ft-context-intro</a> 
+2. 命令                                  <a href="ft_context.html#ft-context-commands">ft-context-commands</a> 
+3. 设置                                  <a href="ft_context.html#ft-context-settings">ft-context-settings</a> 
+4. 映射                                  <a href="ft_context.html#ft-context-mappings">ft-context-mappings</a> 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>                                                        <b class="vimtag"> <a name="ft-context-intro">ft-context-intro</a> </b></h4><code class="section">介绍 </code>
+
+ConTeXt，与 LaTeX 类似，是基于宏的在 TeX 上构造的排版系统:
+
+<code class="example">        https://wiki.contextgarden.net</code>
+<code class="example">        https://wiki.contextgarden.net/Vim</code>
+
+ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。排版文档的建议方式是
+使用  <a href="ft_context.html#:ConTeXt">:ConTeXt</a> 。这会调用在 $PATH 上找到的  <code class="badlink">mtxrun</code>  脚本。
+
+要更精细地控制命令及其环境，可直接调用  <code class="badlink">context.Typeset()</code>  (老式 Vim 脚本里可
+用  <code class="badlink">context#Typeset()</code> )。例如，如果在  <code class="badlink">~/context</code>  下安装了 ConTeXt，可类似于下
+面这样来定义函数以使用它 (可把代码放在  <code class="badlink">~/.vim/after/ftplugin/context.vim</code> ):
+
+<code class="example">        import autoload 'context.vim'</code>
+<code class="example"></code>
+<code class="example">        def MyConTeXt()</code>
+<code class="example">            const env = {'PATH':</code>
+<code class="example">              printf("%s/context/tex/texmf-&lt;os&gt;-&lt;arch&gt;/bin:%s", $HOME, $PATH)}</code>
+<code class="example">            context.Typeset("%", env)</code>
+<code class="example">        enddef</code>
+
+可能用映射来调用函数:
+
+<code class="example">        nnoremap &lt;silent&gt;&lt;buffer&gt;&lt;leader&gt;t &lt;scriptcmd&gt;MyConTeXt()&lt;cr&gt;</code>
+
+ <code class="badlink">context.Typeset()</code>  接受第三个可选的参数，用于指定定制的排版命令。此参数必须是
+函数，接受路径，返回以列表形式出现的命令。例如:
+
+<code class="example">        def ConTeXtCustomCommand(path: string): list&lt;string&gt;</code>
+<code class="example">          return ['mtxrun', '--script', 'context', '--nonstopmode, path]</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        context.ConTeXtTypeset("%", v:none, ConTeXtCustomCommand)</code>
+
+大型项目的组织方式通常是一个根文档和若干章节文件。编辑章节文件时，最好可以直接
+在其上调用  <a href="ft_context.html#:ConTeXt">:ConTeXt</a> ，而不用先切换到根文件。为此，可在每个章节文件的头部加入
+"魔术行"，指定根文件的相对路径。例如:
+
+<code class="example">        % !TEX root = ../MyRoot.tex</code>
+
+Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行指定的文档而不是当前缓冲
+区进行排版。根文档不须在 Vim 中打开。
+
+要扩展补全和语法高亮，可用 ConTeXt 生成支持文件，并加入到你的配置中。如果配置
+文件位于  <code class="badlink">~/.vim</code> ，可用:
+
+<code class="example">        mkdir -p ~/.vim/syntax/shared</code>
+<code class="example">        cd ~/.vim/syntax/shared</code>
+<code class="example">        mtxrun --script interface --vim</code>
+
+末尾的命令会创建以下语法文件:
+
+-  <code class="badlink">context-data-context.vim</code> ;
+-  <code class="badlink">context-data-interfaces.vim</code> ;
+-  <code class="badlink">context-data-metafun.vim</code> ;
+-  <code class="badlink">context-data-tex.vim</code> .
+
+相同的命令也可用于这些语法文件的更新。
+
+                                                        <b class="vimtag"> <a name="ft-context-commands">ft-context-commands</a> </b>
+<code class="section">命令 </code>
+                                        <b class="vimtag"> <a name=":ConTeXt">:ConTeXt</a> </b>
+启动后台  <a href="channel.html#job">job</a>  排版当前缓冲区的文档。此命令接受可选的缓冲区名，以选择另一个缓
+冲区进行排版。
+
+                                        <b class="vimtag"> <a name=":ConTeXtLog">:ConTeXtLog</a> </b>
+编辑当前缓冲区包含的源代码对应的日志文件。
+
+                                        <b class="vimtag"> <a name=":ConTeXtJobsStatus">:ConTeXtJobsStatus</a> </b>
+回显当前后台中运行的作业数目。
+
+                                        <b class="vimtag"> <a name=":ConTeXtStopJobs">:ConTeXtStopJobs</a> </b>
+停止当前后台中运行的所有 ConTeXt 作业。
+
+                                                        <b class="vimtag"> <a name="ft-context-settings">ft-context-settings</a> </b>
+<code class="section">设置 </code>
+                                        <b class="vimtag"> <a name="'b:context_ignore_makefile'">'b:context_ignore_makefile'</a> </b>
+                                        <b class="vimtag"> <a name="'g:context_ignore_makefile'">'g:context_ignore_makefile'</a> </b>
+ <code class="badlink">make</code>  可用于 (同步) 排版文档。如果存在 Makefile 而没有置位本选项，使用标准
+ <code class="badlink">make</code> 。如果置位了本选项，不管有没有 Makefile 存在也会调用  <code class="badlink">mtxrun</code> 。
+
+<code class="example">        g:context_ignore_makefile = 0</code>
+
+<code class="note">注意</code>: 用  <code class="badlink">make</code>  前，先把缓冲区的工作目录设为要排版的文件所在的目录。
+                                        <b class="vimtag"> <a name="'b:context_include'">'b:context_include'</a> </b>
+                                        <b class="vimtag"> <a name="'g:context_include'">'g:context_include'</a> </b>
+文件类型/GROUP 组对的字典，用于决定 \startGROUP 和 \stopGROUP 之间应用哪种语法
+高亮。缺省是高亮  <code class="badlink">\startXML</code>  和  <code class="badlink">\stopXML</code>  之间的 XML。
+
+<code class="example">        g:context_include = {'xml': 'XML'}</code>
+<code class="example"></code>
+<code class="note">注意</code>: Lua 和 MetaPost 总是在对应块的范围内高亮。
+
+                                        <b class="vimtag"> <a name="'g:no_context_maps'">'g:no_context_maps'</a> </b>
+置位时不定义映射。
+
+<code class="example">        g:no_context_maps = 0</code>
+
+                                                        <b class="vimtag"> <a name="ft-context-mappings">ft-context-mappings</a> </b>
+<code class="section">映射 </code>
+
+tp                      "重新排版 TeX 段落"。
+
+i$                      "内含内嵌数学块"。
+
+a$                      "一个内嵌数学块"。
+
+]]                      <code class="special">[count]</code> 个正向小节开始处。
+
+[[                      <code class="special">[count]</code> 个反向小节开始处。
+
+][                      <code class="special">[count]</code> 个正向小节结尾处。
+
+[]                      <code class="special">[count]</code> 个反向小节结尾处。
+
+]}                      <code class="special">[count]</code> 个正向块结尾 (\stop...、\setup...、
+                        \define...)。
+
+[{                      <code class="special">[count]</code> 个反向块起始 (\start...、\setup...、
+                        \define...)。
+
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
+</section>
+</article>
+<footer>
+Generated by vim2html
+</footer>
+</body>
+</html>

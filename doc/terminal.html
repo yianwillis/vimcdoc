@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年7月
+<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -899,8 +899,40 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
 <code class="example">        set t_ts&amp; t_fs&amp;</code>
 <code class="example"></code>
 理据: 为什么不允许任何命令或表达式呢？因为可能会造成安全问题。
+                                                <b class="vimtag"> <a name="terminal-autoshelldir">terminal-autoshelldir</a> </b>
+以下代码可用于从外壳把当前目录传递给 Vim。
+在 .vimrc 里: 
+<code class="example">        def g:Tapi_lcd(_, path: string)</code>
+<code class="example">            if isdirectory(path)</code>
+<code class="example">                execute 'silent lcd ' .. fnameescape(path)</code>
+<code class="example">            endif</code>
+<code class="example">        enddef</code>
 
+同时，bash 初始文件里: 
+<code class="example">        if [[ -n "$VIM_TERMINAL" ]]; then</code>
+<code class="example">            PROMPT_COMMAND='_vim_sync_PWD'</code>
+<code class="example">            function _vim_sync_PWD() {</code>
+<code class="example">              printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"</code>
+<code class="example">            }</code>
+<code class="example">        fi</code>
 
+或者，用于 zsh: 
+<code class="example">        if [[ -n "$VIM_TERMINAL" ]]; then</code>
+<code class="example">            autoload -Uz add-zsh-hook</code>
+<code class="example">            add-zsh-hook -Uz chpwd _vim_sync_PWD</code>
+<code class="example">            function _vim_sync_PWD() {</code>
+<code class="example">                printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"</code>
+<code class="example">            }</code>
+<code class="example">        fi</code>
+
+或者，用于 fish: 
+<code class="example">        if test -n "$VIM_TERMINAL"</code>
+<code class="example">            function _vim_sync_PWD --on-variable=PWD</code>
+<code class="example">                printf '\033]51;["call", "Tapi_lcd", "%s"]\007' "$PWD"</code>
+<code class="example">            end</code>
+<code class="example">        end</code>
+<code class="example"></code>
+<code class="example"></code>
 <code class="section">使用客户-服务器特性 </code>
                                                 <b class="vimtag"> <a name="terminal-client-server">terminal-client-server</a> </b>
 只在 v:servername 非空时有用。如果需要可以这样在打开终端前设置之: 

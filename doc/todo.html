@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年8月
+<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -74,25 +74,14 @@
                                                         <b class="vimtag"> <a name="known-bugs">known-bugs</a> </b>
 ----------------------- 已知漏洞和当前工作 --------------------------
 
-PR to consider:
-- stricter parsing for has('patch-x.y.z')  #10752
-- cmdheight=0  #10675  Does it work properly?
-- add splitscroll  #10682  Useful?  Any trouble? Null Chilly says it's OK.
-    suggestion: names instead of numbers for the option value
-    problem depending on whether window is focused or not
+Use :defer command:
+    - Use "D" flag of writefile() and mkdir() in tests.
+        (testdir/test_c*.vim done)
 
-Support virtual text:  #7553
-- Remove and free text when textprop is removed with negative ID.
-- "gj" does not work correctly
-- no virtual text when <a href="options.html#'signcolumn'">'signcolumn'</a> is set to "yes"  #10794
-- placement at the end of the line: after the text (text_align: "end"), right
-  aligned (text_align: "right"); choice: truncate when not enough space or
-  wrap to next line (text_wrap: "yes"); Also: fill with space to text wraps to
-  start of next screen line (text_align: "below")
-  Also consider an empty line, should fix #10786.  Also check inserting text.
-- win_lbr_chartabsize() TODO item: count screen cells
-- wrong cursor position (Yegappan, July 27)
-- many tests
+When using :echomessage do use msg_row and msg_col, but save and restore.
+How to test any failure?  If nothing fails perhaps it's OK alrady.
+
+Drop Windows XP?  #11089
 
 Further Vim9 improvements, possibly after launch:
 - Use Vim9 for more runtime files.
@@ -122,18 +111,6 @@ Further Vim9 improvements, possibly after launch:
 - When evaluating constants for script variables, some functions could work:
     has(featureName), len(someString)
 - Implement as part of an expression: ++expr, --expr, expr++, expr--.
-
-Update list of features to vote on:
-- Remove Athena item (won't happen)
-- Remove "add open mode" (won't happen)
-- Remove "editing of a hidden buffer" (done)
-- Change "add IDE features" to "improve terminal debugger"
-- Change "diff/merge capability for CVS" to "CVS and git"
-- Remove "pre-compile them" from "improve the performance of Vim scripts"
-- Add: multiple cursors, edit text in more than one place at a time
-- Add: fast syntax highlighting with parser instead of regex patterns
-- Add: virtual text, text properties can insert text in the line
-- Add: start first line halfway, scroll per wrapped screen line
 
 Popup windows:
 - Preview popup not properly updated when it overlaps with completion menu.
@@ -170,19 +147,6 @@ Popup windows:
 - Any other commands to disable in a popup window?
   Use ERROR_IF_POPUP_WINDOW for these.
 - Figure out the size and position better if wrapping inserts indent
-
-Text properties:
-- property is overruled by cursorline. (#8225).
-  Add better control over priority?  Make list of all highlighting, specify
-  where property fits in.
-  Or Should we let the textprop highlight overrule other (e.g. diff) highlight
-  if the priority is above a certain value?  (#7392)
-  Combining text property with <a href="options.html#'cursorline'">'cursorline'</a> does not always work (Billie
-  Cleek, #5533)
-- Add text property that shifts text to make room for annotation (e.g.
-  variable type).  Like the opposite of conceal.  Requires fixing the cursor
-  positioning and mouse clicks as with conceal mode.
-- See remarks at top of src/textprop.c
 
 <a href="options.html#'incsearch'">'incsearch'</a> with :s:
 - :s/foo  using <code class="keystroke">CTRL-G</code> moves to another line, should not happen, or use the
@@ -257,9 +221,7 @@ Terminal emulator window:
 - When <a href="options.html#'encoding'">'encoding'</a> is not utf-8, or the job is using another encoding, setup
   conversions.
 
-Patches considered for including:
-- Add "-n" option to xxd. #10599  needs a test
-- allow for nesting of timeout, sketch in #10595
+Add <a href="options.html#'splitscroll'">'splitscroll'</a>  #10682  Anything remaining
 
 Autoconf: must use autoconf 2.69, later version generates lots of warnings
 - try using autoconf 2.71 and fix all "obsolete" warnings
@@ -268,6 +230,8 @@ Can deref_func_name() and deref_function_name() be merged?
 
 After patch 8.2.4915 w_botline is computed much more often. Can this be
 reduced?
+
+Add BufDeletePost.  #11041
 
 NFA regexp does not handle composing characters well: #10286
     <code class="special">[ɔ̃]</code> matches both ɔ and ɔ̃
@@ -283,9 +247,13 @@ pass it on with modifications.
 Using "A" and "o" in manually created fold (in empty buffer) does not behave
 consistenly (James McCoy, #10698)
 
+To avoid flicker: add an option that when a screen clear is requested, instead
+of clearing it draws everything and uses "clear to end of line" for every line.
+Resetting <a href="term.html#'t_ut'">'t_ut'</a> already causes this?
+
 When scheme can't be found by configure there is no clear "not found" message:
     configure:5769: checking MzScheme install prefix
-    configure:5781: result:
+    configure:5781: result: 
 
 Can "CSI nr X" be used instead of outputting spaces?  Is it faster?  #8002
 
@@ -311,6 +279,9 @@ MS-Windows: did path modifier :p:8 stop working?  #8600
 
 Version of getchar() that does not move the cursor - #10603 Use a separate
 argument for the new flag.
+
+Add "lastline" entry to <a href="options.html#'fillchars'">'fillchars'</a> to specify a character instead of '@'.
+#10963
 
 test_arglist func Test_all_not_allowed_from_cmdwin() hangs on MS-Windows.
 
@@ -339,6 +310,7 @@ Adding "10" to <a href="options.html#'spellsuggest'">'spellsuggest'</a> causes s
 Also, z= in German on a long word can take a very long time, but <code class="keystroke">CTRL-C</code> to
 interrupt does not work. Where to add ui_breakcheck()?
 New English spell files also have very slow suggestions.
+French spell files don't work correctly.  #4916
 
 Make "g&gt;" and "g&lt;" in Visual mode move the text right or left.
 Also for a block selection.  #8558
@@ -943,9 +915,6 @@ The ++ options for the :edit command are also useful on the Vim command line.
 
 Overlong utf-8 sequence is displayed wrong. (Harm te Hennepe, 2017 Sep 14,
 #2089)  Patch with possible solution by Björn Linse.
-
-The change list index is local to a buffer, but it doesn't make sense using it
-for another buffer.  (lacygoill) Copy w_changelistidx to wininfo_S and back.
 
 X11: Putting more than about 262040 characters of text on the clipboard and
 pasting it in another Vim doesn't work.  (Dominique Pelle, 2008 Aug 21-23)
@@ -2713,6 +2682,13 @@ Add an option for a minimal text length before inserting a line break for
 
 
 拼写检查:
+-   List of common misspellings in English:
+    <a href="https://en.wikipedia.org/wiki/Wikipedia:Lists_of_common_misspellings/For_machines">https://en.wikipedia.org/wiki/Wikipedia:Lists_of_common_misspellings/For_machines</a>
+    German:
+    <a href="https://de.wikipedia.org/wiki/Wikipedia:Liste_von_Tippfehlern/F%C3%BCr_Maschinen">https://de.wikipedia.org/wiki/Wikipedia:Liste_von_Tippfehlern/F%C3%BCr_Maschinen</a>
+    There are other languages.
+-   [s does not find missing capital at start of the line.  #10838
+    Probably because the dot at the end of the previous line isn't seen.
 -   When <a href="options.html#'cursorline'">'cursorline'</a> is set and the first word should have SpellCap
     highlighting, redrawing the line removes it when moving the cursor away
     from the line. (#7085)  Would need to inspect the end of the previous line
@@ -3818,7 +3794,9 @@ Diff 模式:
 语法高亮:
     Long term goal: faster, better, etc.  Options:
     - use treesitter, NeoVim uses it - Many people don't like it.
+        After changes requires rebuilding the library.
     - use TextMate, vscode uses it.  #9087 - Other people don't like it.
+            <a href="https://github.com/icedman/vim-textmate">https://github.com/icedman/vim-textmate</a>
       Vscode is asked to switch to treesitter:
       <a href="https://github.com/microsoft/vscode/issues/50140">https://github.com/microsoft/vscode/issues/50140</a>
     - sublime grammar?
@@ -4015,15 +3993,16 @@ Vim 脚本语言:
     can be the plugin name.
     Perhaps also have a way to remove everything that the package added?
     including autocommands.
-7   Pre-parse or compile Vim scripts into a bytecode.
+7   Pre-parse or compile Vim scripts into a bytecode, like :def functions.
+    Possibilities:
     1. Put the bytecode with the original script, with an ":if
-       has(<code class="badlink">'bytecode'</code>)" around it, so that it's only used with a Vim that
-       supports it.  Update the code with a command, can be used in an
-       autocommand.
+       has('bytecode-1234')" around it, so that it's only used with a Vim that
+       supports the version.  Update the code with a command, can be used in
+       an autocommand.
     2. Use a ".vic" file (like Python use .pyc).  Create it when writing a
-       .vim file.  Problem: distribution.
-    3. Use a cache directory for each user.  How to recognize which cached
-       file belongs to a sourced script?
+       .vim file.  Problem: distribution, non-writable directory, etc.
+    3. Use a cache directory for each user.  Disadvantage: cache lookup may
+       cost more time than bytecode wins.
 7   Add argument to winwidth() to subtract the space taken by <a href="options.html#'foldcolumn'">'foldcolumn'</a>,
     signs and/or <a href="options.html#'number'">'number'</a>.
 6   Add ++ and -- operators?  They only work on variables (lvals), how to

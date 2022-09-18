@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="options.txt">options.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年8月
+<b class="vimtag"> <a name="options.txt">options.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -691,6 +691,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                         可以检查}
         如果打开，Vim 会在你打开文件、切换缓冲区、删除缓冲区或者打开/关闭窗口
         时改变当前工作目录的值。具体来说，就是打开或者选择的文件所在的目录。
+        如果缓冲区没有名字，它也没有目录，因此切换到该缓冲区时不改变当前目录。
         <code class="note">注意</code>: 打开此选项会使得某些插件无法工作。
 
                         <b class="vimtag"> <a name="'autoshelldir'">'autoshelldir'</a> </b> <b class="vimtag"> <a name="'asd'">'asd'</a> </b> <b class="vimtag"> <a name="'noautoshelldir'">'noautoshelldir'</a> </b> <b class="vimtag"> <a name="'noasd'">'noasd'</a> </b>
@@ -700,7 +701,31 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         录。为此，你需要正确的设置，使外壳在当前目录改变时释出 OSC 7 转义序
         列。
         例如，Linux 上如果用 bash 或 zsh 的话，可在外壳的 profile 里执行
-        /etc/profile.d/vte.sh。
+        /etc/profile.d/vte.sh。bash 可用以下 (放在 bash 初始文件里): 
+<code class="example">                if [[ -n "$VIM_TERMINAL" ]]; then</code>
+<code class="example">                    PROMPT_COMMAND='_vim_sync_PWD'</code>
+<code class="example">                    function _vim_sync_PWD() {</code>
+<code class="example">                        printf '\033]7;file://%s\033\\' "$PWD"</code>
+<code class="example">                    }</code>
+<code class="example">                fi</code>
+
+        或者，在 zsh 初始文件里: 
+<code class="example">                if [[ -n "$VIM_TERMINAL" ]]; then</code>
+<code class="example">                    autoload -Uz add-zsh-hook</code>
+<code class="example">                    add-zsh-hook -Uz chpwd _vim_sync_PWD</code>
+<code class="example">                    function _vim_sync_PWD() {</code>
+<code class="example">                        printf '\033]7;file://%s\033\\' "$PWD"</code>
+<code class="example">                    }</code>
+<code class="example">                fi</code>
+
+        在 fish 初始文件里: 
+<code class="example">                if test -n "$VIM_TERMINAL"</code>
+<code class="example">                    function _vim_sync_PWD --on-variable=PWD</code>
+<code class="example">                        printf '\033]7;file://%s\033\\' "$PWD"</code>
+<code class="example">                    end</code>
+<code class="example">                end</code>
+
+        另一个办法可见  <a href="terminal.html#terminal-autoshelldir">terminal-autoshelldir</a> 。
         OSC 序列如果解析失败，会报 <b class="vimtag"> <a name="E1179">E1179</a> </b> 。
 
                                 <b class="vimtag"> <a name="'arabic'">'arabic'</a> </b> <b class="vimtag"> <a name="'arab'">'arab'</a> </b> <b class="vimtag"> <a name="'noarabic'">'noarabic'</a> </b> <b class="vimtag"> <a name="'noarab'">'noarab'</a> </b>
@@ -973,7 +998,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                  Unix: "/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"
                                  Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*")
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+wildignore">+wildignore</a>  特性才有效}</code>
         文件名模式列表。如果其中某个模式匹配要写入的文件名，不建立它的备份文
         件。同时测试指定的文件名和它的完整路径名。模式的使用方式和  <a href="autocmd.html#:autocmd">:autocmd</a> 
         类同，见  <a href="autocmd.html#autocmd-patterns">autocmd-patterns</a> 。
@@ -1047,7 +1071,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         算结果非空，Vim 不会试图发送消息给外部调试器 (Netbeans 或 Sun
         Workshop)。
 
-        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 替代之。例
+        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例
         如: 
 <code class="example">                set bexpr=s:MyBalloonExpr()</code>
 <code class="example">                set bexpr=&lt;SID&gt;SomeBalloonExpr()</code>
@@ -1288,7 +1312,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'cdpath'">'cdpath'</a> </b> <b class="vimtag"> <a name="'cd'">'cd'</a> </b> <b class="vimtag"> <a name="E344">E344</a> </b> <b class="vimtag"> <a name="E346">E346</a> </b>
 <a href="options.html#'cdpath'">'cdpath'</a> <a href="options.html#'cd'">'cd'</a>           字符串  (缺省: 等价于 $CDPATH 或 ",,")
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+file_in_path">+file_in_path</a>  特性才有效}</code>
         这是一个目录列表。使用  <a href="editing.html#:cd">:cd</a> 、 <a href="editing.html#:tcd">:tcd</a>  和  <a href="editing.html#:lcd">:lcd</a>  命令时，如果查找的是相
         对路径，而不是以 "/"、"./" 或 "../" 开始的绝对路径，在这里搜索目录。绝
         对路径不使用 <a href="options.html#'cdpath'">'cdpath'</a> 选项。
@@ -1352,7 +1375,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         <a href="options.html#'charconvert'">'charconvert'</a> 需要自己负责这一点。
 
         以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的 <a href="options.html#'charconvert'">'charconvert'</a> 表达式，用脚本 ID
-        ( <a href="eval.html#local-function">local-function</a> ) 替代之。例如: 
+        ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例如: 
 <code class="example">                set charconvert=s:MyConvert()</code>
 <code class="example">                set charconvert=&lt;SID&gt;SomeConvert()</code>
         否则，表达式在设置本选项的脚本的上下文里计算，这样就可用局部于脚本的项
@@ -1481,11 +1504,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'cmdheight'">'cmdheight'</a> </b> <b class="vimtag"> <a name="'ch'">'ch'</a> </b>
 <a href="options.html#'cmdheight'">'cmdheight'</a> <a href="options.html#'ch'">'ch'</a>        数值型  (缺省为 1)
                         全局或局部于标签页
-        命令行使用的屏幕行数。有助于避免  <a href="message.html#hit-enter">hit-enter</a>  提示。
+        命令行使用的屏幕行数。使用一个大值有助于避免  <a href="message.html#hit-enter">hit-enter</a>  提示。
         此选项值保存在每个标签页里，从而每个标签页可有不同的值。
-
-        <a href="options.html#'cmdheight'">'cmdheight'</a> 为零时，除非命令行正在使用中，没有命令行。任何信息都会引发
-         <a href="message.html#hit-enter">hit-enter</a>  提示。
 
                                                 <b class="vimtag"> <a name="'cmdwinheight'">'cmdwinheight'</a> </b> <b class="vimtag"> <a name="'cwh'">'cwh'</a> </b>
 <a href="options.html#'cmdwinheight'">'cmdwinheight'</a> <a href="options.html#'cwh'">'cwh'</a>    数值型  (缺省为 7)
@@ -2756,7 +2776,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'fileignorecase'">'fileignorecase'</a> <a href="options.html#'fic'">'fic'</a>  布尔型 (缺省在一般忽略文件名大小写的系统上打开)
                         全局
         置位时，使用文件名和目录时忽略大小写。
-        若只要被全时忽略大小写，参见 <a href="options.html#'wildignorecase'">'wildignorecase'</a>。
+        若只在补全时忽略大小写，参见 <a href="options.html#'wildignorecase'">'wildignorecase'</a>。
 
                                         <b class="vimtag"> <a name="'filetype'">'filetype'</a> </b> <b class="vimtag"> <a name="'ft'">'ft'</a> </b>
 <a href="options.html#'filetype'">'filetype'</a> <a href="options.html#'ft'">'ft'</a>         字符串 (缺省: "")
@@ -2996,7 +3016,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         例如: 
 <code class="example">                :set formatexpr=mylang#Format()</code>
         调用 mylang#Format() 函数，它在 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的 autoload/myland.vim
-        文件里定义。 <a href="eval.html#autoload">autoload</a> 
+        文件里定义。 <a href="userfunc.html#autoload">autoload</a> 
 
         如果设置 <a href="options.html#'textwidth'">'textwidth'</a> 并且新加的文本超过此界限，也计算本表达式。这和内
         部排版发生的条件一样。确保光标到达相对于文本而言相同的位置！ <a href="builtin.html#mode()">mode()</a> 
@@ -3004,7 +3024,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
         函数如果返回非零，Vim 依旧使用内部的排版机制。
 
-        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 替代之。例
+        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例
         如: 
 <code class="example">                set formatexpr=s:MyFormatExpr()</code>
 <code class="example">                set formatexpr=&lt;SID&gt;SomeFormatExpr()</code>
@@ -3726,7 +3746,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         <a href="options.html#'include'">'include'</a> 语句之后的名字上执行 "gf"。
         也用于  <a href="cmdline.html#%3Ccfile%3E">&lt;cfile&gt;</a> 。
 
-        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 替代之。例
+        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例
         如: 
 <code class="example">                set includeexpr=s:MyIncludeExpr(v:fname)</code>
 <code class="example">                set includeexpr=&lt;SID&gt;SomeIncludeExpr(v:fname)</code>
@@ -3794,7 +3814,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         计算此表达式时， <a href="eval.html#v:lnum">v:lnum</a>  设为要计算缩进的行号。光标在计算表达式时也在
         该行上 (但此后可以移开)。
 
-        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="eval.html#local-function">local-function</a> ) 替代之。例
+        以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例
         如: 
 <code class="example">                set indentexpr=s:MyIndentExpr()</code>
 <code class="example">                set indentexpr=&lt;SID&gt;SomeIndentExpr()</code>
@@ -4151,7 +4171,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'lispwords'">'lispwords'</a> </b> <b class="vimtag"> <a name="'lw'">'lw'</a> </b>
 <a href="options.html#'lispwords'">'lispwords'</a> <a href="options.html#'lw'">'lw'</a>        字符串  (缺省很长)
                         全局或局部于缓冲区  <a href="options.html#global-local">global-local</a> 
-        逗号分隔单词的列表，影响 Lisp 的缩进方式。 <a href="options.html#'lisp'">'lisp'</a> 
+         <a href="options.html#'lisp'">'lisp'</a>  选项打开时，逗号分隔单词的列表以影响 Lisp 的缩进方式。
 
                                                 <b class="vimtag"> <a name="'list'">'list'</a> </b> <b class="vimtag"> <a name="'nolist'">'nolist'</a> </b>
 <a href="options.html#'list'">'list'</a>                  布尔型  (缺省关闭)
@@ -4361,7 +4381,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         的递归函数，把 <a href="options.html#'maxfuncdepth'">'maxfuncdepth'</a> 设大一点。不过这意味着需要更多内存，从而
         需要冒内存不足的风险。
         增加此限制超过 200，也会改变 Ex 命令嵌套的最大层数，见  <a href="message.html#E169">E169</a> 。
-        另见  <a href="eval.html#:function">:function</a> 。
+        另见  <a href="userfunc.html#:function">:function</a> 。
 
                                                 <b class="vimtag"> <a name="'maxmapdepth'">'maxmapdepth'</a> </b> <b class="vimtag"> <a name="'mmd'">'mmd'</a> </b> <b class="vimtag"> <a name="E223">E223</a> </b>
 <a href="options.html#'maxmapdepth'">'maxmapdepth'</a> <a href="options.html#'mmd'">'mmd'</a>     数值型  (缺省为 1000)
@@ -4884,7 +4904,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           会使 ":find index.html" 能够工作。
         - 使用 "*"、"**" 和 ";" 在目录树里往上和往下搜索。相关信息和语法见
            <a href="editing.html#file-searching">file-searching</a> 。
-          <code class="notvi">{仅当编译时加入  <a href="various.html#+path_extra">+path_extra</a>  特性才有效}</code>
         - 小心使用 '\' 字符，在选项里输入两个得到一个: 
 <code class="example">                :set path=.,c:\\include</code>
           也可使用 '/' 代替: 
@@ -5316,10 +5335,9 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                 All     首末两行都可见
                 45%     文件中的相对位置
         如果设置 <a href="options.html#'rulerformat'">'rulerformat'</a>，它决定标尺的内容。
-        每个窗口都有自己的标尺。如果窗口有状态行，标尺在那里显示。如果窗口没有
-        状态行而且 <a href="options.html#'cmdheight'">'cmdheight'</a> 为零，标尺不显示。否则，它显示在屏幕的最后一行
-        上。如果通过 <a href="options.html#'statusline'">'statusline'</a> 给出状态行 (亦即非空)，该选项优先于 <a href="options.html#'ruler'">'ruler'</a>
-        和 <a href="options.html#'rulerformat'">'rulerformat'</a>。
+        每个窗口都有自己的标尺。如果窗口有状态行，标尺在那里显示。否则，它显示
+        在屏幕的最后一行上。如果通过 <a href="options.html#'statusline'">'statusline'</a> 给出状态行 (亦即非空)，该选
+        项优先于 <a href="options.html#'ruler'">'ruler'</a> 和 <a href="options.html#'rulerformat'">'rulerformat'</a>。
         如果显示的字符数不同于文本的字节数 (比如，TAB 或者多字节字符)，同时显
         示文本列号 (字节数) 和屏幕列号，以连字符分隔。
         空行显示 "0-1"。
@@ -5375,7 +5393,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         搜索运行时文件所用的目录:
           filetype.vim  根据文件名决定文件类型  <a href="filetype.html#new-filetype">new-filetype</a> 
           scripts.vim   根据文件内容决定文件类型  <a href="filetype.html#new-filetype-scripts">new-filetype-scripts</a> 
-          autoload/     自动载入的脚本  <a href="eval.html#autoload-functions">autoload-functions</a> 
+          autoload/     自动载入的脚本  <a href="userfunc.html#autoload-functions">autoload-functions</a> 
           colors/       色彩方案文件  <a href="syntax.html#:colorscheme">:colorscheme</a> 
           compiler/     编辑器文件  <a href="quickfix.html#:compiler">:compiler</a> 
           doc/          文档  <a href="usr_51.html#write-local-help">write-local-help</a> 
@@ -5846,7 +5864,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                         全局
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+cmdline_info">+cmdline_info</a>  特性才有效}</code>
         在屏幕最后一行显示 (部分的) 命令。如果你的终端很慢，关闭此选项。
-        <a href="options.html#'cmdheight'">'cmdheight'</a> 为零时此选项无效。
         可视模式里，显示选择区域的大小，即:
         - 在行内选择若干字符时，字符数。如果字节数不同，同时显示字节数: "2-6"
           代表 2 个字符和 6 个字节。
@@ -5884,7 +5901,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                         全局
         在插入、替换和可视模式里，在最后一行提供消息。
         <a href="options.html#'highlight'">'highlight'</a> 的 'M' 标志位设置此消息的高亮类型。
-        <a href="options.html#'cmdheight'">'cmdheight'</a> 为零时此选项无效。
         如果可能使用  <a href="mbyte.html#XIM">XIM</a> ，消息里会包含 "XIM"。但这不意味着实际激活了 XIM，尤
         其是可能还没有设置 <a href="options.html#'imactivatekey'">'imactivatekey'</a>。
         <code class="note">注意</code>: 如果置位 <a href="options.html#'compatible'">'compatible'</a>，本选项被设为 Vi 的缺省值。相反，如果复位
@@ -6022,6 +6038,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+syntax">+syntax</a>  特性才有效}</code>
         单词列表文件名，此文件用于  <a href="spell.html#zg">zg</a>  和  <a href="spell.html#zw">zw</a>  命令加入单词。它必须以
         ".<code class="special">{encoding}</code>.add" 结尾。路径是必要的，否则该文件就放到当前目录。
+        路径名可包含 <a href="options.html#'isfname'">'isfname'</a> 里的字符、空格、逗号和 '@'。
                                                                 <b class="vimtag"> <a name="E765">E765</a> </b>
         它也可以是逗号分隔的名字列表。 <a href="spell.html#zg">zg</a>  和  <a href="spell.html#zw">zw</a>  命令前的计数用来指定需要的
         名字。这可用于，比方说，分别指定个人单词列表和项目单词列表文件。
@@ -6138,6 +6155,15 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'splitright'">'splitright'</a> <a href="options.html#'spr'">'spr'</a>      布尔型  (缺省关闭)
                         全局
         如果打开，窗口的分割会把新窗口放到当前窗口之右。 <a href="windows.html#:split">:split</a> 
+
+                        <b class="vimtag"> <a name="'splitscroll'">'splitscroll'</a> </b> <b class="vimtag"> <a name="'spsc'">'spsc'</a> </b> <b class="vimtag"> <a name="'nosplitscroll'">'nosplitscroll'</a> </b> <b class="vimtag"> <a name="'nospsc'">'nospsc'</a> </b>
+<a href="options.html#'splitscroll'">'splitscroll'</a> <a href="options.html#'spsc'">'spsc'</a>    布尔型  (缺省打开)
+                        全局
+        本选项值决定打开、关闭或调整横向分割的尺寸时的滚动行为。如果置位，窗口
+        横向分割时，会在旧和新窗口中保持相对光标位置一致，调整窗口大小时也会如
+        此。复位时，避免滚动而影响窗口显示的内容。相反的，有必要时会改变光标位
+        置。这种情况下，会把之前的光标位置加入跳转列表。打开 <a href="options.html#'wrap'">'wrap'</a> 时不能绝对
+        保证不滚动。
 
                            <b class="vimtag"> <a name="'startofline'">'startofline'</a> </b> <b class="vimtag"> <a name="'sol'">'sol'</a> </b> <b class="vimtag"> <a name="'nostartofline'">'nostartofline'</a> </b> <b class="vimtag"> <a name="'nosol'">'nosol'</a> </b>
 <a href="options.html#'startofline'">'startofline'</a> <a href="options.html#'sol'">'sol'</a>     布尔型  (缺省打开)
@@ -6320,7 +6346,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'suffixesadd'">'suffixesadd'</a> </b> <b class="vimtag"> <a name="'sua'">'sua'</a> </b>
 <a href="options.html#'suffixesadd'">'suffixesadd'</a> <a href="options.html#'sua'">'sua'</a>     字符串  (缺省为 "")
                         局部于缓冲区
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+file_in_path">+file_in_path</a>  特性才有效}</code>
         逗号分隔的后缀名列表。"gf"、"[I" 等命令搜索文件时使用它们。例如: 
 <code class="example">                :set suffixesadd=.java</code>
 
@@ -6549,7 +6574,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
          <a href="editing.html#file-searching">file-searching</a> 。例如，"/lib/**/tags" 会找到 "/lib" 下面所有名为
         "tags" 的文件。文件名本身不能包含通配符，会按原样使用。例如
         "/lib/**/tags?" 会找到名为 "tags?" 的文件
-        <code class="notvi">{仅当编译时加入  <a href="various.html#+path_extra">+path_extra</a>  特性才有效}</code>
         可以用  <a href="builtin.html#tagfiles()">tagfiles()</a>  函数来得到实际使用的文件名列表。
         如果 Vim 编译时加入  <a href="various.html#+emacs_tags">+emacs_tags</a>  特性，也支持 Emacs 风格的标签文件。
         它们被自动识别。缺省值这时变成 "./tags,./TAGS,tags,TAGS"，除非大小写被
@@ -7396,7 +7420,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'wildignore'">'wildignore'</a> </b> <b class="vimtag"> <a name="'wig'">'wig'</a> </b>
 <a href="options.html#'wildignore'">'wildignore'</a> <a href="options.html#'wig'">'wig'</a>      字符串  (缺省为 "")
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+wildignore">+wildignore</a>  特性才有效}</code>
         文件模式的列表。扩展  <a href="editing.html#wildcards">wildcards</a>  和文件和目录名的补全中忽略符合其中任
         何模式的文件，它也同时影响  <a href="builtin.html#expand()">expand()</a> 、 <a href="builtin.html#glob()">glob()</a>  和  <a href="builtin.html#globpath()">globpath()</a> ，除非
         指定标志位来关闭之。
@@ -7418,10 +7441,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                 <b class="vimtag"> <a name="'wildmenu'">'wildmenu'</a> </b> <b class="vimtag"> <a name="'wmnu'">'wmnu'</a> </b> <b class="vimtag"> <a name="'nowildmenu'">'nowildmenu'</a> </b> <b class="vimtag"> <a name="'nowmnu'">'nowmnu'</a> </b>
 <a href="options.html#'wildmenu'">'wildmenu'</a> <a href="options.html#'wmnu'">'wmnu'</a>       布尔型  (缺省关闭， <a href="starting.html#defaults.vim">defaults.vim</a>  里置位)
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+wildmenu">+wildmenu</a>  特性才有效}</code>
         <a href="options.html#'wildmenu'">'wildmenu'</a> 打开时，命令行补全以增强模式运行。按下 <a href="options.html#'wildchar'">'wildchar'</a> (通常是
-        <code class="special">&lt;Tab&gt;</code>) 启动补全。这时，在命令行的上方显示可能的匹配，然后高亮首个匹配
-        (如果有状态行，覆盖之)。这是 <a href="options.html#'wildoptions'">'wildoptions'</a> 不包含 "pum" 时的行为。
+        <code class="special">&lt;Tab&gt;</code>) 启动补全。这时显示可能的匹配，
+        <a href="options.html#'wildoptions'">'wildoptions'</a> 包含 "pum" 时，在弹出菜单里显示补全匹配，否则在命令行之
+        上方显示，然后高亮首个匹配 (如果有状态行，覆盖之)。
         那些显示前项/后项匹配的热键，如 <code class="special">&lt;Tab&gt;</code> 或 <code class="keystroke">CTRL-P</code>/<code class="keystroke">CTRL-N</code>，会把高亮移动到
         合适的匹配上。
         <a href="options.html#'wildmode'">'wildmode'</a> 如果指定 "full" 会启用 "wildmenu" 模式。而 "longest" 和
@@ -7429,7 +7452,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         可用  <a href="builtin.html#wildmenumode()">wildmenumode()</a>  查看当前模式。
         如果多个匹配超过一行，在右侧显示 "&gt;" 和/或在左侧显示 "&lt;"。需要的话，滚
         动状态行。
-        <a href="options.html#'wildoptions'">'wildoptions'</a> 包含 "pum" 时，在弹出菜单里显示补全匹配。
         按下不用于选择补全项的键时，放弃 "wildmenu" 模式。
         "wildmenu" 激活且不使用弹出菜单时，下面的键有特殊含义:
 
@@ -7500,7 +7522,6 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'wildoptions'">'wildoptions'</a> </b> <b class="vimtag"> <a name="'wop'">'wop'</a> </b>
 <a href="options.html#'wildoptions'">'wildoptions'</a> <a href="options.html#'wop'">'wop'</a>     字符串  (缺省为 "")
                         全局
-                        <code class="notvi">{仅当编译时加入  <a href="various.html#+wildignore">+wildignore</a>  特性才有效}</code>
         单词列表，改变  <a href="cmdline.html#cmdline-completion">cmdline-completion</a>  的行为。
         支持以下值:
           fuzzy         使用  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a>  来找到补全匹配。指定此值时，补全
