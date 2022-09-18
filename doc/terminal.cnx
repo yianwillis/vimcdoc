@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
+*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -867,6 +867,38 @@ Job 到 Vim: JSON API ~
 	set t_ts& t_fs&
 
 理据: 为什么不允许任何命令或表达式呢？因为可能会造成安全问题。
+						*terminal-autoshelldir*
+以下代码可用于从外壳把当前目录传递给 Vim。
+在 .vimrc 里: >
+	def g:Tapi_lcd(_, path: string)
+	    if isdirectory(path)
+                execute 'silent lcd ' .. fnameescape(path)
+            endif
+	enddef
+<
+同时，bash 初始文件里: >
+        if [[ -n "$VIM_TERMINAL" ]]; then
+            PROMPT_COMMAND='_vim_sync_PWD'
+            function _vim_sync_PWD() {
+              printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"
+            }
+        fi
+<
+或者，用于 zsh: >
+	if [[ -n "$VIM_TERMINAL" ]]; then
+	    autoload -Uz add-zsh-hook
+	    add-zsh-hook -Uz chpwd _vim_sync_PWD
+	    function _vim_sync_PWD() {
+		printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"
+	    }
+	fi
+<
+或者，用于 fish: >
+	if test -n "$VIM_TERMINAL"
+	    function _vim_sync_PWD --on-variable=PWD
+		printf '\033]51;["call", "Tapi_lcd", "%s"]\007' "$PWD"
+	    end
+	end
 
 
 使用客户-服务器特性 ~

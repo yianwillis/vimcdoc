@@ -1,4 +1,4 @@
-*options.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+*options.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -659,6 +659,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			可以检查}
 	如果打开，Vim 会在你打开文件、切换缓冲区、删除缓冲区或者打开/关闭窗口
 	时改变当前工作目录的值。具体来说，就是打开或者选择的文件所在的目录。
+	如果缓冲区没有名字，它也没有目录，因此切换到该缓冲区时不改变当前目录。
 	注意: 打开此选项会使得某些插件无法工作。
 
 			*'autoshelldir'* *'asd'* *'noautoshelldir'* *'noasd'*
@@ -668,7 +669,31 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	录。为此，你需要正确的设置，使外壳在当前目录改变时释出 OSC 7 转义序
 	列。
 	例如，Linux 上如果用 bash 或 zsh 的话，可在外壳的 profile 里执行
-	/etc/profile.d/vte.sh。
+	/etc/profile.d/vte.sh。bash 可用以下 (放在 bash 初始文件里): >
+		if [[ -n "$VIM_TERMINAL" ]]; then
+		    PROMPT_COMMAND='_vim_sync_PWD'
+		    function _vim_sync_PWD() {
+			printf '\033]7;file://%s\033\\' "$PWD"
+		    }
+		fi
+<
+	或者，在 zsh 初始文件里: >
+		if [[ -n "$VIM_TERMINAL" ]]; then
+		    autoload -Uz add-zsh-hook
+		    add-zsh-hook -Uz chpwd _vim_sync_PWD
+		    function _vim_sync_PWD() {
+			printf '\033]7;file://%s\033\\' "$PWD"
+		    }
+		fi
+<
+	在 fish 初始文件里: >
+		if test -n "$VIM_TERMINAL"
+		    function _vim_sync_PWD --on-variable=PWD
+			printf '\033]7;file://%s\033\\' "$PWD"
+		    end
+		end
+<
+	另一个办法可见 |terminal-autoshelldir|。
 	OSC 序列如果解析失败，会报 *E1179* 。
 
 				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
@@ -941,7 +966,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				 Unix: "/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"
 				 Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*")
 			全局
-			{仅当编译时加入 |+wildignore| 特性才有效}
 	文件名模式列表。如果其中某个模式匹配要写入的文件名，不建立它的备份文
 	件。同时测试指定的文件名和它的完整路径名。模式的使用方式和 |:autocmd|
 	类同，见 |autocmd-patterns|。
@@ -1256,7 +1280,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'cdpath'* *'cd'* *E344* *E346*
 'cdpath' 'cd'		字符串	(缺省: 等价于 $CDPATH 或 ",,")
 			全局
-			{仅当编译时加入 |+file_in_path| 特性才有效}
 	这是一个目录列表。使用 |:cd|、|:tcd| 和 |:lcd| 命令时，如果查找的是相
 	对路径，而不是以 "/"、"./" 或 "../" 开始的绝对路径，在这里搜索目录。绝
 	对路径不使用 'cdpath' 选项。
@@ -1449,11 +1472,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	数值型	(缺省为 1)
 			全局或局部于标签页
-	命令行使用的屏幕行数。有助于避免 |hit-enter| 提示。
+	命令行使用的屏幕行数。使用一个大值有助于避免 |hit-enter| 提示。
 	此选项值保存在每个标签页里，从而每个标签页可有不同的值。
-
-	'cmdheight' 为零时，除非命令行正在使用中，没有命令行。任何信息都会引发
-	|hit-enter| 提示。
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	数值型	(缺省为 7)
@@ -4119,7 +4139,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'lispwords'* *'lw'*
 'lispwords' 'lw'	字符串	(缺省很长)
 			全局或局部于缓冲区 |global-local|
-	逗号分隔单词的列表，影响 Lisp 的缩进方式。|'lisp'|
+	|'lisp'| 选项打开时，逗号分隔单词的列表以影响 Lisp 的缩进方式。
 
 						*'list'* *'nolist'*
 'list'			布尔型	(缺省关闭)
@@ -4852,7 +4872,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  会使 ":find index.html" 能够工作。
 	- 使用 "*"、"**" 和 ";" 在目录树里往上和往下搜索。相关信息和语法见
 	  |file-searching|。
-	  {仅当编译时加入 |+path_extra| 特性才有效}
 	- 小心使用 '\' 字符，在选项里输入两个得到一个: >
 		:set path=.,c:\\include
 <	  也可使用 '/' 代替: >
@@ -5284,10 +5303,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		All	首末两行都可见
 		45%	文件中的相对位置
 	如果设置 'rulerformat'，它决定标尺的内容。
-	每个窗口都有自己的标尺。如果窗口有状态行，标尺在那里显示。如果窗口没有
-	状态行而且 'cmdheight' 为零，标尺不显示。否则，它显示在屏幕的最后一行
-	上。如果通过 'statusline' 给出状态行 (亦即非空)，该选项优先于 'ruler'
-	和 'rulerformat'。
+	每个窗口都有自己的标尺。如果窗口有状态行，标尺在那里显示。否则，它显示
+	在屏幕的最后一行上。如果通过 'statusline' 给出状态行 (亦即非空)，该选
+	项优先于 'ruler' 和 'rulerformat'。
 	如果显示的字符数不同于文本的字节数 (比如，TAB 或者多字节字符)，同时显
 	示文本列号 (字节数) 和屏幕列号，以连字符分隔。
 	空行显示 "0-1"。
@@ -5814,7 +5832,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 			{仅当编译时加入 |+cmdline_info| 特性才有效}
 	在屏幕最后一行显示 (部分的) 命令。如果你的终端很慢，关闭此选项。
-	'cmdheight' 为零时此选项无效。
 	可视模式里，显示选择区域的大小，即:
 	- 在行内选择若干字符时，字符数。如果字节数不同，同时显示字节数: "2-6"
 	  代表 2 个字符和 6 个字节。
@@ -5852,7 +5869,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 	在插入、替换和可视模式里，在最后一行提供消息。
 	'highlight' 的 'M' 标志位设置此消息的高亮类型。
-	'cmdheight' 为零时此选项无效。
 	如果可能使用 |XIM|，消息里会包含 "XIM"。但这不意味着实际激活了 XIM，尤
 	其是可能还没有设置 'imactivatekey'。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
@@ -5990,6 +6006,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			{仅当编译时加入 |+syntax| 特性才有效}
 	单词列表文件名，此文件用于 |zg| 和 |zw| 命令加入单词。它必须以
 	".{encoding}.add" 结尾。路径是必要的，否则该文件就放到当前目录。
+	路径名可包含 'isfname' 里的字符、空格、逗号和 '@'。
 								*E765*
 	它也可以是逗号分隔的名字列表。|zg| 和 |zw| 命令前的计数用来指定需要的
 	名字。这可用于，比方说，分别指定个人单词列表和项目单词列表文件。
@@ -6106,6 +6123,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'splitright' 'spr'	布尔型	(缺省关闭)
 			全局
 	如果打开，窗口的分割会把新窗口放到当前窗口之右。|:split|
+
+			*'splitscroll'* *'spsc'* *'nosplitscroll'* *'nospsc'*
+'splitscroll' 'spsc'	布尔型	(缺省打开)
+			全局
+	本选项值决定打开、关闭或调整横向分割的尺寸时的滚动行为。如果置位，窗口
+	横向分割时，会在旧和新窗口中保持相对光标位置一致，调整窗口大小时也会如
+	此。复位时，避免滚动而影响窗口显示的内容。相反的，有必要时会改变光标位
+	置。这种情况下，会把之前的光标位置加入跳转列表。打开 'wrap' 时不能绝对
+	保证不滚动。
 
 			   *'startofline'* *'sol'* *'nostartofline'* *'nosol'*
 'startofline' 'sol'	布尔型	(缺省打开)
@@ -6288,7 +6314,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'suffixesadd'* *'sua'*
 'suffixesadd' 'sua'	字符串	(缺省为 "")
 			局部于缓冲区
-			{仅当编译时加入 |+file_in_path| 特性才有效}
 	逗号分隔的后缀名列表。"gf"、"[I" 等命令搜索文件时使用它们。例如: >
 		:set suffixesadd=.java
 <
@@ -6517,7 +6542,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|file-searching|。例如，"/lib/**/tags" 会找到 "/lib" 下面所有名为
 	"tags" 的文件。文件名本身不能包含通配符，会按原样使用。例如
 	"/lib/**/tags?" 会找到名为 "tags?" 的文件
-	{仅当编译时加入 |+path_extra| 特性才有效}
 	可以用 |tagfiles()| 函数来得到实际使用的文件名列表。
 	如果 Vim 编译时加入 |+emacs_tags| 特性，也支持 Emacs 风格的标签文件。
 	它们被自动识别。缺省值这时变成 "./tags,./TAGS,tags,TAGS"，除非大小写被
@@ -7364,7 +7388,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'wildignore'* *'wig'*
 'wildignore' 'wig'	字符串	(缺省为 "")
 			全局
-			{仅当编译时加入 |+wildignore| 特性才有效}
 	文件模式的列表。扩展 |wildcards| 和文件和目录名的补全中忽略符合其中任
 	何模式的文件，它也同时影响 |expand()|、|glob()| 和 |globpath()|，除非
 	指定标志位来关闭之。
@@ -7386,10 +7409,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
 'wildmenu' 'wmnu'	布尔型	(缺省关闭，|defaults.vim| 里置位)
 			全局
-			{仅当编译时加入 |+wildmenu| 特性才有效}
 	'wildmenu' 打开时，命令行补全以增强模式运行。按下 'wildchar' (通常是
-	<Tab>) 启动补全。这时，在命令行的上方显示可能的匹配，然后高亮首个匹配
-	(如果有状态行，覆盖之)。这是 'wildoptions' 不包含 "pum" 时的行为。
+	<Tab>) 启动补全。这时显示可能的匹配，
+	'wildoptions' 包含 "pum" 时，在弹出菜单里显示补全匹配，否则在命令行之
+	上方显示，然后高亮首个匹配 (如果有状态行，覆盖之)。
 	那些显示前项/后项匹配的热键，如 <Tab> 或 CTRL-P/CTRL-N，会把高亮移动到
 	合适的匹配上。
 	'wildmode' 如果指定 "full" 会启用 "wildmenu" 模式。而 "longest" 和
@@ -7397,7 +7420,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	可用 |wildmenumode()| 查看当前模式。
 	如果多个匹配超过一行，在右侧显示 ">" 和/或在左侧显示 "<"。需要的话，滚
 	动状态行。
-	'wildoptions' 包含 "pum" 时，在弹出菜单里显示补全匹配。
 	按下不用于选择补全项的键时，放弃 "wildmenu" 模式。
 	"wildmenu" 激活且不使用弹出菜单时，下面的键有特殊含义:
 
@@ -7468,7 +7490,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'wildoptions'* *'wop'*
 'wildoptions' 'wop'	字符串	(缺省为 "")
 			全局
-			{仅当编译时加入 |+wildignore| 特性才有效}
 	单词列表，改变 |cmdline-completion| 的行为。
 	支持以下值:
 	  fuzzy		使用 |fuzzy-matching| 来找到补全匹配。指定此值时，补全

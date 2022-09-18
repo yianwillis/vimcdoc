@@ -1,0 +1,137 @@
+*ft_mp.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
+
+这是关于 METAFONT 和 MetaPost 文件类型的插件的文档。除非特别指定，下面定义的命
+令、设置和映射对两种文件类型都适用。
+
+注意: 此插件需要 +vim9script。
+
+==============================================================================
+内 容							*mp.vim* *ft-metapost*
+							*mf.vim* *ft-metafont*
+
+1. 介绍					|ft-metapost-intro|
+2. 命令					|ft-metapost-commands|
+3. 设置					|ft-metapost-settings|
+4. 映射					|ft-metapost-mappings|
+
+==============================================================================
+							*ft-metapost-intro*
+							*ft-metafont-intro*
+介绍 ~
+此文件类型提供 METAFONT 和 MetaPost 文档的完整支持，包括语法高亮、缩进和补全。
+
+为 METAFONT 和 MetaPost 代码定义缩进规则需要点技巧，也有些主观，因为它们的语法
+是很自由的。此插件使用一些经验法则，应适用于多数情况，但特定情况下可以自行覆盖
+自动规则，以使 `gg=G` 这样的命令可以保存手动定义的缩进。
+
+为此，可在一行后加上 `%>`、`%<`、`%=` 或 `%!`，以显式地控制其后一行的缩进。
+`<` 和 `>` 符号可重复多次: 例如 `%>>` 会使下行缩进两次。当然，`%<` 会使下行减
+少一层缩进；而 `%=` 设置下行的缩进和当前行的相同；而 `%!` 代表下行的缩进手动控
+制，不应改变。
+
+例如，下面是简单宏的缺省缩进方式:
+>
+   def foo =
+       makepen(
+           subpath(T-n,t) of r
+           shifted .5down
+           --subpath(t,T) of r shifted .5up -- cycle
+       )
+       withcolor black
+   enddef
+<
+通过加入特殊注释，可随意控制缩进:
+>
+   def foo =
+       makepen(
+           subpath(T-n,t) of r  %>
+               shifted .5down   %>
+                   --subpath(t,T) of r shifted .5up -- cycle   %<<<
+       )
+       withcolor black
+   enddef
+<
+							*ft-metapost-commands*
+命令 ~
+					*:FixBeginfigs*
+重新编号当前缓冲区的 beginfig() 块，使第 n 个图的编号为 n。只适用于 MetaPost。
+
+							*ft-metapost-settings*
+							*ft-metafont-settings*
+设置 ~
+					*'g:mf_other_macros'*
+高亮一些其它的基本宏名，如 cmbase、logo 等等的。METAFONT 缓冲区缺省设为 1，
+MetaPost 缓冲区缺省设为 0。
+
+					*'g:mf_plain_macros'*
+高亮 plain.mf 定义的关键字。METAFONT 缓冲区缺省设为 1，MetaPost 缓冲区缺省设为
+0。
+
+					*'g:mf_plain_modes'*
+高亮 modes.mf 定义的关键字。METAFONT 缓冲区缺省设为 1，MetaPost 缓冲区缺省设为
+0。
+
+					*'g:mp_close_tag'*
+定义结束缩进块的额外关键字。例如定义了:
+>
+	g:mp_end_tag = ['\<endfoo\>']
+<
+那么 `endfoo` 开始的行会比前一行减少一层缩进。
+>
+	g:mp_close_tag = []
+<
+					*'b:mp_metafun'*
+					*'g:mp_metafun'*
+设为 1 时，高亮 ConTeXt 的 MetaFun 关键字。只适用于 MetaPost。
+>
+	g:mp_metafun = 0
+<
+					*'g:mp_mfplain_macros'*
+高亮 mfplain.mp 定义的关键字。只适用于 MetaPost。
+>
+	g:mp_mfplain_macros = 1
+<
+					*'g:mp_open_tag'*
+定义开始缩进块的额外关键字。例如定义了:
+>
+	g:mp_open_tag = ['\<beginfoo\>']
+<
+那么 `beginfoo` 开始的行会被缩进。
+>
+	g:mp_open_tag = []
+<
+					*'g:mp_other_macros'*
+高亮所有基本的宏包 (boxes、rboxes、format、graph、marith、sarith、string、TEX)
+定义的关键字。此选项只影响 MetaPost 缓冲区。
+>
+	g:mp_other_macros = 1
+<
+					*'g:mp_plain_macros'*
+高亮 plain.mp 定义的关键字。只适用于 MetaPost。
+>
+	g:mp_plain_macros = 1
+<
+					*'g:no_mp_maps'*
+					*'g:no_mf_maps'*
+置位时，在给定文件类型对应的缓冲区里不定义映射。
+>
+	g:no_mp_maps = 0
+	g:no_mf_maps = 0
+<
+							*ft-metapost-mappings*
+							*ft-metafont-mappings*
+映射 ~
+
+]]			[count] 个正向 vardefs、宏和图。
+
+[[			[count] 个反向 vardef、宏和图。
+
+][			[count] 个正向 vardef、宏和图的结尾处。
+
+[]			[count] 个反向 vardef、宏和图的结尾处。
+
+]}			[count] 个正向块结尾处 (fi、endfor、endgroup)。
+
+[{			[count] 个反向块开始处 (if、for、begingroup)。
+
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

@@ -1,4 +1,4 @@
-*builtin.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年8月
+*builtin.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年9月
 
 内建函数					*builtin-functions*
 
@@ -246,6 +246,7 @@ getreg([{regname} [, 1 [, {list}]]])
 				字符串/列表	某寄存器内容
 getreginfo([{regname}])		字典	关于某寄存器的信息
 getregtype([{regname}])		字符串	某寄存器的类型
+getscriptinfo([{opts}])		列表	已执行脚本的列表
 gettabinfo([{expr}])		列表	标签页列表
 gettabvar({nr}, {varname} [, {def}])
 				可变	{tabnr} 标签页的 {varname} 变量
@@ -283,6 +284,8 @@ iconv({expr}, {from}, {to})	字符串	转换 {expr} 的编码
 indent({lnum})			数值	第 {lnum} 行的缩进
 index({object}, {expr} [, {start} [, {ic}]])
 				数值	{object} 里出现 {expr} 的项目的索引
+indexof({object}, {expr} [, {opts}]])
+				数值	{object} 里 {expr} 为真的项目的索引
 input({prompt} [, {text} [, {completion}]])
 				字符串	从用户得到输入
 inputdialog({prompt} [, {text} [, {cancelreturn}]])
@@ -313,6 +316,7 @@ js_encode({expr})		字符串	编码 JS 风格的 JSON
 json_decode({string})		可变	解码 JSON
 json_encode({expr})		字符串	编码 JSON
 keys({dict})			列表	{dict} 的所有键
+keytrans({string})		字符串	把内部键值翻译为 |:map| 可接受的形式
 len({expr})			数值	{expr} 的长度
 libcall({lib}, {func}, {arg})	字符串	调用库 {lib} 的函数 {func}，使用参数
 					{arg}
@@ -460,7 +464,8 @@ remove({blob}, {idx} [, {end}])	可变/blob
 					从 {blob} 里删除字节 {idx}-{end}
 remove({dict}, {key})		可变	从 {dict} 里删除项目 {key}
 rename({from}, {to})		数值	换名 (移动) 文件，从 {from} 到 {to}
-repeat({expr}, {count})		字符串	重复 {expr} {count} 次
+repeat({expr}, {count})		列表/Blob/字符串
+					重复 {expr} {count} 次
 resolve({filename})		字符串	解析快捷方式对应的文件名
 reverse({list})			列表	反转 {list}，直接修改 {list}
 round({expr})			浮点	{expr} 四舍五入
@@ -494,6 +499,7 @@ setbufvar({buf}, {varname}, {val})
 setcellwidths({list})		无	设置字符单元宽度覆盖
 setcharpos({expr}, {list})	数值	设置 {expr} 的位置为 {list}
 setcharsearch({dict})		字典	从 {dict} 设置字符搜索选项
+setcmdline({str} [, {pos}])	数值	设置命令行
 setcmdpos({pos})		数值	设置命令行的光标位置
 setcursorcharpos({list})	数值	移动光标到 {list} 指定的位置
 setenv({name}, {val})		无	设置环境变量
@@ -1119,7 +1125,7 @@ browsedir({title}, {initdir})
 		如果按了 "Cancel" 按钮、出错、或者无法浏览，返回空字符串。
 
 bufadd({name})						*bufadd()*
-		在缓冲区列表中加入名为字符串 {name} 的缓冲区。
+		在缓冲区列表中加入名为 {name} (须为字符串) 的缓冲区。
 		如果对应文件 {name} 的缓冲区已经存在，返回该缓冲区号。否则返回
 		新建缓冲区的号。{name} 为空串时，总是建立新缓冲区。
 		该缓冲区不置位 'buflisted' 也还未载入。要在缓冲区中增加文件: >
@@ -1163,7 +1169,8 @@ buflisted({buf})					*buflisted()*
 
 bufload({buf})						*bufload()*
 		确保缓冲区 {buf} 已载入。如果缓冲区名指向已存在的文件，读入该
-		文件。否则缓冲区会为空。如果缓冲区已载入，则没有改变。
+		文件。否则缓冲区会为空。如果缓冲区已载入，则没有改变。如果缓冲
+		区不和文件相关 (如 'buftype' 为 "nofile" 时)，不读入任何文件。
 		如果缓冲区的文件已有交换文件，不会弹出对话框，还是会载入缓冲
 		区。
 		{buf} 参数的用法可见 |bufexists()|。
@@ -2444,7 +2451,6 @@ finddir({name} [, {path} [, {count}]])				*finddir()*
 		如果目录没找到，返回空串。
 
 		这和 ex 命令 `:find` 非常类似。
-		{仅当编译时加入 |+file_in_path| 特性才有效}
 
 		也可用作 |method|: >
 			GetName()->finddir()
@@ -2709,10 +2715,10 @@ function({name} [, {arglist}] [, {dict}])
 <		function() 调用可以嵌套，来给函数引用加入更多的参数。额外的参
 		数附加于参数列表之后。如: >
 			func Callback(arg1, arg2, name)
-			...
+			"...
 			let Func = function('Callback', ['one'])
 			let Func2 = function(Func, ['two'])
-			...
+			"...
 			call Func2('name')
 <		函数的调用就类似于: >
 			call Callback('one', 'two', 'name')
@@ -2722,10 +2728,10 @@ function({name} [, {arglist}] [, {dict}])
 			function Callback() dict
 			   echo "called for " .. self.name
 			endfunction
-			...
+			"...
 			let context = {"name": "example"}
 			let Func = function('Callback', context)
-			...
+			"...
 			call Func()	" 会回显: called for example
 <		如果不需额外参数，function() 是没有必要的。这两者等价: >
 			let Func = function('Callback', context)
@@ -2733,10 +2739,10 @@ function({name} [, {arglist}] [, {dict}])
 
 <		可以合并参数列表和字典: >
 			function Callback(arg1, count) dict
-			...
+			"...
 			let context = {"name": "example"}
 			let Func = function('Callback', ['one'], context)
-			...
+			"...
 			call Func(500)
 <		函数的调用就类似于: >
 			call context.Callback('one', 500)
@@ -3040,7 +3046,8 @@ getcmdcompltype()					*getcmdcompltype()*
 		返回当前命令行补全的类型。只有在编辑命令行时有效，所以必须在
 		|c_CTRL-\_e| 或 |c_CTRL-R_=| 里使用。
 		返回字符串可见 |:command-completion|。
-		另见 |getcmdtype()|、|setcmdpos()| 和 |getcmdline()|。
+		另见 |getcmdtype()|、|setcmdpos()| 、|getcmdline()| 和
+		|setcmdline()|。
 		如果没有定义补全，返回空串。
 
 getcmdline()						*getcmdline()*
@@ -3048,7 +3055,8 @@ getcmdline()						*getcmdline()*
 		|c_CTRL-\_e| 或 |c_CTRL-R_=| 里使用。
 		例如: >
 			:cmap <F7> <C-\>eescape(getcmdline(), ' \')<CR>
-<		另见 |getcmdtype()|、|getcmdpos()| 和 |setcmdpos()|。
+<		另见 |getcmdtype()|、|getcmdpos()|、|setcmdpos()| 和
+		|setcmdline()|。
 		输入密码或用 |inputsecret()| 时返回空串。
 
 getcmdpos()					*getcmdpos()*
@@ -3056,7 +3064,8 @@ getcmdpos()					*getcmdpos()*
 		只有在编辑命令行时有效，所以必须在 |c_CTRL-\_e| 或
 		|c_CTRL-R_=| 或表达式映射里使用。
 		不然，返回 0。
-		另见 |getcmdtype()|、|setcmdpos()| 和 |getcmdline()|。
+		另见 |getcmdtype()|、|setcmdpos()|、|getcmdline()| 和
+		|setcmdline()|。
 
 getcmdscreenpos()					*getcmdscreenpos()*
 		返回命令行的字节计算的光标屏幕位置。第一列为 1。
@@ -3064,7 +3073,8 @@ getcmdscreenpos()					*getcmdscreenpos()*
 		只有在编辑命令行时有效，所以必须在 |c_CTRL-\_e| 或
 		|c_CTRL-R_=| 或表达式映射里使用。
 		不然，返回 0。
-		另见 |getcmdpos()|、|setcmdpos()|。
+		另见 |getcmdpos()|、|setcmdpos()|、|getcmdline()| 和
+		|setcmdline()|。
 
 getcmdtype()						*getcmdtype()*
 		返回当前命令行类型。可能的返回值是:
@@ -3084,6 +3094,35 @@ getcmdwintype()						*getcmdwintype()*
 		返回当前 |command-line-window| 类型。可能的返回值和
 		|getcmdtype()| 相同。如果不在命令行窗口内，返回空字符串。
 
+getscriptinfo([{opts})					*getscriptinfo()*
+		返回 |List|，包含所有已执行的 Vim 脚本的信息，依执行的顺序排
+		列，类似于 `:scriptnames` 显示的结果。
+
+		可选的字典参数 {opts} 支持以下可选项目:
+		    name	脚本名匹配模式，如指定此项目而不指定 "sid"，返
+				回名字匹配模式 "name" 的脚本的信息。
+		    sid		脚本 ID |<SID>|。如果指定，只返回 ID 为 "sid"
+				的脚本的信息，忽略 "name"。
+
+		返回列表的每个项目是包含以下项目的 |Dict|:
+		    autoload	脚本用 `import autoload` 载入但尚未真正执行时
+				为真 (见 |import-autoload|)。
+		    functions   脚本中定义的局部于脚本的函数名列表。仅为
+				{opts} 中用 "sid" 项目指定的特定脚本给出。
+		    name	Vim 脚本文件名。
+		    sid		脚本 ID |<SID>|。
+		    sourced	如有，此脚本名链接到的实际执行的脚本 ID。否则
+				为零。
+		    variables   脚本中定义的局部于脚本的变量列表。仅为 {opts}
+				中用 "sid" 项目指定的特定脚本给出。
+				注意 这是备份，不可用此字典来修改脚本局部变量
+				的值。
+		    version	Vimscript 版本号 (|scriptversion|)
+
+		示例: >
+			:echo getscriptinfo({'name': 'myscript'})
+			:echo getscriptinfo({'sid': 15}).variables
+<
 getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		返回命令行补全匹配列表。字符串 {type} 指定类型。支持以下的匹配
 		类型:
@@ -3870,7 +3909,10 @@ has({feature} [, {check}])
 
 has_key({dict}, {key})					*has_key()*
 		返回数值，如果 |Dictionary| {dict} 里存在键为 {key} 的项目，则
-		为 TRUE，不然为 FALSE。{key} 参数是字符串。
+		为 TRUE，不然为 FALSE。
+		{key} 参数是字符串。|Vim9| 脚本中也接受数值 (并转换为字符串)，
+		但其它类型都不行。
+		老式脚本中进行通常的自动转换，转为字符串。
 
 		也可用作 |method|: >
 			mydict->has_key(key)
@@ -4160,15 +4202,21 @@ indent({lnum})	返回数值，第 {lnum} 行的缩进距离。缩进的计算以
 			GetLnum()->indent()
 
 index({object}, {expr} [, {start} [, {ic}]])			*index()*
+		寻找 {object} 中的 {expr}，并返回其索引。要通过匿名函数来选择
+		项目，可见 |indexof()|。
+
 		如果 {object} 为 |List|，返回值等于 {expr} 的最小项目索引。这
 		里不进行自动转换，字符串 "4" 不同于数值 4，数值 4 也不等同于浮
-		点数 4.0。'ignorecase' 的值此处也不适用，大小写不忽略。
+		点数 4.0。'ignorecase' 的值此处不适用，大小写是否敏感由 {ic}
+		参数决定。
 
 		如果 {object} 为 |Blob|，返回字节值等于 {expr} 的最小索引。
 
 		如果给出 {start}，从索引为 {start} 的项目开始寻找 (可以为负，
 		指定相对于尾部的项目)。
+
 		如果给出 {ic} 且为 |TRUE|，忽略大小写。否则，必须匹配大小写。
+
 		如果在 {object} 里找不到 {expr}，返回 -1。
 		示例: >
 			:let idx = index(words, "the")
@@ -4176,6 +4224,41 @@ index({object}, {expr} [, {start} [, {ic}]])			*index()*
 
 <		也可用作 |method|: >
 			GetObject()->index(what)
+
+indexof({object}, {expr} [, {opts}])			*indexof()*
+		返回 {object} 中的 {expr} 为 v:true 的项目的索引。
+		{object} 必须为 |List| 或 |Blob|。
+
+		如果 {object} 为 |List|，为列表中的每个项目计算 {expr}，直到结
+		果结果为 v:true 为止，返回该项目的索引。
+
+		如果 {object} 为 |Blob|，为 Blob 中的每个字节计算 {expr}，直到
+		结果结果为 v:true 为止，返回该字节的索引。
+
+		{expr} 必须为 |string| 或 |Funcref|。
+
+		{expr} 为 |string| 时: 如果 {object} 为 |List|, {expr} 中的
+		|v:key| 包含当前列表项目的索引，而 |v:val| 为当前项目值。如果
+		{object} 为 |Blob|，{expr} 中的 |v:key| 包含当前字节的索引，而
+		|v:val| 为当前字节值。
+
+		{expr} 为 |Funcref| 时，它必须接受两个参数:
+			1. 当前项目的键值或索引。
+			2. 当前项目的值。
+		找到项目时函数必须返回 |TRUE|，此时搜索停止。
+
+		可选参数 {opts} 为字典，包含以下项目:
+		    startidx	从带此索引的项目开始计算 {expr}；可为负值，索
+				引值相对于列表尾部
+		所有项目上的 {expr} 计算结果均为 v:false 时，返回 -1。
+		示例: >
+			:let l = [#{n: 10}, #{n: 20}, #{n: 30}]
+			:echo indexof(l, "v:val.n == 20")
+			:echo indexof(l, {i, v -> v.n == 30})
+			:echo indexof(l, "v:val.n == 20", #{startidx: 1})
+
+<		也可用作 |method|: >
+			mylist->indexof(expr)
 
 input({prompt} [, {text} [, {completion}]])		*input()*
 		返回字符串，即用户在命令行上的输入内容，可以为任何值。参数
@@ -4477,6 +4560,15 @@ keys({dict})						*keys()*
 
 		也可用作 |method|: >
 			mydict->keys()
+
+keytrans({string})					*keytrans()*
+		把键值的内部字节表示方式转换为 |:map| 可接受的形式。如 >
+			:let xx = "\<C-Home>"
+			:echo keytrans(xx)
+<			<C-Home>
+
+		也可用作 |method|: >
+			"\<C-Home>"->keytrans()
 
 <							*len()* *E701*
 len({expr})	返回数值，参数的长度。
@@ -5360,7 +5452,22 @@ min({expr})	返回 {expr} 所有项目的最小值。例如: >
 mkdir({name} [, {path} [, {prot}]])
 		建立目录 {name}。
 
-		如果 {path} 为 "p"，必要时建立中间的目录。否则它必须是 ""。
+		如果 {path} 包含 "p"，必要时建立中间的目录。否则它必须是 ""。
+
+		如果 {path} 包含 "D"，当前函数结束时删除 {name}，相当于: >
+			defer delete({name}, 'd')
+<
+		如果 {path} 包含 "R"，当前函数结束时递归删除 {name}，相当于: >
+			defer delete({name}, 'rf')
+<		注意 {name} 多于一个目录部分且使用 "p" 时，有些目录可能已经存
+		在。此时只有真正创建的那层目录和其包含的部分会被调度删除。
+		如用: >
+			call mkdir('subdir/tmp/autoload', 'pR')
+<		而 "subdir" 已存在时，那么调度删除的会是 "subdir/tmp"，相当
+		于: >
+			defer delete('subdir/tmp', 'rf')
+<		注意 如果延迟调度失败，目录不会删除。应该只有内存溢出时才会出
+		现这种情况。
 
 		如果给出 {prot}，它用于设置新目录的权限。缺省为 0o755
 		(rwxr-xr-x: 用户自己可读写，其它人可读)。用 0o700 使其它人不可
@@ -6256,8 +6363,8 @@ repeat({expr}, {count})					*repeat()*
 		重复 {expr} {count} 次，并返回连接后的结果。例如: >
 			:let separator = repeat('-', 80)
 <		如果 {count} 为零或负，返回空。
-		如果 {expr} 是 |List| 类型，返回连接 {expr} {count} 次的结果。
-		例如: >
+		如果 {expr} 是 |List| 或 |Blob| 类型，返回连接 {expr} {count}
+		次的结果。例如: >
 			:let longlist = repeat(['a', 'b'], 3)
 <		返回 ['a', 'b', 'a', 'b', 'a', 'b']。
 
@@ -6422,10 +6529,12 @@ search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 
 		适用 'ignorecase'、'smartcase' 和 'magic' 标志位。
 
-		如果没给出 'z' 标志位，前向搜索总是从第零列开始，然后跳过光标
+		如果没给出 'z' 标志位，正向搜索总是从第零列开始，然后跳过光标
 		之前的匹配。如果 'cpo' 中有 'c' 标志位，下次搜索从匹配之后的位
-		置开始。没有 'c' 标志位则下次搜索从光标后一列开始。这对有重叠
-		的匹配会有关系。
+		置开始。没有 'c' 标志位则下次搜索从匹配开始处的后一列开始。这
+		对有重叠的匹配会有关系。见 |cpo-c|。也可插入 "\ze" 来改变匹配
+		结束的位置，见 |/\ze|。
+
 		反向搜索给出 'z' 标志位时，搜索从第零列开始，所以不会找到当前
 		行的任何匹配 (除非从文件尾回绕)。
 
@@ -6832,6 +6941,14 @@ setcharsearch({dict})					*setcharsearch()*
 		也可用作 |method|: >
 			SavedSearch()->setcharsearch()
 
+setcmdline({str} [, {pos}])					*setcmdline()*
+		设置命令行为 {str}，并设置光标位置为 {pos}。
+		{pos} 如省略，光标会定位于文本后。
+		如果成功，返回 0，如果不在编辑命令行，返回 1。
+
+		也可用作 |method|: >
+			GetText()->setcmdline()
+
 setcmdpos({pos})					*setcmdpos()*
 		设置命令行的光标位置到字节位置 {pos}。第一个位置为 1。
 		用 |getcmdpos()| 得到当前的位置。
@@ -6841,7 +6958,7 @@ setcmdpos({pos})					*setcmdpos()*
 		置。对于 |c_CTRL-R_=|，在计算表达式之后但在插入返回的文本之前
 		设置位置。
 		如果数值太大，光标放在行尾。如果小于 1，结果没有定义。
-		如果成功，返回 FALSE，如果不在编辑命令行，返回 TRUE。
+		如果成功，返回 0，如果不在编辑命令行，返回 1。
 
 		也可用作 |method|: >
 			GetPos()->setcmdpos()
@@ -7334,7 +7451,7 @@ sort({list} [, {how} [, {dict}]])			*sort()* *E702*
 		值为一也可用于忽略大小写。零代表不忽略大小写。
 
 		如果给出 {how} 且为 'l'，排序使用当前排序规则 locale。实现细
-		节：用 strcoll() 来进行字符串比较。关于如何查看或设置排序规则
+		节: 用 strcoll() 来进行字符串比较。关于如何查看或设置排序规则
 		locale，参见 |:language|。|v:collate| 也可用于检查当前
 		locale。按 locale 的排序通常忽略大小写。示例: >
 			" ö 的排位顺序类似于英语 locale 的 o。
@@ -8980,29 +9097,38 @@ wordcount()						*wordcount()*
 writefile({object}, {fname} [, {flags}])
 		{object} 为 |List| 时，把列表写到文件 {fname} 里。列表的项目间
 		以 NL 分隔。每个列表项必须是字符串或数值。
-		如果 {flags} 包含 "b"，使用二进制模式: 最后一个列表项目之后没
-		有 NL，最后的空项目使得文件的末行以 NL 结尾。
+		所有的 NL 字符被 NUL 字符代替。
+		CR 字符的插入需要在把 {list} 传递给 writefile() 之前先做好。
 
 		{object} 为 |Blob| 时，把这些字节不加修改地写到文件 {fname}
-		里。
+		里，即使不指定二进制模式也是如此。
 
-		如果 {flags} 包含 "a"，使用附加模式，写入行附加到文件之后: >
+		{flags} 必须为字符串。识别以下字符:
+
+		'b'  使用二进制模式: 最后一个列表项目之后没有 NL，最后的空项目
+		     使得文件的末行以 NL 结尾。
+
+		'a'  使用附加模式，写入行附加到文件之后: >
 			:call writefile(["foo"], "event.log", "a")
 			:call writefile(["bar"], "event.log", "a")
 <
-		如果 {flags} 包含 "s"，写入文件后调用 fsync()。在可能的情况下
-		它把文件刷新到盘上。这会多花些时间，但避免系统崩溃时丢失文件的
-		风险。
-		如果 {flags} 不包含 "S" 或 "s"，'fsync' 选项置位时调用
-		fsync()。
-		如果 {flags} 包含 "S"，无论 'fsync' 选项是否置位都不调用
-		fsync()。
+		'D'  当前函数结束时删除文件。相当于: >
+			:defer delete({fname})
+<		     不在函数中执行时失败。另见 |:defer|。
 
-		所有的 NL 字符被 NUL 字符代替。
-		CR 字符的插入需要在把 {list} 传递给 writefile() 之前先做好。
+		's'  写入文件后总是调用 fsync()。在可能的情况下它把文件刷新到
+		     盘上。这会多花些时间，但避免系统崩溃时丢失文件的风险。
+
+		'S'  无论 'fsync' 选项是否置位都不调用 fsync()。
+
+		     如果 {flags} 不包含 "S" 或 "s"，仅当 'fsync' 选项置位时调
+		     用 fsync()。
+
 		如果可能，覆盖已有的文件。
+
 		如果写入失败，返回 -1，否则返回 0。如果文件不能建立或者写入失
 		败，会有错误信息。
+
 		另见 |readfile()|。
 		要按字节复制文件: >
 			:let fl = readfile("foo", "b")
@@ -9047,7 +9173,7 @@ xor({expr}, {expr})					*xor()*
 
 
 acl			编译时加入了 |ACL| 支持。
-all_builtin_terms	编译时打开了所有的内建终端。
+all_builtin_terms	编译时打开了所有的内建终端。(总为真)
 amiga			Vim 的 Amiga 版本。
 arabic			编译时加入了阿拉伯语的支持。|Arabic|。
 arp			编译时加入了 ARP 的支持。(Amiga)。
@@ -9060,7 +9186,7 @@ beos			Vim 的 BeOS 版本。
 browse			编译时加入了 |:browse| 的支持。使 browse() 可以工作。
 browsefilter		编译时加入了 |browsefilter| 的支持。
 bsd			编译时使用了 BSD 家族的 OS (除了 macOS)。
-builtin_terms		编译时打开了一些内建终端。
+builtin_terms		编译时打开了一些内建终端。(总为真)
 byte_offset		编译时加入了 'statusline' 中对 'o' 的支持。
 channel			编译时加入了 |channel| 和 |job| 的支持
 cindent			编译时加入了 'cindent' 的支持。(总为真)
@@ -9090,7 +9216,7 @@ eval			编译时加入了表达式计算的支持。当然总要打开啦！
 ex_extra		|+ex_extra| (总为真)
 extra_search		编译时加入了 |'incsearch'| 和 |'hlsearch'| 的支持。
 farsi			删除了波斯语的支持 |farsi|。
-file_in_path		编译时加入了 |gf| 和 |<cfile>| 的支持。
+file_in_path		编译时加入了 |gf| 和 |<cfile>| 的支持。(总为真)
 filterpipe		'shelltemp' 关闭时，外壳读/写/过滤命令使用管道
 find_in_path		编译时加入了头文件搜索 |+find_in_path| 的支持。
 float			编译时加入了 |Float| 的支持。

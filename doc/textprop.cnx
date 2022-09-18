@@ -1,4 +1,4 @@
-*textprop.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+*textprop.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -109,6 +109,7 @@ prop_add({lnum}, {col}, {props})
 		{col} 如果非法，报错。 *E964*
 
 		{props} 是带以下域的字典:
+		   type		文本属性类型名
 		   length	以字节计的文本长度，只能用于不在另一行继续的属
 				性；可为零
 		   end_lnum	文本结尾的行号 (闭区间)
@@ -120,19 +121,28 @@ prop_add({lnum}, {col}, {props})
 		   id		用户定义的属性 ID；必须为正的数值；使用 "text"
 				时不应给出 "id"，且会自动设为负数；否则使用零
 		   text		{col} 之前要显示的文本，或者当 {col} 为零时在
-				行之后显示
-		   text_align	"text" 给出且 {col} 为零时，指定显示文本的位
+				行之后显示；要带高亮的空白填充，在这里前加和/
+				或后加空白
+							*E1294*
+		   text_align	"text" 给出且 {col} 为零时；指定显示文本的位
 				置:
 				   after   在行尾之后
-				   right   和窗口右对齐
+				   right   和窗口右对齐 (除非文本回绕到下个屏
+					   幕行)
 				   below   在下个屏幕行上
-				省略时使用 "after"。
+				   above   行的正上方
+				省略时使用 "after"。每行只能放下一个 "right"
+				属性，如果有两个或更多，后出现的会放在单独的行
+				上 (仍然右对齐)。
+		   text_padding_left				*E1296*
+				用于 "text" 给出且 {col} 为零时；文本行结尾
+				("below" 时最左列) 和虚拟文本间的填充，此处的
+				空白不高亮
 		   text_wrap	"text" 给出且 {col} 为零时，指定文本放不下时行
 				为:
 				   wrap      回绕文本到下行
 				   truncate  截短文本以放进
 				省略时使用 "truncate"。
-		   type		文本属性类型名
 		除 "type" 外，所有域均是可选的。
 
 		同时提供 "length" 和 "end_lnum" 或 "end_col" 是错误。要么用
@@ -155,6 +165,8 @@ prop_add({lnum}, {col}, {props})
 		此文本会显示，但不是实际缓冲区行的一部分，光标也不能放置其上。
 		鼠标点击此文本会移动光标到文本之后的第一个字符，或者行末尾的字
 		符。
+		文本中的任何制表符和其它控制字符会被替换为空格 (理据: 否则很难
+		计算文本的尺寸)。
 		会选择负数的 "id" 并返回。一旦缓冲区加入了有 "text" 的文本属
 		性，任何其它的文本属性如果使用负数 "id" 会报错: *E1293*
 		确保使用高亮以清楚告知用户这是虚拟文本，否则出现了不能编辑的文
@@ -289,11 +301,14 @@ prop_remove({props} [, {lnum} [, {lnum-end}]])
 		{props} 是包含下列域的字典:
 		   id		删除带此 ID 的文本属性
 		   type		删除带此类型名的文本属性
-		   both		"id" 和 "type" 必须都匹配
+		   types	删除带此列表中给出的类型名的文本属性
+		   both		"id" 和 "type"/"types" 必须都匹配
 		   bufnr	使用此缓冲区而非当前缓冲区
 		   all		为 TRUE 时删除所有的匹配文本属性，而不仅是头一
 				个
-		"id" 或 "type" 之一匹配则属性匹配。
+		"type" 和 "types" 两者只能提供一个。 *E1295*
+
+		"id" 或提供的类型名之一匹配则属性匹配。
 		如果缓冲区 "bufnr" 不存在会报错。
 		如果缓冲区 "bufnr" 未载入，什么都不会发生。
 
@@ -314,6 +329,8 @@ prop_type_add({name}, {props})		*prop_type_add()* *E969* *E970*
 				性；可用负值，缺省优先级为零
 		   combine	省略或为 TRUE 时和任何语法高亮合并；为 FALSE
 				时，不使用语法高亮
+		   override	TRUE 时高亮覆盖其它高亮，包括 'cursorline' 和
+				可视
 		   start_incl	TRUE 时在起始位置的插入会包含在文本属性内
 		   end_incl	TRUE 时在结束位置的插入会包含在文本属性内
 

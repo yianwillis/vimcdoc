@@ -1,0 +1,139 @@
+*ft_context.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
+
+这是 ConTeXt 文件类型插件的文档。
+
+注意: 此插件需要 +vim9script。
+
+==============================================================================
+内 容							*context.vim* *ft-context*
+
+1. 介绍					|ft-context-intro|
+2. 命令					|ft-context-commands|
+3. 设置					|ft-context-settings|
+4. 映射					|ft-context-mappings|
+
+==============================================================================
+							*ft-context-intro*
+介绍 ~
+
+ConTeXt，与 LaTeX 类似，是基于宏的在 TeX 上构造的排版系统:
+>
+	https://wiki.contextgarden.net
+	https://wiki.contextgarden.net/Vim
+<
+ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。排版文档的建议方式是
+使用 |:ConTeXt|。这会调用在 $PATH 上找到的 `mtxrun` 脚本。
+
+要更精细地控制命令及其环境，可直接调用 `context.Typeset()` (老式 Vim 脚本里可
+用 `context#Typeset()`)。例如，如果在 `~/context` 下安装了 ConTeXt，可类似于下
+面这样来定义函数以使用它 (可把代码放在 `~/.vim/after/ftplugin/context.vim`):
+>
+	import autoload 'context.vim'
+
+	def MyConTeXt()
+	    const env = {'PATH':
+	      printf("%s/context/tex/texmf-<os>-<arch>/bin:%s", $HOME, $PATH)}
+	    context.Typeset("%", env)
+	enddef
+<
+可能用映射来调用函数:
+>
+	nnoremap <silent><buffer><leader>t <scriptcmd>MyConTeXt()<cr>
+<
+`context.Typeset()` 接受第三个可选的参数，用于指定定制的排版命令。此参数必须是
+函数，接受路径，返回以列表形式出现的命令。例如:
+>
+	def ConTeXtCustomCommand(path: string): list<string>
+	  return ['mtxrun', '--script', 'context', '--nonstopmode, path]
+	enddef
+
+	context.ConTeXtTypeset("%", v:none, ConTeXtCustomCommand)
+<
+大型项目的组织方式通常是一个根文档和若干章节文件。编辑章节文件时，最好可以直接
+在其上调用 |:ConTeXt|，而不用先切换到根文件。为此，可在每个章节文件的头部加入
+"魔术行"，指定根文件的相对路径。例如:
+>
+	% !TEX root = ../MyRoot.tex
+<
+Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行指定的文档而不是当前缓冲
+区进行排版。根文档不须在 Vim 中打开。
+
+要扩展补全和语法高亮，可用 ConTeXt 生成支持文件，并加入到你的配置中。如果配置
+文件位于 `~/.vim`，可用:
+>
+	mkdir -p ~/.vim/syntax/shared
+	cd ~/.vim/syntax/shared
+	mtxrun --script interface --vim
+<
+末尾的命令会创建以下语法文件:
+
+- `context-data-context.vim`;
+- `context-data-interfaces.vim`;
+- `context-data-metafun.vim`;
+- `context-data-tex.vim`.
+
+相同的命令也可用于这些语法文件的更新。
+
+							*ft-context-commands*
+命令 ~
+					*:ConTeXt*
+启动后台 |job| 排版当前缓冲区的文档。此命令接受可选的缓冲区名，以选择另一个缓
+冲区进行排版。
+
+					*:ConTeXtLog*
+编辑当前缓冲区包含的源代码对应的日志文件。
+
+					*:ConTeXtJobsStatus*
+回显当前后台中运行的作业数目。
+
+					*:ConTeXtStopJobs*
+停止当前后台中运行的所有 ConTeXt 作业。
+
+							*ft-context-settings*
+设置 ~
+					*'b:context_ignore_makefile'*
+					*'g:context_ignore_makefile'*
+`make` 可用于 (同步) 排版文档。如果存在 Makefile 而没有置位本选项，使用标准
+`make`。如果置位了本选项，不管有没有 Makefile 存在也会调用 `mtxrun`。
+>
+	g:context_ignore_makefile = 0
+<
+注意: 用 `make` 前，先把缓冲区的工作目录设为要排版的文件所在的目录。
+					*'b:context_include'*
+					*'g:context_include'*
+文件类型/GROUP 组对的字典，用于决定 \startGROUP 和 \stopGROUP 之间应用哪种语法
+高亮。缺省是高亮 `\startXML` 和 `\stopXML` 之间的 XML。
+>
+	g:context_include = {'xml': 'XML'}
+
+注意: Lua 和 MetaPost 总是在对应块的范围内高亮。
+
+					*'g:no_context_maps'*
+置位时不定义映射。
+>
+	g:no_context_maps = 0
+<
+							*ft-context-mappings*
+映射 ~
+
+tp			"重新排版 TeX 段落"。
+
+i$			"内含内嵌数学块"。
+
+a$			"一个内嵌数学块"。
+
+]]			[count] 个正向小节开始处。
+
+[[			[count] 个反向小节开始处。
+
+][			[count] 个正向小节结尾处。
+
+[]			[count] 个反向小节结尾处。
+
+]}			[count] 个正向块结尾 (\stop...、\setup...、
+			\define...)。
+
+[{			[count] 个反向块起始 (\start...、\setup...、
+			\define...)。
+
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
