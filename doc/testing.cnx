@@ -1,4 +1,4 @@
-*testing.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+*testing.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -86,7 +86,7 @@ test_gui_event({event}, {args})
 		    "findrepl"  搜索和替代文本。
 		    "mouse"	鼠标按钮点击事件。
 		    "scrollbar" 移动或拖动滚动条。
-		    "sendevent" 发送低层 GUI 事件。
+		    "key"	发送低层键盘事件。
 		    "tabline"	用鼠标选择标签页。
 		    "tabmenu"	选择标签页行的菜单项。
 
@@ -122,9 +122,9 @@ test_gui_event({event}, {args})
 		"mouse":
 		  注入鼠标按钮点击或鼠标移动事件。{args} 里支持的项目是:
 		    button:	鼠标按钮。支持的值是:
-				    0	鼠标右键
+				    0	鼠标左键
 				    1	鼠标中键
-				    2	鼠标左键
+				    2	鼠标右键
 				    3	鼠标键释放
 				    4	鼠标滚轮下滚
 				    5	鼠标滚轮上滚
@@ -147,7 +147,8 @@ test_gui_event({event}, {args})
 				而不是像素位置
 
 		"scrollbar":
-		  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可用。
+		  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可
+		  用。
 		  {args} 里支持的项目是:
 		    which:	滚动条。支持的值是:
 				    left  当前窗口的左侧滚动条
@@ -158,8 +159,8 @@ test_gui_event({event}, {args})
 				到最大的行长，假定 'wrap' 未置位。
 		    dragging:	为 1 时拖动滚动条，为 0 时点击滚动条。
 
-		"sendevent":
-		  发送低层 GUI 事件 (如释放键或按下键).
+		"key":
+		  发送低层键盘事件 (如释放键或按下键)。
 		  目前只支持 MS-Windows。
 		  {args} 里支持的项目是:
 		    event:	支持的字符串值是:
@@ -197,6 +198,66 @@ test_ignore_error({expr})			 *test_ignore_error()*
 		也可用作 |method|: >
 			GetErrorText()->test_ignore_error()
 
+
+test_mswin_event({event}, {args})		*test_mswin_event()*
+		生成低层 MS-Windows {event}，使用参数 {args}，用于测试 Vim 功
+		能。支持 MS-Windows GUI 和控制台。
+
+		{event} 是字符串，支持的值是:
+		    "mouse"	鼠标事件。
+		    "key"	键盘事件。
+
+		"mouse":
+		  注入鼠标按钮点击或鼠标移动事件。{args} 里支持的项目是:
+		    button:	鼠标按钮。支持的值是:
+				    0	鼠标右键
+				    1	鼠标中键
+				    2	鼠标左键
+				    3	鼠标键释放
+				    4	鼠标滚轮下滚
+				    5	鼠标滚轮上滚
+				    6	鼠标滚轮左滚
+				    7	鼠标滚轮右滚
+		    row:	鼠标点击行号。Vim 窗口的首行为 1，末行为
+				'lines'。
+		    col:	鼠标点击列号。{col} 的最大值为 'columns'。
+				注意: 控制台应用里 row 和 col 总解释为屏幕单元
+				格。GUI 里取决于 "cell"，也可能解释为像素值。
+		    multiclick:	设为 1 时注入多点击鼠标事件。
+		    modifiers:	键修饰符。支持的值是:
+				    4	按了 shift
+				    8	按了 alt
+				   16	按了 ctrl
+		    move:	可选；如果给出且为 TRUE，生成鼠标移动事件。
+				只使用 {args} 里 row: 和 col: 且为必须。
+				仅当置位了 'mousemoveevent' 或弹出窗口使用鼠标
+				移动事件时才生成事件。
+		    cell:	GUI 可选: 如果给出且为 TRUE，"move" 使用屏幕单
+				元格而不是像素位置。控制台不使用。
+
+		"key":
+		  发送低层键盘事件 (如释放键或按下键)。
+		  {args} 里支持的项目是:
+		    event:	支持的字符串值是:
+				    keyup   生成 keyup 事件
+				    keydown 生成 keydown 事件
+		    keycode:    keyup 或 keydown 事件使用的键码。
+		    modifiers:	可选；键修饰符。
+				支持的值是:
+				    2	按了 shift
+				    4	按了 ctrl
+				    8	按了 alt
+				注意: 这些值和鼠标修饰符的不同。
+		    execute:	可选。类似于 |feedkeys()| 模式 x。
+				包含且设为真 (非零) 时，Vim 会处理任何缓冲的未
+				处理的键盘事件。设置且为真时，其它的 {args}
+				项目均可选。
+
+		成功加入或执行事件后返回 TRUE，出错时返回 FALSE。
+
+		也可用作 |method|: >
+			GetEvent()->test_mswin_event({args})
+<
 
 test_null_blob()					*test_null_blob()*
 		返回 null |Blob|。仅用于测试。

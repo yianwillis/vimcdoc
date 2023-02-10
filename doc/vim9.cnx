@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
+*vim9.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -16,7 +16,7 @@ Vim9 脚本命令和表达式。					*Vim9* *vim9*
 3.  新风格函数				|fast-functions|
 4.  类型				|vim9-types|
 5.  命名风格、导入和导出		|vim9script|
-6.  将来工作: 类			|vim9-classes|
+6.  类和界面				|vim9-classes|
 
 9.  理据				|vim9-rationale|
 
@@ -97,6 +97,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
 	`:t`
 	`:xit`
 - 有些命令，特别是用于流控制的命令，不能缩短。例如，`:throw` 不能写成 `:th`。
+  *vim9-no-shorten*
 - 不可用花括号名字。
 - 命令前的范围必须用冒号前缀: >
 	:%s/this/that
@@ -334,7 +335,6 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 	echo temp  # 出错！
 
 用户命令里这特别有用: >
-
 	command -range Rename {
 		 var save = @a
 		 @a = 'some expression'
@@ -343,7 +343,6 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 	    }
 
 自动命令也是: >
-
    au BufWritePre *.go {
 		 var save = winsaveview()
 		 silent! exe ':%! some formatting command'
@@ -436,7 +435,7 @@ Vim9 脚本中不能用 `:let`。已有的变量可直接赋值，不需要任�
 常量如何工作因语言而异。有些语言把不能重新赋其它值的变量当作常量。JavaScript
 是一个例子。其它语言则会使值也不可更改，因此如果常量使用了列表，列表本身也不可
 改变。Vim9 可以兼有两者。
-							*E1021*
+							*E1021* *E1307*
 可用 `:const` 使变量及其值为常量。可用于复合结构以确保其不会被修改。示例: >
 	const myList = [1, 2]
 	myList = [3, 4]		# 出错！
@@ -653,7 +652,7 @@ Vim9 脚本里参数数目必须匹配。如果要接受任何参数，或任何
 	      | echom 'AFTER bar'
 <
 							*E1050*
-要识别出现在行首的操作符，需要在范围之前加上冒号。要把 "start" 加上 print: >
+要识别出现在行首的操作符，需要在范围之前加上冒号。要把 "start" 加上 "print": >
 	var result = start
 	+ print
 相当于: >
@@ -704,7 +703,7 @@ Vim9 脚本里参数数目必须匹配。如果要接受任何参数，或任何
 	echo [1, 2]
 		[3, 4]
 - 有些情况 Vim 解析命令有困难，尤其是一个命令用作另一个命令的参数的时候，如
-  `windo`。这些情况续行必须使用反斜杠。
+  `:windo`。这些情况续行必须使用反斜杠。
 
 
 空白 ~
@@ -848,7 +847,10 @@ Vim9 脚本中，正常使用索引就可以了，如果项目被删除，列表
 	1
 	3
 一般而言，不应改变正在遍历的列表。如果需要的话，先建立备份。
-
+遍历列表的列表时，可以修改内层的列表。循环变量是 "final"，它不能改变，但它的值
+可以改变。
+							*E1306*
+循环深度，即 :for 和 :while 循环加起来，不能超过 10 层。
 
 条件和表达式 ~
 						*vim9-boolean*
@@ -901,8 +903,9 @@ JavaScript，唯一的例外是空列表和字典也被视为准假值:
 	'hello ' .. v:true  == 'hello true'
 
 简单类型是数值、浮点数、特殊类型和布尔型。其它类型可用 |string()|。
-
-						*false* *true* *null* *E1034*
+			*false* *true* *null* *null_blob* *null_channel*
+			*null_dict* *null_function* *null_job* *null_list*
+			*null_partial* *null_string* *E1034*
 Vim9 脚本可以使用如下预定义值: >
 	true
 	false
@@ -917,7 +920,7 @@ Vim9 脚本可以使用如下预定义值: >
 	null_string
 `true` 等价于 `v:true`、`false` 等价于 `v:false` 而 `null` 等价于 `v:null`。
 
-`null` 类型为 "special"，而其它的 "null_" 的类型可根据其名推定。null 值和空值
+`null` 类型为 "special"，而其它的 "null_" 值可根据其名推定类型。null 值和空值
 处理方式通常相同，但不绝对。这些值可用于清除局部于脚本的变量，因为它们不能用
 `:unlet` 删除。例如: >
 	var theJob = job_start(...)
@@ -1158,7 +1161,7 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 	# 返回: [4, 4, 4, 4, 4]
 <							*E1271*
 闭包必须在其定义所在的上下文里进行编译，以便找到此上下文里的变量。大多数情况下
-没有问题，但函数在编译后用 `breakadd` 标记进行调试时除外。请在编译外层函数前就
+没有问题，但函数在编译后用 `:breakadd` 标记进行调试时除外。请在编译外层函数前就
 定义好断点。
 
 "inloop" 变量只存在一次，所有放入列表的闭包都会指向相同的实例，最后该值为 4。
@@ -1186,19 +1189,18 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 	       })
 	endfor
 
-需要创建闭包以保存 "n" 的当前值，使得闭包创建时就计算其值: >
-	def GetClosure(nr: number): func
-	  return (_) => {
-	    echowindow nr
-	  }
-	enddef
-
+需要定义块并在其中定义变量，并在闭包中使用该变量: >
 	for n in range(4)
-	    timer_start(500 * n, GetClosure(n))
+	{
+	   var nr = n
+	   timer_start(500 * n, (_) => {
+	          echowin nr
+	      })
+	}
 	endfor
 
-定时器中 `echowindow` 很有用，它使得信息在弹出中出现，触发时不会干扰用户正在做
-的事情。
+定时器中 `:echowindow` 很有用，它使得信息在弹出中出现，触发时不会干扰用户正在
+做的事情。
 
 
 把老式函数转换为 Vim9 ~
@@ -1256,6 +1258,19 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 		'two',
 		'three'
 		]
+
+
+表达式选项调用函数 ~
+							*expr-option-function*
+若干选项如 'foldexpr' 的值是一个表达式，先经过计算再得到值。这里的计算会有相当
+负担。一个尽量减少负担的方法，同时也使选项值保持简单，是先定义一个编译过的函
+数，然后设置选项来无参数地调用该函数。例如: >
+	vim9script
+	def MyFoldFunc(): any
+	   ... compute fold level for line v:lnum
+	   return level
+	enddef
+	set foldexpr=s:MyFoldFunc()
 
 ==============================================================================
 
@@ -1402,7 +1417,7 @@ Vim9 脚本里局部于脚本的变量会进行类型检查，即使对在老式
 这是因为看来这是数值的列表，因此它和下面的声明等价: >
 	var ll: list<number> = [1, 2, 3]
 如果要接纳度更高的列表，需要如此声明类型: >
-	var ll: list<any = [1, 2, 3]
+	var ll: list<any> = [1, 2, 3]
 	ll->extend(['x'])  # 正确
 
 
@@ -1495,7 +1510,7 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 除。
 
 和以前一样，Vim9 脚本中仍然可用全局 "g:" 命名空间。还有 "w:"、"b:" 和 "t:" 命
-名空间。它们的共同点是变量不声明，且可以删除。
+名空间。它们的共同点是变量不声明，没有特定类型且可以删除。 *E1304*
 
 `:vim9script` 一个副作用是 'cpoptions' 选项设为 Vim 缺省值，类似于: >
 	:set cpo&vim
@@ -1571,8 +1586,8 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 对常量这样也可以: >
 	const MAXLEN = that.MAX_LEN_OF_NAME
 
-对变量不可以，因为值会被复制一次，而修改变量会改变备份，而不是原先的变量。所以，
-只能用带句号的全名。
+对变量不可以，因为值会被复制一次，而修改变量会改变备份，而不是原先的变量。所
+以，只能用带句号的全名。
 
 `:import` 不能在函数内使用。导入项目应该出现在脚本级别，且只能导入一次。
 
@@ -1697,62 +1712,14 @@ vim9 脚本从另一个脚本导入函数时，用 |<SID>| 前缀可在映射里
 
 ==============================================================================
 
-6. 将来工作: 类						*vim9-classes*
+6. 类和界面						*vim9-classes*
 
-上面有几次提到了 "class" (类)，但还未实现。绝大多数 Vim9 脚本可以创建而无需此
-功能，因为类的实现需要大量工作，留在将来去实现。目前，只要确定以后会加入类就可
-以了。
+老式脚本里字典可以通过加入函数作为成员，来用作某种形式的对象。但这很低效，需要
+作者自行确保所有的对象有正确的成员。见 |Dictionary-function|。
 
-想法:
-- `class` / `endclass`，整个类应在一个文件里
-- 类名总是驼峰式的 (避免和内建类型名字冲突)
-- 单个构造函数，名叫 "constructor"
-- 单继承，使用形式 `class ThisClass extends BaseClass`
-- `abstract class` (实现不完整的类)
-- `interface` / `endinterface` (不带实现的抽象类)
-- `class SomeClass implements SomeInterface`
-- 类的泛型: `class <Tkey, Tentry>`
-- 函数的泛型: `def <Tkey> GetLast(key: Tkey)`
+就像绝大多数流行的面向对象编程语言那样，|Vim9| 脚本可有类、对象和界面。因为牵
+涉大量功能，这些描述放在了单独的帮助文件里: |vim9class.txt|。
 
-再说明一遍，许多想法来自 TypeScript，语法稍有差异。
-
-有希望的新增特性:
-- 把类当作界面使用 (类似于 Dart)
-- 用 import 来给类增加方法扩展 (类似于 Dart)
-- 织入 (Mixin)
-- 测试用: Mock 机制
-
-一种将来会提供的重要的类是 "Promise"。因为 Vim 是单线程的，和异步操作连接是允
-许插件实现非用户阻塞式功能的自然方式。这将是调用回调和处理超时以及错误的统一方
-法。
-
-有些命令已经保留:
-	*:class*
-	*:endclass*
-	*:abstract*
-	*:enum*
-	*:endenum*
-	*:interface*
-	*:endinterface*
-	*:static*
-	*:type*
-
-一些例子: >
-
-	abstract class Person
-	    static const prefix = 'xxx'
-	    var name: string
-
-	    def constructor(name: string)
-		this.name = name
-	    enddef
-
-	    def display(): void
-		echo name
-	    enddef
-
-	    abstract def find(string): Person
-	endclass
 
 ==============================================================================
 
@@ -1975,14 +1942,6 @@ Vim 支持 Perl、Python、Lua、Tcl 和一些其它语言的接口。但由于�
 使用外部工具也有其不足。一种替代方案是把工具转换为 Vim 脚本。要尽量减少翻译的
 工作量，并且同时保持代码快速，需要支持工具使用的构造。因为绝大多数语言支持类，
 缺少类的支持成为了 Vim 的一个问题。
-
-类 ~
-
-Vim 支持通过为字典增加方法，支持过一种准面向对象的编程。如果小心一点这可以工
-作，但这看来不像真正的类。更有甚者，因为字典使用的缘故，速度很慢。
-
-最好能支持真正的类，将来的版本有此计划。会提供多数语言的类支持的
-"最少公共功能"。它和 Java 的方式类似，这也是最流行的编程语言了。
 
 
 

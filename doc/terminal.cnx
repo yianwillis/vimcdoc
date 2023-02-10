@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
+*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -241,8 +241,8 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 	:term ++kill=term tail -f /tmp/log
 
 只要作业还在运行，窗口把它当做包含修改过的缓冲区。用 `CTRL-W :quit` 试图关闭窗
-口会失败。如果用 `CTRL-W :quit!`，作业会结束。但窗口中的文本会丢失。此时缓冲区
-还存在，但用 `:buffer` 在别的窗口打开它时会显示空缓冲区。
+口会失败。如果用 `CTRL-W :quit!`，作业会结束。但窗口中的文本会丢失。缓冲区被删
+除。用 `CTRL-W :bunload!` 则缓冲区会保留但为空。
 
 用 `CTRL-W :close` 试图关闭窗口也会失败。用 `CTRL-W :close!` 会关闭窗口并隐藏
 缓冲区。
@@ -966,7 +966,6 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 
 创建屏幕截图 ~
 							*terminal-screendump*
-
 要创建屏幕截图，在终端中运行 Vim (或其它程序)，并使它显示想要的状态。然后用
 |term_dumpwrite()| 函数来创建屏幕截图文件。例如: >
 	:call term_dumpwrite(77, "mysyntax.dump")
@@ -988,7 +987,6 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 
 比较屏幕截图 ~
 						*terminal-diffscreendump*
-
 |assert_equalfile()| 不能方便地看到差异之处。要发现问题，可用
 |term_dumpdiff()|: >
 	call term_dumpdiff("mysyntax.dump", "test.dump")
@@ -1156,6 +1154,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入: >
   Stop		`:Stop`
   Eval		`:Evaluate`
 这样你就可用鼠标完成大部分的常用操作。需要设置 'mouse' 选项来支持鼠标点击。
+如何配置此工具条可见 |termdebug_winbar|。
 								*:Winbar*
 你可以这样在其它打开的窗口加入窗口工具条: >
   :Winbar
@@ -1212,6 +1211,18 @@ TermdebugStopPost		调试结束后，gdb 相关的窗口已关闭，真正删除
 				试缓冲区，恢复了调试之前的状态。
 
 
+定制 ~
+				*termdebug-customizing* *g:termdebug_config*
+过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
+g:termdebug_config 存在，_不_使用其它的全局变量。
+推荐以赋值空字典开始: >
+	let g:termdebug_config = {}
+
+然后就可以像下面那样给字典加入项目。为完整起见下面还是会提到废弃的全局变量名。
+要切换到 g:termdebug_config，可以据此找到旧变量名并使用相应的值，然后删除废弃
+变量。
+
+
 提示模式 ~
 						*termdebug-prompt*
 如果不支持 |+terminal| 特性且在 MS-Windows 上，gdb 会在 'buftype' 设为
@@ -1225,13 +1236,13 @@ TermdebugStopPost		调试结束后，gdb 相关的窗口已关闭，真正删除
 						*termdebug_use_prompt*
 即使 |+terminal| 特性可用，也可使用提示模式，用: >
 	let g:termdebug_config['use_prompt'] = 1
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
 K 键通常映射为 :Evaluate。如果不想如此: >
 	let g:termdebug_config['map_K'] = 0
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebug_map_K = 0
 <
 						*termdebug_disasm_window*
@@ -1239,7 +1250,7 @@ K 键通常映射为 :Evaluate。如果不想如此: >
 "disarm_window_height" 项目可用于设置窗口高度: >
 	let g:termdebug_config['disasm_window'] = 1
 	let g:termdebug_config['disasm_window_height'] = 15
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebug_disasm_window = 15
 设为任何大于 1 的值时，Asm 窗口会设为此高度。
 
@@ -1253,23 +1264,17 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 CTRL-C 并不中断。因此 `:Continue` 命令用 "continue" 而不是通信通道。
 
 
-定制 ~
-				*termdebug-customizing* *g:termdebug_config*
-过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
-g:termdebug_config 存在，不使用其它的全局变量。
-
-
 GDB 命令 ~
 							*g:termdebugger*
 要改变 gdb 命令的名字，在调用 `:Termdebug` 前设置 g:termdebug_config 的
 "debugger" 项目或 "g:termdebugger" 变量: >
 	let g:termdebug_config['command'] = "mygdb"
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebugger = "mygdb"
 
 如果命令需要参数，用列表: >
 	let g:termdebug_config['command'] = ['rr', 'replay', '--']
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebugger = ['rr', 'replay', '--']
 
 会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
@@ -1287,8 +1292,7 @@ GDB 命令 ~
 
 
 颜色 ~
-						*hl-debugPC* *hl-debugBreakpoint*
-
+					*hl-debugPC* *hl-debugBreakpoint*
 标号的颜色可用以下高亮组调整:
 - debugPC		当前位置
 - debugBreakpoint	断点
@@ -1304,7 +1308,6 @@ GDB 命令 ~
 
 快捷键 ~
 							*termdebug_shortcuts*
-
 可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
 窗口中使用。例如: >
 	map ,w :call TermDebugSendCommand('where')<CR>
@@ -1313,7 +1316,6 @@ GDB 命令 ~
 
 弹出式菜单 ~
 							*termdebug_popup*
-
 缺省 Termdebug 插件设置 'mousemodel' 为 "popup_setpos"，并在弹出式菜单里加入以
 下项目:
 	Set breakpoint		`:Break`
@@ -1321,16 +1323,22 @@ GDB 命令 ~
 	Evaluate		`:Evaluate`
 如果不想要，可以这样关闭之: >
 	let g:termdebug_config['popup'] = 0
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebug_popup = 0
+
+
+窗口工具条 ~
+							*termdebug_winbar*
+缺省 Termdebug 插件在打开鼠标时创建窗口工具条 (见 |:Winbar|)。如果不想要，可以
+这样关闭之: >
+	let g:termdebug_config['winbar'] = 0
 
 
 Vim 窗口宽度 ~
 							*termdebug_wide*
-
 要改变调试开始时的 Vim 窗口宽度并用垂直分割: >
 	let g:termdebug_config['wide'] = 163
-或者如果没有 g:termdebug_config 的话: >
+如果没有 g:termdebug_config，可用: >
 	let g:termdebug_wide = 163
 
 这会在使用 `:Termdebug` 时设置 'columns' 为 163。退出调试器后此值复原。

@@ -1,4 +1,4 @@
-*windows.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年9月
+*windows.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -532,6 +532,43 @@ CTRL-W |	设置当前窗口的宽度为 N (默认值为最大可能宽度)。
 
 一个窗口的最小高度和最小宽度可以用 'winminheight' 和 'winminwidth' 设定。这是
 硬性值，一旦设定，窗口的高度 (或宽度) 将不能小于该值。
+
+
+WinScrolled 和 WinResized 自动命令 ~
+						*win-scrolled-resized*
+要得到窗口大小改变的通知，可用 |WinResized| 自动命令事件。
+要得到窗口文本垂直或水平方向滚动的通知，可用 |WinScrolled| 自动命令事件。窗口
+大小改变时这也会触发。
+例外: 'incsearch' 的文本滚动不触发此事件。
+							*WinResized-event*
+更新显示后触发 |WinResized|，此时若干窗口可能已改变了大小。v:event.windows 变
+量提供自从上次事件后发生改变的窗口的 ID 列表，例如:
+	[1003, 1006]
+							*WinScrolled-event*
+|WinScrolled| 事件在 |WinResized| 之后或滚动窗口后触发。它可以是垂直方向 (窗口
+顶部的文本发生改动) 或水平方向 ('wrap' 关闭时，或首行的起始显示部分发生改动)。
+注意 |WinScrolled| 比 |WinResized| 触发次数多得多，会显著地减慢编辑。
+
+|WinScrolled| 提供的信息是以窗口 ID 为键，每个发生改变的窗口对应一个字典，而键
+"all" 对应总的改变量。|v:event| 示例 (|Vim9| 语法):
+	{
+	   all: {width: 0, height: 2, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	   1003: {width: 0, height: -1, leftcol: 0, skipcol: 0, topline: 0, topfill: 0},
+	   1006: {width: 0, height: 1, leftcol: 0, skipcol: 0, topline: 1, topfill: 0},
+	}
+
+注意 "all" 项目是单独窗口项目的绝对值的总和。
+
+如果要改动的详情，或 "防抖" 事件 (否则处理每个事件需要做太多事情)，可用
+`winlayout()` 和 `getwininfo()` 函数。
+
+首次加入 |WinScrolled| 和 |WinResized| 自动命令时，不触发这些事件，仅在首次滚
+动或改变大小时才触发。切换到另一个标签页时也可能触发。
+
+执行的命令不应引发窗口大小和滚动的改变。如果还是发生了，事件会很快再次触发。换
+而言之，可以假定触发事件前先记录了当前大小和滚动位置，然后据此决定是否有改变。
+								*E1312*
+这里不允许改变窗口布局 (分割、关闭或移动窗口)。
 
 ==============================================================================
 7. 参数和缓冲区列表的命令				*buffer-list*

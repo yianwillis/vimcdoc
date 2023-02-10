@@ -1,4 +1,4 @@
-*userfunc.txt*      适用于 Vim 9.0 版本。	最近更新: 2022年9月
+*userfunc.txt*      适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -156,8 +156,14 @@
 			:def 函数里，如果 `:return` 之后有不可到达的行，给出
 			*E1095* 。
 			老式脚本里没有不可到达行的检查，因而，如果有命令在
-			":return" 之后，不会给出警告。
-
+			":return" 之后，不会给出警告。也不检查后续行是否包含合
+			法的命令。这样可能会察觉不到忘记了续行的反斜杠: >
+				return 'some text'
+				       .. ' some more text'
+<			会高兴地返回 "some text" 而不报错。这本来应该是: >
+				return 'some text'
+				       \ .. ' some more text'
+<
 			如果 ":return" 在 |:try| 之后使用但在匹配的 |:finally|
 			(如果有的话) 之前的话，":finally" 之后直到匹配的
 			|:endtry| 的命令会先执行。该过程反复应用于所有函数内的
@@ -341,8 +347,8 @@ _不_合法的例子: >
 	  call Handle('Outfile')
 	endfunc
 
-注意 删除 "Outfile" 的调度发生在 system() 之前，因为 `system()` 失败时此文件可
-能已经创建。
+注意 删除 "Outfile" 的调度发生在 `system()` 之前，因为 `system()` 失败时此文件
+可能已经创建。
 
 延迟函数以相反顺序调用，最后加入的最先执行。一个无用的例子: >
 	func Useless() abort
@@ -408,6 +414,10 @@ _不_合法的例子: >
 	function filename#funcname()
 	   echo "Done!"
 	endfunction
+
+如果文件不存在，Vim 也会在 'packpath' (在 "start" 之下) 里搜索文件，以便在
+.vimrc 里，这些包还没加到 'runtimepath' 前 (见 |packages|)，就可以调用包里的函
+数。
 
 文件名和函数的 # 之前的名字必须完全匹配，而定义的函数名也必须和调用时使用的形
 式完全一致。在 Vim9 脚本中必须要用 "g:" 前缀: >

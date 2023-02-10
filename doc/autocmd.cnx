@@ -1,4 +1,4 @@
-*autocmd.txt*   适用于 Vim 9.0 版本。	最近更新: 2022年9月
+*autocmd.txt*   适用于 Vim 9.0 版本。	最近更新: 2023年2月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -85,7 +85,7 @@ Vim9 脚本示例: >
 如果 `:autocmd` 出现在 Vim9 脚本中 (`:vim9script` 开始的脚本并在 `:def` 函数里
 定义)，那么 {cmd} 会在 Vim9 脚本环境下运行。此处取决于 autocmd 定义所在的位置
 而不是其触发的位置。
-
+							*:autocmd-block*
 类似于 `:command`，{cmd} 可为命令块，参见 |:command-repl|。示例: >
 	au BufReadPost *.xml {
 		  setlocal matchpairs+=<:>
@@ -156,13 +156,14 @@ Vim9 脚本示例: >
 自动命令组。
 
 :au[tocmd]! [group] {event} {aupat} [++once] [++nested] {cmd}
-			删除所有和 {event} 事件和 {aupat} 模式相关联的自动命令，
-			然后加入命令 {cmd}。
+			删除所有和 {event} 事件和 {aupat} 模式相关联的自动命
+			令，然后加入命令 {cmd}。
 			关于 [++once]，参见 |autocmd-once|。
 			关于 [++nested]，参见 |autocmd-nested|。
 
 :au[tocmd]! [group] {event} {aupat}
-			删除所有和 {event} 事件和 {aupat} 模式相关联的自动命令。
+			删除所有和 {event} 事件和 {aupat} 模式相关联的自动命
+			令。
 
 :au[tocmd]! [group] * {aupat}
 			删除所有和 {aupat} 模式相关联的自动命令。
@@ -184,7 +185,8 @@ Vim9 脚本示例: >
 4. 列出自动命令						*autocmd-list*
 
 :au[tocmd] [group] {event} {aupat}
-			显示所有和 {event} 事件和 {aupat} 模式相关联的自动命令。
+			显示所有和 {event} 事件和 {aupat} 模式相关联的自动命
+			令。
 
 :au[tocmd] [group] * {aupat}
 			显示所有和 {aupat} 模式相关联的自动命令。
@@ -374,6 +376,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |TextChanged|		普通模式中对文本进行改变后
 |TextChangedI|		弹出菜单不可见时，插入模式中对文本进行改变后
 |TextChangedP|		弹出菜单可见时，插入模式中对文本进行改变后
+|TextChangedT|		终端模式中对文本进行改变后
 |TextYankPost|		文本抽出或删除后
 
 |SafeState|		没有任何待定字符，等待用户键入字符
@@ -618,8 +621,8 @@ CursorHoldI			类似于 CursorHold，但用于插入模式。
 CursorMoved			在普通或可视模式下移动光标后。也用于光标行的文
 				本被改变时，例如，使用 "x"、"rx" 或 "p"。
 				如果有预输入、在脚本文件中执行命令、在等待操作
-				符中、或移动到其他窗口但光标位置恰好不变的时候，
-				不总能触发此事件。
+				符中、或移动到其他窗口但光标位置恰好不变的时
+				候，不总能触发此事件。
 				示例可见 |match-parens|。
 				备注: `:noautocmd` 不会跳过此事件。
 				小心: 本事件发生非常频繁，不要做任何用户意想不
@@ -1006,6 +1009,9 @@ TextChangedI			插入模式修改当前缓冲区文本之后。
 TextChangedP			插入模式修改当前缓冲区文本之后。
 				只适用于弹出菜单可见时。其他事项同
 				TextChanged。
+							*TextChangedT*
+TextChangedT			终端模式修改当前缓冲区文本之后。其他事项同
+				TextChanged。
 							*TextYankPost*
 TextYankPost			当前缓冲区的文本被抽出或删除后。
 				|v:event| 的值可用于决定触发此自动命令的操作，
@@ -1083,9 +1089,9 @@ VimSuspend			在 Vim 实例被暂停时。仅当 Vim 内键入 CTRL-Z
 				或 SIGTSTP 信号被发送到 Vim 时触发。而 SIGSTOP
 				信号不会。
 							*WinClosed*
-WinClosed			关闭窗口后。模式匹配的是 |window-ID|。
-				<amatch> 和 <afile> 都设为 |window-ID|。非递归
-				(事件不会触发自身)。
+WinClosed			关闭窗口时，刚要从窗口布局中删除前。模式匹配的
+				是 |window-ID|。<amatch> 和 <afile> 都设为
+				|window-ID|。非递归 (事件不会触发自身)。
 							*WinEnter*
 WinEnter			进入别的窗口后。不包括 Vim 启动时的第一个窗
 				口。
@@ -1105,14 +1111,35 @@ WinNew				创建新窗口时。不用于 Vim 启动时的首个窗口。在
 				WinEnter 事件之前触发。
 
 							*WinScrolled*
-WinScrolled			滚动窗口的内容或改变窗口大小后。
-				模式匹配的是 |window-ID|。<amatch> 和 <afile>
-				都设为 |window-ID|。
-				非递归 (事件不会触发自身)。不过，如果命令导致
-				窗口滚动或大小改变，之后会触发另一个
-				WinScrolled 事件。
-				新增自动命令时，不会触发此事件，仅在首次滚动或
-				改变大小后才触发。
+WinScrolled			在当前标签页的任何窗口里滚动文本 (横向或纵向)
+				或改变宽高后。
+
+				模式匹配的是首个滚动或改变大小的窗口
+				|window-ID|。<amatch> 和 <afile> 都设为
+				|window-ID|。
+
+				|v:event| 设为大小和滚动改变的相关信息。
+				|WinScrolled-event|
+
+				仅当系统启动完毕且首次屏幕重画完成后才会开始触
+				发。首个 WinScrolled 或 WinResized 事件在定义
+				时不触发，但加入更多事件时可能会。
+
+				非递归: WinScrolled 事件执行命令时不会触发自
+				身。不过，如果其中的命令导致窗口滚动或大小改
+				变，之后会触发另一个 WinScrolled 事件。新增自
+				动命令时，不会触发此事件，仅在首次滚动或改变大
+				小后才触发。
+
+
+							*WinResized*
+WinResized			在当前标签页的某个窗口改变宽高后。
+				见 |win-scrolled-resized|。
+
+				|v:event| 设为大小改变的相关信息。
+				|WinResized-event|
+
+				模式、触发和递归性同 |WinScrolled|。
 
 ==============================================================================
 6. 模式						*autocmd-patterns* *{aupat}*
