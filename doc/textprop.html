@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="textprop.txt">textprop.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年9月
+<b class="vimtag"> <a name="textprop.txt">textprop.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -125,7 +125,7 @@ prop_type_list([<code class="special">{props}</code>])               获取属�
 操作文本属性:
 
 prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{props}</code>)        新增文本属性
-prop_add_list(<code class="special">{props}</code>, [[<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{end-lnum}</code>, <code class="special">{end-col}</code>], ...])
+prop_add_list(<code class="special">{props}</code>, [<code class="special">{item}</code>, ...])
                                         在多个位置新增文本属性。
 prop_clear(<code class="special">{lnum}</code> [, <code class="special">{lnum-end}</code> [, <code class="special">{bufnr}</code>]])
                                         删除所有文本属性
@@ -153,9 +153,12 @@ prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>
                    bufnr        加入属性的缓冲区；省略时使用当前缓冲区
                    id           用户定义的属性 ID；必须为正的数值；使用 "text"
                                 时不应给出 "id"，且会自动设为负数；否则使用零
+                                                        <b class="vimtag"> <a name="E1305">E1305</a> </b>
                    text         <code class="special">{col}</code> 之前要显示的文本，或者当 <code class="special">{col}</code> 为零时在
-                                行之后显示；要带高亮的空白填充，在这里前加和/
-                                或后加空白
+                                行之上/下显示；要带高亮的空白填充，在文本前面
+                                和/或后面加空白；不能和 "length"、"end_lnum"
+                                和 "end_col" 同时使用
+                                详见  <a href="textprop.html#virtual-text">virtual-text</a> 。
                                                         <b class="vimtag"> <a name="E1294">E1294</a> </b>
                    text_align   "text" 给出且 <code class="special">{col}</code> 为零时；指定显示文本的位
                                 置:
@@ -176,6 +179,8 @@ prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>
                                    wrap      回绕文本到下行
                                    truncate  截短文本以放进
                                 省略时使用 "truncate"。
+                                <code class="note">注意</code> 这应用于指定的文本属性，而 <a href="options.html#'wrap'">'wrap'</a> 选项设
+                                置全局行为
                 除 "type" 外，所有域均是可选的。
 
                 同时提供 "length" 和 "end_lnum" 或 "end_col" 是错误。要么用
@@ -191,27 +196,35 @@ prop_add(<code class="special">{lnum}</code>, <code class="special">{col}</code>
                 先在加入属性的缓冲区中寻找 "type"。如果找不到，再使用全局属性
                 类型。还找不到的话会报错。
                                                         <b class="vimtag"> <a name="virtual-text">virtual-text</a> </b>
-                使用 "text" 且列不为零时，在文本属性的开始位置显示此文本。缓冲
-                区行的文本会移动以腾出空间。这被称为 "虚拟文本"。
-                如果列为零虚拟文本会在缓冲区文本之后显示。"text_align" 和
-                "text_wrap" 参数决定如何显示。
+                使用 "text" 且列不为零时，在文本属性指定的开始位置显示此文本。
+                缓冲区行的文本会移动以腾出空间。这被称为 "虚拟文本"。
+                如果列为零，虚拟文本会在缓冲区文本之上、之后或之下显示。
+                "text_align" 和 "text_wrap" 参数决定如何显示。
+                要分隔虚拟文本和缓冲区文本，给 "text" 域前面和/或后面加上空白，
+                或者使用 "text_padding_left" 值。
+
+                确保使用高亮以清楚告知用户这是虚拟文本，否则出现了不能编辑的文
+                本会很让人混淆。使用 "above" 时要明确此文本属于下面的文本行，
+                而使用 "below" 时要明确此文本属于上面的文本行。
+
                 此文本会显示，但不是实际缓冲区行的一部分，光标也不能放置其上。
                 鼠标点击此文本会移动光标到文本之后的第一个字符，或者行末尾的字
                 符。
                 文本中的任何制表符和其它控制字符会被替换为空格 (理据: 否则很难
                 计算文本的尺寸)。
-                会选择负数的 "id" 并返回。一旦缓冲区加入了有 "text" 的文本属
-                性，任何其它的文本属性如果使用负数 "id" 会报错: <b class="vimtag"> <a name="E1293">E1293</a> </b>
-                确保使用高亮以清楚告知用户这是虚拟文本，否则出现了不能编辑的文
-                本会很让人混淆。
-                要分隔虚拟文本和缓冲区文本，"text" 字段不妨在前面和/或后面加上
-                空白。
+                会选择负数的 "id" 并返回。
+
+                提供带 text 的文本属性的支持之前，可以使用负数 "id"，但很罕
+                见。现在负数 "id" 专为带 text 的文本属性保留，给出负数 "id" 会
+                报错。一旦缓冲区加入了有 "text" 的文本属性，任何其它的文本属性
+                如果使用负数 "id" 会报错 <b class="vimtag"> <a name="E1293">E1293</a> </b> 。 如果先使用了负数 "id"，之
+                后使用了带 "text" 的文本属性，则会报错 <b class="vimtag"> <a name="E1339">E1339</a> </b> 。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetLnum()-&gt;prop_add(col, props)</code>
 
                                                 <b class="vimtag"> <a name="prop_add_list()">prop_add_list()</a> </b>
-prop_add_list(<code class="special">{props}</code>, [[<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{end-lnum}</code>, <code class="special">{end-col}</code>], ...])
+prop_add_list(<code class="special">{props}</code>, [<code class="special">{item}</code>, ...])
                 类似于 prop_add()，但在多个位置上附属文本属性。
 
                 <code class="special">{props}</code> 是包含以下字段的字典:
@@ -220,18 +233,22 @@ prop_add_list(<code class="special">{props}</code>, [[<code class="special">{lnu
                    type         文本属性类型名
                 除 "type" 外，所有域均是可选的。
 
-                第二个参数是列表的列表，其中每个列表指定文本的一组开始和结束位
-                置。前两个项目 <code class="special">{lnum}</code> 和 <code class="special">{col}</code> 指定附属属性的文本的开始位置，
-                而后两个项目 <code class="special">{end-lnum}</code> 和 <code class="special">{end-col}</code> 指定紧跟文本之后的那个位
-                置。
+                第二个参数是项目的列表，其中每个 <code class="special">{item}</code> 是一个指定文本的开始和
+                结束位置的列表: [<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{end-lnum}</code>, <code class="special">{end-col}</code>]
+                或:             [<code class="special">{lnum}</code>, <code class="special">{col}</code>, <code class="special">{end-lnum}</code>, <code class="special">{end-col}</code>, <code class="special">{id}</code>]
+
+                前两个项目 <code class="special">{lnum}</code> 和 <code class="special">{col}</code> 指定附属属性的文本的开始位置。
+                后两个项目 <code class="special">{end-lnum}</code> 和 <code class="special">{end-col}</code> 指定紧跟文本之后的那个位置。
+                可选的第五个参数 <code class="special">{id}</code> 可用于为属性指定不同的 ID。省略时使用
+                <code class="special">{props}</code> 的 ID，如果没有 ID 则使用零。
 
                 这里不能添加带 "text" 字段的文本属性。
 
-                示例:
-                        call prop_add_list(#{type: 'MyProp', id: 2},
-                                        \ [[1, 4, 1, 7],
-                                        \  [1, 15, 1, 20],
-                                        \  [2, 30, 3, 30]]
+                示例: 
+<code class="example">                        call prop_add_list(#{type: 'MyProp', id: 2},</code>
+<code class="example">                                        \ [[1, 4, 1, 7],</code>
+<code class="example">                                        \  [1, 15, 1, 20],</code>
+<code class="example">                                        \  [2, 30, 3, 30]]</code>
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetProp()-&gt;prop_add_list([[1, 1, 1, 2], [1, 4, 1, 8]])</code>

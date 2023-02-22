@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="userfunc.txt">userfunc.txt</a> </b>      适用于 Vim 9.0 版本。       最近更新: 2022年9月
+<b class="vimtag"> <a name="userfunc.txt">userfunc.txt</a> </b>      适用于 Vim 9.0 版本。       最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -190,7 +190,13 @@
                         :def 函数里，如果  <a href="userfunc.html#:return">:return</a>  之后有不可到达的行，给出
                         <b class="vimtag"> <a name="E1095">E1095</a> </b> 。
                         老式脚本里没有不可到达行的检查，因而，如果有命令在
-                        ":return" 之后，不会给出<code class="note">警告</code>。
+                        ":return" 之后，不会给出<code class="note">警告</code>。也不检查后续行是否包含合
+                        法的命令。这样可能会察觉不到忘记了续行的反斜杠: 
+<code class="example">                                return 'some text'</code>
+<code class="example">                                       .. ' some more text'</code>
+                        会高兴地返回 "some text" 而不报错。这本来应该是: 
+<code class="example">                                return 'some text'</code>
+<code class="example">                                       \ .. ' some more text'</code>
 
                         如果 ":return" 在  <a href="eval.html#:try">:try</a>  之后使用但在匹配的  <a href="eval.html#:finally">:finally</a> 
                         (如果有的话) 之前的话，":finally" 之后直到匹配的
@@ -373,10 +379,10 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 <code class="example">          call Handle('Outfile')</code>
 <code class="example">        endfunc</code>
 <code class="example"></code>
-<code class="note">注意</code> 删除 "Outfile" 的调度发生在 system() 之前，因为  <a href="builtin.html#system()">system()</a>  失败时此文件可
-能已经创建。
+<code class="note">注意</code> 删除 "Outfile" 的调度发生在  <a href="builtin.html#system()">system()</a>  之前，因为  <a href="builtin.html#system()">system()</a>  失败时此文件
+可能已经创建。
 
-延迟函数以相反顺序调用，最后加的最先执行。一个无用的例子: 
+延迟函数以相反顺序调用，最后加入的最先执行。一个无用的例子: 
 <code class="example">        func Useless() abort</code>
 <code class="example">          for s in range(3)</code>
 <code class="example">            defer execute('echomsg "number ' .. s .. '"')</code>
@@ -401,7 +407,7 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 如果使用很多或者很大的函数，可以在需要使用它们的时候才自动提供其定义。有两个方
 法: 用自动命令，还有用 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的 "autoload" 目录。
 
-Vim9 脚本也有导入脚本的自动载入机制，见 import-autoload。
+ <a href="vim9.html#Vim9">Vim9</a>  脚本也有导入脚本的自动载入机制，见  <a href="vim9.html#import-autoload">import-autoload</a> 。
 
 
 <code class="section">使用自动命令 </code>
@@ -440,6 +446,10 @@ Vim9 脚本也有导入脚本的自动载入机制，见 import-autoload。
 <code class="example">           echo "Done!"</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
+如果文件不存在，Vim 也会在 <a href="options.html#'packpath'">'packpath'</a> (在 "start" 之下) 里搜索文件，以便在
+.vimrc 里，这些包还没加到 <a href="options.html#'runtimepath'">'runtimepath'</a> 前 (见  <a href="repeat.html#packages">packages</a> )，就可以调用包里的函
+数。
+
 文件名和函数的 # 之前的名字必须完全匹配，而定义的函数名也必须和调用时使用的形
 式完全一致。在 Vim9 脚本中必须要用 "g:" 前缀: 
 <code class="example">        function g:filename#funcname()</code>

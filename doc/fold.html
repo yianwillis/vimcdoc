@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
+<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -102,14 +102,16 @@
 过计算选项 <a href="options.html#'foldexpr'">'foldexpr'</a> 的值来并得到它的折叠级别。如:
 对所有以制表符开始的连续的几行，创建折叠: 
 <code class="example">        :set foldexpr=getline(v:lnum)[0]==\"\\t\"</code>
-调用一函数来计算折叠级别:   
-<code class="example">        :set foldexpr=MyFoldLevel(v:lnum)</code>
 用空白行分开的段落构成折叠:   
 <code class="example">        :set foldexpr=getline(v:lnum)=~'^\\s*$'&amp;&amp;getline(v:lnum+1)=~'\\S'?'&lt;1':1</code>
 同上:   
 <code class="example">        :set foldexpr=getline(v:lnum-1)=~'^\\s*$'&amp;&amp;getline(v:lnum)=~'\\S'?'&gt;1':1</code>
 <code class="note">备注</code>: ":set" 要特殊处理的字符必须用反斜杠转义。(空格，反斜杠，双引号等等，参考
  <a href="options.html#option-backslash">option-backslash</a> )
+
+效率最高的方法是使用已编译的不带参数的函数:   
+<code class="example">        :set foldexpr=MyFoldLevel()</code>
+该函数必须使用 v:lnum。见  <a href="vim9.html#expr-option-function">expr-option-function</a> 。
 
 这些是表达式的计算条件:
 - 当前缓冲区和窗口值依所在行而定
@@ -207,7 +209,7 @@ foidlevel() 返回 -1。它返回的级别对应于该行开始的位置，尽�
 <code class="example"></code>
 <code class="example">        /* funcB() {{{2 */</code>
 <code class="example">        void funcB() {}</code>
-<code class="example"></code>
+                                                        <b class="vimtag"> <a name="{{{">{{{</a> </b> <b class="vimtag"> <a name="}}}">}}}</a> </b>
 折叠开始于 "{{{" 标志。接下去的数字决定了折叠级别。产生的效果依当前折叠级别和
 该折叠标志给定的级别的大小关系而定:
 1. 如果遇到级别相同的标志，上一个折叠结束，另一个有同样级别的折叠开始。
@@ -461,7 +463,7 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 <code class="example">    :set foldtext=v:folddashes.substitute(getline(v:foldstart),'/\\*\\\|\\*/\\\|{{{\\d\\=','','g')</code>
 <code class="example"></code>
 显示了折叠的第一行，除去其中的 "/*"、"*/" 和 "{{{" 。
-<code class="note">备注</code>: 使用反斜杠是为了避免一些字符被 ":set" 命令解释。使用一个函数更简单: 
+<code class="note">备注</code>: 使用反斜杠是为了避免一些字符被 ":set" 命令解释。使用一个函数简单得多: 
 <code class="example"></code>
 <code class="example">    :set foldtext=MyFoldText()</code>
 <code class="example">    :function MyFoldText()</code>
@@ -470,6 +472,8 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 <code class="example">    :  return v:folddashes .. sub</code>
 <code class="example">    :endfunction</code>
 <code class="example"></code>
+使用不带参数的函数调用的优点是更加速，见  <a href="vim9.html#expr-option-function">expr-option-function</a> 。
+
 <a href="options.html#'foldtext'">'foldtext'</a> 的计算是在沙盘  <a href="eval.html#sandbox">sandbox</a>  里完成的。其中的当前窗口设为要显示该行的窗
 口。上下文设为上次设置此选项所在的脚本。
 
@@ -537,6 +541,9 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 也在实际位置显示的，但因为被折叠而无法做到。
 
 许多移动命令处理连续被折叠的行就像处理空行一样。如，"w" 命令只在首列停一次。
+
+在关闭折叠中开始搜索时，不会查找当前折叠里的匹配。这相当于正向搜索总是从关闭折
+叠的结尾开始，而反向搜索总是从关闭折叠的开头开始。
 
 在插入模式下，光标所在的行不会被折叠。这让你看得见你键入的内容。
 

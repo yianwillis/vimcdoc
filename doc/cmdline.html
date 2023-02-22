@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年9月
+<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -676,14 +676,51 @@ Ex 命令有几个特别的地方:
         'T              标记 T 的位置 (大写)；如果标记存在于另一个文件中，则不
                         能在范围里应用。
         /<code class="special">{pattern}</code>[/]   下一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":%2F">:/</a> </b>
+                                另见下述的  <a href="cmdline.html#:range-pattern">:range-pattern</a> 
         ?<code class="special">{pattern}</code>[?]   前一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":?">:?</a> </b>
+                                另见下述的  <a href="cmdline.html#:range-pattern">:range-pattern</a> 
         \/              下一个与前次搜索模式匹配的行
         \?              前一个与前次搜索模式匹配的行
         \&amp;              下一个与前次替代模式匹配的行
 
+                                                <b class="vimtag"> <a name=":range-offset">:range-offset</a> </b>
 这些符号后面可以跟 (一个或多个) '+' 或 '-' 和一个可选的数字。该数字会与前面的
 行号相加或相减。若该数字省略，则认为是 1。如果 '+' 或 '-' 前为空，使用当前行。
 
+                                                <b class="vimtag"> <a name=":range-closed-fold">:range-closed-fold</a> </b>
+逗号之后的行号如果位于关闭的折叠内部，调整为折叠的尾行，从而包含整个折叠。
+
+如果要附加一个数值，在折叠尾行调整完后再进行。这意味着范围会附加这些行。例
+如: 
+<code class="example">   :3,4+2print</code>
+在以下文本上运行时:
+<code class="section">        1 one </code>
+<code class="section">        2 two </code>
+<code class="section">        3 three </code>
+<code class="section">        4 four 已折叠 </code>
+<code class="section">        5 five 已折叠 </code>
+<code class="section">        6 six </code>
+<code class="section">        7 seven </code>
+<code class="section">        8 eight </code>
+其中四五两行在关闭的折叠里，这样最后会显示 3 到 7 行。7 来自范围指定的 "4"，它
+先被调整到关闭折叠的尾行，也就是 5，然后再加上位移量 2。
+
+使用减法的例子 (此例并不很有用): 
+<code class="example">   :2,4-1print</code>
+在以下文本上运行时:
+<code class="section">        1 one </code>
+<code class="section">        2 two </code>
+<code class="section">        3 three 已折叠</code>
+<code class="section">        4 four 已折叠 </code>
+<code class="section">        5 five 已折叠 </code>
+<code class="section">        6 six 已折叠 </code>
+<code class="section">        7 seven </code>
+<code class="section">        8 eight </code>
+其中三到六行在关闭的折叠里，这样最后会显示 2 到 6 行。6 来自范围指定的 "4"，它
+先被调整到关闭折叠的尾行，也就是 6，然后减 1，结果又回到关闭折叠的内部，所以又
+使用了该折叠的尾行，也就是 6。
+
+                                                        <b class="vimtag"> <a name=":range-pattern">:range-pattern</a> </b>
 在 <code class="special">{pattern}</code> 之后需要由 "/" 或 "?" 来分隔匹配模式与其之后的内容。
 
 "/" 和 "?" 前面可能有另一个地址。查找就从那里开始。和使用分号的方式不同之处
@@ -729,9 +766,9 @@ Ex 命令有几个特别的地方:
 
 计数和范围                                              <b class="vimtag"> <a name="N:">N:</a> </b>
 
-如果在进入 ":" 之前输入了计数前缀，这种情况会被解释成:
-                :.,.+(count - 1)
-简单来说就是: 包括当前行，向后共计 <code class="badlink">'count'</code> 行。例如，删除三行: 
+如果在进入 ":" 之前输入了计数前缀，这种情况会被解释成: 
+<code class="example">                :.,.+(count - 1)</code>
+简单来说就是: 包括当前行，向后共计 "count" 行。例如，删除三行: 
 <code class="example">                3:d&lt;CR&gt;         被翻译成: .,.+2d&lt;CR&gt;</code>
 
 

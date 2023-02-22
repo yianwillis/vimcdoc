@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2022年8月
+<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -119,7 +119,7 @@ test_gui_event(<code class="special">{event}</code>, <code class="special">{args
                     "findrepl"  搜索和替代文本。
                     "mouse"     鼠标按钮点击事件。
                     "scrollbar" 移动或拖动滚动条。
-                    "sendevent" 发送低层 GUI 事件。
+                    "key"       发送低层键盘事件。
                     "tabline"   用鼠标选择标签页。
                     "tabmenu"   选择标签页行的菜单项。
 
@@ -155,9 +155,9 @@ test_gui_event(<code class="special">{event}</code>, <code class="special">{args
                 "mouse":
                   注入鼠标按钮点击或鼠标移动事件。<code class="special">{args}</code> 里支持的项目是:
                     button:     鼠标按钮。支持的值是:
-                                    0   鼠标右键
+                                    0   鼠标左键
                                     1   鼠标中键
-                                    2   鼠标左键
+                                    2   鼠标右键
                                     3   鼠标键释放
                                     4   鼠标滚轮下滚
                                     5   鼠标滚轮上滚
@@ -180,7 +180,8 @@ test_gui_event(<code class="special">{event}</code>, <code class="special">{args
                                 而不是像素位置
 
                 "scrollbar":
-                  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可用。
+                  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可
+                  用。
                   <code class="special">{args}</code> 里支持的项目是:
                     which:      滚动条。支持的值是:
                                     left  当前窗口的左侧滚动条
@@ -191,8 +192,8 @@ test_gui_event(<code class="special">{event}</code>, <code class="special">{args
                                 到最大的行长，假定 <a href="options.html#'wrap'">'wrap'</a> 未置位。
                     dragging:   为 1 时拖动滚动条，为 0 时点击滚动条。
 
-                "sendevent":
-                  发送低层 GUI 事件 (如释放键或按下键).
+                "key":
+                  发送低层键盘事件 (如释放键或按下键)。
                   目前只支持 MS-Windows。
                   <code class="special">{args}</code> 里支持的项目是:
                     event:      支持的字符串值是:
@@ -231,6 +232,66 @@ test_ignore_error(<code class="special">{expr}</code>)                        <b
 <code class="example">                        GetErrorText()-&gt;test_ignore_error()</code>
 <code class="example"></code>
 <code class="example"></code>
+test_mswin_event(<code class="special">{event}</code>, <code class="special">{args}</code>)               <b class="vimtag"> <a name="test_mswin_event()">test_mswin_event()</a> </b>
+                生成低层 MS-Windows <code class="special">{event}</code>，使用参数 <code class="special">{args}</code>，用于测试 Vim 功
+                能。支持 MS-Windows GUI 和控制台。
+
+                <code class="special">{event}</code> 是字符串，支持的值是:
+                    "mouse"     鼠标事件。
+                    "key"       键盘事件。
+
+                "mouse":
+                  注入鼠标按钮点击或鼠标移动事件。<code class="special">{args}</code> 里支持的项目是:
+                    button:     鼠标按钮。支持的值是:
+                                    0   鼠标右键
+                                    1   鼠标中键
+                                    2   鼠标左键
+                                    3   鼠标键释放
+                                    4   鼠标滚轮下滚
+                                    5   鼠标滚轮上滚
+                                    6   鼠标滚轮左滚
+                                    7   鼠标滚轮右滚
+                    row:        鼠标点击行号。Vim 窗口的首行为 1，末行为
+                                <a href="options.html#'lines'">'lines'</a>。
+                    col:        鼠标点击列号。<code class="special">{col}</code> 的最大值为 <a href="options.html#'columns'">'columns'</a>。
+                                <code class="note">注意</code>: 控制台应用里 row 和 col 总解释为屏幕单元
+                                格。GUI 里取决于 "cell"，也可能解释为像素值。
+                    multiclick: 设为 1 时注入多点击鼠标事件。
+                    modifiers:  键修饰符。支持的值是:
+                                    4   按了 shift
+                                    8   按了 alt
+                                   16   按了 ctrl
+                    move:       可选；如果给出且为 TRUE，生成鼠标移动事件。
+                                只使用 <code class="special">{args}</code> 里 row: 和 col: 且为必须。
+                                仅当置位了 <a href="options.html#'mousemoveevent'">'mousemoveevent'</a> 或弹出窗口使用鼠标
+                                移动事件时才生成事件。
+                    cell:       GUI 可选: 如果给出且为 TRUE，"move" 使用屏幕单
+                                元格而不是像素位置。控制台不使用。
+
+                "key":
+                  发送低层键盘事件 (如释放键或按下键)。
+                  <code class="special">{args}</code> 里支持的项目是:
+                    event:      支持的字符串值是:
+                                    keyup   生成 keyup 事件
+                                    keydown 生成 keydown 事件
+                    keycode:    keyup 或 keydown 事件使用的键码。
+                    modifiers:  可选；键修饰符。
+                                支持的值是:
+                                    2   按了 shift
+                                    4   按了 ctrl
+                                    8   按了 alt
+                                <code class="note">注意</code>: 这些值和鼠标修饰符的不同。
+                    execute:    可选。类似于  <a href="builtin.html#feedkeys()">feedkeys()</a>  模式 x。
+                                包含且设为真 (非零) 时，Vim 会处理任何缓冲的未
+                                处理的键盘事件。设置且为真时，其它的 <code class="special">{args}</code>
+                                项目均可选。
+
+                成功加入或执行事件后返回 TRUE，出错时返回 FALSE。
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        GetEvent()-&gt;test_mswin_event({args})</code>
+
+
 test_null_blob()                                        <b class="vimtag"> <a name="test_null_blob()">test_null_blob()</a> </b>
                 返回 null  <a href="eval.html#Blob">Blob</a> 。仅用于测试。
 

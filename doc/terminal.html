@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2022年9月
+<b class="vimtag"> <a name="terminal.txt">terminal.txt</a> </b>  适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -275,8 +275,8 @@ GUI 模式或使用 <a href="options.html#'termguicolors'">'termguicolors'</a> �
 <code class="example">        :term ++kill=term tail -f /tmp/log</code>
 <code class="example"></code>
 只要作业还在运行，窗口把它当做包含修改过的缓冲区。用 `<code class="keystroke">CTRL-W</code> :quit` 试图关闭窗
-口会失败。如果用 `<code class="keystroke">CTRL-W</code> :quit!`，作业会结束。但窗口中的文本会丢失。此时缓冲区
-还存在，但用  <a href="windows.html#:buffer">:buffer</a>  在别的窗口打开它时会显示空缓冲区。
+口会失败。如果用 `<code class="keystroke">CTRL-W</code> :quit!`，作业会结束。但窗口中的文本会丢失。缓冲区被删
+除。用 `<code class="keystroke">CTRL-W</code> :bunload!` 则缓冲区会保留但为空。
 
 用 `<code class="keystroke">CTRL-W</code> :close` 试图关闭窗口也会失败。用 `<code class="keystroke">CTRL-W</code> :close!` 会关闭窗口并隐藏
 缓冲区。
@@ -996,7 +996,6 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 <code class="example"></code>
 <code class="section">创建屏幕截图 </code>
                                                         <b class="vimtag"> <a name="terminal-screendump">terminal-screendump</a> </b>
-
 要创建屏幕截图，在终端中运行 Vim (或其它程序)，并使它显示想要的状态。然后用
  <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  函数来创建屏幕截图文件。例如: 
 <code class="example">        :call term_dumpwrite(77, "mysyntax.dump")</code>
@@ -1018,7 +1017,6 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 
 <code class="section">比较屏幕截图 </code>
                                                 <b class="vimtag"> <a name="terminal-diffscreendump">terminal-diffscreendump</a> </b>
-
  <a href="testing.html#assert_equalfile()">assert_equalfile()</a>  不能方便地看到差异之处。要发现问题，可用
  <a href="terminal.html#term_dumpdiff()">term_dumpdiff()</a> : 
 <code class="example">        call term_dumpdiff("mysyntax.dump", "test.dump")</code>
@@ -1185,6 +1183,7 @@ gdb 窗口上可以输入更高级的命令。例如，输入:
   Stop           <a href="terminal.html#:Stop">:Stop</a> 
   Eval           <a href="terminal.html#:Evaluate">:Evaluate</a> 
 这样你就可用鼠标完成大部分的常用操作。需要设置 <a href="options.html#'mouse'">'mouse'</a> 选项来支持鼠标点击。
+如何配置此工具条可见  <a href="terminal.html#termdebug_winbar">termdebug_winbar</a> 。
                                                                 <b class="vimtag"> <a name=":Winbar">:Winbar</a> </b>
 你可以这样在其它打开的窗口加入窗口工具条: 
 <code class="example">  :Winbar</code>
@@ -1241,6 +1240,18 @@ TermdebugStopPost               调试结束后，gdb 相关的窗口已关闭�
                                 试缓冲区，恢复了调试之前的状态。
 
 
+<code class="section">定制 </code>
+                                <b class="vimtag"> <a name="termdebug-customizing">termdebug-customizing</a> </b> <b class="vimtag"> <a name="g:termdebug_config">g:termdebug_config</a> </b>
+过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
+g:termdebug_config 存在， <code class="emphasis">不</code> 使用其它的全局变量。
+推荐以赋值空字典开始: 
+<code class="example">        let g:termdebug_config = {}</code>
+<code class="example"></code>
+然后就可以像下面那样给字典加入项目。为完整起见下面还是会提到废弃的全局变量名。
+要切换到 g:termdebug_config，可以据此找到旧变量名并使用相应的值，然后删除废弃
+变量。
+
+
 <code class="section">提示模式 </code>
                                                 <b class="vimtag"> <a name="termdebug-prompt">termdebug-prompt</a> </b>
 如果不支持  <a href="various.html#+terminal">+terminal</a>  特性且在 MS-Windows 上，gdb 会在 <a href="options.html#'buftype'">'buftype'</a> 设为
@@ -1254,13 +1265,13 @@ TermdebugStopPost               调试结束后，gdb 相关的窗口已关闭�
                                                 <b class="vimtag"> <a name="termdebug_use_prompt">termdebug_use_prompt</a> </b>
 即使  <a href="various.html#+terminal">+terminal</a>  特性可用，也可使用提示模式，用: 
 <code class="example">        let g:termdebug_config['use_prompt'] = 1</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebug_use_prompt = 1</code>
 
                                                 <b class="vimtag"> <a name="termdebug_map_K">termdebug_map_K</a> </b>
 K 键通常映射为 :Evaluate。如果不想如此: 
 <code class="example">        let g:termdebug_config['map_K'] = 0</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebug_map_K = 0</code>
 
                                                 <b class="vimtag"> <a name="termdebug_disasm_window">termdebug_disasm_window</a> </b>
@@ -1268,7 +1279,7 @@ K 键通常映射为 :Evaluate。如果不想如此:
 "disarm_window_height" 项目可用于设置窗口高度: 
 <code class="example">        let g:termdebug_config['disasm_window'] = 1</code>
 <code class="example">        let g:termdebug_config['disasm_window_height'] = 15</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebug_disasm_window = 15</code>
 设为任何大于 1 的值时，Asm 窗口会设为此高度。
 
@@ -1282,23 +1293,17 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 <code class="keystroke">CTRL-C</code> 并不中断。因此  <a href="terminal.html#:Continue">:Continue</a>  命令用 "continue" 而不是通信通道。
 
 
-<code class="section">定制 </code>
-                                <b class="vimtag"> <a name="termdebug-customizing">termdebug-customizing</a> </b> <b class="vimtag"> <a name="g:termdebug_config">g:termdebug_config</a> </b>
-过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
-g:termdebug_config 存在，不使用其它的全局变量。
-
-
 <code class="section">GDB 命令 </code>
                                                         <b class="vimtag"> <a name="g:termdebugger">g:termdebugger</a> </b>
 要改变 gdb 命令的名字，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置 g:termdebug_config 的
 "debugger" 项目或 "g:termdebugger" 变量: 
 <code class="example">        let g:termdebug_config['command'] = "mygdb"</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebugger = "mygdb"</code>
 <code class="example"></code>
 如果命令需要参数，用列表: 
 <code class="example">        let g:termdebug_config['command'] = ['rr', 'replay', '--']</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebugger = ['rr', 'replay', '--']</code>
 <code class="example"></code>
 会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
@@ -1316,8 +1321,7 @@ g:termdebug_config 存在，不使用其它的全局变量。
 
 
 <code class="section">颜色 </code>
-                                                <b class="vimtag"> <a name="hl-debugPC">hl-debugPC</a> </b> <b class="vimtag"> <a name="hl-debugBreakpoint">hl-debugBreakpoint</a> </b>
-
+                                        <b class="vimtag"> <a name="hl-debugPC">hl-debugPC</a> </b> <b class="vimtag"> <a name="hl-debugBreakpoint">hl-debugBreakpoint</a> </b>
 标号的颜色可用以下高亮组调整:
 - debugPC               当前位置
 - debugBreakpoint       断点
@@ -1333,7 +1337,6 @@ g:termdebug_config 存在，不使用其它的全局变量。
 
 <code class="section">快捷键 </code>
                                                         <b class="vimtag"> <a name="termdebug_shortcuts">termdebug_shortcuts</a> </b>
-
 可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
 窗口中使用。例如: 
 <code class="example">        map ,w :call TermDebugSendCommand('where')&lt;CR&gt;</code>
@@ -1342,7 +1345,6 @@ g:termdebug_config 存在，不使用其它的全局变量。
 
 <code class="section">弹出式菜单 </code>
                                                         <b class="vimtag"> <a name="termdebug_popup">termdebug_popup</a> </b>
-
 缺省 Termdebug 插件设置 <a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup_setpos"，并在弹出式菜单里加入以
 下项目:
         Set breakpoint           <a href="terminal.html#:Break">:Break</a> 
@@ -1350,16 +1352,22 @@ g:termdebug_config 存在，不使用其它的全局变量。
         Evaluate                 <a href="terminal.html#:Evaluate">:Evaluate</a> 
 如果不想要，可以这样关闭之: 
 <code class="example">        let g:termdebug_config['popup'] = 0</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebug_popup = 0</code>
+<code class="example"></code>
+<code class="example"></code>
+<code class="section">窗口工具条 </code>
+                                                        <b class="vimtag"> <a name="termdebug_winbar">termdebug_winbar</a> </b>
+缺省 Termdebug 插件在打开鼠标时创建窗口工具条 (见  <a href="terminal.html#:Winbar">:Winbar</a> )。如果不想要，可以
+这样关闭之: 
+<code class="example">        let g:termdebug_config['winbar'] = 0</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">Vim 窗口宽度 </code>
                                                         <b class="vimtag"> <a name="termdebug_wide">termdebug_wide</a> </b>
-
 要改变调试开始时的 Vim 窗口宽度并用垂直分割: 
 <code class="example">        let g:termdebug_config['wide'] = 163</code>
-或者如果没有 g:termdebug_config 的话: 
+如果没有 g:termdebug_config，可用: 
 <code class="example">        let g:termdebug_wide = 163</code>
 <code class="example"></code>
 这会在使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时设置 <a href="options.html#'columns'">'columns'</a> 为 163。退出调试器后此值复原。

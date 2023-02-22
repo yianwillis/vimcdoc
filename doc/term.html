@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="term.txt">term.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年9月
+<b class="vimtag"> <a name="term.txt">term.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2023年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -108,7 +108,12 @@ Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'
 通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <code class="special">&lt;BS&gt;</code> 时继续。
 
 <code class="note">注意</code>: 如果 <a href="term.html#'t_ti'">'t_ti'</a> 非空，Vim 假定它会切换到轮换屏幕上。执行外壳命令或退出 Vim
-时产生的结果可能会因此稍有不同。如果不想如此，用 <a href="term.html#'t_TI'">'t_TI'</a> 和 <a href="term.html#'t_TE'">'t_TE'</a>。
+时产生的结果可能会因此稍有不同。如果不想如此，用 <a href="term.html#'t_TI'">'t_TI'</a> 和 <a href="term.html#'t_TE'">'t_TE'</a> (但要附加而
+不是覆盖)。
+
+Vim 会试图用 <a href="term.html#'t_RK'">'t_RK'</a> termcap 项目来检测终端使用的键盘协议。它会在 <a href="term.html#'t_TI'">'t_TI'</a> 之后发
+送，但只在没有工作的时候才会做 (没有预输入或等待中的命令)。这是为了防止返回的
+响应出现在外壳命令中或 Vim 结束后才到达。
 
                                                 <b class="vimtag"> <a name="xterm-bracketed-paste">xterm-bracketed-paste</a> </b>
 如果设置了 <a href="term.html#'t_BE'">'t_BE'</a> 选项，进入 "raw" 模式时会发送 <a href="term.html#'t_BE'">'t_BE'</a> 到终端，退出 "raw" 模式
@@ -125,6 +130,9 @@ Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'
 <code class="example">        set t_BE=</code>
 如果这样做，Vim 运行时发送 <a href="term.html#'t_BD'">'t_BD'</a> 给终端以关闭括号内的粘贴。
 
+如果不设置  <a href="term.html#t_PS">t_PS</a>  或  <a href="term.html#t_PE">t_PE</a> ，不使用  <a href="term.html#t_BE">t_BE</a> 。围绕粘贴文字的转义码如果不能识别，
+这样可以确保括号内的粘贴不打开。
+
 如果你的终端支持括号内的粘贴但没有自动设置相关选项，可以试试下面: 
 <code class="example"></code>
 <code class="example">        if &amp;term =~ "screen"</code>
@@ -133,6 +141,9 @@ Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'
 <code class="example">          exec "set t_PS=\e[200~"</code>
 <code class="example">          exec "set t_PE=\e[201~"</code>
 <code class="example">        endif</code>
+<code class="example"></code>
+ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、"BD"、"PS"
+和 "PE"。如果有此版本，你的终端可能不需要手动配置。
 
                                                         <b class="vimtag"> <a name="tmux-integration">tmux-integration</a> </b>
 在 tmux 里执行 Vim 时如果有问题，下面有一些提示。可以注释掉对你不适用的部分
@@ -270,6 +281,47 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 如果 Vim 接收到对  <a href="term.html#t_RV">t_RV</a>  序列的应答 (请求版本) 并且它以 CSI 开始，就假设终端处
 于 8 位模式，并把所有的健序列转换为它们的 8 位版本。
 
+                                                <b class="vimtag"> <a name="xterm-terminfo-entries">xterm-terminfo-entries</a> </b>
+一段时间里，terminfo 项目不足于描述 Vim 使用的所有功能。而内建的 xterm 则有所
+有需要的 termcap 项目，因此，若干和 xterm 足够相似的终端利用了这一点，在 $TERM
+终端名里附加 "xterm-" 前缀。
+
+这会引发问题，因为这些终端常常并非 100% 与 xterm 兼容。2023 年初，terminfo 数
+据库新增了若干项目，这样不需要 "xterm" 变通方法就可以使用这些功能。以下是相关
+项目 (至今为止):
+
+<code class="section">        名字    xterm 值        描述 </code>
+        RV      "\033[&gt;c"       请求版本  <a href="term.html#t_RV">t_RV</a> 
+
+        BE      "\033[?2004h"   打开括号内粘贴模式  <a href="term.html#t_BE">t_BE</a> 
+        BD      "\033[?2004l"   关闭括号内粘贴模式  <a href="term.html#t_BD">t_BD</a> 
+        PS      "\033[200~"     粘贴文本开始  <a href="term.html#t_PS">t_PS</a> 
+        PE      "\033[201~"     粘贴文本结束  <a href="term.html#t_PE">t_PE</a> 
+
+        XM      "\033[?1006;1004;1000%?%p1%<code class="special">{1}</code>%=%th%el%;"
+                                鼠标打开 / 关闭  <a href="term.html#t_XM">t_XM</a> 
+
+"XM" 项目包含了 "1006" 以打开 SGR 风格鼠标报告，支持多于 223 的列数。也包含了
+"1004"，打开焦点报告。t_fe 和 t_fd 项目可留空 (在 terminfo/termcap 里也没有对
+应的项目)。
+
+                                                <b class="vimtag"> <a name="xterm-kitty">xterm-kitty</a> </b> <b class="vimtag"> <a name="kitty-terminal">kitty-terminal</a> </b>
+Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，也因为它并不试图缺省让自
+己更像其它终端，而是规定了在 Kitty 里应用要如何工作。这使得 Vim 在 Kitty 终端
+里很难工作。有些特例需要特别代码，但为某个特定终端开特例并非理想。
+
+其中一个问题是 $TERM 的值设为 "xterm-kitty"。对 Vim 而言，这意味此终端和 xterm
+兼容，可使用内建的 xterm termcap 项目。许多其它终端依赖这一点。但 Kitty 并不完
+全兼容 xterm。作者建议忽略 ”xterm-" 前缀并使用对应的在 terminfo 项目。现在就是
+如此，不使用内建的 xterm termcap 项目。但仍设置了 t_RV，不然很多功能不可用，一
+个例子是自动设置 <a href="options.html#'ttymouse'">'ttymouse'</a> 为 "sgr" (直到为此可用  <a href="term.html#t_XM">t_XM</a>  为止)。
+
+不清楚为什么 kitty 设置 $TERM 为 "xterm-kitty"，此终端并不真得和 xterm 兼容。
+"kitty" 更合适，但该名字的 terminfo 项目并不广泛被接受。
+
+<code class="note">注意</code> kitty 键盘协议是另一个功能，作  <a href="map.html#kitty-keyboard-protocol">kitty-keyboard-protocol</a> 。
+
+
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 终端选项                     <b class="vimtag"> <a name="terminal-options">terminal-options</a> </b> <b class="vimtag"> <a name="termcap-options">termcap-options</a> </b> <b class="vimtag"> <a name="E436">E436</a> </b></h4>
 终端选项可以和普通选项一样设置。但不会在 ":set all" 命令里显示。相反，应该用
@@ -359,6 +411,10 @@ Vim 增加的 (它们没有标准代码):
         t_RV    请求终端版本字符串 (适用于 xterm 和其它终端模   <b class="vimtag"> <a name="t_RV">t_RV</a> </b> <b class="vimtag"> <a name="'t_RV'">'t_RV'</a> </b>
                 拟器) 其响应存于  <a href="eval.html#v:termresponse">v:termresponse</a>   <a href="term.html#xterm-8bit">xterm-8bit</a> 
                  <a href="options.html#'ttymouse'">'ttymouse'</a>   <a href="term.html#xterm-codes">xterm-codes</a> 
+        t_XM    打开/关闭鼠标报告。                             <b class="vimtag"> <a name="t_XM">t_XM</a> </b> <b class="vimtag"> <a name="'t_XM'">'t_XM'</a> </b>
+                见下  <a href="term.html#mouse-reporting">mouse-reporting</a> 
+        t_RK    请求终端键盘协议状态；                          <b class="vimtag"> <a name="t_RK">t_RK</a> </b> <b class="vimtag"> <a name="'t_RK'">'t_RK'</a> </b>
+                 <a href="term.html#t_TI">t_TI</a>  之后发送
         t_u7    请求光标位置 (适用于 xterm)                     <b class="vimtag"> <a name="t_u7">t_u7</a> </b> <b class="vimtag"> <a name="'t_u7'">'t_u7'</a> </b>
                 见  <a href="options.html#'ambiwidth'">'ambiwidth'</a> 
                 其响应存于  <code class="badlink">v:term7resp</code> 
@@ -409,6 +465,18 @@ t_SH 必须提供一个参数:
 
 仅当接收到 t_RV 的反馈时才会发送 t_RS。Mac OS 上如果 termresponse 不能识别到
 Terminal.app 也不会用它。
+
+                                                        <b class="vimtag"> <a name="mouse-reporting">mouse-reporting</a> </b>
+许多终端报告鼠标点击，有些能报告鼠标移动和拖动。Vim 需要知道为些使用哪些键码。
+
+为此，使用 "XM" terminfo/termcap 项目。Vim 也有 <a href="options.html#'ttymouse'">'ttymouse'</a> 选项来指定使用的鼠
+标协议。可用值见该选项。
+
+如果 Vim 可以读取 "XM" terminfo/termcap 项目，会用之打开和关闭鼠标报告。如果该
+项目不存在，则使用 <a href="options.html#'ttymouse'">'ttymouse'</a> 的值来决定。
+
+如果 "XM" 项目存在且首项为 "1006"，设置 <a href="options.html#'ttymouse'">'ttymouse'</a> 为 "sgr"，除非它已有赋值。
+
 
 键 代 码                                                <b class="vimtag"> <a name="terminal-key-codes">terminal-key-codes</a> </b>
 <code class="note">备注</code>: 尽量使用 <code class="special">&lt;&gt;</code> 形式
@@ -469,6 +537,7 @@ Terminal.app 也不会用它。
         t_%1    <code class="special">&lt;Help&gt;</code>          帮助键                          <b class="vimtag"> <a name="t_%1">t_%1</a> </b> <b class="vimtag"> <a name="'t_%1'">'t_%1'</a> </b>
         t_&amp;8    <code class="special">&lt;Undo&gt;</code>          撤销键                          <b class="vimtag"> <a name="t_&8">t_&amp;8</a> </b> <b class="vimtag"> <a name="'t_&8'">'t_&amp;8'</a> </b>
         t_kI    <code class="special">&lt;Insert&gt;</code>        插入键                          <b class="vimtag"> <a name="t_kI">t_kI</a> </b> <b class="vimtag"> <a name="'t_kI'">'t_kI'</a> </b>
+                <code class="special">&lt;kInsert&gt;</code>       keypad 插入键
         t_kD    <code class="special">&lt;Del&gt;</code>           删除键                          <b class="vimtag"> <a name="t_kD">t_kD</a> </b> <b class="vimtag"> <a name="'t_kD'">'t_kD'</a> </b>
         t_kb    <code class="special">&lt;BS&gt;</code>            退格键                          <b class="vimtag"> <a name="t_kb">t_kb</a> </b> <b class="vimtag"> <a name="'t_kb'">'t_kb'</a> </b>
         t_kB    <code class="special">&lt;S-Tab&gt;</code>         反制表 (shift-tab)    <b class="vimtag"> <a name="%3CS-Tab%3E">&lt;S-Tab&gt;</a> </b> <b class="vimtag"> <a name="t_kB">t_kB</a> </b> <b class="vimtag"> <a name="'t_kB'">'t_kB'</a> </b>
@@ -501,8 +570,13 @@ Terminal.app 也不会用它。
         t_KK    <code class="special">&lt;k8&gt;</code>            keypad 8                 <b class="vimtag"> <a name="%3Ck8%3E">&lt;k8&gt;</a> </b> <b class="vimtag"> <a name="t_KK">t_KK</a> </b> <b class="vimtag"> <a name="'t_KK'">'t_KK'</a> </b>
         t_KL    <code class="special">&lt;k9&gt;</code>            keypad 9                 <b class="vimtag"> <a name="%3Ck9%3E">&lt;k9&gt;</a> </b> <b class="vimtag"> <a name="t_KL">t_KL</a> </b> <b class="vimtag"> <a name="'t_KL'">'t_KL'</a> </b>
                 <code class="special">&lt;Mouse&gt;</code>         鼠标代码的引导键                <b class="vimtag"> <a name="%3CMouse%3E">&lt;Mouse&gt;</a> </b>
-        t_PS    括号内粘贴的开始  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>         <b class="vimtag"> <a name="t_PS">t_PS</a> </b> <b class="vimtag"> <a name="'t_PS'">'t_PS'</a> </b>
-        t_PE    括号内粘贴的结束  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>         <b class="vimtag"> <a name="t_PE">t_PE</a> </b> <b class="vimtag"> <a name="'t_PE'">'t_PE'</a> </b>
+
+        t_PS    <code class="special">&lt;PasteStart&gt;</code>    括号内粘贴的开始                <b class="vimtag"> <a name="t_PS">t_PS</a> </b> <b class="vimtag"> <a name="'t_PS'">'t_PS'</a> </b>
+                                 <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>  
+        t_PE    <code class="special">&lt;PasteEnd&gt;</code>      括号内粘贴的结束                <b class="vimtag"> <a name="t_PE">t_PE</a> </b> <b class="vimtag"> <a name="'t_PE'">'t_PE'</a> </b>
+                                 <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>  
+                <code class="special">&lt;FocusGained&gt;</code>   Vim 窗口获得焦点 (仅限内部使用)
+                <code class="special">&lt;FocusLost&gt;</code>     Vim 窗口失去焦点 (仅限内部使用)
 
 关于 t_so 和 t_mr 的 <code class="note">注意</code> 事项: 如果 termcap 项目 "so" 不存在，则使用 "mr" 的
 项目。反之亦然。"se" 和 "me" 也是一样。如果你的终端同时支持反转和突出模式，你
@@ -532,10 +606,13 @@ xterm 里直接取得键码。响应的内容用于调整各种 t_ 代码。这�
 为此，置位 <a href="options.html#'termguicolors'">'termguicolors'</a> 选项。
 <a href="https://gist.github.com/XVilka/8346728">https://gist.github.com/XVilka/8346728</a> 有支持真彩的终端列表。
 
-有时置位 <a href="options.html#'termguicolors'">'termguicolors'</a> 还不够，还需要显式设置  <a href="term.html#t_8f">t_8f</a>  和  <a href="term.html#t_8b">t_8b</a>  选项。这些选
-项的缺省值分别是 "^[[38;2;%lu;%lu;%lum" 和 "^[[48;2;%lu;%lu;%lum"，但只当
- <code class="badlink">$TERM</code>  为  <code class="badlink">xterm</code>  时才设置。有些终端也接受相同的序列，但把所有的分号替换为冒
-号 (这样实际更兼容，但支持不是那么广泛): 
+ <a href="term.html#t_8f">t_8f</a>  和  <a href="term.html#t_8b">t_8b</a>  termcap 项目告知终端使用何种 RGB 色。这些选项的缺省值应适用于
+大多数终端。不合适的话可手动设置。它们的缺省值是: 
+<code class="example">         let &amp;t_8f = "\&lt;Esc&gt;[38;2;%lu;%lu;%lum"</code>
+<code class="example">         let &amp;t_8b = "\&lt;Esc&gt;[48;2;%lu;%lu;%lum"</code>
+<code class="example"></code>
+有些终端也接受相同的序列，但把所有的分号替换为冒号 (这样实际更兼容，但支持不是
+那么广泛): 
 <code class="example">         let &amp;t_8f = "\&lt;Esc&gt;[38:2:%lu:%lu:%lum"</code>
 <code class="example">         let &amp;t_8b = "\&lt;Esc&gt;[48:2:%lu:%lu:%lum"</code>
 <code class="example"></code>
@@ -694,9 +771,9 @@ xterm 用户 <code class="note">注意</code>: shift + 光标键一般不工作�
 选项。见 "Options" 一章  <a href="options.html#options">options</a> 。
 
 如果你的终端不支持滚动区域，但是支持插入/删除行命令，多个窗口的滚动也许会使得
-行跳上跳下。如果你不希望这样，置位 <a href="options.html#'ttyfast'">'ttyfast'</a> 选项，它使得窗口重画，而不是行滚
-动。
-
+行跳上跳下。复位了 <a href="options.html#'ttyfast'">'ttyfast'</a> 选项就会如此。为此，可以这样检查一下: 
+<code class="example">        verbose set ttyfast?</code>
+<code class="example"></code>
 如果你的终端滚动很慢，但是重画却不慢，把 <a href="options.html#'ttyscroll'">'ttyscroll'</a> 设小一点，比如 3。这使得
 Vim 在超过 3 行需要滚动时，重画屏幕而不是滚动。
 
@@ -892,6 +969,8 @@ MS-Windows 和 xterm 上，双击相隔的时间可以通过 <a href="options.ht
 <code class="example"></code>
 使用双击拖动鼠标 (按下按钮、抬起按钮、按下按钮、然后拖动) 会导致完整的多个单词
 被选择，直到按钮被释放为止。这时选择重新以字符为单位。
+
+鼠标滚动可见  <a href="scroll.html#scroll-mouse-wheel">scroll-mouse-wheel</a> 。
 
                                                         <b class="vimtag"> <a name="gpm-mouse">gpm-mouse</a> </b>
 GPM 鼠标只有在编译时打开  <a href="various.html#+mouse_gpm">+mouse_gpm</a>  特性才有效。GPM 鼠标驱动 (Linux 终端) 不
