@@ -6,7 +6,6 @@ scriptencoding utf-8
 " Usage: copy this file to $VIMRUNTIME/syntax
 
 syn match helpHeadlineCn	"^\([^\u0000-\u00ff]\|[A-Z]\)\(\s[^\u0000-\u00ff -.()_:]\|[A-Z0-9 ]\)*\ze\(\s\+\*\|$\)"
-syn match helpSpecial		"CTRL-."
 syn match helpVimCn		"VIM \(参考\|用户\)手册.*"
 syn keyword helpNoteCn		注意 备注
 syn match helpNoteCn		/注意\|备注\|警告/
