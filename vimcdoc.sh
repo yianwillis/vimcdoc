@@ -15,10 +15,11 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-vim --cmd ":exec 'normal i' . \$VIM | wq! /tmp/vimrt.$$" > /dev/null 2>&1 
-if [ -e /tmp/vimrt.$$ ]; then
-	VIM_PATH=`cat /tmp/vimrt.$$`/vimfiles
-	rm /tmp/vimrt.$$
+tmpdir="${TMPDIR:-/tmp}"
+vim --cmd ":exec 'normal i' . \$VIM | wq! $tmpdir/vimrt.$$" > /dev/null 2>&1
+if [ -e $tmpdir/vimrt.$$ ]; then
+	VIM_PATH=`cat $tmpdir/vimrt.$$`/vimfiles
+	rm $tmpdir/vimrt.$$
 else
 	echo 'Error: No vim found on this system.'
 	exit 1
