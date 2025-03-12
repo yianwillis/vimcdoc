@@ -1,4 +1,4 @@
-*usr_05.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年8月
+*usr_05.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 		     VIM 用户手册 - by Bram Moolenaar
 				译者: Nek_in、tocer
@@ -272,15 +272,23 @@ defaults.vim 的载入可以用这个命令关闭: >
 
 
 				*restore-cursor* *last-position-jump*  >
-    autocmd BufReadPost *
-      \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
-      \ |   exe "normal! g`\""
-      \ | endif
+    augroup RestoreCursor
+      autocmd!
+      autocmd BufReadPost *
+        \ let line = line("'\"")
+        \ | if line >= 1 && line <= line("$") && &filetype !~# 'commit'
+        \      && index(['xxd', 'gitrebase'], &filetype) == -1
+        \ |   execute "normal! g`\""
+        \ | endif
+    augroup END
 
 这是又一个自动命令。这回它设置为在读入任何文件之后自动执行。后面那堆复杂的东西
-检查 '" 标记是否已被定义，如果是，则跳转到该标记。行首的反斜杠用于把所有语句连
-接成一行。这可以避免一行写得太长，
-请参见 |line-continuation|。这只在 Vim 脚本文件中有效，在命令行中无效。
+检查 '" 标记是否已被定义，如果是，则跳转到该标记。这里跳过 commit 或 rebase 信
+息，因为每次的信息可能都不同，也不适用于 xxd(1) 过滤和编辑二进制文件，因为要对
+输入文件来回转换，所以可以这么说，这里有双重性。另见 |using-xxd|。
+
+行首的反斜杠用于把所有语句连接成一行。这可以避免一行写得太长，请参见
+|line-continuation|。这只在 Vim 脚本文件中有效，在命令行中无效。
 
 >
 	command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis
@@ -363,6 +371,15 @@ Vim 发布提供了一些软件包供你选用。例如 matchit 插件。此插�
 		~/.vim/pack/fancy/start/fancytext/plugin/fancy.vim ~
 	   这里 "fancytext" 是软件包名，这可以是任何其它名字。
 
+添加 editorconfig 包					*editorconfig-install*
+
+和 matchit 包类似，要在 Vim 启动时载入发布的 editorconfig 插件，在 vimrc 文件
+中加入一行: >
+	packadd! editorconfig
+
+重启 Vim 后，此插件已激活，相关阅读可见: >
+	:h editorconfig.txt
+
 关于软件包的详情可见: |packages|。
 
 ==============================================================================
@@ -379,11 +396,16 @@ Vim 中有两种插件:
 我们将先讨论全局插件，然后涉及文件类型插件 |add-filetype-plugin|。
 
 
-全 局 插 件						*standard-plugin*
+全 局 插 件				*standard-plugin* *distributed-plugins*
 
 当你启动 Vim，它会自动加载一些插件。你不需要为此做任何事。这些插件增加一些很多
 人想用的，但由 Vim 脚本实现而非编译进 Vim 中的功能。你可以在帮助索引中找到这些
-插件: |standard-plugin-list|。还可以参照 |load-plugins|。
+插件: |standard-plugin-list|。
+
+同样地，本地安装的插件和包 (如果自带单独的帮助文件的话)，也可在帮助的
+|local-additions| 小节里找到类似的列表。
+
+还可以参照 |load-plugins|。
 
 							*add-global-plugin*
 你可以加入一个全局插件使得某些功能在你每次使用 Vim 时都被开启。添加一个全局插

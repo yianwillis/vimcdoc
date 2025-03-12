@@ -1,4 +1,4 @@
-*syntax.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*syntax.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -200,9 +200,9 @@ Vim。
 高亮组名用于匹配相同类型事物的高亮项目。它们被链接到用于指定颜色的高亮组。语法
 组名本身不指定任何颜色或属性。
 
-高亮或者语法组的名字必须由 ASCII 字母，数字和下划线组成。如使用正则表达式表示:
-"[a-zA-Z0-9_]*"。不过，使用其它字符时 Vim 不报错。组名最大长度大约是 200 字
-节。 *E1249*
+高亮或者语法组的名字必须由 ASCII 字母、数字、下划线、句号或连字符组成。如使用
+正则表达式表示: "[a-zA-Z0-9_.-]*"。不过，使用其它字符时 Vim 不报错。组名最大长
+度大约是 200 字节。 *E1249*
 
 要允许每个用户选择他们自己喜欢的色彩系列，许多语言应该使用相同的高亮组名。以下
 是建议的组名 (如果语法高亮能够正确工作，你应该能看到实际的颜色，除了 "Ignore"
@@ -537,7 +537,7 @@ Javascript 还可以让你在 url 中省略窗口号或开头的那个 L。
 在生成页中用于防止复制的方法取决于 |g:html_use_input_for_pc| 的值。
 
 						    *g:html_use_input_for_pc*
-缺省: "fallback"
+缺省: "none"
 如果 |g:html_prevent_copy| 非空，则:
 
 为 "all" 时，使用只读的 <input> 元素来代替不可复制区域的普通文本。在有些浏览
@@ -1162,15 +1162,25 @@ DOCBOOK SGML				*docbksgml.vim* *ft-docbksgml-syntax*
 
 DOSBATCH				*dosbatch.vim* *ft-dosbatch-syntax*
 
-DOS 批处理文件的高亮有一个选项。它和 Windows 2000 的命令解释器的新扩展有关，可
-以通过 dosbatch_cmdextversion 变量控制。Windows NT 上，它应该取值为 1，Windows
-2000 应该为 2。下面这行可以选择你想要的版本: >
+dosbatch_cmdextversion 变量选择 Windows 命令解释器支持的扩展集。Windows NT
+(Windows 2000 之前) 版本上，它应该取值为 1，Windows 2000 及之后版本应该为 2。
+下面这行可以选择你想要的版本: >
 
    :let dosbatch_cmdextversion = 1
 
-如果没有定义该变量，缺省设为 2，以支持 Windows 2000 版本。
+如果没有定义该变量，缺省设为 2，以支持 Windows 2000 及之后版本。
 
-第二个选项控制 *.btm 文件是否被识别为 "dosbatch" 类型 (MS-DOS 批处理文件) 或
+原始 MS-DOS 支持使用双冒号 (::) 作为引导注释行的代替方法。当前 Windows 命令解
+释器支持此方法，但在 ( ... ) 命令块里会触发问题。相关讨论可见 Stack Overflow -
+
+https://stackoverflow.com/questions/12407800/which-comment-style-should-i-use-in-batch-files
+
+要允许在 Windows 命令解释器或 MS-DOS bat 文件里用 :: 来引导注释，设置
+dosbatch_colons_comment 变量为任何值: >
+
+   :let dosbatch_colons_comment = 1
+
+有个选项可以控制 *.btm 文件是否被识别为 "dosbatch" 类型 (MS-DOS 批处理文件) 或
 "btm" 类型 (4DOS 批处理文件)。缺省使用后者。下行可以让你选择前者: >
 
    :let g:dosbatch_syntax_for_btm = 1
@@ -1379,8 +1389,10 @@ Visual Basic 和 FORM 都使用扩展名 ".frm"。要检测文件类型，Vim �
 
 FORTH						*forth.vim* *ft-forth-syntax*
 
-匹配 "*.fs" 的文件可能是 F# 或是 Forth。如果自动检测不行或者比如说你不想编辑
-F# 文件，可在 vimrc 里指定: >
+匹配 "*.f" 的文件可能是 Fortran 或是 Forth，而匹配 "*.fs" 的文件可能是 F# 或是
+Forth。如果自动检测不行或者比如说你不想编辑 F# 或 Fortran 文件，可在 vimrc 里
+指定: >
+   :let filetype_f  = "forth"
    :let filetype_fs = "forth"
 
 
@@ -1855,11 +1867,11 @@ LPC 代表一种简单又节省内存的语言: Lars Pensjö C。LPC 的文件�
 
 	:let lpc_syntax_for_c = 1
 
-如果这对某些特殊的 C 或 LPC 文件不能工作，用模式行。在 LPC 文件里:
+如果这对某些特殊的 C 或 LPC 文件不能工作，用模式行。在 LPC 文件里: >
 
 	// vim:set ft=lpc:
 
-对于被识别为 LPC 的 C 文件:
+对于被识别为 LPC 的 C 文件: >
 
 	// vim:set ft=c:
 
@@ -2416,13 +2428,19 @@ PYTHON						*python.vim* *ft-python-syntax*
 	:let python_no_doctest_highlight = 1
 或 >
 	:let python_no_doctest_code_highlight = 1
-(第一个选项隐含第二个)。
+第一个选项隐含第二个。
 
 要高亮行尾的空白还有空格和制表的混合: >
 	:let python_space_error_highlight = 1
 
-如果你想要所有可能的 Python 高亮 (等同于置位上面最后的选项及复位其余选项): >
+如果你想要所有可能的 Python 高亮: >
 	:let python_highlight_all = 1
+这里的效果等同于置位 python_space_error_highlight 及复位其余选项。
+
+如果使用 Python 2 或跨式代码 (同时兼容 Python 2 和 3)，可以强制使用支持 Python
+2 直到 Python 3.5 的旧语法文件。 >
+	:let python_use_python2_syntax = 1
+此选项会排除所有 Python 3.6 或更新的版本的现代特性。
 
 注意: 对以上选项，只关心其存在于否，值并不重要，可以把上面的 1 换成任何值。
 
@@ -3243,10 +3261,10 @@ zsh 的语法高亮脚本打开基于语法的折叠: >
 Vim 理解三种语法项目的类型:
 
 1. 关键字
-   它只能包含由 'iskeyword' 选项定义的关键字字符，而且不能包含其它语法项目。
-   它必须匹配完整的单词 (在匹配的前后不能有其它的关键字字符)。
-   关键词 "if" 只在 "if(a=b)" 里匹配，而不在 "ifdef x" 里匹配。因为 "(" 不是关
-   键字字符，但 "d" 是。
+   它只能包含由 |:syn-iskeyword| 或 'iskeyword' 选项定义的关键字字符，而且不能
+   包含其它语法项目。它必须匹配完整的单词 (在匹配的前后不能有其它的关键字字
+   符)。关键词 "if" 只在 "if(a=b)" 里匹配，而不在 "ifdef x" 里匹配。因为 "("
+   不是关键字字符，但 "d" 是。
 
 2. 匹配
    它匹配单个正则表达式模式。
@@ -4545,8 +4563,9 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	给出 GUI 使用的前景色 (guifg)、背景色 (guibg) 和特殊颜色 (guisp)。
-	"guisp" 用于 undercurl 和 strikethrough。可用一些特殊的名字:
-		NONE		没有颜色 (透明)
+	"guisp" 用于 undercurl 和 strikethrough。
+	可用一些特殊的名字:
+		NONE		没有颜色 (透明)		*E1361*
 		bg		使用 Normal 的背景色
 		background	使用 Normal 的背景色
 		fg		使用 Normal 的前景色
@@ -4606,7 +4625,7 @@ guisp={color-name}					*highlight-guisp*
 ColorColumn	用于 'colorcolumn' 设置的列。
 							*hl-Conceal*
 Conceal		代替隐藏文本的填充字符 (见 'conceallevel')。
-							*hl-Cursor*
+						*hl-Cursor* *hl-lCursor*
 Cursor		光标所在的字符。
 lCursor		使用 |language-mapping| 时光标所在的字符 (见 'guicursor')。
 							*hl-CursorIM*
@@ -4674,6 +4693,14 @@ Normal		普通文本。
 Pmenu		弹出菜单: 普通项目。
 							*hl-PmenuSel*
 PmenuSel	弹出菜单: 选中项目。
+							*hl-PmenuKind*
+PmenuKind	弹出菜单: 普通项目 "kind"。
+							*hl-PmenuKindSel*
+PmenuKindSel	弹出菜单: 选中项目 "kind"。
+							*hl-PmenuExtra*
+PmenuExtra	弹出菜单: 普通项目 "extra text"。
+							*hl-PmenuExtraSel*
+PmenuExtraSel	弹出菜单: 选中项目 "extra text"。
 							*hl-PmenuSbar*
 PmenuSbar	弹出菜单: 滚动条。
 							*hl-PmenuThumb*

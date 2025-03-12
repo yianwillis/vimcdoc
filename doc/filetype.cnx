@@ -1,4 +1,4 @@
-*filetype.txt*  适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*filetype.txt*  适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -124,33 +124,38 @@ Vim 可以检测要编辑的文件类型。这是通过检查文件名完成的�
 这并不总行。一些全局变量可以用来为某些特定的扩展名决定具体的文件类型:
 
 	文件名		变量 ~
-	*.asa		g:filetype_asa	|ft-aspvbs-syntax| |ft-aspperl-syntax|
-	*.asm		g:asmsyntax	|ft-asm-syntax|
-	*.asp		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
-	*.bas		g:filetype_bas	|ft-basic-syntax|
+	*.asa		g:filetype_asa		|ft-aspperl-syntax|
+						|ft-aspvbs-syntax|
+	*.asm		g:asmsyntax		|ft-asm-syntax|
+	*.asp		g:filetype_asp		|ft-aspperl-syntax|
+						|ft-aspvbs-syntax|
+	*.bas		g:filetype_bas		|ft-basic-syntax|
 	*.cfg		g:filetype_cfg
 	*.cls		g:filetype_cls
-	*.csh		g:filetype_csh	|ft-csh-syntax|
+	*.csh		g:filetype_csh		|ft-csh-syntax|
 	*.dat		g:filetype_dat
-	*.frm		g:filetype_frm	|ft-form-syntax|
-	*.fs		g:filetype_fs	|ft-forth-syntax|
-	*.i		g:filetype_i	|ft-progress-syntax|
+	*.f		g:filetype_f		|ft-forth-syntax|
+	*.frm		g:filetype_frm		|ft-form-syntax|
+	*.fs		g:filetype_fs		|ft-forth-syntax|
+	*.h		g:c_syntax_for_h	|ft-c-syntax|
+	*.i		g:filetype_i		|ft-progress-syntax|
 	*.inc		g:filetype_inc
 	*.lsl		g:filetype_lsl
-	*.m		g:filetype_m	|ft-mathematica-syntax|
+	*.m		g:filetype_m		|ft-mathematica-syntax|
 	*.mod		g:filetype_mod
-	*.p		g:filetype_p	|ft-pascal-syntax|
+	*.p		g:filetype_p		|ft-pascal-syntax|
 	*.pl		g:filetype_pl
-	*.pp		g:filetype_pp	|ft-pascal-syntax|
+	*.pp		g:filetype_pp		|ft-pascal-syntax|
 	*.prg		g:filetype_prg
 	*.r		g:filetype_r
 	*.sig		g:filetype_sig
-	*.sql		g:filetype_sql	|ft-sql-syntax|
+	*.sql		g:filetype_sql		|ft-sql-syntax|
 	*.src		g:filetype_src
 	*.sys		g:filetype_sys
-	*.sh		g:bash_is_sh	|ft-sh-syntax|
-	*.tex		g:tex_flavor	|ft-tex-plugin|
-	*.w		g:filetype_w	|ft-cweb-syntax|
+	*.sh		g:bash_is_sh		|ft-sh-syntax|
+	*.tex		g:tex_flavor		|ft-tex-plugin|
+	*.typ		g:filetype_typ
+	*.w		g:filetype_w		|ft-cweb-syntax|
 
 对一些文件类型而言，全局变量只用于文件类型无法检测的场合:
 	*.r		g:filetype_r	|ft-rexx-syntax|
@@ -347,13 +352,13 @@ filetype.vim 和 scripts.vim 写到一个大家都能用的运行时目录里。
    你必须在 'runtimepath' 靠前的一个目录里建立一个新的文件类型插件。Unix 上，
    你可以使用这个文件: >
 	vim ~/.vim/ftplugin/fortran.vim
-<  你可以设置你希望有的选项和映射。注意，全局插件会在其后进行。它可能会否决你
+<   你可以设置你希望有的选项和映射。注意，全局插件会在其后进行。它可能会否决你
    做的那些设置。如果发生了，你有以下两种方法。
 
 2. 建立一个插件的备份，并改变之。
    你需要把该备份放在 'runtimepath' 靠前的位置。Unix 上，你可以这么做: >
 	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.vim/ftplugin/fortran.vim
-<  这样你可以自由的编辑你的备份文件。因为 b:did_ftplugin 会被设置，全局的插件
+<   这样你可以自由的编辑你的备份文件。因为 b:did_ftplugin 会被设置，全局的插件
    就不会载入自身。这样做的一个缺点是，如果发行的插件版本更新，你需要重新复制
    并再次进行修改。
 
@@ -361,16 +366,29 @@ filetype.vim 和 scripts.vim 写到一个大家都能用的运行时目录里。
    你需要在 'runtimepath' 的尾部建立一个新的文件类型插件。Unix 上，你可以使用
    这个文件: >
 	vim ~/.vim/after/ftplugin/fortran.vim
-<  在这个文件里，你可以对需要的设置进行改变。
+<   在这个文件里，你可以对需要的设置进行改变。
 
 ==============================================================================
 3.  缺省文件类型插件的文档				*ftplugin-docs*
 
 
+					*plugin_exec* *g:plugin_exec*
+许可执行外部命令。它的引入是由于历史原因，如 perl 文件类型插件 (还有其他一些)
+用于设置搜索路径。
+出于安全考虑，缺省关闭: >
+	:let g:plugin_exec = 1
+可只为特定文件类型打开: >
+	:let g:<filetype>_exec = 1
+所以要只为 ruby 打开，如此设置: >
+	:let g:ruby_exec = 1
+
+如果同时设置全局 `plugin_exec` 和 `<filetype>_exec` 特定变量，文件类型特定变量
+优先。
+
 AWK							*ft-awk-plugin*
 
 GNU Awk 的特定功能，如 @include，的支持，可以这样打开: >
-	let g:awk_is_gawk = 1
+	:let g:awk_is_gawk = 1
 
 
 CHANGELOG						*ft-changelog-plugin*
@@ -591,7 +609,10 @@ MARKDOWN                                                *ft-markdown-plugin*
 
 要打开折叠，可用: >
 	let g:markdown_folding = 1
-<
+
+缺省置位 'expandtab'。如果不想如此: >
+	let g:markdown_recommended_style = 0
+
 
 PDF							*ft-pdf-plugin*
 

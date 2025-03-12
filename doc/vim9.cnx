@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*vim9.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -64,7 +64,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
 
 总览 ~
 							*E1146*
-使用 Vim9 脚本和 `:def` 函数最常见区别的简要小结；细节见后:
+使用 Vim9 脚本和 `:def` 函数最常见差异的简要小结；细节见后:
 - 注释以 # 开始而不是 ": >
 	echo "hello"   # 注释
 - 很少需要反斜杠用来作续行符: >
@@ -105,6 +105,9 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
 	:exe @a
 - 除非特别指出，使用最高的 |scriptversion|。
 - 定义表达式映射时，在定义所在的脚本上下文里计算表达式。
+- 字符串索引以字符而不是字节计: |vim9-string-index|
+- 可能意想不到的一些差异: |vim9-gotchas|。
+
 
 
 # 开始的注释 ~
@@ -166,7 +169,7 @@ compiled: {name}"。
 项。`:def` 函数总会在错误时中止 (除非命令使用了 `:slient!`或错误在 `:try` 块里
 捕获)，不接受范围、不能是 "dict" 函数，而且总可以有闭包。
 						*vim9-no-dict-function*
-以后会加入类，以替代 "字典函数" 机制。现在你需要显式传递入字典: >
+可用 Vim9 类 (|Vim9-class|) 而不是 "字典函数"。也可以显式传递入字典: >
 	def DictFunc(self: dict<any>, arg: string)
 	   echo self[arg]
 	enddef
@@ -290,7 +293,7 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 
 用 :var、:final 和 :const 声明变量 ~
 				*vim9-declaration* *:var* *E1079*
-				*E1017* *E1020* *E1054* *E1087* *E1108* *E1124*
+				*E1017* *E1020* *E1054* *E1087* *E1124*
 局部变量须用 `:var` 定义。局部常量须用 `:final` 或 `:const` 定义。我们把两者都
 称为 "变量"。
 
@@ -912,10 +915,12 @@ Vim9 脚本可以使用如下预定义值: >
 	null
 	null_blob
 	null_channel
+	null_class
 	null_dict
 	null_function
 	null_job
 	null_list
+	null_object
 	null_partial
 	null_string
 `true` 等价于 `v:true`、`false` 等价于 `v:false` 而 `null` 等价于 `v:null`。
@@ -935,10 +940,10 @@ Vim9 脚本可以使用如下预定义值: >
 可以把 `null` 和任何值比较，不会给出类型错误。但把 `null` 和数值、浮点或布尔型
 比较总返回 `false`。这和老式脚本不同，那里把 `null` 和零或 `false` 比较会返回
 `true`。
-
+							*vim9-false-true*
 转换布尔型为字符串时使用 `false` 和 `true`，而不像老式脚本那样用 `v:false` 和
 `v:true`。`v:none` 没有对应的 `none` 替代，在其他语言中它没有类似的结构。
-
+							*vim9-string-index*
 字符串用 [idx] 索引 或 [idx : idx] 取切片时使用的是字符索引而非字节索引。组合
 字符包含在内。例如: >
 	echo 'bár'[1]
@@ -1112,6 +1117,7 @@ https://github.com/lacygoill/wiki/blob/master/vim/vim9.md
 						*:defc* *:defcompile*
 :defc[ompile]		编译尚未编译的在当前脚本中定义的函数。
 			编译中如有任何错误，会报错。
+			这里不包含类中定义的函数。
 
 :defc[ompile] {func}
 :defc[ompile] debug {func}
@@ -1119,6 +1125,10 @@ https://github.com/lacygoill/wiki/blob/master/vim/vim9.md
 			编译函数 {func}，如有需要。"debug" 和 "profile" 指定编
 			译模式。
 			编译中如有任何错误，会报错。
+			{func} 调用也可以是 "ClassName.functionName"，以编译类
+			中的函数或方法。
+			{func} 调用也可以是 "ClassName"，以编译类中的所有函数
+			和方法。
 
 						*:disa* *:disassemble*
 :disa[ssemble] {func}	显示 {func} 生成的指令序列。用于调试和测试。 *E1061*
@@ -1377,6 +1387,7 @@ Vim9 脚本或 `:def` 函数中声明的变量有类型，或者通过显式指�
 
 如果给出类型但与期待不符，报错 *E1272* 。
 
+如果类型不完整，报错 *E1363*，例如对象所属的类未知 (通常因为是 null 对象)。
 
 类型推论 ~
 							*type-inference*
@@ -1476,8 +1487,8 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 
 			 *E1211* *E1217* *E1218* *E1219* *E1220* *E1221*
 			 *E1222* *E1223* *E1224* *E1225* *E1226* *E1227*
-			 *E1228* *E1238* *E1250* *E1251* *E1252* *E1253*
-			 *E1256* *E1297* *E1298* *E1301*
+			 *E1228* *E1238* *E1250* *E1251* *E1252* *E1256*
+			 *E1297* *E1298* *E1301*
 大多数内建函数检查类型，以便查找错误。
 
 ==============================================================================

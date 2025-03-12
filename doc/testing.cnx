@@ -1,4 +1,4 @@
-*testing.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*testing.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -150,13 +150,13 @@ test_gui_event({event}, {args})
 		  设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可
 		  用。
 		  {args} 里支持的项目是:
-		    which:	滚动条。支持的值是:
+		    which:	选择滚动条。支持的值是:
 				    left  当前窗口的左侧滚动条
 				    right 当前窗口的右侧滚动条
 				    hor   水平滚动条
-		    value:	滚动量。对垂直滚动条而言，{value} 可取值 1 到
-				缓冲区行数。对水平滚动条而言，{value} 可取值 1
-				到最大的行长，假定 'wrap' 未置位。
+		    value:	滚动量。对垂直滚动条而言，{value} 可取值 0 到
+				缓冲区行数减一。对水平滚动条而言，{value} 可取
+				值 1 到最大的行长，假定 'wrap' 未置位。
 		    dragging:	为 1 时拖动滚动条，为 0 时点击滚动条。
 
 		"key":
@@ -327,17 +327,22 @@ test_override({name}, {val})				*test_override()*
 		term_props   检测到版本字符串时，复位所有终端属性
 		ui_delay     用于 ui_delay() 的以毫秒计的时间；覆盖缺省使用的
 			     不多于 3 秒的消息等待时间
+		unreachable  `:throw` 和 `:return` 之后出现代码不报错
 		uptime	     覆盖 sysinfo.uptime
 		vterm_title  用终端窗口运行中的作业来设置窗口标题
 		ALL	     复位所有覆盖 (不使用 {val})
 
 		"starting" 用于假定初始化已经完成的测试。因为测试的运行是通过
 		运行一个 "starting" 变量为非零的脚本进行的。这通常有好处 (测试
-		更快)，但有时会改变行为，使测试不能正常工作。
+		更快)，但有时这会改变行为，使测试不能正常工作。
 		以下操作: >
 			call test_override('starting', 1)
 <		保存 "starting" 的值。以下操作恢复之: >
 			call test_override('starting', 0)
+
+<		要确保标志位之后能复位，可用 `:defer`: >
+			call test_override('unreachable', 1)
+			defer call test_override('unreachable', 0)
 
 <		也可用作 |method|: >
 			GetOverrideVal()-> test_override('starting')
@@ -396,11 +401,12 @@ assert_beeps({cmd})					*assert_beeps()*
 							*assert_equal()*
 assert_equal({expected}, {actual} [, {msg}])
 		{expected} 不等于 {actual} 时，加入错误信息到 |v:errors|，并反
-		回 1。否则返回零 |assert-return|。
+		回 1。否则返回零。 |assert-return|
+		错误形如 "Expected {expected} but got {actual}"。{msg} 如存
+		在，附加到错误信息之前。
+
 		没有自动转换，字符串 "4" 不同于数值 4。数值 4 又不同于浮点数
 		4.0。不适用 'ignorecase'，大小写永远敏感。
-		省略 {msg} 则生成形如 "Expected {expected} but got {actual}"
-		的错误。
 		示例: >
 	assert_equal('foo', 'bar')
 <		会在 |v:errors| 加入字符串:
@@ -468,10 +474,11 @@ assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
 assert_false({actual} [, {msg}])			*assert_false()*
 		{actual} 不为假时，加入错误信息到 |v:errors|，其余类同
 		|assert_equal()|。
+		错误形如 "Expected False but got {actual}"。{msg} 如存在，附加
+		到错误信息之前。
 		另见 |assert-return|。
+
 		零值为假值。{actual} 不是数值时，断言失败。
-		省略 {msg} 则生成形如 "Expected False but got {actual}" 的错
-		误。
 
 		也可用作 |method|: >
 			GetResult()->assert_false()
@@ -479,13 +486,16 @@ assert_false({actual} [, {msg}])			*assert_false()*
 assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
 		对数值和 |Float| 值进行断言。{actual} 小于 {lower} 会大于
 		{upper} 时，加入错误信息到 |v:errors|。另见 |assert-return|。
-		省略 {msg} 则生成形如 "Expected range {lower} - {upper}, but
-		got {actual}" 的错误。
+		错误形如
+		"Expected range {lower} - {upper}, but got {actual}"。{msg} 如
+		存在，附加到错误信息之前。
 
 								*assert_match()*
 assert_match({pattern}, {actual} [, {msg}])
 		{pattern} 不匹配 {actual} 时，加入错误信息到 |v:errors|。另见
 		|assert-return|。
+		错误形如 "Pattern {pattern} does not match {actual}"。{msg} 如
+		存在，附加到错误信息之前。
 
 		{pattern} 的用法类同于 |=~|: 匹配总是假定 'magic' 置位而
 		'cpoptions' 为空，而忽略 'magic' 或 'cpoptions' 的实际值。
@@ -494,8 +504,6 @@ assert_match({pattern}, {actual} [, {msg}])
 		"^" 和 "$" 可用来匹配文本的开始和结尾。两者皆用则可匹配整个文
 		本。
 
-		省略 {msg} 则生成形如 "Pattern {pattern} does not match
-		{actual}" 的错误。
 		示例: >
 	assert_match('^f.*o$', 'foobar')
 <		会在 |v:errors| 加入字符串:
@@ -543,8 +551,7 @@ assert_true({actual} [, {msg}])				*assert_true()*
 		|assert_equal()|。
 		另见 |assert-return|。
 		非零值为真值。{actual} 不是数值时，断言失败。
-		省略 {msg} 则生成形如 "Expected True but got {actual}" 的错
-		误。
+		{msg} 如存在，附加到缺省错误信息之前。
 
 		也可用作 |method|: >
 			GetResult()->assert_true()

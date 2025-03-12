@@ -1,4 +1,4 @@
-*tips.txt*	适用于 Vim 9.0 版本。	最近更新: 2022年7月
+*tips.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -392,16 +392,28 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见: |$VIMRUNTIME|。
 <.vimrc> 文件中使用的一些命令在自动处理这些文件时非常有用。你可以用你希望编辑
 的文件扩展名 (用逗号分隔) 替换以下的 "*.bin": >
 
-	" vim -b : edit binary using xxd-format!
+	" vim -b : 用 xxd-格式编辑二进制文件！
 	augroup Binary
-	  au!
-	  au BufReadPre  *.bin let &bin=1
-	  au BufReadPost *.bin if &bin | %!xxd
-	  au BufReadPost *.bin set ft=xxd | endif
-	  au BufWritePre *.bin if &bin | %!xxd -r
-	  au BufWritePre *.bin endif
-	  au BufWritePost *.bin if &bin | %!xxd
-	  au BufWritePost *.bin set nomod | endif
+	  autocmd!
+	  autocmd BufReadPre  *.bin set binary
+	  autocmd BufReadPost *.bin
+	    \ if &binary
+	    \ |   execute "silent %!xxd -c 32"
+	    \ |   set filetype=xxd
+	    \ |   redraw
+	    \ | endif
+	  autocmd BufWritePre *.bin
+	    \ if &binary
+	    \ |   let s:view = winsaveview()
+	    \ |   execute "silent %!xxd -r -c 32"
+	    \ | endif
+	  autocmd BufWritePost *.bin
+	    \ if &binary
+	    \ |   execute "silent %!xxd -c 32"
+	    \ |   set nomodified
+	    \ |   call winrestview(s:view)
+	    \ |   redraw
+	    \ | endif
 	augroup END
 
 ==============================================================================

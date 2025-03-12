@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -39,6 +39,7 @@
       示例会话					|termdebug-example|
       代码中步进				|termdebug-stepping|
       检视变量					|termdebug-variables|
+      浏览堆栈框架				|termdebug-frames|
       其它命令					|termdebug-commands|
       事件					|termdebug-events|
       提示模式					|termdebug-prompt|
@@ -1181,12 +1182,24 @@ breakpoint"。
 通常可缩短 `:Evaluate` 为 `:Ev`。
 
 
+浏览堆栈框架 ~
+				*termdebug-frames* *:Frame* *:Up* *:Down*
+ `:Frame` [frame]	选择框架 [frame]，这可以是框架编号、地址或函数名 (缺省:
+			当前框架)
+ `:Up` [count]		向上 [count] 个框架 (缺省: 1；调用当前框架的那个框架)
+ `+`			同上 (要关闭之，见 |termdebug_map_plus|)
+ `:Down` [count]	向下 [count] 个框架 (缺省: 1; 当前框架调用的那个框架)
+ `-`			同上 (要关闭之，见 |termdebug_map_minus|)
+
+
 其它命令 ~
 							*termdebug-commands*
  *:Gdb*	     跳转到 gdb 窗口
  *:Program*    跳转到运行程序的窗口
  *:Source*     跳转到源代码窗口，如果还没有则创建之
  *:Asm*	     跳转到反汇编窗口，如果还没有则创建之
+ *:Var*	     跳转到局部或参数变量窗口，如果还没有则创建之。程序停止时会更新此
+	     窗口
 
 事件 ~
 							*termdebug-events*
@@ -1240,19 +1253,36 @@ g:termdebug_config 存在，_不_使用其它的全局变量。
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
-K 键通常映射为 :Evaluate。如果不想如此: >
+K 键通常映射为 |:Evaluate|。如果不想如此: >
 	let g:termdebug_config['map_K'] = 0
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_map_K = 0
 <
+						*termdebug_map_minus*
+- 键通常映射为 |:Down|。如果不想如此: >
+	let g:termdebug_config['map_minus'] = 0
+<
+						*termdebug_map_plus*
++ 键通常映射为 |:Up|。如果不想如此: >
+	let g:termdebug_config['map_plus'] = 0
+<
 						*termdebug_disasm_window*
-要缺省显示 Asm 窗口，设置此标志位为 1。
+要缺省显示 Asm 窗口，设置 "disasm_window" 标志位为 1。
 "disarm_window_height" 项目可用于设置窗口高度: >
 	let g:termdebug_config['disasm_window'] = 1
 	let g:termdebug_config['disasm_window_height'] = 15
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_disasm_window = 15
 设为任何大于 1 的值时，Asm 窗口会设为此高度。
+
+						*termdebug_variables_window*
+要缺省显示 Var 窗口，设置本标志位为 1。
+"variables_window_height" 项目可用于设置窗口高度: >
+	let g:termdebug_config['variables_window'] = 1
+	let g:termdebug_config['variables_window_height'] = 15
+如果没有 g:termdebug_config，可用: >
+	let g:termdebug_variables_window = 15
+设为任何大于 1 的值时，Var 窗口会设为此高度。
 
 通信 ~
 						*termdebug-communication*
@@ -1325,6 +1355,19 @@ GDB 命令 ~
 	let g:termdebug_config['popup'] = 0
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_popup = 0
+
+
+改变缺省标号 ~
+							*termdebug_signs*
+标号列上，Termdebug 用断点 ID 的最后两个字符来代表断点。例如，断点 ID 133 会显
+示为 `33`。
+
+要定制断点标号: >
+	let g:termdebug_config['sign'] = '>>'
+如果没有 g:termdebug_config，可用: >
+	let g:termdebug_config = {'sign': '>>'}
+
+然后，标号列上会用 `>>` 显示断点。
 
 
 窗口工具条 ~
