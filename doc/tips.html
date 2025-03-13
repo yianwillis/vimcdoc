@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="tips.txt">tips.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年7月
+<b class="vimtag"> <a name="tips.txt">tips.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -412,16 +412,28 @@ $VIMRUNTIME 设为存放那些 Vim 文件的目录。参见:  <a href="starting.
 &lt;.vimrc&gt; 文件中使用的一些命令在自动处理这些文件时非常有用。你可以用你希望编辑
 的文件扩展名 (用逗号分隔) 替换以下的 "*.bin": 
 <code class="example"></code>
-<code class="example">        " vim -b : edit binary using xxd-format!</code>
+<code class="example">        " vim -b : 用 xxd-格式编辑二进制文件！</code>
 <code class="example">        augroup Binary</code>
-<code class="example">          au!</code>
-<code class="example">          au BufReadPre  *.bin let &amp;bin=1</code>
-<code class="example">          au BufReadPost *.bin if &amp;bin | %!xxd</code>
-<code class="example">          au BufReadPost *.bin set ft=xxd | endif</code>
-<code class="example">          au BufWritePre *.bin if &amp;bin | %!xxd -r</code>
-<code class="example">          au BufWritePre *.bin endif</code>
-<code class="example">          au BufWritePost *.bin if &amp;bin | %!xxd</code>
-<code class="example">          au BufWritePost *.bin set nomod | endif</code>
+<code class="example">          autocmd!</code>
+<code class="example">          autocmd BufReadPre  *.bin set binary</code>
+<code class="example">          autocmd BufReadPost *.bin</code>
+<code class="example">            \ if &amp;binary</code>
+<code class="example">            \ |   execute "silent %!xxd -c 32"</code>
+<code class="example">            \ |   set filetype=xxd</code>
+<code class="example">            \ |   redraw</code>
+<code class="example">            \ | endif</code>
+<code class="example">          autocmd BufWritePre *.bin</code>
+<code class="example">            \ if &amp;binary</code>
+<code class="example">            \ |   let s:view = winsaveview()</code>
+<code class="example">            \ |   execute "silent %!xxd -r -c 32"</code>
+<code class="example">            \ | endif</code>
+<code class="example">          autocmd BufWritePost *.bin</code>
+<code class="example">            \ if &amp;binary</code>
+<code class="example">            \ |   execute "silent %!xxd -c 32"</code>
+<code class="example">            \ |   set nomodified</code>
+<code class="example">            \ |   call winrestview(s:view)</code>
+<code class="example">            \ |   redraw</code>
+<code class="example">            \ | endif</code>
 <code class="example">        augroup END</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>

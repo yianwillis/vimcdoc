@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -383,9 +383,6 @@ getchar() 得到键入的字符并返回之。
                                                         <b class="vimtag"> <a name="E1255">E1255</a> </b> <b class="vimtag"> <a name="E1136">E1136</a> </b>
 <code class="special">&lt;Cmd&gt;</code> 和 <code class="special">&lt;ScriptCmd&gt;</code> 里的命令必须终止，亦即，在映射定义的 <code class="special">{rhs}</code> 里它们必须后跟
 <code class="special">&lt;CR&gt;</code>。从不进入  <a href="cmdline.html#Command-line">Command-line</a>  模式。
-
-                                                        <b class="vimtag"> <a name="E1137">E1137</a> </b>
-<code class="special">&lt;Cmd&gt;</code> 和 <code class="special">&lt;ScriptCmd&gt;</code> 里的命令只能有普通字符，不能包含函数键这样的特殊字符。
 
 
 1.3 映 射 与 运 行 模 式                                <b class="vimtag"> <a name=":map-modes">:map-modes</a> </b>
@@ -820,6 +817,10 @@ Vim 将把 x 替换成 y，并把 y 替换成 x，等等。这种情况会发生
 
 1.10 映 射 ALT 键                                       <b class="vimtag"> <a name=":map-alt-keys">:map-alt-keys</a> </b>
 
+为了使映射命令可读，可用 <code class="special">&lt;A-k&gt;</code> 形式。<code class="note">注意</code> <code class="special">&lt;A-K&gt;</code> 和 <code class="special">&lt;A-K&gt;</code> 不同，后者使用大写字
+母。实际上，<code class="special">&lt;A-K&gt;</code> 和 <code class="special">&lt;A-S-K&gt;</code> 等价。可用 "M" 代替 "A"。如果实际使用带 Meta 修饰
+符的键，请参见  <a href="map.html#:map-meta-keys">:map-meta-keys</a> 。
+
 GUI 上，Vim 自己处理 Alt 键，所以用 ALT 键的映射应该总没有问题。但在终端上，
 Vim 得到字节的序列，它必须自己判断是不是按了 ALT 键。
 
@@ -1239,7 +1240,8 @@ non-id    匹配的前面是一个空格、制表或者行或插入的开始。
 的。为了避免这种情况，它们可以局部在脚本。
 
                                                 <b class="vimtag"> <a name="%3CSID%3E">&lt;SID&gt;</a> </b> <b class="vimtag"> <a name="%3CSNR%3E">&lt;SNR&gt;</a> </b> <b class="vimtag"> <a name="E81">E81</a> </b>
-字串 "<code class="special">&lt;SID&gt;</code>" 能用于映射或菜单。这要求 <a href="options.html#'cpoptions'">'cpoptions'</a> 中没有 '&lt;' 标志位。
+字串 "<code class="special">&lt;SID&gt;</code>" 能用于映射或菜单。这要求 <a href="options.html#'cpoptions'">'cpoptions'</a> 中没有 '&lt;' 标志位。可用于映
+射中调用同一脚本里局部于脚本的函数。
    当执行映射命令时，Vim 将把 "<code class="special">&lt;SID&gt;</code>" 替换成特殊键码 <code class="special">&lt;SNR&gt;</code>，后跟一个每个脚本唯
 一的数字编号，和一个下划线。例如: 
 <code class="example">        :map &lt;SID&gt;Add</code>
@@ -1355,6 +1357,10 @@ non-id    匹配的前面是一个空格、制表或者行或插入的开始。
 Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数，也可以指定范围。参数
 可以进行文件名，缓冲区等补全。具体的工作方式取决于命令的属性，属性在命令被定义
 时被指定。
+
+在脚本里定义用户命令时，它可以调用局部于脚本中的函数和使用局部于脚本的映射。用
+户调用用户命令时，该命令将运行在定义它的脚本的上下文里，如果一个命令中使用了
+ <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> ，这一点很重要。
 
 属性可分四大类: 参数处理、补全行为、范围处理和特殊情况。下面分类描述之。
 
@@ -1538,6 +1544,9 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 "{" 之前必须有空白。不支持嵌套，不能使用内联函数。对 "|" 可能在参数里出现的命
 令，如带表达式参数的命令，不能后跟 "|" 和其他命令。
 
+如果命令在 Vim9 脚本中定义 ( <a href="repeat.html#:vim9script">:vim9script</a>  开始的脚本和用  <a href="vim9.html#:def">:def</a>  的函数中)，
+以 Vim9 脚本模式执行 <code class="special">{repl}</code>。这只取决于命令定义的位置，而不是它被调用的位置。
+
 对用户自定义命令的替换文本 <code class="special">{repl}</code> 进行扫描，找到使用 &lt;...&gt; 记法的特殊转义序列。
 转义序列被命令行输入提供的值替换，其它文本不变。最终字符串被作为 Ex 命令来执
 行。要避免替换，使用 <code class="special">&lt;lt&gt;</code> 代替初始的 &lt;。这样，要按本义包含 "<code class="special">&lt;bang&gt;</code>"，请使用
@@ -1612,6 +1621,10 @@ args"，函数参数)。它在空格和制表处分割命令行参数，每个�
         XX a\\\ b          'a\ b'
         XX a\\\\b          'a\\b'
         XX a\\\\ b         'a\\', 'b'
+        XX                 <code class="special">[nothing]</code>
+
+<code class="note">注意</code> 如果要处理 "无参数" 的情形，要确定此函数可以无参数地调用。对已编译的函数，
+可考虑可变参数，见  <a href="vim9.html#vim9-variable-arguments">vim9-variable-arguments</a> 。
 
 用户命令的示例: 
 <code class="example"></code>
@@ -1658,12 +1671,6 @@ args"，函数参数)。它在空格和制表处分割命令行参数，每个�
 它将调用: 
 <code class="example">        :call Allargs("%s/foo/bar/ge|update")</code>
 
-如果命令在 Vim9 脚本中定义 ( <a href="repeat.html#:vim9script">:vim9script</a>  开始的脚本并出现在  <a href="vim9.html#:def">:def</a>  函数中)，
-以 Vim9 脚本模式执行 <code class="special">{repl}</code>。这只取决于命令定义的位置，而不是它被调用的位置。
-
-在脚本里定义用户命令时，它可以调用局部于脚本中的函数和使用局部于脚本的映射。用
-户调用用户命令时，该命令将运行在定义它的脚本的上下文里，如果一个命令中使用了
- <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> ，这一点很重要。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

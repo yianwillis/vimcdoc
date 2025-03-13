@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="testing.txt">testing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -183,13 +183,13 @@ test_gui_event(<code class="special">{event}</code>, <code class="special">{args
                   设置或拖动左侧、右侧或水平滚动条。仅当滚动条确实存在时才可
                   用。
                   <code class="special">{args}</code> 里支持的项目是:
-                    which:      滚动条。支持的值是:
+                    which:      选择滚动条。支持的值是:
                                     left  当前窗口的左侧滚动条
                                     right 当前窗口的右侧滚动条
                                     hor   水平滚动条
-                    value:      滚动量。对垂直滚动条而言，<code class="special">{value}</code> 可取值 1 到
-                                缓冲区行数。对水平滚动条而言，<code class="special">{value}</code> 可取值 1
-                                到最大的行长，假定 <a href="options.html#'wrap'">'wrap'</a> 未置位。
+                    value:      滚动量。对垂直滚动条而言，<code class="special">{value}</code> 可取值 0 到
+                                缓冲区行数减一。对水平滚动条而言，<code class="special">{value}</code> 可取
+                                值 1 到最大的行长，假定 <a href="options.html#'wrap'">'wrap'</a> 未置位。
                     dragging:   为 1 时拖动滚动条，为 0 时点击滚动条。
 
                 "key":
@@ -360,17 +360,22 @@ test_override(<code class="special">{name}</code>, <code class="special">{val}</
                 term_props   检测到版本字符串时，复位所有终端属性
                 ui_delay     用于 ui_delay() 的以毫秒计的时间；覆盖缺省使用的
                              不多于 3 秒的消息等待时间
+                unreachable   <a href="eval.html#:throw">:throw</a>  和  <a href="userfunc.html#:return">:return</a>  之后出现代码不报错
                 uptime       覆盖 sysinfo.uptime
                 vterm_title  用终端窗口运行中的作业来设置窗口标题
                 ALL          复位所有覆盖 (不使用 <code class="special">{val}</code>)
 
                 "starting" 用于假定初始化已经完成的测试。因为测试的运行是通过
                 运行一个 "starting" 变量为非零的脚本进行的。这通常有好处 (测试
-                更快)，但有时会改变行为，使测试不能正常工作。
+                更快)，但有时这会改变行为，使测试不能正常工作。
                 以下操作: 
 <code class="example">                        call test_override('starting', 1)</code>
                 保存 "starting" 的值。以下操作恢复之: 
 <code class="example">                        call test_override('starting', 0)</code>
+<code class="example"></code>
+                要确保标志位之后能复位，可用  <a href="userfunc.html#:defer">:defer</a> : 
+<code class="example">                        call test_override('unreachable', 1)</code>
+<code class="example">                        defer call test_override('unreachable', 0)</code>
 <code class="example"></code>
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetOverrideVal()-&gt; test_override('starting')</code>
@@ -428,11 +433,12 @@ assert_beeps(<code class="special">{cmd}</code>)                                
                                                         <b class="vimtag"> <a name="assert_equal()">assert_equal()</a> </b>
 assert_equal(<code class="special">{expected}</code>, <code class="special">{actual}</code> [, <code class="special">{msg}</code>])
                 <code class="special">{expected}</code> 不等于 <code class="special">{actual}</code> 时，加入错误信息到  <a href="eval.html#v:errors">v:errors</a> ，并反
-                回 1。否则返回零  <a href="eval.html#assert-return">assert-return</a> 。
+                回 1。否则返回零。  <a href="eval.html#assert-return">assert-return</a> 
+                错误形如 "Expected <code class="special">{expected}</code> but got <code class="special">{actual}</code>"。<code class="special">{msg}</code> 如存
+                在，附加到错误信息之前。
+
                 没有自动转换，字符串 "4" 不同于数值 4。数值 4 又不同于浮点数
                 4.0。不适用 <a href="options.html#'ignorecase'">'ignorecase'</a>，大小写永远敏感。
-                省略 <code class="special">{msg}</code> 则生成形如 "Expected <code class="special">{expected}</code> but got <code class="special">{actual}</code>"
-                的错误。
                 示例: 
 <code class="example">        assert_equal('foo', 'bar')</code>
                 会在  <a href="eval.html#v:errors">v:errors</a>  加入字符串:
@@ -500,10 +506,11 @@ assert_fails(<code class="special">{cmd}</code> [, <code class="special">{error}
 assert_false(<code class="special">{actual}</code> [, <code class="special">{msg}</code>])                        <b class="vimtag"> <a name="assert_false()">assert_false()</a> </b>
                 <code class="special">{actual}</code> 不为假时，加入错误信息到  <a href="eval.html#v:errors">v:errors</a> ，其余类同
                  <a href="testing.html#assert_equal()">assert_equal()</a> 。
+                错误形如 "Expected False but got <code class="special">{actual}</code>"。<code class="special">{msg}</code> 如存在，附加
+                到错误信息之前。
                 另见  <a href="eval.html#assert-return">assert-return</a> 。
+
                 零值为假值。<code class="special">{actual}</code> 不是数值时，断言失败。
-                省略 <code class="special">{msg}</code> 则生成形如 "Expected False but got <code class="special">{actual}</code>" 的错
-                误。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetResult()-&gt;assert_false()</code>
@@ -511,13 +518,16 @@ assert_false(<code class="special">{actual}</code> [, <code class="special">{msg
 assert_inrange(<code class="special">{lower}</code>, <code class="special">{upper}</code>, <code class="special">{actual}</code> [, <code class="special">{msg}</code>])     <b class="vimtag"> <a name="assert_inrange()">assert_inrange()</a> </b>
                 对数值和  <a href="eval.html#Float">Float</a>  值进行断言。<code class="special">{actual}</code> 小于 <code class="special">{lower}</code> 会大于
                 <code class="special">{upper}</code> 时，加入错误信息到  <a href="eval.html#v:errors">v:errors</a> 。另见  <a href="eval.html#assert-return">assert-return</a> 。
-                省略 <code class="special">{msg}</code> 则生成形如 "Expected range <code class="special">{lower}</code> - <code class="special">{upper}</code>, but
-                got <code class="special">{actual}</code>" 的错误。
+                错误形如
+                "Expected range <code class="special">{lower}</code> - <code class="special">{upper}</code>, but got <code class="special">{actual}</code>"。<code class="special">{msg}</code> 如
+                存在，附加到错误信息之前。
 
                                                                 <b class="vimtag"> <a name="assert_match()">assert_match()</a> </b>
 assert_match(<code class="special">{pattern}</code>, <code class="special">{actual}</code> [, <code class="special">{msg}</code>])
                 <code class="special">{pattern}</code> 不匹配 <code class="special">{actual}</code> 时，加入错误信息到  <a href="eval.html#v:errors">v:errors</a> 。另见
                  <a href="eval.html#assert-return">assert-return</a> 。
+                错误形如 "Pattern <code class="special">{pattern}</code> does not match <code class="special">{actual}</code>"。<code class="special">{msg}</code> 如
+                存在，附加到错误信息之前。
 
                 <code class="special">{pattern}</code> 的用法类同于  <code class="badlink">=~</code> : 匹配总是假定 <a href="options.html#'magic'">'magic'</a> 置位而
                 <a href="options.html#'cpoptions'">'cpoptions'</a> 为空，而忽略 <a href="options.html#'magic'">'magic'</a> 或 <a href="options.html#'cpoptions'">'cpoptions'</a> 的实际值。
@@ -526,8 +536,6 @@ assert_match(<code class="special">{pattern}</code>, <code class="special">{actu
                 "^" 和 "$" 可用来匹配文本的开始和结尾。两者皆用则可匹配整个文
                 本。
 
-                省略 <code class="special">{msg}</code> 则生成形如 "Pattern <code class="special">{pattern}</code> does not match
-                <code class="special">{actual}</code>" 的错误。
                 示例: 
 <code class="example">        assert_match('^f.*o$', 'foobar')</code>
                 会在  <a href="eval.html#v:errors">v:errors</a>  加入字符串:
@@ -575,8 +583,7 @@ assert_true(<code class="special">{actual}</code> [, <code class="special">{msg}
                  <a href="testing.html#assert_equal()">assert_equal()</a> 。
                 另见  <a href="eval.html#assert-return">assert-return</a> 。
                 非零值为真值。<code class="special">{actual}</code> 不是数值时，断言失败。
-                省略 <code class="special">{msg}</code> 则生成形如 "Expected True but got <code class="special">{actual}</code>" 的错
-                误。
+                <code class="special">{msg}</code> 如存在，附加到缺省错误信息之前。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetResult()-&gt;assert_true()</code>

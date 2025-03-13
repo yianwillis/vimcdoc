@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="undo.txt">undo.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2022年8月
+<b class="vimtag"> <a name="undo.txt">undo.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -129,9 +129,18 @@ U                       撤销最近对特定行所作的一系列更改，也�
                                         <b class="vimtag"> <a name="undo-break">undo-break</a> </b> <b class="vimtag"> <a name="undo-close-block">undo-close-block</a> </b>
 要反过来，要让下一改变启用新撤销块，在插入模式下用 <code class="keystroke">CTRL-G</code> u。可用于使某个插入
 命令部分可撤销。譬如可分拆到每个句子。 <a href="insert.html#i_CTRL-G_u">i_CTRL-G_u</a> 
-设置 <a href="options.html#'undolevels'">'undolevels'</a> 的值也会结束撤销块。即使新值和旧值相同。 <a href="vim9.html#Vim9">Vim9</a>  脚本里: 
-<code class="example">        &amp;undolevels = &amp;undolevels</code>
+设置 <a href="options.html#'undolevels'">'undolevels'</a> 的值也会结束撤销块。即使新值和旧值相同。 <code class="badlink">g:undolevels</code>  可显
+式地保证只读写 <a href="options.html#'undolevels'">'undolevels'</a> 的全局值。  <a href="vim9.html#Vim9">Vim9</a>  脚本里: 
+<code class="example">        &amp;g:undolevels = &amp;g:undolevels</code>
 老式脚本里: 
+<code class="example">        let &amp;g:undolevels = &amp;g:undolevels</code>
+<code class="example"></code>
+<code class="note">注意</code>类似的赋值 `let &amp;undolevels=&amp;undolevels` 在选项的局部值设为不同的值的情形
+下并不保留 <a href="options.html#'undolevels'">'undolevels'</a> 的全局值。例如: 
+<code class="example">        " 开始时 'undolevels' 的全局和局部值不同。</code>
+<code class="example">        let &amp;g:undolevels = 1000</code>
+<code class="example">        let &amp;l:undolevels = 2000</code>
+<code class="example">        " 此赋值会同步改变全局选项值为 2000:</code>
 <code class="example">        let &amp;undolevels = &amp;undolevels</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
@@ -337,12 +346,18 @@ Vi-兼容模式。如果它的值是负的，任何撤销都是不可能的。�
                                                         <b class="vimtag"> <a name="clear-undo">clear-undo</a> </b>
 如果设置 <a href="options.html#'undolevels'">'undolevels'</a> 为 -1，撤销信息不会立即清除。当有新改变时才会。要强迫清
 除撤销信息，可以用: 
-<code class="example">        :let old_undolevels = &amp;undolevels</code>
-<code class="example">        :set undolevels=-1</code>
+<code class="example">        :let old_undolevels = &amp;l:undolevels</code>
+<code class="example">        :setlocal undolevels=-1</code>
 <code class="example">        :exe "normal a \&lt;BS&gt;\&lt;Esc&gt;"</code>
-<code class="example">        :let &amp;undolevels = old_undolevels</code>
+<code class="example">        :let &amp;l:undolevels = old_undolevels</code>
 <code class="example">        :unlet old_undolevels</code>
 <code class="example"></code>
+<code class="note">注意</code> 使用了  <code class="badlink">&amp;l:undolevels</code>  确保显式地计取 <a href="options.html#'undolevels'">'undolevels'</a> 的局部值，还有使用了
+ <a href="options.html#:setlocal">:setlocal</a>  来只改变局部选项值 (它优先于对应的全局选项值)。通过  <code class="badlink">&amp;undolevels</code> 
+来保存选项值的行为不好预测；它会读取局部值 (如有设置) 或者全局值 (反之)。另
+外，如果设置了局部值，通过 `:set undolevels` 来改变选项值会同时改变全局和局部
+值，如此，要分别保存和恢复两者就需要花费不必要的额外工夫。
+
 当前缓冲区的位置标记 ('a 至 'z) 随文本一起被保存和复原。
 
 当所有的改变都被撤销时，缓冲区被标记为未改变。这时可以使用 ":q" 而不一定是

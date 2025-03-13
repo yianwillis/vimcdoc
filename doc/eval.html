@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -1456,6 +1456,28 @@ $<code class="badlink">'string'</code>               插值按本义字符串常
 <code class="example">        echo $"{{9}} 的开方根是 {sqrt(9)}"</code>
 <code class="section">        <code class="special">{9}</code> 的平方根是 3.0 </code>
 
+                                                <b class="vimtag"> <a name="string-offset-encoding">string-offset-encoding</a> </b>
+字符串由多个字符组成。字符存储方式取决于 <a href="options.html#'encoding'">'encoding'</a>。最常见的是 UTF-8，ASCII
+字符以单字节表示，其他拉丁字符使用两字节，其余字符使用更多字节。
+
+字符串偏移可用字符或字节计。其他程序也可能用 UTF-16 编码 (16-位字) 并以 UTF-16
+字计算偏移。有些函数使用字节偏移，通常假定 UTF-8 编码。其它函数使用字符偏移，
+适用于所有的编码方式。
+
+字符串 "a©😊" 的不同偏移值如下:
+
+  UTF-8 偏移:
+      <code class="special">[0]</code>: 61, <code class="special">[1]</code>: C2, <code class="special">[2]</code>: A9, <code class="special">[3]</code>: F0, <code class="special">[4]</code>: 9F, <code class="special">[5]</code>: 98, <code class="special">[6]</code>: 8A
+  UTF-16 偏移:
+      <code class="special">[0]</code>: 0061, <code class="special">[1]</code>: 00A9, <code class="special">[2]</code>: D83D, <code class="special">[3]</code>: DE0A
+  UTF-32 (字符) 偏移:
+      <code class="special">[0]</code>: 00000061, <code class="special">[1]</code>: 000000A9, <code class="special">[2]</code>: 0001F60A
+
+可在字符上用 "g8" 和 "ga" 命令看到十进/十六进/八进制值。
+
+ <a href="builtin.html#byteidx()">byteidx()</a> 、 <a href="builtin.html#utf16idx()">utf16idx()</a>  和  <a href="builtin.html#charidx()">charidx()</a>  诸函数可用于在不用的索引值间切换。
+ <a href="builtin.html#strlen()">strlen()</a> 、 <a href="builtin.html#strutf16len()">strutf16len()</a>  和  <a href="builtin.html#strcharlen()">strcharlen()</a>  诸函数可用于分别返回字符串的字节
+数、UTF-16 代码单元数和字符数。
 
 option                                          <b class="vimtag"> <a name="expr-option">expr-option</a> </b> <b class="vimtag"> <a name="E112">E112</a> </b> <b class="vimtag"> <a name="E113">E113</a> </b>
 </section><hr class="singleline" /><section class=inner>
@@ -1638,6 +1660,7 @@ b:changedtick   当前缓冲区的改变次数。每次改变都会递增。撤�
 <code class="example">                    : call My_Update()</code>
 <code class="example">                    :endif</code>
                 不可改变或删除 b:changedtick 变量。
+                更多关于改变的详情可见  <a href="builtin.html#listener_add()">listener_add()</a> 。
 
                                                 <b class="vimtag"> <a name="window-variable">window-variable</a> </b> <b class="vimtag"> <a name="w:var">w:var</a> </b> <b class="vimtag"> <a name="w:">w:</a> </b>
 "w:" 开头的变量名局部于当前窗口。窗口关闭时被删除。
@@ -2147,6 +2170,23 @@ v:progpath      包含 Vim 启动时使用的命令，使用的形式如果传�
                 径。
                 MS-Windows 上的可执行文件可能叫做 "vim.exe"，但 v:progpath 中
                 不会带上 ".exe"。
+                只读。
+
+                                    <b class="vimtag"> <a name="v:python3_version">v:python3_version</a> </b> <b class="vimtag"> <a name="python3-version-variable">python3-version-variable</a> </b>
+v:python3_version
+                Vim 编译时使用的 Python 3 版本。Python 动态载入时
+                ( <a href="if_pyth.html#python-dynamic">python-dynamic</a> )，此版本必须严格匹配 Python 的版本号，至少要
+                匹配到次要版本号 (例如 3.10.2 和 3.10.3 兼容，因为次要版本号为
+                "10"，而 3.9.4 和 3.10.3 不兼容)。
+                使用  <a href="if_pyth.html#python-stable-abi">python-stable-abi</a>  时，这是必须使用的最低 Python 版本
+                号。(例如 v:python3_version 为 3.9，可用 3.9、3.10 或更高版
+                本)。
+
+                此数值依循 Python ABI 版本惯例以十六进制编码。要取得人类可读的
+                十六进制完整版本: 
+<code class="example">                        echo printf("%08X", v:python3_version)</code>
+                如果只想取得次要版本: 
+<code class="example">                        echo and(v:python3_version&gt;&gt;16,0xff)</code>
                 只读。
 
                                         <b class="vimtag"> <a name="v:register">v:register</a> </b> <b class="vimtag"> <a name="register-variable">register-variable</a> </b>
@@ -2724,7 +2764,7 @@ text...
 <code class="example">                                let mylist = [1, 2, 3]</code>
 <code class="example">                                lockvar 0 mylist</code>
 <code class="example">                                let mylist[0] = 77      " OK</code>
-<code class="example">                                call add(mylist, 4]     " OK</code>
+<code class="example">                                call add(mylist, 4)     " OK</code>
 <code class="example">                                let mylist = [7, 8, 9]  " 出错！</code>
                                                                 <b class="vimtag"> <a name="E743">E743</a> </b>
                         要使用没有限制的深度，用 [!] 并省略 <code class="special">[depth]</code>。不过，为
@@ -4069,28 +4109,20 @@ Geddes 提供的方法)
 
 <code class="section">输出 scriptnames 到字典 </code>
                                                 <b class="vimtag"> <a name="scriptnames-dictionary">scriptnames-dictionary</a> </b>
- <a href="repeat.html#:scriptnames">:scriptnames</a>  命令可用于得到执行过的所有脚本文件的列表。没有等价的函数或变量
-(因为很少用到)。如果需要操作此列表，可以使用下面的代码: 
-<code class="example">    " 把 ":scriptnames" 的输出存放到 scriptnames_output 变量中。</code>
-<code class="example">    let scriptnames_output = ''</code>
-<code class="example">    redir =&gt; scriptnames_output</code>
-<code class="example">    silent scriptnames</code>
-<code class="example">    redir END</code>
+ <a href="repeat.html#:scriptnames">:scriptnames</a>  命令可用于得到执行过的所有脚本文件的列表。也有
+ <a href="builtin.html#getscriptinfo()">getscriptinfo()</a>  函数，但返回的信息不完全一样。如果需要操作此列表，可以使用下
+面的代码作为样本: 
 <code class="example"></code>
-<code class="example">    " 把输出分拆为行，并对每行进行分析。在 "script" 字典中加入项目。</code>
-<code class="example">    let scripts = {}</code>
-<code class="example">    for line in split(scriptnames_output, "\n")</code>
-<code class="example">      " 只处理非空白行。</code>
-<code class="example">      if line =~ '\S'</code>
-<code class="example">        " 获取每行的第一个数字。</code>
-<code class="example">        let nr = matchstr(line, '\d\+')</code>
-<code class="example">        " 获取文件名，删除脚本号 " 123: "。</code>
-<code class="example">        let name = substitute(line, '.\+:\s*', '', '')</code>
-<code class="example">        " 在字典中加入项目</code>
-<code class="example">        let scripts[nr] = name</code>
-<code class="example">      endif</code>
-<code class="example">    endfor</code>
-<code class="example">    unlet scriptnames_output</code>
+<code class="example">    # 创建或更新以 SNR 为键的 scripts 字典并返回之。</code>
+<code class="example">    def Scripts(scripts: dict&lt;string&gt; = {}): dict&lt;string&gt;</code>
+<code class="example">      for info in getscriptinfo()</code>
+<code class="example">        if scripts-&gt;has_key(info.sid)</code>
+<code class="example">          continue</code>
+<code class="example">        endif</code>
+<code class="example">        scripts[info.sid] = info.name</code>
+<code class="example">      endfor</code>
+<code class="example">      return scripts</code>
+<code class="example">    enddef</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>10. Vim script versions         <b class="vimtag"> <a name="vimscript-version">vimscript-version</a> </b> <b class="vimtag"> <a name="vimscript-versions">vimscript-versions</a> </b></h4>                                                        <b class="vimtag"> <a name="scriptversion">scriptversion</a> </b>

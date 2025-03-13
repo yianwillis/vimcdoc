@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -97,7 +97,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
 
 <code class="section">总览 </code>
                                                         <b class="vimtag"> <a name="E1146">E1146</a> </b>
-使用 Vim9 脚本和  <a href="vim9.html#:def">:def</a>  函数最常见区别的简要小结；细节见后:
+使用 Vim9 脚本和  <a href="vim9.html#:def">:def</a>  函数最常见差异的简要小结；细节见后:
 - 注释以 # 开始而不是 ": 
 <code class="example">        echo "hello"   # 注释</code>
 - 很少需要反斜杠用来作续行符: 
@@ -138,6 +138,9 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
 <code class="example">        :exe @a</code>
 - 除非特别指出，使用最高的  <a href="eval.html#scriptversion">scriptversion</a> 。
 - 定义表达式映射时，在定义所在的脚本上下文里计算表达式。
+- 字符串索引以字符而不是字节计:  <a href="vim9.html#vim9-string-index">vim9-string-index</a> 
+- 可能意想不到的一些差异:  <a href="vim9.html#vim9-gotchas">vim9-gotchas</a> 。
+
 
 
 <code class="section"># 开始的注释 </code>
@@ -199,7 +202,7 @@ compiled: <code class="special">{name}</code>"。
 项。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止 (除非命令使用了  <code class="badlink">:slient!</code> 或错误在  <a href="eval.html#:try">:try</a>  块里
 捕获)，不接受范围、不能是 "dict" 函数，而且总可以有闭包。
                                                 <b class="vimtag"> <a name="vim9-no-dict-function">vim9-no-dict-function</a> </b>
-以后会加入类，以替代 "字典函数" 机制。现在你需要显式传递入字典: 
+可用 Vim9 类 ( <a href="vim9class.html#Vim9-class">Vim9-class</a> ) 而不是 "字典函数"。也可以显式传递入字典: 
 <code class="example">        def DictFunc(self: dict&lt;any&gt;, arg: string)</code>
 <code class="example">           echo self[arg]</code>
 <code class="example">        enddef</code>
@@ -323,7 +326,7 @@ Vim9 脚本级别不支持使用 "s:" 前缀。所有不带前缀的函数和变
 <code class="example"></code>
 <code class="section">用 :var、:final 和 :const 声明变量 </code>
                                 <b class="vimtag"> <a name="vim9-declaration">vim9-declaration</a> </b> <b class="vimtag"> <a name=":var">:var</a> </b> <b class="vimtag"> <a name="E1079">E1079</a> </b>
-                                <b class="vimtag"> <a name="E1017">E1017</a> </b> <b class="vimtag"> <a name="E1020">E1020</a> </b> <b class="vimtag"> <a name="E1054">E1054</a> </b> <b class="vimtag"> <a name="E1087">E1087</a> </b> <b class="vimtag"> <a name="E1108">E1108</a> </b> <b class="vimtag"> <a name="E1124">E1124</a> </b>
+                                <b class="vimtag"> <a name="E1017">E1017</a> </b> <b class="vimtag"> <a name="E1020">E1020</a> </b> <b class="vimtag"> <a name="E1054">E1054</a> </b> <b class="vimtag"> <a name="E1087">E1087</a> </b> <b class="vimtag"> <a name="E1124">E1124</a> </b>
 局部变量须用  <a href="vim9.html#:var">:var</a>  定义。局部常量须用  <a href="vim9.html#:final">:final</a>  或  <a href="eval.html#:const">:const</a>  定义。我们把两者都
 称为 "变量"。
 
@@ -945,10 +948,12 @@ Vim9 脚本可以使用如下预定义值:
 <code class="example">        null</code>
 <code class="example">        null_blob</code>
 <code class="example">        null_channel</code>
+<code class="example">        null_class</code>
 <code class="example">        null_dict</code>
 <code class="example">        null_function</code>
 <code class="example">        null_job</code>
 <code class="example">        null_list</code>
+<code class="example">        null_object</code>
 <code class="example">        null_partial</code>
 <code class="example">        null_string</code>
  <a href="vim9.html#true">true</a>  等价于  <a href="eval.html#v:true">v:true</a> 、 <a href="vim9.html#false">false</a>  等价于  <a href="eval.html#v:false">v:false</a>  而  <a href="vim9.html#null">null</a>  等价于  <a href="eval.html#v:null">v:null</a> 。
@@ -968,10 +973,10 @@ Vim9 脚本可以使用如下预定义值:
 可以把  <a href="vim9.html#null">null</a>  和任何值比较，不会给出类型错误。但把  <a href="vim9.html#null">null</a>  和数值、浮点或布尔型
 比较总返回  <a href="vim9.html#false">false</a> 。这和老式脚本不同，那里把  <a href="vim9.html#null">null</a>  和零或  <a href="vim9.html#false">false</a>  比较会返回
  <a href="vim9.html#true">true</a> 。
-
+                                                        <b class="vimtag"> <a name="vim9-false-true">vim9-false-true</a> </b>
 转换布尔型为字符串时使用  <a href="vim9.html#false">false</a>  和  <a href="vim9.html#true">true</a> ，而不像老式脚本那样用  <a href="eval.html#v:false">v:false</a>  和
  <a href="eval.html#v:true">v:true</a> 。 <a href="eval.html#v:none">v:none</a>  没有对应的  <code class="badlink">none</code>  替代，在其他语言中它没有类似的结构。
-
+                                                        <b class="vimtag"> <a name="vim9-string-index">vim9-string-index</a> </b>
 字符串用 <code class="special">[idx]</code> 索引 或 [idx : idx] 取切片时使用的是字符索引而非字节索引。组合
 字符包含在内。例如: 
 <code class="example">        echo 'bár'[1]</code>
@@ -1144,6 +1149,7 @@ Ex 命令范围需要冒号前缀。
                                                 <b class="vimtag"> <a name=":defc">:defc</a> </b> <b class="vimtag"> <a name=":defcompile">:defcompile</a> </b>
 :defc[ompile]           编译尚未编译的在当前脚本中定义的函数。
                         编译中如有任何错误，会报错。
+                        这里不包含类中定义的函数。
 
 :defc[ompile] <code class="special">{func}</code>
 :defc[ompile] debug <code class="special">{func}</code>
@@ -1151,6 +1157,10 @@ Ex 命令范围需要冒号前缀。
                         编译函数 <code class="special">{func}</code>，如有需要。"debug" 和 "profile" 指定编
                         译模式。
                         编译中如有任何错误，会报错。
+                        <code class="special">{func}</code> 调用也可以是 "ClassName.functionName"，以编译类
+                        中的函数或方法。
+                        <code class="special">{func}</code> 调用也可以是 "ClassName"，以编译类中的所有函数
+                        和方法。
 
                                                 <b class="vimtag"> <a name=":disa">:disa</a> </b> <b class="vimtag"> <a name=":disassemble">:disassemble</a> </b>
 :disa[ssemble] <code class="special">{func}</code>   显示 <code class="special">{func}</code> 生成的指令序列。用于调试和测试。 <b class="vimtag"> <a name="E1061">E1061</a> </b>
@@ -1408,6 +1418,7 @@ Vim9 脚本或  <a href="vim9.html#:def">:def</a>  函数中声明的变量有�
 
 如果给出类型但与期待不符，报错 <b class="vimtag"> <a name="E1272">E1272</a> </b> 。
 
+如果类型不完整，报错 *E1363*，例如对象所属的类未知 (通常因为是 null 对象)。
 
 <code class="section">类型推论 </code>
                                                         <b class="vimtag"> <a name="type-inference">type-inference</a> </b>
@@ -1507,8 +1518,8 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 
                          <b class="vimtag"> <a name="E1211">E1211</a> </b> <b class="vimtag"> <a name="E1217">E1217</a> </b> <b class="vimtag"> <a name="E1218">E1218</a> </b> <b class="vimtag"> <a name="E1219">E1219</a> </b> <b class="vimtag"> <a name="E1220">E1220</a> </b> <b class="vimtag"> <a name="E1221">E1221</a> </b>
                          <b class="vimtag"> <a name="E1222">E1222</a> </b> <b class="vimtag"> <a name="E1223">E1223</a> </b> <b class="vimtag"> <a name="E1224">E1224</a> </b> <b class="vimtag"> <a name="E1225">E1225</a> </b> <b class="vimtag"> <a name="E1226">E1226</a> </b> <b class="vimtag"> <a name="E1227">E1227</a> </b>
-                         <b class="vimtag"> <a name="E1228">E1228</a> </b> <b class="vimtag"> <a name="E1238">E1238</a> </b> <b class="vimtag"> <a name="E1250">E1250</a> </b> <b class="vimtag"> <a name="E1251">E1251</a> </b> <b class="vimtag"> <a name="E1252">E1252</a> </b> <b class="vimtag"> <a name="E1253">E1253</a> </b>
-                         <b class="vimtag"> <a name="E1256">E1256</a> </b> <b class="vimtag"> <a name="E1297">E1297</a> </b> <b class="vimtag"> <a name="E1298">E1298</a> </b> <b class="vimtag"> <a name="E1301">E1301</a> </b>
+                         <b class="vimtag"> <a name="E1228">E1228</a> </b> <b class="vimtag"> <a name="E1238">E1238</a> </b> <b class="vimtag"> <a name="E1250">E1250</a> </b> <b class="vimtag"> <a name="E1251">E1251</a> </b> <b class="vimtag"> <a name="E1252">E1252</a> </b> <b class="vimtag"> <a name="E1256">E1256</a> </b>
+                         <b class="vimtag"> <a name="E1297">E1297</a> </b> <b class="vimtag"> <a name="E1298">E1298</a> </b> <b class="vimtag"> <a name="E1301">E1301</a> </b>
 大多数内建函数检查类型，以便查找错误。
 
 </section><hr class="doubleline" /><section class=inner>

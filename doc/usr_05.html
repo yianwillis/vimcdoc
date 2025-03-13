@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="usr_05.txt">usr_05.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2022年8月
+<b class="vimtag"> <a name="usr_05.txt">usr_05.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2025年3月
 
                      <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
                                 <code class="vim">译者</code>: Nek_in、tocer
@@ -304,15 +304,23 @@ defaults.vim 的载入可以用这个命令关闭:
 
 
                                 <b class="vimtag"> <a name="restore-cursor">restore-cursor</a> </b> <b class="vimtag"> <a name="last-position-jump">last-position-jump</a> </b>  
-<code class="example">    autocmd BufReadPost *</code>
-<code class="example">      \ if line("'\"") &gt;= 1 &amp;&amp; line("'\"") &lt;= line("$") &amp;&amp; &amp;ft !~# 'commit'</code>
-<code class="example">      \ |   exe "normal! g`\""</code>
-<code class="example">      \ | endif</code>
+<code class="example">    augroup RestoreCursor</code>
+<code class="example">      autocmd!</code>
+<code class="example">      autocmd BufReadPost *</code>
+<code class="example">        \ let line = line("'\"")</code>
+<code class="example">        \ | if line &gt;= 1 &amp;&amp; line &lt;= line("$") &amp;&amp; &amp;filetype !~# 'commit'</code>
+<code class="example">        \      &amp;&amp; index(['xxd', 'gitrebase'], &amp;filetype) == -1</code>
+<code class="example">        \ |   execute "normal! g`\""</code>
+<code class="example">        \ | endif</code>
+<code class="example">    augroup END</code>
 <code class="example"></code>
 这是又一个自动命令。这回它设置为在读入任何文件之后自动执行。后面那堆复杂的东西
-检查 '" 标记是否已被定义，如果是，则跳转到该标记。行首的反斜杠用于把所有语句连
-接成一行。这可以避免一行写得太长，
-请参见  <a href="repeat.html#line-continuation">line-continuation</a> 。这只在 Vim 脚本文件中有效，在命令行中无效。
+检查 '" 标记是否已被定义，如果是，则跳转到该标记。这里跳过 commit 或 rebase 信
+息，因为每次的信息可能都不同，也不适用于 xxd(1) 过滤和编辑二进制文件，因为要对
+输入文件来回转换，所以可以这么说，这里有双重性。另见  <a href="tips.html#using-xxd">using-xxd</a> 。
+
+行首的反斜杠用于把所有语句连接成一行。这可以避免一行写得太长，请参见
+ <a href="repeat.html#line-continuation">line-continuation</a> 。这只在 Vim 脚本文件中有效，在命令行中无效。
 
 
 <code class="example">        command DiffOrig vert new | set bt=nofile | r ++edit # | 0d_ | diffthis</code>
@@ -393,6 +401,15 @@ Vim 发布提供了一些软件包供你选用。例如 matchit 插件。此插�
 <code class="section">                ~/.vim/pack/fancy/start/fancytext/plugin/fancy.vim </code>
            这里 "fancytext" 是软件包名，这可以是任何其它名字。
 
+添加 editorconfig 包                                    <b class="vimtag"> <a name="editorconfig-install">editorconfig-install</a> </b>
+
+和 matchit 包类似，要在 Vim 启动时载入发布的 editorconfig 插件，在 vimrc 文件
+中加入一行: 
+<code class="example">        packadd! editorconfig</code>
+<code class="example"></code>
+重启 Vim 后，此插件已激活，相关阅读可见: 
+<code class="example">        :h editorconfig.txt</code>
+<code class="example"></code>
 关于软件包的详情可见:  <a href="repeat.html#packages">packages</a> 。
 
 </section><hr class="doubleline" /><section class=inner>
@@ -408,11 +425,16 @@ Vim 中有两种插件:
 我们将先讨论全局插件，然后涉及文件类型插件  <a href="usr_05.html#add-filetype-plugin">add-filetype-plugin</a> 。
 
 
-全 局 插 件                                             <b class="vimtag"> <a name="standard-plugin">standard-plugin</a> </b>
+全 局 插 件                             <b class="vimtag"> <a name="standard-plugin">standard-plugin</a> </b> <b class="vimtag"> <a name="distributed-plugins">distributed-plugins</a> </b>
 
 当你启动 Vim，它会自动加载一些插件。你不需要为此做任何事。这些插件增加一些很多
 人想用的，但由 Vim 脚本实现而非编译进 Vim 中的功能。你可以在帮助索引中找到这些
-插件:  <a href="help.html#standard-plugin-list">standard-plugin-list</a> 。还可以参照  <a href="starting.html#load-plugins">load-plugins</a> 。
+插件:  <a href="help.html#standard-plugin-list">standard-plugin-list</a> 。
+
+同样地，本地安装的插件和包 (如果自带单独的帮助文件的话)，也可在帮助的
+ <code class="badlink">local-additions</code>  小节里找到类似的列表。
+
+还可以参照  <a href="starting.html#load-plugins">load-plugins</a> 。
 
                                                         <b class="vimtag"> <a name="add-global-plugin">add-global-plugin</a> </b>
 你可以加入一个全局插件使得某些功能在你每次使用 Vim 时都被开启。添加一个全局插
@@ -528,7 +550,7 @@ Vim 的发布中包括一套针对不同文件类型的插件。你可以用如�
  <a href="usr_51.html#write-plugin">write-plugin</a>           如何写插件。
  <a href="filetype.html#plugin-details">plugin-details</a>         关于如何使用插件的信息或者当你的插件不工作的时候如何处
                         理。
- <a href="filetype.html#new-filetype">new-filetype</a>           如果检测新文件类型。
+ <a href="filetype.html#new-filetype">new-filetype</a>           如何检测新文件类型。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4><b class="vimtag"> <a name="05.7">05.7</a> </b>  添加帮助                                        <b class="vimtag"> <a name="add-local-help">add-local-help</a> </b></h4>
