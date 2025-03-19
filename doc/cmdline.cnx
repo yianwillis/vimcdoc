@@ -1,4 +1,4 @@
-*cmdline.txt*   适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*cmdline.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -80,11 +80,14 @@ CTRL-SHIFT-V				*c_CTRL-SHIFT-V* *c_CTRL-SHIFT-Q*
 CTRL-SHIFT-Q	与 CTRL-V 类似，除非激活了 |modifyOtherKeys|，此时插入带修饰符
 		的键的转义序列。
 		GUI 里插入 |key-notation|，不经简化。
+		注意: 如果你的系统截获 CTRL-SHIFT-V (如用来粘贴文本)，通常可用
+		CTRL-SHIFT-Q 代替。不过有些终端里 (如 Gnome Terminal)，
+		CTRL-SHIFT-Q 会退出终端且没有提示。
 
 							*c_<Left>* *c_Left*
-<Left>		光标左移
+<Left>		光标左移。'wildmenu' 说明 wildmenu 补全模式时的行为。
 							*c_<Right>* *c_Right*
-<Right>		光标右移
+<Right>		光标右移。'wildmenu' 说明 wildmenu 补全模式时的行为。
 							*c_<S-Left>*
 <S-Left> 或 <C-Left>					*c_<C-Left>*
 		光标左移一个字串 (WORD)
@@ -94,7 +97,8 @@ CTRL-SHIFT-Q	与 CTRL-V 类似，除非激活了 |modifyOtherKeys|，此时插�
 CTRL-B 或 <Home>				*c_CTRL-B* *c_<Home>* *c_Home*
 		光标移动至命令的起始
 CTRL-E 或 <End>					*c_CTRL-E* *c_<End>* *c_End*
-		光标移动至命令的末尾
+		光标移动至命令的末尾。'wildmenu' 说明 wildmenu 补全模式时的行
+		为。
 
 							*c_<LeftMouse>*
 <LeftMouse>	将光标置于点击鼠标的地方。
@@ -211,6 +215,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 CTRL-Y		当存在无模式选择时，复制该选择区域的内容至剪贴板。
 		参考 无模式选择 |modeless-selection|。
 		如果没有选择，那么 CTRL-Y 会被当作字符直接插入。
+		'wildmenu' 说明 wildmenu 补全模式时的行为。
 
 CTRL-M 或 CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> 或 <NL>	执行输入的命令
@@ -224,10 +229,12 @@ CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 CTRL-C		不执行命令，退出命令行模式
 
 							*c_<Up>* *c_Up*
-<Up>		在历史记录中查找开始部分与当前输入匹配的前一条命令。(见下面)
+<Up>		在历史记录中查找开始部分与当前输入匹配的前一条命令 (见下面)。
+		'wildmenu' 说明 wildmenu 补全模式时的行为。
 		{仅当编译时加入 |+cmdline_hist| 特性才可用}
 							*c_<Down>* *c_Down*
-<Down>		在历史记录中查找开始部分与当前输入匹配的下一条命令。(见下面)
+<Down>		在历史记录中查找开始部分与当前输入匹配的下一条命令 (见下面)。
+		'wildmenu' 说明 wildmenu 补全模式时的行为。
 		{仅当编译时加入 |+cmdline_hist| 特性才可用}
 
 						*c_<S-Up>* *c_<PageUp>*
@@ -309,6 +316,7 @@ CTRL-]		激活缩写，但不插入任何字符。
 							*:history-indexing*
 		正数表示历史记录的绝对索引，也就是 :history 命令列出的第一列数
 		字。即使历史记录中的其它条目被删除了，该数字也会保持不变。
+		(见 |E1510|)
 
 		负数表示与某一记录的相对位置。以最新的一条记录 (索引号为 -1)
 		为基准向后算起。
@@ -324,7 +332,8 @@ CTRL-]		激活缩写，但不插入任何字符。
 			:history all -2,
 
 :keepp[atterns] {command}			*:keepp* *:keeppatterns*
-		执行 {command}，不加入搜索历史
+		执行 {command}，不加入搜索历史，而且对 |:s| 或 |:&| 而言，也不
+		修改最近替代模式或替代字符串。
 
 ==============================================================================
 2. 命令行补全						*cmdline-completion*
@@ -333,6 +342,7 @@ CTRL-]		激活缩写，但不插入任何字符。
 况:
 
 - 命令名称: 在命令行的起始处。
+- |++opt| 值。
 - 标签: 只在 ":tag" 命令后。
 - 文件名: 只在可以接受文件名的命令或可以接受文件名的选项之后。也被称作文件名补
   全。
@@ -391,15 +401,17 @@ CTRL-T		如果置位 'incsearch'，用 "/" 或 "?" 录入搜索模式而显示�
 		CTRL-G 移动到下一个匹配。提示: 在常规键盘上 T 在 G 上方。
 
 选项 'wildchar' 的默认值是 <Tab> (在 Vi 兼容模式里用的是 CTRL-E；在以前的版本
-里用的是 <Esc>)。 如果用来匹配文件名，在匹配模式里可以使用标准的通配符 '*' 和
-'?'。'*' 匹配任意字符串，'?' 匹配一个字符。
+里用的是 <Esc>)。 如果用来匹配文件名，在匹配模式里可以使用标准的 |wildcards|。
 
 重复使用 'wildchar' 或 CTRL-N 会循环选择匹配，并最终转回到正在输入的内容。如果
 首个匹配不如所愿，可以用 <S-Tab> 或 CTRL-P 直接回到刚输入的内容。
 
-置位选项 'wildignorecase' 可用于忽略文件名的大小写。
-
 'wildmenu' 选项可用于设置在命令行正上方显示可能的匹配。
+
+'wildoptions' 选项提供用于 'wildmenu' 弹出菜单的额外配置，以及模糊匹配。
+
+置位选项 'wildignorecase' 可用于忽略文件名的大小写。对其他文本 (如命令名) 的补
+全，可用 'ignorecase' 选项代替 (不过模糊匹配总是忽略大小写)。
 
 如果你喜欢 tcsh 的自动列表匹配，可以使用这个映射: >
 	:cnoremap X <C-L><C-D>
@@ -557,6 +569,12 @@ Ex 命令有几个特别的地方:
     :[range]!
     没有参数 "-bar" 的用户自定义命令 |:command|
 
+    以及以下 |Vim9-script| 关键字:
+    :abstract
+    :class
+    :enum
+    :interface
+
 注意: 在 ":g" 中 '|' 包含在命令里 (作为参数)，但 ":s" 却不是。这的确有点乱
 (继承于 Vi)。
 
@@ -688,7 +706,7 @@ Ex 命令有几个特别的地方:
 在以下文本上运行时:
 	1 one ~
 	2 two ~
-	3 three 已折叠~
+	3 three 已折叠 ~
 	4 four 已折叠 ~
 	5 five 已折叠 ~
 	6 six 已折叠 ~

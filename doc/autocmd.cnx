@@ -1,4 +1,4 @@
-*autocmd.txt*   适用于 Vim 9.0 版本。	最近更新: 2023年10月
+*autocmd.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -47,20 +47,20 @@
 - 确保定义所在的脚本被重复执行时，自动命令不会被重复。
 
 Vim9 脚本示例: >
-   autocmd_add({replace: true,
+   autocmd_add([{replace: true,
 		group:   'DemoGroup',
 		event:   'BufEnter',
 		pattern: '*.txt',
 		cmd:     'call DemoBufEnter()'
-		})
+		}])
 
 老式脚本示例: >
-   call autocmd_add(#{replace: v:true,
+   call autocmd_add([#{replace: v:true,
 		    \ group: 'DemoGroup',
 		    \ event: 'BufEnter',
 		    \ pattern: '*.txt',
 		    \ cmd: 'call DemoBufEnter()'
-		    \ })
+		    \ }])
 
 ==============================================================================
 2. 定义自动命令						*autocmd-define*
@@ -310,6 +310,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |GUIEnter|		成功启动 GUI 后
 |GUIFailed|		启动 GUI 失败之后
 |TermResponse|		收到 |t_RV| 的终端应答后
+|TermResponseAll|	收到 |t_RV| 及其他的终端应答后
 
 |QuitPre|		用 `:quit` 时，决定是否退出之前
 |ExitPre|		用可使 Vim 退出的命令时
@@ -348,8 +349,10 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |CursorHold|		用户有一段时间没有按键
 |CursorHoldI|		在插入模式下，用户有一段时间没有按键
 |CursorMoved|		普通模式下移动了光标
+|CursorMovedC|		|Command-line| 下移动了光标
 |CursorMovedI|		插入模式下移动了光标
 
+|WinNewPre|		创建新窗口前
 |WinNew|		创建新窗口后
 |TabNew|		创建新标签页后
 |WinClosed|		关闭窗口后
@@ -392,10 +395,14 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 
 |SessionLoadPost|	载入会话文件后
 
+|SessionWritePost|	用 |:mksession| 命令写入会话文件后
+
 |MenuPopup|		刚要显示弹出菜单前
 |CompleteChanged|	插入模式补全菜单被改变后
 |CompleteDonePre|	插入模式补全结束之后，清理 info 之前
 |CompleteDone|		插入模式补全结束之后，清理 info 之后
+
+|KeyInputPre|		要处理按键之前
 
 |User|			和 ":doautocmd" 一起使用
 |SigUSR1|		检测到 SIGUSR1 信号后
@@ -517,6 +524,8 @@ BufWritePost			把整个缓冲区写回到文件后 (应该撤销 BufWritePre
 CmdUndefined			调用未定义的用户命令时。可以用来实现在实际调用
 				时才提供动态定义的命令。模式匹配的是命令的名
 				字。<amatch> 和 <afile> 都被设为该命令的名字。
+				即使是没有 |autocmd-nested| 的自动命令定义里也
+				会触发。
 				注意: 在命令未定义前，自动补全不能工作。一个替
 				代方法是总是定义好用户命令，使之调用自动载入函
 				数。见 |autoload|。
@@ -594,6 +603,11 @@ CompleteDone			插入模式补全结束之后。不管补会是否成功完成�
 				事件。
 				|v:completed_item| 变量包含补全项目的信息。
 
+				设置以下 |v:event| 键值:
+				    complete_word	选中的单词，如果放弃补
+							全则为空。
+				    complete_type	|complete_info_mode|
+
 							*CursorHold*
 CursorHold			用户在 'updatetime' 指定的时间里没有按键时。直
 				到用户按键时该事件才会触发 (就是说，如果你离开
@@ -629,6 +643,11 @@ CursorMoved			在普通或可视模式下移动光标后。也用于光标行的
 				备注: `:noautocmd` 不会跳过此事件。
 				小心: 本事件发生非常频繁，不要做任何用户意想不
 				到或需时很久的事情。
+							*CursorMovedC*
+CursorMovedC			在命令行下移动光标后。小心不要破坏命令行，不然
+				可能会导致 Vim 死锁。
+				<afile> 设为单个字符，指示命令行的类型。
+				|cmdwin-char|
 							*CursorMovedI*
 CursorMovedI			在插入模式下移动光标后。但有弹出菜单时不触发。
 				其余细节和 CursorMoved 相同。
@@ -752,15 +771,17 @@ FilterWritePre			过滤程序写入文件或用外部 diff 产生 diff 文件
 				如果 'shelltemp' 关闭，不触发此事件。
 							*FocusGained*
 FocusGained			Vim 取得输入焦点时。只有 GUI 和少数几个控制台
-				版本能检测该事件。
+				版本能检测该事件。 |xterm-focus-event|
 							*FocusLost*
 FocusLost			Vim 失去输入焦点时。只有 GUI 和少数几个控制台
-				版本能检测该事件。也有可能在弹出对话框时发生。
+				版本能检测该事件。 |xterm-focus-event|
+				也有可能在弹出对话框时发生。
 							*FuncUndefined*
 FuncUndefined			调用未定义的用户函数时。可以用来实现在实际调用
 				时才提供动态定义的函数。模式匹配的是函数的名
 				字。<amatch> 和 <afile> 都被设为该函数的名字。
-				|Vim9| 函数编译时不触发。
+				即使是没有 |autocmd-nested| 的自动命令定义里也
+				会触发，但 |Vim9| 函数编译时不触发。
 				注意: 写 Vim 脚本时，最好采用自动调入函数。
 				见 |autoload-functions|。
 							*GUIEnter*
@@ -798,6 +819,20 @@ InsertLeavePre			刚离开插入模式之前。也用于 CTRL-O |i_CTRL-O|。
 							*InsertLeave*
 InsertLeave			刚离开插入模式后。也用于 CTRL-O |i_CTRL-O|，但
 				不用于 |i_CTRL-C|。
+							*KeyInputPre*
+KeyInputPre			应用映射之后，按键刚开始处理之前。模式匹配和
+				`mode(1)` 相同的指示当前模式的字符串。
+				|v:char| 变量指示按下的键，本事件可改变之，使
+				待处理的变成另一个键。|v:char| 如果不是单个字
+				符或者特殊键，使用首个字符。
+				设置下述的 |v:event| 值:
+				   typed	键是否按下。
+				   typedchar	最近一次 |KeyInputPre| 调用后
+						(实际) 按下的键。
+				注意: 如果连续处理完多个 |KeyInputPre| 自动命
+				令，"typedchar" 可能为空。
+				此处不允许改变文本 |textlock| 或当前模式。
+				{仅当编译时加入 |+eval| 特性才有效}
 							*MenuPopup*
 MenuPopup			刚要显示弹出菜单前 (鼠标右键下)。用于根据光标
 				或鼠标指针下的内容调整菜单。
@@ -914,6 +949,8 @@ SafeStateAgain			类似于 SafeState，但在处理完任何信息和回调调�
 
 							*SessionLoadPost*
 SessionLoadPost			载入 |:mksession| 命令建立的会话文件后。
+							*SessionWritePost*
+SessionWritePost		调用 |:mksession| 命令写入会话文件后。
 							*ShellCmdPost*
 ShellCmdPost			执行用 |:!cmd|、|:shell|、|:make| 和 |:grep|
 				指定的外壳命令后。可用于检查任何文件的改变。
@@ -995,6 +1032,31 @@ TerminalWinOpen			用 `:terminal` 或 |term_start()| 建立终端缓冲
 							*TermResponse*
 TermResponse			收到终端对 |t_RV| 的应答后。
 				可用 |v:termresponse| 的值判别终端版本。
+				|defaults.vim| 用此事件检测 putty 终端并设置深
+				色背景: >
+
+				au TermResponse *
+				\ if v:termresponse == "\e[>0;136;0c"
+				\    set bg=dark
+				\ endif
+<
+				注意 本事件可能在另一事件执行半途中激发，特别
+				是在文件 I/O，外壳命令等耗时的操作进行时尤有可
+				能。
+							*TermResponseAll*
+TermResponseAll			收到终端对 |t_RV|、|t_RC|、|t_RS|、|t_RB|、
+				|t_RF|、或 |t_u7| 的应答后。
+				分别可用 |v:termresponse|、|v:termblinkresp|、
+				|v:termstyleresp|、|v:termrbgresp|、
+				|v:termrfgresp| 和 |v:termu7resp| 的值获取应
+				答。
+				<amatch> 会被设为以下各值之一:
+				    "version"、
+				    "cursorblink"、
+				    "cursorshape"、
+				    "background"、
+				    "foreground"、
+				    "ambiguouswidth"
 				注意 本事件可能在另一事件执行半途中激发，特别
 				是在文件 I/O，外壳命令等耗时的操作进行时尤有可
 				能。
@@ -1110,6 +1172,16 @@ WinLeave			离开某窗口前。如果将要进入的窗口要显示的是别的
 				缓冲区，Vim 在 WinLeave 自动命令前先执行
 				BufLeave 自动命令 (但不包括 ":new")。
 				":qa" 或 ":q" 退出 Vim 时不会触发此事件。
+
+							*WinNewPre*
+WinNewPre			创建新窗口前。在创建分割从而修改窗口布局的命令
+				前触发。
+				创建标签页及首个窗口时不触发，因为窗口结构此时
+				尚未初始化，所以一般而言此时并不安全。
+				执行 WinNewPre 里的命令时不允许修改窗口布局。
+				最常用于保存当前窗口布局并在窗口创建后和新布局
+				相比较。
+
 							*WinNew*
 WinNew				创建新窗口时。不用于 Vim 启动时的首个窗口。在
 				WinEnter 事件之前触发。
@@ -1549,6 +1621,9 @@ Vim 根据你定义的顺序执行所有匹配的自动命令。建议第一个�
 
 要在一段时间里屏蔽自动命令，使用 'eventignore' 选项。注意 这可能会导致意料不到
 的效果。确信在此之后恢复 'eventignore'，可用带 |:finally| 的 |:try| 块。
+
+要无限期地在特定窗口里屏蔽自动命令，可用 'eventignorewin' 选项。只能用于屏蔽窗
+口和缓冲区相关的事件。
 
 							*:noautocmd* *:noa*
 要为单个命令屏蔽自动命令，使用 ":noautocmd" 命令修饰符。它会在下一个命令的执行
