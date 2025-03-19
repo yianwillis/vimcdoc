@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -118,10 +118,11 @@
 
 这些命令删除文本。你可以用  <a href="repeat.html#.">.</a>  命令重复它们 (除了  <a href="change.html#:d">:d</a> )，也可以撤销它们。用可
 视模式可以删除文本列块。关于寄存器的解释，参见  <a href="change.html#registers">registers</a> 。
-
+                                                        <b class="vimtag"> <a name="d-special">d-special</a> </b>
 d<code class="special">{motion}</code> 命令的一个特例: 如果动作不面向行，动作的开始和结束处不在同一行，开始
 位置之前只有空白，并且结束位置之后没有非空白的话，该删除会转为行动作。这意味着
-删除命令可能删除你还想保留的空白行。 <a href="motion.html#o_v">o_v</a>  操作符强制该动作面向字符。
+删除命令可能删除你还想保留的空白行。 <a href="motion.html#o_v">o_v</a>  操作符强制该动作面向字符，也可从
+<a href="options.html#'cpoptions'">'cpoptions'</a> 里删除 "z" 标志位 (见  <code class="badlink">cpo-z</code> ) 来关闭此怪异行为。
 
 如果 <a href="options.html#'cpoptions'">'cpoptions'</a> 包括 'E' 标志位，删除文本里的空区域 (例如，在首列上 "d0") 会
 报错。
@@ -247,7 +248,7 @@ Vim 把其后的字符插入在行尾 (和插入模式相同)。在替换模式�
 
 如果你希望 "cw" 包括单词之后的空格，使用如下的映射: 
 <code class="example">        :map cw dwi</code>
-或者，用 "caw" (见  <a href="motion.html#aw">aw</a> )。
+替代方案可用 "caw" (另见  <a href="motion.html#aw">aw</a>  和  <code class="badlink">cpo-z</code> )。
 
                                                         <b class="vimtag"> <a name=":c">:c</a> </b> <b class="vimtag"> <a name=":ch">:ch</a> </b> <b class="vimtag"> <a name=":change">:change</a> </b>
 :<code class="special">{range}</code>c[hange][!]     用另外的文本替换若干文本行。输入只包含 "." 的行结束替
@@ -417,8 +418,11 @@ g??                     用 Rot13 对当前行进行编码。
 <code class="note">注意</code> 如果 <a href="options.html#'nrformats'">'nrformats'</a> 包括 "octal"，开头有零的十进制数会产生错误，因为会和八进
 制数产生混淆。
 
-同样类似的要 <code class="note">注意</code>，如果 <a href="options.html#'nrformats'">'nrformats'</a> 包括 "bin"，开头有 '0x' 或 '0X' 的二进制数
-被认作十六进制，因为 '0b' 是合法的十六进制数字。
+同样类似的要 <code class="note">注意</code>，如果 <a href="options.html#'nrformats'">'nrformats'</a> 同是包括 "bin" 和 "hex"，开头有 '0x' 或
+'0X' 的二进制数被认作十六进制，因为 '0b' 是合法的十六进制数字。"0x0b11" 上按
+<code class="keystroke">CTRL-A</code> 会返回 "0x0b12" 而不是 "0x0b100"。
+而 <a href="options.html#'nrformats'">'nrformats'</a> 包括 "bin" 但没有 "hex" 时，在 "0x0b11" 的 "0b11" 上按 <code class="keystroke">CTRL-A</code>
+会返回 "0x0b100"。
 
 如果光标下的数值大到超过 32 或 64 位 (取决于 Vim 是如何编译的) 能表示的范围，
 取整到最接近的可表示的数值，且忽略增减操作。例如 64 位支持下在
@@ -528,6 +532,8 @@ g??                     用 Rot13 对当前行进行编码。
                          <a href="visual.html#Visual-mode">Visual-mode</a> )。
 
 :<code class="special">{range}</code>![!]<code class="special">{filter}</code> [!]<code class="special">[arg]</code>                           <b class="vimtag"> <a name=":range!">:range!</a> </b>
+                        要执行外部命令，可见  <a href="various.html#:!">:!</a> 
+
                         用外部程序 <code class="special">{filter}</code> 过滤 <code class="special">{range}</code> 指定的多行。Vim 把可
                         选的感叹号替换成最后一次使用的命令，并附加上可选的参数
                         <code class="special">[arg]</code>。Vim 把过滤命令的输出保存到临时文件，并把文件内
@@ -559,9 +565,9 @@ g??                     用 Rot13 对当前行进行编码。
                                                 <b class="vimtag"> <a name="tempfile">tempfile</a> </b> <b class="vimtag"> <a name="setuid">setuid</a> </b>
 Vim 使用临时文件来处理过滤、执行比较和用于 tempname()。Unix 上，该文件会放在一
 个私人的目录里 (只能被当前用户访问)，以防堵安全上的漏洞 (例如，符号链接攻击或
-文件被其他用户读取等)。Vim 退出时，自动删除该目录及之下的所有文件。如果 Vim 本
-身设置了 setuid 位，这样或许会有问题。临时文件由 setuid 用户拥有，但过滤程序以
-原来用户的权限执行。
+文件被其他用户读取等)。Vim 退出时，自动删除该目录及之下的所有文件 (仅对 Unix
+有效，其它系统上需要自行清理)。如果 Vim 本身设置了 setuid 位，这样或许会有问
+题。临时文件由 setuid 用户拥有，但过滤程序以原来用户的权限执行。
 在以下目录首个可用者建立存放临时文件的目录:
         Unix:    $TMPDIR、/tmp、当前目录、$HOME。
         Windows: $TMP、$TEMP、c:\TMP、c:\TEMP
@@ -581,7 +587,8 @@ MS-Windows 上，使用 GetTempFileName() 系统函数。
                         如果指定 <code class="special">[count]</code>，在 <code class="special">[range]</code> 最后一行开始的 <code class="special">[count]</code>
                         行进行替代。如果不指定 <code class="special">[range]</code> ，则从当前行开始。
                                                         <b class="vimtag"> <a name="E939">E939</a> </b>
-                        <code class="special">[count]</code> 必须为正数。另见  <a href="cmdline.html#cmdline-ranges">cmdline-ranges</a> 。
+                        <code class="special">[count]</code> 必须为正数 (最大值 2147483647)。
+                        另见  <a href="cmdline.html#cmdline-ranges">cmdline-ranges</a> 。
 
                         关于 <code class="special">[flags]</code>，参见  <a href="change.html#:s_flags">:s_flags</a> 。
                         定界符不必非是 / 不可，请见  <a href="change.html#pattern-delimiter">pattern-delimiter</a> 。
@@ -1109,14 +1116,14 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                                         <b class="vimtag"> <a name="quote2">quote2</a> </b> <b class="vimtag"> <a name="quote3">quote3</a> </b> <b class="vimtag"> <a name="quote4">quote4</a> </b> <b class="vimtag"> <a name="quote9">quote9</a> </b>
 Vim 把抽出和删除命令的文本保存在这些寄存器里。
    编号寄存器 0 包含最近抽出的文本，除非该命令用 ["x] 指定了别的寄存器。
-   编号寄存器 1 包含了最近删除或者修改的文本，除非该命令用 ["x] 指定了别的寄存
-器或者该文本小于一行 (该情况下使用行内删除寄存器)。以下移动命令在应用删除操作
-符时例外:  <a href="motion.html#%">%</a> 、 <a href="motion.html#(">(</a> 、 <a href="motion.html#)">)</a> 、 <a href="motion.html#`">`</a> 、 <a href="pattern.html#%2F">/</a> 、 <a href="pattern.html#?">?</a> 、 <a href="pattern.html#n">n</a> 、 <a href="pattern.html#N">N</a> 、 <a href="motion.html#{">{</a>  和  <a href="motion.html#}">}</a> 。它们总是使用寄
-存器 "1 (这是 Vi 兼容行为)。如果文本小于一行，同时使用 "- 寄存器。
-<code class="note">注意</code> 这些字符可能会被映射。例如，matchit 插件会映射 % 字符。
+   编号寄存器 1 包含了最近删除或者修改的文本 (即使该命令指定了别的寄存器)，除
+非该文本小于一行 (该情况下使用行内删除寄存器)。以下移动命令在应用删除操作符时
+例外:  <a href="motion.html#%">%</a> 、 <a href="motion.html#(">(</a> 、 <a href="motion.html#)">)</a> 、 <a href="motion.html#`">`</a> 、 <a href="pattern.html#%2F">/</a> 、 <a href="pattern.html#?">?</a> 、 <a href="pattern.html#n">n</a> 、 <a href="pattern.html#N">N</a> 、 <a href="motion.html#{">{</a>  和  <a href="motion.html#}">}</a> 。它们总是使用寄存器
+"1 (这是 Vi 兼容行为)。如果文本小于一行，同时使用 "- 寄存器。<code class="note">注意</code> 这些字符可能
+会被映射。例如，matchit 插件会映射 % 字符。
    每来一次新的删除和修改，Vim 把前一次的寄存器 1 的内容复制到寄存器 2，2 到
 3，依此类推。而寄存器 9 的内容就丢失了。
-<code class="notvi">{Vi: 编号寄存器的内容在更换文件时丢失；寄存器 0 不存在}</code>
+<code class="notvi">{Vi: 寄存器 0 不存在}</code>
 
 3. 行内删除寄存器 "-                                    <b class="vimtag"> <a name="quote_-">quote_-</a> </b> <b class="vimtag"> <a name="quote-">quote-</a> </b>
 该寄存器保存删除不到一行内容的命令的文本，除非该命令用 ["x] 指定了寄存器。
@@ -1165,8 +1172,8 @@ Vim 只有在你指定的时候才使用这些寄存器。指定为小写字母�
 
 表达式的计算结果必须是一个字符串。数值结果会自动转化为字符串。对 "p" 和 ":put"
 命令而言，浮点数结果也会被转化为字符串。如果结果为列表，每个成员被转成字符串，
-然后被单独放在一行上。字典、函数引用类型的结果则产生错误信息 (通过 string() 转
-化)。
+然后被单独放在一行上。字典被转换为字符串。函数引用类型的结果则产生错误信息 (通
+过 string() 转化)。
 
 如果 "= 寄存器被 "p" 命令使用，该字符串会在 <code class="special">&lt;NL&gt;</code> 字符处断开。如果该字符串以
 <code class="special">&lt;NL&gt;</code> 结尾，则它被视为一个面向行的寄存器。
@@ -1217,6 +1224,8 @@ MS-Windows 上，"* 和 "+ 的使用实际上是等价的，可见  <a href="gui
 
 :<code class="special">[range]</code>m[ove] <code class="special">{address}</code>                        <b class="vimtag"> <a name=":m">:m</a> </b> <b class="vimtag"> <a name=":mo">:mo</a> </b> <b class="vimtag"> <a name=":move">:move</a> </b> <b class="vimtag"> <a name="E134">E134</a> </b>
                         把 <code class="special">[range]</code> 指定的行移动到 <code class="special">{address}</code> 给出的行之下。
+                        清除 <code class="special">[range]</code> 里的所有文本属性。见
+                         <code class="badlink">text-prop-cleared</code> 。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>6. 文本排版                                             <b class="vimtag"> <a name="formatting">formatting</a> </b></h4>
@@ -1295,31 +1304,31 @@ gww                     对当前行排版，其它和 "gw" 类同。
  <a href="usr_51.html#ftplugin">ftplugin</a> ，因为排版方式高度依赖于文件类型。这里，建议使用  <a href="userfunc.html#autoload">autoload</a>  脚本，这
 样只有在有需要时才会载入对应的脚本，而该脚本应命名为 <code class="special">&lt;filetype&gt;</code>format.vim。
 
-例如，随 Vim 发布的在 $VIMRUNTIME 目录里的 XML 文件类型插件把 <a href="options.html#'formatexpr'">'formatexpr'</a> 选
-项设为: 
+例如，随 Vim 发布的在 $VIMRUNTIME/ftplugin 目录里的 XML 文件类型插件把
+<a href="options.html#'formatexpr'">'formatexpr'</a> 选项设为: 
 <code class="example"></code>
 <code class="example">   setlocal formatexpr=xmlformat#Format()</code>
 <code class="example"></code>
-这意味着，在以下目录你会找到相应的脚本，其中定义了 xmlformat#Format() 函数:
+这意味着，在以下文件你会找到相应的脚本，其中定义了 xmlformat#Format() 函数:
  <code class="badlink">$VIMRUNTIME/autoload/xmlformat.vim</code> 
 
 下例脚本删除选定文本的拖尾空白。把它放在你的 autoload 目录，如
-~/.vim/autoload/format.vim 里: 
-<code class="example"></code>
-<code class="example">  func! format#Format()</code>
-<code class="example">    " 只在显式的 gq 命令时重新排版</code>
-<code class="example">    if mode() != 'n'</code>
-<code class="example">      " 缺省使用 Vim 内部的重新排版方式</code>
-<code class="example">      return 1</code>
-<code class="example">    endif</code>
-<code class="example">    let lines = getline(v:lnum, v:lnum + v:count - 1)</code>
-<code class="example">    call map(lines, {key, val -&gt; substitute(val, '\s\+$', '', 'g')})</code>
-<code class="example">    call setline('.', lines)</code>
-<code class="example"></code>
-<code class="example">    " 不使用内部的排版方式！</code>
-<code class="example">    return 0</code>
-<code class="example">  endfunc</code>
-<code class="example"></code>
+~/.vim/autoload/format.vim 里:
+&gt;vim
+  func! format#Format()
+    " 只在显式的 gq 命令时重新排版
+    if mode() != 'n'
+      " 缺省使用 Vim 内部的重新排版方式
+      return 1
+    endif
+    let lines = getline(v:lnum, v:lnum + v:count - 1)
+    call map(lines, {key, val -&gt; substitute(val, '\s\+$', '', 'g')})
+    call setline('.', lines)
+
+    " 不使用内部的排版方式！
+    return 0
+  endfunc
+
 然后，如此打开此种排版方式: 
 <code class="example">  setlocal formatexpr=format#Format()</code>
 
@@ -1334,7 +1343,8 @@ gww                     对当前行排版，其它和 "gw" 类同。
 
                                                         <b class="vimtag"> <a name="right-justify">right-justify</a> </b>
 Vim 没有靠右控制对齐 (right justify) 文本的命令。你可以用 "par" 这样的外部命令
-来实现 (例如，"!}par" 对到段落尾的文本排版)，或者设置 <a href="options.html#'formatprg'">'formatprg'</a> 为 "par"。
+来实现 (例如， <code class="badlink">:.,}!par</code>  对到段落尾的文本排版)，或者设置 <a href="options.html#'formatprg'">'formatprg'</a> 为
+"par"。
 
                                                         <b class="vimtag"> <a name="format-comments">format-comments</a> </b>
 用户手册的  <a href="usr_30.html#30.6">30.6</a>  一节给出注释排版的总览。
@@ -1391,7 +1401,7 @@ Vim 可以自动对注释的插入和排版进行特殊处理。Vim 把以特定
         时才有效。
 
 如果一个字符串没有 'f'、's'、'm' 或 'e' 任何一个标志位，Vim 假设注释字符串在每
-行都重复出现。标志位部分可以为空。
+行都重复出现。<code class="special">{flags}</code> 字段可以为空。
 
 在 <code class="special">{string}</code> 之前或之后的任何空白都是 <code class="special">{string}</code> 的一部分，所以不要随便留出开头或
 结尾的空白，除非空白的确是注释字符串的一部分。

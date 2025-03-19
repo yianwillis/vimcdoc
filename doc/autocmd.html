@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="autocmd.txt">autocmd.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年10月
+<b class="vimtag"> <a name="autocmd.txt">autocmd.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -81,20 +81,20 @@
 - 确保定义所在的脚本被重复执行时，自动命令不会被重复。
 
 Vim9 脚本示例: 
-<code class="example">   autocmd_add({replace: true,</code>
+<code class="example">   autocmd_add([{replace: true,</code>
 <code class="example">                group:   'DemoGroup',</code>
 <code class="example">                event:   'BufEnter',</code>
 <code class="example">                pattern: '*.txt',</code>
 <code class="example">                cmd:     'call DemoBufEnter()'</code>
-<code class="example">                })</code>
+<code class="example">                }])</code>
 <code class="example"></code>
 老式脚本示例: 
-<code class="example">   call autocmd_add(#{replace: v:true,</code>
+<code class="example">   call autocmd_add([#{replace: v:true,</code>
 <code class="example">                    \ group: 'DemoGroup',</code>
 <code class="example">                    \ event: 'BufEnter',</code>
 <code class="example">                    \ pattern: '*.txt',</code>
 <code class="example">                    \ cmd: 'call DemoBufEnter()'</code>
-<code class="example">                    \ })</code>
+<code class="example">                    \ }])</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 定义自动命令                                         <b class="vimtag"> <a name="autocmd-define">autocmd-define</a> </b></h4>
@@ -340,6 +340,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
  <a href="autocmd.html#GUIEnter">GUIEnter</a>               成功启动 GUI 后
  <a href="autocmd.html#GUIFailed">GUIFailed</a>              启动 GUI 失败之后
  <a href="autocmd.html#TermResponse">TermResponse</a>           收到  <a href="term.html#t_RV">t_RV</a>  的终端应答后
+ <code class="badlink">TermResponseAll</code>        收到  <a href="term.html#t_RV">t_RV</a>  及其他的终端应答后
 
  <a href="autocmd.html#QuitPre">QuitPre</a>                用  <a href="editing.html#:quit">:quit</a>  时，决定是否退出之前
  <a href="autocmd.html#ExitPre">ExitPre</a>                用可使 Vim 退出的命令时
@@ -378,8 +379,10 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
  <a href="autocmd.html#CursorHold">CursorHold</a>             用户有一段时间没有按键
  <a href="autocmd.html#CursorHoldI">CursorHoldI</a>            在插入模式下，用户有一段时间没有按键
  <a href="autocmd.html#CursorMoved">CursorMoved</a>            普通模式下移动了光标
+ <code class="badlink">CursorMovedC</code>            <a href="cmdline.html#Command-line">Command-line</a>  下移动了光标
  <a href="autocmd.html#CursorMovedI">CursorMovedI</a>           插入模式下移动了光标
 
+ <code class="badlink">WinNewPre</code>              创建新窗口前
  <a href="autocmd.html#WinNew">WinNew</a>                 创建新窗口后
  <a href="autocmd.html#TabNew">TabNew</a>                 创建新标签页后
  <a href="autocmd.html#WinClosed">WinClosed</a>              关闭窗口后
@@ -422,10 +425,14 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 
  <a href="autocmd.html#SessionLoadPost">SessionLoadPost</a>        载入会话文件后
 
+ <code class="badlink">SessionWritePost</code>       用  <a href="starting.html#:mksession">:mksession</a>  命令写入会话文件后
+
  <a href="autocmd.html#MenuPopup">MenuPopup</a>              刚要显示弹出菜单前
  <a href="autocmd.html#CompleteChanged">CompleteChanged</a>        插入模式补全菜单被改变后
  <a href="autocmd.html#CompleteDonePre">CompleteDonePre</a>        插入模式补全结束之后，清理 info 之前
  <a href="autocmd.html#CompleteDone">CompleteDone</a>           插入模式补全结束之后，清理 info 之后
+
+ <code class="badlink">KeyInputPre</code>            要处理按键之前
 
  <a href="autocmd.html#User">User</a>                   和 ":doautocmd" 一起使用
  <a href="autocmd.html#SigUSR1">SigUSR1</a>                检测到 SIGUSR1 信号后
@@ -547,6 +554,8 @@ BufWritePost                    把整个缓冲区写回到文件后 (应该撤�
 CmdUndefined                    调用未定义的用户命令时。可以用来实现在实际调用
                                 时才提供动态定义的命令。模式匹配的是命令的名
                                 字。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都被设为该命令的名字。
+                                即使是没有  <a href="autocmd.html#autocmd-nested">autocmd-nested</a>  的自动命令定义里也
+                                会触发。
                                 <code class="note">注意</code>: 在命令未定义前，自动补全不能工作。一个替
                                 代方法是总是定义好用户命令，使之调用自动载入函
                                 数。见  <a href="userfunc.html#autoload">autoload</a> 。
@@ -624,6 +633,11 @@ CompleteDone                    插入模式补全结束之后。不管补会是
                                 事件。
                                  <a href="eval.html#v:completed_item">v:completed_item</a>  变量包含补全项目的信息。
 
+                                设置以下  <a href="eval.html#v:event">v:event</a>  键值:
+                                    complete_word       选中的单词，如果放弃补
+                                                        全则为空。
+                                    complete_type        <a href="builtin.html#complete_info_mode">complete_info_mode</a> 
+
                                                         <b class="vimtag"> <a name="CursorHold">CursorHold</a> </b>
 CursorHold                      用户在 <a href="options.html#'updatetime'">'updatetime'</a> 指定的时间里没有按键时。直
                                 到用户按键时该事件才会触发 (就是说，如果你离开
@@ -659,6 +673,11 @@ CursorMoved                     在普通或可视模式下移动光标后。也
                                 <code class="note">备注</code>:  <a href="autocmd.html#:noautocmd">:noautocmd</a>  不会跳过此事件。
                                 小心: 本事件发生非常频繁，不要做任何用户意想不
                                 到或需时很久的事情。
+                                                        <b class="vimtag"> <a name="CursorMovedC">CursorMovedC</a> </b>
+CursorMovedC                    在命令行下移动光标后。小心不要破坏命令行，不然
+                                可能会导致 Vim 死锁。
+                                <code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的类型。
+                                 <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
                                                         <b class="vimtag"> <a name="CursorMovedI">CursorMovedI</a> </b>
 CursorMovedI                    在插入模式下移动光标后。但有弹出菜单时不触发。
                                 其余细节和 CursorMoved 相同。
@@ -782,15 +801,17 @@ FilterWritePre                  过滤程序写入文件或用外部 diff 产生
                                 如果 <a href="options.html#'shelltemp'">'shelltemp'</a> 关闭，不触发此事件。
                                                         <b class="vimtag"> <a name="FocusGained">FocusGained</a> </b>
 FocusGained                     Vim 取得输入焦点时。只有 GUI 和少数几个控制台
-                                版本能检测该事件。
+                                版本能检测该事件。  <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
                                                         <b class="vimtag"> <a name="FocusLost">FocusLost</a> </b>
 FocusLost                       Vim 失去输入焦点时。只有 GUI 和少数几个控制台
-                                版本能检测该事件。也有可能在弹出对话框时发生。
+                                版本能检测该事件。  <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
+                                也有可能在弹出对话框时发生。
                                                         <b class="vimtag"> <a name="FuncUndefined">FuncUndefined</a> </b>
 FuncUndefined                   调用未定义的用户函数时。可以用来实现在实际调用
                                 时才提供动态定义的函数。模式匹配的是函数的名
                                 字。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都被设为该函数的名字。
-                                 <a href="vim9.html#Vim9">Vim9</a>  函数编译时不触发。
+                                即使是没有  <a href="autocmd.html#autocmd-nested">autocmd-nested</a>  的自动命令定义里也
+                                会触发，但  <a href="vim9.html#Vim9">Vim9</a>  函数编译时不触发。
                                 <code class="note">注意</code>: 写 Vim 脚本时，最好采用自动调入函数。
                                 见  <a href="userfunc.html#autoload-functions">autoload-functions</a> 。
                                                         <b class="vimtag"> <a name="GUIEnter">GUIEnter</a> </b>
@@ -828,6 +849,20 @@ InsertLeavePre                  刚离开插入模式之前。也用于 <code cl
                                                         <b class="vimtag"> <a name="InsertLeave">InsertLeave</a> </b>
 InsertLeave                     刚离开插入模式后。也用于 <code class="keystroke">CTRL-O</code>  <a href="insert.html#i_CTRL-O">i_CTRL-O</a> ，但
                                 不用于  <a href="insert.html#i_CTRL-C">i_CTRL-C</a> 。
+                                                        <b class="vimtag"> <a name="KeyInputPre">KeyInputPre</a> </b>
+KeyInputPre                     应用映射之后，按键刚开始处理之前。模式匹配和
+                                 <code class="badlink">mode(1)</code>  相同的指示当前模式的字符串。
+                                 <a href="eval.html#v:char">v:char</a>  变量指示按下的键，本事件可改变之，使
+                                待处理的变成另一个键。 <a href="eval.html#v:char">v:char</a>  如果不是单个字
+                                符或者特殊键，使用首个字符。
+                                设置下述的  <a href="eval.html#v:event">v:event</a>  值:
+                                   typed        键是否按下。
+                                   typedchar    最近一次  <code class="badlink">KeyInputPre</code>  调用后
+                                                (实际) 按下的键。
+                                <code class="note">注意</code>: 如果连续处理完多个  <code class="badlink">KeyInputPre</code>  自动命
+                                令，"typedchar" 可能为空。
+                                此处不允许改变文本  <a href="eval.html#textlock">textlock</a>  或当前模式。
+                                <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  特性才有效}</code>
                                                         <b class="vimtag"> <a name="MenuPopup">MenuPopup</a> </b>
 MenuPopup                       刚要显示弹出菜单前 (鼠标右键下)。用于根据光标
                                 或鼠标指针下的内容调整菜单。
@@ -944,6 +979,8 @@ SafeStateAgain                  类似于 SafeState，但在处理完任何信�
 
                                                         <b class="vimtag"> <a name="SessionLoadPost">SessionLoadPost</a> </b>
 SessionLoadPost                 载入  <a href="starting.html#:mksession">:mksession</a>  命令建立的会话文件后。
+                                                        <b class="vimtag"> <a name="SessionWritePost">SessionWritePost</a> </b>
+SessionWritePost                调用  <a href="starting.html#:mksession">:mksession</a>  命令写入会话文件后。
                                                         <b class="vimtag"> <a name="ShellCmdPost">ShellCmdPost</a> </b>
 ShellCmdPost                    执行用  <a href="various.html#:!cmd">:!cmd</a> 、 <a href="various.html#:shell">:shell</a> 、 <a href="quickfix.html#:make">:make</a>  和  <a href="quickfix.html#:grep">:grep</a> 
                                 指定的外壳命令后。可用于检查任何文件的改变。
@@ -1025,6 +1062,31 @@ TerminalWinOpen                 用  <a href="terminal.html#:terminal">:terminal
                                                         <b class="vimtag"> <a name="TermResponse">TermResponse</a> </b>
 TermResponse                    收到终端对  <a href="term.html#t_RV">t_RV</a>  的应答后。
                                 可用  <a href="eval.html#v:termresponse">v:termresponse</a>  的值判别终端版本。
+                                 <a href="starting.html#defaults.vim">defaults.vim</a>  用此事件检测 putty 终端并设置深
+                                色背景: 
+<code class="example"></code>
+<code class="example">                                au TermResponse *</code>
+<code class="example">                                \ if v:termresponse == "\e[&gt;0;136;0c"</code>
+<code class="example">                                \    set bg=dark</code>
+<code class="example">                                \ endif</code>
+
+                                <code class="note">注意</code> 本事件可能在另一事件执行半途中激发，特别
+                                是在文件 I/O，外壳命令等耗时的操作进行时尤有可
+                                能。
+                                                        <b class="vimtag"> <a name="TermResponseAll">TermResponseAll</a> </b>
+TermResponseAll                 收到终端对  <a href="term.html#t_RV">t_RV</a> 、 <a href="term.html#t_RC">t_RC</a> 、 <a href="term.html#t_RS">t_RS</a> 、 <a href="term.html#t_RB">t_RB</a> 、
+                                 <a href="term.html#t_RF">t_RF</a> 、或  <a href="term.html#t_u7">t_u7</a>  的应答后。
+                                分别可用  <a href="eval.html#v:termresponse">v:termresponse</a> 、 <a href="eval.html#v:termblinkresp">v:termblinkresp</a> 、
+                                 <a href="eval.html#v:termstyleresp">v:termstyleresp</a> 、 <a href="eval.html#v:termrbgresp">v:termrbgresp</a> 、
+                                 <a href="eval.html#v:termrfgresp">v:termrfgresp</a>  和  <a href="eval.html#v:termu7resp">v:termu7resp</a>  的值获取应
+                                答。
+                                <code class="special">&lt;amatch&gt;</code> 会被设为以下各值之一:
+                                    "version"、
+                                    "cursorblink"、
+                                    "cursorshape"、
+                                    "background"、
+                                    "foreground"、
+                                    "ambiguouswidth"
                                 <code class="note">注意</code> 本事件可能在另一事件执行半途中激发，特别
                                 是在文件 I/O，外壳命令等耗时的操作进行时尤有可
                                 能。
@@ -1140,6 +1202,16 @@ WinLeave                        离开某窗口前。如果将要进入的窗口
                                 缓冲区，Vim 在 WinLeave 自动命令前先执行
                                 BufLeave 自动命令 (但不包括 ":new")。
                                 ":qa" 或 ":q" 退出 Vim 时不会触发此事件。
+
+                                                        <b class="vimtag"> <a name="WinNewPre">WinNewPre</a> </b>
+WinNewPre                       创建新窗口前。在创建分割从而修改窗口布局的命令
+                                前触发。
+                                创建标签页及首个窗口时不触发，因为窗口结构此时
+                                尚未初始化，所以一般而言此时并不安全。
+                                执行 WinNewPre 里的命令时不允许修改窗口布局。
+                                最常用于保存当前窗口布局并在窗口创建后和新布局
+                                相比较。
+
                                                         <b class="vimtag"> <a name="WinNew">WinNew</a> </b>
 WinNew                          创建新窗口时。不用于 Vim 启动时的首个窗口。在
                                 WinEnter 事件之前触发。
@@ -1573,6 +1645,9 @@ Vim 根据你定义的顺序执行所有匹配的自动命令。建议第一个�
 <h4>11. 屏蔽自动命令                                        <b class="vimtag"> <a name="autocmd-disable">autocmd-disable</a> </b></h4>
 要在一段时间里屏蔽自动命令，使用 <a href="options.html#'eventignore'">'eventignore'</a> 选项。<code class="note">注意</code> 这可能会导致意料不到
 的效果。确信在此之后恢复 <a href="options.html#'eventignore'">'eventignore'</a>，可用带  <a href="eval.html#:finally">:finally</a>  的  <a href="eval.html#:try">:try</a>  块。
+
+要无限期地在特定窗口里屏蔽自动命令，可用 <code class="badlink">'eventignorewin'</code> 选项。只能用于屏蔽窗
+口和缓冲区相关的事件。
 
                                                         <b class="vimtag"> <a name=":noautocmd">:noautocmd</a> </b> <b class="vimtag"> <a name=":noa">:noa</a> </b>
 要为单个命令屏蔽自动命令，使用 ":noautocmd" 命令修饰符。它会在下一个命令的执行
