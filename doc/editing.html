@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="editing.txt">editing.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -348,8 +348,8 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 单避免该问题的方法是用 "path\[[]abc]"。这样这匹配文件名 "path[abc]"。
 
                                         <b class="vimtag"> <a name="starstar-wildcard">starstar-wildcard</a> </b>
-在 Unix、Win32、macOS 和一些其它系统上，可以扩展 "**" (也可能取决于 <a href="options.html#'shell'">'shell'</a> 设
-置。已知 zsh 可用；bash 需 bash 版本 &gt;= 4.X)。
+在 Unix、Win32、macOS 和一些其它系统上，可以扩展 "**" (Unix 和 macOS 上也可能
+取决于 <a href="options.html#'shell'">'shell'</a> 设置。已知 zsh 可用；bash 需 bash 版本 &gt;= 4.X)。
 它允许你在目录树里搜索。最大深度可以到 100 层目录。
 <code class="note">注意</code> 有些命令的工作方式略有不同。见  <a href="editing.html#file-searching">file-searching</a> 。
 例如: 
@@ -573,8 +573,9 @@ Vim 有若干选项控制文件格式:
 
 :<code class="special">[count]</code>arge[dit][!] <code class="special">[++opt]</code> <code class="special">[+cmd]</code> <code class="special">{name}</code> ..           <b class="vimtag"> <a name=":arge">:arge</a> </b> <b class="vimtag"> <a name=":argedit">:argedit</a> </b>
                         将一或多个 <code class="special">{name}</code> 加到参数列表里，并编辑之。
-                        如果 <code class="special">{name}</code> 已经在参数列表里存在，只编辑之。
-                        这和用  <a href="editing.html#:argadd">:argadd</a>  然后  <a href="editing.html#:edit">:edit</a>  类似。
+                        不检查重复项，同一文件可以加入参数列表多次  <a href="editing.html#:argded">:argded</a> 。
+                        这和用  <a href="editing.html#:argadd">:argadd</a>  然后  <a href="editing.html#:edit">:edit</a>  类似 (唯一的小区别是
+                         <a href="editing.html#:edit">:edit</a>  不修改参数列表，所以不改动参数列表指针)。
                         文件名里的空格需用 "\" 转义。
                         <code class="special">[count]</code> 的用法和  <a href="editing.html#:argadd">:argadd</a>  一样。
                         如果当前文件不能被放弃  <a href="editing.html#abandon">abandon</a> ，<code class="special">{name}</code> 等仍会被加入
@@ -589,12 +590,12 @@ Vim 有若干选项控制文件格式:
                         后。不然，加到第 <code class="special">[count]</code> 个文件之后。如果参数列表是
                         "a b c"，而 "b" 是当前参数，那么以下命令会导致:
 <code class="section">                                命令            新的参数列表 </code>
-                                :argadd x       a b x c
-                                :0argadd x      x a b c
-                                :1argadd x      a x b c
-                                :$argadd x      a b c x
+                                :argadd x       a  <code class="special">[b]</code>  x  c
+                                :0argadd x      x   a  <code class="special">[b]</code> c
+                                :1argadd x      a   x  <code class="special">[b]</code> c
+                                :$argadd x      a  <code class="special">[b]</code>  c  x
                         在末项之后:
-                                :+2argadd y     a b c x y
+                                :+2argadd y     a  <code class="special">[b]</code>  c  x  y
                         这里不会检查重复项，因此一个文件可能加入参数列表两次。
                         可以在其后用  <a href="editing.html#:argdedupe">:argdedupe</a>  来修正: 
 <code class="example">                                :argadd *.txt | argdedupe</code>
@@ -917,6 +918,13 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 
 如果备份文件创建失败，写入不会进行。除非命令中加上 '!'。
 
+                                                        <b class="vimtag"> <a name="file-watcher">file-watcher</a> </b>
+如果你发现在缓冲区写入时本应采取行动的程序 (如 inotify、entr 或 fswatch) 或调
+用 Vim 来编辑文件 (如 git) 的外部程序出现了似乎没<code class="note">注意</code>到原始文件已改变的问题，
+需要考虑把 <a href="options.html#'backupcopy'">'backupcopy'</a> 选项值为 "yes"。这样确保 Vim 写回到这些观察者程序期待
+的同一文件，而不是创建新文件 (那样这些程序就无法检测到文件改变)。另见
+ <a href="options.html#crontab">crontab</a> 
+
                                                         <b class="vimtag"> <a name="write-permissions">write-permissions</a> </b>
 写入新文件时其权限设为可读写。unix 上的掩码是 0o666 外加 umask。写入已经读入的
 文件时，Vim 保留原有权限，但清除 s 位。
@@ -950,7 +958,7 @@ ACL 代表访问控制表 (Access Control List)。这是控制文件访问权限
    Vim 试图在写入文件时保留 ACL 信息。备份文件会用和原始文件相同的 ACL 信息。
    ACL 信息也用来检查文件是否只读 (在打开文件时)。
 
-                                <b class="vimtag"> <a name="xattr">xattr</a> </b> <b class="vimtag"> <a name="E1506">E1506</a> </b> <b class="vimtag"> <a name="E1507">E1507</a> </b> <b class="vimtag"> <a name="E1508">E1508</a> </b> <b class="vimtag"> <a name="E1509">E1509</a> </b>
+                                        <b class="vimtag"> <a name="xattr">xattr</a> </b> <b class="vimtag"> <a name="E1506">E1506</a> </b> <b class="vimtag"> <a name="E1508">E1508</a> </b> <b class="vimtag"> <a name="E1509">E1509</a> </b>
 xattr 代表扩展属性 (Extended Attributes)。这是文件系统中，相伴文件而保存其元数
 据的高级方式。支持与否取决于实际使用的文件系统。Vim 只在 Linux 系统上支持。
    Vim 试图在写入文件时保留扩展属性信息。备份文件会获取原始文件的扩展属性。
@@ -1135,13 +1143,13 @@ Motif 使用相同的格式，但只使用第一个模式 (Motif 只提供一个
 
 例如，要使得对话框里只显示 Vim 文件，你可以用以下命令: 
 <code class="example"></code>
-<code class="example">     let g:browsefilter = "Vim Scripts\t*.vim\nVim Startup Files\t*vimrc\n"</code>
+<code class="example">     let g:browsefilter = "Vim scripts\t*.vim\nVim Startup Files\t*vimrc\n"</code>
 <code class="example"></code>
 你可以通过在某个缓冲区上设置 b:browsefilter 变量超越全局过滤的设置。最有可能的
 情况是在文件类型插件里设置 b:browsefilter，以便浏览对话框只显示和当前编辑的文
 件所属类型相关的项目。缺点是: 无法编辑一个新的不同类型的文件。要克服这一点，你
-可以加上 "All Files\t*.*\n" 作为最后的过滤。用户从而拥有访问任何类型文件的选
-择。
+可以加上 Windows 上 "All Files (*.*)\t*\n"，或其他平台上 "All Files (*) \t*\n"
+作为最后的过滤。用户从而拥有访问任何类型文件的选择。
 
 如果 Vim 不能实际支持时不想设置 browsefilter，可以测试 has("browsefilter"): 
 <code class="example"></code>
@@ -1504,7 +1512,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
    这里，你可以给出一个目录，然后沿着目录树向上搜索一个文件。你可以给出若干终
    止目录来限制搜索的范围。终止目录附加于路径 (对 <a href="options.html#'path'">'path'</a> 选项而言) 或文件名
    (对 <a href="options.html#'tags'">'tags'</a> 选项而言) 之后，中间以 ";" 分隔。如果需要多个终止目录，一一列
-   出，以 ';' 分隔。如果你不想要终止目录 (搜索直到根目录)，只要用 ";"。 
+   出，以 ';' 分隔。如果你不想要终止目录 ("搜索直到根目录")，只要用 ";"。 
 <code class="example">        /usr/include/sys;/usr</code>
     会在以下位置搜索: 
 <code class="example">           /usr/include/sys</code>
@@ -1516,7 +1524,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 
    如果 Vim 的当前路径是 /u/user_x/work/release 而你用 
 <code class="example">        :set path=include;/u/user_x</code>
-   然后用  <a href="editing.html#gf">gf</a>  搜索文件，则文件在如下位置搜索: 
+    然后用  <a href="editing.html#gf">gf</a>  搜索文件，则文件在如下位置搜索: 
 <code class="example">        /u/user_x/work/release/include</code>
 <code class="example">        /u/user_x/work/include</code>
 <code class="example">        /u/user_x/include</code>
@@ -1527,7 +1535,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 3) 混合向上/向下搜索
    如果 Vim 当前路径是 /u/user_x/work/release 而你用 
 <code class="example">        set path=**;/u/user_x</code>
-   然后用  <a href="editing.html#gf">gf</a>  搜索文件，则文件在如下位置搜索: 
+    然后用  <a href="editing.html#gf">gf</a>  搜索文件，则文件在如下位置搜索: 
 <code class="example">        /u/user_x/work/release/**</code>
 <code class="example">        /u/user_x/work/**</code>
 <code class="example">        /u/user_x/**</code>
@@ -1538,13 +1546,13 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 
    因而，在上例中你可能想如此设置 path: 
 <code class="example">        :set path=**,/u/user_x/**</code>
-    这会搜索:
-<code class="section">        /u/user_x/work/release/** </code>
-<code class="section">        /u/user_x/** </code>
+    这会搜索: 
+<code class="example">        /u/user_x/work/release/**</code>
+<code class="example">        /u/user_x/**</code>
     它会搜索相同的目录群，但顺序不同。
 
-    <code class="note">注意</code> ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 URL、使用带
-    深度限定的双星记号 (/usr/**2) 或向上搜索 (;) 记号的 <a href="options.html#'path'">'path'</a> 项目。
+   <code class="note">注意</code> ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 URL、使用带
+   深度限定的双星记号 (/usr/**2) 或向上搜索 (;) 记号的 <a href="options.html#'path'">'path'</a> 项目。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

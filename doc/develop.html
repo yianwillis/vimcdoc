@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -154,7 +154,7 @@ VIM 不 是 ...                                           <b class="vimtag"> <a 
   这里有一个讽刺的说法: "Vim 不像 Emacs 那样会包含除厨房中的水槽以外的每件事
   物，但有人说如果你需要的话，却可以用它来洗盘子。;-)"
   要在 Vim 中使用 gdb，参见  <a href="terminal.html#terminal-debugger">terminal-debugger</a> 。其它 (老式的) 工具可见:
-  <a href="http://www.agide.org">http://www.agide.org</a> 和 <a href="http://clewn.sf.net">http://clewn.sf.net</a>。
+  <a href="http://www.agide.org">http://www.agide.org</a> (链接看来已失效) 和 <a href="http://clewn.sf.net">http://clewn.sf.net</a>。
 - Vim 不是一个为了看起来漂亮而牺牲多平台一致性的华而不实的 GUI 编辑器。但我们
   依然欢迎有效的 GUI 特性。
 
@@ -165,19 +165,29 @@ VIM 不 是 ...                                           <b class="vimtag"> <a 
 
 这个列表是不完全的，请查看源代码以获得更多的例子。
 
+代码库包含 editorconfig 文件，可用发布的 editorconfig 插件
+ <a href="usr_05.html#editorconfig-install">editorconfig-install</a>  来确保编辑风格遵循建议值。
 
 修 改 代 码                                             <b class="vimtag"> <a name="style-changes">style-changes</a> </b>
 
 修改代码的基本步骤:
 1. 从 github 获取代码。方便你的版本随时和主代码库保持同步 (你的修改可能需要一
-   段时间才会被接受)。需要花点时间学习 git，它的用户界面不是最直观。
+   段时间才会被接受)。
 2. 首先调整文档，这样做将使你对你的更改如何影响使用者有一个印象。
 3. 改变源代码。
 4. 检查 ../doc/todo.txt，看看所作的修改是否影响其中的项目。
-5. 用 "git diff" 做一个补丁。也可以在 github 上创建拉取请求，但主要是 diff 的
-   部分。
-6. 写一个修改了哪些地方的记录，最好提到相关问题和解决方案。给 vim-dev 邮件组发
-   信包含这个解释和 diff 本身。也可以在 github 上创建拉取请求。
+5. 在 src/testdir 增加新测试，验证新行为并确保将来不会有回归问题。
+6. 用 "git diff" 做一个补丁。
+7. 写一个修改了哪些地方的记录，最好提到相关问题和解决方案。给  <a href="intro.html#vim-dev">vim-dev</a>  邮件组
+   发信包含这个解释和 diff 本身。
+
+除非是很小的改动，必须在 github 上创建拉取请求，因为这样可能触发测试套件。
+
+
+                                                        <b class="vimtag"> <a name="style-clang-format">style-clang-format</a> </b>
+ <code class="badlink">clang-format</code>  排版器可根据发布的 .clang-format 文件来 (半-) 自动排版 sound.c
+和 sign.c。其他源文件目前还不遵循 .clang-format 文件。将来可能会有改变，也可能
+被重排版。
 
 
 C COMPILER                              <b class="vimtag"> <a name="style-compiler">style-compiler</a> </b> <b class="vimtag"> <a name="ANSI-C">ANSI-C</a> </b> <b class="vimtag"> <a name="C89">C89</a> </b> <b class="vimtag"> <a name="C99">C99</a> </b>
@@ -186,45 +196,230 @@ C COMPILER                              <b class="vimtag"> <a name="style-compil
 的支持，或至少没有得到 100% 的支持。因此我们只使用部分 C99 特性而显式地禁止其
 它的一些特性 (随着时间推移会作调整)。
 
-请不要在任何地方修改代码来应用 C99 特性，这会给现有补丁的合并带来困难。C99 特
-性仅限于新增或需要改动的代码。
-
-<code class="section">注释 </code>
-
-Vim 传统上使用 /* 注释 */。我们打算继续在文件和函数头部，还有大块代码处使用这
-种风格，如:
-        /*
-         * The "foo" argument does something useful.
-         * Return OK or FAIL.
-         */
-新代码或需要改动的代码上建议使用 // 注释，特别是在代码之后的注释:
-        int some_var;  // 这里可用单行注释
-
-<code class="section">枚举 </code>
-
-枚举的最后一项可有拖尾的逗号。C89 过去不允许。
-
-<code class="section">类型 </code>
-
-允许使用 "long long"，并应假定为 64 位。printf 格式中对应可用 %lld。另外，%llu
-可用于 "long long unsigned"。
-
-<code class="section">声明 </code>
-
-MSVC 2015 是最低支持的编译器，因而声明不需要在块的开始处。但这通常是个好习惯。
-
-建议在循环内声明 for 循环变量:
-        for (int i = 0; i &lt; len; ++i)
-这种用法优势明显，所以我们会更经常使用。
-
-
-<code class="section">不使用 </code>
+不使用的特性
 
 不使用以下 C99 特性，因为支持的编译器尚不广泛:
 - 可变长度数组 (即便在 C11 中也是一个可选的特性)。
-- _Bool 和 _Complex 类型。
+- C99 _Bool 和 _Complex 类型。
 - "inline" (也几乎用不到，让优化器自己去做吧)
 - 灵活数组成员 (Flexible Array Member): HP-UX C 编译器不支持 (John Marriott)
+
+
+注 释                                                  <b class="vimtag"> <a name="style-comments">style-comments</a> </b>
+
+尽量避免在函数内部使用多行注释: 如果函数如此复杂，以致需要不同的部分需要分别注
+释，应该重新考虑函数的结构。
+
+对文件头部和函数描述，可用: 
+<code class="example">    /*</code>
+<code class="example">     * 描述</code>
+<code class="example">     */</code>
+
+其他注释应用: 
+<code class="example">    // 注释</code>
+
+
+
+缩 进                                                 <b class="vimtag"> <a name="style-indentation">style-indentation</a> </b>
+
+我们代码缩进使用 4 个空格。如果使用 Vim 编辑源代码，因为有  <a href="options.html#modeline">modeline</a> ，不需要
+做任何设置。
+
+对其他编辑器，在代码库的根目录提供了  <code class="badlink">.editorconfig</code> 。
+
+
+声 明                                                <b class="vimtag"> <a name="style-declarations">style-declarations</a> </b>
+
+建议在循环内声明  <code class="badlink">for</code>  循环变量:
+正确: 
+<code class="example">    for (int i = 0; i &lt; len; ++i)</code>
+
+错误: 
+<code class="example">    int i;</code>
+<code class="example">    for (i = 0; i &lt; len; ++i)</code>
+
+变量声明时必须带缺省值:
+正确: 
+<code class="example">    int n = 0;</code>
+<code class="example">    int *ptr = NULL;</code>
+
+错误: 
+<code class="example">    int n;</code>
+<code class="example">    int *ptr;</code>
+
+
+
+花 括 号                                                   <b class="vimtag"> <a name="style-braces">style-braces</a> </b>
+
+所有的花括号必须从新行开始:
+正确: 
+<code class="example">    if (cond)</code>
+<code class="example">    {</code>
+<code class="example">       cmd;</code>
+<code class="example">       cmd;</code>
+<code class="example">    }</code>
+<code class="example">    else</code>
+<code class="example">    {</code>
+<code class="example">       cmd;</code>
+<code class="example">       cmd;</code>
+<code class="example">    }</code>
+
+错误: 
+<code class="example">    if (cond) {</code>
+<code class="example">       cmd;</code>
+<code class="example">       cmd;</code>
+<code class="example">    } else {</code>
+<code class="example">       cmd;</code>
+<code class="example">       cmd;</code>
+<code class="example">    }</code>
+
+正确: 
+<code class="example">    while (cond)</code>
+<code class="example">    {</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+
+错误: 
+<code class="example">    while (cond) {</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+
+单行，包括注释部分，的块可以省略花括号。
+正确: 
+<code class="example">    if (cond)</code>
+<code class="example">        cmd;</code>
+<code class="example">    else</code>
+<code class="example">        cmd;</code>
+
+错误: 
+<code class="example">    if (cond)</code>
+<code class="example">        /*</code>
+<code class="example">         * comment</code>
+<code class="example">         */</code>
+<code class="example">        cmd;</code>
+<code class="example">    else</code>
+<code class="example">        cmd;</code>
+
+ <code class="badlink">if</code> / <code class="badlink">else</code>  一个块有括号时，另一个块最好也有括号。
+正确: 
+<code class="example">    if (cond)</code>
+<code class="example">    {</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+<code class="example">    else</code>
+<code class="example">    {</code>
+<code class="example">        cmd;</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+
+错误: 
+<code class="example">    if (cond)</code>
+<code class="example">        cmd;</code>
+<code class="example">    else</code>
+<code class="example">    {</code>
+<code class="example">        cmd;</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+<code class="example"></code>
+<code class="example">    if (cond)</code>
+<code class="example">    {</code>
+<code class="example">        cmd;</code>
+<code class="example">        cmd;</code>
+<code class="example">    }</code>
+<code class="example">    else</code>
+<code class="example">        cmd;</code>
+
+正确: 
+<code class="example">    while (cond)</code>
+<code class="example">        cmd;</code>
+
+错误:
+
+<code class="example">    while (cond)</code>
+<code class="example">        if (cond)</code>
+<code class="example">            cmd;</code>
+
+
+
+类 型                                                       <b class="vimtag"> <a name="style-types">style-types</a> </b>
+
+使用描述性的类型。可在 src/structs.h 文件里找到它们的列表，也可能在你正在工作
+的文件里有相应的 typedef。
+
+<code class="note">注意</code> 所有定制类型都采用 "_T" 后缀
+
+正确: 
+<code class="example">    int is_valid_line_number(linenr_T lnum);</code>
+
+错误: 
+<code class="example">    int is_valid_line_number(unsigned long lnum);</code>
+
+
+
+空 格 和 标 点                                             <b class="vimtag"> <a name="style-spaces">style-spaces</a> </b>
+
+不要在函数名和括号间留空格:
+
+正确:   func(arg);
+错误:   func (arg);
+
+但请在 if，while，switch 等之后留一个空格:
+
+正确:   if (arg)        for (;;)
+错误:   if(arg)         for(;;)
+
+在逗号和分号后留一个空格:
+
+正确:   func(arg1, arg2);       for (i = 0; i &lt; 2; ++i)
+错误:   func(arg1,arg2);        for (i = 0;i &lt; 2;++i)
+
+在 '='，'+'，'/' 等的前后各留一个空格:
+
+错误:   var=a*5;
+正确:   var = a * 5;
+
+使用空行来把代码分组。
+
+正确: 
+<code class="example">    msg_puts_title(_("\n--- Signs ---"));</code>
+<code class="example">    msg_putchar('\n');</code>
+<code class="example"></code>
+<code class="example">    if (rbuf == NULL)</code>
+<code class="example">        buf = firstbuf;</code>
+<code class="example">    else</code>
+<code class="example">        buf = rbuf;</code>
+<code class="example"></code>
+<code class="example">    while (buf != NULL &amp;&amp; !got_int)</code>
+
+错误: 
+<code class="example">    msg_puts_title(_("\n--- Signs ---"));</code>
+<code class="example">    msg_putchar('\n');</code>
+<code class="example">    if (rbuf == NULL)</code>
+<code class="example">        buf = firstbuf;</code>
+<code class="example">    else</code>
+<code class="example">        buf = rbuf;</code>
+<code class="example">    while (buf != NULL &amp;&amp; !got_int)</code>
+
+
+
+函 数                                                   <b class="vimtag"> <a name="style-functions">style-functions</a> </b>
+
+函数声明的返回类型单独一行且采用同样的缩进。
+
+正确: 
+<code class="example">    int</code>
+<code class="example">    function_name(int arg1, int arg2)</code>
+<code class="example">    {</code>
+<code class="example">    }</code>
+
+错误: 
+<code class="example">    int function_name(int arg1, int arg2)</code>
+<code class="example">    {</code>
+<code class="example">    }</code>
+
+
+函数参数请用有意义的名称。
+
 
 普 通 函 数 的 使 用                                    <b class="vimtag"> <a name="style-functions">style-functions</a> </b>
 
@@ -300,27 +495,30 @@ get_env_value() Linux 系统函数
 
 杂 项                                                   <b class="vimtag"> <a name="style-various">style-various</a> </b>
 
-类型定义 (typedef) 的名称应该以 "_T" 结尾: 
-<code class="example">    typedef int some_T;</code>
 宏 (define) 的名称应该全部是大写: 
 <code class="example">    #define SOME_THING</code>
+
+
 特性 (feature) 应该总是以 "FEAT_" 开头: 
 <code class="example">    #define FEAT_FOO</code>
-<code class="example"></code>
+
+
 不要使用 '\"'，一些编译器不能处理它。用 '"' 比较合适。
 
-不要使用:
-    #if HAVE_SOME
+不要使用: 
+<code class="example">    #if HAVE_SOME</code>
+
 一些编译器不能处理它并报告说 "HAVE_SOME" 没有被定义。
-请使用
-    #ifdef HAVE_SOME
-或
-    #if defined(HAVE_SOME)
+请使用 
+<code class="example">    #ifdef HAVE_SOME</code>
+     
+或 
+<code class="example">    #if defined(HAVE_SOME)</code>
 
 
 风 格                                                   <b class="vimtag"> <a name="style-examples">style-examples</a> </b>
 
-一般原则: 每行一条语句。
+每行一条语句。
 
 错误:       if (cond) a = 1;
 
@@ -338,97 +536,6 @@ get_env_value() Linux 系统函数
                 a = 1;
             while (cond);
 
-错误:       if (cond) {
-               cmd;
-               cmd;
-            } else {
-               cmd;
-               cmd;
-            }
-
-正确:       if (cond)
-            {
-               cmd;
-               cmd;
-            }
-            else
-            {
-               cmd;
-               cmd;
-            }
-
-单行的块可以省略花括号。if/else 一个单行的块有括号时，另一个块最好也有括号:
-正确:       if (cond)
-               cmd;
-            else
-               cmd;
-
-正确:       if (cond)
-            {
-               cmd;
-            }
-            else
-            {
-               cmd;
-               cmd;
-            }
-
-使用 ANSI (新风格) 函数声明，返回类型在单独缩进的一行上。
-
-错误:   int function_name(int arg1, int arg2)
-
-正确:   /*
-         * 解释函数的功能。
-         *
-         * 解释返回值。
-         */
-            int
-        function_name(
-            int         arg1,           // arg1 的简短注释
-            int         arg2)           // arg2 的简短注释
-        {
-            int         local;          // local 的注释
-
-            local = arg1 * arg2;
-
-
-
-空 格 和 标 点                                          <b class="vimtag"> <a name="style-spaces">style-spaces</a> </b>
-
-不要在函数名和括号间留空格:
-
-错误:   func (arg);
-正确:   func(arg);
-
-但请在 if，while，switch 等之后留一个空格:
-
-错误:   if(arg)         for(;;)
-正确:   if (arg)        for (;;)
-
-在逗号和分号后留一个空格:
-
-错误:   func(arg1,arg2);        for (i = 0;i &lt; 2;++i)
-正确:   func(arg1, arg2);       for (i = 0; i &lt; 2; ++i)
-
-在 '='，'+'，'/' 等的前后各留一个空格:
-
-错误:   var=a*5;
-正确:   var = a * 5;
-
-一般地: 使用空行来把代码分组。在每组代码的上面写上注释，这样就可以快速的知道这
-些代码是用来干什么的。
-
-正确:   /* Prepare for building the table. */
-        get_first_item();
-        table_idx = 0;
-
-        /* Build the table */
-        while (has_item())
-            table[table_idx++] = next_item();
-
-        /* Finish up. */
-        cleanup_items();
-        generate_hash(table);
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 设计决定                                             <b class="vimtag"> <a name="design-decisions">design-decisions</a> </b></h4>
