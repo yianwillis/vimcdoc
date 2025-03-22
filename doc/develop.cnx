@@ -1,4 +1,4 @@
-*develop.txt*	适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*develop.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -120,7 +120,7 @@ VIM 不 是 ...						*design-not*
   这里有一个讽刺的说法: "Vim 不像 Emacs 那样会包含除厨房中的水槽以外的每件事
   物，但有人说如果你需要的话，却可以用它来洗盘子。;-)"
   要在 Vim 中使用 gdb，参见 |terminal-debugger|。其它 (老式的) 工具可见:
-  http://www.agide.org 和 http://clewn.sf.net。
+  http://www.agide.org (链接看来已失效) 和 http://clewn.sf.net。
 - Vim 不是一个为了看起来漂亮而牺牲多平台一致性的华而不实的 GUI 编辑器。但我们
   依然欢迎有效的 GUI 特性。
 
@@ -132,19 +132,29 @@ VIM 不 是 ...						*design-not*
 
 这个列表是不完全的，请查看源代码以获得更多的例子。
 
+代码库包含 editorconfig 文件，可用发布的 editorconfig 插件
+|editorconfig-install| 来确保编辑风格遵循建议值。
 
 修 改 代 码						*style-changes*
 
 修改代码的基本步骤:
 1. 从 github 获取代码。方便你的版本随时和主代码库保持同步 (你的修改可能需要一
-   段时间才会被接受)。需要花点时间学习 git，它的用户界面不是最直观。
+   段时间才会被接受)。
 2. 首先调整文档，这样做将使你对你的更改如何影响使用者有一个印象。
 3. 改变源代码。
 4. 检查 ../doc/todo.txt，看看所作的修改是否影响其中的项目。
-5. 用 "git diff" 做一个补丁。也可以在 github 上创建拉取请求，但主要是 diff 的
-   部分。
-6. 写一个修改了哪些地方的记录，最好提到相关问题和解决方案。给 vim-dev 邮件组发
-   信包含这个解释和 diff 本身。也可以在 github 上创建拉取请求。
+5. 在 src/testdir 增加新测试，验证新行为并确保将来不会有回归问题。
+6. 用 "git diff" 做一个补丁。
+7. 写一个修改了哪些地方的记录，最好提到相关问题和解决方案。给 |vim-dev| 邮件组
+   发信包含这个解释和 diff 本身。
+
+除非是很小的改动，必须在 github 上创建拉取请求，因为这样可能触发测试套件。
+
+
+							*style-clang-format*
+`clang-format` 排版器可根据发布的 .clang-format 文件来 (半-) 自动排版 sound.c
+和 sign.c。其他源文件目前还不遵循 .clang-format 文件。将来可能会有改变，也可能
+被重排版。
 
 
 C COMPILER				*style-compiler* *ANSI-C* *C89* *C99*
@@ -153,45 +163,230 @@ C COMPILER				*style-compiler* *ANSI-C* *C89* *C99*
 的支持，或至少没有得到 100% 的支持。因此我们只使用部分 C99 特性而显式地禁止其
 它的一些特性 (随着时间推移会作调整)。
 
-请不要在任何地方修改代码来应用 C99 特性，这会给现有补丁的合并带来困难。C99 特
-性仅限于新增或需要改动的代码。
-
-注释 ~
-
-Vim 传统上使用 /* 注释 */。我们打算继续在文件和函数头部，还有大块代码处使用这
-种风格，如:
-	/*
-	 * The "foo" argument does something useful.
-	 * Return OK or FAIL.
-	 */
-新代码或需要改动的代码上建议使用 // 注释，特别是在代码之后的注释:
-	int some_var;  // 这里可用单行注释
-
-枚举 ~
-
-枚举的最后一项可有拖尾的逗号。C89 过去不允许。
-
-类型 ~
-
-允许使用 "long long"，并应假定为 64 位。printf 格式中对应可用 %lld。另外，%llu
-可用于 "long long unsigned"。
-
-声明 ~
-
-MSVC 2015 是最低支持的编译器，因而声明不需要在块的开始处。但这通常是个好习惯。
-
-建议在循环内声明 for 循环变量:
-	for (int i = 0; i < len; ++i)
-这种用法优势明显，所以我们会更经常使用。
-
-
-不使用 ~
+不使用的特性
 
 不使用以下 C99 特性，因为支持的编译器尚不广泛:
 - 可变长度数组 (即便在 C11 中也是一个可选的特性)。
-- _Bool 和 _Complex 类型。
+- C99 _Bool 和 _Complex 类型。
 - "inline" (也几乎用不到，让优化器自己去做吧)
 - 灵活数组成员 (Flexible Array Member): HP-UX C 编译器不支持 (John Marriott)
+
+
+注 释	 					       *style-comments*
+
+尽量避免在函数内部使用多行注释: 如果函数如此复杂，以致需要不同的部分需要分别注
+释，应该重新考虑函数的结构。
+
+对文件头部和函数描述，可用: >
+    /*
+     * 描述
+     */
+<
+其他注释应用: >
+    // 注释
+<
+
+
+缩 进						      *style-indentation*
+
+我们代码缩进使用 4 个空格。如果使用 Vim 编辑源代码，因为有 |modeline|，不需要
+做任何设置。
+
+对其他编辑器，在代码库的根目录提供了 `.editorconfig`。
+
+
+声 明		                                     *style-declarations*
+
+建议在循环内声明 `for` 循环变量:
+正确: >
+    for (int i = 0; i < len; ++i)
+<
+错误: >
+    int i;
+    for (i = 0; i < len; ++i)
+<
+变量声明时必须带缺省值:
+正确: >
+    int n = 0;
+    int *ptr = NULL;
+<
+错误: >
+    int n;
+    int *ptr;
+<
+
+
+花 括 号						   *style-braces*
+
+所有的花括号必须从新行开始:
+正确: >
+    if (cond)
+    {
+       cmd;
+       cmd;
+    }
+    else
+    {
+       cmd;
+       cmd;
+    }
+<
+错误: >
+    if (cond) {
+       cmd;
+       cmd;
+    } else {
+       cmd;
+       cmd;
+    }
+<
+正确: >
+    while (cond)
+    {
+	cmd;
+    }
+<
+错误: >
+    while (cond) {
+	cmd;
+    }
+<
+单行，包括注释部分，的块可以省略花括号。
+正确: >
+    if (cond)
+	cmd;
+    else
+	cmd;
+<
+错误: >
+    if (cond)
+	/*
+	 * comment
+	 */
+	cmd;
+    else
+	cmd;
+<
+`if`/`else` 一个块有括号时，另一个块最好也有括号。
+正确: >
+    if (cond)
+    {
+	cmd;
+    }
+    else
+    {
+	cmd;
+	cmd;
+    }
+<
+错误: >
+    if (cond)
+	cmd;
+    else
+    {
+	cmd;
+	cmd;
+    }
+
+    if (cond)
+    {
+	cmd;
+	cmd;
+    }
+    else
+	cmd;
+<
+正确: >
+    while (cond)
+	cmd;
+<
+错误:
+>
+    while (cond)
+	if (cond)
+	    cmd;
+<
+
+
+类 型							    *style-types*
+
+使用描述性的类型。可在 src/structs.h 文件里找到它们的列表，也可能在你正在工作
+的文件里有相应的 typedef。
+
+注意 所有定制类型都采用 "_T" 后缀
+
+正确: >
+    int is_valid_line_number(linenr_T lnum);
+<
+错误: >
+    int is_valid_line_number(unsigned long lnum);
+<
+
+
+空 格 和 标 点						   *style-spaces*
+
+不要在函数名和括号间留空格:
+
+正确:	func(arg);
+错误:   func (arg);
+
+但请在 if，while，switch 等之后留一个空格:
+
+正确:	if (arg)	for (;;)
+错误:	if(arg)		for(;;)
+
+在逗号和分号后留一个空格:
+
+正确:	func(arg1, arg2);	for (i = 0; i < 2; ++i)
+错误:   func(arg1,arg2);	for (i = 0;i < 2;++i)
+
+在 '='，'+'，'/' 等的前后各留一个空格:
+
+错误:	var=a*5;
+正确:	var = a * 5;
+
+使用空行来把代码分组。
+
+正确: >
+    msg_puts_title(_("\n--- Signs ---"));
+    msg_putchar('\n');
+
+    if (rbuf == NULL)
+	buf = firstbuf;
+    else
+	buf = rbuf;
+
+    while (buf != NULL && !got_int)
+<
+错误: >
+    msg_puts_title(_("\n--- Signs ---"));
+    msg_putchar('\n');
+    if (rbuf == NULL)
+	buf = firstbuf;
+    else
+	buf = rbuf;
+    while (buf != NULL && !got_int)
+<
+
+
+函 数							*style-functions*
+
+函数声明的返回类型单独一行且采用同样的缩进。
+
+正确: >
+    int
+    function_name(int arg1, int arg2)
+    {
+    }
+<
+错误: >
+    int function_name(int arg1, int arg2)
+    {
+    }
+<
+
+函数参数请用有意义的名称。
+
 
 普 通 函 数 的 使 用					*style-functions*
 
@@ -267,27 +462,30 @@ get_env_value()	Linux 系统函数
 
 杂 项							*style-various*
 
-类型定义 (typedef) 的名称应该以 "_T" 结尾: >
-    typedef int some_T;
 宏 (define) 的名称应该全部是大写: >
     #define SOME_THING
+<
+
 特性 (feature) 应该总是以 "FEAT_" 开头: >
     #define FEAT_FOO
+<
 
 不要使用 '\"'，一些编译器不能处理它。用 '"' 比较合适。
 
-不要使用:
+不要使用: >
     #if HAVE_SOME
+<
 一些编译器不能处理它并报告说 "HAVE_SOME" 没有被定义。
-请使用
+请使用 >
     #ifdef HAVE_SOME
-或
+<    
+或 >
     #if defined(HAVE_SOME)
-
+<
 
 风 格							*style-examples*
 
-一般原则: 每行一条语句。
+每行一条语句。
 
 错误:	    if (cond) a = 1;
 
@@ -305,97 +503,6 @@ get_env_value()	Linux 系统函数
 		a = 1;
 	    while (cond);
 
-错误:	    if (cond) {
-               cmd;
-               cmd;
-	    } else {
-               cmd;
-               cmd;
-	    }
-
-正确:	    if (cond)
-            {
-               cmd;
-               cmd;
-	    }
-	    else
-	    {
-               cmd;
-               cmd;
-	    }
-
-单行的块可以省略花括号。if/else 一个单行的块有括号时，另一个块最好也有括号:
-正确:	    if (cond)
-	       cmd;
-	    else
-               cmd;
-
-正确:	    if (cond)
-	    {
-	       cmd;
-	    }
-	    else
-	    {
-               cmd;
-               cmd;
-	    }
-
-使用 ANSI (新风格) 函数声明，返回类型在单独缩进的一行上。
-
-错误:	int function_name(int arg1, int arg2)
-
-正确:	/*
-	 * 解释函数的功能。
-	 *
-	 * 解释返回值。
-	 */
-	    int
-	function_name(
-	    int		arg1,		// arg1 的简短注释
-	    int		arg2)		// arg2 的简短注释
-	{
-	    int		local;		// local 的注释
-
-	    local = arg1 * arg2;
-
-
-
-空 格 和 标 点						*style-spaces*
-
-不要在函数名和括号间留空格:
-
-错误:   func (arg);
-正确:	func(arg);
-
-但请在 if，while，switch 等之后留一个空格:
-
-错误:	if(arg)		for(;;)
-正确:	if (arg)	for (;;)
-
-在逗号和分号后留一个空格:
-
-错误:   func(arg1,arg2);	for (i = 0;i < 2;++i)
-正确:	func(arg1, arg2);	for (i = 0; i < 2; ++i)
-
-在 '='，'+'，'/' 等的前后各留一个空格:
-
-错误:	var=a*5;
-正确:	var = a * 5;
-
-一般地: 使用空行来把代码分组。在每组代码的上面写上注释，这样就可以快速的知道这
-些代码是用来干什么的。
-
-正确:	/* Prepare for building the table. */
-	get_first_item();
-	table_idx = 0;
-
-	/* Build the table */
-	while (has_item())
-	    table[table_idx++] = next_item();
-
-	/* Finish up. */
-	cleanup_items();
-	generate_hash(table);
 
 ==============================================================================
 3. 设计决定						*design-decisions*

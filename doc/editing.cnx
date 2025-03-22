@@ -1,4 +1,4 @@
-*editing.txt*   适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*editing.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -315,8 +315,8 @@ File Name"。在使用能接受多于一个文件名的命令时 (如 ":next fil
 单避免该问题的方法是用 "path\[[]abc]"。这样这匹配文件名 "path[abc]"。
 
 					*starstar-wildcard*
-在 Unix、Win32、macOS 和一些其它系统上，可以扩展 "**" (也可能取决于 'shell' 设
-置。已知 zsh 可用；bash 需 bash 版本 >= 4.X)。
+在 Unix、Win32、macOS 和一些其它系统上，可以扩展 "**" (Unix 和 macOS 上也可能
+取决于 'shell' 设置。已知 zsh 可用；bash 需 bash 版本 >= 4.X)。
 它允许你在目录树里搜索。最大深度可以到 100 层目录。
 注意 有些命令的工作方式略有不同。见 |file-searching|。
 例如: >
@@ -541,8 +541,9 @@ Vim 有若干选项控制文件格式:
 
 :[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
 			将一或多个 {name} 加到参数列表里，并编辑之。
-			如果 {name} 已经在参数列表里存在，只编辑之。
-			这和用 |:argadd| 然后 |:edit| 类似。
+			不检查重复项，同一文件可以加入参数列表多次 |:argded|。
+			这和用 |:argadd| 然后 |:edit| 类似 (唯一的小区别是
+			|:edit| 不修改参数列表，所以不改动参数列表指针)。
 			文件名里的空格需用 "\" 转义。
 			[count] 的用法和 |:argadd| 一样。
 			如果当前文件不能被放弃 |abandon|，{name} 等仍会被加入
@@ -557,12 +558,12 @@ Vim 有若干选项控制文件格式:
 			后。不然，加到第 [count] 个文件之后。如果参数列表是
 			"a b c"，而 "b" 是当前参数，那么以下命令会导致:
 				命令		新的参数列表 ~
-				:argadd x	a b x c
-				:0argadd x	x a b c
-				:1argadd x	a x b c
-				:$argadd x	a b c x
+				:argadd x	a  [b]  x  c
+				:0argadd x	x   a  [b] c
+				:1argadd x	a   x  [b] c
+				:$argadd x	a  [b]  c  x
 			在末项之后:
-				:+2argadd y	a b c x y
+				:+2argadd y	a  [b]  c  x  y
 			这里不会检查重复项，因此一个文件可能加入参数列表两次。
 			可以在其后用 |:argdedupe| 来修正: >
 				:argadd *.txt | argdedupe
@@ -886,6 +887,13 @@ C 文件。在 Vim 里面，":n *.c" 命令会做同样的事。
 
 如果备份文件创建失败，写入不会进行。除非命令中加上 '!'。
 
+							*file-watcher*
+如果你发现在缓冲区写入时本应采取行动的程序 (如 inotify、entr 或 fswatch) 或调
+用 Vim 来编辑文件 (如 git) 的外部程序出现了似乎没注意到原始文件已改变的问题，
+需要考虑把 'backupcopy' 选项值为 "yes"。这样确保 Vim 写回到这些观察者程序期待
+的同一文件，而不是创建新文件 (那样这些程序就无法检测到文件改变)。另见
+|crontab|
+
 							*write-permissions*
 写入新文件时其权限设为可读写。unix 上的掩码是 0o666 外加 umask。写入已经读入的
 文件时，Vim 保留原有权限，但清除 s 位。
@@ -919,7 +927,7 @@ ACL 代表访问控制表 (Access Control List)。这是控制文件访问权限
    Vim 试图在写入文件时保留 ACL 信息。备份文件会用和原始文件相同的 ACL 信息。
    ACL 信息也用来检查文件是否只读 (在打开文件时)。
 
-				*xattr* *E1506* *E1507* *E1508* *E1509*
+					*xattr* *E1506* *E1508* *E1509*
 xattr 代表扩展属性 (Extended Attributes)。这是文件系统中，相伴文件而保存其元数
 据的高级方式。支持与否取决于实际使用的文件系统。Vim 只在 Linux 系统上支持。
    Vim 试图在写入文件时保留扩展属性信息。备份文件会获取原始文件的扩展属性。
@@ -1106,13 +1114,13 @@ Motif 使用相同的格式，但只使用第一个模式 (Motif 只提供一个
 
 例如，要使得对话框里只显示 Vim 文件，你可以用以下命令: >
 
-     let g:browsefilter = "Vim Scripts\t*.vim\nVim Startup Files\t*vimrc\n"
+     let g:browsefilter = "Vim scripts\t*.vim\nVim Startup Files\t*vimrc\n"
 
 你可以通过在某个缓冲区上设置 b:browsefilter 变量超越全局过滤的设置。最有可能的
 情况是在文件类型插件里设置 b:browsefilter，以便浏览对话框只显示和当前编辑的文
 件所属类型相关的项目。缺点是: 无法编辑一个新的不同类型的文件。要克服这一点，你
-可以加上 "All Files\t*.*\n" 作为最后的过滤。用户从而拥有访问任何类型文件的选
-择。
+可以加上 Windows 上 "All Files (*.*)\t*\n"，或其他平台上 "All Files (*) \t*\n"
+作为最后的过滤。用户从而拥有访问任何类型文件的选择。
 
 如果 Vim 不能实际支持时不想设置 browsefilter，可以测试 has("browsefilter"): >
 
@@ -1480,7 +1488,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
    这里，你可以给出一个目录，然后沿着目录树向上搜索一个文件。你可以给出若干终
    止目录来限制搜索的范围。终止目录附加于路径 (对 'path' 选项而言) 或文件名
    (对 'tags' 选项而言) 之后，中间以 ";" 分隔。如果需要多个终止目录，一一列
-   出，以 ';' 分隔。如果你不想要终止目录 (搜索直到根目录)，只要用 ";"。 >
+   出，以 ';' 分隔。如果你不想要终止目录 ("搜索直到根目录")，只要用 ";"。 >
 	/usr/include/sys;/usr
 <   会在以下位置搜索: >
 	   /usr/include/sys
@@ -1492,7 +1500,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 
    如果 Vim 的当前路径是 /u/user_x/work/release 而你用 >
 	:set path=include;/u/user_x
-<  然后用 |gf| 搜索文件，则文件在如下位置搜索: >
+<   然后用 |gf| 搜索文件，则文件在如下位置搜索: >
 	/u/user_x/work/release/include
 	/u/user_x/work/include
 	/u/user_x/include
@@ -1503,7 +1511,7 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 3) 混合向上/向下搜索
    如果 Vim 当前路径是 /u/user_x/work/release 而你用 >
 	set path=**;/u/user_x
-<  然后用 |gf| 搜索文件，则文件在如下位置搜索: >
+<   然后用 |gf| 搜索文件，则文件在如下位置搜索: >
 	/u/user_x/work/release/**
 	/u/user_x/work/**
 	/u/user_x/**
@@ -1514,12 +1522,12 @@ Win32 库的一些细节使得 Vim 对小时的变化有些混淆。第二天问
 
    因而，在上例中你可能想如此设置 path: >
 	:set path=**,/u/user_x/**
-<   这会搜索:
-	/u/user_x/work/release/** ~
-	/u/user_x/** ~
-    它会搜索相同的目录群，但顺序不同。
+<   这会搜索: >
+	/u/user_x/work/release/**
+	/u/user_x/**
+<   它会搜索相同的目录群，但顺序不同。
 
-    注意 ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 URL、使用带
-    深度限定的双星记号 (/usr/**2) 或向上搜索 (;) 记号的 'path' 项目。
+   注意 ":find"、":sfind" 和 ":tabfind" 命令的补全目前不接受包含 URL、使用带
+   深度限定的双星记号 (/usr/**2) 或向上搜索 (;) 记号的 'path' 项目。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
