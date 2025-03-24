@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="gui_w32.txt">gui_w32.txt</a> </b>   适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="gui_w32.txt">gui_w32.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -440,6 +440,33 @@ GVim 可以在 MS-Window 上编译时加入 XPM 文件的支持。 <a href="vari
 可从 github 获取 vim16x16.xpm 文件:
 <a href="https://github.com/vim/vim/blob/master/runtime/vim16x16.xpm">https://github.com/vim/vim/blob/master/runtime/vim16x16.xpm</a>
 
+
+键 码 翻 译 策 略               <b class="vimtag"> <a name="w32-experimental-keycode-trans-strategy">w32-experimental-keycode-trans-strategy</a> </b>
+
+
+补丁 v8.2.4807 修改了 W32 GVIM 以使用实验性的键码翻译方法，希望能使用更多的键
+盘快捷键，尤其是支持非标准的键盘布局。为实现此支持，放弃了 Win API
+TranslateMessage() 调用，取而代之的是用 ToUnicode() Win API 调用来识别键码。此
+方法发现了此前 TranslateMessage() 实现掩盖的一些边角案例，每个案例都需要分别处
+理。为此，我们决定目前把此功能标为实验性，并再次恢复 "传统" 键码翻译方法作为缺
+省。
+
+关于 "实验性" 键码翻译方法的讨论可能还会持续一段时间。在此期间，如果你受了
+Win32 GVIM 恢复 "传统" 键码翻译方法的影响，可在 vimrc 里再次打开 "实验性" 翻译
+方法:
+
+<code class="example">  :call test_mswin_event('set_keycode_trans_strategy', {'strategy': 'experimental'})</code>
+
+同样地，如果想回到 "传统" 键码翻译方法 (比如用作测试)，可用:
+
+<code class="example">  :call test_mswin_event('set_keycode_trans_strategy', {'strategy': 'classic'})</code>
+
+还有一个办法 (此方法对 TINY GVIM 版本尤其有用，那里不能调用
+test_mswin_event())，把环境变量 VIM_KEYCODE_TRANS_STRATEGY 设为想要的值
+("experimental" 或 "classic")，要覆盖缺省值，例如在 dos 提示符下:
+
+<code class="example">        set VIM_KEYCODE_TRANS_STRATEGY=experimental</code>
+<code class="example">        gvim.exe</code>
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
 </section>

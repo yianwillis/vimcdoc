@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="eval.txt">eval.txt</a> </b>      适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -70,6 +70,7 @@
 11. 不包含 +eval 特性    <a href="eval.html#no-eval-feature">no-eval-feature</a> 
 12. 沙盘 (sandbox)       <a href="eval.html#eval-sandbox">eval-sandbox</a> 
 13. 文本锁               <a href="eval.html#textlock">textlock</a> 
+14. Vim 脚本库           <a href="eval.html#vim-script-library">vim-script-library</a> 
 
 测试支持的文档可见  <a href="testing.html#testing.txt">testing.txt</a> 。
 剖视的文档可见  <a href="repeat.html#profiling">profiling</a> 。
@@ -311,10 +312,14 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
                                                         <b class="vimtag"> <a name="list-concatenation">list-concatenation</a> </b>
 两个列表可以用 "+" 操作符连接: 
 <code class="example">        :let longlist = mylist + [5, 6]</code>
+<code class="example">        :let longlist = [5, 6] + mylist</code>
+要在前面或后面附加项目，在项目外面加上 [] 从而把它变为一个列表。
+
+列表可在原位与另一个列表连接，用  <a href="eval.html#:let+%20">:let+=</a>  或  <a href="builtin.html#extend()">extend()</a> : 
 <code class="example">        :let mylist += [7, 8]</code>
-<code class="example"></code>
-要在前面或后面附加项目，在项目外面加上 [] 从而把它变为一个列表。要改变列表内部
-的值，见下  <a href="eval.html#list-modification">list-modification</a> 。
+<code class="example">        :call extend(mylist, [7, 8])</code>
+
+要改变列表内部的值，见下  <a href="eval.html#list-modification">list-modification</a> 。
 
 
 <code class="section">子列表</code>
@@ -419,6 +424,17 @@ str2float() 可转换字符串到浮点数，printf() 从浮点数到字符串�
 的项目数: 
 <code class="example">        :let list[3:5] = [3, 4, 5]</code>
 <code class="example"></code>
+要在原位增加列表的项目，可用  <a href="eval.html#:let+%20">:let+=</a>  ( <a href="eval.html#list-concatenation">list-concatenation</a> ): 
+<code class="example">        :let listA = [1, 2]</code>
+<code class="example">        :let listA += [3, 4]</code>
+
+如果两个变量指向同一列表，在原位修改一个列表会使被引用的列表也在原位被修改: 
+<code class="example">        :let listA = [1, 2]</code>
+<code class="example">        :let listB = listA</code>
+<code class="example">        :let listB += [3, 4]</code>
+<code class="example">        :echo listA</code>
+<code class="example">        [1, 2, 3, 4]</code>
+
 给列表增加和删除项目可以通过函数完成。一些例子如下: 
 <code class="example">        :call insert(list, 'a')         " 在最前面插入 'a'</code>
 <code class="example">        :call insert(list, 'a', 3)      " 在 list[3] 前插入项目 'a'</code>
@@ -708,12 +724,15 @@ blob 之后用方括号放上索引可以访问 blob 中的字节。索引从零
 
 
 <code class="section">blob 连接 </code>
-
+                                                        <b class="vimtag"> <a name="blob-concatenation">blob-concatenation</a> </b>
 用 "+" 操作符可以连接两个 blob: 
 <code class="example">        :let longblob = myblob + 0z4455</code>
+<code class="example">        :let longblob = 0z4455 + myblob</code>
+
+blob 在原位与另一个blob 连接，用  <a href="eval.html#:let+%20">:let+=</a> : 
 <code class="example">        :let myblob += 0z6677</code>
 <code class="example"></code>
-要在原位修改 blob，可见下述的  <a href="eval.html#blob-modification">blob-modification</a> 。
+更多关于在原位修改 blob 的细节可见下述的  <a href="eval.html#blob-modification">blob-modification</a> 。
 
 
 <code class="section">blob 部分 </code>
@@ -736,7 +755,7 @@ blob 的一部分可用在方括号内指定以冒号分隔的开始处和结束
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">blob 修改 </code>
-                                        <b class="vimtag"> <a name="blob-modification">blob-modification</a> </b> <b class="vimtag"> <a name="E1182">E1182</a> </b> <b class="vimtag"> <a name="E1184">E1184</a> </b>
+                                                <b class="vimtag"> <a name="blob-modification">blob-modification</a> </b> <b class="vimtag"> <a name="E1184">E1184</a> </b>
 要修改 blob 的特定字节，可以这么用  <a href="eval.html#:let">:let</a> : 
 <code class="example">        :let blob[4] = 0x44</code>
 <code class="example"></code>
@@ -749,6 +768,18 @@ blob 的一部分可用在方括号内指定以冒号分隔的开始处和结束
 要修改 blob 的部分，指定要修改的开始和结束字节。新值必须和范围的字节数相同: 
 <code class="example">        :let blob[3:5] = 0z334455</code>
 <code class="example"></code>
+要在原位增加 blob 的项目，可用  <a href="eval.html#:let+%20">:let+=</a>  ( <a href="eval.html#blob-concatenation">blob-concatenation</a> ): 
+<code class="example">        :let blobA = 0z1122</code>
+<code class="example">        :let blobA += 0z3344</code>
+
+如果两个变量指向同一 blob，在原位修改一个 blob 会使被引用的 blob 也在原位被修
+改: 
+<code class="example">        :let blobA = 0z1122</code>
+<code class="example">        :let blobB = blobA</code>
+<code class="example">        :let blobB += 0z3344</code>
+<code class="example">        :echo blobA</code>
+<code class="example">        0z11223344</code>
+
 也可用  <a href="builtin.html#add()">add()</a> 、 <a href="builtin.html#remove()">remove()</a>  和  <a href="builtin.html#insert()">insert()</a>  函数。
 
 
@@ -826,7 +857,8 @@ MY_VAR_6                viminfo 文件
         expr5 is expr5          相同的  <a href="eval.html#List">List</a> 、 <a href="eval.html#Dictionary">Dictionary</a>  或  <a href="eval.html#Blob">Blob</a>  实例
         expr5 isnot expr5       不同的  <a href="eval.html#List">List</a> 、 <a href="eval.html#Dictionary">Dictionary</a>  或  <a href="eval.html#Blob">Blob</a>  实例
 
- <a href="eval.html#expr5">expr5</a>  expr6 &lt;&lt; expr6          按位左移
+ <a href="eval.html#expr5">expr5</a>  expr6
+        expr6 &lt;&lt; expr6          按位左移
         expr6 &gt;&gt; expr6          按位右移
 
  <a href="eval.html#expr6">expr6</a>  expr7
@@ -1751,7 +1783,8 @@ StartCounting() 在哪里调用，s:counter 变量总可以在 MyCounter() 里�
 
 预定义的 VIM 变量:                              <b class="vimtag"> <a name="vim-variable">vim-variable</a> </b> <b class="vimtag"> <a name="v:var">v:var</a> </b> <b class="vimtag"> <a name="v:">v:</a> </b>
                                                         <b class="vimtag"> <a name="E963">E963</a> </b> <b class="vimtag"> <a name="E1063">E1063</a> </b>
-有些变量可以被用户设置，但不能改变类型。
+多数变量只读，如果变量可以被用户设置，下面对应的变量描述会说明，但类型不能改
+变。
 
                                         <b class="vimtag"> <a name="v:argv">v:argv</a> </b> <b class="vimtag"> <a name="argv-variable">argv-variable</a> </b>
 v:argv          调用 Vim 时的命令行参数。这是字符串列表。首项是 Vim 命令。
@@ -1784,7 +1817,7 @@ v:beval_winid   鼠标指针所在的窗口 ID  <a href="windows.html#window-ID"
                                         <b class="vimtag"> <a name="v:char">v:char</a> </b> <b class="vimtag"> <a name="char-variable">char-variable</a> </b>
 v:char          计算 <a href="options.html#'formatexpr'">'formatexpr'</a> 时使用的参数和用于带 <code class="special">&lt;expr&gt;</code> 的缩写中输入的字
                 符  <a href="map.html#:map-%3Cexpr%3E">:map-&lt;expr&gt;</a> 。
-                也用于  <a href="autocmd.html#InsertCharPre">InsertCharPre</a>  和  <a href="autocmd.html#InsertEnter">InsertEnter</a>  事件。
+                也用于  <a href="autocmd.html#InsertCharPre">InsertCharPre</a> 、 <a href="autocmd.html#InsertEnter">InsertEnter</a>  和  <a href="autocmd.html#KeyInputPre">KeyInputPre</a>  事件。
 
                         <b class="vimtag"> <a name="v:charconvert_from">v:charconvert_from</a> </b> <b class="vimtag"> <a name="charconvert_from-variable">charconvert_from-variable</a> </b>
 v:charconvert_from
@@ -1817,9 +1850,12 @@ v:collate       运行时环境当前 locale 设置的排序规则。这使 Vim 
                                                                 <b class="vimtag"> <a name="v:colornames">v:colornames</a> </b>
 v:colornames    映射色彩名对十六进色彩字符串的字典。色彩名可用于
                  <a href="syntax.html#highlight-guifg">highlight-guifg</a> 、 <a href="syntax.html#highlight-guibg">highlight-guibg</a>  和  <a href="syntax.html#highlight-guisp">highlight-guisp</a>  的参
-                数。更新 v:colornames 里的项目不会立即影响语法高亮有影响。高亮
-                命令 (可能由色彩方案脚本提供) 需要重新进行计算以更新色彩值。例
-                如: 
+                数。
+
+                字典的键值 (色彩名) 必须为小写，因为 Vim 使用小写名查找色彩。
+
+                更新 v:colornames 里的项目不会立即影响语法高亮有影响。高亮命令
+                (可能由色彩方案脚本提供) 需要重新进行计算以更新色彩值。例如: 
 <code class="example"></code>
 <code class="example">                    :let v:colornames['fuscia'] = '#cf3ab4'</code>
 <code class="example">                    :let v:colornames['mauve'] = '#915f6d'</code>
@@ -1842,6 +1878,9 @@ v:colornames    映射色彩名对十六进色彩字符串的字典。色彩名�
                 果。而且可能也不能达成你想要的，因为  <a href="syntax.html#:colorscheme">:colorscheme</a>  和
                  <a href="syntax.html#:highlight">:highlight</a>  命令两者都会自动载入  <code class="badlink">colors/lists/default.vim</code> 
                 里的所有色彩脚本。
+
+                你可以修改那个文件，但只能加新键而不要去修改已有的，否则 Vim
+                会跳过文件的载入 (假定文件没有改变)。
 
                                 <b class="vimtag"> <a name="v:completed_item">v:completed_item</a> </b> <b class="vimtag"> <a name="completed_item-variable">completed_item-variable</a> </b>
 v:completed_item
@@ -1923,8 +1962,8 @@ v:event         包含当前  <a href="autocmd.html#autocommand">autocommand</a>
 
 
                                         <b class="vimtag"> <a name="v:exception">v:exception</a> </b> <b class="vimtag"> <a name="exception-variable">exception-variable</a> </b>
-v:exception     最近捕获且没有完成的例外的值。见  <a href="eval.html#v:throwpoint">v:throwpoint</a>  和
-                 <a href="eval.html#throw-variables">throw-variables</a> 。
+v:exception     最近捕获且没有完成的例外的值。见  <a href="eval.html#v:stacktrace">v:stacktrace</a> 、
+                 <a href="eval.html#v:throwpoint">v:throwpoint</a>  和  <a href="eval.html#throw-variables">throw-variables</a> 。
                 例如: 
 <code class="example">        :try</code>
 <code class="example">        :  throw "oops"</code>
@@ -2172,7 +2211,7 @@ v:progpath      包含 Vim 启动时使用的命令，使用的形式如果传�
                 不会带上 ".exe"。
                 只读。
 
-                                    <b class="vimtag"> <a name="v:python3_version">v:python3_version</a> </b> <b class="vimtag"> <a name="python3-version-variable">python3-version-variable</a> </b>
+                                <b class="vimtag"> <a name="v:python3_version">v:python3_version</a> </b> <b class="vimtag"> <a name="python3-version-variable">python3-version-variable</a> </b>
 v:python3_version
                 Vim 编译时使用的 Python 3 版本。Python 动态载入时
                 ( <a href="if_pyth.html#python-dynamic">python-dynamic</a> )，此版本必须严格匹配 Python 的版本号，至少要
@@ -2237,6 +2276,11 @@ v:sizeoflong    一个 long 值的字节数。取决于 Vim 的编译环境。�
 v:sizeofpointer 一个 pointer 值的字节数。取决于 Vim 的编译环境。只对决定测试会
                 否给出期待中的结果有用。
 
+                                        <b class="vimtag"> <a name="v:stacktrace">v:stacktrace</a> </b> <b class="vimtag"> <a name="stacktrace-variable">stacktrace-variable</a> </b>
+v:stacktrace    最近捕捉且未完成处理的例外的栈追踪。栈追踪的结构可见
+                 <a href="builtin.html#getstacktrace()">getstacktrace()</a> 。另见  <a href="eval.html#v:exception">v:exception</a> 、 <a href="eval.html#v:throwpoint">v:throwpoint</a>  和
+                 <a href="eval.html#throw-variables">throw-variables</a> 。
+
                                         <b class="vimtag"> <a name="v:statusmsg">v:statusmsg</a> </b> <b class="vimtag"> <a name="statusmsg-variable">statusmsg-variable</a> </b>
 v:statusmsg     最近给出的状态消息。可以设置该变量。
 
@@ -2287,14 +2331,21 @@ v:t_blob         <a href="eval.html#Blob">Blob</a>  的类型值。只读。见:
 v:t_class        <a href="vim9class.html#class">class</a>  的类型值。只读。见:  <a href="builtin.html#type()">type()</a> 
                                         <b class="vimtag"> <a name="v:t_object">v:t_object</a> </b> <b class="vimtag"> <a name="t_object-variable">t_object-variable</a> </b>
 v:t_object       <a href="vim9class.html#object">object</a>  的类型值。只读。见:  <a href="builtin.html#type()">type()</a> 
+                                        <b class="vimtag"> <a name="v:t_typealias">v:t_typealias</a> </b> <b class="vimtag"> <a name="t_typealias-variable">t_typealias-variable</a> </b>
+v:t_typealias    <code class="badlink">typealias</code>  的类型值。只读。见:  <a href="builtin.html#type()">type()</a> 
+                                        <b class="vimtag"> <a name="v:t_enum">v:t_enum</a> </b> <b class="vimtag"> <a name="t_enum-variable">t_enum-variable</a> </b>
+v:t_enum         <code class="badlink">enum</code>  的类型值。只读。见:  <a href="builtin.html#type()">type()</a> 
+                                        <b class="vimtag"> <a name="v:t_enumvalue">v:t_enumvalue</a> </b> <b class="vimtag"> <a name="t_enumvalue-variable">t_enumvalue-variable</a> </b>
+v:t_enumvalue    <code class="badlink">enumvalue</code>  的类型值。只读。见:  <a href="builtin.html#type()">type()</a> 
 
                                 <b class="vimtag"> <a name="v:termresponse">v:termresponse</a> </b> <b class="vimtag"> <a name="termresponse-variable">termresponse-variable</a> </b>
 v:termresponse  使用  <a href="term.html#t_RV">t_RV</a>  termcap 项目返回的终端的转义序列。Vim 收到 ESC [
                 或者 CSI 开始，然后是 '&gt;' 或 '?'，并以一个 'c' 结束，并且其间
                 只包含数字和 ';' 的转义序列的时候，会设置该值。
                 如果设置该选项，会激活 TermResponse 自动命令事件，这样你就可以
-                对终端的应答做出反应。可用  <a href="builtin.html#terminalprops()">terminalprops()</a>  来查看 Vim 对终端
-                了解的情况。
+                对终端的应答做出反应。也会激活 TermResponseAll 事件，其中
+                <code class="special">&lt;amatch&gt;</code> 设为 "version"。可用  <a href="builtin.html#terminalprops()">terminalprops()</a>  来查看 Vim 对
+                终端了解的情况。
                 新的 xterm 的应答是: "<code class="special">&lt;Esc&gt;</code>[&gt; Pp ; Pv ; Pc c"。 Pp 是终端类型:
                 0 代表 vt100，而 1 代表 vt220。 Pv 是补丁号 (因为这是 patch 95
                 引入的，补丁号应该总是 95 或更高)。Pc 总是零。
@@ -2304,22 +2355,28 @@ v:termresponse  使用  <a href="term.html#t_RV">t_RV</a>  termcap 项目返回�
 
                                                 <b class="vimtag"> <a name="v:termblinkresp">v:termblinkresp</a> </b>
 v:termblinkresp 终端用于  <a href="term.html#t_RC">t_RC</a>  termcap 项目的转义序列。用于找出终端光标是否闪
-                烁。用于  <a href="terminal.html#term_getcursor()">term_getcursor()</a> 。
+                烁。用于  <a href="terminal.html#term_getcursor()">term_getcursor()</a> 。也会激活 TermResponseAll 事件，其
+                中 <code class="special">&lt;amatch&gt;</code> 设为 "cursorblink"。
 
                                                 <b class="vimtag"> <a name="v:termstyleresp">v:termstyleresp</a> </b>
 v:termstyleresp 终端用于  <a href="term.html#t_RS">t_RS</a>  termcap 项目的转义序列。用于找出终端光标的形
-                状。用于  <a href="terminal.html#term_getcursor()">term_getcursor()</a> 。
+                状。用于  <a href="terminal.html#term_getcursor()">term_getcursor()</a> 。也会激活 TermResponseAll 事件，其
+                中 <code class="special">&lt;amatch&gt;</code> 设为 "cursorshape"。
 
                                                 <b class="vimtag"> <a name="v:termrbgresp">v:termrbgresp</a> </b>
 v:termrbgresp   终端用于  <a href="term.html#t_RB">t_RB</a>  termcap 项目的转义序列。用于找出终端的背景色，
-                见 <a href="options.html#'background'">'background'</a>。
+                见 <a href="options.html#'background'">'background'</a>。也会激活 TermResponseAll 事件，其中 <code class="special">&lt;amatch&gt;</code>
+                设为 "background"。
 
                                                 <b class="vimtag"> <a name="v:termrfgresp">v:termrfgresp</a> </b>
 v:termrfgresp   终端用于  <a href="term.html#t_RF">t_RF</a>  termcap 项目的转义序列。用于找出终端的前景色。
+                也会激活 TermResponseAll 事件，其中 <code class="special">&lt;amatch&gt;</code> 设为
+                "foreground"。
 
                                                 <b class="vimtag"> <a name="v:termu7resp">v:termu7resp</a> </b>
 v:termu7resp    终端用于  <a href="term.html#t_u7">t_u7</a>  termcap 项目的转义序列。用于找出终端如何处理二
-                义性宽度字符，见 <a href="options.html#'ambiwidth'">'ambiwidth'</a>。
+                义性宽度字符，见 <a href="options.html#'ambiwidth'">'ambiwidth'</a>。也会激活 TermResponseAll 事件，
+                其中 <code class="special">&lt;amatch&gt;</code> 设为 "ambiguouswidth"。
 
                                         <b class="vimtag"> <a name="v:testing">v:testing</a> </b> <b class="vimtag"> <a name="testing-variable">testing-variable</a> </b>
 v:testing       必须在  <a href="testing.html#test_garbagecollect_now()">test_garbagecollect_now()</a>  之前设置。
@@ -2334,7 +2391,7 @@ v:this_session  最近载入或者保存的会话文件的文件名  <a href="st
 
                                         <b class="vimtag"> <a name="v:throwpoint">v:throwpoint</a> </b> <b class="vimtag"> <a name="throwpoint-variable">throwpoint-variable</a> </b>
 v:throwpoint    最近捕获且未完成的例外的抛出位置。输入的命令不会设置此变量。另
-                见  <a href="eval.html#v:exception">v:exception</a>  和  <a href="eval.html#throw-variables">throw-variables</a> 。
+                见  <a href="eval.html#v:exception">v:exception</a> 、 <a href="eval.html#v:stacktrace">v:stacktrace</a>  和  <a href="eval.html#throw-variables">throw-variables</a> 。
                 例如: 
 <code class="example">        :try</code>
 <code class="example">        :  throw "oops"</code>
@@ -2381,8 +2438,8 @@ v:vim_did_enter 直到绝大部分的初始化工作做完之前保持为零。�
 v:warningmsg    最近给出的<code class="note">警告</code>消息。该变量可以设置。
 
                                         <b class="vimtag"> <a name="v:windowid">v:windowid</a> </b> <b class="vimtag"> <a name="windowid-variable">windowid-variable</a> </b>
-v:windowid      运行基于 X11 的任何 GUI，或者在终端运行且 Vim 连接到 X 服务器
-                ( <a href="starting.html#-X">-X</a> ) 时，给出窗口号。
+v:windowid      运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim 连接到 X
+                服务器 ( <a href="starting.html#-X">-X</a> ) 时，给出窗口号。
                 运行 MS-Windows GUI 时，给出窗口的句柄。
                 否则该值为零。
                 <code class="note">注意</code>: Vim 内部的窗口请用  <a href="builtin.html#winnr()">winnr()</a>  或  <a href="builtin.html#win_getid()">win_getid()</a> ，见
@@ -2484,6 +2541,7 @@ v:windowid      运行基于 X11 的任何 GUI，或者在终端运行且 Vim �
 :let <code class="special">{var}</code> ..= <code class="special">{expr1}</code>  类似于 ":let <code class="special">{var}</code> = <code class="special">{var}</code> .. <code class="special">{expr1}</code>"。
                         如果 <code class="special">{var}</code> 还没有设置或者 <code class="special">{var}</code> 和 <code class="special">{expr1}</code> 的类型不符
                         合操作符的要求，失败。
+                         <code class="badlink">+=</code>  在原位修改  <a href="eval.html#List">List</a>  或  <a href="eval.html#Blob">Blob</a> ，而不是创建新的。
                         Vim 脚本版本 2 或之后不支持  <code class="badlink">.=</code>  ，见
                          <a href="eval.html#vimscript-version">vimscript-version</a> 。
 
@@ -2698,7 +2756,7 @@ text...
 :cons[t] <code class="special">{var-name}</code> = <code class="special">{expr1}</code>
 :cons[t] [<code class="special">{name1}</code>, <code class="special">{name2}</code>, ...] = <code class="special">{expr1}</code>
 :cons[t] [<code class="special">{name}</code>, ..., ; <code class="special">{lastname}</code>] = <code class="special">{expr1}</code>
-:cons[t] <code class="special">{var-name}</code> =&lt;&lt; <code class="special">[trim]</code> <code class="special">{marker}</code>
+:cons[t] <code class="special">{var-name}</code> =&lt;&lt; <code class="special">[trim]</code> <code class="special">[eval]</code> <code class="special">{marker}</code>
 text...
 text...
 <code class="special">{marker}</code>
@@ -2720,9 +2778,9 @@ text...
 <code class="example">                                let lconst[0] = 2  " 报错！</code>
 <code class="example">                                let lconst[1][0] = 'b'  " OK</code>
                                                         <b class="vimtag"> <a name="E995">E995</a> </b>
-                         <a href="eval.html#:const">:const</a>  不能用来修改变量: 
+                        用  <a href="eval.html#:const">:const</a>  来修改已有的变量会报错: 
 <code class="example">                                :let x = 1</code>
-<code class="example">                                :const x = 2  " Error!</code>
+<code class="example">                                :const x = 1  " 报错!</code>
                                                         <b class="vimtag"> <a name="E996">E996</a> </b>
                         <code class="note">注意</code> 这里不能使用环境变量、选项值和寄存器值，因为它们
                         不能被锁定。
@@ -2778,6 +2836,9 @@ text...
 <code class="example">                                :lockvar l</code>
 <code class="example">                                :let cl[1] = 99         " won't work!</code>
                         为了避免这一点，可以给列表建立备份。见  <a href="builtin.html#deepcopy()">deepcopy()</a> 。
+
+                                                        <b class="vimtag"> <a name="E1391">E1391</a> </b> <b class="vimtag"> <a name="E1392">E1392</a> </b>
+                        目前 <code class="emphasis">不</code> 支持加锁和解锁对象和类变量。
 
 
 :unlo[ckvar][!] <code class="special">[depth]</code> <code class="special">{name}</code> ...              <b class="vimtag"> <a name=":unlockvar">:unlockvar</a> </b> <b class="vimtag"> <a name=":unlo">:unlo</a> </b> <b class="vimtag"> <a name="E1246">E1246</a> </b>
@@ -3328,9 +3389,9 @@ catch 子句。
 <code class="example">        :  catch /^\d\+$/</code>
 <code class="example">        :    echo "Number thrown.  Value is" v:exception</code>
 <code class="example"></code>
-你也许会对在什么地方抛出例外也感兴趣。它被保存在  <a href="eval.html#v:throwpoint">v:throwpoint</a>  里。<code class="note">注意</code>
-"v:exception" 和 "v:throwpoint" 可用于最近捕获的例外，只要该例外还没有完成处
-理。
+你也许会对在什么地方抛出例外也感兴趣。它被保存在  <a href="eval.html#v:throwpoint">v:throwpoint</a>  里。可用
+ <a href="eval.html#v:stacktrace">v:stacktrace</a>  找到栈追踪。<code class="note">注意</code> "v:exception"、"v:stacktrace" 和
+"v:throwpoint" 可用于最近捕获的例外，只要该例外还没有完成处理。
    例如: 
 <code class="example"></code>
 <code class="example">        :function! Caught()</code>
@@ -4251,6 +4312,77 @@ Vim):
         - 编辑其它文件
         - 关闭窗口或者退出 Vim
         - 其它
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>14. Vim 脚本库                                          <b class="vimtag"> <a name="vim-script-library">vim-script-library</a> </b></h4>
+Vim 发布捆绑了 Vim 脚本库，可用于运行时库和脚本作者。目前只包含少量函数，但将
+来可能会扩充。
+
+函数可用于  <a href="vim9.html#Vim9-script">Vim9-script</a>  和老式的 Vim 脚本 (以兼容 Vim 非 9.0 版本和 Neovim)。
+
+                                                        <b class="vimtag"> <a name="dist%23vim">dist#vim</a> </b> <b class="vimtag"> <a name="dist%23vim9">dist#vim9</a> </b>
+函数使用自动载入前缀 "dist#vim" (以兼容老式 Vim 脚本和 Neovim) 和用于 Vim9 脚
+本的 "dist#vim9"。
+
+可用以下函数:
+
+<code class="section">dist#vim#IsSafeExecutable(filetype, executable) </code>
+<code class="section">dist#vim9#IsSafeExecutable(filetype:string, executable:string): bool </code>
+
+此函数接受文件类型和可执行文件，并检查执行该文件是否安全。由于安全原因，用户可
+能不想让 Vim 执行未知的可执行文件，也可以通过置位 "<code class="special">&lt;filetype&gt;</code>_exec" 变量
+( <a href="filetype.html#plugin_exec">plugin_exec</a> ) 来禁止执行特定的文件类型。
+
+返回值为  <a href="vim9.html#true">true</a>  或  <a href="vim9.html#false">false</a> ，指示插件是否应执行给定可执行程序。接受以下参数:
+
+<code class="section">        参数            类型 </code>
+
+        filetype        字符串
+        executable      字符串
+
+                                                      <b class="vimtag"> <a name="dist%23vim9%23Open()">dist#vim9#Open()</a> </b> <b class="vimtag"> <a name=":Open">:Open</a> </b>
+                                                      <b class="vimtag"> <a name="g:Openprg">g:Openprg</a> </b> <b class="vimtag"> <a name="gx">gx</a> </b>
+<code class="section">dist#vim9#Open(file: string) </code>
+
+用系统缺省处理程序打开  <code class="badlink">path</code>  (macOS  <code class="badlink">open</code> ，Windows  <code class="badlink">explorer.exe</code> ，Linux
+ <code class="badlink">xdg-open</code>  等)。如果存在变量  <a href="eval.html#g:Openprg">g:Openprg</a> ，使用变量指定的字符串代替系统缺省。
+
+gx 映射缺省调用此函数。可视模式下试图打开可视选择的文本。
+
+相关设置变量:
+ <code class="badlink">g:gx_word</code> : 控制 gx 如何选择光标下的文本。为了后向兼容， <a href="pi_netrw.html#g:netrw_gx">g:netrw_gx</a>  用作后
+             备。
+             (缺省:  <code class="badlink"><code class="special">&lt;cfile&gt;</code></code> )
+
+ <code class="badlink">g:nogx</code> : 关闭 gx 映射。为了后向兼容， <a href="pi_netrw.html#g:netrw_nogx">g:netrw_nogx</a>  用作后备。(缺省:  <code class="badlink">未设置</code> )
+
+
+<code class="note">注意</code>: path 自动应用转义。
+
+用法: &gt;vim
+        :call dist#vim9#Open(<code class="special">&lt;path&gt;</code>)
+        :Open <code class="special">&lt;path&gt;</code>
+&lt;
+
+                                                  <b class="vimtag"> <a name="dist%23vim9%23Launch()">dist#vim9#Launch()</a> </b> <b class="vimtag"> <a name=":Launch">:Launch</a> </b>
+<code class="section">dist#vim9#Launch(file: string) </code>
+
+使用合适的系统程序来运行 <code class="special">&lt;args&gt;</code>。用于在 Vim 里启动 GUI 程序。
+
+<code class="note">注意</code>: 由用户决定如何转义 <code class="special">&lt;args&gt;</code>
+
+示例: &gt;vim
+        vim9script
+
+        import autoload 'dist/vim9.vim'
+        # 在另一 xterm 窗口上运行 <a href="options.html#'makeprg'">'makeprg'</a>
+        vim9.Launch('xterm ' .. expandcmd(&amp;makeprg))
+&lt;
+
+用法: &gt;vim
+        :call dist#vim9#Launch(<code class="special">&lt;args&gt;</code>)
+        :Launch <code class="special">&lt;app&gt;</code> <code class="special">&lt;args&gt;</code>.
+&lt;
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

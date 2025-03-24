@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="fold.txt">fold.txt</a> </b>      适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -116,7 +116,8 @@
 这些是表达式的计算条件:
 - 当前缓冲区和窗口值依所在行而定
 - 变量 "v:lnum" 被定为该行行号
-- 计算结果将用以下方式解释:
+
+foldexpr 的计算结果决定缩进级别:
 <code class="section">  值                    代表 </code>
   0                     这行不折叠
   1, 2, ..              这行的折叠级别 1，2 等
@@ -128,6 +129,8 @@
   "&lt;1", "&lt;2", ..        此折叠级别在本行结束
   "&gt;1", "&gt;2", ..        此折叠级别在本行开始
 
+"="、"s" 和 "a" 诸值更耗时，请见  <a href="fold.html#fold-expr-slow">fold-expr-slow</a> 。
+
 不需要用 "&gt;1" ("&lt;1") 标志折叠的开始 (结束)。当这行折叠级别高于 (低于) 上一行的
 级别时，折叠将开始 (结束)。
 
@@ -136,11 +139,6 @@
 
 表达式中有错误或者计算结果不能识别时，Vim 不会产生错误消息，而是将折叠级别设为
 0。所以当需要调试时，可将 <a href="options.html#'debug'">'debug'</a> 选项设为 "msg"，错误消息就可以被见到了。
-
-<code class="note">备注</code>: 由于每一行关于表达式的值都要被计算，这一折叠方式可能会很慢！
-
-最好避免使用 "="，"a" 和 "s" 作为返回值，因为 Vim 不得不经常向后回溯以得到折叠
-级别。这会降低执行速度。
 
 <a href="options.html#'foldexpr'">'foldexpr'</a> 表达式以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始时，它们被脚本 ID 替换
 ( <a href="userfunc.html#local-function">local-function</a> )。例如: 
@@ -164,6 +162,33 @@ foidlevel() 返回 -1。它返回的级别对应于该行开始的位置，尽�
 
 折叠可能会没有及时更新。用  <a href="fold.html#zx">zx</a>  或者  <a href="fold.html#zX">zX</a>  可以强制折叠更新。
 
+尽 量 减 少 计 算 开 销                                 <b class="vimtag"> <a name="fold-expr-slow">fold-expr-slow</a> </b>
+
+由于计算开销，此折叠方法可使 Vim 停止响应，尤其是在一开始需要计算所有行的折叠
+级别的时候。在此之后每做一个改动，Vim 会使折叠级别的重新计算限制在影响折叠级别
+的行范围内 (其他行的已知折叠级别会被重用)。
+
+因而，折叠表达式应尽量减少一行的计算所依赖的行数: 例如，最好避免使用 "="，"a"
+和 "s" 作为返回值，因为它们需要 Vim 向后回溯，计算之前行的折叠级别，直到找到独
+立的折叠级别为止。
+
+如果这很难，次优解是在缓冲区局部变量里缓存折叠级别 (b:foldlevels)，只在
+ <a href="eval.html#b:changedtick">b:changedtick</a>  里更新:
+&gt;vim
+  vim9script
+  def MyFoldFunc(): number
+    if b:lasttick == b:changedtick
+      return b:foldlevels[v:lnum - 1]
+    endif
+    b:lasttick = b:changedtick
+    b:foldlevels = []
+    # compute foldlevels ...
+    return b:foldlevels[v:lnum - 1]
+  enddef
+  set foldexpr=s:MyFoldFunc()
+&lt;
+上例通过预编译的不带参数的 Vim9 脚本函数达到了进一步加速 (仍然必须用 v:lnum)。
+见  <a href="vim9.html#expr-option-function">expr-option-function</a> 。
 
 语 法                                           <b class="vimtag"> <a name="fold-syntax">fold-syntax</a> </b>
 
@@ -417,7 +442,7 @@ zk              向上移动到前一折叠的结束处。关闭的折叠也被�
 
 <code class="section">对 折 叠 执 行 命 令 </code>
 
-:<code class="special">[range]</code>foldd[oopen] <code class="special">{cmd}</code>                      <b class="vimtag"> <a name=":foldd">:foldd</a> </b> <b class="vimtag"> <a name=":folddo">:folddo</a> </b> <b class="vimtag"> <a name=":folddoopen">:folddoopen</a> </b>
+:<code class="special">[range]</code>foldd[oopen] <code class="special">{cmd}</code>              <b class="vimtag"> <a name=":foldd">:foldd</a> </b> <b class="vimtag"> <a name=":folddo">:folddo</a> </b> <b class="vimtag"> <a name=":folddoopen">:folddoopen</a> </b>
                 对所有不在关闭的折叠中的行执行 <code class="special">{cmd}</code>。
                 给定 <code class="special">[range]</code> 时，仅对范围内那些行起作用。
                 每次命令被执行时，光标会被定位在要被操作的行上。
