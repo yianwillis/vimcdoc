@@ -1,4 +1,4 @@
-*if_pyth.txt*   适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*if_pyth.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Paul Moore
@@ -187,6 +187,10 @@ vim.eval(str)						*python-eval*
 	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name': ~
 	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}] ~
 
+	注意: Vim9 脚本里，def 函数的局部变量在 python 计算里不可见。要把局部
+	变量传递给 python 的计算，调用 |py3eval()| 及类似函数时可用 {locals}
+	字典。
+
 vim.bindeval(str)					*python-bindeval*
 	类似于 |python-eval|，但返回 |python-bindeval-objects| 中描述的特殊对
 	象。这些 python 对象可用于修改 (|List| 或 |Dictionary|) 或调用
@@ -306,7 +310,8 @@ Python 'runtimepath' 处理				*python-special-path*
 在 python 中，vim.VIM_SPECIAL_PATH 特殊目录用于代表 'runtimepath' 的路径列表:
 如果 sys.path 包含此目录而且 sys.path_hooks 包含 vim.path_hooks，python 会试图
 载入 'runtimepath' 的每个 {rtp} 对应的 {rtp}/python2 (或 python3) 和
-{rtp}/pythonx (同时适用于两个 python 版本) 模块。
+{rtp}/pythonx (同时适用于两个 python 版本) 模块 (备注: 大概从 Python 3.12.0a7
+开始，imp 模块的 find_module() 已被删除)。
 
 实现大致如下，但以 C 编写: >
 
@@ -365,9 +370,11 @@ vim.VIM_SPECIAL_PATH					*python-VIM_SPECIAL_PATH*
 
 vim.find_module(...)					*python-find_module*
 vim.path_hook(path)					*python-path_hook*
+vim.find_spec(...)					*python-find_spec*
 	用于实现上述路径载入的方法或对象。除非你想对 sys.meta_path 进行处理而
-	可以看看 vim.path_hook，请不要直接使用它们。将来的 vim 版本不一定保证
-	任何这里描述的对象会继续存在。
+	可以看看 vim.path_hook，请不要直接使用它们，vim.find_spec() 从 Python
+	3.7 开始可用。
+	将来的 vim 版本不一定保证任何这里描述的对象会继续存在。
 
 vim._get_paths						*python-_get_paths*
 	用于产生给路径钩搜索的路径列表的方法。可以用于调试，但不要假定将来的
@@ -471,7 +478,7 @@ vim._get_paths						*python-_get_paths*
 
 可通过 vim 模块的 "Range" 属性取得范围对象的类型。
 
-例如 (假设 r 是当前范围):
+例如 (假设 r 是当前范围): >
 	# 发送范围内的所有行给缺省打印机
 	vim.command("%d,%dhardcopy!" % (r.start+1,r.end+1))
 
@@ -659,6 +666,9 @@ vim.Function 对象				*python-Function*
 为了访问双向接口的方便，可用 |pyeval()| 和 |py3eval()| 函数来计算 Python 表达
 式然后返回计算结果给 Vim 脚本。也可用 |pyxeval()|。
 
+可选的 {locals} 字典可以在计算时注入局部变量。这对 vim9script 尤其有用，因为那
+里 vim.eval |python-eval| 找不到 def 函数的局部变量。
+
 Python "None" 值转化为 v:none。
 
 ==============================================================================
@@ -674,8 +684,9 @@ MS-Windows 和 Unix 上，可以动态调入 Python 库。|:version| 输出这�
 MS-Windows ~
 
 要使用 Python 接口，Python DLL 必须在搜索路径上。控制台窗口里输入 "path" 可以
-看到 (搜索路径) 当前使用的目录。也可用 'pythondll' 或 'pythonthreedll' 选项来
-指定 Python DLL。
+看到 (搜索路径) 当前使用的目录。如果搜索路径上找不到 DLL，Vim 会检查注册表以寻
+找 Python 安装的位置。也可用 'pythondll' 或 'pythonthreedll' 选项来指定 Python
+DLL。
 
 DLL 的名字应该匹配 Vim 编译时所使用的 Python 版本。目前，用于 Python 2 的名字
 为 "python27.dll"，也就是 Python 2.7。用于 Python 3 的是 python36.dll (Python
@@ -696,6 +707,8 @@ Unix ~
 稳定 ABI，此限制可放宽，任何版本不低于 |v:python3_version| 的 Python 3 库都可
 使用。参见 |has-python| 检查是否有稳定 ABI 的支持，也可查看 version 的输出里是
 否有 |+python3/dyn-stable|。
+MS-Windows 上，'pythonthreedll' 会设为 "python3.dll"。在注册表里查找 DLL 时，
+Vim 会查找 Python 的最新版本。
 
 ==============================================================================
 10. Python 3						*python3*

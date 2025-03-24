@@ -1,4 +1,4 @@
-*insert.txt*    适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*insert.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -43,8 +43,8 @@ CTRL-V 被映射，你也许会经常使用 CTRL-Q 来代替 |i_CTRL-Q|。
 						*i_CTRL-[* *i_<Esc>*
 <Esc> 或 CTRL-[	结束插入或替换模式，回到普通模式。结束缩写。
 		注意: 如果你很难在键盘上敲上 <Esc> 键，训练自己使用 CTRL-[。
-		如果 Esc 不能用而你使用的是 Mac，试试 CTRL-Esc。或者在辅助功能
-		里关闭收听。
+		如果 Esc 不能用而你使用的是 Mac，试试 CTRL-<Esc>。或者在辅助功
+		能里关闭收听。
 						*i_CTRL-C*
 CTRL-C		退出插入模式，回到普通模式。不检查缩写。不激活 |InsertLeave|
 		自动命令事件。
@@ -135,17 +135,17 @@ CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		按本义插入寄存器内容，并且不进行自动缩进。和鼠标粘贴文本相同
 		|<MiddleMouse>|。如果寄存器是面向行的，在当前行之上插入文本，
 		类似于 P。
-		不会替换字符！
 		'.' 寄存器 (最近插入的文本) 依然如同键盘输入那样的方式插入。
 		此命令后，'.' 寄存器包含键入的命令而不是文本，也就是本义值
 		"^R^O" 而不是寄存器的文本。
+		|Replace-mode| 下不会替换字符！
 
 CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		按本义插入寄存器内容，修正缩进，和 |[<MiddleMouse>| 类似。
-		不会替换字符！
 		'.' 寄存器 (最近插入的文本) 依然如同键盘输入那样的方式插入。
 		此命令后，'.' 寄存器包含键入的命令而不是文本，也就是本义值
 		"^R^P" 而不是寄存器的文本。
+		|Replace-mode| 下不会替换字符！
 
 						*i_CTRL-T*
 CTRL-T		在当前行开始处插入一个 shiftwidth 的缩进。缩进总是取整到
@@ -175,6 +175,9 @@ CTRL-Q		同 CTRL-V。
 CTRL-SHIFT-V				*i_CTRL-SHIFT-V* *i_CTRL-SHIFT-Q*
 CTRL-SHIFT-Q	与 CTRL-V 类似，除非激活了 |modifyOtherKeys|，此时插入带修饰符
 		的键的转义序列。
+		注意: 如果你的系统截获 CTRL-SHIFT-V (如用来粘贴文本)，通常可用
+		CTRL-SHIFT-Q 代替。不过有些终端里 (如 Gnome Terminal)，
+		CTRL-SHIFT-Q 会退出终端且没有提示。
 
 CTRL-X		进入 CTRL-X 模式，一个子模式。那里你可以给出命令来补全单词或者
 		滚动窗口。见 |i_CTRL-X| 和 |ins-completion|。
@@ -541,6 +544,9 @@ CTRL-X 模式，输入非合法的 CTRL-X 模式命令就行了。合法的键�
 
 想得到当前补全的信息，可用 |complete_info()|。
 如果你想调整匹配的大小写，另见 'infercase' 选项。
+
+插入从 |popup-menu| 里选中的候选单词时，候选单词里不匹配查询的部分应用
+|hl-ComplMatchIns| 高亮。如果 'completeopt' 打开了 fuzzy，不应用此高亮。
 
 							*complete_CTRL-E*
 如果补全处于激活状态，可以用 CTRL-E 来停止补全并回到原来录入的文字。CTRL-E 本
@@ -956,6 +962,14 @@ CTRL-X CTRL-Z		停止补全而不改变原有的文本。
 	empty		如果非零，匹配项即使是空字符串也会加入
 	user_data	和项目相关联的定制数据，可从 |v:completed_item| 得到；
 			可以是任何类型；缺省为空串
+	abbr_hlgroup	附加的高亮组，其中的属性和弹出菜单里 |hl-PmenuSel| 和
+			|hl-Pmenu| 或 |hl-PmenuMatchSel| 和 |hl-PmenuMatch| 高
+			亮属性合并，为补全项目的缩写 (abbr) 应用如删除线那样的
+			cterm 和 gui 属性 (有更高的优先级)，
+	kind_hlgroup	附加的高亮组，特别用来设置补全类型 (kind) 的高亮属性。
+			如果此项目存在，会覆盖 |hl-PmenuKind| 高亮组，从而可以
+			定制补全类型的 ctermfg 和 guifg 属性
+	match		见 |complete_info()| 里的 "matches"
 
 除了 "icase"、"equal"、"dup" 和 "empty" 以外，其它各项必须是字符串。如果有一项
 不合要求，报错，而列表的其余项目也不再使用。你可以在返回列表中混用字符串和字典
@@ -1652,12 +1666,24 @@ O			在光标上方开启新行，并插入文本，重复 [count] 次。
 这两个命令会继续要求行，直到你输入了只包含 "." 的一行。小心反斜杠开始的行，见
 |line-continuation|。
 
-Ex 模式 (见 |-e|) 下，行尾的反斜杠可用来插入 NUL 字符。所以要使一行以反斜杠结
-尾，用两个反斜杠。也就是说仅在行尾情况下，反斜杠数目减半。
+先使用 "|" 命令分隔符后键入的文本。所以 ex 模式下的以下命令: >
+	:a|one
+	two
+	.
+	:visual
+会在光标行后附加以下文本: >
+	one
+	two
+<
+|Ex-mode| 下，如和 |:global| 或 |:vglobal| 一起使用这些命令，会从命令之后的文
+本提取行。反斜杠转义的 NL 用来分隔行: >
+	:global/abc/insert\
+	one line\
+	another line
+此时不需要最后的 "."。
 
-注意: 这些命令不能和 |:global| 或 |:vglobal| 一起使用。":append" 和 ":insert"
-在 ":if" 和 ":endif"、":for" 和 ":endfor" 还有 ":while" 和 ":endwhile" 之间不
-能很好的工作。
+注意: ":append" 和 ":insert" 在 ":if" 和 ":endif"、":for" 和 ":endfor" 还有
+":while" 和 ":endwhile" 之间不能很好的工作。
 
 							*:start* *:startinsert*
 :star[tinsert][!]	在执行完本命令后，启动插入模式。和普通模式下输入 "i"
@@ -1708,8 +1734,8 @@ Ex 模式 (见 |-e|) 下，行尾的反斜杠可用来插入 NUL 字符。所以
 "." 命令重复。它们是基于行工作的，插入从光标所在行或指定行的下方开始。要在第一
 行之上插入文本，使用命令 ":0r {name}"。
 
-在 ":read" 命令之后，光标留在第一个新行的第一个非空白处。和 Ex 模式不一样。那
-里光标留在最后一个新行上 (对不起，那是为了和 Vi 兼容)。
+在 ":read" 命令之后，光标留在第一个新行的第一个非空白处。Ex 模式下，光标留在最
+后一个新行上 (对不起，那是为了和 Vi 兼容)。
 
 如果文件名字通过 ":r" 给出，它成为轮换文件。这可以用来，比如说，你想编辑那个文
 件的时候: ":e! #"。该特性可以通过删除 'cpoptions' 选项里的 'a' 标志位来关闭。
