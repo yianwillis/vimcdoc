@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -56,12 +56,13 @@
    1.9 使用映射                                  <a href="map.html#map-typing">map-typing</a> 
    1.10 映射 ALT 键                              <a href="map.html#:map-alt-keys">:map-alt-keys</a> 
    1.11 映射 META 键                             <a href="map.html#:map-meta-keys">:map-meta-keys</a> 
-   1.12 modifyOtherKeys 模式映射                 <a href="map.html#modifyOtherKeys">modifyOtherKeys</a> 
-   1.13 使用 Kitty 键盘协议的映射                <a href="map.html#kitty-keyboard-protocol">kitty-keyboard-protocol</a> 
+   1.12 映射 SUPER 或 COMMAND 键                 <a href="map.html#:map-super-keys">:map-super-keys</a> 
+   1.13 modifyOtherKeys 模式映射                 <a href="map.html#modifyOtherKeys">modifyOtherKeys</a> 
+   1.14 使用 Kitty 键盘协议的映射                <a href="map.html#kitty-keyboard-protocol">kitty-keyboard-protocol</a> 
    1.14 映射操作符                               <a href="map.html#:map-operator">:map-operator</a> 
 2. 缩写                          <a href="map.html#abbreviations">abbreviations</a> 
 3. 局部映射和函数                <a href="map.html#script-local">script-local</a> 
-4. 用户定义的命令                <a href="map.html#user-commands">user-commands</a> 
+4. 用户定义的命令               |user-commands
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 键映射                               <b class="vimtag"> <a name="key-mapping">key-mapping</a> </b> <b class="vimtag"> <a name="mapping">mapping</a> </b> <b class="vimtag"> <a name="macro">macro</a> </b></h4>
@@ -112,6 +113,8 @@
                         在映射命令作用的模式中把键序列 <code class="special">{lhs}</code> 映射为 <code class="special">{rhs}</code> 。禁
                         止对映射后的 <code class="special">{rhs}</code> 进行映射扫描。这个特性可以避免映射
                         的嵌套和递归。通常用于重定义一个命令。
+                        <code class="note">注意</code>: 除了  <a href="insert.html#i_CTRL-]">i_CTRL-]</a>  和  <a href="cmdline.html#c_CTRL-]">c_CTRL-]</a> ，<code class="special">{rhs}</code> 里的键不触
+                        发缩写。
                         <code class="note">注意</code>: <code class="special">&lt;Plug&gt;</code> 出现在 <code class="special">{rhs}</code> 时，总会被应用，即使不允许重
                         映射也是如此。
 
@@ -382,7 +385,8 @@ getchar() 得到键入的字符并返回之。
 
                                                         <b class="vimtag"> <a name="E1255">E1255</a> </b> <b class="vimtag"> <a name="E1136">E1136</a> </b>
 <code class="special">&lt;Cmd&gt;</code> 和 <code class="special">&lt;ScriptCmd&gt;</code> 里的命令必须终止，亦即，在映射定义的 <code class="special">{rhs}</code> 里它们必须后跟
-<code class="special">&lt;CR&gt;</code>。从不进入  <a href="cmdline.html#Command-line">Command-line</a>  模式。
+<code class="special">&lt;CR&gt;</code>。从不进入  <a href="cmdline.html#Command-line">Command-line</a>  模式。在 <code class="special">{rhs}</code> 里要按本义键入 <code class="special">&lt;CR&gt;</code> 这串字符，可
+用  <a href="intro.html#%3Clt%3E">&lt;lt&gt;</a> 。
 
 
 1.3 映 射 与 运 行 模 式                                <b class="vimtag"> <a name=":map-modes">:map-modes</a> </b>
@@ -544,9 +548,11 @@ l[nore]map     |  -   | yes | yes |  -  |  -  |  -  |  -   | yes  |
 映射列出的同时不能新增或清除映射，如在定时器回调中。  <b class="vimtag"> <a name="E1309">E1309</a> </b>
 
                                                         <b class="vimtag"> <a name=":map-verbose">:map-verbose</a> </b>
-如果 <a href="options.html#'verbose'">'verbose'</a> 非零，列出键映射的同时可以显示它在哪里定义。例如: 
+如果 <a href="options.html#'verbose'">'verbose'</a> 非零，在首行会显示检测到和实际使用的 <a href="options.html#'keyprotocol'">'keyprotocol'</a> 值。键映射会
+同时显示它最后在哪里定义。例如: 
 <code class="example"></code>
 <code class="example">        :verbose map &lt;C-W&gt;*</code>
+<code class="example">        Kitty keyboard protocol: Cleared</code>
 <code class="example">        n  &lt;C-W&gt;*      * &lt;C-W&gt;&lt;C-S&gt;*</code>
 <code class="example">                Last set from /home/abcd/.vimrc</code>
 <code class="example"></code>
@@ -869,7 +875,17 @@ Meta 修饰符使用 "T" 字符。例如，要在插入模式中映射 Meta-b:
 <code class="example">        :imap &lt;T-b&gt; terrible</code>
 <code class="example"></code>
 <code class="example"></code>
-1.12 modifyOtherKeys 模 式 映 射                        <b class="vimtag"> <a name="modifyOtherKeys">modifyOtherKeys</a> </b>
+1.12 映射 SUPER 或 COMMAND 键                <b class="vimtag"> <a name=":map-super-keys">:map-super-keys</a> </b> <b class="vimtag"> <a name=":map-cmd-key">:map-cmd-key</a> </b>
+
+Linux 上的 gVim 和 Mac OS 上的 MacVim 在 GUI 模式 ( <a href="builtin.html#gui_running">gui_running</a>  为 1) 可用
+Super 修饰符。Mac 上它代表 Command 键，而带 GTK GUI 的 Linux 上它代表 Super
+键。
+Super / Command 修饰符使用 "D" 字符。
+
+例如，要在插入模式中映射 Command-b: 
+<code class="example">        :imap &lt;D-b&gt; barritone</code>
+<code class="example"></code>
+1.13 modifyOtherKeys 模 式 映 射                        <b class="vimtag"> <a name="modifyOtherKeys">modifyOtherKeys</a> </b>
 
 Xterm 和一些其它的终端可以进入一种模式，其中带修饰符的键可以使用特殊的转义代码
 发送。Vim 识别这些代码，所以可以区别 <code class="keystroke">CTRL-H</code> 和退格键，尽管退格键也发送字符 8。
@@ -923,7 +939,7 @@ modifyOtherKeys 打开时可以映射 &lt;C-[&gt; 和 &lt;C-S-{&gt;:
 都会退出插入模式。
 
 
-1.13 使用 Kitty 键盘协议的映射                   <b class="vimtag"> <a name="kitty-keyboard-protocol">kitty-keyboard-protocol</a> </b>
+1.14 使用 Kitty 键盘协议的映射                   <b class="vimtag"> <a name="kitty-keyboard-protocol">kitty-keyboard-protocol</a> </b>
 
 <a href="options.html#'term'">'term'</a> 值包含 "kitty" 时，Vim 会发送转义序列以打开 Kitty 键盘协议。可用
 <a href="options.html#'keyprotocol'">'keyprotocol'</a> 选项改变此行为。
@@ -944,7 +960,7 @@ Kitty 键盘协议是否打开。要确认 Vim 是否检测到了这样的转义
         Cleared         被 <a href="term.html#'t_TE'">'t_TE'</a> 关闭，之前状态未知
 
 
-1.14 映 射 操 作 符                                     <b class="vimtag"> <a name=":map-operator">:map-operator</a> </b>
+1.15 映 射 操 作 符                                     <b class="vimtag"> <a name=":map-operator">:map-operator</a> </b>
 
 操作符应用于 <code class="special">{motion}</code> 命令之前。要定义你自己的操作符，你需要先创建映射来设置
 <a href="options.html#'operatorfunc'">'operatorfunc'</a> 选项，然后调用  <a href="map.html#g@">g@</a>  操作符。这样用户输入 <code class="special">{motion}</code> 命令后，会调
@@ -1398,13 +1414,16 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 
         -complete=arglist       参数列表中的文件名
         -complete=augroup       自动命令组
-        -complete=buffer        缓冲区名
         -complete=behave        :behave 子选项
+        -complete=breakpoint     <a href="repeat.html#:breakadd">:breakadd</a>  子选项
+        -complete=buffer        缓冲区名
         -complete=color         颜色方案
         -complete=command       Ex 命令 (及其参数)
         -complete=compiler      编译器
         -complete=cscope         <a href="if_cscop.html#:cscope">:cscope</a>  子选项
+        -complete=diff_buffer   比较缓冲区名
         -complete=dir           目录名
+        -complete=dir_in_path    <a href="options.html#'cdpath'">'cdpath'</a>  里的目录名
         -complete=environment   环境变量名
         -complete=event         自动命令事件
         -complete=expression    Vim 表达式
@@ -1415,6 +1434,7 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
         -complete=help          帮助主题
         -complete=highlight     高亮组
         -complete=history        <a href="cmdline.html#:history">:history</a>  子选项
+        -complete=keymap        键盘映射
         -complete=locale        locale 名 (和 locale -a 给出的相同)
         -complete=mapclear      缓冲区参数
         -complete=mapping       映射名
@@ -1422,7 +1442,11 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
         -complete=messages       <a href="message.html#:messages">:messages</a>  子选项
         -complete=option        选项
         -complete=packadd       可选包  <a href="repeat.html#pack-add">pack-add</a>  名
+        -complete=runtime        <a href="options.html#'runtimepath'">'runtimepath'</a>  里的文件和目录名
+        -complete=scriptnames   已载入的脚本名
         -complete=shellcmd      外壳命令
+        -complete=shellcmdline  第一部分是外壳命令，其余是文件句。行为与
+                                 <a href="various.html#:!cmd">:!cmd</a>  相同
         -complete=sign           <a href="sign.html#:sign">:sign</a>  子选项
         -complete=syntax        语法文件名  <a href="options.html#'syntax'">'syntax'</a> 
         -complete=syntime        <a href="syntax.html#:syntime">:syntime</a>  子选项

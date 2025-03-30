@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="todo.txt">todo.txt</a> </b>      适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -74,9 +74,6 @@
                                                         <b class="vimtag"> <a name="known-bugs">known-bugs</a> </b>
 ----------------------- 已知漏洞和当前工作 --------------------------
 
-FILETYPE_FILE is defined to the same value in multiple places.
-Only use the one in feature.h.  Others too.
-
 Mapping with modifier is not recognized after a partial mapping.  Probably
 because the typeahead was simplified when looking for a matching mapping.
 Need to somehow undo the simplification.  #12002
@@ -94,38 +91,21 @@ When a help item can't be found, then open <a href="options.html#'helpfile'">'he
 that file and gtive E149 only when not found.  Helps for a tiny Vim installed
 without all the help files.
 
-SpellCap highlight not updated - PR #12428
-
 Virtual text problems:
--  If <a href="options.html#'list'">'list'</a> is on, <code class="badlink">'below'</code> virtual text which includes 1 or 2 characters are
-   gone (Issue #12028)
 -  Virtual text aligned "above": Wrong indentation when using tabs  (Issue
    #12232)
--  Virtual text to the right of the line that isn't visible doesn't cause the
-   <code class="badlink">'extends'</code> character to show in <a href="options.html#'list'">'list'</a> mode.  #12478
--  Virtual text to the right of the line that fits exactly on screen causes
-   that line and all lines below it not to be displayed (Issue #12213)
--  Window screen gets wrong when a virtual text is placed on <code class="badlink">'above'</code> or
-   <code class="badlink">'below'</code> on an empty line (Issue #11959)
 -  truncated Virtual text below an empty line causes display error #12493
 
 When <a href="options.html#'virtualedit'">'virtualedit'</a> is "all" and <a href="options.html#'cursorcolumn'">'cursorcolumn'</a> is set, the wrong column may be
 highlighted. (van-de-bugger, 2018 Jan 23, #2576)
 
-Improve profiling by caching matching functions:  PR  #12192
-
 With <a href="options.html#'smoothscroll'">'smoothscroll'</a> set and "lastline" in <a href="options.html#'display'">'display'</a>, moving the cursor to a
 wrapping line that makes the display scroll up may scroll much more than
 needed, thus jump-scrolling. (part of issue 12411)
-
-Add filecopy() ?  #12346
-
-Implement foreach()  PR  #12166
-
 Errors when running tests with valgrind:
 - test_codestyle.vim:  e.g.:
-    command line..script /home/mool/vim/vim90/src/testdir/runtest.vim[569]..function RunTheTest[52]..Test_test_files line 6: keycode_check.vim: space before tab: Expected 0 but got 7
-    command line..script /home/mool/vim/vim90/src/testdir/runtest.vim[569]..function RunTheTest[52]..Test_test_files line 10: setup.vim: trailing white space: Expected 0 but got 23
+    command line..script /home/mool/vim/vim91/src/testdir/runtest.vim[569]..function RunTheTest[52]..Test_test_files line 6: keycode_check.vim: space before tab: Expected 0 but got 7
+    command line..script /home/mool/vim/vim91/src/testdir/runtest.vim[569]..function RunTheTest[52]..Test_test_files line 10: setup.vim: trailing white space: Expected 0 but got 23
 - test_gui.vim:
     Found errors in Test_gui_mouse_event():
 
@@ -158,14 +138,6 @@ Upcoming larger works:
 
 Further Vim9 improvements:
 - Classes and Interfaces. See  <a href="vim9.html#vim9-classes">vim9-classes</a> 
-  - "final" object members - can only be set in the constructor.
-  - Cannot use class type of itself in the method (Issue #12369)
-  - Cannot use an object method in a lambda  #12417
-        Define all methods before compiling them?
-  - Cannot call class member of funcref type  (Issue #12324)
-        Also #12081 first case.
-  - Using list of functions does not work #12081 (repro in later message).
-  - First argument of call() cannot be "obj.Func". (#11865)
   - Getting member of variable with "any" type should be handled at runtime.
     Remove temporary solution from #12096 / patch 9.0.1375.
   - "obj.Method()" does not always work in a compiled function, assumes "obj"
@@ -173,17 +145,8 @@ Further Vim9 improvements:
     Issue #11822: any.Func() can be a dict or an object call, need to handle
     this at runtime.  Also see #12198 for an example.
     Possibly issue #11981 can be fixed at the same time (has two examples).
-  - Support export/import of classes and interfaces.
-  - Make ":defcompile ClassName" compile all functions and methods in the
-    class.
   - Forward declaration of a class?  E.g. for Clone() function.
         Email lifepillar 2023 Mar 26
-  - object empty(), len() - can class define a method to be used for them?
-  - add to help: when using a default new() method then reordering object
-    members may cause trouble.  Can define new() without arguments to avoid.
-  - When "Meta" is a class, is "const MetaAlias = Meta" allowed?  It should
-    either work or given an error. Possibly give an error now and implement it
-    later (using a typedef).  #12006
   - how about lock/unlock?
   - For chaining, allow using the class name as type for function return
     value.
@@ -193,8 +156,6 @@ Further Vim9 improvements:
   - More efficient way for interface member index than iterating over list?
   - a variant of type() that returns a different type for each class?
       list<code class="special">&lt;number&gt;</code> and list<code class="special">&lt;string&gt;</code> should also differ.
-- implement :type
-- implement :enum
 - Promise class, could be used to wait on a popup close callback?
 - class local to a function
 - Use Vim9 for more runtime files.
@@ -202,6 +163,8 @@ Further Vim9 improvements:
 - When evaluating constants for script variables, some functions could work:
     has(featureName), len(someString)
 - Implement as part of an expression: ++expr, --expr, expr++, expr--.
+- The use of the literal value "null" and the type specific "null_xxx"
+  values is confusing (#13433, #11770).
 
 Information missing in terminfo:
 - Codes used for focus gained and lost termcodes are hard-coded in
@@ -279,8 +242,6 @@ Popup windows:
   positioned?  PopupNew?  Could be used to set some options or move it out of
   the way. (#5737)
   However, it may also cause trouble, changing the popup of another plugin.
-- Width is not computed correctly when minwidth and maxwidth are &amp;columns
-  and padding and a scrollbar are used.  (#6676)
 - Should popup_getoptions() also return the mask?  #7774
 - Add a way to use popup_menu() synchronously: instead of invoking the
   callback, return the choice. (Ben Jackson, #6534)
@@ -350,8 +311,6 @@ Terminal emulator window:
 - Use <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-K</code> to enter a digraph? #5371
 - When Vim runs in the terminal and changes the title, the statusline needs to
   be redrawn.
-- GUI: When using ":set go+=!" a system() call causes the hit-enter prompt.
-  (#3327)
 - Allow for specifying the directory, with ++cwd=<code class="special">{dir}</code>.
 - When pasting should call vterm_keyboard_start_paste(), e.g. when using
   K_MIDDLEMOUSE, calling insert_reg().
@@ -377,9 +336,6 @@ Cursor is after the end of the line:  #12137.
 
 Crash when a variable is removed while listing variables (Issue #11435)
 
-Autoconf: must use autoconf 2.69, later version generates lots of warnings
-- try using autoconf 2.71 and fix all "obsolete" warnings  #11322
-
 Problem with Visual highlight when <a href="options.html#'linebreak'">'linebreak'</a> and <a href="options.html#'showbreak'">'showbreak'</a> are set.
 #11272
 
@@ -389,15 +345,10 @@ Problem with Visual highlight when <a href="options.html#'linebreak'">'linebreak
 GUI Scroll test fails on FreeBSD when using Motif.  See FIXME in
 Test_scrollbars in src/test_gui.vim
 
-Selected index returned by complete_info() does not match the index in the
-list of items.  #12230
-
 Support dark mode for MS-Windows: #12282
 
 Remote command escapes single quote with backslash, should be doubling the
 single quote in vim_strsave_escaped_ext()  #12202.
-
-PR to add custom and customlist completion types.  #12228
 
 Can deref_func_name() and deref_function_name() be merged?
 
@@ -552,9 +503,6 @@ IDEA: when drawing the text, store the text byte index in ScreenLinesIdx[].
 When converting screen column to text position use this.
 The line number can be obtained from win-&gt;w_lines[].
 
-Version of getchar() that does not move the cursor - #10603 Use a separate
-argument for the new flag.
-
 test_arglist func Test_all_not_allowed_from_cmdwin() hangs on MS-Windows.
 
 Can we add highlighting to ":echowindow"?
@@ -562,10 +510,6 @@ Can we add highlighting to ":echowindow"?
 Information for a specific terminal (e.g. gnome, tmux, konsole, alacritty) is
 spread out.  Make a section with copy/paste examples of script and pointers to
 more information.
-
-Problem that a previous silent ":throw" causes a following try/catch not to
-work. (ZyX, 2013 Sep 28) With examples: (Malcolm Rowe, 2015 Dec 24)
-Also see #8487 for an example.
 
 Request to use "." for the cursor column in search pattern \%&lt;.c and \%&lt;.v.
 (#8179)
@@ -594,7 +538,6 @@ SpellCap doesn't show below a closed fold. #12420
 - Adding "~" to <a href="options.html#'cdpath'">'cdpath'</a> doesn't work for completion?  (Davido, 2013 Aug 19)
 - Problem with <a href="options.html#'cdpath'">'cdpath'</a> on MS-Windows when a directory is equal to $HOME.
   (2006 Jul 26, Gary Johnson)
-- Completion of ":cd" doesn't use <a href="options.html#'cdpath'">'cdpath'</a>. #374.
 
 Make "g&gt;" and "g&lt;" in Visual mode move the text right or left.
 Also for a block selection.  #8558
@@ -1003,9 +946,6 @@ When <a href="options.html#'sidescrolloff'">'sidescrolloff'</a> is set, using "z
 scrolls back.  Should allow for this scrolling, like <a href="options.html#'scrolloff'">'scrolloff'</a> does when
 using <code class="keystroke">CTRL-E</code>. (Yee Cheng Chin, #3721)
 
-Add function to make use of internal diff, working on two lists and returning
-unified diff (list of lines).
-
 When splitting a window with few text lines, the relative cursor position is
 kept, which means part of the text isn't displayed.  Better show all the text
 when possible. (Dylan Lloyd, #3973)
@@ -1168,9 +1108,6 @@ When t_Co is changed from termresponse, the OptionSet autocommand event isn't
 triggered.  Use the code from the end of set_num_option() in
 set_color_count().
 
-Add another autocommand like TermResponse that is fired for the other terminal
-responses, such as bg and fg.  Use "bg", "fg", "blink", etc. for the name.
-
 When using command line window, CmdlineLeave is triggered without
 CmdlineEnter.  (xtal8, 2017 Oct 30, #2263)
 Add some way to get the nested state.  Although CmdwinEnter is obviously
@@ -1185,9 +1122,6 @@ Problem with <a href="options.html#'delcombine'">'delcombine'</a>. (agguser, 201
 
 MS-Windows: buffer completion doesn't work when using backslash (or slash)
 for a path separator. (xtal8, #2201)
-
-Would be nice for Insert mode completion to highlight the text that was added
-(and may change when picking another completion).
 
 Test more runtime files.
 
@@ -1765,7 +1699,8 @@ Also Vundle: <a href="https://github.com/gmarik/vundle">https://github.com/gmari
 Or minpac: <a href="https://github.com/k-takata/minpac">https://github.com/k-takata/minpac</a>, since it leverages the builtin
 package feature.
 Long message about this from ZyX, 2014 Mar 23.  And following replies.
-Also see <a href="http://vim-wiki.mawercer.de/wiki/topic/vim%20plugin%20managment.html">http://vim-wiki.mawercer.de/wiki/topic/vim%20plugin%20managment.html</a>
+Also see (link seems dead):
+<a href="http://vim-wiki.mawercer.de/wiki/topic/vim%20plugin%20managment.html">http://vim-wiki.mawercer.de/wiki/topic/vim%20plugin%20managment.html</a>
 User view:
 - Support multiple sources, basically any http:// URL. Or a central place that
   will work for everybody (github?  redirects from vim.org?).
@@ -2496,7 +2431,7 @@ Problem with <a href="options.html#'ts'">'ts'</a> set to 9 and <a href="options.
 Would be more consistent when an existing tab is re-used. (Tony Mechelynck)
 
 Using Aap to build Vim: add remarks about how to set personal preferences.
-Example on <a href="http://www.calmar.ws/tmp/aap.html">http://www.calmar.ws/tmp/aap.html</a>
+Example on <a href="http://www.calmar.ws/tmp/aap.html">http://www.calmar.ws/tmp/aap.html</a> (link seems dead)
 
 When <a href="options.html#'diffopt'">'diffopt'</a> has "context:0" a single deleted line causes two folds to merge
 and mess up syncing. (Austin Jennings, 2008 Jan 31)
@@ -2527,7 +2462,7 @@ Asked about latest version: 0.77.1 is on www.vim.org.
 More AmigaOS4 patches. (Peter Bengtsson, Nov 9)
 
 Amiga patches with vbcc. (Adrien Destugues, 2010 Aug 30)
-<a href="http://pulkomandy.ath.cx/drop/vim73_vbcc_amiga.diff">http://pulkomandy.ath.cx/drop/vim73_vbcc_amiga.diff</a>
+(link seems dead): <a href="http://pulkomandy.ath.cx/drop/vim73_vbcc_amiga.diff">http://pulkomandy.ath.cx/drop/vim73_vbcc_amiga.diff</a>
 
 Problem with compound words?  (Bert, 2008 May 6)
 No warning for when flags are defined after they are used in an affix.
@@ -2597,8 +2532,9 @@ Win32: Patch for cscope external command. (Mike Williams, 2007 Aug 7)
 
 Win32: XPM support only works with path without spaces.  Patch by Mathias
 Michaelis, 2006 Jun 9.  Another patch for more path names, 2006 May 31.
-New version: <a href="http://members.tcnet.ch/michaelis/vim/patches.zip">http://members.tcnet.ch/michaelis/vim/patches.zip</a> (also for other
-patches by Mathias, see mail Feb 22)
+New version (link seems dead):
+<a href="http://members.tcnet.ch/michaelis/vim/patches.zip">http://members.tcnet.ch/michaelis/vim/patches.zip</a>
+(also for other patches by Mathias, see mail Feb 22)
 
 Win32: compiling with normal features and OLE fails.  Patch by Mathias
 Michaelis, 2006 Jun 4.
@@ -3123,7 +3059,7 @@ Win32 GUI 已知的漏洞:
     the screen.
 8   The -P argument doesn't work very well with many MDI applications.
     The last argument of CreateWindowEx() should be used, see MSDN docs.
-    Tutorial: <a href="http://win32assembly.online.fr/tut32.html">http://win32assembly.online.fr/tut32.html</a>
+    Tutorial (link seems dead): <a href="http://win32assembly.online.fr/tut32.html">http://win32assembly.online.fr/tut32.html</a>
 6   Win32 GUI: With "-u NONE -U NONE" and doing "<code class="keystroke">CTRL-W</code> v" "<code class="keystroke">CTRL-W</code> o", the ":"
     of ":only" is highlighted like the cursor.  (Lipelis)
 8   When <a href="options.html#'encoding'">'encoding'</a> is "utf-8", should use <a href="options.html#'guifont'">'guifont'</a> for both normal and wide
@@ -3525,7 +3461,7 @@ Macintosh:
     way to avoid using the builtin termcap.
 8   Xterm sends ^[[H for <code class="special">&lt;Home&gt;</code> and ^[[F for <code class="special">&lt;End&gt;</code> in some mode.  Also
     recognize these keys?  Mostly useful for xterm simulators, like gnometerm.
-    See <a href="http://dickey.his.com/xterm/xterm.faq.html#xterm_pc_style">http://dickey.his.com/xterm/xterm.faq.html#xterm_pc_style</a>.
+    See <a href="https://invisible-island.net/xterm/xterm.faq.html#xterm_pc_style">https://invisible-island.net/xterm/xterm.faq.html#xterm_pc_style</a>
 8   '[ and '] should be set to start/end of line when using a linewise operator
     (e.g., ":w").
 8   <code class="keystroke">CTRL-A</code> can't handle big "long" numbers, they become negative.  Check for
@@ -3814,8 +3750,8 @@ Macintosh:
     What does MAXNGRAMSUGS do?
     Is COMPLEXPREFIXES necessary when we have flags for affixes?
 -   There is no Finnish spell checking file.  For openoffice Voikko is now
-    used, which is based on Malaga: <a href="http://home.arcor.de/bjoern-beutel/malaga/">http://home.arcor.de/bjoern-beutel/malaga/</a>
-    (Teemu Likonen)
+    used, which is based on Malaga (link seems dead):
+    <a href="http://home.arcor.de/bjoern-beutel/malaga/">http://home.arcor.de/bjoern-beutel/malaga/</a> (Teemu Likonen)
 8   ":mkspell" still takes much too long in Hungarian dictionary from
     hunspell.  Only solution appears to be to postpone secondary suffixes.
 8   Handle postponed prefix with COMPOUNDPERMITFLAG or COMPOUNDFORBIDFLAG.
@@ -3871,7 +3807,7 @@ Macintosh:
     syntax items (to add @Spell).
     Add ":syntax contains <code class="special">{pattern}</code> add=@Spell" command?  A bit like ":syn
     cluster" but change the contains list directly for matching syntax items.
--   References: MySpell library (in OpenOffice.org).
+-   References: MySpell library (in OpenOffice.org), (links seem dead):
         <a href="http://spellchecker.mozdev.org/source.html">http://spellchecker.mozdev.org/source.html</a>
         <a href="http://whiteboard.openoffice.org/source/browse/whiteboard/lingucomponent/source/spellcheck/myspell/">http://whiteboard.openoffice.org/source/browse/whiteboard/lingucomponent/source/spellcheck/myspell/</a>
       author: Kevin Hendricks &lt;kevin.hendricks@sympatico.ca&gt;
@@ -4029,8 +3965,9 @@ Diff 模式:
     could be entered.  E.g., for "f" command.  But not in Normal mode.  Sort
     of opposite of <a href="options.html#'langmap'">'langmap'</a>.  Use ":amap" command?
 -   When breaking a line, take properties of multibyte characters into
-    account.  The "linebreak" program from Bruno Haible can do it:
-    ftp://ftp.ilog.fr/pub/Users/haible/gnu/linebreak-0.1.tar.gz
+    account.  The "linebreak" program from Bruno Haible can do it, this
+    is now part of gnulib module unilbrk:
+    <a href="https://www.gnu.org/software/gnulib/MODULES.html">https://www.gnu.org/software/gnulib/MODULES.html</a>
     But it's very complicated...
 -   Problem with <a href="options.html#'langmap'">'langmap'</a> being used on the rhs of a mapping. (Nikolai
     Weibull, 2008 May 14).
@@ -4291,10 +4228,7 @@ Vim 脚本语言:
         char2hex()              convert char string to hex string.
         crypt()                 encrypt string
         decrypt()               decrypt string
-        base64enc()             base 64 encoding
-        base64dec()             base 64 decoding
         attributes()            return file protection flags "drwxrwxrwx"
-        filecopy(from, to)      Copy a file
         shorten(fname)          shorten a file name, like home_replace()
         perl(cmd)               call Perl and return string
         inputrl()               like input() but right-to-left
@@ -4454,7 +4388,6 @@ Vim 脚本语言:
     left out.
 8   When compiled with a GUI-only version, the termcap entries for terminals
     can be removed.
-8   Can the check for libelf in configure.ac be removed?
 
 
 消息:
@@ -4717,7 +4650,6 @@ GUI:
 
 
 自动命令:
-9   Add WinNewPre - before creating a new window. #10635
 9   When triggering WinNew provide the window ID somehow.  #10633
 9   Rework the code from FEAT_OSFILETYPE for autocmd-osfiletypes to use
     <a href="options.html#'filetype'">'filetype'</a>.  Only for when the current buffer is known.
@@ -4829,10 +4761,10 @@ GUI:
                 ctags -f $allTagsFile --fields=+aiKmnsSz --language-force=C++ --C++-kinds=+cefgmnpsut-dlux -u $files
         www.vim.org script 1213 (Java Development Environment) (Fuchuan Wang)
         IComplete: <a href="http://www.vim.org/scripts/script.php?script_id=1265">http://www.vim.org/scripts/script.php?script_id=1265</a>
-            and <a href="http://stud4.tuwien.ac.at/~e0125672/icomplete/">http://stud4.tuwien.ac.at/~e0125672/icomplete/</a>
         <a href="http://cedet.sourceforge.net/intellisense.shtml">http://cedet.sourceforge.net/intellisense.shtml</a> (for Emacs)
         Ivan Villanueva has something for Java.
-        Emacs: <a href="http://www.xref-tech.com/xrefactory/more_c_completion.html">http://www.xref-tech.com/xrefactory/more_c_completion.html</a>
+        Emacs (link seems dead):
+        <a href="http://www.xref-tech.com/xrefactory/more_c_completion.html">http://www.xref-tech.com/xrefactory/more_c_completion.html</a>
         Completion in .NET framework SharpDevelop: <a href="http://www.icsharpcode.net">http://www.icsharpcode.net</a>
 -   Pre-expand abbreviations, show which abbrevs would match?
 
@@ -4840,15 +4772,9 @@ GUI:
 插入模式自动补全/扩展:
 -   Is it possible to keep the complete menu open when calling complete()?
     (Prabir Shrestha, 2017 May 19, #1713)
--   When <a href="options.html#'completeopt'">'completeopt'</a> has "noselect" does not insert a newline.
-    (Lifepillar, 2017 Apr 23, #1653)
--   Can <a href="options.html#'completeopt'">'completeopt'</a> be made buffer-local? (#5487)
 -   When complete() first argument is before where insert started and
     <a href="options.html#'backspace'">'backspace'</a> is Vi compatible, the completion fails.
     (Hirohito Higashi, 2015 Feb 19)
--   The CompleteDone autocommand needs some info passed to it:
-    - The word that was selected (empty if abandoned complete)
-    - Type of completion: tag, omnifunc, user func.
 -   When a:base in <a href="options.html#'completefunc'">'completefunc'</a> starts with a number it's passed as a
     number, not a string. (Sean Ma)  Need to add flag to call_func_retlist()
     to force a string value.
@@ -5981,8 +5907,6 @@ Viminfo:
 7   Instead of filtering errors with a shell script it should be possible to
     do this with Vim script.  A function that filters the raw text that comes
     from the <a href="options.html#'makeprg'">'makeprg'</a>?
--   Add %b to <a href="options.html#'errorformat'">'errorformat'</a>: buffer number. (Yegappan Lakshmanan / Suresh
-    Govindachar)
 7   Allow a window not to have a statusline.  Makes it possible to use a
     window as a buffer-tab selection.
 8   Allow non-active windows to have a different statusline. (Yakov Lerner)

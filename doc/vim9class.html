@@ -33,17 +33,14 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9class.txt">vim9class.txt</a> </b> 适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="vim9class.txt">vim9class.txt</a> </b> 适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
                                 <code class="vim">译者</code>: Willis
 
 
-<code class="note">备注</code> - 本文档未完成，一切都可能会变动！ - <code class="note">备注</code>
-
-
-Vim9 类、对象、界面、类型和枚举。
+Vim9 类、对象、界面、类型和枚举。                               <b class="vimtag"> <a name="vim9-class">vim9-class</a> </b>
 
 1.  总览                         <a href="vim9class.html#Vim9-class-overview">Vim9-class-overview</a> 
 2.  简单类                       <a href="vim9class.html#Vim9-simple-class">Vim9-simple-class</a> 
@@ -62,7 +59,7 @@ Vim9 类、对象、界面、类型和枚举。
 
 时髦的叫法叫 "面向对象编程"。这个主题有大量的学习材料。本文档假定你已了解相关
 基本概念，着重说明  <a href="vim9.html#Vim9">Vim9</a>  脚本提供的功能。还有一些如何有效使用这些功能有用的提
-示。
+示。不能在老式 Vim 脚本和老式函数时使用 Vim9 类和对象。
 
 最基本的项目是对象:
 - 对象保存状态。它包含一或多个变量，每个变量可带值。
@@ -83,7 +80,6 @@ Vim9 类、对象、界面、类型和枚举。
 
 类的层次结构支持单一继承。其它的需要可用界面实现。
 
-
 <code class="section">类模型 </code>
 
 可以任何方式构造类的模型。留心你要做什么，不要试图为现实世界建模。这有点混淆，
@@ -101,8 +97,8 @@ Vim9 类、对象、界面、类型和枚举。
 从简单的例子开始: 保存文本位置的类 (更有效的做法稍后会讲): 
 <code class="example"></code>
 <code class="example">        class TextPosition</code>
-<code class="example">           this.lnum: number</code>
-<code class="example">           this.col: number</code>
+<code class="example">           var lnum: number</code>
+<code class="example">           var col: number</code>
 <code class="example"></code>
 <code class="example">           def new(lnum: number, col: number)</code>
 <code class="example">              this.lnum = lnum</code>
@@ -130,14 +126,22 @@ new() 方法创建此类的一个对象:
 可直接访问对象变量 "lnum" 和 "col": 
 <code class="example"></code>
 <code class="example">        echo $'文本位置为 ({pos.lnum}, {pos.col})'</code>
-                                                        <b class="vimtag"> <a name="E1317">E1317</a> </b> <b class="vimtag"> <a name="E1327">E1327</a> </b>
-如果你有使用其它面向对象语言的经验，肯定会<code class="note">注意</code>到 Vim 里对象成员引用时总是用
-"this." 前缀。这和 Java 和 TypeScript 这些语言不同。此命名惯例容易找到对象成
-员。相反地，不带 "this." 前缀的变量就是非对象变量。
+                                                    <b class="vimtag"> <a name="E1317">E1317</a> </b> <b class="vimtag"> <a name="E1327">E1327</a> </b> <b class="vimtag"> <a name=":this">:this</a> </b>
+如果你有使用其它面向对象语言的经验，肯定会<code class="note">注意</code>到 Vim 类定义内部的声明的对象成
+员在引用时总是用 "this." 前缀。这和 Java 和 TypeScript 这些语言不同。此命名惯
+例容易找到对象成员。相反地，不带 "this." 前缀的变量就是非对象变量。
 
+                                                                <b class="vimtag"> <a name="E1411">E1411</a> </b>
+在类定义的外部，访问对象的方法和变量要使用对象名，后跟句号，后跟成员: 
+<code class="example"></code>
+<code class="example">        pos.lnum</code>
+<code class="example">        pos.SetCol(10)</code>
+
+                                                        <b class="vimtag"> <a name="E1405">E1405</a> </b> <b class="vimtag"> <a name="E1406">E1406</a> </b>
+类名不能用作表达式。类名不能出现在赋值语句的左手边。
 
 <code class="section">对象变量写访问 </code>
-
+                                                    <b class="vimtag"> <a name="read-only-variable">read-only-variable</a> </b>
 现在试试直接修改对象变量: 
 <code class="example"></code>
 <code class="example">        pos.lnum = 9</code>
@@ -150,11 +154,11 @@ new() 方法创建此类的一个对象:
 对象变量可读但不可写是最常见和安全的方法。通常读值没有问题，但设置值时会有副作
 用，需要特别处理。此例中，SetLnum() 方法可以检查行号是否合法，不然可以报错或者
 选择最接近的合法值。
-                                                        <b class="vimtag"> <a name=":public">:public</a> </b> <b class="vimtag"> <a name="E1331">E1331</a> </b>
+                                        <b class="vimtag"> <a name=":public">:public</a> </b> <b class="vimtag"> <a name="public-variable">public-variable</a> </b> <b class="vimtag"> <a name="E1331">E1331</a> </b>
 如果你不担心副作用而想随时修改对象变量，可标记其为 public: 
 <code class="example"></code>
-<code class="example">        public this.lnum: number</code>
-<code class="example">        public this.col: number</code>
+<code class="example">        public var lnum: number</code>
+<code class="example">        public var col: number</code>
 <code class="example"></code>
 现在你就不需要 SetLnum()、SetCol() 和 SetPosition() 方法了，直接设置
 "pos.lnum" 不再报错。
@@ -166,21 +170,21 @@ new() 方法创建此类的一个对象:
                                                         <b class="vimtag"> <a name="E1376">E1376</a> </b>
 不能使用类名来访问对象变量。
 
-<code class="section">私有变量 </code>
-                                        <b class="vimtag"> <a name="private-variable">private-variable</a> </b> <b class="vimtag"> <a name="E1332">E1332</a> </b> <b class="vimtag"> <a name="E1333">E1333</a> </b>
-另一方面，如果不想让对象变量直接可读，可标记其为私有。这是通过给名字加上下划线
-前缀完成的: 
+<code class="section">受保护变量 </code>
+                                        <b class="vimtag"> <a name="protected-variable">protected-variable</a> </b> <b class="vimtag"> <a name="E1332">E1332</a> </b> <b class="vimtag"> <a name="E1333">E1333</a> </b>
+另一方面，如果不想让对象变量在类或子类的外部直接可读，可标记其为受保护。这是通
+过给名字加上下划线前缀完成的: 
 <code class="example"></code>
-<code class="example">        this._lnum: number</code>
-<code class="example">        this._col number</code>
+<code class="example">        var _lnum: number</code>
+<code class="example">        var _col: number</code>
 <code class="example"></code>
-你现在需要提供读取私有变量值的方法。常称为 getter。推荐使用 "Get" 开头: 
+你现在需要提供读取受保护变量值的方法。常称为 getter。推荐使用 "Get" 开头: 
 <code class="example"></code>
 <code class="example">        def GetLnum(): number</code>
 <code class="example">           return this._lnum</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-<code class="example">        def GetCol() number</code>
+<code class="example">        def GetCol(): number</code>
 <code class="example">           return this._col</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
@@ -194,10 +198,10 @@ new() 方法创建此类的一个对象:
 <code class="example">           return this._lnum</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-<code class="section">私有方法 </code>
-                                                <b class="vimtag"> <a name="private-method">private-method</a> </b> <b class="vimtag"> <a name="E1366">E1366</a> </b>
-要使得对象方法只能被同类的其他方法访问，而在类外不可见，可标记其为私有。这是通
-过给方法名字加上下划线前缀完成的: 
+<code class="section">受保护方法 </code>
+                                                <b class="vimtag"> <a name="protected-method">protected-method</a> </b> <b class="vimtag"> <a name="E1366">E1366</a> </b>
+要使得对象方法只能被同类的其他方法访问，而在类外不可见，可标记其为受保护。这是
+通过给方法名字加上下划线前缀完成的: 
 <code class="example"></code>
 <code class="example">    class SomeClass</code>
 <code class="example">        def _Foo(): number</code>
@@ -208,18 +212,20 @@ new() 方法创建此类的一个对象:
 <code class="example">        enddef</code>
 <code class="example">    endclass</code>
 
-在类的外部访问私有方法会报错 (接上例的类定义): 
+在类的外部访问受保护方法会报错 (接上例的类定义): 
 <code class="example"></code>
 <code class="example">    var a = SomeClass.new()</code>
 <code class="example">    a._Foo()</code>
 
 <code class="section">简化 new() 方法 </code>
                                                 <b class="vimtag"> <a name="new()">new()</a> </b> <b class="vimtag"> <a name="constructor">constructor</a> </b>
+另见  <a href="vim9class.html#default-constructor">default-constructor</a>  和  <a href="vim9class.html#multiple-constructors">multiple-constructors</a> 。
+
 许多构造函数接受对象变量的值作为参数。常常会见到以下模式: 
 <code class="example"></code>
 <code class="example">         class SomeClass</code>
-<code class="example">           this.lnum: number</code>
-<code class="example">           this.col: number</code>
+<code class="example">           var lnum: number</code>
+<code class="example">           var col: number</code>
 <code class="example"></code>
 <code class="example">           def new(lnum: number, col: number)</code>
 <code class="example">              this.lnum = lnum</code>
@@ -241,8 +247,8 @@ new() 时提供的值赋值到该对象变量。此机制来自于 Dart 语言�
 类定义: 
 <code class="example"></code>
 <code class="example">        class TextPosition</code>
-<code class="example">           public this.lnum: number</code>
-<code class="example">           public this.col: number</code>
+<code class="example">           public var lnum: number</code>
+<code class="example">           public var col: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.lnum, this.col)</code>
 <code class="example">           enddef</code>
@@ -266,6 +272,8 @@ new() 时提供的值赋值到该对象变量。此机制来自于 Dart 语言�
                                                         <b class="vimtag"> <a name="E1365">E1365</a> </b>
 new() 方法的定义不能指定返回类型。它总是返回类的一个对象。
 
+new() 方法可写作 "_new()"，标识其为受保护方法。这可用于支持单例设计模式。
+
                                                         <b class="vimtag"> <a name="E1386">E1386</a> </b>
 调用对象方法时，方法名之前必须是对象变量名。不能使用类名来调用对象方法。
 
@@ -276,8 +284,8 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 用 "static" 声明类成员。在类定义的内部，使用这些名字不需前缀: 
 <code class="example"></code>
 <code class="example">        class OtherThing</code>
-<code class="example">           this.size: number</code>
-<code class="example">           static totalSize: number</code>
+<code class="example">           var size: number</code>
+<code class="example">           static var totalSize: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.size)</code>
 <code class="example">              totalSize += this.size</code>
@@ -289,22 +297,22 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
                                             <b class="vimtag"> <a name="E1374">E1374</a> </b> <b class="vimtag"> <a name="E1375">E1375</a> </b> <b class="vimtag"> <a name="E1384">E1384</a> </b> <b class="vimtag"> <a name="E1385">E1385</a> </b>
 在类定义之外，类成员的访问必须使用类名作为前缀。不能使用对象来访问类成员。
 
-和对象成员一样，可通过下划线名字前缀来使访问私有，也可用 "public" 前缀来标识
+和对象成员一样，可通过下划线名字前缀来使访问受保护，也可用 "public" 前缀来标识
 其为公共: 
 <code class="example"></code>
 <code class="example">    class OtherThing</code>
-<code class="example">        static total: number          # 任何人都可读，只有类可写</code>
-<code class="example">        static _sum: number           # 只有类可读写</code>
-<code class="example">        public static result: number  # 任何人可读写</code>
+<code class="example">        static var total: number          # 任何人都可读，只有类可写</code>
+<code class="example">        static var _sum: number           # 只有类可读写</code>
+<code class="example">        public static var result: number  # 任何人可读写</code>
 <code class="example">    endclass</code>
 
                                                         <b class="vimtag"> <a name="class-method">class-method</a> </b>
 也可用 "static" 声明类方法。它们可以使用类变量但不能访问对象变量，不能使用
-"this" 关键字。 
+"this" 关键字: 
 <code class="example"></code>
 <code class="example">        class OtherThing</code>
-<code class="example">           this.size: number</code>
-<code class="example">           static totalSize: number</code>
+<code class="example">           var size: number</code>
+<code class="example">           static var totalSize: number</code>
 <code class="example"></code>
 <code class="example">           # 清除总大小，返回清除之前的值。</code>
 <code class="example">           static def ClearTotalSize(): number</code>
@@ -315,9 +323,27 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">        endclass</code>
 <code class="example"></code>
 在类内部，可以直接按名字调用类方法，在类的外部则必须使用类名前缀:
- <code class="badlink">OtherThing.ClearTotalSize()</code> 。要在子类中使用父类的类方法，必须用类名前缀。
+ <code class="badlink">OtherThing.ClearTotalSize()</code> 。另外在包括类变量的初始块、匿名函数表达式和内嵌
+函数这些特殊上下文里，公共类方法也必须使用名字前缀:
 
-和对象方法一样，可用下划线作为方法名首字符使之私有: 
+<code class="example">    class OtherThing</code>
+<code class="example">        static var name: string = OtherThing.GiveName()</code>
+<code class="example"></code>
+<code class="example">        static def GiveName(): string</code>
+<code class="example">            def DoGiveName(): string</code>
+<code class="example">                return OtherThing.NameAny()</code>
+<code class="example">            enddef</code>
+<code class="example"></code>
+<code class="example">            return DoGiveName()</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        static def NameAny(): string</code>
+<code class="example">            return "any"</code>
+<code class="example">        enddef</code>
+<code class="example">    endclass</code>
+
+
+和对象方法一样，可用下划线作为方法名首字符使之受保护: 
 <code class="example"></code>
 <code class="example">    class OtherThing</code>
 <code class="example">        static def _Foo()</code>
@@ -329,21 +355,22 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">    endclass</code>
 
                                                         <b class="vimtag"> <a name="E1370">E1370</a> </b>
-<code class="note">注意</code> 构造函数不能声明为 "static"，因为它们本来就是。
+<code class="note">注意</code> 构造函数不能声明为 "static"。它们的调用方式类似于类方法，但执行方式类似于
+对象方法；它们可以访问 "this"。
 
 要在扩展类里访问父类的类方法和类变量，必须使用类名前缀，就像在类的定义之外的其
 他一切场合一样: 
 <code class="example"></code>
 <code class="example">    vim9script</code>
 <code class="example">    class Vehicle</code>
-<code class="example">        static nextID: number = 1000</code>
+<code class="example">        static var nextID: number = 1000</code>
 <code class="example">        static def GetID(): number</code>
 <code class="example">            nextID += 1</code>
 <code class="example">            return nextID</code>
 <code class="example">        enddef</code>
 <code class="example">    endclass</code>
 <code class="example">    class Car extends Vehicle</code>
-<code class="example">        this.myID: number</code>
+<code class="example">        var myID: number</code>
 <code class="example">        def new()</code>
 <code class="example">            this.myID = Vehicle.GetID()</code>
 <code class="example">        enddef</code>
@@ -351,6 +378,76 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 
 子类不继承类变量和方法。子类可以声明与父类重名的类变量或方法。此时，根据成员所
 在的类使用相应的类成员。子类类成员的类型可与父类的不同。
+
+类或对象方法名的双下划线 (__) 前缀为将来的使用保留。
+
+                                        <b class="vimtag"> <a name="object-final-variable">object-final-variable</a> </b> <b class="vimtag"> <a name="E1409">E1409</a> </b>
+可用  <a href="vim9.html#:final">:final</a>  关键字使类或对象变量为常量。例如: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        final v1 = [1, 2]               # final 对象变量</code>
+<code class="example">        public final v2 = {x: 1}        # final 对象变量</code>
+<code class="example">        static final v3 = 'abc'         # final 类变量</code>
+<code class="example">        public static final v4 = 0z10   # final 类变量</code>
+<code class="example">    endclass</code>
+
+final 变量只能在构造函数里修改。示例: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        final v1: list&lt;number&gt;</code>
+<code class="example">        def new()</code>
+<code class="example">            this.v1 = [1, 2]</code>
+<code class="example">        enddef</code>
+<code class="example">    endclass</code>
+<code class="example">    var a = A.new()</code>
+<code class="example">    echo a.v1</code>
+
+<code class="note">注意</code> final 变量的值可以被修改。示例: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        public final v1 = [1, 2]</code>
+<code class="example">    endclass</code>
+<code class="example">    var a = A.new()</code>
+<code class="example">    a.v1[0] = 6                 # 正确</code>
+<code class="example">    a.v1-&gt;add(3)                # 正确</code>
+<code class="example">    a.v1 = [3, 4]               # 报错</code>
+
+                                                        <b class="vimtag"> <a name="E1408">E1408</a> </b>
+界面不支持 final 变量。类或对象方法不能是 final。
+
+                                        <b class="vimtag"> <a name="object-const-variable">object-const-variable</a> </b>
+可用  <a href="eval.html#:const">:const</a>  关键字使类或对象变量及其值为常量。示例: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        const v1 = [1, 2]               # 常量对象变量</code>
+<code class="example">        public const v2 = {x: 1}        # 常量对象变量</code>
+<code class="example">        static const v3 = 'abc'         # 常量类变量</code>
+<code class="example">        public static const v4 = 0z10   # 常量类变量</code>
+<code class="example">    endclass</code>
+
+常量变量只能在构造函数里修改。示例: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        const v1: list&lt;number&gt;</code>
+<code class="example">        def new()</code>
+<code class="example">            this.v1 = [1, 2]</code>
+<code class="example">        enddef</code>
+<code class="example">    endclass</code>
+<code class="example">    var a = A.new()</code>
+<code class="example">    echo a.v1</code>
+
+常量变量和其值不能被修改。示例: 
+<code class="example"></code>
+<code class="example">    class A</code>
+<code class="example">        public const v1 = [1, 2]</code>
+<code class="example">    endclass</code>
+<code class="example">    var a = A.new()</code>
+<code class="example">    a.v1[0] = 6                 # 报错</code>
+<code class="example">    a.v1-&gt;add(3)                # 报错</code>
+<code class="example">    a.v1 = [3, 4]               # 报错</code>
+
+                                                         <b class="vimtag"> <a name="E1410">E1410</a> </b>
+界面不支持常量变量。类或对象方法不能是常量。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>4.  使用抽象类                                  <b class="vimtag"> <a name="Vim9-abstract-class">Vim9-abstract-class</a> </b>
@@ -365,20 +462,20 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 
 <code class="example"></code>
 <code class="example">        abstract class Shape</code>
-<code class="example">           this.color = Color.Black</code>
-<code class="example">           this.thickness = 10</code>
+<code class="example">           var color = Color.Black</code>
+<code class="example">           var thickness = 10</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 <code class="example">        class Square extends Shape</code>
-<code class="example">           this.size: number</code>
+<code class="example">           var size: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.size)</code>
 <code class="example">           enddef</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 <code class="example">        class Triangle extends Shape</code>
-<code class="example">           this.base: number</code>
-<code class="example">           this.height: number</code>
+<code class="example">           var base: number</code>
+<code class="example">           var height: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.base, this.height)</code>
 <code class="example">           enddef</code>
@@ -386,17 +483,18 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 
 抽象类和普通类的定义方式相同，但不能用 new() 方法。 <b class="vimtag"> <a name="E1359">E1359</a> </b>
 
-                                                <b class="vimtag"> <a name="abstract-method">abstract-method</a> </b> <b class="vimtag"> <a name="E1371">E1371</a> </b> <b class="vimtag"> <a name="E1372">E1372</a> </b>
+                                            <b class="vimtag"> <a name="abstract-method">abstract-method</a> </b> <b class="vimtag"> <a name="E1371">E1371</a> </b> <b class="vimtag"> <a name="E1372">E1372</a> </b>
 抽象类中，可在方法定义时用 "abstract" 前缀，来定义抽象方法: 
 <code class="example"></code>
 <code class="example">        abstract class Shape</code>
 <code class="example">           abstract def Draw()</code>
-<code class="example">           abstract static def SetColor()</code>
 <code class="example">        endclass</code>
 
+抽象类里的类方法不能是抽象方法。
+
                                                 <b class="vimtag"> <a name="E1373">E1373</a> </b>
-扩展抽象类的类必须实现所有的抽象方法。签名 (参数、参数类型及返回类型) 必需严格
-一致。抽象类的类方法也可以是抽象方法。
+扩展抽象类的非抽象类必须实现所有的抽象方法。签名 (参数、参数类型及返回类型) 必
+需严格一致。如果方法的返回类型为类，扩展方法可以使用该类本身或其子类。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>5.  使用界面                                    <b class="vimtag"> <a name="Vim9-using-interface">Vim9-using-interface</a> </b>
@@ -406,8 +504,8 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 基础上进行扩展: 
 <code class="example"></code>
 <code class="example">        abstract class Shape</code>
-<code class="example">           this.color = Color.Black</code>
-<code class="example">           this.thickness = 10</code>
+<code class="example">           var color = Color.Black</code>
+<code class="example">           var thickness = 10</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 <code class="example">        interface HasSurface</code>
@@ -415,7 +513,7 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">        endinterface</code>
 <code class="example"></code>
 <code class="example">        class Square extends Shape implements HasSurface</code>
-<code class="example">           this.size: number</code>
+<code class="example">           var size: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.size)</code>
 <code class="example">           enddef</code>
@@ -426,8 +524,8 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">        endclass</code>
 <code class="example"></code>
 <code class="example">        class Triangle extends Shape implements HasSurface</code>
-<code class="example">           this.base: number</code>
-<code class="example">           this.height: number</code>
+<code class="example">           var base: number</code>
+<code class="example">           var height: number</code>
 <code class="example"></code>
 <code class="example">           def new(this.base, this.height)</code>
 <code class="example">           enddef</code>
@@ -451,8 +549,8 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">        endfor</code>
 
                                         <b class="vimtag"> <a name="E1378">E1378</a> </b> <b class="vimtag"> <a name="E1379">E1379</a> </b> <b class="vimtag"> <a name="E1380">E1380</a> </b> <b class="vimtag"> <a name="E1387">E1387</a> </b>
-界面只能包含对象方法和只读的对象变量。界面不能包含可读写和私有的对象变量、私有
-对象方法、类变量和类方法。
+界面只能包含对象方法和只读的对象变量。界面不能包含可读写和受保护的对象变量、受
+保护的对象方法、类变量和类方法。
 
 界面可用 "extends" 扩展另一个界面。子界面继承父界面的所有实例变量和方法。
 
@@ -465,7 +563,7 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 后不能为类新增内容。
 
 只能在一个  <a href="vim9.html#Vim9">Vim9</a>  脚本文件中定义类。 <b class="vimtag"> <a name="E1316">E1316</a> </b>
-不能在函数内部定义类。
+不能在函数内部定义类。 <b class="vimtag"> <a name="E1429">E1429</a> </b>
 
 一个脚本文件中可以定义多个类。最好只导出一个主类。不过，定义类型、枚举和帮助类
 还是常用的。
@@ -491,9 +589,12 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 <code class="example">        extends ClassName</code>
 <code class="example">        implements InterfaceName, OtherInterface</code>
 <code class="example">        specifies SomeInterface</code>
+
+"specifies" 功能目前尚未实现。
+
                                                         <b class="vimtag"> <a name="E1355">E1355</a> </b> <b class="vimtag"> <a name="E1369">E1369</a> </b>
 每个变量和函数名只能用一次。不能定义同名但带不同类型参数的方法。不能使用同名的
-公有和私有成员变量。父类使用的对象变量名不能被子类重用。
+公有和受保护成员变量。父类使用的对象变量名不能被子类重用。
 
 
 <code class="section">对象变量初始化 </code>
@@ -514,12 +615,12 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 基类的对象变量被子类全盘接收。不可覆盖 (和一些其它的语言不同)。
 
                                                 <b class="vimtag"> <a name="E1356">E1356</a> </b> <b class="vimtag"> <a name="E1357">E1357</a> </b> <b class="vimtag"> <a name="E1358">E1358</a> </b>
-基类的对象方法可以覆盖。参数数目必须一致。方法的参数类型可以是基类方法参数类型
-的逆变 (contra-variant) 类型。方法的返回值类型可以是基类方法返回值类型的协变
-(covariant) 类型。可通过 "super." 前缀调用基类提供的方法。
+基类的对象方法可以被覆盖。签名 (参数、参数类型和返回类型) 必须完全一致。如果方
+法的返回类型是类，扩展方法可以使用该类本身或其子类。可通过 "super." 前缀调用基
+类提供的方法。
 
                                                 <b class="vimtag"> <a name="E1377">E1377</a> </b>
-子类方法的访问域 (public 或 private) 必须与父类的相同。
+子类方法的访问域 (公共或受保护) 必须与父类的相同。
 
 其它对象方法被子类全盘接收。
 
@@ -538,47 +639,66 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 类可以实现一个或多个界面。"implements" 关键字只能出现一次 <b class="vimtag"> <a name="E1350">E1350</a> </b> 。
 可指定多个界面，以逗号分隔。每个界面名只能出现一次。 <b class="vimtag"> <a name="E1351">E1351</a> </b>
 
-
 <code class="section">定义界面的类 </code>
                                                         <b class="vimtag"> <a name="specifies">specifies</a> </b>
 类可以通过一个命名的界面来声明自己的界面、对象变量和方法。这样就不需要单独指定
 界面了，很多语言，尤其是 Java，就是如此。
-
+TODO: 功能目前尚未实现。
 
 <code class="section">类中的项目 </code>
                                                 <b class="vimtag"> <a name="E1318">E1318</a> </b> <b class="vimtag"> <a name="E1325">E1325</a> </b> <b class="vimtag"> <a name="E1388">E1388</a> </b>
 类内部，即  <a href="vim9class.html#:class">:class</a>  和  <a href="vim9class.html#:endclass">:endclass</a>  之间，可出现以下项目:
 - 对象变量声明: 
-<code class="example">        this._memberName: memberType</code>
-<code class="example">        this.memberName: memberType</code>
-<code class="example">        public this.memberName: memberType</code>
+<code class="example">        var _protectedVariableName: memberType</code>
+<code class="example">        var readonlyVariableName: memberType</code>
+<code class="example">        public var readwriteVariableName: memberType</code>
 - 类变量声明: 
-<code class="example">        static _privateClassVariableName: memberType</code>
-<code class="example">        static readonlyClassVariableName: memberType</code>
-<code class="example">        static public readwriteClassVariableName: memberType</code>
+<code class="example">        static var _protectedClassVariableName: memberType</code>
+<code class="example">        static var readonlyClassVariableName: memberType</code>
+<code class="example">        public static var readwriteClassVariableName: memberType</code>
 - 构造方法: 
 <code class="example">        def new(arguments)</code>
 <code class="example">        def newName(arguments)</code>
 - 类方法: 
 <code class="example">        static def SomeMethod(arguments)</code>
-<code class="example">        static def _PrivateMethod(arguments)</code>
+<code class="example">        static def _ProtectedMethod(arguments)</code>
 - 对象方法: 
 <code class="example">        def SomeMethod(arguments)</code>
-<code class="example">        def _PrivateMethod(arguments)</code>
+<code class="example">        def _ProtectedMethod(arguments)</code>
 <code class="example"></code>
 对象变量必须指定类型。最好的方法是显式指定 ": <code class="special">{type}</code>"。简单类型也可用初始器，
 形如 "= 123"，Vim 可以推定类型为数值。更复杂的类型不要这样做，也不能用于不完整
 的类型。如: 
-<code class="example">        this.nameList = []</code>
+<code class="example">        var nameList = []</code>
 这里指定了列表，但项目类型未知。最好这样: 
-<code class="example">        this.nameList: list&lt;string&gt;</code>
+<code class="example">        var nameList: list&lt;string&gt;</code>
 这里不需要初始化，列表缺省已为空。
                                                         <b class="vimtag"> <a name="E1330">E1330</a> </b>
 有些类型不能使用，如 "void"、"null" 和 "v:none"。
 
+<code class="section">内建对象方法 </code>
+                                                       <b class="vimtag"> <a name="builtin-object-methods">builtin-object-methods</a> </b>
+有些内建函数，如  <a href="builtin.html#empty()">empty()</a> 、 <a href="builtin.html#len()">len()</a>  和  <a href="builtin.html#string()">string()</a>  可用于任何对象。对象可实现和
+这些内建函数同名的方法，以返回对象特定的值。
+
+                                                        <b class="vimtag"> <a name="E1412">E1412</a> </b>
+支持下面的内建方法:
+                                                        <b class="vimtag"> <a name="object-empty()">object-empty()</a> </b>
+    empty()  被  <a href="builtin.html#empty()">empty()</a>  函数调用，以检查对象是否为空。如果此方法缺失，返回
+             true。此方法不应接受任何参数，必须返回布尔型。
+                                                        <b class="vimtag"> <a name="object-len()">object-len()</a> </b>
+    len()    被  <a href="builtin.html#len()">len()</a>  函数调用，以返回对象的长度。如果类中缺失此方法，报错且
+             返回零。此方法不应接受任何参数，必须返回数值。
+                                                        <b class="vimtag"> <a name="object-string()">object-string()</a> </b>
+    string() 被  <a href="builtin.html#string()">string()</a>  函数调用，以返回对象的文本表示。 <a href="eval.html#:echo">:echo</a>  命令作用于
+             对象时也会调用此方法。如果类中缺失此方法，返回内建的文本表示。
+             此方法不应接受任何参数，必须返回字符串。
+
+                                                        <b class="vimtag"> <a name="E1413">E1413</a> </b>
+类方法不能用作内建方法。
 
 <code class="section">定义界面 </code>
-                                                <b class="vimtag"> <a name=":interface">:interface</a> </b> <b class="vimtag"> <a name=":endinterface">:endinterface</a> </b>
+                                        <b class="vimtag"> <a name="Interface">Interface</a> </b> <b class="vimtag"> <a name=":interface">:interface</a> </b> <b class="vimtag"> <a name=":endinterface">:endinterface</a> </b>
 界面在  <a href="vim9class.html#:interface">:interface</a>  和  <a href="vim9class.html#:endinterface">:endinterface</a>  间定义。可加上前缀  <a href="vim9.html#:export">:export</a> : 
 <code class="example"></code>
 <code class="example">        interface InterfaceName</code>
@@ -593,7 +713,7 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 例: 
 <code class="example"></code>
 <code class="example">        interface HasSurface</code>
-<code class="example">           this.size: number</code>
+<code class="example">           var size: number</code>
 <code class="example">           def Surface(): number</code>
 <code class="example">        endinterface</code>
 <code class="example"></code>
@@ -602,12 +722,11 @@ new() 方法的定义不能指定返回类型。它总是返回类的一个对�
 只能在  <a href="vim9.html#Vim9">Vim9</a>  脚本文件中定义界面。 <b class="vimtag"> <a name="E1342">E1342</a> </b>
 界面不能 "implement" 另一个界面，但可以 "extend" 另一个界面。 <b class="vimtag"> <a name="E1381">E1381</a> </b>
 
-
 <code class="section">null 对象 </code>
 
 变量声明时如果指定对象的类型但没有初始化时，其值为 null。试图使用 null 对象时，
 Vim 经常不知道应该使用哪个类。因而，Vim 无法检查变量名是否正确，从而给出
-"Using a null object" 错误，即使变量名是非法的。 <b class="vimtag"> <a name="E1360">E1360</a> </b> <b class="vimtag"> <a name="E1362">E1362</a> </b> <b class="vimtag"> <a name="E1363">E1363</a> </b>
+"Using a null object" 错误，即使变量名是非法的。 <b class="vimtag"> <a name="E1360">E1360</a> </b> <b class="vimtag"> <a name="E1362">E1362</a> </b>
 
 
 <code class="section">缺省构造函数 </code>
@@ -616,9 +735,9 @@ Vim 经常不知道应该使用哪个类。因而，Vim 无法检查变量名是
 按照它们出现的顺序分别提供一个参数。如你的类是这样: 
 <code class="example"></code>
 <code class="example">        class AutoNew</code>
-<code class="example">           this.name: string</code>
-<code class="example">           this.age: number</code>
-<code class="example">           this.gender: Gender</code>
+<code class="example">           var name: string</code>
+<code class="example">           var age: number</code>
+<code class="example">           var gender: Gender</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 那么缺省构造函数就会是: 
@@ -630,8 +749,8 @@ Vim 经常不知道应该使用哪个类。因而，Vim 无法检查变量名是
 用对象变量的缺省值。下面是更有用的带缺省值的例子: 
 <code class="example"></code>
 <code class="example">        class TextPosition</code>
-<code class="example">           this.lnum: number = 1</code>
-<code class="example">           this.col: number = 1</code>
+<code class="example">           var lnum: number = 1</code>
+<code class="example">           var col: number = 1</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 如果构造函数要强制提供参数，必须自己编写。例如，要上面的 AutoNew 类必须提供
@@ -639,17 +758,21 @@ name，可这样定义构造函数:
 <code class="example"></code>
 <code class="example">        def new(this.name, this.age = v:none, this.gender = v:none)</code>
 <code class="example">        enddef</code>
+
+如果使用缺省 new() 方法而后来改变了类里对象变量的顺序，所有调用缺省 new() 方法
+的调用者并须要跟着改变。为了避免这一点，显式定义 mew() 方法且不带参数。
+
                                                         <b class="vimtag"> <a name="E1328">E1328</a> </b>
 <code class="note">注意</code> 除了这里的 "v:none" 之外，不能使用其它缺省值。要初始化对象变量，在其声明
 的地方提供初始值。这样你只须在一个地方寻找缺省值。
 
-缺省构造函数中使用所有的对象变量，包括私有访问的那些。
+缺省构造函数中使用所有的对象变量，包括受保护访问的那些。
 
 如果类扩展其它类，被扩展类的对象变量会先出现。
 
 
 <code class="section">多个构造函数 </code>
-
+                                                <b class="vimtag"> <a name="multiple-constructors">multiple-constructors</a> </b>
 通常每个类只有一个 new() 构造函数。如果常常需要传递相同的参数，可简化代码，把
 这些参数放到另一个构造函数里。例如，如果经常使用黑色: 
 <code class="example"></code>
@@ -673,32 +796,178 @@ name，可这样定义构造函数:
 <code class="note">注意</code> 此方法名必须以 "new" 开始。如果没有叫 "new()" 的方法，会加入缺省构造函
 数，即使有其它的构造函数也是如此。
 
+<code class="section">变量类型 "any" 用于对象</code>
+                                                        <b class="vimtag"> <a name="obj-var-type-any">obj-var-type-any</a> </b>
+变量声明可用类型 "any" 来保存任何对象。如.
+
+<code class="example">    vim9script</code>
+<code class="example">    class A</code>
+<code class="example">        var n = 10</code>
+<code class="example">        def Get(): number</code>
+<code class="example">            return this.n</code>
+<code class="example">        enddef</code>
+<code class="example">    endclass</code>
+<code class="example"></code>
+<code class="example">    def Fn(o: any)</code>
+<code class="example">        echo o.n</code>
+<code class="example">        echo o.Get()</code>
+<code class="example">    enddef</code>
+<code class="example"></code>
+<code class="example">    var a = A.new()</code>
+<code class="example">    Fn(a)</code>
+
+此例中，Vim 不能在编译时决定函数 Fn() 里的参数 "o" 的类型。它可以是  <a href="eval.html#Dict">Dict</a>  或
+ <a href="vim9class.html#Object">Object</a>  值。所以在运行时，类型已知，查找对象的成员变量和方法。此过程效率不
+高，所以要更有效率，如有可能，建议指定更专门的类型。
+
+<code class="section">编译类中的方法</code>
+                                                        <b class="vimtag"> <a name="class-compile">class-compile</a> </b>
+ <a href="vim9.html#:defcompile">:defcompile</a>  命令可用于编译类中定义的所有类和对象方法: 
+<code class="example"></code>
+<code class="example">        defcompile MyClass      # 编译类 "MyClass"</code>
+<code class="example">        defcompile              # 编译当前脚本里的所有类</code>
 
 </section><hr class="doubleline" /><section class=inner>
-<h4></h4>7.  类型定义                                    <b class="vimtag"> <a name="Vim9-type">Vim9-type</a> </b> <b class="vimtag"> <a name=":type">:type</a> </b>
+<h4></h4>7.  类型定义                                    <b class="vimtag"> <a name="typealias">typealias</a> </b> <b class="vimtag"> <a name="Vim9-type">Vim9-type</a> </b> <b class="vimtag"> <a name=":type">:type</a> </b>
 
-类型定义为类型规格给定名称。例如: 
+                                        <b class="vimtag"> <a name="E1393">E1393</a> </b> <b class="vimtag"> <a name="E1395">E1395</a> </b> <b class="vimtag"> <a name="E1396">E1396</a> </b> <b class="vimtag"> <a name="E1397">E1397</a> </b> <b class="vimtag"> <a name="E1398">E1398</a> </b>
+类型定义为类型规格给定名称。这也被称作 "类型别名"。所有使用内建类型的地方都可
+以使用类型别名。例如: 
 <code class="example"></code>
-<code class="example">        :type ListOfStrings list&lt;string&gt;</code>
+<code class="example">    type ListOfStrings = list&lt;string&gt;</code>
+<code class="example">    var s: ListOfStrings = ['a', 'b']</code>
 <code class="example"></code>
-TODO: 更多说明
+<code class="example">    def ProcessStr(str: ListOfStrings): ListOfStrings</code>
+<code class="example">        return str</code>
+<code class="example">    enddef</code>
+<code class="example">    echo ProcessStr(s)</code>
 
+                                                        <b class="vimtag"> <a name="E1394">E1394</a> </b>
+类型别名的名字必须以大写字母开头。只能别名已有的类型。
+
+                                                        <b class="vimtag"> <a name="E1399">E1399</a> </b>
+创建的类型别名只作用在脚本层级，而不能局限在函数内部。可导出类型别名，使之可跨
+脚本应用。
+
+                                        <b class="vimtag"> <a name="E1400">E1400</a> </b> <b class="vimtag"> <a name="E1401">E1401</a> </b> <b class="vimtag"> <a name="E1402">E1402</a> </b> <b class="vimtag"> <a name="E1403">E1403</a> </b> <b class="vimtag"> <a name="E1407">E1407</a> </b>
+类型别名不能用作表达式。类型别名不能出现在赋值语句的左手边。
+
+ <a href="builtin.html#typename()">typename()</a>  函数返回类型别名原来的类型: 
+<code class="example"></code>
+<code class="example">    type ListOfStudents = list&lt;dict&lt;any&gt;&gt;</code>
+<code class="example">    echo typename(ListOfStudents)</code>
+<code class="example">    typealias&lt;list&lt;dict&lt;any&gt;&gt;&gt;</code>
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>8.  枚举                                        <b class="vimtag"> <a name="Vim9-enum">Vim9-enum</a> </b> <b class="vimtag"> <a name=":enum">:enum</a> </b> <b class="vimtag"> <a name=":endenum">:endenum</a> </b>
 
+                                                <b class="vimtag"> <a name="enum">enum</a> </b> <b class="vimtag"> <a name="E1418">E1418</a> </b> <b class="vimtag"> <a name="E1419">E1419</a> </b> <b class="vimtag"> <a name="E1420">E1420</a> </b>
 枚举是从给定值列表中选取一个的类型。示例: 
 <code class="example"></code>
-<code class="example">        :enum Color</code>
-<code class="example">                White</code>
-<code class="example">                Red</code>
-<code class="example">                Green</code>
-<code class="example">                Blue</code>
-<code class="example">                Black</code>
-<code class="example">        :endenum</code>
-<code class="example"></code>
-TODO: 更多说明
+<code class="example">    enum Color</code>
+<code class="example">        White,</code>
+<code class="example">        Red,</code>
+<code class="example">        Green, Blue, Black</code>
+<code class="example">    endenum</code>
 
+                                                <b class="vimtag"> <a name="enumvalue">enumvalue</a> </b> <b class="vimtag"> <a name="E1422">E1422</a> </b>
+枚举值以逗号分隔。一行内可列出多于一个枚举值。最后一个枚举值后跟不跟逗号。
+
+枚举值的访问使用枚举名后跟值名: 
+<code class="example"></code>
+<code class="example">    var a: Color = Color.Blue</code>
+
+枚举视作类，每个枚举值相当于类的一个实例。和通常用  <a href="vim9class.html#new()">new()</a>  实例化对象不同，枚
+举补全不能如此创建。
+
+只能在  <a href="vim9.html#Vim9">Vim9</a>  脚本文件里定义枚举。                      <b class="vimtag"> <a name="E1414">E1414</a> </b>
+不能在函数内部定义枚举。
+
+                                                        <b class="vimtag"> <a name="E1415">E1415</a> </b>
+枚举名必须以大写字母开头。枚举里的枚举值名可以大写或小写字母开头。
+
+                                                        <b class="vimtag"> <a name="E1416">E1416</a> </b>
+枚举可实现界面，但不能扩展类: 
+<code class="example"></code>
+<code class="example">    enum MyEnum implements MyIntf</code>
+<code class="example">        Value1,</code>
+<code class="example">        Value2</code>
+<code class="example"></code>
+<code class="example">        def SomeMethod()</code>
+<code class="example">        enddef</code>
+<code class="example">    endenum</code>
+
+                                                        <b class="vimtag"> <a name="enum-constructor">enum-constructor</a> </b>
+枚举里，枚举值对象的构造和其他对象用  <a href="vim9class.html#new()">new()</a>  方法构造一样。参数可传递进枚举的
+构造函数，方法是像调用函数一样，在枚举值名后指定参数。缺省构造函数不带参数。
+
+                                                        <b class="vimtag"> <a name="E1417">E1417</a> </b>
+枚举可包含类变量、类方法、对象变量和对象方法。枚举的方法不能是  <a href="vim9class.html#:abstract">:abstract</a>  方
+法。
+
+下例展示了带对象变量和方法的枚举: 
+<code class="example"></code>
+<code class="example">    vim9script</code>
+<code class="example">    enum Planet</code>
+<code class="example">        Earth(1, false),</code>
+<code class="example">        Jupiter(95, true),</code>
+<code class="example">        Saturn(146, true)</code>
+<code class="example"></code>
+<code class="example">        var moons: number</code>
+<code class="example">        var has_rings: bool</code>
+<code class="example">        def GetMoons(): number</code>
+<code class="example">            return this.moons</code>
+<code class="example">        enddef</code>
+<code class="example">    endenum</code>
+<code class="example">    echo Planet.Jupiter.GetMoons()</code>
+<code class="example">    echo Planet.Earth.has_rings</code>
+
+                                                <b class="vimtag"> <a name="E1421">E1421</a> </b> <b class="vimtag"> <a name="E1423">E1423</a> </b> <b class="vimtag"> <a name="E1424">E1424</a> </b> <b class="vimtag"> <a name="E1425">E1425</a> </b>
+枚举及其值不能修改。不能用作数值或字符串类型。枚举值可声明能修改的实例变量。
+
+                                                <b class="vimtag"> <a name="enum-name">enum-name</a> </b>
+每个枚举值对象有个 "name" 实例变量，包含枚举值的名字。这是只读变量。
+
+                                                <b class="vimtag"> <a name="enum-ordinal">enum-ordinal</a> </b> <b class="vimtag"> <a name="E1426">E1426</a> </b>
+每个枚举值有个相关联的序数，从 0 开始。枚举值的序数可用 "ordinal" 实例变量访
+问。这是只读变量。<code class="note">注意</code> 如果枚举里的枚举值的顺序被改变，序数值也会跟着改变。
+
+                                                <b class="vimtag"> <a name="enum-values">enum-values</a> </b>
+可用类变量 "values" 访问枚举里的所有值，一个包含枚举对象的列表。这是只读变量。
+
+示例: 
+<code class="example">    enum Planet</code>
+<code class="example">        Mercury,</code>
+<code class="example">        Venus,</code>
+<code class="example">        Earth</code>
+<code class="example">    endenum</code>
+<code class="example"></code>
+<code class="example">    echo Planet.Mercury</code>
+<code class="example">    echo Planet.Venus.name</code>
+<code class="example">    echo Planet.Venus.ordinal</code>
+<code class="example">    for p in Planet.values</code>
+<code class="example">        # ...</code>
+<code class="example">    endfor</code>
+
+枚举是一个类，它带有包含枚举值对象的类变量，也带有给出枚举值名和枚举值序数的对
+象变量: 
+<code class="example"></code>
+<code class="example">    enum Planet</code>
+<code class="example">        Mercury,</code>
+<code class="example">        Venus</code>
+<code class="example">    endenum</code>
+
+上述枚举定义等价于下面的类定义: 
+<code class="example"></code>
+<code class="example">    class Planet</code>
+<code class="example">      public static final Mercury: Planet = Planet.new('Mercury', 0)</code>
+<code class="example">      public static final Venus: Planet = Planet.new('Venus', 1)</code>
+<code class="example"></code>
+<code class="example">      public static const values: list&lt;Planet&gt; = [Planet.Mercury, Planet.Venus]</code>
+<code class="example"></code>
+<code class="example">      public const name: string</code>
+<code class="example">      public const ordinal: number</code>
+<code class="example">    endclass</code>
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>9.  理据
@@ -736,7 +1005,6 @@ TODO: 更多说明
 对  <a href="vim9.html#Vim9">Vim9</a>  脚本而言，为所有的构造函数使用相同的方法名看来是正确的选择，而叫它
 new() 使调用者和被调用的方法之间的关系非常明确。
 
-
 <code class="section">构造函数不能重载 </code>
 
 Vim 脚本里，不管是老式还是  <a href="vim9.html#Vim9">Vim9</a>  脚本，方法不能重载。这意味着不能有相同的方法
@@ -750,13 +1018,11 @@ Vim 脚本里，不管是老式还是  <a href="vim9.html#Vim9">Vim9</a>  脚本
 相反地，每个构造函数必须有以 "new" 开始的不同名字。这样就可以有带不同参数的多
 个构造函数，也容易看到使用的是哪个构造函数。也可以进行适当地参数类型检查。
 
-
 <code class="section">方法不能重载 </code>
 
 和构造函数同样的原因: 参数类型不总是显而易见的，要判定实际调用的是哪个方法因而
 常有困难。最好给方法不同的名字，这样类型检查会如你所愿。这样会排除多态性，但我
 们本来就不怎么需要。
-
 
 <code class="section">单一继承和界面 </code>
 
@@ -768,7 +1034,6 @@ Vim 也应该够用了。"尽量简单" 原则在此适用。
 面改变时，也会检查任何声明实现了该界面的类，确定已作了相应的修改。因为类有某界
 面的方法就假定它实现了该界面的机制是很脆弱的，会导致微妙的问题，我们不这么做。
 
-
 <code class="section">在所有地方使用 "this.variable" </code>
 
 不同编程语言中的对象变量有不同的访问方式，取决于出现的位置。有时需要 "this."
@@ -778,9 +1043,8 @@ Vim 也应该够用了。"尽量简单" 原则在此适用。
 "this." 前缀，而访问其它变量却不需要，常常省略。这造成了带 "this." 的变量和不
 带的混用，非常不统一。
 
- <a href="vim9.html#Vim9">Vim9</a>  类里总是使用 "this." 前缀。包括变量的声明。简单且统一。阅读类内部的代码
-时，可以直接看清哪些变量引用指向对象变量，哪些不是。
-
+ <a href="vim9.html#Vim9">Vim9</a>  类里总是为声明的方法和变量使用 "this." 前缀。简单且统一。阅读类内部的代
+码时，可以直接看清哪些变量引用指向对象变量，哪些不是。
 
 <code class="section">使用类变量 </code>
 
@@ -790,7 +1054,6 @@ Vim 也应该够用了。"尽量简单" 原则在此适用。
 
 TypeScript 在类变量名前加上类名前缀，即使在类内部也是如此。这有两个问题: 类名
 可能颇长，会占据相当空间，而且类改名时这些地方也要跟着改名。
-
 
 <code class="section">声明对象及类变量 </code>
 
@@ -807,36 +1070,40 @@ TypeScript 不用:
 <code class="example">          this.y = 0</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
-有些用户指出，这看来更像是赋值而不是声明。加上 "var" 改变了这一点: 
+有些用户指出，这看来更像是赋值而不是声明。加上 "var" 并省略 "this." 改变了这一
+点: 
 <code class="example">        class Point</code>
-<code class="example">          var this.x: number</code>
-<code class="example">          var this.y = 0</code>
+<code class="example">          var x: number</code>
+<code class="example">          var y = 0</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 为此，也需要用 "static" 关键字来声明类变量。这时可以选择省略 "var": 
 <code class="example">        class Point</code>
-<code class="example">          var this.x: number</code>
+<code class="example">          var x: number</code>
 <code class="example">          static count = 0</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 用的话，可以放在 "static" 之前: 
 <code class="example">        class Point</code>
-<code class="example">          var this.x: number</code>
+<code class="example">          var x: number</code>
 <code class="example">          var static count = 0</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 也可以放在 "static" 之后: 
 <code class="example">        class Point</code>
-<code class="example">          var this.x: number</code>
+<code class="example">          var x: number</code>
 <code class="example">          static var count = 0</code>
 <code class="example">        endclass</code>
 <code class="example"></code>
 这与 "static def Func()" 更一致些。
 
-是否使用 "var" 没有明显优劣。我们不用的两个主要原因是: 
-1. TypeScript、Java 和其它流行语言不用。
+是否使用 "var" 没有明显优劣。不用的两个主要原因是: 
+1. TypeScript 和其它流行语言不用。
 2. 少点拥挤。
 
+不过，更常见的是语言把一般的变量和函数声明语法重用于类/对象的变量和方法上。
+Vim9 也把一般的函数声明语法重用于方法上。因此，为了统一起见，我们要求以上声明
+使用 "var"。
 
 <code class="section">用 "ClassName.new()" 来构造对象 </code>
 
@@ -847,6 +1114,16 @@ TypeScript 不用:
  <a href="vim9.html#Vim9">Vim9</a>  脚本里构造方法叫做 new()，也使用 new() 调用，简单直接。其它语言使用
 "new ClassName()" 而没有 ClassName() 方法，反而是名为 ClassName 的类里带其它名
 字的方法。很混淆。
+
+
+<code class="section">Vim9class 访问模式 </code>
+                                                    <b class="vimtag"> <a name="vim9-access-modes">vim9-access-modes</a> </b>
+Vim9class 支持的变量访问方法及其意义是
+         <a href="vim9class.html#public-variable">public-variable</a>        可在任何地方读写
+         <a href="vim9class.html#read-only-variable">read-only-variable</a>     可在任何地方读，只能在类及其子类内部写
+         <a href="vim9class.html#protected-variable">protected-variable</a>     只能在类及其子类内部读写
+
+方法的访问模式类似，但没有只读模式。
 
 
 <code class="section">对象变量缺省读访问 </code>
@@ -860,26 +1137,26 @@ TypeScript 不用:
 不是真地要这么干。写代码时这可以帮助少点错误。
 
 
-<code class="section">加下划线使对象变量私有 </code>
+<code class="section">加下划线使对象变量受保护 </code>
 
-对象变量私有时，只可在类 (和子类) 中读取和修改，不能在类外使用。前加下划线是这
-么做的简单办法。若干编程语言建议如此。
+对象变量受保护时，只可在类 (和子类) 中读取和修改，不能在类外使用。前加下划线是
+这么做的简单办法。若干编程语言建议如此。
 
 如果要改变想法，使对象变量在类外也可访问，只要在所有的地方删除下划线。因为名字
 只出现在类 (和子类) 中，应该容易找到和修改。
 
-反过来就难很多: 可以简单地在对象变量前加上下划线使之私有，但所有其它地方你要自
-己追踪到和修改。可能要提供 "set" 方法调用。这也反映了现实中的问题，拿走权限需
-要在所有使用该权限的地方下功夫。
+反过来就难很多: 可以简单地在对象变量前加上下划线使之受保护，但所有其它地方你要
+自己追踪到和修改。可能要提供 "set" 方法调用。这也反映了现实中的问题，拿走权限
+需要在所有使用该权限的地方下功夫。
 
-替代方案会用 "private" 关键字，就像 "public" 在反方向修改访问那样。好吧，不这
-么做只是为了减少关键字数量。
+替代方案会用 "protected" 关键字，就像 "public" 在反方向修改访问那样。好吧，不
+这么做只是为了减少关键字数量。
 
 
-<code class="section">没有保护对象变量 </code>
+<code class="section">没有私有对象变量 </code>
 
 有些语言提供了若干方法控制对象变量的访问。最有名的是 "protected"，其意义随语言
-有所不同。其它的还有 "shared"、"private" 甚至 "friend"。
+有所不同。其它的还有 "shared"、"private"、"package" 甚至 "friend"。
 
 这些规则使生活变麻烦。在许多人在同一个复杂的代码上操作的项目里，容易出错而这些
 规则可能有其合理性。尤其是重整或其它类模型上的修改。

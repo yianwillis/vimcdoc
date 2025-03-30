@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="usr_52.txt">usr_52.txt</a> </b>    适用于 Vim 9.0 版本。   最近更新: 2023年2月
+<b class="vimtag"> <a name="usr_52.txt">usr_52.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
                      <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
                                 <code class="vim">译者</code>: Willis
@@ -48,6 +48,7 @@
  <a href="usr_52.html#52.3">52.3</a>   不经导入/导出的自动载入
  <a href="usr_52.html#52.4">52.4</a>   可用的其它机制
  <a href="usr_52.html#52.5">52.5</a>   在老式脚本中使用 Vim9 脚本
+ <a href="usr_52.html#52.6">52.6</a>   Vim9 例子: 注释和高亮抽出插件
 
         下一章:  <a href="usr_90.html#usr_90.txt">usr_90.txt</a>   安装 Vim
         前一章:  <a href="usr_51.html#usr_51.txt">usr_51.txt</a>   创建插件
@@ -76,7 +77,7 @@ Typescript。另外，函数被编译为指令以快速执行。这使 Vim9 脚�
 <code class="example">        def GetReply(nr: number): string</code>
 <code class="example">          if nr == 42</code>
 <code class="example">             return 'yes'</code>
-<code class="example">          elseif nr = 22</code>
+<code class="example">          elseif nr == 22</code>
 <code class="example">             return 'maybe'</code>
 <code class="example">          else</code>
 <code class="example">             return 'no'</code>
@@ -169,7 +170,7 @@ plugin/theplugin.vim 里改一处就可以了:
 自 动 载 入 目 录
 
 另一种使用自动载入的形式，脚本名既不是绝对也不是相对路径: 
-<code class="example">        import autload "monthlib.vim"</code>
+<code class="example">        import autoload "monthlib.vim"</code>
 <code class="example"></code>
 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 的 autoload 目录下搜索脚本 "monthlib.vim"。Unix 一个常见目
 录是 "~/.vim/autoload"。也会在 <a href="options.html#'packpath'">'packpath'</a> 里 "start" 之下搜索脚本。
@@ -318,6 +319,45 @@ Vim 会识别有内嵌 "#" 字符的函数名，如果该函数还没有定义�
 <code class="example">        source ~/.vim/extra/myNicePlugin.vim</code>
 <code class="example">        call g:NicePluginTest()</code>
 <code class="example"></code>
+</section><hr class="doubleline" /><section class=inner>
+<h4><b class="vimtag"> <a name="52.6">52.6</a> </b>  Vim9 examples: comment and highlight-yank plugin</h4>
+注 释 包
+
+Vim 带有一个 comment 插件，用 Vim9 脚本编写。  <a href="usr_05.html#comment-install">comment-install</a> 
+看一下在 $VIMRUNTIME/pack/dist/opt/comment/ 的包的内容吧。
+
+高 亮 抽 出 插 件
+
+这里是一个高亮抽出区域的例子。使用 Vim 9.1.0446 开始可用的  <a href="builtin.html#getregionpos()">getregionpos()</a>  函
+数。
+
+复制下例到一个新文件，把它放在你的 plugin 目录，下次你启动 Vim 时它就会激活
+了。 <a href="usr_05.html#add-plugin">add-plugin</a> : 
+<code class="example"></code>
+<code class="example">        vim9script</code>
+<code class="example"></code>
+<code class="example">        def HighlightedYank(hlgroup = 'IncSearch', duration = 300, in_visual = true)</code>
+<code class="example">          if v:event.operator ==? 'y'</code>
+<code class="example">            if !in_visual &amp;&amp; visualmode() != null_string</code>
+<code class="example">              visualmode(1)</code>
+<code class="example">              return</code>
+<code class="example">            endif</code>
+<code class="example">            var [beg, end] = [getpos("'["), getpos("']")]</code>
+<code class="example">            var type = v:event.regtype ?? 'v'</code>
+<code class="example">            var pos = getregionpos(beg, end, {type: type})</code>
+<code class="example">            var end_offset = (type == 'V' || v:event.inclusive) ? 1 : 0</code>
+<code class="example">            var m = matchaddpos(hlgroup, pos-&gt;mapnew((_, v) =&gt; {</code>
+<code class="example">              var col_beg = v[0][2] + v[0][3]</code>
+<code class="example">              var col_end = v[1][2] + v[1][3] + end_offset</code>
+<code class="example">              return [v[0][1], col_beg, col_end - col_beg]</code>
+<code class="example">            }))</code>
+<code class="example">            var winid = win_getid()</code>
+<code class="example">            timer_start(duration, (_) =&gt; m-&gt;matchdelete(winid))</code>
+<code class="example">          endif</code>
+<code class="example">        enddef</code>
+<code class="example"></code>
+<code class="example">        autocmd TextYankPost * HighlightedYank()</code>
+
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>下一章:  <a href="usr_90.html#usr_90.txt">usr_90.txt</a>   安装 Vim
 

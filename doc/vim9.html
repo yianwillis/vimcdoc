@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 9.0 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="vim9.txt">vim9.txt</a> </b>      适用于 Vim 9.1 版本。   最近更新: 2025年3月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -92,6 +92,7 @@ Vim9 脚本和老式的 Vim 脚本可以混合。重写旧脚本并非必需，�
                 函数里有用。<code class="note">注意</code> 因为使用老式表达式语法解析，<code class="special">{cmd}</code> 不能使用局
                 部变量。
 
+ <a href="usr_52.html#52.6">52.6</a>  有 Vim9 脚本的一些示例。
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>2. 和老式 Vim 脚本的差异                                <b class="vimtag"> <a name="vim9-differences">vim9-differences</a> </b>
 
@@ -201,7 +202,7 @@ compiled: <code class="special">{name}</code>"。
  <a href="vim9.html#:def">:def</a>  不像  <a href="userfunc.html#:function">:function</a>  那样有 "range"、"abort"、"dict" 或 "closure" 这样的选
 项。 <a href="vim9.html#:def">:def</a>  函数总会在错误时中止 (除非命令使用了  <code class="badlink">:slient!</code> 或错误在  <a href="eval.html#:try">:try</a>  块里
 捕获)，不接受范围、不能是 "dict" 函数，而且总可以有闭包。
-                                                <b class="vimtag"> <a name="vim9-no-dict-function">vim9-no-dict-function</a> </b>
+                                                <b class="vimtag"> <a name="vim9-no-dict-function">vim9-no-dict-function</a> </b> <b class="vimtag"> <a name="E1182">E1182</a> </b>
 可用 Vim9 类 ( <a href="vim9class.html#Vim9-class">Vim9-class</a> ) 而不是 "字典函数"。也可以显式传递入字典: 
 <code class="example">        def DictFunc(self: dict&lt;any&gt;, arg: string)</code>
 <code class="example">           echo self[arg]</code>
@@ -591,6 +592,14 @@ Vim9 脚本里参数数目必须匹配。如果要接受任何参数，或任何
                                                 <b class="vimtag"> <a name="command-block">command-block</a> </b> <b class="vimtag"> <a name="E1026">E1026</a> </b>
 定义用户命令时也可用代码块。在代码块内使用 Vim9 语法。
 
+这里是个使用嵌入文档 (here-docs) 的例子: 
+<code class="example">    com SomeCommand {</code>
+<code class="example">        g:someVar =&lt;&lt; trim eval END</code>
+<code class="example">          ccc</code>
+<code class="example">          ddd</code>
+<code class="example">        END</code>
+<code class="example">      }</code>
+<code class="example"></code>
 如果语句包含字典，其结束花括号不能写在行首。否则，被解析为代码块的结束。下面这
 样不行: 
 <code class="example">        command NewCommand {</code>
@@ -940,8 +949,9 @@ JavaScript，唯一的例外是空列表和字典也被视为准假值:
 <code class="example"></code>
 简单类型是数值、浮点数、特殊类型和布尔型。其它类型可用  <a href="builtin.html#string()">string()</a> 。
                         <b class="vimtag"> <a name="false">false</a> </b> <b class="vimtag"> <a name="true">true</a> </b> <b class="vimtag"> <a name="null">null</a> </b> <b class="vimtag"> <a name="null_blob">null_blob</a> </b> <b class="vimtag"> <a name="null_channel">null_channel</a> </b>
-                        <b class="vimtag"> <a name="null_dict">null_dict</a> </b> <b class="vimtag"> <a name="null_function">null_function</a> </b> <b class="vimtag"> <a name="null_job">null_job</a> </b> <b class="vimtag"> <a name="null_list">null_list</a> </b>
-                        <b class="vimtag"> <a name="null_partial">null_partial</a> </b> <b class="vimtag"> <a name="null_string">null_string</a> </b> <b class="vimtag"> <a name="E1034">E1034</a> </b>
+                        <b class="vimtag"> <a name="null_class">null_class</a> </b> <b class="vimtag"> <a name="null_dict">null_dict</a> </b> <b class="vimtag"> <a name="null_function">null_function</a> </b> <b class="vimtag"> <a name="null_job">null_job</a> </b>
+                        <b class="vimtag"> <a name="null_list">null_list</a> </b> <b class="vimtag"> <a name="null_object">null_object</a> </b> <b class="vimtag"> <a name="null_partial">null_partial</a> </b> <b class="vimtag"> <a name="null_string">null_string</a> </b>
+                        <b class="vimtag"> <a name="E1034">E1034</a> </b>
 Vim9 脚本可以使用如下预定义值: 
 <code class="example">        true</code>
 <code class="example">        false</code>
@@ -967,9 +977,12 @@ Vim9 脚本可以使用如下预定义值:
 <code class="example"></code>
 这些值也可用于参数的缺省值: 
 <code class="example">        def MyFunc(b: blob = null_blob)</code>
-<code class="example">           if b == null_blob</code>
-<code class="example">              # 没给出 b 参数</code>
-<code class="example"></code>
+<code class="example">            # 注意: 和 null 比较，而不是 null_blob，</code>
+<code class="example">            #       以区分缺省值和空 blob。</code>
+<code class="example">            if b == null</code>
+<code class="example">                # 没给出 b 参数</code>
+更多和 null 的测试的信息可见  <a href="vim9.html#null-compare">null-compare</a> 。
+
 可以把  <a href="vim9.html#null">null</a>  和任何值比较，不会给出类型错误。但把  <a href="vim9.html#null">null</a>  和数值、浮点或布尔型
 比较总返回  <a href="vim9.html#false">false</a> 。这和老式脚本不同，那里把  <a href="vim9.html#null">null</a>  和零或  <a href="vim9.html#false">false</a>  比较会返回
  <a href="vim9.html#true">true</a> 。
@@ -1147,9 +1160,10 @@ Ex 命令范围需要冒号前缀。
 也不行。
 
                                                 <b class="vimtag"> <a name=":defc">:defc</a> </b> <b class="vimtag"> <a name=":defcompile">:defcompile</a> </b>
-:defc[ompile]           编译尚未编译的在当前脚本中定义的函数。
-                        编译中如有任何错误，会报错。
-                        这里不包含类中定义的函数。
+:defc[ompile]           编译尚未编译的在当前脚本中定义的函数和类
+                        ( <a href="vim9class.html#class-compile">class-compile</a> )。编译中如有任何错误，会报错。
+
+:defc[ompile] MyClass   编译类里的所有方法。  <a href="vim9class.html#class-compile">class-compile</a> 
 
 :defc[ompile] <code class="special">{func}</code>
 :defc[ompile] debug <code class="special">{func}</code>
@@ -1342,7 +1356,7 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 
 没有 array 类型，用 list&lt;<code class="special">{type}</code>&gt; 代替。list 常量使用了有效实现，以避免许多小片
 内存的分配。
-                                                        <b class="vimtag"> <a name="E1005">E1005</a> </b> <b class="vimtag"> <a name="E1007">E1007</a> </b>
+                                    <b class="vimtag"> <a name="vim9-func-declaration">vim9-func-declaration</a> </b> <b class="vimtag"> <a name="E1005">E1005</a> </b> <b class="vimtag"> <a name="E1007">E1007</a> </b>
 可以用具体程度不同的方式来声明偏函数和函数:
 func                            任何类型的函数引用，不检查参数和返回值类型
 func: void                      任何数量和类型的参数，无返回值
@@ -1355,12 +1369,12 @@ func(): <code class="special">{type}</code>                  无参数的函数�
 func(<code class="special">{type}</code>)                    指定参数类型的函数，无返回值
 func(<code class="special">{type}</code>): <code class="special">{type}</code>            指定参数类型和返回类型的函数
 func(?<code class="special">{type}</code>)                   指定可选参数类型的函数，无返回值
-func(...<code class="special">{type}</code>)                 带可变数目的指定类型的函数，无返回值
-func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, ...<code class="special">{type}</code>): <code class="special">{type}</code>
+func(...list&lt;<code class="special">{type}</code>&gt;)           带可变数目的指定类型的参数列表的函数，无返回值
+func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, ...list&lt;<code class="special">{type}</code>&gt;): <code class="special">{type}</code>
                                 带以下的函数:
                                 - 必选参数的类型
                                 - 可选参数的类型
-                                - 可变数目参数的类型
+                                - 可变数目参数列表的类型
                                 - 返回类型
 
 如果返回类型为 "void"，函数什么都不返回。
@@ -1372,7 +1386,6 @@ func(<code class="special">{type}</code>, ?<code class="special">{type}</code>, 
 <code class="example">        :type MyList list&lt;string&gt;</code>
 定制类型必须以大写字母开头，以避免和之后新增的内建类型名字起冲突，这和用户函数
 类似。
-<code class="special">{尚未实现}</code>
 
 类和接口可用作类型: 
 <code class="example">        :class MyClass</code>
@@ -1418,7 +1431,7 @@ Vim9 脚本或  <a href="vim9.html#:def">:def</a>  函数中声明的变量有�
 
 如果给出类型但与期待不符，报错 <b class="vimtag"> <a name="E1272">E1272</a> </b> 。
 
-如果类型不完整，报错 *E1363*，例如对象所属的类未知 (通常因为是 null 对象)。
+如果类型不完整，报错 <b class="vimtag"> <a name="E1363">E1363</a> </b> ，例如对象所属的类未知 (通常因为是 null 对象)。
 
 <code class="section">类型推论 </code>
                                                         <b class="vimtag"> <a name="type-inference">type-inference</a> </b>
@@ -1516,11 +1529,165 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
  <a href="builtin.html#flattennew()">flattennew()</a>  代替。因为  <a href="builtin.html#flatten()">flatten()</a>  的目的就是改变类型，它不能用于 Vim9 脚
 本。
 
+赋值给指定参数的函数引用  (见  <a href="vim9.html#vim9-func-declaration">vim9-func-declaration</a> ) 会严格检查参数的类型。
+可变数目的参数类型必须匹配: 
+<code class="example">        var FuncRef: func(string, number, bool): number</code>
+<code class="example">        FuncRef = (v1: string, v2: number, v3: bool) =&gt; 777     # 正确</code>
+<code class="example">        FuncRef = (v1: string, v2: number, v3: number) =&gt; 777   # 出错！</code>
+<code class="example">        # 可变数目的参数必须有相同类型</code>
+<code class="example">        var FuncVA: func(...list&lt;string&gt;): number</code>
+<code class="example">        FuncVA = (...v: list&lt;number&gt;): number =&gt; v  # 出错！</code>
+<code class="example">        FuncVA = (...v: list&lt;any&gt;): number =&gt; v     # 正确，`any` 会运行时检查</code>
+<code class="example">        FuncVA = (v1: string, v: string2): number =&gt; 333     # 出错！</code>
+<code class="example">        FuncVA = (v: list&lt;string&gt;): number =&gt; 3     # 出错！</code>
+<code class="example"></code>
+如果目标函数引用没有指定参数，不进行参数类型检查: 
+<code class="example">        var FuncUnknownArgs: func: number</code>
+<code class="example">        FuncUnknownArgs = (v): number =&gt; v                      # 正确</code>
+<code class="example">        FuncUnknownArgs = (v1: string, v2: string): number =&gt; 3 # 正确</code>
+<code class="example">        FuncUnknownArgs = (...v1: list&lt;string&gt;): number =&gt; 333  # 正确</code>
+
                          <b class="vimtag"> <a name="E1211">E1211</a> </b> <b class="vimtag"> <a name="E1217">E1217</a> </b> <b class="vimtag"> <a name="E1218">E1218</a> </b> <b class="vimtag"> <a name="E1219">E1219</a> </b> <b class="vimtag"> <a name="E1220">E1220</a> </b> <b class="vimtag"> <a name="E1221">E1221</a> </b>
                          <b class="vimtag"> <a name="E1222">E1222</a> </b> <b class="vimtag"> <a name="E1223">E1223</a> </b> <b class="vimtag"> <a name="E1224">E1224</a> </b> <b class="vimtag"> <a name="E1225">E1225</a> </b> <b class="vimtag"> <a name="E1226">E1226</a> </b> <b class="vimtag"> <a name="E1227">E1227</a> </b>
                          <b class="vimtag"> <a name="E1228">E1228</a> </b> <b class="vimtag"> <a name="E1238">E1238</a> </b> <b class="vimtag"> <a name="E1250">E1250</a> </b> <b class="vimtag"> <a name="E1251">E1251</a> </b> <b class="vimtag"> <a name="E1252">E1252</a> </b> <b class="vimtag"> <a name="E1256">E1256</a> </b>
                          <b class="vimtag"> <a name="E1297">E1297</a> </b> <b class="vimtag"> <a name="E1298">E1298</a> </b> <b class="vimtag"> <a name="E1301">E1301</a> </b>
 大多数内建函数检查类型，以便查找错误。
+
+<code class="section">变量种类、缺省和 null 处理 </code>
+                                <b class="vimtag"> <a name="variable-categories">variable-categories</a> </b> <b class="vimtag"> <a name="null-variables">null-variables</a> </b>
+变量有以下几个种类:
+        原始类型        number、float、boolean
+        容器类型        string、blob、list、dict
+        特殊类型        function、job、channel、user-defined-object
+
+声明没有初始块的变量时，必须显式提供类型。每个种类有不同的缺省初始块语法。这里
+为每个种类各举个例子: 
+<code class="example">        var num: number         # 原始类型缺省为 0 或等价值</code>
+<code class="example">        var cont: list&lt;string&gt;  # 容器类型缺省为空容器</code>
+<code class="example">        var spec: job           # 特殊类型缺省为 null</code>
+
+Vim 没有你熟悉的 null 值；它有若干预定义的 null_<code class="special">&lt;type&gt;</code> 值，如  <a href="vim9.html#null_string">null_string</a> 、
+ <a href="vim9.html#null_list">null_list</a> 、 <a href="vim9.html#null_job">null_job</a> 。原始类型没有 null_<code class="special">&lt;type&gt;</code>。null_<code class="special">&lt;type&gt;</code> 典型用法有:
+- 清除变量，释放其资源；
+- 作为函数定义里的参数缺省值，见  <a href="vim9.html#null-compare">null-compare</a> 。
+
+对特殊类型变量，如  <a href="channel.html#job">job</a>  而言，null_<code class="special">&lt;type&gt;</code> 可用于清理资源。对容器类型变量而
+言，给变量赋值空容器也可以用来清理资源。如: 
+<code class="example">        var j: job = job_start(...)</code>
+<code class="example">        # ... 作业完成任务</code>
+<code class="example">        j = null_job    # 清除变量，并释放作业资源</code>
+<code class="example"></code>
+<code class="example">        var l: list&lt;any&gt;</code>
+<code class="example">        # ... 给列表加很多内容</code>
+<code class="example">        l = []  # 清除变量，并释放容器资源</code>
+使用空容器而不是 null_<code class="special">&lt;type&gt;</code> 来清除容器类型变量可以避免  <a href="vim9.html#null-anomalies">null-anomalies</a>  描述
+的 null 的复杂性。
+
+容器类型变量和特殊类型变量的初始块语法不同。未初始化的容器变量缺省为空容器: 
+<code class="example">        var l1: list&lt;string&gt;                # 空容器</code>
+<code class="example">        var l2: list&lt;string&gt; = []           # 空容器</code>
+<code class="example">        var l3: list&lt;string&gt; = null_list    # null 容器</code>
+"l1" 和 "l2" 等价，初始化结果无法区分；但 "l3" 是 null 容器。null 容器和空容器
+类似，但有不同，见  <a href="vim9.html#null-anomalies">null-anomalies</a> 。
+
+特殊类型变量缺省为 null。以下的作业初始化等价且不可区分: 
+<code class="example">        var j1: job</code>
+<code class="example">        var j2: job = null_job</code>
+<code class="example">        var j3 = null_job</code>
+<code class="example"></code>
+声明列表或字典时，如果项目类型未指定且无法推导，类型判为 "any": 
+<code class="example">        var d1 = {}             # 类型为 "dict&lt;any&gt;"</code>
+<code class="example">        var d2 = null_dict      # 类型为 "dict&lt;any&gt;"</code>
+<code class="example"></code>
+函数声明见  <a href="vim9.html#vim9-func-declaration">vim9-func-declaration</a> ，则相当独特。
+
+                                                <b class="vimtag"> <a name="null-compare">null-compare</a> </b>
+常见的和 null 比较的语法，如果要求 null 容器和空容器不相等，比较时不要使用
+null_<code class="special">&lt;type&gt;</code>: 
+<code class="example">        vim9script</code>
+<code class="example">        def F(arg: list&lt;string&gt; = null_list)</code>
+<code class="example">            if arg == null</code>
+<code class="example">               echo "null"</code>
+<code class="example">            else</code>
+<code class="example">                echo printf("not null, %sempty", empty(arg) ? '' : 'not ')</code>
+<code class="example">            endif</code>
+<code class="example">        enddef</code>
+<code class="example">        F()             # output: "null"</code>
+<code class="example">        F(null_list)    # output: "null"</code>
+<code class="example">        F([])           # output: "not null, empty"</code>
+<code class="example">        F([''])         # output: "not null, not empty"</code>
+上述函数接受字符串列表并报告其值。
+修改上述函数签名可以接受不同类型的参数: 
+<code class="example">        def F(arg: list&lt;any&gt; = null_list)   # 任何类型的列表</code>
+<code class="example">        def F(arg: any = null)              # 任何类型</code>
+
+上例中，目标是区分空列表和空列表，和  <a href="vim9.html#null">null</a>  比较而不是和  <a href="vim9.html#null_list">null_list</a>  比较是正
+确的选择。根本原因是 "null_list == null" 且 "[] != null"。而和  <a href="vim9.html#null_list">null_list</a>  的
+比较会失败，因为 "[] == null_list"。下面的小节给出比较结果的细节。
+
+                                        <b class="vimtag"> <a name="null-details">null-details</a> </b> <b class="vimtag"> <a name="null-anomalies">null-anomalies</a> </b>
+本小节描述使用 null 和 null_<code class="special">&lt;type&gt;</code> 的问题；下面列举 null 比较的结果。有些情况
+下，如果熟悉了 vim9 的 null 语法，程序员还是可以选择使用 null_<code class="special">&lt;type&gt;</code> 用来比较
+和/或其他情况。
+
+文档的其他地方说:
+        null 值和空值处理方式通常相同，但不绝对
+这里是例子: 
+<code class="example">        vim9script</code>
+<code class="example">        var s1: list&lt;string&gt;</code>
+<code class="example">        var s2: list&lt;string&gt; = null_list</code>
+<code class="example">        echo s1             # 输出: "[]"</code>
+<code class="example">        echo s2             # 输出: "[]"</code>
+<code class="example"></code>
+<code class="example">        echo s1 + ['a']     # 输出: "['a']"</code>
+<code class="example">        echo s2 + ['a']     # 输出: "['a']"</code>
+<code class="example"></code>
+<code class="example">        echo s1-&gt;add('a')   # 输出: "['a']"</code>
+<code class="example">        echo s2-&gt;add('a')   # E1130: Can not add to null list</code>
+
+两个和 null_<code class="special">&lt;type&gt;</code> 相等的值并不一定彼此相等: 
+<code class="example">        vim9script</code>
+<code class="example">        echo {} == null_dict      # true</code>
+<code class="example">        echo null_dict == null    # true</code>
+<code class="example">        echo {} == null           # false</code>
+
+和其他窗口类型不同，未初始化的字符串等于 null。<a href="options.html#'is'">'is'</a> 操作符可用来判断是不是
+null_string: &gt;vim
+        vim9script
+        var s1: string
+        var s2 = null_string
+        echo s1 == null         # true - 意想不到
+        echo s2 == null         # true
+        echo s2 is null_string  # true
+
+        var b1: blob
+        var b2 = null_blob
+        echo b1 == null         # false
+        echo b2 == null         # true
+&lt;
+任何初始为 null_<code class="special">&lt;type&gt;</code> 的变量等于 null_<code class="special">&lt;type&gt;</code>，同时也等于 null。例如: &gt;vim
+        vim9script
+        var x = null_blob
+        echo x == null_blob     # true
+        echo x == null          # true
+&lt;
+未初始化的变量通常等于 null；取决于类型: &gt;vim
+        var s: string           s == null
+        var b: blob             b != null   ***
+        var l: list<code class="special">&lt;any&gt;</code>        l != null   ***
+        var d: dict<code class="special">&lt;any&gt;</code>        d != null   ***
+        var f: func             f == null
+        var j: job              j == null
+        var c: channel          c == null
+        var o: Class            o == null
+
+初始为空的变量等于 null_<code class="special">&lt;type&gt;</code>；但不等于 null: &gt;vim
+        var s2: string = ""       == null_string        != null
+        var b2: blob = 0z         == null_blob          != null
+        var l2: list<code class="special">&lt;any&gt;</code> = []    == null_list          != null
+        var d2: dict<code class="special">&lt;any&gt;</code> = <code class="special">{}</code>    == null_dict          != null
+
+<code class="note">注意</code>: 特殊类型的变量，如作业，缺省为 null 值，没有对应的空值。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>5. 命名风格、导入和导出
@@ -1572,6 +1739,10 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 这样就可以编写脚本，在可能的情况下利用 Vim9 脚本的语法，但也支持旧的 Vim 版
 本。
 
+<code class="note">注意</code> Vim9 语法 在 Vim 9 之前有过改变，所以使用正确语法的脚本 (如 "import from"
+而不是 "import") 可能会报错。如果不想如此，检查  <a href="eval.html#v:version">v:version</a>  &gt;= 900 会更安全
+些。
+
 只能有两种方法工作:
 1. "if" 语句计算为假，跳过直到  <code class="badlink">endif</code>  部分为止的命令， <a href="vim9.html#vim9script">vim9script</a>  是第一个真
    正执行的命令。
@@ -1589,8 +1760,9 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 <code class="example">        export def MyFunc() ...</code>
 <code class="example">        export class MyClass ...</code>
 <code class="example">        export interface MyClass ...</code>
+<code class="example">        export enum MyEnum ...</code>
                                                         <b class="vimtag"> <a name="E1043">E1043</a> </b> <b class="vimtag"> <a name="E1044">E1044</a> </b>
-就像这里暗示的，只能导出常数、变量、 <a href="vim9.html#:def">:def</a>  函数和类。{尚未实现: 类、界面}
+就像这里暗示的，只能导出常数、变量、 <a href="vim9.html#:def">:def</a>  函数、类、界面和枚举。
 
                                                         <b class="vimtag"> <a name="E1042">E1042</a> </b>
  <a href="vim9.html#:export">:export</a>  只能用于 Vim9 脚本的脚本级别。
