@@ -18,4 +18,12 @@ hi link helpNoteCn		helpNote
 hi link helpNotViCn		helpNotVi
 hi link helpYizheCn		Identifier
 
+" Special highlighting for syntax highlighting groups in syntax.cnx help file.
+" Adopted from Vim distribution's syntax/help.vim.
+if has('textprop') && expand('%:p') =~ '[/\\]doc[/\\]syntax.cnx'
+  " highlight groups with their respective color
+  import 'dist/vimhelp.vim'
+  call vimhelp.HighlightGroups()
+endif
+
 " vim: ts=8 sw=2

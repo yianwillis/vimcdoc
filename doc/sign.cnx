@@ -1,4 +1,4 @@
-*sign.txt*      适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*sign.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Gordon Prieur
@@ -62,7 +62,8 @@
 
 							*sign-priority*
 每个已放置的标号会分配一个优先值。同一行上如有多个标号放置，使用最高优先级的标
-号的属性，这与标号组无关。标号的缺省优先级是 10。优先级在标号放置时分配。
+号的属性，这与标号组无关。标号的缺省优先级是 10。不同的标号在定义时可给出不同
+的缺省优先级。优先级在标号放置时分配。
 
 当出现相同优先级的两个标号且其中一个在标号列上显示图标或文本而另一个有行高亮
 时，两个标号同时显示。
@@ -108,6 +109,8 @@
 			Motif		pixmap (.xpm)
 			Win32		.bmp, .ico, .cur
 					pixmap (.xpm) |+xpm_w32|
+	priority={prio}
+		此标号的缺省优先级，见 |sign-priority|。
 
 	linehl={group}
 		用以显示整个标号行的高亮组。多用于定义背景色。
@@ -173,9 +176,9 @@
 
 		缺省，标号放置在全局标号组。
 
-		缺省，标号分配的缺省优先级为 10。要分配不同的优先值，用
-		"priority={prio}" 来指定。优先级用于在同一行有多个标号放置时决
-		定显示的标号。
+		缺省，标号分配的缺省优先级为 10，除非标号定义时给出了不同的缺
+		省值。要分配不同的优先值，用 "priority={prio}" 来指定。优先级
+		用于在同一行有多个标号放置时决定显示哪个标号。
 
 		示例: >
 			:sign place 5 line=3 name=sign1 file=a.py
@@ -335,7 +338,7 @@
 		同上，但跳转到组 {group} 里的标号
 
 ==============================================================================
-3. Functions					*sign-functions-details*
+3. 函数						*sign-functions-details*
 
 sign_define({name} [, {dict}])				*sign_define()*
 sign_define({list})
@@ -349,6 +352,7 @@ sign_define({list})
 		支持以下的值:
 		   icon		用于标号的位图文件完整路径。
 		   linehl	用于标号放置所在的整行的高亮组。
+		   priority	标号的缺省优先级
 		   numhl	放置标号的行的行号使用的高亮组。
 		   text		没有图标或不使用 GUI 时显示的文本。
 		   texthl	文本项目使用的高亮组
@@ -377,6 +381,9 @@ sign_define({list})
 <
 		也可用作 |method|: >
 			GetSignList()->sign_define()
+<
+		返回类型: |Number|
+
 
 sign_getdefined([{name}])				*sign_getdefined()*
 		获取已定义标号及其属性的列表。类似于 |:sign-list| 命令。
@@ -388,6 +395,7 @@ sign_getdefined([{name}])				*sign_getdefined()*
 		   icon		标号的位图文件完整路径
 		   linehl	标号放置所在的整行的高亮组；有设置此项目才存在
 		   name		标号名
+		   priority	标号的缺省优先级
 		   numhl	放置标号的行的行号使用的高亮组；有设置此项目才
 				存在
 		   text		没有图标或不使用 GUI 时显示的文本。
@@ -406,6 +414,9 @@ sign_getdefined([{name}])				*sign_getdefined()*
 <
 		也可用作 |method|: >
 			GetSignList()->sign_getdefined()
+<
+		返回类型: list<dict<string>> 或 list<any>
+
 
 sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		返回一个或所有缓冲区里放置的标号的列表。类似于
@@ -460,8 +471,10 @@ sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		也可用作 |method|: >
 			GetBufname()->sign_getplaced()
 <
-							*sign_jump()*
-sign_jump({id}, {group}, {buf})
+		返回类型: list<dict<any>>
+
+
+sign_jump({id}, {group}, {buf})				*sign_jump()*
 		打开缓冲区 {buf} 或跳转到包含 {buf} 的窗口，并定位光标到组
 		{group} 里的标号 {id}。类似于 |:sign-jump| 命令。
 
@@ -477,6 +490,9 @@ sign_jump({id}, {group}, {buf})
 		也可用作 |method|: >
 			GetSignid()->sign_jump()
 <
+		返回类型: |Number|
+
+
 							*sign_place()*
 sign_place({id}, {group}, {name}, {buf} [, {dict}])
 		把 {name} 指定的标号放在文件 {fname} 或缓冲区 {buf} 的第
@@ -523,8 +539,10 @@ sign_place({id}, {group}, {name}, {buf} [, {dict}])
 		也可用作 |method|: >
 			GetSignid()->sign_place(group, name, expr)
 <
-							*sign_placelist()*
-sign_placelist({list})
+		返回类型: |Number|
+
+
+sign_placelist({list})				*sign_placelist()*
 		放置一或多个标号。类似于 |sign_place()| 函数。{list} 参数指定
 		要放置的一列标号。每个列表项目是带以下标号属性的字典:
 		    buffer	缓冲区名或号。可接受的值见 |bufname()|。
@@ -537,8 +555,8 @@ sign_placelist({list})
 		    lnum	缓冲区里放置标号的行号。可接受值见 |line()|。
 		    name	放置的标号名。详见 |sign_define()|。
 		    priority	标号优先级。多个标号放置在同一行时，使用最高优
-				先级的标号。如果不指定，缺省优先级是 10。详见
-				|sign-priority|。
+				先级的标号。如果不指定，缺省优先级是 10，除非
+				标号定义时指定了其他值。详见 |sign-priority|。
 
 		如果 {id} 指定已存在的桔，则修改已有的标号以使用指定的 {name}
 		和/或 {priority}。
@@ -572,6 +590,9 @@ sign_placelist({list})
 <
 		也可用作 |method|: >
 			GetSignlist()->sign_placelist()
+<
+		返回类型: |Number|
+
 
 sign_undefine([{name}])					*sign_undefine()*
 sign_undefine({list})
@@ -595,6 +616,9 @@ sign_undefine({list})
 <
 		也可用作 |method|: >
 			GetSignlist()->sign_undefine()
+<
+		返回类型: |Number|
+
 
 sign_unplace({group} [, {dict}])			*sign_unplace()*
 		撤销在一或多个缓冲区里已放置的标号的放置。类似于
@@ -638,6 +662,9 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 <		也可用作 |method|: >
 			GetSigngroup()->sign_unplace()
 <
+		返回类型: |Number|
+
+
 sign_unplacelist({list})				*sign_unplacelist()*
 		撤销在一或多个缓冲区里已放置的标号的放置。类似于
 		|sign_unplace()| 函数。
@@ -663,5 +690,6 @@ sign_unplacelist({list})				*sign_unplacelist()*
 		也可用作 |method|: >
 			GetSignlist()->sign_unplacelist()
 <
+		返回类型: list<number> 或 list<any>
 
  vim:tw=78:ts=8:noet:ft=help:norl:

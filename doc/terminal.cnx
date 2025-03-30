@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*terminal.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -43,6 +43,7 @@
       其它命令					|termdebug-commands|
       事件					|termdebug-events|
       提示模式					|termdebug-prompt|
+      映射					|termdebug-mappings|
       通信					|termdebug-communication|
       定制					|termdebug-customizing|
 
@@ -173,6 +174,14 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 			如果 [command] 为 NONE，不启动作业，但终端的 pty 可被
 			gdb 这样的命令使用。
 
+			如果 [command] 输出 NUL 字符，会被转换为换行符
+			|NL-used-for-Nul|。
+
+							*terminal-nospecial*
+			Vim 自己仅识别 [command] 里的 |cmdline-special| 字符。
+			其它字符完全照搬。如果需要扩展通配符、环境变量或其他外
+			壳特殊字符，可以考虑 |term++shell| 选项。
+
 			如果没有给出 [command]，缺省行为是外壳退出时关闭终端。
 			可以用 ++noclose 参数改变此行为。
 			给出 [command] 时，缺省行为是保持终端打开在终端普通模
@@ -181,6 +190,7 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 			不能后跟 Vim 命令，任何的 | 都会包含在 [command] 中。
 			如果必须要在同一行上后跟 Vim 命令，可用 `:execute` 。
 
+							*terminal-bufname*
 			建立新缓冲区，名字使用 [command] 或 'shell' 再加上前缀
 			"!"。如果带此名的缓冲区已存在，加一个括起的数值。比
 			如，如果 "gdb" 存在 (译者注: 似应为 "!gdb")，第二个终
@@ -205,9 +215,14 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 					果当前缓冲区不能 |abandon| 则失败。
 			++hidden	在隐藏缓冲区打开终端，不使用窗口。
 			++norestore	不把此终端窗口加到会话文件中。
+
+						*term++shell*
 			++shell		不直接执行 {command}，而使用外壳，就像
 					`:!command` 那样	*E279*
 					{仅能用于 Unix 和 MS-Windows}
+					产生的命令就像
+					'shell' 'shellcmdflag' [command]
+					其他和 `:!command` 相关的选项无效。
 			++kill={how}	关闭终端窗口的尝试使用 {how} 信号杀死
 					作业。相关值见 |term_setkill()|。
 			++rows={height} 使用 {height} 作为终端窗口高度。如果终
@@ -253,6 +268,10 @@ GUI 模式或使用 'termguicolors' 时，新的终端窗口缺省使用的 16 �
 强制进行。
 
 							*terminal-close*
+终端作业结束且没给出 [command] 时 (如执行的是 'shell' 命令)，缺省关闭终端窗口
+(除非接收空间的下个窗口里的缓冲区置位了 'nobuflisted' 选项，此时终端窗口不会自
+动关闭，而会打开一个新的空缓冲区)。
+
 如果关闭了终端窗口，比如外壳退出且使用了 "++close" 参数时，且此窗口是 Vim 最后
 一个正常的窗口，Vim 会退出。这类似于普通窗口中用了 |:quit|。帮助和预览窗口不计
 在内。
@@ -391,6 +410,10 @@ winpty64.dll 来对应 Vim 编译时的用法。
 可用环境变量为运行的作业传递信息:
     VIM_SERVERNAME	v:servername
 
+							*git-vimdumps*
+有个 git-difftool 的扩展叫 `git-vimdumps`，可用于方便地检查屏幕截图并进行比
+较。创建和使用此 git 扩展的说明请见 Vim 库里 `src/testdir/commondumps.vim` 文
+件。
 
 ==============================================================================
 2. 终端函数					 *terminal-function-details*
@@ -437,8 +460,10 @@ term_dumpdiff({filename}, {filename} [, {options}])
 		也可用作 |method|: >
 			GetFilename()->term_dumpdiff(otherfile)
 <
-							*term_dumpload()*
-term_dumpload({filename} [, {options}])
+		返回类型: |Number|
+
+
+term_dumpload({filename} [, {options}])			*term_dumpload()*
 		打开新窗口显示 {filename} 内容。必须是 |term_dumpwrite()| 创建
 		的文件。
 		返回缓冲区号，如果失败返回零。
@@ -449,6 +474,8 @@ term_dumpload({filename} [, {options}])
 		也可用作 |method|: >
 			GetFilename()->term_dumpload()
 <
+		返回类型: |Number|
+
 							*term_dumpwrite()*
 term_dumpwrite({buf}, {filename} [, {options}])
 		把 {buf} 的终端屏幕的内容保存到 {filename} 文件里。使用的格式
@@ -463,6 +490,9 @@ term_dumpwrite({buf}, {filename} [, {options}])
 
 		也可用作 |method|，基用于文件名: >
 			GetFilename()->term_dumpwrite(bufnr)
+<
+		返回类型: |Number|
+
 
 term_getaltscreen({buf})				*term_getaltscreen()*
 		如果 {buf} 的终端使用轮换屏幕，则返回 1。
@@ -470,6 +500,8 @@ term_getaltscreen({buf})				*term_getaltscreen()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getaltscreen()
+<
+		返回类型: |Number|
 
 
 term_getansicolors({buf})				*term_getansicolors()*
@@ -484,8 +516,10 @@ term_getansicolors({buf})				*term_getansicolors()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getansicolors()
+<
+		返回类型: list<string> 或 list<any>
 
-<		{仅当编译时打开 GUI 和/或 |+termguicolors| 特性时才有效}
+		{仅当编译时打开 GUI 和/或 |+termguicolors| 特性时才有效}
 
 term_getattr({attr}, {what})				*term_getattr()*
 		给出一个由 term_scrape() 的 "attr" 项目返回的 {attr}，返回它是
@@ -498,6 +532,8 @@ term_getattr({attr}, {what})				*term_getattr()*
 
 		也可用作 |method|: >
 			GetAttr()->term_getattr()
+<
+		返回类型: |Number|
 
 
 term_getcursor({buf})					*term_getcursor()*
@@ -518,14 +554,20 @@ term_getcursor({buf})					*term_getcursor()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getcursor()
+<
+		返回类型: list<any>
+
 
 term_getjob({buf})					*term_getjob()*
 		获取终端窗口 {buf} 相关联的作业。
 		{buf} 的用法见 |term_getsize()|。
-		没有相关作业时返回 |v:null|。
+		没有相关作业时返回 |v:null|。Vim9 脚本时，如果没有作业返回
+		|null_job|。
 
 		也可用作 |method|: >
 			GetBufnr()->term_getjob()
+<
+		返回类型: |job|
 
 
 term_getline({buf}, {row})				*term_getline()*
@@ -539,6 +581,8 @@ term_getline({buf}, {row})				*term_getline()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getline(row)
+<
+		返回类型: |String|
 
 
 term_getscrolled({buf})					*term_getscrolled()*
@@ -553,6 +597,8 @@ term_getscrolled({buf})					*term_getscrolled()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getscrolled()
+<
+		返回类型: |Number|
 
 
 term_getsize({buf})					*term_getsize()*
@@ -564,6 +610,8 @@ term_getsize({buf})					*term_getsize()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getsize()
+<
+		返回类型: list<number> 或 list<any>
 
 
 term_getstatus({buf})					*term_getstatus()*
@@ -578,6 +626,8 @@ term_getstatus({buf})					*term_getstatus()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_getstatus()
+<
+		返回类型: |String|
 
 
 term_gettitle({buf})					*term_gettitle()*
@@ -588,6 +638,8 @@ term_gettitle({buf})					*term_gettitle()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_gettitle()
+<
+		返回类型: |String|
 
 
 term_gettty({buf} [, {input}])				*term_gettty()*
@@ -600,10 +652,15 @@ term_gettty({buf} [, {input}])				*term_gettty()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_gettty()
+<
+		返回类型: |String|
 
 
 term_list()						*term_list()*
 		返回所有终端窗口的缓冲区号的列表。
+
+		返回类型: list<number> 或 list<any>
+
 
 term_scrape({buf}, {row})				*term_scrape()*
 		获取终端 {buf} 屏幕第 {row} 行的内容。
@@ -623,6 +680,8 @@ term_scrape({buf}, {row})				*term_scrape()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_scrape(row)
+<
+		返回类型: list<dict<any>> 或 list<any>
 
 
 term_sendkeys({buf}, {keys})				*term_sendkeys()*
@@ -633,6 +692,8 @@ term_sendkeys({buf}, {keys})				*term_sendkeys()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_sendkeys(keys)
+<
+		返回类型: |Number|
 
 
 term_setansicolors({buf}, {colors})			*term_setansicolors()*
@@ -665,8 +726,10 @@ term_setansicolors({buf}, {colors})			*term_setansicolors()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_setansicolors(colors)
+<
+		返回类型: |Number|
 
-<		{仅当编译时打开 GUI 和/或 |+termguicolors| 特性时才有效}
+		{仅当编译时打开 GUI 和/或 |+termguicolors| 特性时才有效}
 
 
 term_setapi({buf}, {expr})				*term_setapi()*
@@ -680,6 +743,8 @@ term_setapi({buf}, {expr})				*term_setapi()*
 
 		也可用作 |method|，基用于 {buf}: >
 			GetBufnr()->term_setapi({expr})
+<
+		返回类型: |Number|
 
 
 term_setkill({buf}, {how})				*term_setkill()*
@@ -692,6 +757,8 @@ term_setkill({buf}, {how})				*term_setkill()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_setkill(how)
+<
+		返回类型: |Number|
 
 
 term_setrestore({buf}, {command})			*term_setrestore()*
@@ -705,6 +772,8 @@ term_setrestore({buf}, {command})			*term_setrestore()*
 
 		也可用作 |method|: >
 			GetBufnr()->term_setrestore(command)
+<
+		返回类型: |Number|
 
 
 term_setsize({buf}, {rows}, {cols})		*term_setsize()* *E955*
@@ -716,6 +785,8 @@ term_setsize({buf}, {rows}, {cols})		*term_setsize()* *E955*
 
 		也可用作 |method|: >
 			GetBufnr()->term_setsize(rows, cols)
+<
+		返回类型: |Number|
 
 
 term_start({cmd} [, {options}])			*term_start()*
@@ -777,14 +848,20 @@ term_start({cmd} [, {options}])			*term_start()*
 
 		也可用作 |method|: >
 			GetCommand()->term_start()
+<
+		返回类型: |Number|
 
 
 term_wait({buf} [, {time}])					*term_wait()*
 		等待 {buf} 未处理的更新。
 		{buf} 的用法见 |term_getsize()|。
-		{time} 是等待更新到达以毫秒计的时间。未指定则使用 10 毫秒。
+		{time} 是等待更新到达以毫秒计的时间。未指定则使用 10 毫秒。也
+		会处理排队的信息，和 |:sleep| 类似。
+
 		也可用作 |method|: >
 			GetBufnr()->term_wait()
+<
+		返回类型: |Number|
 
 ==============================================================================
 3. 终端通信					 *terminal-communication*
@@ -861,11 +938,10 @@ Job 到 Vim: JSON API ~
 		JSON 示例: >
 			["drop", "path/file.txt", {"ff": "dos"}]
 
-让 vim 发送此转义序列的一个小技巧: >
-	exe "set t_ts=\<Esc>]51; t_fs=\x07"
-	let &titlestring = '["call","Tapi_TryThis",["hello",123]]'
-	redraw
-	set t_ts& t_fs&
+可用 |echoraw()| 发送此转义序列: >
+	call echoraw("\<ESC>]51;[\"call\", \"Tapi_TryThis\", [\"hello\", 123]]\x07")
+	call echoraw("\<Esc>]51;[\"drop\", \"README.md\"]\x07")
+注意: JSON 需要用双引号包围字符串值，所以它们必须要被转义。
 
 理据: 为什么不允许任何命令或表达式呢？因为可能会造成安全问题。
 						*terminal-autoshelldir*
@@ -873,17 +949,17 @@ Job 到 Vim: JSON API ~
 在 .vimrc 里: >
 	def g:Tapi_lcd(_, path: string)
 	    if isdirectory(path)
-                execute 'silent lcd ' .. fnameescape(path)
+		execute 'silent lcd ' .. fnameescape(path)
             endif
 	enddef
 <
 同时，bash 初始文件里: >
-        if [[ -n "$VIM_TERMINAL" ]]; then
-            PROMPT_COMMAND='_vim_sync_PWD'
-            function _vim_sync_PWD() {
-              printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"
-            }
-        fi
+	if [[ -n "$VIM_TERMINAL" ]]; then
+	    PROMPT_COMMAND='_vim_sync_PWD'
+	    function _vim_sync_PWD() {
+		printf '\033]51;["call", "Tapi_lcd", "%q"]\007' "$PWD"
+	    }
+	fi
 <
 或者，用于 zsh: >
 	if [[ -n "$VIM_TERMINAL" ]]; then
@@ -1013,7 +1089,7 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 另外，按 "s" 会交换两份截图。多做几次，在文本的上下文中找到差异会容易一些。
 
 ==============================================================================
-6. 调试					*terminal-debug* *terminal-debugger*
+6. 调试		*terminal-debug* *terminal-debugger* *package-termdebug*
 
 终端调试插件可用来使用 gdb 来调试程序而同时在 Vim 窗口中查看源代码。因为这完全
 包含在 Vim 内完成，我们通过 ssh 连接也可以远程进行工作。
@@ -1026,6 +1102,8 @@ Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的
 							*termdebug-starting*
 此命令载入插件: >
 	packadd termdebug
+要在 |.vimrc| 文件里载入此插件，要加上 "!" 属性: >
+	packadd! termdebug
 <							*:Termdebug*
 要启动调试，用 `:Termdebug` 或 `:TermdebugCommand` 后跟命令名，如: >
 	:Termdebug vim
@@ -1050,6 +1128,13 @@ program 窗口	用于执行程序的终端窗口，。gdb 里 "run" 时，程序
 通常在 gdb 窗口中输入 "quit" 可以结束调试器。此时，这两个打开的窗口会被关闭。
 
 一次只能激活一个调试器。
+
+						*termdebug-timeout*
+取决于如何启动 gdb，termdebug 启动时间差别很大。要避免 termdebug 因为 gdb 的启
+动进程花时太长被卡住，给出了可配置的超时。此配置以 10ms 为单位: >
+    let g:termdebug_config['timeout'] = 500 # 500 * 10ms = 5 秒。
+
+缺省超时是 3000 ms。
 							*:TermdebugCommand*
 要指定要调试的命令，可用 `:TermdebugCommand` 命令后跟命令名和其它参数。 >
 	:TermdebugCommand vim --clean -c ':set nu'
@@ -1138,6 +1223,9 @@ gdb 窗口上可以输入更高级的命令。例如，输入: >
  *:Break*	在光标位置设置断点
  :Break {position}
 		在指定位置设置断点
+ *:Tbreak*	在光标位置设置临时断点
+ :Tbreak {position}
+		在指定位置设置临时断点
  *:Clear*	删除光标位置所在的断点
 
  *:Step*	执行 gdb "step" 命令
@@ -1248,41 +1336,62 @@ g:termdebug_config 存在，_不_使用其它的全局变量。
 
 						*termdebug_use_prompt*
 即使 |+terminal| 特性可用，也可使用提示模式，用: >
-	let g:termdebug_config['use_prompt'] = 1
+	let g:termdebug_config['use_prompt'] = v:true
 如果没有 g:termdebug_config，可用: >
-	let g:termdebug_use_prompt = 1
+	let g:termdebug_use_prompt = v:true
 <
-						*termdebug_map_K*
-K 键通常映射为 |:Evaluate|。如果不想如此: >
-	let g:termdebug_config['map_K'] = 0
+
+不过，将来版本会淘汰后一种形式。
+
+映射 ~
+termdebug 插件打开若干缺省映射。termdebug 会话终止后，所有这些映射复位到其原来
+的值。
+
+					*termdebug_map_K* *termdebug-mappings*
+K 键通常映射为 |:Evaluate|，除非已经定义了 K 的缓冲区局部映射 (|:map-local|)。
+如果不想如此: >
+	let g:termdebug_config['map_K'] = v:false
 如果没有 g:termdebug_config，可用: >
-	let g:termdebug_map_K = 0
+	let g:termdebug_map_K = v:false
 <
+不过，将来版本会淘汰后一种形式。
+
 						*termdebug_map_minus*
-- 键通常映射为 |:Down|。如果不想如此: >
-	let g:termdebug_config['map_minus'] = 0
+- 键通常映射为 |:Down|，除非已经定义了 - 的缓冲区局部映射 (|:map-local|)。如
+果不想如此: >
+	let g:termdebug_config['map_minus'] = v:false
 <
 						*termdebug_map_plus*
-+ 键通常映射为 |:Up|。如果不想如此: >
-	let g:termdebug_config['map_plus'] = 0
++ 键通常映射为 |:Up|，除非已经定义了 + 的缓冲区局部映射 (|:map-local|)。如果不
+想如此: >
+	let g:termdebug_config['map_plus'] = v:false
 <
 						*termdebug_disasm_window*
-要缺省显示 Asm 窗口，设置 "disasm_window" 标志位为 1。
-"disarm_window_height" 项目可用于设置窗口高度: >
-	let g:termdebug_config['disasm_window'] = 1
+要缺省显示 Asm 窗口，设置 "disasm_window" 标志位为 1。"disarm_window_height"
+项目可用于设置窗口高度: >
+	let g:termdebug_config['disasm_window'] = v:true
 	let g:termdebug_config['disasm_window_height'] = 15
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_disasm_window = 15
-设为任何大于 1 的值时，Asm 窗口会设为此高度。
+<
+不过，将来版本会淘汰后一种形式。
+
+设为任何大于 1 的值时，Asm 窗口会设为此高度。如果当前窗口有足够的横向空间，会
+垂直分割，Asm 窗口和源代码窗口并排显示 (不使用高度选项)。
 
 						*termdebug_variables_window*
-要缺省显示 Var 窗口，设置本标志位为 1。
-"variables_window_height" 项目可用于设置窗口高度: >
-	let g:termdebug_config['variables_window'] = 1
+要缺省显示 Var 窗口，设置本标志位为 1。"variables_window_height" 项目可用于设
+置窗口高度: >
+	let g:termdebug_config['variables_window'] = v:true
 	let g:termdebug_config['variables_window_height'] = 15
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_variables_window = 15
-设为任何大于 1 的值时，Var 窗口会设为此高度。
+<
+不过，将来版本会淘汰后一种形式。
+
+设为任何大于 1 的值时，Var 窗口会设为此高度。如果当前窗口有足够的横向空间，会
+垂直分割，Var 窗口和源代码窗口并排显示 (不使用高度选项)。
+
 
 通信 ~
 						*termdebug-communication*
@@ -1301,6 +1410,8 @@ GDB 命令 ~
 	let g:termdebug_config['command'] = "mygdb"
 如果没有 g:termdebug_config，可用: >
 	let g:termdebugger = "mygdb"
+
+不过，将来版本会淘汰后一种形式。
 
 如果命令需要参数，用列表: >
 	let g:termdebug_config['command'] = ['rr', 'replay', '--']
@@ -1356,18 +1467,23 @@ GDB 命令 ~
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_popup = 0
 
+不过，将来版本会淘汰后一种形式。
+
 
 改变缺省标号 ~
 							*termdebug_signs*
-标号列上，Termdebug 用断点 ID 的最后两个字符来代表断点。例如，断点 ID 133 会显
-示为 `33`。
+标号列上，Termdebug 用断点 ID 的十六进制值来代表断点。如果大于 "0xFF"，显示为
+"F+"，因为标号只有两个屏幕单元的空间。也可用十进制断点标号，此时如果用 ID 大于
+99，会显示为 "9+"。
 
-要定制断点标号: >
+要定制断点标号以在标号列中显示 `>>`: >
 	let g:termdebug_config['sign'] = '>>'
+如果要使用十进制 (基底为 10) 断点标号: >
+	let g:termdebug_config['sign_decimal'] = 1
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_config = {'sign': '>>'}
-
-然后，标号列上会用 `>>` 显示断点。
+类似地，要打开十进制标号: >
+	let g:termdebug_config = {'sign_decimal': 1}
 
 
 窗口工具条 ~
@@ -1384,6 +1500,8 @@ Vim 窗口宽度 ~
 如果没有 g:termdebug_config，可用: >
 	let g:termdebug_wide = 163
 
+不过，将来版本会淘汰后一种形式。
+
 这会在使用 `:Termdebug` 时设置 'columns' 为 163。退出调试器后此值复原。
 
 如果设置了宽度而 'columns' 已设为一个更大的值，则使用垂直分割且不改变
@@ -1393,5 +1511,33 @@ Vim 窗口宽度 ~
 的场合。
 
 
- vim:tw=78:ts=8:noet:ft=help:norl:
+光标处弹出窗口里计算 ~
+						*termdebug_evaluate_in_popup*
+缺省 |:Evaluate| 简单地显示输出。对大量输出，这很难读甚至会被截断。
+替代方案是，在当前光标位置把计算结果输出到弹出窗口: >
+	let g:termdebug_config['evaluate_in_popup'] = v:true
+也可以 "一次性" 使用此功能: >
+	func OnCursorHold()
+	  let g:termdebug_config['evaluate_in_popup'] = v:true
+	  :Evaluate
+	  let g:termdebug_config['evaluate_in_popup'] = v:false
+	endfunc
+<
 
+贡献 ~
+						*termdebug_contributing*
+欢迎贡献对 termdebug 的改进。
+不过，开发过程中，常常要像 `echo` 语句 (或类似) 的机制来帮助开发。
+为此，可以设置: >
+    let g:termdebug_config['debug'] = true
+<
+这会设置  `DEBUG` 变量为 `true`，可在源代码里引用。下面是用法的示例: >
+    if exists('g:termdebug_loaded')
+      if DEBUG
+	Echoerr('Termdebug already loaded.')
+      endif
+      finish
+    endif
+<
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

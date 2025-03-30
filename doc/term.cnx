@@ -1,4 +1,4 @@
-*term.txt*      适用于 Vim 9.0 版本。	最近更新: 2023年2月
+*term.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -87,6 +87,10 @@ Vim 会试图用 't_RK' termcap 项目来检测终端使用的键盘协议。它
 这样 Vim 就能区隔粘贴的文本和键入的字符。粘贴文本的处理就像使用了鼠标中键，按
 本义插入而不作命令解释。
 
+请 注意: 尽量括号内的粘贴试图防止粘贴时讨厌的副作用 (如 CTRL-C 或 <Esc> 键)，
+它不应被视作安全保证，因为不同的终端实现的方式可能略有不同。粘贴到 Vim 时仍应
+小心。
+
 光标在首列时，在光标前插入粘贴文本。否则在光标位置之后附加粘贴文本。这意味着你
 不能在首列之后粘贴。不幸的是 Vim 没有办法知道鼠标指针在哪里。
 
@@ -98,6 +102,9 @@ Vim 会试图用 't_RK' termcap 项目来检测终端使用的键盘协议。它
 
 如果不设置 |t_PS| 或 |t_PE|，不使用 |t_BE|。围绕粘贴文字的转义码如果不能识别，
 这样可以确保括号内的粘贴不打开。
+
+注意: 'esckeys' 选项如没有置位，关闭括号内的粘贴模式 (置位 'compatible' 选项时
+也是)。
 
 如果你的终端支持括号内的粘贴但没有自动设置相关选项，可以试试下面: >
 
@@ -233,11 +240,11 @@ Sun 和其它的平台上的 xterm 缺省的 termcap 项目不包含区域滚动
 							*xterm-end-home-keys*
 在一些系统上 (至少使用 XFree86 3.1.2 的 FreeBSD)，<End> 和 <Home> 键的代码里包
 含 <Nul> 字符。要使得这些键发送正确的键码，在你的 ~/.Xdefaults 文件里增加:
-
-*VT100.Translations:		#override \n\
-		<Key>Home: string("0x1b") string("[7~") \n\
-		<Key>End: string("0x1b") string("[8~")
-
+>
+	*VT100.Translations:		#override \n\
+			<Key>Home: string("0x1b") string("[7~") \n\
+			<Key>End: string("0x1b") string("[8~")
+<
 						*xterm-8bit* *xterm-8-bit*
 Xterm 可以在使用 8 位转义序列的模式里运行。这里，CSI 代码代替了 <Esc>[。它的优
 点是，<Esc> 键可以在插入模式下更快的识别，因为不会和特殊键的开始相混淆。
@@ -266,10 +273,14 @@ termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，
 
 	XM	"\033[?1006;1004;1000%?%p1%{1}%=%th%el%;"
 				鼠标打开 / 关闭 |t_XM|
+	FE	"\033[?1004h"	打开焦点事件跟踪 |t_fe|
+	FD	"\033[?1004l"	关闭焦点事件跟踪 |t_fd|
 
 "XM" 项目包含了 "1006" 以打开 SGR 风格鼠标报告，支持多于 223 的列数。也包含了
-"1004"，打开焦点报告。t_fe 和 t_fd 项目可留空 (在 terminfo/termcap 里也没有对
-应的项目)。
+"1004"，打开焦点报告。
+备注: 到 2023 年为止，Vim 自己目前不使用 "1004"，相反地，建议用 |t_fe| 和
+|t_fd| 项目来设置焦点报告，而不要和鼠标跟踪绑定，因为 ncurses 在最新版本里也开
+始如此 (这些项目最终会在 terminfo/termcap 里出现)。
 
 						*xterm-kitty* *kitty-terminal*
 Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，也因为它并不试图缺省让自
@@ -300,9 +311,10 @@ Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，�
 这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
 个 termcap 代码是必须的: 光标移动，'t_cm'。
 
-选项 't_da'、't_db'、't_ms'、't_xs'、't_xn' 代表 termcap 里的标志位。termcap
-标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置位。而空
-字符串代表该标志位没有置位。't_CS' 也是这样的，虽然它不是 termcap 的标志位。
+选项 't_da'、't_db'、't_ms'、't_xs'、't_xn'、't_xo' 代表 termcap 里的标志位。
+termcap 标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置
+位。而空字符串代表该标志位没有置位。't_CS' 也是这样的，虽然它不是 termcap 的标
+志位。
 
 输 出 代 码						*terminal-output-codes*
 	选项	含义	~
@@ -353,6 +365,10 @@ Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，�
 	t_vs	光标 "非常" 可见 (闪烁)				*t_vs* *'t_vs'*
 	t_xs	如果非空，突出部分不能通过覆盖删除 (hpterm)	*t_xs* *'t_xs'*
 	t_xn	如果非空，在屏幕最后单元里写入字符不导致滚动	*t_xn* *'t_xn'*
+								*t_xo* *'t_xo'*
+	t_xo	如果非空，终端使用 xon/xoff 握手协议，映射
+		CTRL-S 不再可用，因为它被用作流控制 (用于 vt420
+		终端)。此标志位只在启动 Vim 时有作用。
 	t_ZH	斜体模式					*t_ZH* *'t_ZH'*
 	t_ZR	斜体结束					*t_ZR* *'t_ZR'*
 
@@ -360,6 +376,7 @@ Vim 增加的 (它们没有标准代码):
 	t_AU	设置下划线色 (ANSI)				*t_AU* *'t_AU'*
 	t_Ce	下曲 (undercurl) 和下划线结束			*t_Ce* *'t_Ce'*
 	t_Cs	下曲 (波浪状下划线) 模式			*t_Cs* *'t_Cs'*
+	t_CF	设置备选字体 (使用索引 0 - 10)			*t_CF* *'t_CF'*
 	t_Us	双下划线模式					*t_Us* *'t_Us'*
 	t_ds	点状下划线模式					*t_ds* *'t_ds'*
 	t_Ds	虚线下划线模式					*t_Ds* *'t_Ds'*
@@ -578,10 +595,10 @@ https://gist.github.com/XVilka/8346728 有支持真彩的终端列表。
 	 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 	 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 
-有些终端也接受相同的序列，但把所有的分号替换为冒号 (这样实际更兼容，但支持不是
-那么广泛): >
-	 let &t_8f = "\<Esc>[38:2:%lu:%lu:%lum"
-	 let &t_8b = "\<Esc>[48:2:%lu:%lu:%lum"
+有些终端也接受类似的序列，但把所有的分号替换为冒号，并在数值 2 之后加上额外的
+冒号 (这样符合 ISO 8613-6 标准，但支持不是那么广泛): >
+	 let &t_8f = "\<Esc>[38:2::%lu:%lu:%lum"
+	 let &t_8b = "\<Esc>[48:2::%lu:%lu:%lum"
 
 这些选项包含 printf 字符串，调用 |printf()| (实际上，它的 C 等价函数，因此带有
 `l` 修饰符) 时带上 t_ 选项值和三个无符号长整数，分别代表红、绿和蓝色的 0 到
@@ -602,9 +619,9 @@ CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾�
 有些包含 xterm 支持的终端支持焦点事件跟踪特性。用 't_fe' 序列打开此功能后，每
 次终端获得或丧失焦点时，终端都会给 Vim 发送特殊的键序列。Vim 对此进行处理，并
 触发焦点事件 (|FocusGained|/|FocusLost|)。退出 "raw" 模式时，'t_fd' 序列会用来
-关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入:
-	`set t_fd=`
-	`set t_fe=`
+关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入: >
+	set t_fd=
+	set t_fe=
 如果终端支持但 Vim 不识别此终端，需要你自己设置这些选项: >
 	let &t_fe = "\<Esc>[?1004h"
 	let &t_fd = "\<Esc>[?1004l"
@@ -642,8 +659,8 @@ Windows 终端可用以下代码: >
 	let &t_SI = "\e[5 q"    " 闪烁竖线
 	let &t_SR = "\e[3 q"    " 闪烁下划线
 	let &t_EI = "\e[1 q"    " 闪烁块状
-	let &t_ti ..= "\e[1 q"   " 闪烁块状
-	let &t_te ..= "\e[0 q"   " 缺省 (取决于终端，通常是闪烁块状)
+	let &t_ti ..= "\e[1 q"  " 闪烁块状
+	let &t_te ..= "\e[0 q"  " 缺省 (取决于终端，通常是闪烁块状)
     endif
 
 {仅当编译时加入 |+cursorshape| 特性才支持}
@@ -678,13 +695,13 @@ Sun 上的 xterm。你可以使用内建的 builtin_xterm 或者自己定义 t_c
 xterm 用户 注意: shift + 光标键一般不工作。要使用 xmodmap 命令和 Vim 里的一些
 	设置才可以。
 
-	在 xterm 里给出如下命令:
+	在 xterm 里给出如下命令: >
 		xmodmap -e "keysym Up = Up F13"
 		xmodmap -e "keysym Down = Down F16"
 		xmodmap -e "keysym Left = Left F18"
 		xmodmap -e "keysym Right = Right F19"
-
-	然后在 Vim 里使用这些映射:
+<
+	然后在 Vim 里使用这些映射: >
 		:map <t_F3> <S-Up>
 		:map! <t_F3> <S-Up>
 		:map <t_F6> <S-Down>

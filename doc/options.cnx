@@ -1,4 +1,4 @@
-*options.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -70,7 +70,7 @@ Vim 有很多内部变量和开关，可以达到特殊的效果。这些选项�
 :se[t] {option}:{value}
 			设置字符串或数值选项的值为 {value}。
 			数值选项的值可以用十进制、十六进制 (0x 开头) 或八进制
-			('0' 开头)。
+			('0' 或 '0o' 开头)。
 			可以用 'wildchar' 输入原来的值 (缺省是 <Tab>，但如果置
 			位 'compatible'，是 CTRL-E)。许多使用固定语法名和名字
 			的字符串选项也支持可用值的补全。见
@@ -161,10 +161,24 @@ termcap 值。设置后，可以用于映射。如果 "xx" 包含特殊字符，
 							*option-backslash*
 在字符串选项值中，如果要包含空白，一定要用反斜杠前导。如果要包含单个反斜杠，一
 定要输入两个。换而言之，选项值里的反斜杠数目会减半 (往下取整)。
+选项 'path'、'cdpath' 和 'tags' 里，空白要用三个反斜杠前导，这些选项要与 3.0
+版本兼容，那时的选项可以用逗号或空格分隔。
+'backupdir' 和 'tags' 那样逗号分隔的选项也需要以两个反斜杠前导来转义逗号，但对
+如 'makeprg' 那样非逗号分隔的选项则不需要。
+用 |:let| 和 |literal-string| 设置选项时，减少一层反斜杠。
 这里有一些例子: >
-   :set tags=tags\ /usr/tags	    产生 "tags /usr/tags"
-   :set tags=tags\\,file	    产生 "tags\,file"
-   :set tags=tags\\\ file	    产生 "tags\ file"
+   :set makeprg=make\ file	    结果是 "make file"
+   :let &makeprg='make file'	    (同上)
+   :set makeprg=make\\\ file	    结果是 "make\ file"
+   :set tags=tags\ /usr/tags	    结果是 "tags" 和 "/usr/tags"
+   :set tags=tags\\\ file	    结果是 "tags file"
+   :let &tags='tags\ file'	    (同上)
+
+   :set makeprg=make,file	    结果是 "make,file"
+   :set makeprg=make\\,file	    结果是 "make\,file"
+   :set tags=tags,file		    结果是 "tags" 和 "file"
+   :set tags=tags\\,file	    结果是 "tags,file"
+   :let &tags='tags\,file'	    (同上)
 
 "|" 字符把 ":set" 命令和下一个命令隔开。要在选项值里包含 "|"，用 "\|" 代替。
 下例把 'titlestring' 选项设为 "hi|there": >
@@ -262,6 +276,7 @@ Vim 基本上依照你的想法使用这些选项值。不幸的是，要满足�
 	选项		原因	~
 	'previewwindow'	只能有唯一一个
 	'scroll'	特定于已有的窗口
+	'winfixbuf'	特定于已有的窗口
 	'winfixheight'	特定于已有的窗口
 	'winfixwidth'	特定于已有的窗口
 
@@ -287,10 +302,18 @@ Vim 基本上依照你的想法使用这些选项值。不幸的是，要满足�
 			如果使用了全局值，在选项名前会显示 "--"。
 			全局选项则显示全局值 (将来或许会有所改变)。
 
-:setl[ocal] {option}<	通过复制全局值，把 {option} 的局部值设回它的全局值。
+:se[t] {option}<	设置 {option} 的有效值为其全局值。
+			对字符串 |global-local| 选项，撤销其局部值，从而使用它
+			的全局值。
+			对其他类型的选项，复制全局值到其局部值。
 
-:se[t] {option}<	对 |global-local| 选项: 撤销 {option} 的局部值，从而使
-			用它的全局值。
+:setl[ocal] {option}<	设置 {option} 的有效值为其全局值。
+			对数值和布尔型 |global-local| 选项，撤销其局部值，从而
+			使用它的全局值。
+			对其他类型的选项，包括字符串 |global-local| 选项，复制
+			全局值到其局部值。
+
+注意 字符串和数值 |global-local| 选项的行为之间有细微差别。
 
 							*:setg* *:setglobal*
 :setg[lobal][!] ...	类似于 ":set"，但只设置局部选项的全局值，而不改变其局
@@ -300,12 +323,13 @@ Vim 基本上依照你的想法使用这些选项值。不幸的是，要满足�
 			如果没有参数: 显示所有不同于缺省的局部选项的全局值。
 
 对缓冲区和窗口局部选项而言:
-	命令		    全局值	       局部值 ~
+	命令		    全局值	       局部值	       条件~
       :set option=value	     设置		设置
  :setlocal option=value	      -			设置
 :setglobal option=value	     设置		 -
-      :set option?	      -		        显示
- :setlocal option?	      -		        显示
+      :set option?	      -			显示	    设置了局部值
+      :set option?	     显示		 -	    没设置局部值
+ :setlocal option?	      -			显示
 :setglobal option?	     显示		 -
 
 
@@ -338,9 +362,10 @@ C 源代码使用的值。可用这个命令: >
 
 
 						*option-value-function*
-有些选项 ('completefunc'、'imactivatefunc'、'imstatusfunc'、'omnifunc'、
-'operatorfunc'、'quickfixtextfunc'、'tagfunc' 和 'thesaurusfunc') 应设为函数名
-或函数引用或匿名函数。使用匿名函数时，会转换为形如 "<lambda>123" 的名字。例如:
+有些选项 ('completefunc'、'findfunc'、'imactivatefunc'、'imstatusfunc'、
+'omnifunc'、'operatorfunc'、'quickfixtextfunc'、'tagfunc' 和 'thesaurusfunc')
+应设为函数名或函数引用或匿名函数。使用匿名函数时，会转换为形如 "<lambda>123"
+的名字。例如:
 >
 	set opfunc=MyOpFunc
 	set opfunc=function('MyOpFunc')
@@ -681,6 +706,40 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	起问题。
 	注意: 如果置位 'compatible'，本选项被复位。
 
+				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
+'arabic' 'arab'		布尔型 (缺省关闭)
+			局部于窗口
+			{仅当编译时加入 |+arabic| 特性才有效}
+	可以置位本选项来开始编辑阿拉伯文本。
+	置位本选项会:
+	- 置位 'rightleft' 选项，除非置位 'termbidi'。
+	- 置位 'arabicshape' 选项，除非置位 'termbidi'。
+	- 设置 'keymap' 选项为 "arabic"；插入模式下 CTRL-^ 会切换英语和阿拉伯
+	  语键盘映射。
+	- 置位 'delcombine' 选项。
+	注意 要使用阿拉伯文本，'encoding' 必须是 "utf-8"。
+
+	复位本选项会:
+	- 复位 'rightleft' 选项。
+	- 关闭 'keymap' 的使用 (但不改变其值)。
+	注意 这里不复位 'arabicshape' 和 'delcombine' (这些是全局选项)。
+	注意: 如果置位 'compatible'，本选项被复位。
+	另见 |arabic.txt|。
+
+					*'arabicshape'* *'arshape'*
+					*'noarabicshape'* *'noarshape'*
+'arabicshape' 'arshape'	布尔型 (缺省打开)
+			全局
+			{仅当编译时加入 |+arabic| 特性才有效}
+	如果打开且 'termbidi' 关闭，启动必须的可见字符的校正，以正确显示阿拉伯
+	语言。本质上它打开了字型重整；这是一个广义的术语，它包括:
+	  a) 根据词内位置 (开头、中间、结尾和单独出现) 改变/调整字符的形状。
+	  b) 启动组合字符的能力
+	  c) 启动一些字符所需的组合
+	如果关闭，屏幕用每个字符原来单独显示的方式显示。
+	阿拉伯语是一个复杂的语言，还需要其他的设置。详见 |arabic.txt|。
+	注意: 如果置位 'compatible'，本选项被复位。
+
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
 'autochdir' 'acd'	布尔型 (缺省关闭)
 			全局
@@ -724,40 +783,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <
 	另一个办法可见 |terminal-autoshelldir|。
 	OSC 序列如果解析失败，会报 *E1179* 。
-
-				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
-'arabic' 'arab'		布尔型 (缺省关闭)
-			局部于窗口
-			{仅当编译时加入 |+arabic| 特性才有效}
-	可以置位本选项来开始编辑阿拉伯文本。
-	置位本选项会:
-	- 置位 'rightleft' 选项，除非置位 'termbidi'。
-	- 置位 'arabicshape' 选项，除非置位 'termbidi'。
-	- 设置 'keymap' 选项为 "arabic"；插入模式下 CTRL-^ 会切换英语和阿拉伯
-	  语键盘映射。
-	- 置位 'delcombine' 选项。
-	注意 要使用阿拉伯文本，'encoding' 必须是 "utf-8"。
-
-	复位本选项会:
-	- 复位 'rightleft' 选项。
-	- 关闭 'keymap' 的使用 (但不改变其值)。
-	注意 这里不复位 'arabicshape' 和 'delcombine' (这些是全局选项)。
-	注意: 如果置位 'compatible'，本选项被复位。
-	另见 |arabic.txt|。
-
-					*'arabicshape'* *'arshape'*
-					*'noarabicshape'* *'noarshape'*
-'arabicshape' 'arshape'	布尔型 (缺省打开)
-			全局
-			{仅当编译时加入 |+arabic| 特性才有效}
-	如果打开且 'termbidi' 关闭，启动必须的可见字符的校正，以正确显示阿拉伯
-	语言。本质上它打开了字型重整；这是一个广义的术语，它包括:
-	  a) 根据词内位置 (开头、中间、结尾和单独出现) 改变/调整字符的形状。
-	  b) 启动组合字符的能力
-	  c) 启动一些字符所需的组合
-	如果关闭，屏幕用每个字符原来单独显示的方式显示。
-	阿拉伯语是一个复杂的语言，还需要其他的设置。详见 |arabic.txt|。
-	注意: 如果置位 'compatible'，本选项被复位。
 
 			*'autoindent'* *'ai'* *'noautoindent'* *'noai'*
 'autoindent' 'ai'	布尔型	(缺省关闭)
@@ -812,9 +837,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	设置本选项不改变背景色，它告诉 Vim 背景颜色应该看起来怎么样。要改变背
 	景色，见 |:hi-normal|。
 
-	如果设置 'background'，Vim 会根据新值调整缺省的颜色组。但语法高亮使用
-	的颜色不会改变。			*g:colors_name*
-	已经载入色彩方案时 ("g:colors_name" 变量已设置)，设置 'background' 会
+	如果改变了 'background'，Vim 会根据新值调整缺省的颜色组。但语法高亮使
+	用的颜色不会改变。				*g:colors_name*
+	已经载入色彩方案时 ("g:colors_name" 变量已设置)，改变 'background' 会
 	重新载入色彩方案。如果色彩方案根据 'background' 调整，这不错。但如果颜
 	色方案自己设置 'background'，实际效果可能就被撤销了。如果需要的话，先
 	删除 "g:colors_name" 变量。
@@ -827,7 +852,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	设置 |t_RB| 选项时，Vim 使用它从终端请求背景色。如果返回的 RGB 色是
 	深/浅而 'background' 不是深/浅时，设置 'background' 并重画屏幕。可能有
-	副作用，如果怀疑有问题，在 .vimrc 里复位 t_BG。|t_RB| 的反馈值可从
+	副作用，如果怀疑有问题，在 .vimrc 里复位 |t_RB|。|t_RB| 的反馈值可从
 	|v:termrbgresp| 中获取。
 
 	启动 GUI 时，'background' 的缺省值是 "light"。如果 .gvimrc 里没有设置
@@ -854,8 +879,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	以通过 ":syntax on" 完成。
 
 							*'backspace'* *'bs'*
-'backspace' 'bs'	字符串 (缺省 ""，|defaults.vim| 里设为
-							   "indent,eol,start")
+'backspace' 'bs'	字符串 (Vim 缺省: "indent,eol,start"，
+				 Vi 缺省:  "")
 			全局
 	影响 <BS>、<Del>、CTRL-W 和 CTRL-U 在插入模式下的工作方式。它是逗号分
 	隔的项目列表。每个项目允许一种退格删除的内容:
@@ -923,10 +948,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	件的位置写入新的文件内容。这可以用于，比如说，所有的文件或者是符号链接
 	或者是硬链接的源代码树。这样，任何的改变都应该会保留在本地源代码树中，
 	而不影响原来的代码。
-							*crontab*
+								*crontab*
 	一种情形下 "no" 和 "auto" 可能会有问题: 一个程序打开文件、启用 Vim 编
 	辑该文件、然后测试已打开的文件是否发生改变 (通过文件描述符)。该测试总
-	是会检查备份文件而不是新建立的文件。"crontab -e" 就是这样一个例子。
+	是会检查备份文件而不是新建立的文件。"crontab -e" 就是这样一个例子，若
+	干像 inotify 一样的 |file-watcher| 守护进程也是如此。这些情况下要考虑
+	一下切换选项。
 
 	用复制方式时，原来的文件会被清空，然后填入新的文本。这意味着保护位、拥
 	有者和原来文件的符号链接都保持不变。但备份文件是一个新的文件，拥有者是
@@ -1200,7 +1227,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			    (缺省: 关闭)
 		list:{n}    为匹配编号或无编号列表的行 (适用 'formatlistpat'
 			    设定) 增加额外缩进。
-		list:-1	    缩进使用 'formatlistpat' 的匹配长度。
+		list:-1	    缩进使用 'formatlistpat' 的匹配宽度。
 			    (缺省: 0)
 		column:{n}  缩进到列 {n}。会覆盖其他子选项。注意 'showbreak'
 			    设定可能会增加额外缩进。
@@ -1306,6 +1333,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	目录为 |$HOME| 目录。
 	关闭时，这些命令只显示当前目录名。
 	Unix 上此选项无效果。
+<	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 	注意: 如果置位 'compatible'，本选项被复位。
 
 						*'cdpath'* *'cd'* *E344* *E346*
@@ -1329,9 +1357,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	用于命令行模式打开命令行窗口的键。
 	'compatible' 关闭时，缺省值为 CTRL-F。
 	只允许不可显示的键。
-	该键可以用单个字符的形式指定，但不易输入，建议使用 <> 记法。例如: >
-		:exe "set cedit=\<C-Y>"
-		:exe "set cedit=\<Esc>"
+	该键可以用单个字符的形式指定，但不易输入，建议使用 |key-notation| (如
+	<Up>、<C-F>) 或插入记号后跟一个字母 (如 `^F` 是 CTRL-F)。例如: >
+		:set cedit=^Y
+		:set cedit=<Esc>
 <	|Nvi| 也有本选项，但只使用第一个字符。
 	见 |cmdwin|。
 	注意: 如果复位 'compatible'，此选项设为 Vim 缺省值。
@@ -1413,7 +1442,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|cinoptions-values| 说明如何设置本选项的值，而 |C-indenting| 提供总体
 	的 C 缩进方式的信息。
 
-
+						*'cinscopedecls'* *'cinsd'*
+'cinscopedecls' 'cinsd'	字符串	(缺省为 "public,protected,private")
+			局部于缓冲区
+	|cino-g| 解读为 C++ 作用域声明的关键字。比如 Qt 框架提供了额外的作用域
+	声明 "signals"、"public slots" 和 "private slots"，可用: >
+		set cinscopedecls+=signals,public\ slots,private\ slots
+<
 						*'cinwords'* *'cinw'*
 'cinwords' 'cinw'	字符串	(缺省为 "if,else,while,do,for,switch")
 			局部于缓冲区
@@ -1422,13 +1457,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意 'ignorecase' 对 'cinwords' 没有影响。如果希望忽略大小写，包含关键
 	字所有的大小写: "if,If,IF"。
 
-						*'cinscopedecls'* *'cinsd'*
-'cinscopedecls' 'cinsd'	字符串	(缺省为 "public,protected,private")
-			局部于缓冲区
-	|cino-g| 解读为 C++ 作用域声明的关键字。比如 Qt 框架提供了额外的作用域
-	声明 "signals"、"public slots" 和 "private slots"，可用: >
-		set cinscopedecls+=signals,public\ slots,private\ slots
-<
 						*'clipboard'* *'cb'*
 'clipboard' 'cb'	字符串	(X-windows 的缺省为
 					"autoselect,exclude:cons\|linux"，
@@ -1551,11 +1579,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|option-backslash| 说明如何包含空格和使用反斜杠。
 
 					*'commentstring'* *'cms'* *E537*
-'commentstring' 'cms'	字符串	(缺省为 "/*%s*/")
+'commentstring' 'cms'	字符串	(缺省为 "/* %s */")
 			局部于缓冲区
 			{仅当编译时加入 |+folding| 特性才有效}
-	注释行的样板。该值里面的 "%s" 被注释文本替换。目前，只用于为折叠增加标
-	志。见 |fold-marker|。
+	注释行的样板。该值里面的 "%s" 被注释文本替换，如有可能，应以一个空格填
+	充。目前用于为折叠增加标志，见 |fold-marker|。也常用于注释插件 (如
+	|comment-install|)。
 
 			*'compatible'* *'cp'* *'nocompatible'* *'nocp'*
 'compatible' 'cp'	布尔型	(缺省打开，如果找到 |vimrc| 或 |gvimrc| 文件
@@ -1614,6 +1643,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'delcombine'	+ 关闭		unicode: 删除整个字符组合
 	'digraph'	+ 关闭		没有二合字母
 	'esckeys'	& 关闭		插入模式不使用 <Esc> 开始键码的键
+					同时会关闭 |modifyOtherKeys| 和
+					|xterm-bracketed-paste|
 	'expandtab'	+ 关闭		制表不扩展为空格
 	'fileformats'	& ""		没有自动的文件格式检测
 			  "dos,unix"	除了 MS-Windows 外
@@ -1713,22 +1744,38 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
-						*'completeslash'* *'csl'*
-'completeslash' 'csl'	字符串	(缺省: "")
-			局部于缓冲区
-			{仅适用于 MS-Windows}
-	此选项设置时，在补全的时候否决 'shellslash':
-	- 如果此选项设为 "slash"，正斜杠用于插入模式时的路径补全。这可用于
-	  MS-Windows 上 'noshellslash' 置位时编辑 HTML 标签或 Makefile。
-	- 如果此选项设为 "backslash"，使用反斜杠。这可用于 MS-Windows 上
-	  'shellslash' 置位时编辑批处理文件。
-	- 如果此选项为空，使用和 'shellslash' 相同的字符。
-	插入模式的补全使用缓冲区局部变量。命令行补全使用全局值。
+						*'completefuzzycollect'* *'cfc'*
+'completefuzzycollect' 'cfc'	字符串	(缺省: 空)
+				全局
+	本选项为 (只有部分的) 特定 |ins-completion| 模式打开模糊收集，调整如何
+	为对输入进行的模糊匹配收集项目。
+	此选项包含以下值 (逗号分隔)，每个值为一个特定补全模式打开模糊收集:
+	files		文件名
+	keyword		在 'complete' 和当前文件里的关键字补全
+	whole_line	整行
+
+						*'completeitemalign'* *'cia'*
+'completeitemalign' 'cia' 字符串 (缺省: "abbr,kind,menu")
+			全局
+	逗号分隔的字符串列表，控制插入模式补全时弹出菜单里的项目的对齐和显示顺
+	序。支持的值为 "abbr"、"kind" 和 "menu"。这些值允许定制
+	|complete-items| 在弹出菜单里的显示方式。注意: 必须总是包含这三个值，
+	但顺序可变。
 
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	字符串	(缺省: "menu,preview")
-			全局
+			全局或局部于缓冲区 |global-local|
 	逗号分隔的选项列表，用于插入模式的补全 |ins-completion|。支持的值是:
+
+	   fuzzy    为补全候选打开 |fuzzy-matching|。这能支持更灵活和直观的匹
+		    配，可以跳过字符，即使键入序列不是完全准确，也能找到匹配。
+		    注意: 此选项不影响候选列表的收集，它只控制如何从备选列表里
+		    筛选出补全候选。如果要 |fuzzy-matching| 为你的候选列表收集
+		    更多的备选，见 |'completefuzzycollect'|。
+
+	   longest  只插入匹配的最长公共文本。如果显示菜单，用 CTRL-L 来插入更
+		    多的字符。是否忽略大小写取决于补全的类型。缓冲区文本使用
+		    'ignorecase' 选项。
 
 	   menu	    使用弹出菜单来显示可能的补全。只有匹配多于一个且有足够的颜
 		    色时才显示该菜单。|ins-completion-menu|
@@ -1736,12 +1783,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	   menuone  即使只有一个匹配，也使用弹出菜单。可用于匹配有附加信息的情
 		    况，例如，它来自的文件。
 
-	   longest  只插入匹配的最长公共文本。如果显示菜单，用 CTRL-L 来插入更
-		    多的字符。是否忽略大小写取决于补全的类型。缓冲区文本使用
-		    'ignorecase' 选项。
+	   noinsert 不插入任何匹配的文本，直到用户从菜单里选择一个匹配为止。只
+		    能用于和 "menu" 和 "menuone" 的组合。如果 "longest" 存在，
+		    没有效果。
 
-	   preview  在预览窗口里显示当前选择的补全的额外信息。只能和 "menu" 或
-		    "menuone" 搭配使用。
+	   noselect 同 "noinsert"，但不预选菜单项。如果同时给出 "noinsert" 和
+		    "noselect"，"noselect" 优先级更高。
+
+	   nosort   "fuzzy" 打开时，关闭补全候选基于模糊分数的的排序。候选使用
+		    原来的顺序。
 
 	   popup    在弹出窗口里显示当前选择的补全的额外信息。只能和 "menu" 或
 		    "menuone" 搭配使用。否决 "preview"。
@@ -1754,12 +1804,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		    例见 |complete-popuphidden|。
 		    {仅当编译时加入 |+textprop| 特性才有效}
 
-	   noinsert 不插入任何匹配的文本，直到用户从菜单里选择一个匹配为止。只
-		    能用于和 "menu" 和 "menuone" 的组合。如果 "longest" 存在，
-		    没有效果。
+	   preinsert
+		    预插入首个候选单词去掉当前补全头部的那部分，使用
+		    |hl-ComplMatchIns| 高亮组。只能在没打开 "fuzzy" 而打开
+		    "menuone" 的情况下使用。
 
-	   noselect 不选择菜单里的匹配，强迫用户从菜单中选择。只能用于和
-		    "menu" 和 "menuone" 的组合。
+	   preview  在预览窗口里显示当前选择的补全的额外信息。只能和 "menu" 或
+		    "menuone" 搭配使用。
 
 
 					*'completepopup'* *'cpp'*
@@ -1771,6 +1822,17 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	你也可用 |popup_findinfo()| 然后用 |popup_setoptions()| 来设置已有的
 	info 弹出的属性。见 |complete-popup|。
 
+						*'completeslash'* *'csl'*
+'completeslash' 'csl'	字符串	(缺省: "")
+			局部于缓冲区
+			{仅适用于 MS-Windows}
+	此选项设置时，在补全的时候否决 'shellslash':
+	- 如果此选项设为 "slash"，正斜杠用于插入模式时的路径补全。这可用于
+	  MS-Windows 上 'noshellslash' 置位时编辑 HTML 标签或 Makefile。
+	- 如果此选项设为 "backslash"，使用反斜杠。这可用于 MS-Windows 上
+	  'shellslash' 置位时编辑批处理文件。
+	- 如果此选项为空，使用和 'shellslash' 相同的字符。
+	插入模式的补全使用缓冲区局部变量。命令行补全使用全局值。
 
 						*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	字符串 (缺省: "")
@@ -1836,8 +1898,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	另见 'preserveindent'。
 
 						*'cpoptions'* *'cpo'* *cpo*
-'cpoptions' 'cpo'	字符串	(Vim 缺省: "aABceFs"，
-				 Vi 缺省:  所有的标志位)
+'cpoptions' 'cpo'	字符串	(Vim 缺省: "aABceFsz"，
+				 Vi 缺省:  除了 "#{|&/\." 外的所有标志位
+				 |$VIM_POSIX|:  所有的标志位)
 			全局
 	单字符标志位的序列。每个字符的存在指示一种 Vi 兼容的行为。可用于改变常
 	见或被认为是更好的 Vi 不兼容的行为。
@@ -2017,6 +2080,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			动。
 								*cpo-Z*
 		Z	置位 'readonly' 选项时，使用 "w!" 不复位 'readonly'。
+								*cpo-z*
+		z	"cw" 和 "d" 命令的特殊处理 (见 |cw| 和 |d-special|)。
 								*cpo-!*
 		!	重复过滤命令时，使用最后使用的外部命令，不管它是什么。
 			否则，使用最近的 -过滤- 命令。
@@ -2085,7 +2150,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		|	$LINES 和 $COLUMNS 环境变量的值否决通过系统特定的函数
 			得到的终端大小的值。
 
-
 						*'cryptmethod'* *'cm'*
 'cryptmethod' 'cm'	字符串	(缺省为 "blowfish2")
 			全局或局部于缓冲区 |global-local|
@@ -2137,7 +2201,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	如果新版本 Vim 加入其它加密方法而当前版本不支持的话，会得到 *E821* 。
 	需要使用更新的 Vim 版本来编辑该文件。
-
 
 						*'cscopepathcomp'* *'cspc'*
 'cscopepathcomp' 'cspc'	数值型	(缺省为 0)
@@ -2201,7 +2264,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	异同 (见 'diff')；比较模式下，已插入和删除的行 (但不包括行内删除的字
 	符) 已经考虑在内。
 
-
 			*'cursorcolumn'* *'cuc'* *'nocursorcolumn'* *'nocuc'*
 'cursorcolumn' 'cuc'	布尔型 (缺省关闭)
 			局部于窗口
@@ -2221,7 +2283,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	屏幕刷新会变慢。
 	激活可视模式时，为了容易看到选择的文本，不使用此高亮。
 
-
 						*'cursorlineopt'* *'culopt'*
 'cursorlineopt' 'culopt' 字符串 (缺省: "number,line")
 			局部于窗口
@@ -2236,7 +2297,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	"both"		"line,number" 值的别名。
 
 	"line" 和 "screenline" 不能同时使用。
-
 
 						*'debug'*
 'debug'			字符串	(缺省为 "")
@@ -2322,16 +2382,37 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	比较模式的设置选项。由以下几个项目组成。全都是可选的。项目之间由逗号分
 	隔。
 
-		filler		显示填充行，使得文本和在相同位置多出文本的其它
-				窗口同步。多用于并排并且置位 'scrollbind' 的窗
-				口。
+		algorithm:{text} 内部比较引擎使用指定的比较算法。目前支持的算
+				法是:
+				myers      缺省算法
+				minimal    花费额外时间来生成最小的可能差异
+				patience   patience 比较算法
+				histogram  histogram 比较算法
+
+		closeoff	置位 'diff' 的窗口关闭时，如果同一个标签页中只
+				剩下一个置位 'diff' 的窗口时，在那个窗口中执行
+				`:diffoff`。这会撤销 `:diffsplit` 命令的效果。
 
 		context:{n}	在更改和包含未更改行的折叠之间保留的上下文行数
 				{n} (译者注: 即差异文周围不被折叠的行数)。如果
 				省略，使用六行上下文。如果为零，实际上下文其实
 				是一，因为折叠需要之间至少有一行，也适用于删除
-				行。
+				行。设为一个大值 (999999) 可以完全关闭折叠。
 				见 |fold-diff|。
+
+		filler		显示填充行，使得文本和在相同位置多出文本的其它
+				窗口同步。多用于并排并且置位 'scrollbind' 的窗
+				口。
+
+		foldcolumn:{n}	启动比较模式时设置 'foldcolumn' 选项为 {n}。
+				如果不存在，用 2。
+
+		followwrap	跟随 'wrap' 选项，比较时保持其不变。
+
+		horizontal	以水平分割启动比较模式 (除非显式指定不要如
+				此)。
+
+		hiddenoff	不对隐藏缓冲区使用比较模式。
 
 		iblank		忽略全空白行的改动。如果 'diffexpr' 为空，给
 				"diff" 命令加上 "-B" 标志位。查阅 "diff" 文档
@@ -2342,6 +2423,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		icase		忽略文本大小写的更改。"a" 和 "A" 视为等同。如
 				果 'diffexpr' 为空，在 "diff" 命令里加入 "-i"
 				标志位。
+
+		indent-heuristic
+				内部比较库使用缩进启发。
+
+		internal	使用内部比较库。设置 'diffexpr' 时忽略此项
+				目。 *E960*
+				写入缓冲区时如果内存溢出，在涉及该缓冲区的比较
+				中忽略此项目。要了解这在什么时候发生过，见
+				'verbose' 选项。
 
 		iwhite		忽略空白字符数目的更改。如果 'diffexpr' 为空，
 				在 "diff" 命令里加入 "-b" 标志位。查阅 "diff"
@@ -2356,38 +2446,17 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				在 "diff" 命令里加入 "-Z" 标志位。查阅 "diff"
 				文档了解该标志位具体的行为。
 
-		horizontal	以水平分割启动比较模式 (除非显式指定不要如
-				此)。
+		linematch:{n}   对缓冲区之间最相近的行间的改动进行对齐和标记。
+				如果差异块的总行数超过 {n}，不对齐行，因为过大
+				的差异块会有明显的延迟。合理的设定值是
+				"linematch:60"，这对 2 个缓冲区的差异块会打开
+				每个缓冲区 30 行的对齐，而对 3 个缓冲区的差异
+				块则是每个缓冲区 20 行。
 
 		vertical	以垂直分割启动比较模式 (除非显式指定不要如
 				此)。
 
-		closeoff	置位 'diff' 的窗口关闭时，如果同一个标签页中只
-				剩下一个置位 'diff' 的窗口时，在那个窗口中执行
-				`:diffoff`。这会撤销 `:diffsplit` 命令的效果。
 
-		hiddenoff	不对隐藏缓冲区使用比较模式。
-
-		foldcolumn:{n}	启动比较模式时设置 'foldcolumn' 选项为 {n}。
-				如果不存在，用 2。
-
-		followwrap	跟随 'wrap' 选项，比较时保持其不变。
-
-		internal	使用内部比较库。设置 'diffexpr' 时忽略此项
-				目。 *E960*
-				写入缓冲区时如果内存溢出，在涉及该缓冲区的比较
-				中忽略此项目。要了解这在什么时候发生过，见
-				'verbose' 选项。
-
-		indent-heuristic
-				内部比较库使用缩进启发。
-
-		algorithm:{text} 内部比较引擎使用指定的比较算法。目前支持的算
-				法是:
-				myers      缺省算法
-				minimal    花费额外时间来生成最小的可能差异
-				patience   patience 比较算法
-				histogram  histogram 比较算法
 	示例: >
 		:set diffopt=internal,filler,context:4
 		:set diffopt=
@@ -2611,8 +2680,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	映射，但缺省情况下无法使用光标键。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
-	备注: 此选项如果关闭，在插入模式会屏蔽 |modifyOtherKeys| 功能，以免每
-	个带修饰符的键都会退出插入模式。
+	备注: 此选项如果关闭，在插入模式会屏蔽 |modifyOtherKeys| 和
+	|xterm-bracketed-paste| 功能，以免每个带修饰符的键都会退出插入模式。
 
 						*'eventignore'* *'ei'*
 'eventignore' 'ei'	字符串	(缺省为 "")
@@ -2623,6 +2692,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	否则，此为逗号分隔的事件名列表。例如: >
 	    :set ei=WinEnter,WinLeave
 <
+						*'eventignorewin'* *'eiw'*
+'eventignorewin' 'eiw'	字符串	(缺省为 "")
+			局部于窗口
+	和 'eventignore' 类似，但应用于特定窗口及其缓冲区，那里的窗口和缓冲区
+	相关的自动命令会被无限期地忽略，而无需改动全局的 'eventignore'。
+
 				 *'expandtab'* *'et'* *'noexpandtab'* *'noet'*
 'expandtab' 'et'	布尔型	(缺省关闭)
 			局部于缓冲区
@@ -2729,7 +2804,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 					*'fileformat'* *'ff'*
 'fileformat' 'ff'	字符串 (MS-Windows 的缺省: "dos"，
-				Unix、macOS 的缺省: "unix")
+				Unix 的缺省: "unix")
 			局部于缓冲区
 	给出当前缓冲区的 <EOL> 格式，用于从文件读入缓冲区和把缓冲区写回文件:
 	    dos	    <CR><NL>
@@ -2750,7 +2825,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	字符串 (缺省:
 				Vim+Vi	MS-Windows: "dos,unix"，
-				Vim	Unix、macOS: "unix,dos"，
+				Vim	Unix: "unix,dos"，
 				Vi	Cygwin: "unix,dos"，
 				Vi	其它: "")
 			全局
@@ -2813,24 +2888,23 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如对于 IDL 文件:
 		/* vim: set filetype=idl : */ ~
 	|FileType| |filetypes|
-	如果选项值里有句号，它分隔两个名字。例如:
+	如果选项值里有句号，它分隔两个名字。所以不要在文件类型里用句号。例如:
 		/* vim: set filetype=c.doxygen : */ ~
 	先使用 "c" 文件类型，再使用 "doxygen" 文件类型。这既适用于文件类型插
 	件，也适用于语法文件。句号可以多于一个。
 	不管 'cpoptions' 里是否包含 's' 或 'S' 标志位，本选项不会复制到别的缓
 	冲区。
-	只能使用普通的文件名字符。"/\*?[|<>" 都不合法。
+	只能使用字母数字字符，'-' 和 '_' 也可以。
 
 						*'fillchars'* *'fcs'*
-'fillchars' 'fcs'	字符串	(缺省为 "vert:|,fold:-,eob:~")
+'fillchars' 'fcs'	字符串	(缺省为 "vert:|,fold:-,eob:~,lastline:@")
 			全局或局部于窗口 |global-local|
-			{仅当编译时加入 |+folding| 特性才有效}
 	填充状态行、垂直分割线和窗口特殊行的字符。
-	它是逗号分隔的项目列表。每个项目由名字，冒号和值组成:
+	它是逗号分隔的项目列表。每个项目由名字，冒号和值组成: |E1511|
 
 	  项目名	缺省		用于 ~
-	  stl		' ' 或 '^'	当前窗口的状态行
-	  stlnc		' ' 或 '='	非当前窗口的状态行
+	  stl		' '		当前窗口的状态行
+	  stlnc		' '		非当前窗口的状态行
 	  vert		'|'		垂直分割线 |:vsplit|
 	  fold		'-'		填充 'foldtext'
 	  foldopen	'-'		标记折叠开始处
@@ -2840,15 +2914,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  eob		'~'		缓冲区结束之后的空行
 	  lastline	'@'		'display' 包含的 lastline/truncate
 
-	任何不提供的项目使用其缺省值。"stl" 和 "stlnc" 在有高亮的地方使用空
-	格，否则使用 '^' 或 '='。
+	任何不提供的项目使用其缺省值。
 
 	例如: >
-	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
-<	除了在高亮时也使用那些字符以外，这类似于缺省值。
-
+	    :set fillchars=stl:\ ,stlnc:\ ,vert:\|,fold:-,diff:-
+<
 	"stl"、"stlnc"、"foldopen"、"foldclose" 和 "foldsep" 支持单字节和多字
-	节字符。但不支持双宽字符。
+	节字符。但不支持双宽字符。 |E1512|
 
 	这些项目使用的高亮:
 	  项目名	高亮组 ~
@@ -2860,6 +2932,47 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  eob		EndOfBuffer		|hl-EndOfBuffer|
 	  lastline	NonText			|hl-NonText|
 
+						*'findfunc'* *'ffu'* *E1514*
+'findfunc' 'ffu'	字符串	(缺省为空)
+			全局或局部于缓冲区 |global-local|
+			{仅当编译时加入 |+eval| 特性才有效}
+	用于 |:find| 命令获取文件名的函数。此选项为空时，使用内部的
+	|file-searching| 机制。
+
+	值可以是函数名，|lambda| 或 |Funcref|。详见 |option-value-function|。
+
+	函数调用时带两个参数。第一个参数是 |String|，是 |:find| 命令的参数。
+	第二个参数是 |Boolean|，如果调用函数时需要取得用于 |:find| 命令的命令
+	行补全匹配的列表，设为 |v:true|。此函数应返回字符串列表。
+
+	每次 |:find| 命令执行只调用此函数一次。此函数要处理 'path' 里指定的所
+	有目录。
+
+	如果找到匹配，函数应返回包含一或多个文件名的 |List|。如果没找到匹配，
+	函数应返回空列表。
+
+	函数调用时如果出现错误，用空列表作为返回值。
+
+	计算 'findfunc' 时不允许修改文本或者跳到其它窗口 |textlock|。
+
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
+
+	示例:
+>
+	    " 用 glob()
+	    func FindFuncGlob(cmdarg, cmdcomplete)
+		let pat = a:cmdcomplete ? $'{a:cmdarg}*' : a:cmdarg
+		return glob(pat, v:false, v:true)
+	    endfunc
+	    set findfunc=FindFuncGlob
+
+	    " 用 'git ls-files' 的输出
+	    func FindGitFiles(cmdarg, cmdcomplete)
+		let fnames = systemlist('git ls-files')
+		return fnames->filter('v:val =~? a:cmdarg')
+	    endfunc
+	    set findfunc=FindGitFiles
+<
 		*'fixendofline'* *'fixeol'* *'nofixendofline'* *'nofixeol'*
 'fixendofline' 'fixeol'	布尔型	(缺省打开)
 			局部于缓冲区
@@ -3076,8 +3189,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					*'formatoptions'* *'fo'*
 'formatoptions' 'fo'	字符串 (Vim 缺省: "tcq"，Vi 缺省: "vt")
 			局部于缓冲区
-	描述自动排版如何进行的字母序列。见 |fo-table|。如果置位 'paste' 选项，
-	不进行排版 (如同 'formatoptions' 为空)。可以插入逗号，以增加可读性。
+	描述自动排版如何进行的字母序列。
+	可用值见 |fo-table|。如何排版文本见 |gq|。
+	如果置位 'paste' 选项，不进行排版 (如同 'formatoptions' 为空)。可以插
+	入逗号，以增加可读性。
 	建议使用 ":set" 的 "+=" 和 "-=" 特性，这可以避免未来版本增加新的标志位
 	时出现的问题 |add-option-flags|。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
@@ -3120,8 +3235,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:s///gg		  替代所有	  替代单个
 
 	注意: 如果置位 'compatible'，本选项被复位。
-	已废弃: 设置此选项可能会破坏不注意到此选项的插件。另外，许多用户会觉得
-	/g 标志位的作用和正常效果相反很混淆。
+	设置此选项可能会破坏依赖 'g' 标志位缺省行为的插件。这也使得 'g' 标志位
+	和 |:s_g| 文档描述的行为相反。
 	此选项不用于 |Vim9| 脚本。
 
 						*'grepformat'* *'gfm'*
@@ -3260,7 +3375,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'guiligatures'* *'gli'* *E1243*
 'guiligatures' 'gli'	字符串	(缺省为 "")
 			全局
-			{仅有 GTK GUI 支持}
+			{仅有 GTK 和 Win32 GUI 支持}
 	ASCII 字符列表，这些字符合并时可生成复杂字形。每个字符必须是值范围在
 	32-127 的可显示的 ASCII 字符。
 	例如: >
@@ -3471,12 +3586,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				     T:DiffText,>:SignColumn,-:Conceal,
 				     B:SpellBad,P:SpellCap,R:SpellRare,
 				     L:SpellLocal,+:Pmenu,=:PmenuSel,
+				     k:PmenuMatch,<:PmenuMatchSel,
 				     [:PmenuKind,]:PmenuKindSel,
 				     {:PmenuExtra,}:PmenuExtraSel,
 				     x:PmenuSbar,X:PmenuThumb,*:TabLine,
 				     #:TabLineSel,_:TabLineFill,!:CursorColumn,
 				     .:CursorLine,o:ColorColumn,q:QuickFixLine,
-				     z:StatusLineTerm,Z:StatusLineTermNC")
+				     z:StatusLineTerm,Z:StatusLineTermNC,
+				     g:MsgArea,h:ComplMatchIns")
 			全局
 	本选项可以用来为若干场合设置高亮模式。它是逗号分隔的字符对的列表。每对
 	字符中，第一个字符给出适用的场合，第二个字符设定该场合使用的模式。这些
@@ -3492,6 +3609,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-Search|	 l  最近搜索模式高亮 (见 'hlsearch')
 	|hl-MoreMsg|	 m  |more-prompt|
 	|hl-ModeMsg|	 M  模式 (例如，"-- INSERT --")
+	|hl-MsgArea|	 g  |Command-line| 和消息区域
+	|hl-ComplMatchIns| h  当前插入的补全的匹配文本
 	|hl-LineNr|	 n  ":number" 和 ":#" 命令的行号，也用于 'number' 和
 			    'relativenumber' 选项置位时的行号。
 	|hl-LineNrAbove|   a  'relativenumber' 选项置位时光标上方的行号。
@@ -3523,10 +3642,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-PmenuSel|	 =  弹出菜单选中行
 	|hl-PmenuKind|	 [  弹出菜单 "kind" 正常行
 	|hl-PmenuKindSel|  ]  弹出菜单 "kind" 选中行
-	|hl-PmenuExtra|	 {  弹出菜单 "kind" 正常行
-	|hl-PmenuExtraSel| }  弹出菜单 "kind" 选中行
+	|hl-PmenuExtra|	 {  弹出菜单 "extra" 正常行
+	|hl-PmenuExtraSel| }  弹出菜单 "extra" 选中行
 	|hl-PmenuSbar|	 x  弹出菜单滚动条
 	|hl-PmenuThumb|	 X  弹出菜单滚动条拇指 (thumb)
+	|hl-PmenuMatch|	 k  弹出菜单匹配文本
+	|hl-PmenuMatchSel| <  弹出菜单选中行上的匹配文本
 
 	显示模式是:
 		r	反转		(termcap 项目 "mr" 和 "me")
@@ -3550,11 +3671,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|highlight-default| 说明缺省的高亮组。
 
 						*'history'* *'hi'*
-'history' 'hi'		数值型	(Vim 缺省: 50，Vi 缺省: 0，|defaults.vim| 里设
-								为 200)
+'history' 'hi'		数值型	(Vim 缺省: 200，Vi 缺省: 0)
 			全局
 	":" 命令的历史和最近的搜索模式的历史会被记住。本选项决定每个历史分别记
-	住多少项 (见 |cmdline-editing|)。
+	住多少项 (见 |cmdline-editing| 和用于记住的消息数的 'messagesopt')。
 	最大值为 10000。
 	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
@@ -3623,7 +3743,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			*'ignorecase'* *'ic'* *'noignorecase'* *'noic'*
 'ignorecase' 'ic'	布尔型	(缺省关闭)
 			全局
-	搜索模式里忽略大小写。也用于标签文件的查找。
+	搜索模式、|cmdline-completion|、标签文件里的查找，还有非 |Vim9| 的
+	|expr-==| 时忽略大小写。
 	另见 'smartcase' 和 'tagcase'。
 	可以在模式里使用 "\c" 或 "\C" 否决这里的设置。见 |/ignorecase|。
 
@@ -3996,7 +4117,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'compatible'，本选项被设为 Vim 的缺省值。
 
 						*'isprint'* *'isp'*
-'isprint' 'isp'	字符串	(Win32 和 macOS 缺省为: "@,~-255"；
+'isprint' 'isp'	字符串	(Win32 和 VMS 缺省为: "@,~-255"；
 				否则: "@,161-255")
 			全局
 	此选项给出的字符在屏幕上能直接显示。|pattern| 里的 "\p" 也使用此选项。
@@ -4048,6 +4169,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set key=
 <	不能用 ":set key" 或 "echo &key" 得到本选项的值。以防本来不应该知道的
 	人能够看到。这也意味着一旦设置以后，你自己也无法看到，小心不要输错！
+	此选项上也不能用 |:set=|、|:set+=|、|:set^=|，以防攻击者猜到密钥的部分
+	子串。
 	在表达式中可用 "&key" 来判断加密是否已打开。如果 'key' 已设置，该值
 	返回 "*****" (五颗星)。
 
@@ -4058,7 +4181,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	键盘映射表的名字。见 |mbyte-keymap|。
 	设置此选项为合法的键盘映射表名也会设置 'iminsert' 为 1，使得该键盘映射
 	表生效。除非 'imsearch' 原来为 -1，它也被设为 1。
-	只能使用普通的文件名字符。"/\*?[|<>" 都不合法。
+	只能使用字母数字字符。'.'、'-' 和 '_' 也可以。
 
 					*'keymodel'* *'km'*
 'keymodel' 'km'		字符串	(缺省为 "")
@@ -4080,10 +4203,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	选项值是逗号分隔的项目列表。每个项目是匹配 'term' 选项的模式，冒号和协
 	议名。为了演示一下格式，缺省值可以这样设置: >
-	   set keyprotocol=kitty:kitty,foot:kitty,wezterm:kitty,xterm:mok2
+	   set keyprotocol=kitty:kitty,foot:kitty,ghostty:kitty,wezterm:kitty
+	   set keyprotocol+=xterm:mok2
 
-<	这意味着 'term' 名包含 "kitty"、"foot" 或 "wezterm" 时，使用
-	"kitty" 协议。而 'term' 名包含 "xterm" 时，使用 "mok2" 协议。
+<	这意味着 'term' 名包含 "kitty"、"foot"、"ghostty" 或 "wezterm" 时，使
+	用 "kitty" 协议。而 'term' 名包含 "xterm" 时，使用 "mok2" 协议。
 
 	使用首个匹配，所以如果你要 "kitty" 使用 kitty 协议而 "badkitty" 不用，
 	应先匹配 "badkitty" 并指定 "none" 值: >
@@ -4295,7 +4419,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'listchars' 'lcs'	字符串	(缺省为 "eol:$")
 			全局或局部于窗口 |global-local|
 	'list' 模式和 |:list| 命令使用的字符串。这是逗号分隔的字符串设置的列
-	表。
+	表。 *E1511*
 							*lcs-eol*
 	  eol:c		行尾显示的字符。如果忽略，行尾没有额外的字符。
 							*lcs-tab*
@@ -4355,7 +4479,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			U+202F)。如果忽略，留出一个空格。
 
 	不应该使用字符 ':' 和 ','。如果 'encoding' 为 "utf-8"，可以使用 UTF-8
-	字符，不然只能使用可显示的字符。所有字符必须使用单倍宽度。
+	字符，不然只能使用可显示的字符。所有字符必须使用单倍宽度。 *E1512*
 
 	每个字符可用十六进制表示: >
 		set listchars=eol:\\x24
@@ -4487,6 +4611,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	需要冒内存不足的风险。
 	增加此限制超过 200，也会改变 Ex 命令嵌套的最大层数，见 |E169|。
 	另见 |:function|。
+	也用于回调函数的最大层数。
 
 						*'maxmapdepth'* *'mmd'* *E223*
 'maxmapdepth' 'mmd'	数值型	(缺省为 1000)
@@ -4537,6 +4662,25 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	菜单可用的最大项目数量。用于从项目列表生成的菜单，比如 Buffers 菜单。
 	改变此选项不会立即生效，刷新菜单后才可以。
 
+						*'messagesopt'* *'mopt'*
+'messagesopt' 'mopt'	字符串	(缺省为 "hit-enter,history:500")
+			全局
+
+	消息输出的选项设定。包含以下项目。项目必须以逗号分隔。
+
+	hit-enter	消息长于 'cmdheight' 指定的长度时，使用 |hit-enter| 提
+			示符。
+
+	wait:{n}	不用 |hit-enter| 提示符，简单等待 {n} 毫秒，使用户有机
+			会读完消息。{n} 最大为 10000。0 可用来关闭等待 (但用户
+			会丢失重要的消息)。
+			"hit-enter" 存在时忽略本项目，但 "hit-enter" 不存在时
+			必须要提供本项目。
+
+	history:{n}	决定 |:messages| 历史要记住多少项目。最大值是 10000。
+			设为零会清除消息历史。
+			本项目必须存在。
+
 						*'mkspellmem'* *'msm'*
 'mkspellmem' 'msm'	字符串	(缺省 "460000,2000,500")
 			全局
@@ -4565,7 +4709,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	如果你的内存不足 512 兆字节，|:mkspell| 可能对某些语言会失败，不管
 	'mkspellmem' 如何设置。
 
-	本选项不能在 |modeline| 或 |sandbox| 里设置。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
 'modeline' 'ml'		布尔型	(Vim 缺省: 打开 (root 用户则为关闭)
@@ -4697,7 +4841,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	|:behave| 命令设置 'mousemodel' 选项。
 
-	      *'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
+	    *'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
 'mousemoveevent' 'mousemev'  布尔型	(缺省关闭)
 			全局
 			{仅适用于 GUI}
@@ -4772,6 +4916,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	只限于 GUI、Win32 和使用 xterm 的 Unix。定义两个鼠标点击之间最大的使第
 	二击被识别为多击的毫秒数。
 
+
+						    *'mzquantum'* *'mzq'*
+'mzquantum' 'mzq'	数值型	(缺省为 100)
+			全局
+			{仅当编译时加入 |+mzscheme| 特性才有效}
+	轮询 MzScheme 线程的毫秒计的时间间隔。负数或零意味着没有线程调度。
+	注意: 如果复位 'compatible'，本选项被设为 Vim 缺省值。
+
 						*'mzschemedll'*
 'mzschemedll'		字符串	(缺省取决于编译选项)
 			全局
@@ -4792,13 +4944,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	本值必须在 |vimrc| 脚本或之前设定。在启动阶段 |load-plugins| 这步
 	之前。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
-
-						    *'mzquantum'* *'mzq'*
-'mzquantum' 'mzq'	数值型	(缺省为 100)
-			全局
-			{仅当编译时加入 |+mzscheme| 特性才有效}
-	轮询 MzScheme 线程的毫秒计的时间间隔。负数或零意味着没有线程调度。
-	注意: 如果复位 'compatible'，本选项被设为 Vim 缺省值。
 
 							*'nrformats'* *'nf'*
 'nrformats' 'nf'	字符串	(缺省为 "bin,octal,hex"，|defaults.vim| 里设为
@@ -4822,6 +4967,17 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		    (没有 "unsigned" 时会得到 "9-2019")。
 		    在 "0" 上用 CTRL-X 或 "18446744073709551615" (2^64 - 1) 上
 		    用 CTRL-A 没有效果，溢出会被防止。
+	blank	如果包含，数值是有符号还是无符号取决于前导的空白。如果数值的前
+		导连字号之前是非空白字符 (也就是说不是制表或 " ")，不把负号当
+		作数值的一部分。举例来说:
+		    在 "Carbon-14" 的 "14" 上按 CTRL-A，结果是 "Carbon-15"
+		    (如果不用 "blank"，会变成 "Carbon-13")。
+		    在 "Carbon -8" 的 "8" 上按 CTRL-X，结果是 "Carbon -9"
+		    (因为 -8 有空白前导。如果包含了 "unsigned"，结果是
+		    "Carbon -7")。
+		包含此格式会防止溢出，就像包含了 "unsigned" 一样。如果同时包含
+		此格式和 "unsigned"，"unsigned" 优先。
+
 	简单的以 1-9 的数字开始的数值总被认为是十进制的。这也包括不能识别为八
 	进制或十六进制的数值。
 
@@ -4871,7 +5027,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	本选项通常在文件类型插件里设置: |:filetype-plugin-on|
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
-
 			    *'opendevice'* *'odev'* *'noopendevice'* *'noodev'*
 'opendevice' 'odev'	布尔型	(缺省关闭)
 			全局
@@ -4881,7 +5036,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意 在 MS-Windows 上编辑 "aux.h"、"lpt1.txt" 诸如此类也相当于对设备进
 	行编辑。
 
-
 						*'operatorfunc'* *'opfunc'*
 'operatorfunc' 'opfunc'	字符串	(缺省: 空)
 			全局
@@ -4890,17 +5044,16 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
-
 					*'osfiletype'* *'oft'*
 'osfiletype' 'oft'	字符串 (缺省: "")
 			局部于缓冲区
 	此选项用来支持 RISC OS，后者已被移除。
 
-
 				*'packpath'* *'pp'*
 'packpath' 'pp'		字符串	(缺省: 见 'runtimepath')
 	寻找软件包的目录。见 |packages|。
 
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'paragraphs'* *'para'*
 'paragraphs' 'para'	字符串	(缺省为 "IPLPPPQPP TPHPLIPpLpItpplpipbp")
@@ -4970,6 +5123,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 			{仅当编译时加入 |+diff| 特性才有效}
 	用来给文件打补丁并生成文件新版本的表达式。见 |diff-patchexpr|。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 					*'patchmode'* *'pm'* *E205* *E206*
 'patchmode' 'pm'	字符串	(缺省为 "")
@@ -5282,7 +5436,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意: 为了避免使用模式的移植性问题，永远把本选项设为缺省 "打开" 状态。
 	只有在旧的 Vi 脚本里才需要把它关闭。
 
-                                               *'renderoptions'* *'rop'*
+						*'renderoptions'* *'rop'*
 'renderoptions' 'rop'	字符串  (缺省: 空白)
 			全局
 			{仅当编译时加入 GUI 和 MS-Windows 的 DIRECTX 才有效}
@@ -5465,7 +5619,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <
 				*'runtimepath'* *'rtp'* *vimfiles*
 'runtimepath' 'rtp'	字符串	(缺省:
-					Unix:  "$HOME/.vim,
+					Unix:  "$HOME/.vim 或
+						$XDG_CONFIG_HOME/vim,
 						$VIM/vimfiles,
 						$VIMRUNTIME,
 						$VIM/vimfiles/after,
@@ -5480,9 +5635,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						$VIMRUNTIME,
 						$VIM/vimfiles/after,
 						$HOME/vimfiles/after"
-					macOS: "$VIM:vimfiles,
-						$VIMRUNTIME,
-						$VIM:vimfiles:after"
 					Haiku: "$BE_USER_SETTINGS/vim,
 						$VIM/vimfiles,
 						$VIMRUNTIME,
@@ -5505,7 +5657,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  import/	`:import` 找到的文件
 	  indent/	缩进脚本 |indent-expression|
 	  keymap/	键盘映射表文件 |mbyte-keymap|
-	  lang/		菜单翻译 |:menutrans|
+	  lang/		消息翻译 |:menutrans| 和 |multi-lang|
 	  menu.vim	GUI 菜单 |menu.vim|
 	  pack/		软件包 |:packadd|
 	  plugin/	插件脚本 |write-plugin|
@@ -5515,6 +5667,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  tutor/	vimtutor 所需的文件 |tutor|
 
 	还有其它用 |:runtime| 命令搜索的文件。
+
+	$XDG_CONFIG_HOME 可见 |xdg-base-dir|。
 
 	多数系统上，设置的缺省值搜索五个位置:
 	1. 你的主目录，里面有你的个人偏好。
@@ -5644,6 +5798,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	除选择区时。
 	如果使用了 "old" 而 'virtualedit' 允许光标移动过行尾，则还是不包括换行
 	符。
+	使用 "exclusive" 时，会为闭动作调整可视模式的光标位置
+	|inclusive-motion-selection-exclusive|。
 	注意 如果从普通模式开始、'virtualedit' 为空、使用 "exclusive" (开区间)
 	而从行尾开始反向选择，你无法包含行尾的字符。
 
@@ -5852,8 +6008,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'shellxescape' 'sxe'	字符串	(缺省: ""；
 				 MS-Windows: "\"&|<>()@^")
 			全局
-	'shellxquote' 如果设为 "("，此选项列出的字符会用 '^' 字符转义。这梓可
+	'shellxquote' 如果设为 "("，此选项列出的字符会用 '^' 字符转义。这样可
 	以用 cmd.exe 执行大部分外部命令。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'shellxquote'* *'sxq'*
 'shellxquote' 'sxq'	字符串	(缺省: ""；
@@ -5911,7 +6068,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		(比如，":cn")
 	  s	不给出 "search hit BOTTOM, continuing at TOP" 或	*shm-s*
 		"search hit TOP, continuing at BOTTOM" 消息；使用搜索计数时不
-		在计数信息后显示 "W" (见下 S)
+		在计数信息后显示 "W" (见下 |shm-S|)
 	  t	如果文件消息不能完整放在命令行上，从开头截短该消息，	*shm-t*
 		最左列给出 "<"；Ex 模式忽略此标志位
 	  T	如果其它的消息不能完整放在命令行上，从中间截短该消息；	*shm-T*
@@ -5925,8 +6082,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  C	扫描插入模式补全项目时不给出消息，如 "scanning tags"	*shm-C*
 	  q	用 "recording" 代替 "recording @a"			*shm-q*
 	  F	编辑文件时不给出文件信息，就像给命令用了 `:silent`	*shm-F*
-		一样；注意 这也会影响自动命令的信息
-	  S     搜索时不显示搜索计数，如 "[1/5]"			*shm-S*
+		一样；注意 这也会影响自动命令的信息和 'autoread' 的重载
+	  S     搜索时不显示搜索计数，如 "[1/5]"。如果不给出 "S" 标志位	*shm-S*
+		(也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W" (助记符:
+		Wrapped 环绕) 字符以代表 "search hit BOTTOM, continuing at
+		TOP" 和 "search hit TOP, continuing at BOTTOM" 消息。
 
 	这给你一个机会，避免在缓冲区之间切换要按 <Enter>，但仍然能够在可用的空
 	间里得到有用的消息。要得到 'shm' 为空时的完整消息，使用 ":file!"。
@@ -6069,7 +6229,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	   "number"	在 'number' 列上标号。如果没有 number 列，相当于
 			"auto"。
 
-
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*
 'smartcase' 'scs'	布尔型	(缺省关闭)
 			全局
@@ -6119,7 +6278,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	就像隐藏在窗口上方一样。首行的开始处显示 "<<<"，使用 |hl-NonText| 高
 	亮。
 	也请考虑 'display' 选项里加上 "lastline"，显示窗口末行尽量多的内容。
-	注意: 只部分实现，目前可用于 CTRL-E、CTRL-Y 和鼠标滚动。
+	注意: 只部分实现，|gj| 和 |gk| 尚不可用。
 
 					*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	数值型	(缺省为 0)
@@ -6271,7 +6430,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
-
 			*'splitbelow'* *'sb'* *'nosplitbelow'* *'nosb'*
 'splitbelow' 'sb'	布尔型	(缺省关闭)
 			全局
@@ -6302,7 +6460,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如果打开，下面列出的命令把光标移动到行首的第一个非空白。如果关闭，光
 	标保持在同一列上 (如果可能的话)。这适用于以下命令:
 	- CTRL-D、CTRL-U、CTRL-B、CTRL-F、"G"、"H"、"M"、"L"、gg
-	- 使用面向行操作符的 "d"、"<<" 和 ">>"
+	- 使用面向行操作符的 "d"、"<<"、"==" 和 ">>" (|operator-resulting-pos|)
 	- 带计数的 "%"
 	- 缓冲区改变命令 (CTRL-^、 :bnext、:bNext，等等)
 	- 只有单个行号的 Ex 命令，比如 ":25" 或 ":+"。
@@ -6320,6 +6478,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  %-0{minwid}.{maxwid}{item}
 	除了 {item} 以外，每个字段都是可选的。单个百分号可以用 "%%" 给出。
 
+							*stl-%!*
 	如果此选项以 "%!" 开始，它用作表达式。计算此表达式的结果用作选项值。例
 	如: >
 		:set statusline=%!MyStatusLine()
@@ -6450,7 +6609,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	示例:
 	模拟 'ruler' 设置的标准状态行 >
-	  :set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+	  :set statusline=%<%f\ %h%w%m%r%=%-14.(%l,%c%V%)\ %P
 <	类似，但加上光标所在字符的 ASCII 值 (类似于 "ga") >
 	  :set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
 <	显示字节偏移和字节值，用红色标记已修改标志位。 >
@@ -6518,7 +6677,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 	本选项控制缓冲区切换的行为。
 	以下情形检查本选项
-	- 跳转到错误的 |quickfix| 命令 (|:cc|、|:cn|、|:cp| 等)
+	- 跳转到错误的 |quickfix| 命令 (|:cc|、|:cn|、|:cp| 等)。
 	- 跳转到标签的 |:stag| 命令。
 	- 打开文件的 |CTRL-W_f| 或 |CTRL-W_F| 命令。
 	- 跳转到缓冲区的缓冲区分割命令 (如 |:sbuffer|、|:sbnext| 或
@@ -6536,6 +6695,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			在，本值优先。
 	   uselast	如果包含，当用 |quickfix| 命令跳转到错误时，跳到上次使
 			用的窗口。
+	打开 'winfixbuf' 的窗口目前不对其分割窗口应用 'switchbuf'。
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	数值型	(缺省为 3000)
@@ -6567,7 +6727,18 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	设置 'syntax' 选项的实际效果是激活以该值为参数的 Syntax 自动命令事件。
 	不管 'cpoptions' 里是否包含 's' 或 'S' 标志位，本选项不会复制到别的缓
 	冲区。
-	只能使用普通的文件名字符。"/\*?[|<>" 都不合法。
+	只能使用字母数字字符，'.'、'-' 和 '_' 也可以。
+
+						*'tabclose'* *'tcl'*
+'tabclose' 'tcl'	字符串	(缺省为 "")
+			全局
+	此选项控制标签页关闭时 (例如用 |:tabclose|) 的行为。如果为空，Vim 跳转
+	到下一个 (右侧) 标签页。
+
+	可能值 (逗号分隔的列表):
+	   left		如果包含，转到前一个标签页而不是下一个。
+	   uselast	如果包含，如有可能转到上次使用的标签页。此选项优先于其
+			他选项。
 
 						*'tabline'* *'tal'*
 'tabline' 'tal'		字符串	(缺省为空)
@@ -6590,12 +6761,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	记住只有一个标签页是当前标签页，其它标签页都是不可见的，你不能调到它们
 	的窗口里。
 
-
 						*'tabpagemax'* *'tpm'*
 'tabpagemax' 'tpm'	数值型	(缺省为 10)
 			全局
 	|-p| 命令行参数或 ":tab all" 命令打开的最大标签页数。|tabpage|
-
 
 					*'tabstop'* *'ts'*
 'tabstop' 'ts'		数值型	(缺省为 8)
@@ -6606,7 +6775,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	确 (比如，打印时)。
 	此值必须大于 0 而小于 10000。
 
-	Vim 里有四个 (译者注: 原文如此，应为五个) 主要的使用制表的方法:
+	Vim 里有五个主要的使用制表的方法:
 	1. 总是保持 'tabstop' 为 8，设置 'softtabstop' 和 'shiftwidth' 为 4
 	   (或 3 或任何你想要的) 然后用 'noexpandtab'。这时，Vim 使用制表和空
 	   格的混合，但输入 <Tab> 或 <BS> 键就像每个制表占用 4 (或 3) 个字符一
@@ -6690,6 +6859,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	此选项指定函数，用于执行标签搜索。此函数取得标签模式并应返回匹配标签的
 	列表。见 |tag-function| 说明如何写此函数并给出一例。此值可以是函数名、
 	|lambda| 或 |Funcref|。详见 |option-value-function|。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	数值型	(缺省为 0)
@@ -6709,7 +6879,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				|+emacs_tags|: "./tags,./TAGS,tags,TAGS")
 			全局或局部于缓冲区 |global-local|
 	标签命令所用的多个文件名，空格或逗号分隔。要在文件名里包含空格或逗号，
-	在它们之前加上反斜杠 (|option-backslash| 说明如何包含空格和反斜杠)。
+	在它们之前加上若干个反斜杠 (|option-backslash| 说明如何包含空格/逗号和
+	反斜杠)。
 	如果文件名以 "./" 开始，'.' 被替换为当前文件的路径。但只在 'cpoptions'
 	里没有包含 'd' 标志位时才会如此。环境变量被扩展 |:set_env|。另见
 	|tags-option|。
@@ -6791,7 +6962,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	如果你的系统没有 UTF-8 的 locale 支持，需要这么做。
 
 		*'termguicolors'* *'tgc'* *'notermguicolors'* *'notgc'* *E954*
-'termguicolors' 'tgc'	布尔型 (缺省关闭)
+'termguicolors' 'tgc'	布尔型 (缺省关闭，除非 Vim 检测到在有相应能力的终端上
+				运行)
 			全局
 			{仅当编译时加入 |+termguicolors| 特性才有效}
 	打开时，在终端上使用 |highlight-guifg| 和 |highlight-guibg| 属性 (因而
@@ -6818,8 +6990,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'termwinkey' 'twk'	字符串	(缺省 "")
 			局部于窗口
 	终端窗口中引导 CTRL-W 系列命令的键。其它键发送给窗口中运行中的作业。
-	可以使用 <> 记号，如: >
-		:set termwinkey=<C-L>
+	该键可以用单个字符、|key-notation| (如 <Up>、<C-F>) 或插入记号后跟一个
+	字母 (如 `^F` 是 CTRL-F) 等形式指定。例如: >
+		:set twk=X
+		:set twk=^I
+		:set twk=<C-L>
 <	字符串必须对应一个键击，但可以有多个字节。
 	如果不指定则使用 CTRL-W，这样 CTRL-W : 把你带到命令行上。如果
 	'termwinkey' 设为 CTRL-L，则 CTRL-L : 会把你带到命令行上。
@@ -6920,10 +7095,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	为了安全原因，反引号不能用于此选项里。
 
 						*'thesaurusfunc'* *'tsrfu'*
-'thesaurusfunc' 'tsrfu'	string	(default: empty)
-			global or local to buffer |global-local|
-			{not available when compiled without the |+eval|
-			feature}
+'thesaurusfunc' 'tsrfu'	字符串	(缺省: 空)
+			全局或局部于缓冲区 |global-local|
+			{仅当编译时加入 |+eval| 特性才有效}
 	此选项指定用于 CTRL-X CTRL-T 同义词补全的函数。|i_CTRL-X_CTRL-T| 见
 	|compl-thesaurusfunc|。此值可以是函数名、|lambda| 或 |Funcref|。详见
 	|option-value-function|。
@@ -6939,6 +7113,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				*'timeout'* *'to'* *'notimeout'* *'noto'*
 'timeout' 'to'		布尔型 (缺省打开)
 			全局
+
 						*'ttimeout'* *'nottimeout'*
 'ttimeout'		布尔型 (缺省关闭，|defaults.vim| 里置位)
 			全局
@@ -7004,8 +7179,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	不过: 如果 Vim 启动时带 |-X| 参数，标题无法恢复 (除了 GUI 以外)。如果
 	标题无法恢复，它被设为 'titleold' 的值。那时，你可能希望在 Vim 之外恢
 	复标题。
-	如果在远程的机器上使用 xterm，你可以使用命令:
+	如果在远程的机器上使用 xterm，你可以使用命令: >
+
 	    rsh machine_name xterm -display $DISPLAY &
+	    ssh -X machine_name xterm &
+<
 	那么应该会继承 WINDOWID 环境变量，而窗口的标题在退出 Vim 之后应该会换
 	回原先的值。
 
@@ -7035,7 +7213,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	所有的 GUI 版本和带有非空的 't_ts' 选项的终端)。
 	如果 Vim 编译时定义 HAVE_X11，在可能的情况下恢复原来的标题，见 |X11|。
 	如果本选项包含 printf 风格的 '%' 项目，依照 'statusline' 使用的规则进
-	行扩展。
+	行扩展。如果其中有非法的 '%' 格式，按原值使用，设置本选项时不报错或警
+	告。
 	'modelineexpr' 关闭时，不能在模式行中设置此选项。
 
 	例如: >
@@ -7321,16 +7500,18 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	此不一定能马上看得到写入的内容。
 	设置 'verbosefile' 为新值就像先把它清空然后再设置一样。
 	和 |:redir| 的区别是，在设置 'verbosefile' 时不再显示 verbose 消息。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	字符串	(缺省    Amiga "home:vimfiles/view"，
-					 Win32: "$HOME/vimfiles/view"，
-					 Unix: "$HOME/.vim/view"，
-					 macOS: "$VIM/vimfiles/view"
-					 VMS: "sys$login:vimfiles/view")
+'viewdir' 'vdir'	字符串	(缺省        Amiga: "home:vimfiles/view"，
+					     Win32: "$HOME/vimfiles/view"，
+					     Unix: "$HOME/.vim/view" 或
+					           "$XDG_CONFIG_HOME/vim/view"
+					     VMS: "sys$login:vimfiles/view")
 			全局
 			{仅当编译时加入 |+mksession| 特性才有效}
 	储存 |:mkview| 文件的目录名。
+	$XDG_CONFIG_HOME 可见 |xdg-base-dir|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'viewoptions'* *'vop'*
@@ -7550,7 +7731,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	详情可见: |cmdline-completion|。
 	不在宏里识别该字符。为此，见 'wildcharm'。
 	有些键不可用，如 CTRL-C、<CR> 和 Enter。
-	尽管 'wc' 是一个数值选项，你可以设置它为一个特殊键: >
+	<Esc> 可用，但为万全起见，连续按两次仍然会退出命令行。
+	尽管 'wc' 是一个数值选项，它可以用数值、单个字符、|key-notation| (如
+	<Up>、<C-F>) 或插入记号后跟一个字母 (如 `^F` 是 CTRL-F) 等形式指定: >
+		:set wc=27
+		:set wc=X
+		:set wc=^I
 		:set wc=<Tab>
 <	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
@@ -7578,16 +7764,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	建议使用 |:set+=| 和 |:set-=| 来从列表里加减模式。这可以避免未来版本使
 	用其它缺省值出现的问题。
 
-		*'wildignorecase'* *'wic'* *'nowildignorecase'* *'nowic'*
+		    *'wildignorecase'* *'wic'* *'nowildignorecase'* *'nowic'*
 'wildignorecase' 'wic'	布尔型	(缺省关闭)
 			全局
 	置位时对文件名和目录的补全忽略大小写。'fileignorecase' 置位时没有作
 	用。
 	不适用于用外壳扩展通配符的情况，当有特殊字符时这会发生。
 
-
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
-'wildmenu' 'wmnu'	布尔型	(缺省关闭，|defaults.vim| 里置位)
+'wildmenu' 'wmnu'	布尔型	(缺省打开)
 			全局
 	'wildmenu' 打开时，命令行补全以增强模式运行。按下 'wildchar' (通常是
 	<Tab>) 启动补全。这时显示可能的匹配，
@@ -7601,22 +7786,24 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如果多个匹配超过一行，在右侧显示 ">" 和/或在左侧显示 "<"。需要的话，滚
 	动状态行。
 	按下不用于选择补全项的键时，放弃 "wildmenu" 模式。
-	"wildmenu" 激活且不使用弹出菜单时，下面的键有特殊含义:
-
-	<Left> <Right>	- 选择前项/后项匹配 (类似于 CTRL-P/CTRL-N)
-	<Down>		- 在文件名/菜单名补全中: 移进子目录和子菜单。
+	"wildmenu" 激活时，下面的键有特殊含义:
+	CTRL-P		- 到上个项目
+	CTRL-N		- 到下个项目
 	<CR>		- 在菜单补全中且光标刚刚在句号之后: 移进子菜单。
+	CTRL-E		- 结束补全，回到选择匹配之前的状态。
+	CTRL-Y		- 接受当前选择的匹配并停止补全。
+
+	命令行补全不使用弹出菜单时，下面的键有特殊含义:
+	<Left> <Right>	- 选择前项/后项匹配 (类似于 CTRL-P/CTRL-N)
 	<Up>		- 在文件名/菜单名补全中: 上移到父目录或父菜单。
+	<Down>		- 在文件名/菜单名补全中: 移进子目录和子菜单。
 
 	命令行补全用弹出菜单时，下面的键有特殊含义:
-	<Down>		- 选择后项匹配 (类似于 CTRL-N)
+	<Up> <Down>	- 选择前项/后项匹配 (类似于 CTRL-P/CTRL-N)
+	<PageUp>	- 选择往后若干项目的那个匹配
+	<PageDown>	- 选择往前若干项目的那个匹配
 	<Left>		- 在文件名/菜单名补全中: 上移到父目录或父菜单。
 	<Right>		- 在文件名/菜单名补全中: 移进子目录和子菜单。
-	<Up>		- 选择前项匹配 (类似于 CTRL-P)
-	CTRL-E		- 结束补全，回到选择匹配之前的状态。
-	CTRL-N		- 到下个项目
-	CTRL-P		- 到上个项目
-	CTRL-Y		- 接受当前选择的匹配并停止补全。
 
 	此功能使控制台上有菜单可用 |console-menus|。
 
@@ -7636,14 +7823,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	每个部分包含冒号分隔的列表，列表项目可能值如下:
 	""		只用第一个匹配补全。
 	"full"		用下一个完整的匹配补全。在最后一次匹配之后，使用原来的
-			字符串，然后又是第一个匹配。如果 "wildmenu" 打开的话，
+			字符串，然后又是第一个匹配。如果 'wildmenu' 打开的话，
 			使用之。
 	"longest"	用最长的公共子串补全。如果结果没有变长，使用下一个部
 			分。
 	"list"		如果有多于一个补全，列出所有的匹配。
 	"lastused"	如果补全缓冲区名并有多于一个缓冲区匹配时，按缓冲区最近
 			使用时间排序 (除当前缓冲区外)。
-	如果只有一个匹配，所有情况下都完整补全。
+	"noselect"	不预选首个菜单项目，如果 'wildmenu' 打开的话，使用之。
+	如果只有一个匹配，除了 "noselect" 以外的所有情况下都完整补全。
 
 	有用的冒号分隔值的示例:
 	"longest:full"	类似于 "longest"，但如果 'wildmenu' 打开的话，使用之。
@@ -7664,7 +7852,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set wildmode=list,full
 <	列出所有的匹配而不补全，然后是每个完整的匹配 >
 		:set wildmode=longest,list
-<	用最长的子串补全，然后列出所有的可能性。
+<	用最长的子串补全，然后列出所有的可能性 >
+		:set wildmode=noselect:full
+<	不补全但显示 'wildmenu'，然后是每个完整的匹配 >
+		:set wildmode=noselect:lastused,full
+<	同上，但按缓冲区最近使用时间排序。
 	详情可见: |cmdline-completion|。
 
 						*'wildoptions'* *'wop'*
@@ -7715,6 +7907,28 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'lines' 减 1。
 	注意: 不要和 Vim 窗口的高度混淆。那里要用 'lines'。
 
+						*'winfixbuf'*
+'winfixbuf' 'wfb'	布尔型	(缺省关闭)
+			局部于窗口
+	如果打开，窗口及其显示的缓冲区被绑定。例如，试图用 |:edit| 改变缓冲区
+	会失败。其他试图改变窗口的缓冲区命令，如 |:cnext|，会跳过打开
+	'winfixbuf' 的窗口。但如果 Ex 命令带有 '!' 修饰符，仍会强制切换缓冲
+	区。
+
+			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
+'winfixheight' 'wfh'	布尔型	(缺省关闭)
+			局部于窗口  |local-noglobal|
+	窗口打开或关闭并且置位 'equalalways' 时，保持窗口的高度。另见
+	|CTRL-W_=|。|preview-window| 和 |quickfix-window| 中缺省打开。
+	不过，如果空间不够，高度仍然会改变。
+
+			*'winfixwidth'* *'wfw'* *'nowinfixwidth'* *'nowfw'*
+'winfixwidth' 'wfw'	布尔型	(缺省关闭)
+			局部于窗口  |local-noglobal|
+	窗口打开或关闭并且置位 'equalalways' 时，保持窗口的宽度。另见
+	|CTRL-W_=|。
+	不过，如果空间不够，宽度仍然会改变。
+
 						*'winheight'* *'wh'* *E591*
 'winheight' 'wh'	数值型	(缺省为 1)
 			全局
@@ -7729,20 +7943,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <	最小的值为 1。
 	改变当前窗口的高度的命令不会调整此高度。
 	'winheight' 应用于当前窗口。'winminheight' 设置其它窗口的最小高度。
-
-			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
-'winfixheight' 'wfh'	布尔型	(缺省关闭)
-			局部于窗口  |local-noglobal|
-	窗口打开或关闭并且置位 'equalalways' 时，保持窗口的高度。另见
-	|CTRL-W_=|。|preview-window| 和 |quickfix-window| 中缺省打开。
-	不过，如果空间不够，高度仍然会改变。
-
-			*'winfixwidth'* *'wfw'* *'nowinfixwidth'* *'nowfw'*
-'winfixwidth' 'wfw'	布尔型	(缺省关闭)
-			局部于窗口  |local-noglobal|
-	窗口打开或关闭并且置位 'equalalways' 的时候，保持窗口的宽度。另见
-	|CTRL-W_=|。
-	不过，如果空间不够，宽度仍然会改变。
 
 						*'winminheight'* *'wmh'*
 'winminheight' 'wmh'	数值型	(缺省为 1)

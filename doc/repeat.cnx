@@ -1,4 +1,4 @@
-*repeat.txt*    适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*repeat.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -492,7 +492,7 @@ Vim 软件包是包含一个或多个插件的目录。和普通插件相比，�
 使用软件包并自动载入 ~
 
 让我们假定，你的 Vim 文件在 "~/.vim" 目录里，而你想加入来自 zip 归档
-"/tmp/foopack.zip" 的软件包:
+"/tmp/foopack.zip" 的软件包: >
 	% mkdir -p ~/.vim/pack/foo
 	% cd ~/.vim/pack/foo
 	% unzip /tmp/foopack.zip
@@ -535,7 +535,7 @@ Vim 启动时，处理完 .vimrc 后，扫描 'packpath' 里的所有目录，�
 
 使用单个插件并自动载入 ~
 
-如果没有软件包但有单个插件，需要建立额外的目录结构:
+如果没有软件包但有单个插件，需要建立额外的目录结构: >
 	% mkdir -p ~/.vim/pack/foo/start/foobar
 	% cd ~/.vim/pack/foo/start/foobar
 	% unzip /tmp/someplugin.zip
@@ -598,6 +598,9 @@ Vim 启动时，处理完 .vimrc 后，扫描 'packpath' 里的所有目录，�
    start/foobar/autoload/foo.vim	" 使用 foo 命令时载入
    start/foobar/doc/foo.txt		" foo.vim 的帮助
    start/foobar/doc/tags		" 帮助标签
+   start/foobar/lang/<lang_id>/LC_MESSAGES/foobar.mo
+					" 插件消息的 <lang_id> 语言版本。文件
+					" 可选。
    opt/fooextra/plugin/extra.vim	" 可选插件，定义命令
    opt/fooextra/autoload/extra.vim	" 使用 extra 命令时载入
    opt/fooextra/doc/extra.txt		" extra.vim 的帮助
@@ -607,20 +610,309 @@ Vim 启动时，处理完 .vimrc 后，扫描 'packpath' 里的所有目录，�
 	mkdir ~/.vim/pack
 	cd ~/.vim/pack
 	git clone https://github.com/you/foobar.git myfoobar
-
+<
 这里 "myfoobar" 是用户可选的名字，唯一的条件是和其它软件包的名字不同。
 
 在你的文档里，你要解释插件的用途，并告知用户如何载入可选插件: >
 	:packadd! fooextra
-
+<
 可以在你提供的插件之一加入此 packadd 命令，在需要可选插件时执行。
 
+					*package-doc* *package-documentation*
 运行 `:helptags` 命令生成文档/标签文件。把此生成文件包含在软件包内，用户就可以
 把软件包放在自己的 pack 目录里，立即可以使用 help 命令。不要忘记改变插件帮助后
 重新运行此命令: >
 	:helptags path/start/foobar/doc
 	:helptags path/opt/fooextra/doc
+<
+							*package-translation*
+要使得插件显示经过翻译的消息，需要几个步骤。
+插件作者如果要翻译消息，必须用 |bindtextdomain()| 函数定义包名和翻译所在的目录
+位置: >
+	:call bindtextdomain("foobar",
+	\ fnamemodify(expand("<script>"), ':p:h') .. '/../lang/')
+<
+这里:
+  "foobar"	是 |gettext()| 函数使用的唯一包标识符，用于以后查找此插件的翻
+		译字符串。
+  "lang/"	翻译文件所在的目录结构的相对或绝对路径。
 
+消息翻译文件所在的目录结构是 (从包的顶层目录开始):
+"lang/<lang_id>/LC_MESSAGES"。<lang_id> 的格式见 |multi-lang|。
+此函数需要在插件初始化调用一次且仅仅一次。
+一旦完成，|gettext()| 函数就可用来提取经过翻译的消息: >
+	:echo gettext("Hello", "foobar")
+<
+这里:
+  "Hello"	待翻译的消息 "Hello"，使用用户的语言 |:lang|
+  "foobar"	包标识符，由早先的 |bindtextdomain()| 函数定义。
+
+然后你需要创建用于翻译的模板文件 - POT-文件。为此，执行以下命令 (在 Vim 库下运
+行): >
+	cd ~/forkvim/src/po
+	make -f Makefile "PLUGPACKAGE={package}" \
+	"PO_PLUG_INPUTLIST={path/to/scripts-that-need-translations.vim}" \
+	["POT_PLUGPACKAGE_PATH={path/where/to/write/{package}.pot}" \]
+	["VIMPROG={path/to/vim} \]
+	{package}.pot
+<
+这里:
+PLUGPACKAGE		包含 |bindtextdomain()| 和 |gettext()| 函数指定的包名
+			的变量，例如 "foobar"。
+PO_PLUG_INPUTLIST	包含那些有字符串要翻译的脚本，也就是指定了 |gettext()|
+			函数的脚本。脚本用绝对或相对路径指定。如:
+			start/foobar/plugin/bar.vim
+			脚本间用空白分隔。
+POT_PLUGPACKAGE_PATH	包含要保存准备好的 POT 文件的目录。此变量非必需，如果
+			不指定，POT 文件会被存在 "src/po" 目录下。
+VIMPROG			包含可用的 Vim 的目录。如果 Vim 编辑器已经被编译和安装
+			好且在 $PATH 环境变量里，只要指定 vim 可执行文件的名字
+			就好。
+{package}.pot		目标名。应是包名，如 "foobar"，加上 .pot 扩展名。
+一旦建立好 POT 文件，其内容被分别复制到每个要准备翻译的语言对应的 PO 文件。
+
+翻译完成后，需要和 PO 文件转换为二进制 MO 文件格式，把这些 MO 文件放在我们之前
+建立的目录结构 "lang/" 目录里。
+为此，运行下述命令:
+>
+	cd ~/forkvim/src/po
+	make -f Makefile "PLUGPACKAGE={package}" \
+	"PO_PLUGPACKAGE={path/to/{lang}.po}" \
+	["MO_PLUGPACKAGE_PATH={path/to/lang/<lang_id>/LC_MESSAGES}" \]
+	{package}.mo
+<
+这里:
+PLUGPACKAGE		包含 |bindtextdomain()| 和 |gettext()| 函数指定的包名
+			的变量，例如 "foobar"。
+PO_PLUGPACKAGE		包含 PO 文件的变量。文件用绝对或相对路径指定。如，
+			"~/myproject/translate/en.po"
+MO_PLUGPACKAGE_PATH	包含 "lang/" 目录结构的变量，翻译好的文件会放在这里，
+			如 "foobar.mo"。此变量非必需，如果不指定，MO 文件会被
+			存在 "src/po" 目录下。
+{package}.mo		目标名。应是包名，如 "foobar"，加上 .mo 扩展名。
+
+						*package-translate_example*
+让我们用具体的例子来展示整个过程，把 "ftplugin/aap.vim" 文件翻译成俄语和德语。
+
+首先，准备一下 "aap.vim" 文件，在里面指定 |bindtextdomain()| 和 |gettext()| 函
+数调用。
+>
+ " Only do this when not done yet for this buffer
+ if exists("b:did_ftplugin")
+     finish
+ endif
+
+ " Don't load another plugin for this buffer
+ let b:did_ftplugin = 1
+ call bindtextdomain("aap", fnamemodify(expand("<script>"), ':p:h') .. '/../lang/')
+
+ " Reset 'formatoptions', 'comments', 'commentstring' and 'expandtab' to undo
+ " this plugin.
+ let b:undo_ftplugin = "setl fo< com< cms< et<"
+
+ " Set 'formatoptions' to break comment lines but not other lines,
+ " and insert the comment leader when hitting <CR> or using "o".
+ setlocal fo-=t fo+=croql
+
+ " Set 'comments' to format dashed lists in comments.
+ setlocal comments=s:#\ -,m:#\ \ ,e:#,n:#,fb:-
+ setlocal commentstring=#\ %s
+
+ " Expand tabs to spaces to avoid trouble.
+ setlocal expandtab
+
+ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+ let b:browsefilter = gettext("Aap Recipe Files (*.aap)\t*.aap\n", "aap")
+ if has("win32")
+     let b:browsefilter ..= gettext("All Files (*.*)\t*\n", "aap")
+ else
+     let b:browsefilter ..= gettext("All Files (*)\t*\n", "aap")
+ endif
+ let b:undo_ftplugin ..= " | unlet! b:browsefilter"
+ endif
+<
+现在为此创建 POT 文件 (示例使用 Windows 路径):
+>
+	cd /d f:\forkvim\src\po
+ (下面命令必须在一行输入，这里为示例起见用多行显示)
+	nmake.exe -f Make_mvc.mak "PLUGPACKAGE=aap"
+		    "PO_PLUG_INPUTLIST=d:\Programs\vim\vim91\ftplugin\aap.vim"
+		    "POT_PLUGPACKAGE_PATH=e:\project\translate\plugins"
+		    "VIMPROG=d:\Programs\vim\vim91\vim.exe"
+		    aap.pot
+<
+创建完我们的包的 POT 文件后，转到保存它的目录，然后开始翻译。
+>
+	cd /d e:\project\translate\plugins
+	copy aap.pot ru.po
+	copy aap.pot de.po
+<
+这里提供了翻译成俄语的 PO 文件:
+    # Test plugins translate ~
+    # ~
+    msgid "" ~
+    msgstr "" ~
+    "Project-Id-Version: aap\n" ~
+    "Report-Msgid-Bugs-To: \n" ~
+    "POT-Creation-Date: 2024-06-23 14:58+0300\n" ~
+    "PO-Revision-Date: 2024-06-23 14:58+0300\n" ~
+    "Last-Translator: Restorer\n" ~
+    "Language-Team: RuVim\n" ~
+    "Language: ru\n" ~
+    "MIME-Version: 1.0\n" ~
+    "Content-Type: text/plain; charset=UTF-8\n" ~
+    "Content-Transfer-Encoding: 8bit\n" ~
+
+    #: ../../runtime/ftplugin/aap.vim:32 ~
+    msgid "Aap Recipe Files (*.aap)\t*.aap\n" ~
+    msgstr "Файлы инструкций Aap (*.aap)\t*.aap\n" ~
+
+    #: ../../runtime/ftplugin/aap.vim:34 ~
+    msgid "All Files (*.*)\t*\n" ~
+    msgstr "Все файлы (*.*)\t*\n" ~
+
+    #: ../../runtime/ftplugin/aap.vim:36 ~
+    msgid "All Files (*)\t*\n" ~
+    msgstr "Все файлы (*)\t*\n" ~
+
+翻译成德语的 PO 文件:
+    # Test plugins translate~
+    #~
+    msgid ""~
+    msgstr ""~
+    "Project-Id-Version: aap\n"~
+    "Report-Msgid-Bugs-To: \n"~
+    "POT-Creation-Date: 2024-06-23 14:58+0300\n"~
+    "PO-Revision-Date: 2024-06-24 13:11+0300\n"~
+    "Last-Translator: Restorer\n"~
+    "Language-Team: German\n"~
+    "Language: de\n"~
+    "MIME-Version: 1.0\n"~
+    "Content-Type: text/plain; charset=UTF-8\n"~
+    "Content-Transfer-Encoding: 8bit\n"~
+
+    #: ../../runtime/ftplugin/aap.vim:32~
+    msgid "Aap Recipe Files (*.aap)\t*.aap\n"~
+    msgstr "Aap-Rezeptdateien (*.aap)\t*.aap\n"~
+
+    #: ../../runtime/ftplugin/aap.vim:34~
+    msgid "All Files (*.*)\t*\n"~
+    msgstr "Alle Dateien (*.*)\t*.*\n"~
+
+    #: ../../runtime/ftplugin/aap.vim:36~
+    msgid "All Files (*)\t*\n"~
+    msgstr "Alle Dateien (*)\t*\n"~
+
+现在把它们转换为 MO 文件，以便 |gettext()| 显示经过翻译的消息。
+注意 这不是专用的插件包，所以我们把 MO 文件放在 Vim 编辑器的 "lang/" 目录下。
+键入以下命令:
+>
+	cd /d f:\forkvim\src\po
+< (下面命令必须在一行输入，这里为示例起见用多行显示)
+ 对 Russian: >
+	nmake.exe -f Make_mvc.mak "PLUGPACKAGE=aap"
+	"PO_PLUGPACKAGE=e:\project\translate\plugins\ru.po"
+	"MO_PLUGPACKAGE_PATH=d:\Programs\vim\vim91\lang\ru\LC_MESSAGES"
+	aap.mo
+<对 German: >
+	nmake.exe -f Make_mvc.mak "PLUGPACKAGE=aap"
+	"PO_PLUGPACKAGE=e:\project\translate\plugins\de.po"
+	"MO_PLUGPACKAGE_PATH=d:\Programs\vim\vim91\lang\de\LC_MESSAGES"
+	aap.mo
+<
+翻译就这样做完了，现在你可以用自己的语言看到插件的消息。
+
+我们再试试翻译比如包里有几个包含要翻译的字符串的脚本的插件包。例如，要把
+"netrw" 包翻成日语。此例中我们只翻译包里的几行。先准备一下要翻译消息字符串的脚
+本。
+
+文件 "autoload\netrw.vim":
+>
+ " Load Once:
+ if &cp || exists("g:loaded_netrw")
+   finish
+ endif
+ call bindtextdomain("netrw", fnamemodify(expand("<script>"), ':p:h') .. '/../lang/')
+
+ " Check that vim has patches that netrw requires.
+ " Patches needed for v7.4: 1557, and 213.
+ " (netrw will benefit from vim's having patch#656, too)
+ let s:needspatches=[1557,213]
+ if exists("s:needspatches")
+  for ptch in s:needspatches
+   if v:version < 704 || (v:version == 704 && !has("patch".ptch))
+    if !exists("s:needpatch{ptch}")
+     unsilent echomsg gettext("***sorry*** this version of netrw requires vim v7.4 with patch#", "netrw") .. ptch
+    endif
+    let s:needpatch{ptch}= 1
+    finish
+   endif
+  endfor
+ endif
+<
+文件 "autoload\netrwSettings.vim":
+>
+ " Load Once:
+ if exists("g:loaded_netrwSettings") || &cp
+   finish
+ endif
+ call bindtextdomain("netrw", fnamemodify(expand("<script>"), ':p:h') .. '/../lang/')
+ let g:loaded_netrwSettings = "v18"
+ if v:version < 700
+  echohl WarningMsg
+  echo gettext("***warning*** this version of netrwSettings needs vim 7.0", "netrw")
+  echohl Normal
+  finish
+ endif
+<
+现在为将来的消息翻译准备一下 POT 文件。执行以下命令:
+>
+	cd ~/forkvim/src/po
+	make -f Makefile "VIMPROG=/usr/local/bin/vim" "PLUGPACKAGE=netrw" \
+	"POT_PLUGPACKAGE_PATH=~/project/translate/plugins" \
+	"PO_PLUG_INPUTLIST=../../runtime/autoload/netrw.vim
+	../../runtime/autoload/netrwSettings.vim" \
+	netrw.pot
+<
+转到 POT 文件所在的目录，开始翻译:
+>
+	cd ~/project/translate/plugins
+	cp ./netrw.pot ja.po
+<
+翻译完成时，"ja.po" 文件会是这样:
+    # Test plugins translate ~
+    # ~
+    msgid "" ~
+    msgstr "" ~
+    "Project-Id-Version: netrw\n" ~
+    "Report-Msgid-Bugs-To: \n" ~
+    "POT-Creation-Date: 2024-06-23 17:14+0300\n" ~
+    "PO-Revision-Date: 2024-06-23 17:14+0300\n" ~
+    "Last-Translator: Restorer\n" ~
+    "Language-Team: Japanese\n" ~
+    "Language: ja\n" ~
+    "MIME-Version: 1.0\n" ~
+    "Content-Type: text/plain; charset=UTF-8\n" ~
+    "Content-Transfer-Encoding: 8bit\n" ~
+
+    #: ../../runtime/autoload/netrw.vim:51 ~
+    msgid "***sorry*** this version of netrw requires vim v7.4 with patch#" ~
+    msgstr "" ~
+    "***申し訳ありません***このバージョンのnetrwには、パッチ付きのvim v7.4が必要です#" ~
+
+    #: ../../runtime/autoload/netrwSettings.vim:28 ~
+    msgid "***warning*** this version of netrwSettings needs vim 7.0" ~
+    msgstr "***警告***このバージョンのnetrwSettingsにはvim7.0が必要です" ~
+
+把 ja.po 转换成 MO 文件:
+>
+	cd ~/forkvim/src/po
+	make -f Makefile "PLUGPACKAGE=netrw" \
+	"PO_PLUGPACKAGE=~/project/translate/plugins/ja.po" \
+	"MO_PLUGPACKAGE_PATH=/usr/local/share/vim/vim91/lang/ja/LC_MESSAGES" \
+	netrw.mo
+<
+执行完这些步骤就可以让你得到任何第三方插件包的翻译版本了。
 
 插件间的依赖关系 ~
 							*packload-two-steps*
@@ -951,9 +1243,9 @@ Vim 花费在等待用户输入的时间完全不参与计算。所以 input() �
 
 刨视给出关于时间花费在哪里的很好的指示，但要记住很多因素会影响输出结果:
 
-- 测量时间的准确度取决于 gettimeofday() 或如有的话 clock_gettime 系统函数。精
-  确度从 1/100 秒到纳秒级。显示的时间如果用 clock_gettime 时以纳秒计，否则以微
-  秒计。具体可查看 `has("prof_nsec")`。
+- 测量时间的准确度取决于 gettimeofday() 或如有的话 clock_gettime() 系统函数。
+  精确度从 1/100 秒到纳秒级。显示的时间如果用 clock_gettime() 时以纳秒计，否则
+  以微秒计。具体可查看 `has("prof_nsec")`。
 
 - 测量的是实际流逝的时间。如果其它进程繁忙，可能造成的延迟无法预测。你可能需要
   多次运行刨视，并使用时间最少的结果。

@@ -1,4 +1,4 @@
-*usr_41.txt*	适用于 Vim 9.0 版本。	最近更新: 2025年3月
+*usr_41.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
 
 		     VIM 用户手册 - by Bram Moolenaar
 				译者: lang2、Willis
@@ -28,6 +28,17 @@ Vim 脚本语言在很多地方用到，包括 vimrc 文件，语法文件，等
 
 ==============================================================================
 *41.1*	简介					*vim-script-intro* *script*
+
+先从一些术语的命名说起。Vim 脚本是 Vim 可以解释和执行的文件。这包括用 Vim 的脚
+本语言书写的文本，如 .vim 文件或 .vimrc 和 .gvimrc 这种配置文件。这些脚本可以
+定义函数、命令和设置，Vim 用来定制和扩展其行为。
+
+稍稍滥用一下这个术语，在本文档里我们将用 "Vim 脚本" 来称呼 Vim 脚本语言。这种
+简写可以精简一下关于 Vim 脚本编程的解释和讨论。
+
+Vim 插件是一个或多个 Vim 脚本的集合，随带着附加文件，如帮助文档，配置文件还有
+其他资源，设计用来为 Vim 增加特定的特性和功能。插件可以提供新命令，增强已有的
+能力，还有集成外部工具或服务进 Vim 环境。
 
 你最初接触到 Vim 脚本是在 vimrc 文件里。当 Vim 启动时它将读取该文件的内容并执
 行其中的命令。你可以在其中设置选项，定义映射，选择插件还有很多别的。你也可以在
@@ -666,10 +677,12 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	toupper()		将一个字符串转换为大写
 	charclass()		字符的类
 	match()			字符串中的模式匹配处
+	matchbufline()		缓冲区里模式的所有匹配
 	matchend()		字符串中的模式匹配结束处
 	matchfuzzy()		模糊匹配字符串列表中的一个字符串
 	matchfuzzypos()		模糊匹配字符串列表中的一个字符串
 	matchstr()		在一个字符串中匹配一个模式
+	matchstrlist()		字符串列表中的模式的所有匹配
 	matchstrpos()		字符串中满足匹配的模式和位置
 	matchlist()		类似 matchstr()，同时返回子匹配
 	stridx()		子串在母串中第一次出现的地方
@@ -681,6 +694,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	strdisplaywidth()	字符串的显示长度，处理制表
 	setcellwidths()		设置字符单元宽度覆盖
 	getcellwidths()		取得字符单元宽度覆盖
+	getcellpixels()		取得字符单元像素尺寸
 	reverse()		反转字符串里的字符顺序
 	substitute()		用一个字符串替换一个匹配的模式
 	submatch()		取得 ":s" 和 substitute() 匹配中指定的某个匹配
@@ -700,7 +714,11 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	execute()		执行 Ex 命令并获取输出
 	win_execute()		类似于 execute()，但用于指定窗口
 	trim()			从字符串中删除字符
+	bindtextdomain()	设置消息查找翻译的基础路径
 	gettext()		查找消息翻译
+	ngettext()		查找单数/复数的消息翻译
+	str2blob()		转换字符串列表为 blob
+	blob2str()		转换 blob 为字符串列表
 
 列表处理:						*list-functions*
 	get()			得到项目，错误索引不报错
@@ -716,6 +734,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	filter()		删除列表的选定项目
 	map()			改变每个列表项目
 	mapnew()		为改变项目创建新列表
+	foreach()		在列表的项目上应用函数
 	reduce()		缩减列表为单一值
 	slice()			获取列表的切片
 	sort()			给列表排序
@@ -746,6 +765,7 @@ Vim 提供的函数很多。这里我们以它们的用途分类列出。你可�
 	filter()		删除字典的选定项目
 	map()			改变每个字典项目
 	mapnew()		为改变项目创建新字典
+	foreach()		在字典的项目上应用函数
 	keys()			得到字典的键列表
 	values()		得到字典的值列表
 	items()			得到字典的键-值组对的列表
@@ -844,6 +864,8 @@ Blob 操作:						*blob-functions*
 
 操作当前缓冲区的文本:					*text-functions*
 	getline()		从缓冲区中取一行
+	getregion()		从缓冲区里得到区域文本
+	getregionpos()		从区域里得到位置列表
 	setline()		替换缓冲区中的一行
 	append()		附加行或行的列表到缓冲区
 	indent()		某行的缩进
@@ -906,6 +928,7 @@ Blob 操作:						*blob-functions*
 	readdir()		从目录得到文件名的列表
 	readdirex()		从目录得到文件信息的列表
 	writefile()		把一个行列表或 blob 写到文件里
+	filecopy()		把 {from} 文件复制到 {to}
 
 日期和时间:				*date-functions* *time-functions*
 	getftime()		得到文件的最近修改时间
@@ -963,8 +986,10 @@ Blob 操作:						*blob-functions*
 	swapname()		取得缓冲区的交换文件路径
 
 命令行:						*command-line-functions*
+	getcmdcomplpat()	得到当前命令行补全模式
 	getcmdcompltype()	得到当前命令行补全类型
-	getcmdline()		得到当前命令行
+	getcmdline()		得到当前命令行输入
+	getcmdprompt()		得到当前命令行提示符
 	getcmdpos()		得到命令行里的光标位置
 	getcmdscreenpos()	得到命令行光标的屏幕位置
 	setcmdline()		设置当前命令行
@@ -1008,7 +1033,7 @@ Blob 操作:						*blob-functions*
 	synIDattr()		取得某语法标示的特定属性
 	synIDtrans()		取得翻译后的语法标示
 	synstack()		取得指定位置的语法标示的列表
-	synconcealed()		取得和隐藏 (conceal) 相关的信息
+	synconcealed()		取得和 (语法) 隐藏 (conceal) 相关的信息
 	diff_hlID()		得到比较模式某个位置的高亮标示
 	matchadd()		定义要高亮的模式 (一个 "匹配")
 	matchaddpos()		定义要高亮的位置列表
@@ -1150,6 +1175,8 @@ Vim 服务器:					*server-functions*
 	json_decode()		把 JSON 字符串解码为 Vim 类型
 	js_encode()		把表达式编码为 JSON 字符串
 	js_decode()		把 JSON 字符串解码为 Vim 类型
+	base64_encode()		编码 blob 为 base64 字符串
+	base64_decode()		从 base64 字符串里解码 blob
 	err_teapot()		报错 418 或 503
 
 作业:						*job-functions*
@@ -1209,6 +1236,7 @@ Vim 服务器:					*server-functions*
 	popup_move()		改变弹出的位置和大小
 	popup_setoptions()	覆盖弹出的选项
 	popup_settext()		替换弹出缓冲区的内容
+	popup_setbuf()		设置弹出缓冲区
 	popup_close()		关闭一个弹出
 	popup_clear()		关闭所有弹出
 	popup_filter_menu()	从一列项目中选择
@@ -1277,8 +1305,12 @@ Tags:						*tag-functions*
 	changenr()		返回最近的改变号
 	cscope_connection()	检查有无与 cscope 的连接
 	did_filetype()		检查某文件类型自动命令是否已经使用
+	diff()			比较两个字符串列表
 	eventhandler()		检查是否在一个事件处理程序内
+	getcellpixels()		得到单元像素尺寸的列表
 	getpid()		得到 Vim 的进程号
+	getscriptinfo()		得到执行过的 Vim 脚本列表
+	getstacktrace()		得到 Vim 脚本的当前栈追踪
 	getimstatus()		检查 IME 状态是否激活
 	interrupt()		中断脚本执行
 	windowsversion()	得到 MS-Windows 版本
@@ -1293,6 +1325,8 @@ Tags:						*tag-functions*
 	shiftwidth()		'shiftwidth' 的有效值
 
 	wordcount()		获取缓冲区的字节/单词/字符计数
+
+	id()			获取项目用于键的唯一字符串
 
 	luaeval()		计算 |Lua| 表达式
 	mzeval()		计算 |MzScheme| 表达式
