@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
+*vim9.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年4月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -886,6 +886,7 @@ JavaScript，唯一的例外是空列表和字典也被视为准假值:
 	string		非空
 	blob		非空
 	list		非空 (和 JavaScript 不同)
+	tuple		非空 (和 JavaScript 不同)
 	dictionary	非空 (和 JavaScript 不同)
 	func		有函数名时
 	special		true 或 v:true
@@ -930,6 +931,7 @@ Vim9 脚本可以使用如下预定义值: >
 	null_function
 	null_job
 	null_list
+	null_tuple
 	null_object
 	null_partial
 	null_string
@@ -1206,7 +1208,7 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 有些情况下，特别是从老式上下文里调用 Vim9 闭包时，计算会失败。 *E1248*
 
 注意 在脚本级别，循环变量在循环之后会变非法，这包括在其后会调用的闭包中的引
-用，如用计时器的时候。以下会出错  |E1302|: >
+用，如用计时器的时候。以下会出错 |E1302|: >
 	for n in range(4)
 	    timer_start(500 * n, (_) => {
 	          echowin n
@@ -1311,20 +1313,44 @@ map 参数是字符串表达式，它在函数作用域之外进行计算。可�
 	dict<{type}>
 	job
 	channel
+	tuple<{type}>
+	tuple<{type}, {type}, ...>
+	tuple<...list<{type}>>
+	tuple<{type}, ...list<{type}>>
 	func
 	func: {type}
 	func({type}, ...)
 	func({type}, ...): {type}
 	void
 
-尚未支持:
-	tuple<a: {type}, b: {type}, ...>
-
 以下类型可用于声明，但不会有简单值真有 "void" 类型。试图使用 void (如没有返回
 值的函数) 会报错。 *E1031*  *E1186* 。
 
 没有 array 类型，用 list<{type}> 代替。list 常量使用了有效实现，以避免许多小片
 内存的分配。
+							*tuple-type*
+元组类型可用更具体或更一般的不同方式声明:
+tuple<number>			带单个类型 |Number| 的项目的元组
+tuple<number, string>		带两个类型 |Number| 和 |String| 的项目的元组
+tuple<number, float, bool>	带三个类型 |Number|、|Float| 和 |Boolean| 的项
+				目的元组。
+tuple<...list<number>>		带可变参数零或多个类型 |Number| 的项目的元组
+tuple<number, ...list<string>>	带一个类型 |Number| 的项目，后跟零或多个类型
+				|String| 的项目的元组。
+
+示例: >
+    var myTuple: tuple<number> = (20,)
+    var myTuple: tuple<number, string> = (30, 'vim')
+    var myTuple: tuple<number, float, bool> = (40, 1.1, true)
+    var myTuple: tuple<...list<string>> = ('a', 'b', 'c')
+    var myTuple: tuple<number, ...list<string>> = (3, 'a', 'b', 'c')
+<
+						*variadic-tuple* *E1539*
+可变参数元组有零或多个相同类型的项目。可变参数元组必须以列表类型结尾。例如: >
+    var myTuple: tuple<...list<number>> = (1, 2, 3)
+    var myTuple: tuple<...list<string>> = ('a', 'b', 'c')
+    var myTuple: tuple<...list<bool>> = ()
+<
 				    *vim9-func-declaration* *E1005* *E1007*
 可以用具体程度不同的方式来声明偏函数和函数:
 func				任何类型的函数引用，不检查参数和返回值类型
@@ -1519,14 +1545,15 @@ Vim9 脚本中这里会更严格。只要使用的值匹配期待的类型，绝
 			 *E1211* *E1217* *E1218* *E1219* *E1220* *E1221*
 			 *E1222* *E1223* *E1224* *E1225* *E1226* *E1227*
 			 *E1228* *E1238* *E1250* *E1251* *E1252* *E1256*
-			 *E1297* *E1298* *E1301*
+			 *E1297* *E1298* *E1301* *E1528* *E1529* *E1530*
+			 *E1531* *E1534*
 大多数内建函数检查类型，以便查找错误。
 
 变量种类、缺省和 null 处理 ~
 				*variable-categories* *null-variables*
 变量有以下几个种类:
 	原始类型	number、float、boolean
-	容器类型	string、blob、list、dict
+	容器类型	string、blob、list、tuple、dict
 	特殊类型	function、job、channel、user-defined-object
 
 声明没有初始块的变量时，必须显式提供类型。每个种类有不同的缺省初始块语法。这里
@@ -1644,6 +1671,7 @@ null_string: >vim
 	var s: string		s == null
 	var b: blob		b != null   ***
 	var l: list<any>	l != null   ***
+	var t: tuple<any>	  != null   ***
 	var d: dict<any>	d != null   ***
 	var f: func		f == null
 	var j: job		j == null
@@ -1654,6 +1682,7 @@ null_string: >vim
 	var s2: string = ""	  == null_string	!= null
 	var b2: blob = 0z	  == null_blob		!= null
 	var l2: list<any> = []	  == null_list		!= null
+	var t2: tuple<any> = ()	  == null_tuple		!= null
 	var d2: dict<any> = {}	  == null_dict		!= null
 
 注意: 特殊类型的变量，如作业，缺省为 null 值，没有对应的空值。

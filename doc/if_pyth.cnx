@@ -1,4 +1,4 @@
-*if_pyth.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年3月
+*if_pyth.txt*   适用于 Vim 9.1 版本。	最近更新: 2025年4月
 
 
 		  VIM 参考手册    by Paul Moore
@@ -170,8 +170,9 @@ vim.eval(str)						*python-eval*
 	返回表达式的结果:
 	-如果 Vim 表达式计算结果是字符串或者数值，那么返回一个字符串。
 	-如果 Vim 表达式计算结果是 Vim 列表，那么返回一个列表
+	-如果 Vim 表达式计算结果是 Vim 元组，那么返回一个元组
 	-如果 Vim 表达式计算结果是 Vim 字典，那么返回一个字典
-	字典和列表被递归扩展。
+	字典、列表和元组被递归扩展。
 	例: >
 	    :" 'textwidth' 选项值
 	    :py text_width = vim.eval("&tw")
@@ -181,6 +182,8 @@ vim.eval(str)						*python-eval*
 	    :
 	    :" 结果是个字符串！使用 string.atoi() 把它转换成数值。
 	    :py str = vim.eval("12+12")
+	    :
+	    :py tuple = vim.eval('(1, 2, 3)')
 	    :
 	    :py tagList = vim.eval('taglist("eval_expr")')
 <	后一个将返回一个 python 类型的字典列表，例如:
@@ -193,8 +196,8 @@ vim.eval(str)						*python-eval*
 
 vim.bindeval(str)					*python-bindeval*
 	类似于 |python-eval|，但返回 |python-bindeval-objects| 中描述的特殊对
-	象。这些 python 对象可用于修改 (|List| 或 |Dictionary|) 或调用
-	(|Funcref|) vim 对象。
+	象。这些 python 对象可用于修改 (|List|、|Tuple| 或 |Dictionary|) 或调
+	用 (|Funcref|) vim 对象。
 
 vim.strwidth(str)					*python-strwidth*
 	类似于 |strwidth()|: 返回 str 占据的显示单元数，制表符算作一个单元。
@@ -616,6 +619,22 @@ vim.List 对象					*python-List*
         for i in l:			# 遍历
         print isinstance(l, vim.List)	# True
         class List(vim.List):		# 子类
+
+vim.Tuple 对象					*python-Tuple*
+    类序列对象，用于访问 vim |Tuple| 类型。
+    支持 `.locked` 属性，见 |python-.locked|。还支持以下方法:
+        方法            描述 ~
+        __new__(), __new__(iterable)
+                        用 `vim.Tuple()` 可以建立新的 vim 元组。
+			无参数的版本方法构建空列表 (译者注: 原文如此，应为空元
+			组)。
+    示例: >
+        t = vim.Tuple("abc")		# 构造函数，返回, result: ('a', 'b', 'c')
+        print t[1:]			# 分片
+        print t[0]			# 读取项目
+        for i in t:			# 遍历
+        print isinstance(t, vim.Tuple)	# True
+        class Tuple(vim.Tuple):		# 子类
 
 vim.Function 对象				*python-Function*
     类函数对象，相当于 vim |Funcref| 对象。接受特殊关键字参数 `self`，见

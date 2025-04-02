@@ -1,4 +1,4 @@
-*syntax.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
+*syntax.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年4月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -1149,6 +1149,19 @@ CWEB						*cweb.vim* *ft-cweb-syntax*
 来不编辑 Progress，可以在启动的 vimrc 文件里用: >
    :let filetype_w = "cweb"
 
+CSHARP							 *cs.vim* *ft-cs-syntax*
+
+C# 原始字符串常量可用任何数量的引号来包围内容块，而原始内插字符串常量也可用任
+意数量的大括号来包围内插值，如 >
+
+    $$$""""Hello {{{name}}}""""
+<
+缺省，Vim 高亮 3-8 个引号，1-8 个插值大括号。可用以下变量设置引号和大括号的最
+大数量:
+
+    变量					缺省 ~
+    g:cs_raw_string_quote_count			8
+    g:cs_raw_string_interpolation_brace_count	8
 
 DART						*dart.vim* *ft-dart-syntax*
 
@@ -1895,12 +1908,12 @@ Java 平台的显著变动会以 JDK 增强提案 (JDK Enhancement Proposals，J
 逐步推出，可在发布时实现，作为功能预览提供。可能需要若干 JEP 和几个发布周期才
 会使这样的功能被整合到平台里，或者被撤消。要迎合早期尝鲜者，Vim 提供了已实现的
 语法相关的预览功能的可选支持。可以指定预览功能号的列表来请求支持，如下: >
-	:let g:java_syntax_previews = [455, 476]
+	:let g:java_syntax_previews = [488, 494]
 
 下表给出支持的 JEP 号:
 	`430`: 字符串模板 [JDK 21]
-	`455`: 模式、instanceof 和 switch 里的原始类型
-	`476`: 模块导入声明
+	`488`: 模式、instanceof 和 switch 里的原始类型
+	`494`: 模块导入声明
 
 注意 一旦特定的预览功能被整合进 Java 平台，项目会从此表中删除，相关功能不再可
 选。
@@ -3068,24 +3081,24 @@ Vim 试图根据文件名决定使用的外壳类型，例如: >
 关于模式的完整列表，见 $VIMRUNTIME/filetype.vim。如果这些都不符，那么就检查文
 件的第一行 (比如寻找 /bin/sh  /bin/ksh /bin/bash)。如果第一行指定了外壳类型，
 那么就使用该类型。不过有的文件 (比如 .profile) 肯定是外壳文件，但其类型并不容
-易推出。另外，有的系统里 sh 被符号链接到 "bash" (linux、Windows+cygwin) 或
-"ksh" (posix)。
+易推出。另外，有的系统里 sh 被符号链接到 "bash" (Linux、Windows+cygwin) 或
+"ksh" (POSIX)。
 
 你可以在 <.vimrc> 里设置下列变量中的一个，以指定全局的缺省值:
 
-    ksh: >
+   ksh: >
 	let g:is_kornshell = 1
-<   posix: (和设置 g:is_kornshell 为 1 效果几乎相同) >
+<   posix: (缺省) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
-<   sh: (缺省) Bourne shell >
+<   dash: >
+	let g:is_dash	   = 1
+<   sh: Bourne shell >
 	let g:is_sh	   = 1
 
-<   (dash 用户应使用 posix)
-
 如果没有 "#! ..." 一行，而用户也没有用上述方法设定缺省的 sh.vim 语法设置，那么
-syntax/sh.vim 假定使用 Bourne shell 语法。请不要在错误报告里引用 RFC 或者市场
+syntax/sh.vim 假定使用 POSIX shell 语法。请不要在错误报告里引用 RFC 或者市场
 占有率的统计数据 (译者注: 此处大概指希望使用其它缺省值的用户) -- 自己选择系统
 使用的缺省 sh 版本并在 <.vimrc> 文件里安装相应的 "let..." 就可以了。
 
@@ -3521,7 +3534,29 @@ syntax/vim.vim 给出的错误高亮未必都正确；Vim 脚本是一个要正�
 言。如果不想出现错误高亮，在你的 |vimrc| 里放上: >
 
 	let g:vimsyn_noerror = 1
+<
+要抵制特定的错误，定义以下变量: >
 
+   g:vimsyn_nobehaveerror = 1        " :behave 错误
+   g:vimsyn_vimFTError = 1           " :filetype 错误
+   g:vimsyn_noaugrouperror = 1       " :augroup 错误
+   g:vimsyn_noopererror = 1          " operator 错误
+   g:vimsyn_notypealiaserror = 1     " Vim9 type alias 错误
+   g:vimsyn_novimfunctionerror = 1   " Vim9 method 错误
+   g:vimsyn_nousercmderror = 1       " :com 错误
+   g:vimsyn_novimsynerror = 1        " :syn 错误
+   g:vimsyn_novimsyncaseerror = 1    " :syn case 错误
+   g:vimsyn_novimsynconcealerror = 1 " :syn conceal 错误
+   g:vimsyn_novimsynfoldlevelerror = 1 " :syn foldlevel 错误
+   g:vimsyn_novimsynspellerror = 1   " :syn spell 错误
+   g:vimsyn_novimsyncerror = 1       " :syn sync 错误
+   g:vimsyn_novimhictermerror = 1    " :hi 错误
+   g:vimsyn_vimhikeyerror = 1        " :hi key=arg 错误
+<
+要强制 Neovim 特定的 Vim 脚本元素的高亮 (即使不使用 Neovim)，可设置 >
+
+	let g:vimsyn_vim_features = ['nvim']
+<
 
 WDL							*wdl.vim* *wdl-syntax*
 
@@ -4632,7 +4667,7 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 	let v:colornames['khaki'] = '#bdb76b'
 	colorscheme desert
 <
-要进一步定制，如修改  |:highlight-link| 关联，用新名，如
+要进一步定制，如修改 |:highlight-link| 关联，用新名，如
 "~/.vim/colors/mine.vim"，并用 `:runtime` 载入原来的色彩方案: >
 	runtime colors/evening.vim
 	hi Statement ctermfg=Blue guifg=Blue
@@ -5011,6 +5046,9 @@ DiffChange	比较模式: 改变的行。|diff.txt|
 DiffDelete	比较模式: 删除的行。|diff.txt|
 							*hl-DiffText*
 DiffText	比较模式: 改变行里的改动文本。|diff.txt|
+							*hl-DiffTextAdd*
+DiffTextAdd	比较模式: 改变行里的新增文本。缺省链接到 |hl-DiffText|。
+		|diff.txt|
 							*hl-EndOfBuffer*
 EndOfBuffer	缓冲区的末行之后的填充行 (~)。缺省用 |hl-NonText| 类似的高亮。
 							*hl-ErrorMsg*

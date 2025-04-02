@@ -1,4 +1,4 @@
-*usr_52.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年3月
+*usr_52.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年4月
 
 		     VIM 用户手册 - by Bram Moolenaar
 				译者: Willis
@@ -290,7 +290,7 @@ Vim 会识别有内嵌 "#" 字符的函数名，如果该函数还没有定义�
 	call g:NicePluginTest()
 
 ==============================================================================
-*52.6*	Vim9 examples: comment and highlight-yank plugin
+*52.6*	Vim9 例子: 注释和高亮抽出插件
 
 注 释 包
 
@@ -299,11 +299,8 @@ Vim 带有一个 comment 插件，用 Vim9 脚本编写。 |comment-install|
 
 高 亮 抽 出 插 件
 
-这里是一个高亮抽出区域的例子。使用 Vim 9.1.0446 开始可用的 |getregionpos()| 函
-数。
-
-复制下例到一个新文件，把它放在你的 plugin 目录，下次你启动 Vim 时它就会激活
-了。|add-plugin|: >
+Vim 带有一个 highlight-yank 插件，用 Vim9 脚本编写 |hlyank-install|。这里是一
+个简化实现: >vim
 
 	vim9script
 
@@ -315,11 +312,10 @@ Vim 带有一个 comment 插件，用 Vim9 脚本编写。 |comment-install|
 	    endif
 	    var [beg, end] = [getpos("'["), getpos("']")]
 	    var type = v:event.regtype ?? 'v'
-	    var pos = getregionpos(beg, end, {type: type})
-	    var end_offset = (type == 'V' || v:event.inclusive) ? 1 : 0
+	    var pos = getregionpos(beg, end, {type: type, exclusive: false})
 	    var m = matchaddpos(hlgroup, pos->mapnew((_, v) => {
 	      var col_beg = v[0][2] + v[0][3]
-	      var col_end = v[1][2] + v[1][3] + end_offset
+	      var col_end = v[1][2] + v[1][3] + 1
 	      return [v[0][1], col_beg, col_end - col_beg]
 	    }))
 	    var winid = win_getid()
@@ -329,6 +325,8 @@ Vim 带有一个 comment 插件，用 Vim9 脚本编写。 |comment-install|
 
 	autocmd TextYankPost * HighlightedYank()
 <
+完整的示例可以看看位于 `$VIMRUNTIME/pack/dist/opt/hlyank/` 的包。
+
 ==============================================================================
 
 下一章: |usr_90.txt|  安装 Vim
