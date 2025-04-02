@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="usr_52.txt">usr_52.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年3月
+<b class="vimtag"> <a name="usr_52.txt">usr_52.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年4月
 
                      <code class="vim">VIM 用户手册 - by Bram Moolenaar</code>
                                 <code class="vim">译者</code>: Willis
@@ -320,7 +320,7 @@ Vim 会识别有内嵌 "#" 字符的函数名，如果该函数还没有定义�
 <code class="example">        call g:NicePluginTest()</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
-<h4><b class="vimtag"> <a name="52.6">52.6</a> </b>  Vim9 examples: comment and highlight-yank plugin</h4>
+<h4><b class="vimtag"> <a name="52.6">52.6</a> </b>  Vim9 例子: 注释和高亮抽出插件</h4>
 注 释 包
 
 Vim 带有一个 comment 插件，用 Vim9 脚本编写。  <a href="usr_05.html#comment-install">comment-install</a> 
@@ -328,35 +328,33 @@ Vim 带有一个 comment 插件，用 Vim9 脚本编写。  <a href="usr_05.html
 
 高 亮 抽 出 插 件
 
-这里是一个高亮抽出区域的例子。使用 Vim 9.1.0446 开始可用的  <a href="builtin.html#getregionpos()">getregionpos()</a>  函
-数。
+Vim 带有一个 highlight-yank 插件，用 Vim9 脚本编写  <code class="badlink">hlyank-install</code> 。这里是一
+个简化实现: &gt;vim
 
-复制下例到一个新文件，把它放在你的 plugin 目录，下次你启动 Vim 时它就会激活
-了。 <a href="usr_05.html#add-plugin">add-plugin</a> : 
-<code class="example"></code>
-<code class="example">        vim9script</code>
-<code class="example"></code>
-<code class="example">        def HighlightedYank(hlgroup = 'IncSearch', duration = 300, in_visual = true)</code>
-<code class="example">          if v:event.operator ==? 'y'</code>
-<code class="example">            if !in_visual &amp;&amp; visualmode() != null_string</code>
-<code class="example">              visualmode(1)</code>
-<code class="example">              return</code>
-<code class="example">            endif</code>
-<code class="example">            var [beg, end] = [getpos("'["), getpos("']")]</code>
-<code class="example">            var type = v:event.regtype ?? 'v'</code>
-<code class="example">            var pos = getregionpos(beg, end, {type: type})</code>
-<code class="example">            var end_offset = (type == 'V' || v:event.inclusive) ? 1 : 0</code>
-<code class="example">            var m = matchaddpos(hlgroup, pos-&gt;mapnew((_, v) =&gt; {</code>
-<code class="example">              var col_beg = v[0][2] + v[0][3]</code>
-<code class="example">              var col_end = v[1][2] + v[1][3] + end_offset</code>
-<code class="example">              return [v[0][1], col_beg, col_end - col_beg]</code>
-<code class="example">            }))</code>
-<code class="example">            var winid = win_getid()</code>
-<code class="example">            timer_start(duration, (_) =&gt; m-&gt;matchdelete(winid))</code>
-<code class="example">          endif</code>
-<code class="example">        enddef</code>
-<code class="example"></code>
-<code class="example">        autocmd TextYankPost * HighlightedYank()</code>
+        vim9script
+
+        def HighlightedYank(hlgroup = 'IncSearch', duration = 300, in_visual = true)
+          if v:event.operator ==? 'y'
+            if !in_visual &amp;&amp; visualmode() != null_string
+              visualmode(1)
+              return
+            endif
+            var [beg, end] = [getpos("'["), getpos("']")]
+            var type = v:event.regtype ?? 'v'
+            var pos = getregionpos(beg, end, {type: type, exclusive: false})
+            var m = matchaddpos(hlgroup, pos-&gt;mapnew((_, v) =&gt; {
+              var col_beg = v[0][2] + v[0][3]
+              var col_end = v[1][2] + v[1][3] + 1
+              return [v[0][1], col_beg, col_end - col_beg]
+            }))
+            var winid = win_getid()
+            timer_start(duration, (_) =&gt; m-&gt;matchdelete(winid))
+          endif
+        enddef
+
+        autocmd TextYankPost * HighlightedYank()
+&lt;
+完整的示例可以看看位于  <code class="badlink">$VIMRUNTIME/pack/dist/opt/hlyank/</code>  的包。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>下一章:  <a href="usr_90.html#usr_90.txt">usr_90.txt</a>   安装 Vim
