@@ -123,11 +123,13 @@ charidx({string}, {idx} [, {countcc} [, {utf16}]])
 chdir({dir})			数值	改变当前目录
 cindent({lnum})			数值	第 {lnum} 行的 C 缩进
 clearmatches([{win}])		无	清除所有的匹配
+cmdcomplete_info()		字典	获得当前命令行补全信息
 col({expr} [, {winid}])		数值	光标或位置标记的列字节索引
 complete({startcol}, {matches}) 无	设置插入模式补全
 complete_add({expr})		数值	增加补全匹配
 complete_check()		数值	补全时检查输入的键
 complete_info([{what}])		字典	获得当前补全信息
+complete_match([{lnum}, {col}])	列表	获得补全列和触发文本
 confirm({msg} [, {choices} [, {default} [, {type}]]])
 				数值	用户选择的序号
 copy({expr})			可变	提供 {expr} 的浅备份
@@ -1703,6 +1705,23 @@ clearmatches([{win}])					*clearmatches()*
 		返回类型: |Number|
 
 
+cmdcomplete_info()					*cmdcomplete_info()*
+		返回 |Dictionary|，即命令行补全信息。见 |cmdline-completion|。
+		项目是:
+		   cmdline_orig	补全开始前原始的命令行字符串。
+		   pum_visible	如果弹出菜单可见则为 |TRUE|。
+				见 |pumvisible()|。
+		   matches	所有补全候选的列表。每个项目是字符串。
+		   selected	选中项目的索引。首个索引值为零。如果没项目选
+				中，索引值为 -1 (只显示输入的文本，而按了 <Up>
+				或 <Down> 键时如果没有选中项目则是最近的补全)
+
+		如果没有尝试补全、只有一个候选且已完整提供、或者出错的时候，返
+		回空 |Dictionary|。
+
+		返回类型: dict<any>
+
+
 col({expr} [, {winid}])					*col()*
 		返回数值，即 {expr} 给定的列位置的字节索引。
 		可接受的位置参见 |getpos()|。
@@ -1850,6 +1869,46 @@ complete_info([{what}])				*complete_info()*
 			GetItems()->complete_info()
 <
 		返回类型: dict<any>
+
+complete_match([{lnum}, {col}])			*complete_match()*
+		从给定位置开始反向查找，返回根据 'isexpand' 选项找到的匹配列
+		表。没有提供参数时，使用当前光标位置。
+
+		每个匹配用 [startcol, trigger_text] 列表表示，其中:
+		- startcol: 补全应开始的列号，如果没有触发器位置则为 -1。对多
+		  字符触发器，返回首个字符的列号。
+		- trigger_text: 匹配 'isexpand' 的触发器字符串，如果没找到匹配
+		  或使用了缺省 'iskeyword' 模式时则为空串。
+
+		'isexpand' 如为空，使用 'iskeyword' 模式 "\k\+$" 以查找当前关
+		键字的开始位置。
+
+		示例: >
+	set isexpand=.,->,/,/*,abc
+	func CustomComplete()
+	  let res = complete_match()
+	  if res->len() == 0 | return | endif
+	  let [col, trigger] = res[0]
+	  let items = []
+	  if trigger == '/*'
+	    let items = ['/** */']
+	  elseif trigger == '/'
+	    let items = ['/*! */', '// TODO:', '// fixme:']
+	  elseif trigger == '.'
+	    let items = ['length()']
+	  elseif trigger =~ '^\->'
+	    let items = ['map()', 'reduce()']
+	  elseif trigger =~ '^\abc'
+	    let items = ['def', 'ghk']
+	  endif
+	  if items->len() > 0
+	    let startcol = trigger =~ '^/' ? col : col + len(trigger)
+	    call complete(startcol, items)
+	  endif
+	endfunc
+	inoremap <Tab> <Cmd>call CustomComplete()<CR>
+<
+		返回类型: list<list<any>>
 
 						*confirm()*
 confirm({msg} [, {choices} [, {default} [, {type}]]])
@@ -2912,7 +2971,7 @@ finddir({name} [, {path} [, {count}]])				*finddir()*
 		也可用作 |method|: >
 			GetName()->finddir()
 <
-		返回类型: |String|
+		返回类型: {count} 为负时是 list<string>，否则是 |String|
 
 
 findfile({name} [, {path} [, {count}]])				*findfile()*
@@ -2926,7 +2985,7 @@ findfile({name} [, {path} [, {count}]])				*findfile()*
 		也可用作 |method|: >
 			GetName()->findfile()
 <
-		返回类型: |String|
+		返回类型: {count} 为负时是 list<string>，否则是 |String|
 
 
 flatten({list} [, {maxdepth}])					*flatten()*
@@ -3800,6 +3859,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		file		文件和目录名
 		file_in_path	|'path'| 中的文件和目录名
 		filetype	文件类型名 |'filetype'|
+		filetypecmd	|:filetype| 子选项
 		function	函数名
 		help		帮助主题
 		highlight	高亮组
@@ -7175,8 +7235,8 @@ printf({fmt}, {expr1} ...)				*printf()*
 		    echo printf("%1$*2$.*3$f", 1.4142135, 6, 2)
 <		      1.41
 
-		因为字段宽度或精度导致字符串超过 6400 个字符时。会出现溢出错误
-		|E1510|。
+		因为字段宽度或精度导致字符串超过 1 MiB (1024*1024 = 1048576)
+		个字符时。会出现溢出错误 |E1510|。
 
 							*E1500*
 		不能混合位置和非位置参数: >

@@ -177,7 +177,7 @@ termcap 值。设置后，可以用于映射。如果 "xx" 包含特殊字符，
    :set makeprg=make,file	    结果是 "make,file"
    :set makeprg=make\\,file	    结果是 "make\,file"
    :set tags=tags,file		    结果是 "tags" 和 "file"
-   :set tags=tags\\,file	    结果是 "tags,file"
+   :set tags=tags\\,file	    结果是 "tags\,file"
    :let &tags='tags\,file'	    (同上)
 
 "|" 字符把 ":set" 命令和下一个命令隔开。要在选项值里包含 "|"，用 "\|" 代替。
@@ -1413,6 +1413,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
+						*'chistory'* *'chi'*
+'chistory' 'chi'	数值型	(缺省为 10)
+			全局
+			{仅当编译时加入 |+quickfix| 特性才有效}
+	快速修复堆栈要记住的快速修复列表的数目。必须在 1 和 100 之间。如果设置
+	选项比快速修复列表堆栈的项目数更小，删除最老的那些项目。如果当前快速修
+	复列表被删除，用堆栈顶部的 (即最近创建的) 快速修复列表来替代之。更多信
+	息可见 |quickfix-stack|。
+
 				   *'cindent'* *'cin'* *'nocindent'* *'nocin'*
 'cindent' 'cin'		布尔型	(缺省关闭)
 			局部于缓冲区
@@ -1717,6 +1726,19 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	d	扫描当前文件和包含的头文件里的定义名或宏 |i_CTRL-X_CTRL-D|
 	]	标签补全
 	t	同 "]"
+	f{func}	调用函数 {func}。可指定多个 "f" 标志位。函数调用的方式和返回值
+		详见 |complete-functions|。该值可以是函数名或 |Funcref|。对
+		|Funcref| 而言，其值里的空格必须以一个反斜杠 ('\') 转义，而逗
+		号使用两个反斜杠 ('\\') 转义 (见 |option-backslash|)。
+		{func} 返回的字典里如果包含了 {"refresh": "always"}，引导文本
+		改变时，函数会被再次调用。
+		总在关键字边界上插入补全的匹配，不管 a:findstart 为 1 时
+		{func} 返回的列数为何。这和其他补全源的行为兼容。
+		{func} 里要进一步修改插入的文本，可用 |CompleteDonePre|。
+		如果匹配生成可能会很慢，应该用 |complete_check()| 来避免阻塞，
+		以确保编辑器的响应速度。
+	f	等价于 "f{func}"，其中函数取自 'completefunc' 选项。
+	o	等价于 "f{func}"，其中函数取自 'omnifunc' 选项。
 
 	卸载的缓冲区不会载入，因而它们的自动命令 |:autocmd| 也不会执行，这使得
 	有些文件的补全效果出人意表 (比如 gzipped 压缩的文件)。整行补全也不会扫
@@ -1733,6 +1755,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如你所知，CTRL-N 和 CTRL-P 可用于完成任何基于 'iskeyword' 的扩展 (比如
 	字典 |i_CTRL-X_CTRL-K|、头文件里的模式 |i_CTRL-X_CTRL-I|、标签
 	|i_CTRL-X_CTRL-]| 和普通的扩展)。
+
+	在补全源标志位后附加插入符 ("^") 后跟 {count} 可以为该补全源指定可选的
+	匹配限制。例如: ".^9,w,u,t^5" 限制来自当前缓冲区的匹配数目为 9，而来自
+	标签的限制为 5。其他源保持无限制。
+	注意: 匹配限制只对正向补全 (CTRL-N) 有效，反向补全 (CTRL-P) 不适用。
 
 						*'completefunc'* *'cfu'*
 'completefunc' 'cfu'	字符串	(缺省: 空)
@@ -1791,6 +1818,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	   menuone  即使只有一个匹配，也使用弹出菜单。可用于匹配有附加信息的情
 		    况，例如，它来自的文件。
+
+	   nearest  匹配列出的顺序取决于和光标位置的距离，和缺省只考虑光标之后
+		    的匹配的距离的行为不同。只适用于当前缓冲区的匹配。"fuzzy"
+		    打开时没有效果。
 
 	   noinsert 不插入任何匹配的文本，直到用户从菜单里选择一个匹配为止。只
 		    能用于和 "menu" 和 "menuone" 的组合。如果 "longest" 存在，
@@ -2446,8 +2477,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					值时的缺省。
 				char    使用内部 diff，进行逐字符的比较，高亮
 					差异文。
-				word    使用内部 diff，进行逐 |word| 的比较，高亮
-					差异文。
+				word    使用内部 diff，进行逐 |word| 的比较，
+					高亮差异文。非字母数字的多字节字符，如
+					表情符号、CJK 字符等，视作单独的单词。
 
 		internal	使用内部比较库。设置 'diffexpr' 时忽略此项
 				目。 *E960*
@@ -2921,7 +2953,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	字符串	(缺省为 "vert:|,fold:-,eob:~,lastline:@")
 			全局或局部于窗口 |global-local|
-	填充状态行、垂直分割线和窗口特殊行的字符。
+	填充状态行、垂直分割线、窗口特殊行和 |ins-completion-menu| 里的截断文
+	本的字符。
 	它是逗号分隔的项目列表。每个项目由名字，冒号和值组成: |E1511|
 
 	  项目名	缺省		用于 ~
@@ -2935,6 +2968,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  diff		'-'		'diff' 选项里的被删除行
 	  eob		'~'		缓冲区结束之后的空行
 	  lastline	'@'		'display' 包含的 lastline/truncate
+	  trunc		'>'		|ins-completion-menu| 里的截断文本。
+	  truncrl	'<'		同 "trunc"，用于 'rightleft' 模式
 
 	任何不提供的项目使用其缺省值。
 
@@ -2950,9 +2985,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  stlnc		StatusLineNC		|hl-StatusLineNC|
 	  vert		VertSplit		|hl-VertSplit|
 	  fold		Folded			|hl-Folded|
+	  foldopen	FoldColumn		|hl-FoldColumn|
+	  foldclose	FoldColumn		|hl-FoldColumn|
+	  foldsep	FoldColumn		|hl-FoldColumn|
 	  diff		DiffDelete		|hl-DiffDelete|
 	  eob		EndOfBuffer		|hl-EndOfBuffer|
 	  lastline	NonText			|hl-NonText|
+	  trunc		众多的弹出菜单高亮组之一，如 |hl-PmenuSel|
+	  truncrl	同 "trunc"
 
 						*'findfunc'* *'ffu'* *E1514*
 'findfunc' 'ffu'	字符串	(缺省为空)
@@ -3654,7 +3694,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-DiffChange|	 C  比较模式改变的行
 	|hl-DiffDelete|	 D  比较模式删除的行
 	|hl-DiffText|	 T  比较模式改变的文本
-	|hl-DiffTextAdd|   E  比较模式插入的文本 
+	|hl-DiffTextAdd|   E  比较模式插入的文本
 	|hl-SignColumn|	 >  |signs| 所用的列
 	|hl-Conceal|	 -  用于隐藏字符的填充字符 (见 'conceallevel')
 	|hl-SpellBad|	 B  拼写错误的单词 |spell|
@@ -3928,7 +3968,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 <
 	如果 |gf| 命令找不到未经修改的文件名，也用此选项。这样，可以在
 	'include' 语句之后的名字上执行 "gf"。
-	也用于 |<cfile>|。
+	注意: 不用于 |<cfile>|。
 
 	以 s: 或 |<SID>| 开始的表达式，用脚本 ID (|local-function|) 替代之。例
 	如: >
@@ -4044,6 +4084,21 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	是大写字母，补全部分被换成小写。如果输入文本没有小写字母，而且某个字母
 	之后有大写字母而在那里匹配串是小写字母，补全部分被换成大写。
 	如用 'noinfercase'，照原样给出匹配。
+
+						*'isexpand'* *'ise'*
+'isexpand' 'ise'	字符串	(缺省为 "")
+			局部于缓冲区
+	定义字符和模式用于插入模式补全。|complete_match()| 函数用本选项来确定
+	补全的开始位置。这是逗号分隔的触发器列表。每个触发器是:
+	- 单个字符，如 "." 或 "/"
+	- 一串字符，如 "->"、"/*" 或 "/**"
+
+	注意: 如果要把按本义出现的逗号作为触发器字符，可用 "\\,"，见
+	|option-backslash|。
+
+	示例: >
+		set isexpand=.,->,/*,\\,
+<
 
 			*'insertmode'* *'im'* *'noinsertmode'* *'noim'*
 'insertmode' 'im'	布尔型	(缺省关闭)
@@ -4362,6 +4417,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	外，窗口标题的刷新也被推迟。要强迫刷新，使用 |:redraw|。
 	显示偶尔可能会出错。本选项只是用于执行重画会闪烁或速度变慢的操作的临时
 	场合。
+
+						*'lhistory'* *'lhi'*
+'lhistory' 'lhi'	数值型	(缺省为 10)
+			局部于窗口
+			{仅当编译时加入 |+quickfix| 特性才有效}
+	类似于 'chistory'，但用于和窗口关联的位置列表堆栈。不管是在位置列表窗
+	口自身或是在位置列表堆栈关联的窗口里改变本选项，新值都会应用在另一个窗
+	口里。这意味着某一个位置列表窗口和其对应的窗口里，本选项值总保持一致。
+	更多信息可见 |quickfix-stack|。
 
 			*'linebreak'* *'lbr'* *'nolinebreak'* *'nolbr'*
 'linebreak' 'lbr'	布尔型	(缺省关闭)
@@ -5325,7 +5389,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'pummaxwidth' 'pmw'	数值型	(缺省为 0)
 			全局
 	决定用于补全的弹出菜单的最大宽度。如果为零，没有最大宽度限制，否则弹出
-	菜单永远不会宽于此值。结束处用 "..." 指示截断文本。优先于 'pumwidth'。
+	菜单永远不会宽于此值。结束处用 'fillchars' 选项里的 "trunc" 值来指示截
+	断文本。
+
+	优先于 'pumwidth'。
 	|ins-completion-menu|.
 
 						*'pumwidth'* *'pw'*
@@ -6886,9 +6953,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'tagfunc' 'tfu'		字符串	(缺省: 空)
 			局部于缓冲区
 			{仅当编译时加入 |+eval| 特性才有效}
-	此选项指定函数，用于执行标签搜索。此函数取得标签模式并应返回匹配标签的
-	列表。见 |tag-function| 说明如何写此函数并给出一例。此值可以是函数名、
-	|lambda| 或 |Funcref|。详见 |option-value-function|。
+	此选项指定函数，用于执行标签搜索 (包括 |taglist()|)。
+	此函数取得标签模式并应返回匹配标签的列表。见 |tag-function| 说明如何写
+	此函数并给出一例。此值可以是函数名、|lambda| 或 |Funcref|。详见
+	|option-value-function|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'taglength'* *'tl'*
@@ -7846,47 +7914,53 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'wildmode'* *'wim'*
 'wildmode' 'wim'	字符串	(Vim 缺省: "full")
 			全局
-	用 'wildchar' 指定的字符所用的补全模式。它是逗号分隔的不超过四部分的列
-	表。每个部分指定每次连续使用的 'wildchar' 要完成的动作。第一部分指定第
-	一次使用时的行为。第二部分指定第二次使用时的，等等。
+	用 'wildchar' 指定的字符所用的补全模式。本选项是逗号分隔的不超过四部分
+	的列表，分别对应第一次、第二次、第三次和第四次按  'wildchar'。每个部分
+	包含冒号分隔的项目列表，每项指定一种补全行为，在对应阶段会同时应用这些
+	补全行为。
 
-	每个部分包含冒号分隔的列表，列表项目可能值如下:
-	""		只用第一个匹配补全。
-	"full"		用下一个完整的匹配补全。在最后一次匹配之后，使用原来的
-			字符串，然后又是第一个匹配。如果 'wildmenu' 打开的话，
-			使用之。
-	"longest"	用最长的公共子串补全。如果结果没有变长，使用下一个部
-			分。
+	行为项目可能值如下:
+	""		只用第一个匹配补全 (插入)。不循环或列出更多的匹配。
+	"full"		用下一个完整的匹配补全。在所有匹配间循环，最后一次匹配
+			之后回到原始的输入。如果 'wildmenu' 打开的话，使用之。
+	"longest"	用最长的公共子串补全。如果输入没有被扩展，使用下一个
+			'wildmode' 部分。
 	"list"		如果有多于一个补全，列出所有的匹配。
-	"lastused"	如果补全缓冲区名并有多于一个缓冲区匹配时，按缓冲区最近
-			使用时间排序 (除当前缓冲区外)。
-	"noselect"	不预选首个菜单项目，如果 'wildmenu' 打开的话，使用之。
-	如果只有一个匹配，除了 "noselect" 以外的所有情况下都完整补全。
+	"lastused"	补全缓冲区名时，按缓冲区最近使用时间排序 (除当前缓冲区
+			外)。只适用于缓冲区名补全。
+	"noselect"	如果 'wildmenu' 打开的话，显示菜单但不预选首个项目。
+	如果只有一个匹配，除非指定 "noselect"，会用该匹配进行完整补全。
 
-	有用的冒号分隔值的示例:
-	"longest:full"	类似于 "longest"，但如果 'wildmenu' 打开的话，使用之。
-			不会补全到下一个完整匹配。
-	"list:full"	如果有多于一个补全，列出所有的匹配并先用第一个补全。
-	"list:longest"	如果有多于一个补全，列出所有的匹配并先用最长的子串补
-			全。
-	"list:lastused" 如果有多于一个缓冲区匹配，列出所有匹配并给缓冲区按最近
-			使用的时间排序 (除当前缓冲区外)。
+	一些有用的冒号分隔值的组合:
+	"longest:full"		从最长的公共子串开始，并显示 'wildmenu' (如果
+				打开)。不在完整匹配里循环。
+	"list:full"		列出所有的匹配并先用第一个补全。
+	"list:longest"		列出所有的匹配并先用最长的子串补全。
+	"list:lastused" 	列出所有匹配。补全缓冲区时，按它们最近使用的时
+				间排序 (除当前缓冲区外)。
+	"noselect:lastused"	如果 'wildmenu' 打开的话，不预选首个项目。补全
+				缓冲区时，按它们最近使用的时间排序 (除当前缓冲
+				区外)。
 
 	例如: >
 		:set wildmode=full
-<	用第一个完整的匹配补全，然后下一个匹配，依此类推 (缺省) >
+<	每次按键用下一个完整的匹配补全 (缺省行为) >
 		:set wildmode=longest,full
-<	用最长的子串补全，然后是每个完整的匹配 >
+<	首次按键: 最长的公共子串补全
+	第二次按键: 在每个完整的匹配间循环 >
 		:set wildmode=list:full
-<	列出所有的匹配并用每个完整的匹配补全 >
+<	首次按键: 列出所有的匹配并用第一个匹配补全 >
 		:set wildmode=list,full
-<	列出所有的匹配而不补全，然后是每个完整的匹配 >
+<	首次按键: 只列出所有的匹配
+	第二次按键: 用完整的匹配补全 >
 		:set wildmode=longest,list
-<	用最长的子串补全，然后列出所有的可能性 >
+<	首次按键: 最长的公共子串补全
+	第二次按键: 列出所有的匹配 >
 		:set wildmode=noselect:full
-<	不补全但显示 'wildmenu'，然后是每个完整的匹配 >
+<	首次按键: 显示 'wildmenu' 但不补全或选择
+	第二次按键: 在每个完整的匹配间循环 >
 		:set wildmode=noselect:lastused,full
-<	同上，但按缓冲区最近使用时间排序。
+<	同上，但缓冲区匹配按最近使用时间排序
 	详情可见: |cmdline-completion|。
 
 						*'wildoptions'* *'wop'*

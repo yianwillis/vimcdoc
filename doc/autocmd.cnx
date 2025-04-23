@@ -368,6 +368,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
 |CmdlineChanged|	命令行文本发生改变后
 |CmdlineEnter|		光标移到命令行后
 |CmdlineLeave|		光标离开命令行前
+|CmdlineLeavePre|	准备离开命令行前
 
 |InsertEnter|		开始插入模式前
 |InsertChange|		在插入或替换模式下输入 <Insert> 时
@@ -516,7 +517,8 @@ BufWriteCmd			把整个缓冲区写回到文件前。应执行把文件写回的
 				不应改动缓冲区的内容。
 				此操作复位 'modified' 时，调整撤销信息，把之前
 				的撤销状态标记为 'modified'，这和 |:write| 的
-				行为一致。
+				行为一致。|'[| 和 |']| 位置标记可用于定位行范
+				围。
 				|Cmd-event|
 							*BufWritePost*
 BufWritePost			把整个缓冲区写回到文件后 (应该撤销 BufWritePre
@@ -550,6 +552,14 @@ CmdlineLeave			离开命令行前。也用于按 CTRL-C 或 <Esc> 之后放
 				此处命令出错时，命令行本身依旧执行。
 				<afile> 设为单个字符，指示命令行的类型。
 				|cmdwin-char|
+							*CmdlineLeavePre*
+CmdlineLeavePre			刚要离开命令行前，在 |CmdlineLeave| 之前。可用
+				于通过 |cmdcomplete_info()| 捕捉补全信息，因为
+				此信息在 |CmdlineLeave| 触发前已清除。这里包括
+				映射中非交互式使用 ":" 的情形，但不包括使用
+				|<Cmd>| 时。按 CTRL-C 或 <Esc> 之后放弃命令行
+				时也会触发。<afile> 设为单个字符，指示命令行的
+				类型。详见 |cmdwin-char|。
 							*CmdwinEnter*
 CmdwinEnter			进入命令行窗口后。可用来对此特殊类型的窗口进行
 				设置。
@@ -744,14 +754,14 @@ FileType			设置 'filetype' 选项时。模式匹配的是文件类型。
 				参见 |filetypes|。
 							*FileWriteCmd*
 FileWriteCmd			写入文件前，但不包括写入整个缓冲区。应执行写入
-				文件的操作。不应改动缓冲区的内容。用 '[ 和 ']
-				位置标记来定位行范围。
+				文件的操作。不应改动缓冲区的内容。|'[| 和 |']|
+				位置标记可用于定位行范围。
 				|Cmd-event|
 							*FileWritePost*
 FileWritePost			写入文件后，但不包括写入整个缓冲区。
 							*FileWritePre*
-FileWritePre			写入文件前，但不包括写入整个缓冲区。用 '[ 和
-				'] 位置标记来定位行范围。
+FileWritePre			写入文件前，但不包括写入整个缓冲区。|'[| 和
+				|']| 位置标记可用于定位行范围。
 							*FilterReadPost*
 FilterReadPost			过滤命令读入文件后。Vim 用当前缓冲区的名字来匹
 				配模式，正如 FilterReadPre 那样。
@@ -1195,7 +1205,11 @@ WinNew				创建新窗口时。不用于 Vim 启动时的首个窗口。在
 
 							*WinScrolled*
 WinScrolled			在当前标签页的任何窗口里滚动文本 (横向或纵向)
-				或改变宽高后。
+				或改变宽高后。见 |win-scrolled-resized|。
+
+				注意: 不能用 `:noautocmd` 跳过此事件，因为它在
+				Vim 处理完普通模式命令后返回到主循环时触发。要
+				屏蔽此事件，考虑设置 'eventignore' 选项。
 
 				模式匹配的是首个滚动或改变大小的窗口
 				|window-ID|。<amatch> 和 <afile> 都设为
