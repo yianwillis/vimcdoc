@@ -157,11 +157,13 @@ charidx(<code class="special">{string}</code>, <code class="special">{idx}</code
 chdir(<code class="special">{dir}</code>)                    数值    改变当前目录
 cindent(<code class="special">{lnum}</code>)                 数值    第 <code class="special">{lnum}</code> 行的 C 缩进
 clearmatches([<code class="special">{win}</code>])           无      清除所有的匹配
+cmdcomplete_info()              字典    获得当前命令行补全信息
 col(<code class="special">{expr}</code> [, <code class="special">{winid}</code>])         数值    光标或位置标记的列字节索引
 complete(<code class="special">{startcol}</code>, <code class="special">{matches}</code>) 无      设置插入模式补全
 complete_add(<code class="special">{expr}</code>)            数值    增加补全匹配
 complete_check()                数值    补全时检查输入的键
 complete_info([<code class="special">{what}</code>])         字典    获得当前补全信息
+complete_match([<code class="special">{lnum}</code>, <code class="special">{col}</code>]) 列表    获得补全列和触发文本
 confirm(<code class="special">{msg}</code> [, <code class="special">{choices}</code> [, <code class="special">{default}</code> [, <code class="special">{type}</code>]]])
                                 数值    用户选择的序号
 copy(<code class="special">{expr}</code>)                    可变    提供 <code class="special">{expr}</code> 的浅备份
@@ -1736,6 +1738,23 @@ clearmatches([<code class="special">{win}</code>])                              
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
+cmdcomplete_info()                                      <b class="vimtag"> <a name="cmdcomplete_info()">cmdcomplete_info()</a> </b>
+                返回  <a href="eval.html#Dictionary">Dictionary</a> ，即命令行补全信息。见  <a href="cmdline.html#cmdline-completion">cmdline-completion</a> 。
+                项目是:
+                   cmdline_orig 补全开始前原始的命令行字符串。
+                   pum_visible  如果弹出菜单可见则为  <a href="eval.html#TRUE">TRUE</a> 。
+                                见  <a href="builtin.html#pumvisible()">pumvisible()</a> 。
+                   matches      所有补全候选的列表。每个项目是字符串。
+                   selected     选中项目的索引。首个索引值为零。如果没项目选
+                                中，索引值为 -1 (只显示输入的文本，而按了 <code class="special">&lt;Up&gt;</code>
+                                或 <code class="special">&lt;Down&gt;</code> 键时如果没有选中项目则是最近的补全)
+
+                如果没有尝试补全、只有一个候选且已完整提供、或者出错的时候，返
+                回空  <a href="eval.html#Dictionary">Dictionary</a> 。
+
+                返回类型: dict<code class="special">&lt;any&gt;</code>
+
+
 col(<code class="special">{expr}</code> [, <code class="special">{winid}</code>])                                 <b class="vimtag"> <a name="col()">col()</a> </b>
                 返回数值，即 <code class="special">{expr}</code> 给定的列位置的字节索引。
                 可接受的位置参见  <a href="builtin.html#getpos()">getpos()</a> 。
@@ -1883,6 +1902,46 @@ complete_info([<code class="special">{what}</code>])                         <b 
 <code class="example">                        GetItems()-&gt;complete_info()</code>
 
                 返回类型: dict<code class="special">&lt;any&gt;</code>
+
+complete_match([<code class="special">{lnum}</code>, <code class="special">{col}</code>])                 <b class="vimtag"> <a name="complete_match()">complete_match()</a> </b>
+                从给定位置开始反向查找，返回根据 <a href="options.html#'isexpand'">'isexpand'</a> 选项找到的匹配列
+                表。没有提供参数时，使用当前光标位置。
+
+                每个匹配用 [startcol, trigger_text] 列表表示，其中:
+                - startcol: 补全应开始的列号，如果没有触发器位置则为 -1。对多
+                  字符触发器，返回首个字符的列号。
+                - trigger_text: 匹配 <a href="options.html#'isexpand'">'isexpand'</a> 的触发器字符串，如果没找到匹配
+                  或使用了缺省 <a href="options.html#'iskeyword'">'iskeyword'</a> 模式时则为空串。
+
+                <a href="options.html#'isexpand'">'isexpand'</a> 如为空，使用 <a href="options.html#'iskeyword'">'iskeyword'</a> 模式 "\k\+$" 以查找当前关
+                键字的开始位置。
+
+                示例: 
+<code class="example">        set isexpand=.,-&gt;,/,/*,abc</code>
+<code class="example">        func CustomComplete()</code>
+<code class="example">          let res = complete_match()</code>
+<code class="example">          if res-&gt;len() == 0 | return | endif</code>
+<code class="example">          let [col, trigger] = res[0]</code>
+<code class="example">          let items = []</code>
+<code class="example">          if trigger == '/*'</code>
+<code class="example">            let items = ['/** */']</code>
+<code class="example">          elseif trigger == '/'</code>
+<code class="example">            let items = ['/*! */', '// TODO:', '// fixme:']</code>
+<code class="example">          elseif trigger == '.'</code>
+<code class="example">            let items = ['length()']</code>
+<code class="example">          elseif trigger =~ '^\-&gt;'</code>
+<code class="example">            let items = ['map()', 'reduce()']</code>
+<code class="example">          elseif trigger =~ '^\abc'</code>
+<code class="example">            let items = ['def', 'ghk']</code>
+<code class="example">          endif</code>
+<code class="example">          if items-&gt;len() &gt; 0</code>
+<code class="example">            let startcol = trigger =~ '^/' ? col : col + len(trigger)</code>
+<code class="example">            call complete(startcol, items)</code>
+<code class="example">          endif</code>
+<code class="example">        endfunc</code>
+<code class="example">        inoremap &lt;Tab&gt; &lt;Cmd&gt;call CustomComplete()&lt;CR&gt;</code>
+
+                返回类型: list&lt;list<code class="special">&lt;any&gt;</code>&gt;
 
                                                 <b class="vimtag"> <a name="confirm()">confirm()</a> </b>
 confirm(<code class="special">{msg}</code> [, <code class="special">{choices}</code> [, <code class="special">{default}</code> [, <code class="special">{type}</code>]]])
@@ -2945,7 +3004,7 @@ finddir(<code class="special">{name}</code> [, <code class="special">{path}</cod
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetName()-&gt;finddir()</code>
 
-                返回类型:  <a href="eval.html#String">String</a> 
+                返回类型: <code class="special">{count}</code> 为负时是 list<code class="special">&lt;string&gt;</code>，否则是  <a href="eval.html#String">String</a> 
 
 
 findfile(<code class="special">{name}</code> [, <code class="special">{path}</code> [, <code class="special">{count}</code>]])                         <b class="vimtag"> <a name="findfile()">findfile()</a> </b>
@@ -2959,7 +3018,7 @@ findfile(<code class="special">{name}</code> [, <code class="special">{path}</co
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetName()-&gt;findfile()</code>
 
-                返回类型:  <a href="eval.html#String">String</a> 
+                返回类型: <code class="special">{count}</code> 为负时是 list<code class="special">&lt;string&gt;</code>，否则是  <a href="eval.html#String">String</a> 
 
 
 flatten(<code class="special">{list}</code> [, <code class="special">{maxdepth}</code>])                                  <b class="vimtag"> <a name="flatten()">flatten()</a> </b>
@@ -3833,6 +3892,7 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
                 file            文件和目录名
                 file_in_path     <a href="options.html#'path'">'path'</a>  中的文件和目录名
                 filetype        文件类型名  <a href="options.html#'filetype'">'filetype'</a> 
+                filetypecmd      <a href="filetype.html#:filetype">:filetype</a>  子选项
                 function        函数名
                 help            帮助主题
                 highlight       高亮组
@@ -7208,8 +7268,8 @@ printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code> 
 <code class="example">                    echo printf("%1$*2$.*3$f", 1.4142135, 6, 2)</code>
                       1.41
 
-                因为字段宽度或精度导致字符串超过 6400 个字符时。会出现溢出错误
-                 <a href="change.html#E1510">E1510</a> 。
+                因为字段宽度或精度导致字符串超过 1 MiB (1024*1024 = 1048576)
+                个字符时。会出现溢出错误  <a href="change.html#E1510">E1510</a> 。
 
                                                         <b class="vimtag"> <a name="E1500">E1500</a> </b>
                 不能混合位置和非位置参数: 

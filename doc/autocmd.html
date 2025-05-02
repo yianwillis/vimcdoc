@@ -398,6 +398,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
  <a href="autocmd.html#CmdlineChanged">CmdlineChanged</a>         命令行文本发生改变后
  <a href="autocmd.html#CmdlineEnter">CmdlineEnter</a>           光标移到命令行后
  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a>           光标离开命令行前
+ <a href="autocmd.html#CmdlineLeavePre">CmdlineLeavePre</a>        准备离开命令行前
 
  <a href="autocmd.html#InsertEnter">InsertEnter</a>            开始插入模式前
  <a href="autocmd.html#InsertChange">InsertChange</a>           在插入或替换模式下输入 <code class="special">&lt;Insert&gt;</code> 时
@@ -546,7 +547,8 @@ BufWriteCmd                     把整个缓冲区写回到文件前。应执行
                                 不应改动缓冲区的内容。
                                 此操作复位 <a href="options.html#'modified'">'modified'</a> 时，调整撤销信息，把之前
                                 的撤销状态标记为 <a href="options.html#'modified'">'modified'</a>，这和  <a href="editing.html#:write">:write</a>  的
-                                行为一致。
+                                行为一致。 <a href="motion.html#'[">'[</a>  和  <a href="motion.html#']">']</a>  位置标记可用于定位行范
+                                围。
                                  <a href="autocmd.html#Cmd-event">Cmd-event</a> 
                                                         <b class="vimtag"> <a name="BufWritePost">BufWritePost</a> </b>
 BufWritePost                    把整个缓冲区写回到文件后 (应该撤销 BufWritePre
@@ -580,6 +582,14 @@ CmdlineLeave                    离开命令行前。也用于按 <code class="k
                                 此处命令出错时，命令行本身依旧执行。
                                 <code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的类型。
                                  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
+                                                        <b class="vimtag"> <a name="CmdlineLeavePre">CmdlineLeavePre</a> </b>
+CmdlineLeavePre                 刚要离开命令行前，在  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a>  之前。可用
+                                于通过  <a href="builtin.html#cmdcomplete_info()">cmdcomplete_info()</a>  捕捉补全信息，因为
+                                此信息在  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a>  触发前已清除。这里包括
+                                映射中非交互式使用 ":" 的情形，但不包括使用
+                                 <a href="map.html#%3CCmd%3E">&lt;Cmd&gt;</a>  时。按 <code class="keystroke">CTRL-C</code> 或 <code class="special">&lt;Esc&gt;</code> 之后放弃命令行
+                                时也会触发。<code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的
+                                类型。详见  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 。
                                                         <b class="vimtag"> <a name="CmdwinEnter">CmdwinEnter</a> </b>
 CmdwinEnter                     进入命令行窗口后。可用来对此特殊类型的窗口进行
                                 设置。
@@ -774,14 +784,14 @@ FileType                        设置 <a href="options.html#'filetype'">'filety
                                 参见  <a href="filetype.html#filetypes">filetypes</a> 。
                                                         <b class="vimtag"> <a name="FileWriteCmd">FileWriteCmd</a> </b>
 FileWriteCmd                    写入文件前，但不包括写入整个缓冲区。应执行写入
-                                文件的操作。不应改动缓冲区的内容。用 '[ 和 ']
-                                位置标记来定位行范围。
+                                文件的操作。不应改动缓冲区的内容。 <a href="motion.html#'[">'[</a>  和  <a href="motion.html#']">']</a> 
+                                位置标记可用于定位行范围。
                                  <a href="autocmd.html#Cmd-event">Cmd-event</a> 
                                                         <b class="vimtag"> <a name="FileWritePost">FileWritePost</a> </b>
 FileWritePost                   写入文件后，但不包括写入整个缓冲区。
                                                         <b class="vimtag"> <a name="FileWritePre">FileWritePre</a> </b>
-FileWritePre                    写入文件前，但不包括写入整个缓冲区。用 '[ 和
-                                '] 位置标记来定位行范围。
+FileWritePre                    写入文件前，但不包括写入整个缓冲区。 <a href="motion.html#'[">'[</a>  和
+                                 <a href="motion.html#']">']</a>  位置标记可用于定位行范围。
                                                         <b class="vimtag"> <a name="FilterReadPost">FilterReadPost</a> </b>
 FilterReadPost                  过滤命令读入文件后。Vim 用当前缓冲区的名字来匹
                                 配模式，正如 FilterReadPre 那样。
@@ -1225,7 +1235,11 @@ WinNew                          创建新窗口时。不用于 Vim 启动时的�
 
                                                         <b class="vimtag"> <a name="WinScrolled">WinScrolled</a> </b>
 WinScrolled                     在当前标签页的任何窗口里滚动文本 (横向或纵向)
-                                或改变宽高后。
+                                或改变宽高后。见  <a href="windows.html#win-scrolled-resized">win-scrolled-resized</a> 。
+
+                                <code class="note">注意</code>: 不能用  <a href="autocmd.html#:noautocmd">:noautocmd</a>  跳过此事件，因为它在
+                                Vim 处理完普通模式命令后返回到主循环时触发。要
+                                屏蔽此事件，考虑设置 <a href="options.html#'eventignore'">'eventignore'</a> 选项。
 
                                 模式匹配的是首个滚动或改变大小的窗口
                                  <a href="windows.html#window-ID">window-ID</a> 。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都设为

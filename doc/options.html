@@ -211,7 +211,7 @@ termcap 值。设置后，可以用于映射。如果 "xx" 包含特殊字符，
 <code class="example">   :set makeprg=make,file           结果是 "make,file"</code>
 <code class="example">   :set makeprg=make\\,file         结果是 "make\,file"</code>
 <code class="example">   :set tags=tags,file              结果是 "tags" 和 "file"</code>
-<code class="example">   :set tags=tags\\,file            结果是 "tags,file"</code>
+<code class="example">   :set tags=tags\\,file            结果是 "tags\,file"</code>
 <code class="example">   :let &amp;tags='tags\,file'          (同上)</code>
 <code class="example"></code>
 "|" 字符把 ":set" 命令和下一个命令隔开。要在选项值里包含 "|"，用 "\|" 代替。
@@ -1445,6 +1445,15 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
         为了安全原因，本选项不能在  <a href="options.html#modeline">modeline</a>  或  <a href="eval.html#sandbox">sandbox</a>  里设置。
 
+                                                <b class="vimtag"> <a name="'chistory'">'chistory'</a> </b> <b class="vimtag"> <a name="'chi'">'chi'</a> </b>
+<a href="options.html#'chistory'">'chistory'</a> <a href="options.html#'chi'">'chi'</a>        数值型  (缺省为 10)
+                        全局
+                        <code class="notvi">{仅当编译时加入  <a href="various.html#+quickfix">+quickfix</a>  特性才有效}</code>
+        快速修复堆栈要记住的快速修复列表的数目。必须在 1 和 100 之间。如果设置
+        选项比快速修复列表堆栈的项目数更小，删除最老的那些项目。如果当前快速修
+        复列表被删除，用堆栈顶部的 (即最近创建的) 快速修复列表来替代之。更多信
+        息可见  <a href="quickfix.html#quickfix-stack">quickfix-stack</a> 。
+
                                    <b class="vimtag"> <a name="'cindent'">'cindent'</a> </b> <b class="vimtag"> <a name="'cin'">'cin'</a> </b> <b class="vimtag"> <a name="'nocindent'">'nocindent'</a> </b> <b class="vimtag"> <a name="'nocin'">'nocin'</a> </b>
 <a href="options.html#'cindent'">'cindent'</a> <a href="options.html#'cin'">'cin'</a>         布尔型  (缺省关闭)
                         局部于缓冲区
@@ -1749,6 +1758,19 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         d       扫描当前文件和包含的头文件里的定义名或宏  <a href="insert.html#i_CTRL-X_CTRL-D">i_CTRL-X_CTRL-D</a> 
         ]       标签补全
         t       同 "]"
+        f<code class="special">{func}</code> 调用函数 <code class="special">{func}</code>。可指定多个 "f" 标志位。函数调用的方式和返回值
+                详见  <a href="insert.html#complete-functions">complete-functions</a> 。该值可以是函数名或  <a href="eval.html#Funcref">Funcref</a> 。对
+                 <a href="eval.html#Funcref">Funcref</a>  而言，其值里的空格必须以一个反斜杠 ('\') 转义，而逗
+                号使用两个反斜杠 ('\\') 转义 (见  <a href="options.html#option-backslash">option-backslash</a> )。
+                <code class="special">{func}</code> 返回的字典里如果包含了 {"refresh": "always"}，引导文本
+                改变时，函数会被再次调用。
+                总在关键字边界上插入补全的匹配，不管 a:findstart 为 1 时
+                <code class="special">{func}</code> 返回的列数为何。这和其他补全源的行为兼容。
+                <code class="special">{func}</code> 里要进一步修改插入的文本，可用  <a href="autocmd.html#CompleteDonePre">CompleteDonePre</a> 。
+                如果匹配生成可能会很慢，应该用  <a href="builtin.html#complete_check()">complete_check()</a>  来避免阻塞，
+                以确保编辑器的响应速度。
+        f       等价于 "f<code class="special">{func}</code>"，其中函数取自 <a href="options.html#'completefunc'">'completefunc'</a> 选项。
+        o       等价于 "f<code class="special">{func}</code>"，其中函数取自 <a href="options.html#'omnifunc'">'omnifunc'</a> 选项。
 
         卸载的缓冲区不会载入，因而它们的自动命令  <a href="autocmd.html#:autocmd">:autocmd</a>  也不会执行，这使得
         有些文件的补全效果出人意表 (比如 gzipped 压缩的文件)。整行补全也不会扫
@@ -1765,6 +1787,11 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         如你所知，<code class="keystroke">CTRL-N</code> 和 <code class="keystroke">CTRL-P</code> 可用于完成任何基于 <a href="options.html#'iskeyword'">'iskeyword'</a> 的扩展 (比如
         字典  <a href="insert.html#i_CTRL-X_CTRL-K">i_CTRL-X_CTRL-K</a> 、头文件里的模式  <a href="insert.html#i_CTRL-X_CTRL-I">i_CTRL-X_CTRL-I</a> 、标签
          <a href="insert.html#i_CTRL-X_CTRL-]">i_CTRL-X_CTRL-]</a>  和普通的扩展)。
+
+        在补全源标志位后附加插入符 ("^") 后跟 <code class="special">{count}</code> 可以为该补全源指定可选的
+        匹配限制。例如: ".^9,w,u,t^5" 限制来自当前缓冲区的匹配数目为 9，而来自
+        标签的限制为 5。其他源保持无限制。
+        <code class="note">注意</code>: 匹配限制只对正向补全 (<code class="keystroke">CTRL-N</code>) 有效，反向补全 (<code class="keystroke">CTRL-P</code>) 不适用。
 
                                                 <b class="vimtag"> <a name="'completefunc'">'completefunc'</a> </b> <b class="vimtag"> <a name="'cfu'">'cfu'</a> </b>
 <a href="options.html#'completefunc'">'completefunc'</a> <a href="options.html#'cfu'">'cfu'</a>    字符串  (缺省: 空)
@@ -1823,6 +1850,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
            menuone  即使只有一个匹配，也使用弹出菜单。可用于匹配有附加信息的情
                     况，例如，它来自的文件。
+
+           nearest  匹配列出的顺序取决于和光标位置的距离，和缺省只考虑光标之后
+                    的匹配的距离的行为不同。只适用于当前缓冲区的匹配。"fuzzy"
+                    打开时没有效果。
 
            noinsert 不插入任何匹配的文本，直到用户从菜单里选择一个匹配为止。只
                     能用于和 "menu" 和 "menuone" 的组合。如果 "longest" 存在，
@@ -2478,8 +2509,9 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                         值时的缺省。
                                 char    使用内部 diff，进行逐字符的比较，高亮
                                         差异文。
-                                word    使用内部 diff，进行逐  <a href="motion.html#word">word</a>  的比较，高亮
-                                        差异文。
+                                word    使用内部 diff，进行逐  <a href="motion.html#word">word</a>  的比较，
+                                        高亮差异文。非字母数字的多字节字符，如
+                                        表情符号、CJK 字符等，视作单独的单词。
 
                 internal        使用内部比较库。设置 <a href="options.html#'diffexpr'">'diffexpr'</a> 时忽略此项
                                 目。 <b class="vimtag"> <a name="E960">E960</a> </b>
@@ -2953,7 +2985,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'fillchars'">'fillchars'</a> </b> <b class="vimtag"> <a name="'fcs'">'fcs'</a> </b>
 <a href="options.html#'fillchars'">'fillchars'</a> <a href="options.html#'fcs'">'fcs'</a>       字符串  (缺省为 "vert:|,fold:-,eob:~,lastline:@")
                         全局或局部于窗口  <a href="options.html#global-local">global-local</a> 
-        填充状态行、垂直分割线和窗口特殊行的字符。
+        填充状态行、垂直分割线、窗口特殊行和  <a href="insert.html#ins-completion-menu">ins-completion-menu</a>  里的截断文
+        本的字符。
         它是逗号分隔的项目列表。每个项目由名字，冒号和值组成:  <a href="options.html#E1511">E1511</a> 
 
 <code class="section">          项目名        缺省            用于 </code>
@@ -2967,6 +3000,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           diff          '-'             <a href="options.html#'diff'">'diff'</a> 选项里的被删除行
           eob           '~'             缓冲区结束之后的空行
           lastline      '@'             <a href="options.html#'display'">'display'</a> 包含的 lastline/truncate
+          trunc         '&gt;'              <a href="insert.html#ins-completion-menu">ins-completion-menu</a>  里的截断文本。
+          truncrl       '&lt;'             同 "trunc"，用于 <a href="options.html#'rightleft'">'rightleft'</a> 模式
 
         任何不提供的项目使用其缺省值。
 
@@ -2982,9 +3017,14 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           stlnc         StatusLineNC             <a href="syntax.html#hl-StatusLineNC">hl-StatusLineNC</a> 
           vert          VertSplit                <a href="syntax.html#hl-VertSplit">hl-VertSplit</a> 
           fold          Folded                   <a href="syntax.html#hl-Folded">hl-Folded</a> 
+          foldopen      FoldColumn               <a href="syntax.html#hl-FoldColumn">hl-FoldColumn</a> 
+          foldclose     FoldColumn               <a href="syntax.html#hl-FoldColumn">hl-FoldColumn</a> 
+          foldsep       FoldColumn               <a href="syntax.html#hl-FoldColumn">hl-FoldColumn</a> 
           diff          DiffDelete               <a href="syntax.html#hl-DiffDelete">hl-DiffDelete</a> 
           eob           EndOfBuffer              <a href="syntax.html#hl-EndOfBuffer">hl-EndOfBuffer</a> 
           lastline      NonText                  <a href="syntax.html#hl-NonText">hl-NonText</a> 
+          trunc         众多的弹出菜单高亮组之一，如  <a href="syntax.html#hl-PmenuSel">hl-PmenuSel</a> 
+          truncrl       同 "trunc"
 
                                                 <b class="vimtag"> <a name="'findfunc'">'findfunc'</a> </b> <b class="vimtag"> <a name="'ffu'">'ffu'</a> </b> <b class="vimtag"> <a name="E1514">E1514</a> </b>
 <a href="options.html#'findfunc'">'findfunc'</a> <a href="options.html#'ffu'">'ffu'</a>        字符串  (缺省为空)
@@ -3686,7 +3726,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
          <a href="syntax.html#hl-DiffChange">hl-DiffChange</a>   C  比较模式改变的行
          <a href="syntax.html#hl-DiffDelete">hl-DiffDelete</a>   D  比较模式删除的行
          <a href="syntax.html#hl-DiffText">hl-DiffText</a>     T  比较模式改变的文本
-         <a href="syntax.html#hl-DiffTextAdd">hl-DiffTextAdd</a>    E  比较模式插入的文本 
+         <a href="syntax.html#hl-DiffTextAdd">hl-DiffTextAdd</a>    E  比较模式插入的文本
          <a href="syntax.html#hl-SignColumn">hl-SignColumn</a>   &gt;   <a href="sign.html#signs">signs</a>  所用的列
          <a href="syntax.html#hl-Conceal">hl-Conceal</a>      -  用于隐藏字符的填充字符 (见 <a href="options.html#'conceallevel'">'conceallevel'</a>)
          <a href="syntax.html#hl-SpellBad">hl-SpellBad</a>     B  拼写错误的单词  <a href="spell.html#spell">spell</a> 
@@ -3960,7 +4000,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
         如果  <a href="editing.html#gf">gf</a>  命令找不到未经修改的文件名，也用此选项。这样，可以在
         <a href="options.html#'include'">'include'</a> 语句之后的名字上执行 "gf"。
-        也用于  <a href="cmdline.html#%3Ccfile%3E">&lt;cfile&gt;</a> 。
+        <code class="note">注意</code>: 不用于  <a href="cmdline.html#%3Ccfile%3E">&lt;cfile&gt;</a> 。
 
         以 s: 或  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  开始的表达式，用脚本 ID ( <a href="userfunc.html#local-function">local-function</a> ) 替代之。例
         如: 
@@ -4076,6 +4116,21 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         是大写字母，补全部分被换成小写。如果输入文本没有小写字母，而且某个字母
         之后有大写字母而在那里匹配串是小写字母，补全部分被换成大写。
         如用 <a href="options.html#'noinfercase'">'noinfercase'</a>，照原样给出匹配。
+
+                                                <b class="vimtag"> <a name="'isexpand'">'isexpand'</a> </b> <b class="vimtag"> <a name="'ise'">'ise'</a> </b>
+<a href="options.html#'isexpand'">'isexpand'</a> <a href="options.html#'ise'">'ise'</a>        字符串  (缺省为 "")
+                        局部于缓冲区
+        定义字符和模式用于插入模式补全。 <a href="builtin.html#complete_match()">complete_match()</a>  函数用本选项来确定
+        补全的开始位置。这是逗号分隔的触发器列表。每个触发器是:
+        - 单个字符，如 "." 或 "/"
+        - 一串字符，如 "-&gt;"、"/*" 或 "/**"
+
+        <code class="note">注意</code>: 如果要把按本义出现的逗号作为触发器字符，可用 "\\,"，见
+         <a href="options.html#option-backslash">option-backslash</a> 。
+
+        示例: 
+<code class="example">                set isexpand=.,-&gt;,/*,\\,</code>
+
 
                         <b class="vimtag"> <a name="'insertmode'">'insertmode'</a> </b> <b class="vimtag"> <a name="'im'">'im'</a> </b> <b class="vimtag"> <a name="'noinsertmode'">'noinsertmode'</a> </b> <b class="vimtag"> <a name="'noim'">'noim'</a> </b>
 <a href="options.html#'insertmode'">'insertmode'</a> <a href="options.html#'im'">'im'</a>       布尔型  (缺省关闭)
@@ -4394,6 +4449,15 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         外，窗口标题的刷新也被推迟。要强迫刷新，使用  <a href="various.html#:redraw">:redraw</a> 。
         显示偶尔可能会出错。本选项只是用于执行重画会闪烁或速度变慢的操作的临时
         场合。
+
+                                                <b class="vimtag"> <a name="'lhistory'">'lhistory'</a> </b> <b class="vimtag"> <a name="'lhi'">'lhi'</a> </b>
+<a href="options.html#'lhistory'">'lhistory'</a> <a href="options.html#'lhi'">'lhi'</a>        数值型  (缺省为 10)
+                        局部于窗口
+                        <code class="notvi">{仅当编译时加入  <a href="various.html#+quickfix">+quickfix</a>  特性才有效}</code>
+        类似于 <a href="options.html#'chistory'">'chistory'</a>，但用于和窗口关联的位置列表堆栈。不管是在位置列表窗
+        口自身或是在位置列表堆栈关联的窗口里改变本选项，新值都会应用在另一个窗
+        口里。这意味着某一个位置列表窗口和其对应的窗口里，本选项值总保持一致。
+        更多信息可见  <a href="quickfix.html#quickfix-stack">quickfix-stack</a> 。
 
                         <b class="vimtag"> <a name="'linebreak'">'linebreak'</a> </b> <b class="vimtag"> <a name="'lbr'">'lbr'</a> </b> <b class="vimtag"> <a name="'nolinebreak'">'nolinebreak'</a> </b> <b class="vimtag"> <a name="'nolbr'">'nolbr'</a> </b>
 <a href="options.html#'linebreak'">'linebreak'</a> <a href="options.html#'lbr'">'lbr'</a>       布尔型  (缺省关闭)
@@ -5357,7 +5421,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'pummaxwidth'">'pummaxwidth'</a> <a href="options.html#'pmw'">'pmw'</a>     数值型  (缺省为 0)
                         全局
         决定用于补全的弹出菜单的最大宽度。如果为零，没有最大宽度限制，否则弹出
-        菜单永远不会宽于此值。结束处用 "..." 指示截断文本。优先于 <a href="options.html#'pumwidth'">'pumwidth'</a>。
+        菜单永远不会宽于此值。结束处用 <a href="options.html#'fillchars'">'fillchars'</a> 选项里的 "trunc" 值来指示截
+        断文本。
+
+        优先于 <a href="options.html#'pumwidth'">'pumwidth'</a>。
          <a href="insert.html#ins-completion-menu">ins-completion-menu</a> .
 
                                                 <b class="vimtag"> <a name="'pumwidth'">'pumwidth'</a> </b> <b class="vimtag"> <a name="'pw'">'pw'</a> </b>
@@ -6918,9 +6985,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'tagfunc'">'tagfunc'</a> <a href="options.html#'tfu'">'tfu'</a>         字符串  (缺省: 空)
                         局部于缓冲区
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  特性才有效}</code>
-        此选项指定函数，用于执行标签搜索。此函数取得标签模式并应返回匹配标签的
-        列表。见  <a href="tagsrch.html#tag-function">tag-function</a>  说明如何写此函数并给出一例。此值可以是函数名、
-         <a href="eval.html#lambda">lambda</a>  或  <a href="eval.html#Funcref">Funcref</a> 。详见  <a href="options.html#option-value-function">option-value-function</a> 。
+        此选项指定函数，用于执行标签搜索 (包括  <a href="builtin.html#taglist()">taglist()</a> )。
+        此函数取得标签模式并应返回匹配标签的列表。见  <a href="tagsrch.html#tag-function">tag-function</a>  说明如何写
+        此函数并给出一例。此值可以是函数名、 <a href="eval.html#lambda">lambda</a>  或  <a href="eval.html#Funcref">Funcref</a> 。详见
+         <a href="options.html#option-value-function">option-value-function</a> 。
         为了安全原因，本选项不能在  <a href="options.html#modeline">modeline</a>  或  <a href="eval.html#sandbox">sandbox</a>  里设置。
 
                                                 <b class="vimtag"> <a name="'taglength'">'taglength'</a> </b> <b class="vimtag"> <a name="'tl'">'tl'</a> </b>
@@ -7878,47 +7946,53 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                                 <b class="vimtag"> <a name="'wildmode'">'wildmode'</a> </b> <b class="vimtag"> <a name="'wim'">'wim'</a> </b>
 <a href="options.html#'wildmode'">'wildmode'</a> <a href="options.html#'wim'">'wim'</a>        字符串  (Vim 缺省: "full")
                         全局
-        用 <a href="options.html#'wildchar'">'wildchar'</a> 指定的字符所用的补全模式。它是逗号分隔的不超过四部分的列
-        表。每个部分指定每次连续使用的 <a href="options.html#'wildchar'">'wildchar'</a> 要完成的动作。第一部分指定第
-        一次使用时的行为。第二部分指定第二次使用时的，等等。
+        用 <a href="options.html#'wildchar'">'wildchar'</a> 指定的字符所用的补全模式。本选项是逗号分隔的不超过四部分
+        的列表，分别对应第一次、第二次、第三次和第四次按  <a href="options.html#'wildchar'">'wildchar'</a>。每个部分
+        包含冒号分隔的项目列表，每项指定一种补全行为，在对应阶段会同时应用这些
+        补全行为。
 
-        每个部分包含冒号分隔的列表，列表项目可能值如下:
-        ""              只用第一个匹配补全。
-        "full"          用下一个完整的匹配补全。在最后一次匹配之后，使用原来的
-                        字符串，然后又是第一个匹配。如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，
-                        使用之。
-        "longest"       用最长的公共子串补全。如果结果没有变长，使用下一个部
-                        分。
+        行为项目可能值如下:
+        ""              只用第一个匹配补全 (插入)。不循环或列出更多的匹配。
+        "full"          用下一个完整的匹配补全。在所有匹配间循环，最后一次匹配
+                        之后回到原始的输入。如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，使用之。
+        "longest"       用最长的公共子串补全。如果输入没有被扩展，使用下一个
+                        <a href="options.html#'wildmode'">'wildmode'</a> 部分。
         "list"          如果有多于一个补全，列出所有的匹配。
-        "lastused"      如果补全缓冲区名并有多于一个缓冲区匹配时，按缓冲区最近
-                        使用时间排序 (除当前缓冲区外)。
-        "noselect"      不预选首个菜单项目，如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，使用之。
-        如果只有一个匹配，除了 "noselect" 以外的所有情况下都完整补全。
+        "lastused"      补全缓冲区名时，按缓冲区最近使用时间排序 (除当前缓冲区
+                        外)。只适用于缓冲区名补全。
+        "noselect"      如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，显示菜单但不预选首个项目。
+        如果只有一个匹配，除非指定 "noselect"，会用该匹配进行完整补全。
 
-        有用的冒号分隔值的示例:
-        "longest:full"  类似于 "longest"，但如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，使用之。
-                        不会补全到下一个完整匹配。
-        "list:full"     如果有多于一个补全，列出所有的匹配并先用第一个补全。
-        "list:longest"  如果有多于一个补全，列出所有的匹配并先用最长的子串补
-                        全。
-        "list:lastused" 如果有多于一个缓冲区匹配，列出所有匹配并给缓冲区按最近
-                        使用的时间排序 (除当前缓冲区外)。
+        一些有用的冒号分隔值的组合:
+        "longest:full"          从最长的公共子串开始，并显示 <a href="options.html#'wildmenu'">'wildmenu'</a> (如果
+                                打开)。不在完整匹配里循环。
+        "list:full"             列出所有的匹配并先用第一个补全。
+        "list:longest"          列出所有的匹配并先用最长的子串补全。
+        "list:lastused"         列出所有匹配。补全缓冲区时，按它们最近使用的时
+                                间排序 (除当前缓冲区外)。
+        "noselect:lastused"     如果 <a href="options.html#'wildmenu'">'wildmenu'</a> 打开的话，不预选首个项目。补全
+                                缓冲区时，按它们最近使用的时间排序 (除当前缓冲
+                                区外)。
 
         例如: 
 <code class="example">                :set wildmode=full</code>
-        用第一个完整的匹配补全，然后下一个匹配，依此类推 (缺省) 
+        每次按键用下一个完整的匹配补全 (缺省行为) 
 <code class="example">                :set wildmode=longest,full</code>
-        用最长的子串补全，然后是每个完整的匹配 
+        首次按键: 最长的公共子串补全
+        第二次按键: 在每个完整的匹配间循环 
 <code class="example">                :set wildmode=list:full</code>
-        列出所有的匹配并用每个完整的匹配补全 
+        首次按键: 列出所有的匹配并用第一个匹配补全 
 <code class="example">                :set wildmode=list,full</code>
-        列出所有的匹配而不补全，然后是每个完整的匹配 
+        首次按键: 只列出所有的匹配
+        第二次按键: 用完整的匹配补全 
 <code class="example">                :set wildmode=longest,list</code>
-        用最长的子串补全，然后列出所有的可能性 
+        首次按键: 最长的公共子串补全
+        第二次按键: 列出所有的匹配 
 <code class="example">                :set wildmode=noselect:full</code>
-        不补全但显示 <a href="options.html#'wildmenu'">'wildmenu'</a>，然后是每个完整的匹配 
+        首次按键: 显示 <a href="options.html#'wildmenu'">'wildmenu'</a> 但不补全或选择
+        第二次按键: 在每个完整的匹配间循环 
 <code class="example">                :set wildmode=noselect:lastused,full</code>
-        同上，但按缓冲区最近使用时间排序。
+        同上，但缓冲区匹配按最近使用时间排序
         详情可见:  <a href="cmdline.html#cmdline-completion">cmdline-completion</a> 。
 
                                                 <b class="vimtag"> <a name="'wildoptions'">'wildoptions'</a> </b> <b class="vimtag"> <a name="'wop'">'wop'</a> </b>

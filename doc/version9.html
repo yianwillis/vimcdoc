@@ -41521,6 +41521,8 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
 
 支持 protected _new() 方法
 
+新增用作变量数据类型  <a href="vim9.html#vim9-types">vim9-types</a>  的 object&lt;<code class="special">{type}</code>&gt; 支持，
+
 <code class="section">比较模式 </code>
 </section><hr class="singleline" /><section class=inner>
 
@@ -41569,10 +41571,18 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
 - <a href="options.html#'completeopt'">'completeopt'</a> 新选项值:
         "nosort"        - 不排序补全结果
         "preinsert"     - 高亮待插入的值
-- 正确处理多行补全
+        "nearest"       - 按照到光标的距离排序补全结果
+- 正确处理多行补全项目
 - 改进用于  <a href="syntax.html#:hi">:hi</a>  命令的命令行补全
 - <a href="options.html#'wildmode'">'wildmode'</a> 新选项值:
         "noselect"      - wildmenu 里不自动选择项目
+- <a href="options.html#'complete'">'complete'</a> 的新标志位:
+        "f<code class="special">{func}</code>"       - 使用给定函数补全
+        "f"             - 使用 <a href="options.html#'completefunc'">'completefunc'</a> 补全
+        "o"             - 使用 <a href="options.html#'omnifunc'">'omnifunc'</a> 补全
+- 用 "<code class="special">{flag}</code>^<code class="special">&lt;limit&gt;</code>" 记法来限制 <a href="options.html#'complete'">'complete'</a> 源的匹配数目
+- 新增 ":filetype" 命令补全
+- 新增用于  <a href="builtin.html#getcompletion()">getcompletion()</a>  的 "filetypecmd" 补全类型
 
 <code class="section">选项: </code>
 - <a href="options.html#'commentstring'">'commentstring'</a> 的缺省包含空白填充使自动注释更美观  <a href="usr_05.html#comment-install">comment-install</a> 
@@ -41584,7 +41594,9 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
 - <a href="options.html#'rulerformat'">'rulerformat'</a> 现在支持  <a href="options.html#stl-%!">stl-%!</a>  项目
 - <a href="options.html#'smoothscroll'">'smoothscroll'</a> 逻辑可作用于 <code class="keystroke">CTRL-F</code> / <code class="keystroke">CTRL-B</code> 全页滚动和 <code class="keystroke">CTRL-D</code> / <code class="keystroke">CTRL-U</code> 半页
   滚动
-- <a href="options.html#'pummaxwidth'">'pummaxwidth'</a> 补全弹出菜单的最大宽度
+- <a href="options.html#'fillchars'">'fillchars'</a> 的新选项值:
+        "trunc"         - 配置截断指示符，<a href="options.html#'pummaxwidth'">'pummaxwidth'</a>
+        "truncrl"       - 类似于 "trunc" 但用于 <a href="options.html#'rl'">'rl'</a> 模式，<a href="options.html#'pummaxwidth'">'pummaxwidth'</a>
 
 <code class="section">Ex 命令: </code>
 - 定义新标号时允许指定优先级  <a href="sign.html#:sign-define">:sign-define</a> 
@@ -41626,6 +41638,8 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
  <a href="builtin.html#base64_encode()">base64_encode()</a>        编码 blob 为 base64 字符串
  <a href="builtin.html#blob2str()">blob2str()</a>             转换 blob 为字符串列表
  <a href="builtin.html#bindtextdomain()">bindtextdomain()</a>       设置消息查找翻译的基础路径
+ <a href="builtin.html#cmdcomplete_info()">cmdcomplete_info()</a>     取得当前命令行补全信息
+ <a href="builtin.html#complete_match()">complete_match()</a>       取得补全和触发器信息
  <a href="builtin.html#diff()">diff()</a>                 比较两个字符串列表
  <a href="builtin.html#filecopy()">filecopy()</a>             把 <code class="special">{from}</code> 文件复制到 <code class="special">{to}</code>
  <a href="builtin.html#foreach()">foreach()</a>              在列表的项目上应用函数
@@ -41648,6 +41662,7 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
 
 <code class="section">自动命令: </code>
 
+ <a href="autocmd.html#CmdlineLeavePre">CmdlineLeavePre</a>        准备离开命令行之前
  <a href="autocmd.html#CursorMovedC">CursorMovedC</a>           命令行中移动了光标后
  <a href="autocmd.html#KeyInputPre">KeyInputPre</a>            任何模式下要处理按键之前
  <a href="autocmd.html#SessionWritePost">SessionWritePost</a>       用  <a href="starting.html#:mksession">:mksession</a>  命令写入会话文件后
@@ -41675,15 +41690,19 @@ Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a>
 
 <code class="section">选项: </code>
 
+<a href="options.html#'chistory'">'chistory'</a>              快速修复堆栈的大小  <a href="quickfix.html#quickfix-stack">quickfix-stack</a> 。
 <a href="options.html#'completefuzzycollect'">'completefuzzycollect'</a>  为 (若干)  <a href="insert.html#ins-completion">ins-completion</a>  模式打开候选的模糊收集
 <a href="options.html#'completeitemalign'">'completeitemalign'</a>     插入模式补全弹出里的  <a href="insert.html#complete-items">complete-items</a>  顺序
 <a href="options.html#'eventignorewin'">'eventignorewin'</a>        窗口中忽略自动命令事件
 <a href="options.html#'findfunc'">'findfunc'</a>              用于取得  <a href="editing.html#:find">:find</a>  命令结果的 Vim 函数
+<a href="options.html#'isexpand'">'isexpand'</a>              定义用于补全的触发器
+<a href="options.html#'lhistory'">'lhistory'</a>              位置列表堆栈的大小  <a href="quickfix.html#quickfix-stack">quickfix-stack</a> 。
 <a href="options.html#'messagesopt'">'messagesopt'</a>           配置  <a href="message.html#:messages">:messages</a>  和  <a href="message.html#hit-enter">hit-enter</a>  提示
-<a href="options.html#'winfixbuf'">'winfixbuf'</a>             维持窗口焦点的缓冲区不变
+<a href="options.html#'pummaxwidth'">'pummaxwidth'</a>           补全弹出菜单的最大宽度
 <a href="options.html#'tabclose'">'tabclose'</a>              关闭标签页后焦点转到哪个标签页
 <a href="term.html#'t_xo'">'t_xo'</a>                  终端使用 XON/XOFF 握手协议 (如 vt420)
 <a href="term.html#'t_CF'">'t_CF'</a>                  备选字体高亮终端代码的支持
+<a href="options.html#'winfixbuf'">'winfixbuf'</a>             维持窗口焦点的缓冲区不变
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>不 兼 容 的 改 动                                       <b class="vimtag"> <a name="incompatible-9.2">incompatible-9.2</a> </b></h4>
