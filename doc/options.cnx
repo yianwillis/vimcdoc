@@ -1,4 +1,4 @@
-*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年4月
+*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年5月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -1726,7 +1726,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	d	扫描当前文件和包含的头文件里的定义名或宏 |i_CTRL-X_CTRL-D|
 	]	标签补全
 	t	同 "]"
-	f{func}	调用函数 {func}。可指定多个 "f" 标志位。函数调用的方式和返回值
+	F{func}	调用函数 {func}。可指定多个 "F" 标志位。函数调用的方式和返回值
 		详见 |complete-functions|。该值可以是函数名或 |Funcref|。对
 		|Funcref| 而言，其值里的空格必须以一个反斜杠 ('\') 转义，而逗
 		号使用两个反斜杠 ('\\') 转义 (见 |option-backslash|)。
@@ -1737,8 +1737,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		{func} 里要进一步修改插入的文本，可用 |CompleteDonePre|。
 		如果匹配生成可能会很慢，应该用 |complete_check()| 来避免阻塞，
 		以确保编辑器的响应速度。
-	f	等价于 "f{func}"，其中函数取自 'completefunc' 选项。
-	o	等价于 "f{func}"，其中函数取自 'omnifunc' 选项。
+	F	等价于 "F{func}"，其中函数取自 'completefunc' 选项。
+	o	等价于 "F{func}"，其中函数取自 'omnifunc' 选项。
 
 	卸载的缓冲区不会载入，因而它们的自动命令 |:autocmd| 也不会执行，这使得
 	有些文件的补全效果出人意表 (比如 gzipped 压缩的文件)。整行补全也不会扫
@@ -2948,7 +2948,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	件，也适用于语法文件。句号可以多于一个。
 	不管 'cpoptions' 里是否包含 's' 或 'S' 标志位，本选项不会复制到别的缓
 	冲区。
-	只能使用字母数字字符，'-' 和 '_' 也可以。
+	只能使用字母数字字符、'-' 和 '_' (组合不同文件类型时，也可用 '.' 作为
+	分隔符)。
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	字符串	(缺省为 "vert:|,fold:-,eob:~,lastline:@")
@@ -2970,14 +2971,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  lastline	'@'		'display' 包含的 lastline/truncate
 	  trunc		'>'		|ins-completion-menu| 里的截断文本。
 	  truncrl	'<'		同 "trunc"，用于 'rightleft' 模式
+	  tpl_vert	'|'		'tabpanel' 的垂直分割符
 
 	任何不提供的项目使用其缺省值。
 
 	例如: >
-	    :set fillchars=stl:\ ,stlnc:\ ,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:\ ,stlnc:\ ,vert:\|,fold:-,diff:-,tpl_vert:\|
 <
-	"stl"、"stlnc"、"foldopen"、"foldclose" 和 "foldsep" 支持单字节和多字
-	节字符。但不支持双宽字符。 |E1512|
+	所有项目支持单字节和多字节字符。但不支持双宽字符。 |E1512|
 
 	这些项目使用的高亮:
 	  项目名	高亮组 ~
@@ -3303,7 +3304,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 						*'grepformat'* *'gfm'*
 'grepformat' 'gfm'	字符串	(缺省为 "%f:%l:%m,%f:%l%m,%f  %l%m")
-			全局
+			全局或局部于缓冲区 |global-local|
 	识别 ":grep" 命令输出的格式。
 	这是类似于 scanf 格式的字符串，和 'errorformat' 选项使用的格式相同:
 	|errorformat|。
@@ -3806,8 +3807,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			*'ignorecase'* *'ic'* *'noignorecase'* *'noic'*
 'ignorecase' 'ic'	布尔型	(缺省关闭)
 			全局
-	搜索模式、|cmdline-completion|、标签文件里的查找，还有非 |Vim9| 的
-	|expr-==| 时忽略大小写。
+	搜索模式、|cmdline-completion|、标签文件里的查找、非 |Vim9| 的
+	|expr-==| 和插入模式补全 |ins-completion| 时忽略大小写。
 	另见 'smartcase' 和 'tagcase'。
 	可以在模式里使用 "\c" 或 "\C" 否决这里的设置。见 |/ignorecase|。
 
@@ -4682,12 +4683,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'maxcombine'* *'mco'*
 'maxcombine' 'mco'	数值型 (缺省为 2)
 			全局
-	最大支持的显示用组合字符的数目。
+	支持的显示用组合字符的最大数目。
 	只用于 'encoding' 为 "utf-8" 的时候。
 	缺省值对多数语言足够了。希伯来语肯定要 4 个。
 	最大值为 6。
 	即使本选项设为 2，你仍然可以编辑有更多组合字符的文本，只不过你看不到而
-	已。用 |g8| 或 |ga|。见 |mbyte-combining|。
+	已。用 |g8| 或 |ga|。
+	设为 0 时，看不到任何组合字符。
+	见 |mbyte-combining|。
 
 						*'maxfuncdepth'* *'mfd'*
 'maxfuncdepth' 'mfd'	数值型	(缺省为 100)
@@ -4971,25 +4974,26 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	外型可从下表选一:
 	可用	名字		看起来像 ~
-	w x	arrow		普通鼠标箭头
+	w x g	arrow		普通鼠标箭头
 	w x	blank		没有指针 (小心使用！)
-	w x	beam		I 型横梁
-	w x	updown		上下改变大小的指针
-	w x	leftright	左右改变大小的指针
-	w x	busy		系统通常的忙指针
-	w x	no		系统通常的 '没有输入' 指针
-	  x	udsizing	指示上下改变大小
-	  x	lrsizing	指示左右改变大小
-	  x	crosshair	像一个大而细的 +
-	  x	hand1		黑色的手
-	  x	hand2		白色的手
+	w x g	beam		I 型横梁
+	w x g	updown		上下改变大小的指针
+	w x g	leftright	左右改变大小的指针
+	w x g	busy		系统通常的忙指针
+	w x g	no		系统通常的 '没有输入' 指针
+	  x g	udsizing	指示上下改变大小
+	  x g	lrsizing	指示左右改变大小
+	  x g	crosshair	像一个大而细的 +
+	  x g	hand1		黑色的手
+	  x g	hand2		白色的手
 	  x	pencil		你用来书写的东西
-	  x	question	大的 ?
+	  x g	question	大的 ?
 	  x	rightup-arrow	指向右上方的箭头
 	w x	up-arrow	指向上方的箭头
 	  x	<number>	X11 指针号 (见 X11/cursorfont.h)
 
-	"可用" 列包含 'w' 意味该外型可用于 Win32，x 代表 X11。
+	"可用" 列包含 'w' 意味该外型可用于 Win32，x 代表 X11 (含 GTK+ 2)，g 代
+	表 GTK+ 3。
 	任何没有指定的模式或者不可用的外型都会使得普通鼠标指针被使用。
 
 	例如: >
@@ -6290,6 +6294,18 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	标签页行有 GUI 和非 GUI 两种实现。
 	|tab-page| 解释标签页的更多信息。
 
+						*'showtabpanel'* *'stpl'*
+'showtabpanel' 'stpl'	数值型	(缺省为 0)
+			全局
+			{Vi 无此功能}
+			{仅当编译时加入 |+tabpanel| 特性才有效}
+	本选项的值指定何时显示带有标签页标签的 |tabpanel|:
+		0: 永远不会
+		1: 至少有两个标签页时才会
+		2: 永远会
+	标签页面板只有非 GUI 实现。
+	|tab-page| 解释标签页标签的更多信息。
+
 						*'sidescroll'* *'ss'*
 'sidescroll' 'ss'	数值型	(缺省为 0)
 			全局
@@ -6331,8 +6347,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 	如果搜索模式包含大写字符，不使用 'ignorecase' 选项。只有在输入搜索模式
 	并且打开 'ignorecase' 选项时才会使用。用于 "/"、"?"、"n"、"N"、":g" 和
-	":s" 命令。不用于 "*"、"#"、"gd"、标签查找等。在 "*" 和 "#" 之后，
-	可以通过 "/" 命令从历史里回忆搜索模式，然后按回车使用 'smartcase'。
+	":s" 命令和用于补全菜单匹配的过滤 |compl-states|。
+	不用于 "*"、"#"、"gd"、标签查找等。在 "*" 和 "#" 之后，可以通过 "/" 命
+	令从历史里回忆搜索模式，然后按回车使用 'smartcase'。
 	注意: 如果置位 'compatible'，本选项被复位。
 
 			     *'smartindent'* *'si'* *'nosmartindent'* *'nosi'*
@@ -6863,39 +6880,75 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 	|-p| 命令行参数或 ":tab all" 命令打开的最大标签页数。|tabpage|
 
+				*'tabpanel'* *'tpl'* *g:actual_curtabpage*
+'tabpanel' 'tpl'	字符串	(缺省为空)
+			全局
+			{Vi 无此功能}
+	非空时，本选项决定 |tabpanel| 的内容。它包含 printf 风格的 '%' 项目和
+	普通文本交替出现，和 'statusline' 或 'tabline' 类似。.
+
+	'tabpanel' 使用的项目发生改动时，不会触发其自动更新，须用
+	|:redrawtabpanel|。
+	'modelineexpr' 关闭时，不能在模式行中设置此选项。
+
+	赋给本选项的函数里可用 |g:actual_curtabpage|。|g:actual_curtabpage| 代
+	表当前标签页的标签号。
+	此选项可包含换行符:
+>
+	set tabpanel=%!TabPanel()
+	function! TabPanel() abort
+	  return printf("(%2d)\n  %%f", g:actual_curtabpage)
+	endfunction
+<
+	结果是:
+>
+	+-----------+---------------------------------
+	|(1)        |
+	|  ~/aaa.txt|
+	|(2)        |
+	|  ~/.vimrc |
+	|           |
+	|           |
+	|           |
+<
+
+					*'tabpanelopt'* *'tplo'*
+'tabpanelopt' 'tplo'	字符串	(缺省为 "")
+			全局
+			{Vi 无此功能}
+	用于 |tabpanel| 的可选设置，包含以下项目，项目必须以逗号分隔。
+
+		align:{text}	指定标签页面板的位置。目前支持的位置有:
+
+				left	左对齐
+				right	右对齐
+
+				(缺省 "left")
+
+		columns:{n}	标签页面板使用的大小 (以字符计)。使用值为零或
+				小于 Vim 窗口大小时永不显示标签页面板。
+				(缺省 20)
+
+		vert		标签页面板使用垂直分割符。使用的垂直分割符是
+				'fillchars' 里的 "tpl_vert"。
+				(缺省关闭)
+
+	示例: >
+		:set tabpanelopt=columns:16,align:right
+		:set tabpanelopt=
+		:set tabpanelopt=vert,align:right
+		:set tabpanelopt=columns:16
+<
+
 					*'tabstop'* *'ts'*
 'tabstop' 'ts'		数值型	(缺省为 8)
 			局部于缓冲区
-	文件里的 <Tab> 代表的空格数。另见 |:retab| 命令和 'softtabstop' 选项。
+	定义用于显示水平制表字符 (ASCII 9) 的列数；水平制表总是前进到下一个制
+	表位。
+	此值最小是 1，最大是 9999。
+	Vim 编译时加入 |+vartabs| 特性且设置了 |'vartabstop'| 时，忽略本选项。
+	除非有充分原因，应保持原值 8 不变 (见用户手册 |30.5|)。
 
-	注意: 设置 'tabstop' 为不同于 8 的值可能使你的文件在很多地方看起来不正
-	确 (比如，打印时)。
-	此值必须大于 0 而小于 10000。
-
-	Vim 里有五个主要的使用制表的方法:
-	1. 总是保持 'tabstop' 为 8，设置 'softtabstop' 和 'shiftwidth' 为 4
-	   (或 3 或任何你想要的) 然后用 'noexpandtab'。这时，Vim 使用制表和空
-	   格的混合，但输入 <Tab> 或 <BS> 键就像每个制表占用 4 (或 3) 个字符一
-	   样。
-	   这是推荐方法，不管是其他的工具还是在终端里列出时都会保持外观一致。
-	2. 设置 'softtabstop' 和 'shiftwidth' 为想要的任何值，然后用
-	   'expandtab'。这样总会插入空格。改变 'tabstop' (以防万一最好还是保持
-	   为 8) 时绝不会影响排版。文件会变大一点。而且需要检查一下文件原来是
-	   不是有制表符。要清理制表符，可先置位 'expandtab' 然后用 `%retab!`，
-	   事前应确认 'tabstop' 的值已正确设置。
-	3. 设置 'tabstop' 和 'shiftwidth' 为想要的任何值，然后用 'expandtab'。
-	   这样总会插入空格。改变 'tabstop' 时绝不会影响排版。需要检查一下文件
-	   原来是不是有制表符，方法见上。
-	4. 设置 'tabstop' 和 'shiftwidth' 为想要的任何值，然后用 |modeline|，
-	   再次编辑时就会重新设置这些值。这只适用于总是使用 Vim 进行文件编辑的
-	   情况，因为其他工具会假定 tabstop 相当于 8 个空格。
-	5. 永远把 'tabstop' 和 'shiftwidth' 设为相同的值，并用 'noexpandtab'。
-	   这样，就可以 (只适用于行首的缩进) 使用任何别人的制表位设置。不过，
-	   如果你这么做，最好在第一个非空白字符之后想插入制表时以空格代替。否
-	   则，改变 'tabstop' 时，注释等的对齐会不正确。
-
-	如果 Vim 编译时带了 |+vartabs| 特性且 |'vartabstop'| 不是空串，忽略
-	'tabstop' 的值。
 
 			*'tagbsearch'* *'tbs'* *'notagbsearch'* *'notbs'*
 'tagbsearch' 'tbs'	布尔型	(缺省打开)
