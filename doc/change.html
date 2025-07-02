@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年5月
+<b class="vimtag"> <a name="change.txt">change.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年6月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -55,6 +55,7 @@
 5. 复制并移动文本                <a href="change.html#copy-move">copy-move</a> 
 6. 文本排版                      <a href="change.html#formatting">formatting</a> 
 7. 文本排序                      <a href="change.html#sorting">sorting</a> 
+8. 文本去重                      <a href="change.html#deduplicating">deduplicating</a> 
 
 关于插入文本部分，参阅  <a href="insert.html#insert.txt">insert.txt</a> 。
 
@@ -1023,7 +1024,7 @@ g&amp;                      同  <code class="badlink">:%s//~/&amp;</code>  (在
                                                         <b class="vimtag"> <a name=":ip">:ip</a> </b> <b class="vimtag"> <a name=":iput">:iput</a> </b>
 :<code class="special">[line]</code>ip[ut] <code class="special">[x]</code>       类似  <a href="change.html#:put">:put</a> ，但调整缩进和当前行一致
 
-:<code class="special">[line]</code>ip[ut]! <code class="special">[x]</code>      类似  <a href="change.html#:put">:put</a> !, 但调整缩进和当前行一致
+:<code class="special">[line]</code>ip[ut]! <code class="special">[x]</code>      类似  <a href="change.html#:put">:put</a> !，但调整缩进和当前行一致
 
 ["x]]p              或                                  <b class="vimtag"> <a name="]p">]p</a> </b> <b class="vimtag"> <a name="]%3CMiddleMouse%3E">]&lt;MiddleMouse&gt;</a> </b>
 ["x]]<code class="special">&lt;MiddleMouse&gt;</code>      类似 "p"，但调整当前行的缩进。只有在 <a href="options.html#'mouse'">'mouse'</a> 包含 'n'
@@ -1623,6 +1624,7 @@ p       不在句号后的单个空白上断行。它的目的是和 <a href="op
 </section><hr class="doubleline" /><section class=inner>
 <h4>7. 文本排序                                             <b class="vimtag"> <a name="sorting">sorting</a> </b></h4>
 Vim 有排序函数和排序命令。排序函数可见:  <a href="builtin.html#sort()">sort()</a> ， <a href="builtin.html#uniq()">uniq()</a> 。
+另见  <a href="change.html#:uniq">:uniq</a> 。
 
                                                         <b class="vimtag"> <a name=":sor">:sor</a> </b> <b class="vimtag"> <a name=":sort">:sort</a> </b>
 :<code class="special">[range]</code>sor[t][!] <code class="special">[b]</code>[f][i][l][n][o][r][u][x] [/<code class="special">{pattern}</code>/]
@@ -1632,7 +1634,7 @@ Vim 有排序函数和排序命令。排序函数可见:  <a href="builtin.html#
                         带 [!] 则反向排序。
 
                         带 <code class="special">[i]</code> 则忽略大小写。
-
+                                                        <b class="vimtag"> <a name=":sort-l">:sort-l</a> </b>
                         带 <code class="special">[l]</code> 时排序使用当前排序规则 locale。
                         实现细节: 用 strcoll() 来进行字符串比较。关于如何查看
                         或设置排序规则 locale，参见  <a href="mlang.html#:language">:language</a> 。例如: 
@@ -1661,12 +1663,13 @@ Vim 有排序函数和排序命令。排序函数可见:  <a href="builtin.html#
 
                         带 <code class="special">[b]</code> 则排序基于每行的首个二进制数 (在 <code class="special">{pattern}</code> 匹配
                         之后或之内)。
-
+                                                        <b class="vimtag"> <a name=":sort-u">:sort-u</a> </b> <b class="vimtag"> <a name=":sort-uniq">:sort-uniq</a> </b>
                         带 <code class="special">[u]</code> (u 代表 unique 唯一) 则只保留完全相同的行的第一
                         行 (如果带 <code class="special">[i]</code>，忽略大小写的区别)。
                         没有这个标志位，完全相同的行的序列会按照它们原来的顺序
                         被保留下来。
                         <code class="note">注意</code> 引导和拖尾的空白差异会导致不相同的行。
+                        如果只想去除重复，可用  <a href="change.html#:uniq">:uniq</a> 。
 
                         如果指定 /<code class="special">{pattern}</code>/ 并且没有 <code class="special">[r]</code> 标志位，跳过匹配
                         <code class="special">{pattern}</code> 的文本，使得排序在匹配之后的内容上进行。
@@ -1699,6 +1702,45 @@ Vim 有排序函数和排序命令。排序函数可见:  <a href="builtin.html#
 
 排序可以被中断，但在整个过程里如果中断得太晚，最后可能会出现重复的行。这取决于
 使用的系统库函数。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>8. 文本去重                                     <b class="vimtag"> <a name="deduplicating">deduplicating</a> </b> <b class="vimtag"> <a name="unique">unique</a> </b></h4>
+Vim 有去重函数和去重命令。去重函数可见:  <a href="builtin.html#uniq()">uniq()</a> 。
+另见  <a href="change.html#:sort-uniq">:sort-uniq</a> 。
+
+                                                        <b class="vimtag"> <a name=":uni">:uni</a> </b> <b class="vimtag"> <a name=":uniq">:uniq</a> </b>
+:<code class="special">[range]</code>uni[q][!] <code class="special">[i]</code>[l][r][u] [/<code class="special">{pattern}</code>/]
+                        删除 <code class="special">[range]</code> 里相邻的重复行。未指定范围则处理所有行。
+
+                        带 <code class="special">[i]</code> 则忽略大小写。
+
+                        带 <code class="special">[l]</code> 时比较使用当前排序规则 locale。
+                        详见  <a href="change.html#:sort-l">:sort-l</a> 。
+
+                        带 <code class="special">[r]</code> 则比较在匹配 <code class="special">{pattern}</code> 的文本上进行，而不是整
+                        行。
+
+                        带 <code class="special">[u]</code> 则只保留不重复的行 (即不立即紧跟相同行的那些
+                        行)。
+
+                        带 [!] 则只保留立即紧跟重复行的那些行。
+
+                        同时给出 [!] 和 <code class="special">[u]</code> 时，忽略 <code class="special">[u]</code>，只有 [!] 生效。
+
+                        如果指定 /<code class="special">{pattern}</code>/ 并且没有 <code class="special">[r]</code> 标志位，跳过匹配
+                        <code class="special">{pattern}</code> 的文本，使得比较在匹配之后的内容上进行。
+                        模式适用 <a href="options.html#'ignorecase'">'ignorecase'</a>，但不使用 <a href="options.html#'smartcase'">'smartcase'</a>。
+                        除了斜杠，任何非字母的字符也都可以。
+
+                        例如，要按第二个逗号分隔的字段去重: 
+<code class="example">                                :uniq /[^,]*,/</code>
+                        要只保留忽略前 5 个字符的不重复行: 
+<code class="example">                                :uniq u /.\{5}/</code>
+                        如果 <code class="special">{pattern}</code> 为空 (例如指定 //)，则使用最近使用的搜
+                        索模式。
+
+                        <code class="note">注意</code> 引导和拖尾的空白差异会导致不相同的行。
+                        要删除任何位置的重复内容，可用  <a href="change.html#:sort-u">:sort-u</a>  或外部工具。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
