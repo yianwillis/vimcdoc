@@ -1,0 +1,94 @@
+*wayland.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年6月
+
+
+		  VIM 参考手册    by Bram Moolenaar
+				译者: Willis
+
+
+Wayland 协议支持					*wayland*
+
+1. 有用的 Wayland 信息		|wayland-useful|
+2. Wayland 选择区		|wayland-selections|
+
+==============================================================================
+1. 有用的 Wayland 信息					*wayland-useful*
+
+							*wayland-seat*
+诸如剪贴板之类的 Wayland 功能需要使用座位 (seat)。Wayland 座位由键盘、指针和触
+摸板等组成。使用的座位由 'wlseat' 选项设置。只有在同一 Wayland 会话中使用多个
+Wayland 座位才有用。
+
+							*wayland-gui*
+见 |gui-wayland|。请 注意 使用 GUI 时，Vim 使用 GTK 之类的工具箱来访问剪贴板，
+而不是通过 Wayland 来访问剪贴板。这可以通过 |v:clipmethod| 变量来检查，在 GUI
+里运行时应该等于 "none"。
+
+Wayland 命令:
+							*:wlrestore* *:wl*
+:wl[restore] [display]	重新初始化到 Wayland 合成器的连接。可用于在
+			screen/tmux 会话里运行 Vim，在 Wayland 合成器重启后要
+			继续运行。
+
+			[display] 应使用 $WAYLAND_DISPLAY 环境变量的格式 (如
+			"wayland-0")。[display] 省略时，使用上次执行此命令时使
+			用的相同值来重新初始化连接。如果此值从未提供过，使用
+			$WAYLAND_DISPLAY 环境变量的值。这也同时更新
+			|v:clipmethod|。
+			{仅当编译时加入 |+wayland| 特性才有效}
+
+Wayland 错误:
+							*E1548*
+Vim 试图和 Wayland 合成器连接时失败。很有可能是因为 Wayland 合成器进程被终止。
+试试 `:wlrestore` 命令重新尝试连接。
+
+==============================================================================
+2. Wayland 选择区					*wayland-selections*
+
+Vim 支持 wlr-data-control-unstable-v1 和 ext-data-control-v1 协议来访问当前
+Wayland 选择区。这些是理想情况下的协议，见 |wayland-focus-steal|。这里选择区基
+本上就是代表 "剪贴板"。可以通过运行 wayland-info 命令来检查你的 Wayland 合成器
+是否支持这些协议，该命令应该是你系统的 libwayland 的一部分: >
+	wayland-info | grep -E '(ext_data_control|zwlr_data_control)'
+<如果 grep 找到匹配，你的系统可能支持两者之一或两种协议都支持。如果找不到任何
+匹配，请参考 |wayland-focus-steal| 了解更多信息。
+
+如果你来自 X11 世界，常规的 Wayland 选择区等价于 X11 的 CLIPBOARD 选择区，而主
+Wayland 选择区相当于 X11 PRIMARY 选择区。在 Vim 里访问这些选择区的方法和 X11
+相同，+ 寄存器是常规选择区，而 * 寄存器是主选择区，注意 你的合成器可能不支持主
+选择区，详见 |wayland-primary-selection|。
+
+							*wayland-persist*
+如果你用过 X11 剪切缓冲区，Wayland 没有对应的机制。与其模拟此功能，不如使用单
+独的剪贴板管理程序以在 Wayland 客户端存在时永续选择区数据。
+
+							*wayland-and-x11*
+如果你的 Vim 版本编译时同时加入了 X11 和 Wayland 支持，Vim 会用 'clipmethod'
+选项来决定用哪种方法来访问剪贴板。
+
+						*wayland-primary-selection*
+如果你觉得 X11 风格的主选择区有用，Wayland 也用自己的若干协议实现了此种行为:
+
+- 主选择区协议得到最广泛支持，但使用时需要获得焦点，见 |wayland-focus-steal|。
+
+- 数据控制协议在你的系统上可用，如 ext 或 wlr 协议，那么也同时支持主选择区。除
+  非你使用了 wlr-data-control 协议版本 1 (这不同于协议名里的 'v1')。此时使用主
+  选择区协议作为后备。
+
+					*wayland-focus-steal* *wayland-gnome*
+如果你使用了 Wayland 上 的 GNOME 桌面环境，直至此文撰写时，还没有用于像 Vim 这
+样的外部客户端在没有获得焦点的情况下访问/修改剪贴板的方法。这里的焦点代表客户
+端得到某种输入事件，如窗口得到焦点时。这是 wlr-data-control-unstable-v1 和
+ext-data-control-v1 这些协议要解决的问题。如果你的 Wayland 合成器不支持以上协
+议，那么适用上面的描述。
+
+要解决此问题，Vim 实现了一种获取焦点的方法，通过创建临时的透明顶层表面
+(surface) 以访问剪贴板。此方法缺省关闭，但可用 'wlsteal' 选项打开。此外，也需
+要有键盘的座位 (seat)，见 'wlseat'，且 xdg-shell 协议必须可用。
+
+注意 此方法因为盗取焦点，有若干副作用。例如，如果你的桌面环境有显示当前打开应
+用的任务栏，在 Vim 试图盗取焦点时，会 "闪烁"，就像窗口打开然后立即关闭的效果。
+另外，全屏模式下焦点盗取不可用，因为创建的表面无法得到焦点。这种情况发生时，
+Vim 会看来暂时被冻结了，详见 'wltimeoutlen'。
+
+ vim:tw=78:ts=8:noet:ft=help:norl
+

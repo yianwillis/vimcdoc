@@ -1,4 +1,4 @@
-*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年5月
+*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年6月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -1471,8 +1471,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					"autoselect,exclude:cons\|linux"，
 				其它为 "")
 			全局
-			{仅有在 GUI 版本或者包含 |+xterm_clipboard| 特性时才有
-			效}
+			{仅有在 GUI 版本或者包含 |+xterm_clipboard| 或
+			|+wayland_clipboard| 特性时才有效}
 	本选项是逗号分隔的名字列表。
 	注意: 如果其中的一项是 "exclude:"，其后不能再附加项目。因此，不要用 +=
 	附加项目，而要用 ^= 在前面加上项目，例如: >
@@ -1492,9 +1492,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			出、删除、修改和放置操作，以剪贴板 '+' 寄存器
 			(|quoteplus|) 代替 '*' 寄存器。如也包含 "unnamed"，抽
 			出动作 (但不包括删除、修改和放置) 会同时把文本放入 '*'
-			寄存器。
-			仅当 |+X11| 特性存在时才可用。
-			以下方法可检查该选项是否可用: >
+			寄存器。如果使用 Wayland 且合成器不支持
+			primary-selection-unstable-v1 协议，使用常规选择区代
+			替。仅当 |+X11| 或  |+wayland_clipboard| 特性存在时才
+			可用。以下方法可检查该选项是否可用: >
 				if has('unnamedplus')
 <
 						*clipboard-autoselect*
@@ -1525,20 +1526,41 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*clipboard-exclude*
 	exclude:{pattern}
 			定义用来匹配终端名 'term' 的模式。匹配的终端不连接到 X
-			服务器。可用于以下这种情形:
+			服务器或 Wayland 合成器。可用于以下这种情形:
 			- 在控制台上运行 Vim，
-			- $DISPLAY 的设置使得应用程序在另一个显示上打开，
-			- 不希望在控制台上连接到 X 服务器，但希望在终端模拟器
-			  上如此。
-			如果永远不想连接到 X 服务器，使用: >
+			- $DISPLAY/$WAYLAND_DISPLAY 的设置使得应用程序在另一个
+			  显示上打开，
+			- 不希望在控制台上连接到 X 服务器/Wayland 合成器，但希
+			  望在终端模拟器上如此。
+			如果永远不想连接到 X 服务器/Wayland 合成器，使用: >
 				exclude:.*
-<			这和 |-X| 参数的效果相同。
+<			这和 |-X| 或 |-Y| 参数的效果相同。
 			注意 如果没有到 X 服务器的连接，窗口标题不会复原，而剪
-			贴板也无法访问。
+			贴板也无法访问。Wayland 类同，但窗口标题不会复原。
 			忽略 'magic' 的值，{pattern} 的解释总是假定 'magic' 打
 			开。
 			选项值的其余部分用于 {pattern}，本项目必须是最后一个项
 			目。
+
+						*'clipmethod'* *'cpm'*
+'clipmethod' 'cpm'	字符串	(Unix 缺省为: "wayland,x11"，
+				 VMS: "x11"，
+				 其他: "")
+			全局
+			{仅当编译时加入 |+xterm_clipboard| 或
+			|+wayland_clipboard| 特性才有效}
+	指定正在使用的系统剪贴板的访问方法，取决于哪种方法优先或可用。支持的方
+	法是:
+		wayland		Wayland 选择
+		x11		X11 选择
+
+	注意: GUI 运行时或在没有 Wayland 或 X11 支持的系统，如 Windows 或
+	macOS，上运行 Vim 时，忽略此选项。总使用 GUI 或系统的剪贴板访问方式。
+
+	选项值是逗号分隔的项目列表。列表从左到右进行解析，首个 Vim 决定可用或
+	可正常工作的方法被用作实际使用的访问剪贴板的方法。
+
+	可在 |v:clipmethod| 变量里找到当前使用的方法。
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	数值型	(缺省为 1)
@@ -1687,7 +1709,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'smartcase'	+ 关闭		没有忽略大小写的自动切换
 	'smartindent'	+ 关闭		没有智能缩进
 	'smarttab'	+ 关闭		没有智能制表大小
-	'softtabstop'	+ 0		制表总是使用 'tabstop' 个位置
+	'softtabstop'	+ 0		没有软制表位置
 	'startofline'	+ 打开		一些命令到行首
 	'tagcase'	& "followic"	搜索标签文件时 'ignorecase'
 	'tagrelative'	& 关闭		标签文件名不是相对的
@@ -1852,6 +1874,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	   preview  在预览窗口里显示当前选择的补全的额外信息。只能和 "menu" 或
 		    "menuone" 搭配使用。
 
+	此选项不适用于 |cmdline-completion|。为此可见 'wildoptions'。
 
 					*'completepopup'* *'cpp'*
 'completepopup' 'cpp'	字符串 (缺省: 空)
@@ -2746,11 +2769,81 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	否则，此为逗号分隔的事件名列表。例如: >
 	    :set ei=WinEnter,WinLeave
 <
+	要忽略除了部分事件以外的所有事件，可用 "-" 前缀: >
+	    :set ei=all,-WinLeave
+<
 						*'eventignorewin'* *'eiw'*
 'eventignorewin' 'eiw'	字符串	(缺省为 "")
 			局部于窗口
 	和 'eventignore' 类似，但应用于特定窗口及其缓冲区，那里的窗口和缓冲区
 	相关的自动命令会被无限期地忽略，而无需改动全局的 'eventignore'。
+
+	注意: 以下事件被视作在窗口上下文之外发生，因而不能被 'eventignorewin'
+	忽略:
+
+		|CmdlineChanged|、
+		|CmdlineEnter|、
+		|CmdlineLeave|、
+		|CmdlineLeavePre|、
+		|CmdUndefined|、
+		|CmdwinEnter|、
+		|CmdwinLeave|、
+		|ColorScheme|、
+		|ColorSchemePre|、
+		|CompleteChanged|、
+		|CompleteDone|、
+		|CompleteDonePre|、
+		|DiffUpdated|、
+		|DirChanged|、
+		|DirChangedPre|、
+		|EncodingChanged|、
+		|ExitPre|、
+		|FocusGained|、
+		|FocusLost|、
+		|FuncUndefined|、
+		|GUIEnter|、
+		|GUIFailed|、
+		|KeyInputPre|、
+		|MenuPopup|、
+		|ModeChanged|、
+		|OptionSet|、
+		|QuickFixCmdPost|、
+		|QuickFixCmdPre|、
+		|QuitPre|、
+		|RemoteReply|、
+		|SafeState|、
+		|SafeStateAgain|、
+		|SessionLoadPost|、
+		|SessionWritePost|、
+		|ShellCmdPost|、
+		|SigUSR1|、
+		|SourceCmd|、
+		|SourcePost|、
+		|SourcePre|、
+		|SpellFileMissing|、
+		|StdinReadPost|、
+		|StdinReadPre|、
+		|SwapExists|、
+		|Syntax|、
+		|TabClosed|、
+		|TabClosedPre|、
+		|TabEnter|、
+		|TabLeave|、
+		|TabNew|、
+		|TermChanged|、
+		|TerminalOpen|、
+		|TerminalWinOpen|、
+		|TermResponse|、
+		|TermResponseAll|、
+		|User|、
+		|VimEnter|、
+		|VimLeave|、
+		|VimLeavePre|、
+		|VimResized|、
+		|VimResume|、
+		|VimSuspend|、
+		|WinNew|、
+		|WinNewPre|
 
 				 *'expandtab'* *'et'* *'noexpandtab'* *'noet'*
 'expandtab' 'et'	布尔型	(缺省关闭)
@@ -3666,7 +3759,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-NonText|	 @  窗口末尾的 '@' 和 'showbreak' 里的字符
 	|hl-Directory|	 d  CTRL-D 列出的目录和列表里其它特殊的东西
 	|hl-ErrorMsg|	 e  错误信息
-			 h  (已废弃，可以忽略)
 	|hl-IncSearch|	 i  'incsearch' 高亮
 	|hl-CurSearch|	 y  最近搜索模式的当前实例
 	|hl-Search|	 l  最近搜索模式高亮 (见 'hlsearch')
@@ -3686,7 +3778,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-VertSplit|	 c  用来分隔垂直分割窗口的列
 	|hl-Visual|	 v  可视模式
 	|hl-VisualNOS|	 V  Vim 不是 "选择区拥有者" 时的可视模式。只限于 X11
-			    GUI 的 |gui-x11| 和 |xterm-clipboard|。
+			    GUI 的 |gui-x11|、|xterm-clipboard| 和
+			    |wayland-selections|。
 	|hl-WarningMsg|	 w  警告消息
 	|hl-WildMenu|	 W  'wildmenu' 显示的通配符匹配
 	|hl-Folded|	 f  关闭的折叠所用的行
@@ -5901,8 +5994,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	符。
 	使用 "exclusive" 时，会为闭动作调整可视模式的光标位置
 	|inclusive-motion-selection-exclusive|。
-	注意 如果从普通模式开始、'virtualedit' 为空、使用 "exclusive" (开区间)
-	而从行尾开始反向选择，你无法包含行尾的字符。
+	注意:
+	- 如果从普通模式开始、'virtualedit' 为空、使用 "exclusive" (开区间) 而
+	  从行尾开始反向选择，你无法包含行尾的字符。
+	- 如果可视选择单个字符且使用 "exclusive" (开区间)，Vim 的行为转变为
+	  inclusive (闭区间) (换而言之，不能可视选择空区域)。
 
 	|:behave| 命令设置 'selection' 选项。
 
@@ -6139,9 +6235,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'shiftwidth'* *'sw'*
 'shiftwidth' 'sw'	数值型	(缺省为 8)
 			局部于缓冲区
-	(自动) 缩进每一步使用的空白数目。用于 |'cindent'|、|>>|、|<<| 等。
-	如果为零，使用 'tabstop' 的值。|shiftwidth()| 函数可用来得到有效的
-	shiftwidth 值。
+	(自动) 缩进构成每一级的列数。用于 |'cindent'|、|<<|、|>>| 等。
+	如果为零，Vim 使用 'tabstop' 的当前值。脚本中可用 |shiftwidth()| 函数
+	来得到其有效值。
 
 						*'shortmess'* *'shm'*
 'shortmess' 'shm'	字符串	(Vim 缺省 "filnxtToOS"，Vi 缺省: "S"，
@@ -6297,13 +6393,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'showtabpanel'* *'stpl'*
 'showtabpanel' 'stpl'	数值型	(缺省为 0)
 			全局
-			{Vi 无此功能}
 			{仅当编译时加入 |+tabpanel| 特性才有效}
 	本选项的值指定何时显示带有标签页标签的 |tabpanel|:
 		0: 永远不会
 		1: 至少有两个标签页时才会
 		2: 永远会
-	标签页面板只有非 GUI 实现。
 	|tab-page| 解释标签页标签的更多信息。
 
 						*'sidescroll'* *'ss'*
@@ -6375,15 +6469,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				 *'smarttab'* *'sta'* *'nosmarttab'* *'nosta'*
 'smarttab' 'sta'	布尔型	(缺省关闭)
 			全局
-	如果打开，行首的 <Tab> 根据 'shiftwidth' 插入空白。'tabstop' 或
-	'softtabstop' 用在别的地方。<BS> 删除行首 'shiftwidth' 那么多的空白。
-	如果关闭，<Tab> 总是根据 'tabstop' 或 'softtabstop' 决定插入空白的数
-	目。'shiftwidth' 只用于文本左移或右移 |shift-left-right|。
-	插入空白的具体方式 (制表还是空格) 取决于 'expandtab' 选项。另见
-	|ins-expandtab|。如果没有置位 'expandtab'，通过使用 <Tab>，使空格数目
-	减到最小。
-	'paste' 置位时复位本选项，复位时恢复本选项。
-	注意: 如果置位 'compatible'，本选项被复位。
+	打开时，如果光标在引导空白位置，<Tab> 键缩进 'shiftwidth' 个位置。<BS>
+	键的效果刚好相反。
+	在引导空白位置时，此行为相当于把 'softtabstop' 设置为 'shiftwidth' 的
+	值。
+	如果置位 'compatible'，本选项被复位；'paste' 置位时暂时复位本选项，
+	'paste' 复位时恢复本选项。
+	注意: 绝大多数情况下，用 'softtabstop' 是更好的方法。关于 Vim 如何使用
+	制表和空格，详见用户手册的 |30.5| 小节。
 
 			*'smoothscroll'* *'sms'* *'nosmoothscroll'* *'nosms'*
 'smoothscroll' 'sms'	布尔型  (缺省关闭)
@@ -6397,18 +6490,20 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					*'softtabstop'* *'sts'*
 'softtabstop' 'sts'	数值型	(缺省为 0)
 			局部于缓冲区
-	执行编辑操作，如插入 <Tab> 或者使用 <BS> 时，把 <Tab> 算作空格的数目。
-	"感觉上" 你就像使用单个 <Tab> 一样，而实际上使用的是空格和 <Tab> 的混
-	合。这可以用来维持 'ts' 的设置为标准值 8 不变，但编辑时感觉就像它被设
-	为 'sts' 那样。不过，"x" 这样的命令仍然会在实际的字符上操作。
-	如果 'sts' 为零，关闭此特性。
-	如果 'sts' 为负，使用 'shiftwidth' 的值。
-	如果置位 'paste' 选项，'softtabstop' 被设为 0。'paste' 复位时恢复本选
-	项。
-	另见 |ins-expandtab|。如果没有置位 'expandtab'，通过使用 <Tab>，使空格
-	数目减到最小。
-	'cpoptions' 里的 'L' 标志位改变制表在 'list' 置位时的使用方式。
-	注意: 如果置位 'compatible'，本选项被设为 0。
+	创建软制表位，以 'softtabstop' 列数分隔。插入模式下，按 <Tab> 键会移动
+	光标到下一个软制表位，而不是按本义插入制表符。<BS> 的行为刚好相反。Vim
+	会插入制表和空格字符的最小混合而产生所需的视觉效果。
+
+	此设置不影响已有的制表符的显示。
+
+	如果选项值为零，关闭此特性。如果为负，使用 'shiftwidth' 的值。如果希望
+	'sts' 和 'shiftwidth' 使用不同值，可以考虑置位 'smarttab'。
+
+	'paste' 置位时暂时设置 'softtabstop' 为 0，复位时恢复本选项。如果置位
+	'compatible'，本选项也被复位。
+
+	'cpoptions' 里的 'L' 标志位改变制表在 'list' 置位时的行为。另见
+	|ins-expandtab| 和用户手册 |30.5| 小节的详细描述。
 
 	如果 Vim 编译时带了 |+vartabs| 特性且 |'varsofttabstop'| 不是空串，忽
 	略 'softtabstop' 的值。
@@ -6883,9 +6978,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				*'tabpanel'* *'tpl'* *g:actual_curtabpage*
 'tabpanel' 'tpl'	字符串	(缺省为空)
 			全局
-			{Vi 无此功能}
 	非空时，本选项决定 |tabpanel| 的内容。它包含 printf 风格的 '%' 项目和
-	普通文本交替出现，和 'statusline' 或 'tabline' 类似。.
+	普通文本交替出现，和 'statusline' 或 'tabline' 类似。
 
 	'tabpanel' 使用的项目发生改动时，不会触发其自动更新，须用
 	|:redrawtabpanel|。
@@ -6893,12 +6987,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	赋给本选项的函数里可用 |g:actual_curtabpage|。|g:actual_curtabpage| 代
 	表当前标签页的标签号。
-	此选项可包含换行符:
->
-	set tabpanel=%!TabPanel()
-	function! TabPanel() abort
-	  return printf("(%2d)\n  %%f", g:actual_curtabpage)
-	endfunction
+	此选项可包含换行符: >
+
+		set tabpanel=%!TabPanel()
+		function! TabPanel() abort
+		  return printf("(%2d)\n  %%f", g:actual_curtabpage)
+		endfunction
 <
 	结果是:
 >
@@ -6911,25 +7005,23 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|           |
 	|           |
 <
-
 					*'tabpanelopt'* *'tplo'*
 'tabpanelopt' 'tplo'	字符串	(缺省为 "")
 			全局
-			{Vi 无此功能}
 	用于 |tabpanel| 的可选设置，包含以下项目，项目必须以逗号分隔。
 
 		align:{text}	指定标签页面板的位置。目前支持的位置有:
 
-				left	左对齐
-				right	右对齐
+				left	左边
+				right	右边
 
 				(缺省 "left")
 
-		columns:{n}	标签页面板使用的大小 (以字符计)。使用值为零或
-				小于 Vim 窗口大小时永不显示标签页面板。
+		columns:{n}	标签页面板的列宽。
+				此值为零或小于 'column' 时，不显示标签页面板。
 				(缺省 20)
 
-		vert		标签页面板使用垂直分割符。使用的垂直分割符是
+		vert		标签页面板使用垂直分割符。使用的垂直分割符来自
 				'fillchars' 里的 "tpl_vert"。
 				(缺省关闭)
 
@@ -6939,7 +7031,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set tabpanelopt=vert,align:right
 		:set tabpanelopt=columns:16
 <
-
 					*'tabstop'* *'ts'*
 'tabstop' 'ts'		数值型	(缺省为 8)
 			局部于缓冲区
@@ -7597,28 +7688,33 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'varsofttabstop' 'vsts'	字符串	(缺省 "")
 			局部于缓冲区
 			{仅当编译时加入 |+vartabs| 特性才有效}
-	在编辑时，比如插入 <Tab> 或按 <BS> 在时候，把 <Tab> 算作的空格数的一个
-	列表。"感觉上" 就像插入了可变宽度的 <Tab> 的那样，而事实上是空格和
-	<Tab> 的混合。制表宽度以逗号分隔，末值应用于所有其后的制表位。
+	定义可变宽度的软制表位。选项值是逗号分隔的以列数计的宽度列表。每个宽度
+	定义下一个软制表位之前的列数。末值无限重复。
 
 	例如，编辑汇编语言文件时，语句从第 9 列开始，而注释从第 41 列开始，可
 	以这么设置: >
 		:set varsofttabstop=8,32,8
-<	会设定软制表位分别在 8 和 8 + 32 空格位，而其后每列多 8 个空格位。
+<	会设定软制表位分别在第 8 和 40 (8 + 32) 列，其后每个制表位相隔 8 列。
 
-	注意 设置 |'varsofttabstop'| 时忽略 |'softtabstop'| 的值。
+	注意 此设置优先于 |'softtabstop'|。
+	关于 Vim 如何使用制表和空格，详见用户手册的 |30.5| 小节。
+
 
 						*'vartabstop'* *'vts'*
 'vartabstop' 'vts'	字符串	(缺省 "")
 			局部于缓冲区
 			{仅当编译时加入 |+vartabs| 特性才有效}
-	在文件中 <Tab> 所代表的空格数一个列表，以逗号分隔。每个值对应一个制表
-	位，末值应用于所有其后的制表位。例如: >
-		:set vartabstop=4,20,10,8
-<	会设定首个制表位 4 个空格宽，第二个 20 个空格宽，第三个 10 个空格宽，
-	其后每个制表位 8 个空格宽。
+	定义可变宽度的制表位。选项值是逗号分隔的以列数计的宽度列表。每个宽度定
+	义下一个制表位之前的列数。末值无限重复。
 
-	注意 设置 |'vartabstop'| 时忽略 |'tabstop'| 的值。
+	例如: >
+		:set vartabstop=4,8
+<	会设定首个制表位在从行首开始算的第 4 列，其后每个制表位相隔 8 列。
+
+	注意: 此设置优先于 |'tabstop'|。
+	UNIX 上建议保留缺省为 8 的制表位列数。考虑设置 'varsofttabstop' 代替本
+	选项。
+	关于 Vim 如何使用制表和空格，详见用户手册的 |30.5| 小节。
 
 						*'verbose'* *'vbs'*
 'verbose' 'vbs'		数值型	(缺省为 0)
@@ -7889,7 +7985,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set wc=X
 		:set wc=^I
 		:set wc=<Tab>
-<	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
+<	'wildchar' 也打开搜索模式上下文的补全，如 |/|、|?|、|:s|、|:g|、|:v|
+	和 |:vim|。要按本义插入 <Tab> 而不触发补全，键入 <C-V><Tab> 或 "\t"。
+	注意: 如果置位 'compatible'，本选项被设为 Vi 的缺省值。相反，如果复位
 	'compatible'，本选项被设为 Vim 的缺省值。
 
 						*'wildcharm'* *'wcm'*
@@ -8020,6 +8118,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'wildoptions' 'wop'	字符串	(缺省为 "")
 			全局
 	单词列表，改变 |cmdline-completion| 的行为。
+
 	支持以下值:
 	  fuzzy		使用 |fuzzy-matching| 来找到补全匹配。指定此值时，补全
 			不用通配符扩展。匹配会基于 "最佳匹配" 排序，而不是按字
@@ -8031,6 +8130,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			行只显示一个匹配。常用的标签类型是:
 				d	#define
 				f	函数
+
+	此选项不适用于 |ins-completion|。为此，参见 'completeopt'。
 
 						*'winaltkeys'* *'wak'*
 'winaltkeys' 'wak'	字符串	(缺省为 "menu")
@@ -8064,7 +8165,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'lines' 减 1。
 	注意: 不要和 Vim 窗口的高度混淆。那里要用 'lines'。
 
-						*'winfixbuf'*
+						*'winfixbuf'* *'wfb'*
 'winfixbuf' 'wfb'	布尔型	(缺省关闭)
 			局部于窗口
 	如果打开，窗口及其显示的缓冲区被绑定。例如，试图用 |:edit| 改变缓冲区
@@ -8141,6 +8242,32 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	较小的值。
 	改变当前窗口的宽度的命令不会调整此宽度。
 	'winwidth' 应用于当前窗口。'winminwidth' 设置其它窗口的最小宽度。
+
+						*'wlseat'* *'wse'*
+'wlseat' 'wse'		字符串	(缺省为 "")
+			全局
+			{仅当编译时加入 |+wayland| 特性才有效}
+	指定用于 Wayland 功能的 Wayland 座位 (seat)，特别是用于剪贴板。如果座
+	位不存在，此选项仍设为新值，但结果是 Wayland 剪贴板不可用。如果传递空
+	值，Vim 会试图使用首个可用的座位。更新本选项也会更新 |v:clipmethod|。
+
+				*'wlsteal'* *'wst'* *'nowlsteal'* *'nowst'*
+'wlsteal' 'wst'		布尔型  (缺省关闭)
+			全局
+			{仅当编译时加入 |+wayland_clipboard| 特性才有效}
+	打开时，Vim 可以通过创建临时表面 (surface)，来盗取焦点用来访问剪贴板。
+	详见 |wayland-focus-steal|。
+
+						*'wltimeoutlen'* *'wtm'*
+'wltimeoutlen' 'wtm'	数值型	(缺省为 500)
+			全局
+			{仅当编译时加入 |+wayland| 特性才有效}
+	Vim 等待 Wayland 合成器的超时，以毫秒计。Vim 等待合成器时，不对输入响
+	应，也不更新屏幕。所以，调低此值有些情况下会使 Vim 更快响应。但反过来，
+	如果合成器比正常情况需要更多时间来响应，你会收到报错。
+
+	此外，本选项也用于等待表面 (surface) 获取焦点的最大超时，见
+	|wayland-focus-steal|。
 
 						*'wrap'* *'nowrap'*
 'wrap'			布尔型	(缺省打开)
