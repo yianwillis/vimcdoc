@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<![endif]-->
+<title>VIM 中文帮助: Wayland 协议支持</title>
+<link rel="stylesheet" href="vim-stylesheet.css" type="text/css" />
+<link rel="canonical" href="https://yianwillis.github.io/vimcdoc/doc/wayland.html" />
+<script type="text/javascript" src="vimcdoc.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<nav id=banner>
+<form action=tags.html target="tag_iframe">
+  <input type="text" name="tag" id="tag" placeholder="标签搜索">
+</form>
+<iframe name="tag_iframe" src=""></iframe>
+<a href="help.html">帮助总览</a> &middot;
+<hr/>
+<a href="quickref.html">快速参考</a> &middot;
+<a href="index.html">命令索引</a> &middot;
+<a href="eval.html#functions">函数列表</a> &middot;
+<a href="quickref.html#option-list">选项列表</a> &middot;
+<hr/>
+<a href="usr_toc.html">用户手册</a> &middot;
+<a href="help.html#reference_toc">参考手册</a> &middot;
+</nav>
+
+<header>
+<h2>wayland</h2>
+</header>
+<article id=outer>
+<section class=inner>
+<b class="vimtag"> <a name="wayland.txt">wayland.txt</a> </b>    适用于 Vim 9.1 版本。  最近更新: 2025年6月
+
+
+                  <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
+                                <code class="vim">译者</code>: Willis
+
+
+Wayland 协议支持                                        <b class="vimtag"> <a name="wayland">wayland</a> </b>
+
+1. 有用的 Wayland 信息           <a href="wayland.html#wayland-useful">wayland-useful</a> 
+2. Wayland 选择区                <a href="wayland.html#wayland-selections">wayland-selections</a> 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>1. 有用的 Wayland 信息                                  <b class="vimtag"> <a name="wayland-useful">wayland-useful</a> </b></h4>
+                                                        <b class="vimtag"> <a name="wayland-seat">wayland-seat</a> </b>
+诸如剪贴板之类的 Wayland 功能需要使用座位 (seat)。Wayland 座位由键盘、指针和触
+摸板等组成。使用的座位由 <a href="options.html#'wlseat'">'wlseat'</a> 选项设置。只有在同一 Wayland 会话中使用多个
+Wayland 座位才有用。
+
+                                                        <b class="vimtag"> <a name="wayland-gui">wayland-gui</a> </b>
+见  <a href="gui_x11.html#gui-wayland">gui-wayland</a> 。请 <code class="note">注意</code> 使用 GUI 时，Vim 使用 GTK 之类的工具箱来访问剪贴板，
+而不是通过 Wayland 来访问剪贴板。这可以通过  <a href="eval.html#v:clipmethod">v:clipmethod</a>  变量来检查，在 GUI
+里运行时应该等于 "none"。
+
+Wayland 命令:
+                                                        <b class="vimtag"> <a name=":wlrestore">:wlrestore</a> </b> <b class="vimtag"> <a name=":wl">:wl</a> </b>
+:wl[restore] <code class="special">[display]</code>  重新初始化到 Wayland 合成器的连接。可用于在
+                        screen/tmux 会话里运行 Vim，在 Wayland 合成器重启后要
+                        继续运行。
+
+                        <code class="special">[display]</code> 应使用 $WAYLAND_DISPLAY 环境变量的格式 (如
+                        "wayland-0")。[display] 省略时，使用上次执行此命令时使
+                        用的相同值来重新初始化连接。如果此值从未提供过，使用
+                        $WAYLAND_DISPLAY 环境变量的值。这也同时更新
+                         <a href="eval.html#v:clipmethod">v:clipmethod</a> 。
+                        <code class="notvi">{仅当编译时加入  <a href="various.html#+wayland">+wayland</a>  特性才有效}</code>
+
+Wayland 错误:
+                                                        <b class="vimtag"> <a name="E1548">E1548</a> </b>
+Vim 试图和 Wayland 合成器连接时失败。很有可能是因为 Wayland 合成器进程被终止。
+试试  <a href="wayland.html#:wlrestore">:wlrestore</a>  命令重新尝试连接。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>2. Wayland 选择区                                       <b class="vimtag"> <a name="wayland-selections">wayland-selections</a> </b></h4>
+Vim 支持 wlr-data-control-unstable-v1 和 ext-data-control-v1 协议来访问当前
+Wayland 选择区。这些是理想情况下的协议，见  <a href="wayland.html#wayland-focus-steal">wayland-focus-steal</a> 。这里选择区基
+本上就是代表 "剪贴板"。可以通过运行 wayland-info 命令来检查你的 Wayland 合成器
+是否支持这些协议，该命令应该是你系统的 libwayland 的一部分: 
+<code class="example">        wayland-info | grep -E '(ext_data_control|zwlr_data_control)'</code>
+如果 grep 找到匹配，你的系统可能支持两者之一或两种协议都支持。如果找不到任何
+匹配，请参考  <a href="wayland.html#wayland-focus-steal">wayland-focus-steal</a>  了解更多信息。
+
+如果你来自 X11 世界，常规的 Wayland 选择区等价于 X11 的 CLIPBOARD 选择区，而主
+Wayland 选择区相当于 X11 PRIMARY 选择区。在 Vim 里访问这些选择区的方法和 X11
+相同，+ 寄存器是常规选择区，而 * 寄存器是主选择区，<code class="note">注意</code> 你的合成器可能不支持主
+选择区，详见  <a href="wayland.html#wayland-primary-selection">wayland-primary-selection</a> 。
+
+                                                        <b class="vimtag"> <a name="wayland-persist">wayland-persist</a> </b>
+如果你用过 X11 剪切缓冲区，Wayland 没有对应的机制。与其模拟此功能，不如使用单
+独的剪贴板管理程序以在 Wayland 客户端存在时永续选择区数据。
+
+                                                        <b class="vimtag"> <a name="wayland-and-x11">wayland-and-x11</a> </b>
+如果你的 Vim 版本编译时同时加入了 X11 和 Wayland 支持，Vim 会用 <a href="options.html#'clipmethod'">'clipmethod'</a>
+选项来决定用哪种方法来访问剪贴板。
+
+                                                <b class="vimtag"> <a name="wayland-primary-selection">wayland-primary-selection</a> </b>
+如果你觉得 X11 风格的主选择区有用，Wayland 也用自己的若干协议实现了此种行为:
+
+- 主选择区协议得到最广泛支持，但使用时需要获得焦点，见  <a href="wayland.html#wayland-focus-steal">wayland-focus-steal</a> 。
+
+- 数据控制协议在你的系统上可用，如 ext 或 wlr 协议，那么也同时支持主选择区。除
+  非你使用了 wlr-data-control 协议版本 1 (这不同于协议名里的 'v1')。此时使用主
+  选择区协议作为后备。
+
+                                        <b class="vimtag"> <a name="wayland-focus-steal">wayland-focus-steal</a> </b> <b class="vimtag"> <a name="wayland-gnome">wayland-gnome</a> </b>
+如果你使用了 Wayland 上 的 GNOME 桌面环境，直至此文撰写时，还没有用于像 Vim 这
+样的外部客户端在没有获得焦点的情况下访问/修改剪贴板的方法。这里的焦点代表客户
+端得到某种输入事件，如窗口得到焦点时。这是 wlr-data-control-unstable-v1 和
+ext-data-control-v1 这些协议要解决的问题。如果你的 Wayland 合成器不支持以上协
+议，那么适用上面的描述。
+
+要解决此问题，Vim 实现了一种获取焦点的方法，通过创建临时的透明顶层表面
+(surface) 以访问剪贴板。此方法缺省关闭，但可用 <a href="options.html#'wlsteal'">'wlsteal'</a> 选项打开。此外，也需
+要有键盘的座位 (seat)，见 <a href="options.html#'wlseat'">'wlseat'</a>，且 xdg-shell 协议必须可用。
+
+<code class="note">注意</code> 此方法因为盗取焦点，有若干副作用。例如，如果你的桌面环境有显示当前打开应
+用的任务栏，在 Vim 试图盗取焦点时，会 "闪烁"，就像窗口打开然后立即关闭的效果。
+另外，全屏模式下焦点盗取不可用，因为创建的表面无法得到焦点。这种情况发生时，
+Vim 会看来暂时被冻结了，详见 <a href="options.html#'wltimeoutlen'">'wltimeoutlen'</a>。
+
+ vim:tw=78:ts=8:noet:ft=help:norl
+
+</section>
+</article>
+<footer>
+Generated by vim2html
+</footer>
+</body>
+</html>
