@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="autocmd.txt">autocmd.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年6月
+<b class="vimtag"> <a name="autocmd.txt">autocmd.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -512,6 +512,7 @@ BufUnload                       缓冲区卸载前。此时，缓冲区里的文
                                 即将退出时，每个载入的缓冲区也会收到该事件。
                                 <code class="note">注意</code>: 执行此自动命令时，当前缓冲区 "%" 可能会
                                 和被卸载的缓冲区 "<code class="special">&lt;afile&gt;</code>" 不同。
+                                                                <b class="vimtag"> <a name="E1546">E1546</a> </b>
                                 此处不可切换到其它缓冲区或窗口，否则会引起问
                                 题。
                                 退出时如果 v:dying 至少为 2，不触发此事件。
@@ -585,6 +586,8 @@ CmdlineLeave                    离开命令行前。也用于按 <code class="k
                                 此处命令出错时，命令行本身依旧执行。
                                 <code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的类型。
                                  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
+                                 <a href="eval.html#v:char">v:char</a>  设为使命令行退出的键值 (如 <code class="special">&lt;CR&gt;</code>、
+                                &lt;<code class="keystroke">CTRL-C</code>&gt;、<code class="special">&lt;Esc&gt;</code>)。
                                                         <b class="vimtag"> <a name="CmdlineLeavePre">CmdlineLeavePre</a> </b>
 CmdlineLeavePre                 刚要离开命令行前，在  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a>  之前。可用
                                 于通过  <a href="builtin.html#cmdcomplete_info()">cmdcomplete_info()</a>  捕捉补全信息，因为
@@ -593,6 +596,7 @@ CmdlineLeavePre                 刚要离开命令行前，在  <a href="autocmd
                                  <a href="map.html#%3CCmd%3E">&lt;Cmd&gt;</a>  时。按 <code class="keystroke">CTRL-C</code> 或 <code class="special">&lt;Esc&gt;</code> 之后放弃命令行
                                 时也会触发。<code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的
                                 类型。详见  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 。
+                                 <a href="eval.html#v:char">v:char</a>  的设置值同  <a href="autocmd.html#CmdlineLeave">CmdlineLeave</a> 。
                                                         <b class="vimtag"> <a name="CmdwinEnter">CmdwinEnter</a> </b>
 CmdwinEnter                     进入命令行窗口后。可用来对此特殊类型的窗口进行
                                 设置。
@@ -1091,22 +1095,27 @@ TermResponse                    收到终端对  <a href="term.html#t_RV">t_RV</
                                 是在文件 I/O，外壳命令等耗时的操作进行时尤有可
                                 能。
                                                         <b class="vimtag"> <a name="TermResponseAll">TermResponseAll</a> </b>
-TermResponseAll                 收到终端对  <a href="term.html#t_RV">t_RV</a> 、 <a href="term.html#t_RC">t_RC</a> 、 <a href="term.html#t_RS">t_RS</a> 、 <a href="term.html#t_RB">t_RB</a> 、
-                                 <a href="term.html#t_RF">t_RF</a> 、或  <a href="term.html#t_u7">t_u7</a>  的应答后。
-                                分别可用  <a href="eval.html#v:termresponse">v:termresponse</a> 、 <a href="eval.html#v:termblinkresp">v:termblinkresp</a> 、
-                                 <a href="eval.html#v:termstyleresp">v:termstyleresp</a> 、 <a href="eval.html#v:termrbgresp">v:termrbgresp</a> 、
-                                 <a href="eval.html#v:termrfgresp">v:termrfgresp</a>  和  <a href="eval.html#v:termu7resp">v:termu7resp</a>  的值获取应
-                                答。
+TermResponseAll                 收到终端对  <a href="term.html#t_RV">t_RV</a> 、 <a href="term.html#t_RC">t_RC</a> 、 <a href="term.html#t_RS">t_RS</a> 、 <a href="term.html#t_u7">t_u7</a>  或任
+                                何 OSC 命令的应答后。分别可用
+                                 <a href="eval.html#v:termresponse">v:termresponse</a> 、 <a href="eval.html#v:termblinkresp">v:termblinkresp</a> 、
+                                 <a href="eval.html#v:termstyleresp">v:termstyleresp</a> 、 <a href="eval.html#v:termu7resp">v:termu7resp</a>  和
+                                 <a href="eval.html#v:termosc">v:termosc</a>  的值获取应答。
                                 <code class="special">&lt;amatch&gt;</code> 会被设为以下各值之一:
                                     "version"、
                                     "cursorblink"、
                                     "cursorshape"、
-                                    "background"、
-                                    "foreground"、
-                                    "ambiguouswidth"
+                                    "ambiguouswidth"、
+                                    "osc"
                                 <code class="note">注意</code> 本事件可能在另一事件执行半途中激发，特别
                                 是在文件 I/O，外壳命令等耗时的操作进行时尤有可
                                 能。
+                                <code class="note">注意</code>: 传统上 TermResponseAll 也用于
+                                "foreground" 和 "background" 模式。它们现在视
+                                为 "osc" 值的一部分被处理。为了后向兼容，
+                                $VIMRUNTIME/plugin/colorresp.vim 插件在碰到
+                                "foreground" 和 "background" 值时，会处理
+                                "osc" 事件并触发 TermResponseAll 自动命令事
+                                件。
                                                         <b class="vimtag"> <a name="TextChanged">TextChanged</a> </b>
 TextChanged                     普通模式修改当前缓冲区文本之后。即
                                  <a href="eval.html#b:changedtick">b:changedtick</a>  改变 (TextChanged 自动命令定义

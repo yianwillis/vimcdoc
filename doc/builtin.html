@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>      适用于 Vim 9.1 版本。        最近更新: 2025年6月
+<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>      适用于 Vim 9.1 版本。        最近更新: 2025年9月
 
 内建函数                                        <b class="vimtag"> <a name="builtin-functions">builtin-functions</a> </b>
 
@@ -274,6 +274,7 @@ getcmdtype()                    字符串  返回当前命令行类型
 getcmdwintype()                 字符串  返回当前命令行窗口类型
 getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</code> [, <code class="special">{filtered}</code>])
                                 列表    命令行补全匹配列表
+getcompletiontype(<code class="special">{pat}</code>)        字符串  返回用 <code class="special">{pat}</code> 时命令行补全的类型
 getcurpos([<code class="special">{winnr}</code>])            列表    光标位置
 getcursorcharpos([<code class="special">{winnr}</code>])     列表    光标的字符位置
 getcwd([<code class="special">{winnr}</code> [, <code class="special">{tabnr}</code>]])   字符串  当前工作目录
@@ -366,7 +367,7 @@ isdirectory(<code class="special">{directory}</code>)        数值    如果 <c
 islocked(<code class="special">{expr}</code>)                数值    如果 <code class="special">{expr}</code> 被锁住则为  <a href="eval.html#TRUE">TRUE</a> 
 isinf(<code class="special">{expr}</code>)                   数值    决定 <code class="special">{expr}</code> 是否为无限大 (正或负)
 isnan(<code class="special">{expr}</code>)                   数值    如果 <code class="special">{expr}</code> 为 NaN 则为  <a href="eval.html#TRUE">TRUE</a> 
-items(<code class="special">{dict}</code>)                   列表    <code class="special">{dict}</code> 里的键-值组对
+items(<code class="special">{expr}</code>)                   列表    <code class="special">{expr}</code> 里的键/索引-值组对
 job_getchannel(<code class="special">{job}</code>)           通道    获取 <code class="special">{job}</code> 的通道句柄
 job_info([<code class="special">{job}</code>])               字典    获取 <code class="special">{job}</code> 的信息
 job_setoptions(<code class="special">{job}</code>, <code class="special">{options}</code>) 无     设置 <code class="special">{job}</code> 选项
@@ -768,6 +769,8 @@ undofile(<code class="special">{name}</code>)                字符串  对应 <
 undotree([<code class="special">{buf}</code>])               列表    撤销缓冲区 <code class="special">{buf}</code> 的文件树
 uniq(<code class="special">{list}</code> [, <code class="special">{func}</code> [, <code class="special">{dict}</code>]])
                                 列表    从列表中删除相邻的重复项
+uri_decode(<code class="special">{string}</code>)            字符串  URI-解码字符串
+uri_encode(<code class="special">{string}</code>)            字符串  URI-编码字符串
 utf16idx(<code class="special">{string}</code>, <code class="special">{idx}</code> [, <code class="special">{countcc}</code> [, <code class="special">{charidx}</code>]])
                                 数值    <code class="special">{string}</code> 里 <code class="special">{idx}</code> 字节的 UTF-16 索引
 values(<code class="special">{dict}</code>)                  列表    <code class="special">{dict}</code> 的所有值
@@ -778,6 +781,7 @@ virtcol2col(<code class="special">{winid}</code>, <code class="special">{lnum}</
                                 数值    屏幕上字符的字节索引
 visualmode([<code class="special">{expr}</code>])            字符串  最近使用的可视模式
 wildmenumode()                  数值    <a href="options.html#'wildmenu'">'wildmenu'</a> 模式是否激活
+wildtrigger()                   数值    开始通配扩展
 win_execute(<code class="special">{id}</code>, <code class="special">{command}</code> [, <code class="special">{silent}</code>])
                                 字符串  在窗口 <code class="special">{id}</code> 执行 <code class="special">{command}</code>
 win_findbuf(<code class="special">{bufnr}</code>)            列表    寻找包含 <code class="special">{bufnr}</code> 的窗口
@@ -1241,7 +1245,7 @@ base64_encode(<code class="special">{blob}</code>)                              
 <code class="example">                    " 对二进制文件内容进行编码</code>
 <code class="example">                    echo base64_encode(readblob('somefile.bin'))</code>
 <code class="example">                    " 对字符串进行编码</code>
-<code class="example">                    echo base64_encode(str2blob([somestr]))</code>
+<code class="example">                    echo base64_encode(str2blob(somestr-&gt;split("\n")))</code>
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetBinaryData()-&gt;base64_encode()</code>
@@ -1690,14 +1694,21 @@ charidx(<code class="special">{string}</code>, <code class="special">{idx}</code
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
-chdir(<code class="special">{dir}</code>)                                            <b class="vimtag"> <a name="chdir()">chdir()</a> </b>
-                切换当前工作目录为 <code class="special">{dir}</code>。目录改变的作用域取决于当前窗口的目
-                录:
-                        - 如果当然窗口有局部于窗口的目录 ( <a href="editing.html#:lcd">:lcd</a> )，则改变局部
-                          于窗口的目录。
-                        - 否则，如果当前标签页有局部目录 ( <a href="editing.html#:tcd">:tcd</a> )，则改变局部
-                          于标签页的目录。
-                        - 否则，返回全局目录。
+chdir(<code class="special">{dir}</code> [, <code class="special">{scope}</code>])                                <b class="vimtag"> <a name="chdir()">chdir()</a> </b>
+                切换当前工作目录为 <code class="special">{dir}</code>。目录改变的作用域见下:
+                如果没给出 <code class="special">{scope}</code>，在当前目录的作用域里切换当前工作目录:
+                    - 如果设置了局部于窗口的目录 ( <a href="editing.html#:lcd">:lcd</a> )，则在该作用域里改变
+                      当前工作目录。
+                    - 否则，如果设置了局部于标签页的目录 ( <a href="editing.html#:tcd">:tcd</a> )，则在该作用
+                      域里改变当前工作目录。
+                    - 否则，改变全局目录。
+
+                如果给出 <code class="special">{scope}</code>，为下面指定的作用域改变当前工作目录:
+                    "window"    改变窗口局部目录。 <a href="editing.html#:lcd">:lcd</a> 
+                    "tabpage"   改变标签页局部目录。 <a href="editing.html#:tcd">:tcd</a> 
+                    "global"    改变全局目录。 <a href="editing.html#:cd">:cd</a> 
+
+                <code class="special">{dir}</code> 必须为字符串。
                 如果成功，返回上次的工作目录。把它传给另一个 chdir() 会恢复上
                 次目录。
                 如果失败，返回空串。
@@ -2255,8 +2266,8 @@ diff(<code class="special">{fromlist}</code>, <code class="special">{tolist}</co
                     iwhiteeol           忽略行尾空白字符的更改。
                 这些选项的更多信息详见 <a href="options.html#'diffopt'">'diffopt'</a>。
 
-                为了计算合并风格的 diff，用换行符连接 <code class="special">{fromlist}</code> 里的所有项目，
-                然后对 <code class="special">{tolist}</code> 同样处理。合并风格的 diff 输出使用行号。
+                为了计算合并风格的 diff，用换行符连接 <code class="special">{fromlist}</code> 里的所有项
+                目，然后对 <code class="special">{tolist}</code> 同样处理。合并风格的 diff 输出使用行号。
 
                 如果 <code class="special">{fromlist}</code> 和 <code class="special">{tolist}</code> 等同，返回空列表或空串。
 
@@ -3593,9 +3604,9 @@ getcellpixels()                                         <b class="vimtag"> <a na
 
                 仅对 Unix (终端和 gVim) 和 Windows (仅 gVim) 有效。
                 其他系统返回 [] 或报错。
-                <code class="note">注意</code> 不同终端可能会有变种。macOS 上系统的 Terminal.app 返回的尺
-                寸以点 (point) 计 (在视网膜缩放之前)，而第三方终端返回原始像素
-                尺寸 (在视网膜缩放之后)。
+                <code class="note">注意</code> 不同终端可能会有变种。macOS 上系统的 Terminal.app 返回的
+                尺寸以点 (point) 计 (在视网膜缩放之前)，而第三方终端返回原始像
+                素尺寸 (在视网膜缩放之后)。
 
                 返回类型: list<code class="special">&lt;any&gt;</code>
 
@@ -3795,6 +3806,9 @@ getcmdcompltype()                                       <b class="vimtag"> <a na
                  <a href="builtin.html#getcmdprompt()">getcmdprompt()</a> 、 <a href="builtin.html#getcmdcomplpat()">getcmdcomplpat()</a>  或  <a href="builtin.html#setcmdline()">setcmdline()</a> 。
                 如果没有定义补全，返回空串。
 
+                要获取为指定字符串所使用的命令行补全的类型，可用
+                 <a href="builtin.html#getcompletiontype()">getcompletiontype()</a> 。
+
                 返回类型:  <a href="eval.html#String">String</a> 
 
 
@@ -3886,13 +3900,13 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
                 customlist,<code class="special">{func}</code> <code class="special">{func}</code> 定义的定制补全
                 diff_buffer      <a href="diff.html#:diffget">:diffget</a>  和  <a href="diff.html#:diffput">:diffput</a>  补全
                 dir             目录名
-                dir_in_path      <a href="options.html#'cdpath'">'cdpath'</a>  里的目录名
+                dir_in_path     <a href="options.html#'cdpath'">'cdpath'</a> 里的目录名
                 environment     环境变量名
                 event           自动命令事件
                 expression      Vim 表达式
                 file            文件和目录名
-                file_in_path     <a href="options.html#'path'">'path'</a>  中的文件和目录名
-                filetype        文件类型名  <a href="options.html#'filetype'">'filetype'</a> 
+                file_in_path    <a href="options.html#'path'">'path'</a> 中的文件和目录名
+                filetype        文件类型名 <a href="options.html#'filetype'">'filetype'</a>
                 filetypecmd      <a href="filetype.html#:filetype">:filetype</a>  子选项
                 function        函数名
                 help            帮助主题
@@ -3906,11 +3920,12 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
                 messages         <a href="message.html#:messages">:messages</a>  子选项
                 option          选项
                 packadd         可选包  <a href="repeat.html#pack-add">pack-add</a>  名
+                retab            <a href="change.html#:retab">:retab</a>  子选项
                 scriptnames     执行过的脚本名  <a href="repeat.html#:scriptnames">:scriptnames</a> 
                 shellcmd        外壳命令
                 shellcmdline    带文件名参数的外壳命令行
                 sign             <a href="sign.html#:sign">:sign</a>  子选项
-                syntax          语法文件名  <a href="options.html#'syntax'">'syntax'</a> 
+                syntax          语法文件名 <a href="options.html#'syntax'">'syntax'</a>
                 syntime          <a href="syntax.html#:syntime">:syntime</a>  子选项
                 tag             标签
                 tag_listfiles   标签、文件名
@@ -3936,6 +3951,13 @@ getcompletion(<code class="special">{pat}</code>, <code class="special">{type}</
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetPattern()-&gt;getcompletion('color')</code>
+
+                返回类型: list<code class="special">&lt;string&gt;</code>
+
+getcompletiontype(<code class="special">{pat}</code>)                                <b class="vimtag"> <a name="getcompletiontype()">getcompletiontype()</a> </b>
+                返回 <code class="special">{pat}</code> 使用的命令补全的类型。如果找不到对应的补全类型，返
+                回空串。
+                要得到当前命令行补全类型，可用  <a href="builtin.html#getcmdcompltype()">getcmdcompltype()</a> 。
 
                 返回类型: list<code class="special">&lt;string&gt;</code>
 
@@ -5582,19 +5604,27 @@ isnan(<code class="special">{expr}</code>)                                      
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
-items(<code class="special">{dict}</code>)                                           <b class="vimtag"> <a name="items()">items()</a> </b>
-                返回  <a href="eval.html#List">List</a> ，<code class="special">{dict}</code> 的所有键-值组对。每个  <a href="eval.html#List">List</a>  项目是两个项
-                目的列表: <code class="special">{dict}</code> 项目的键和此项目的值。 <a href="eval.html#List">List</a>  项目的顺序不定。
+items(<code class="special">{expr}</code>)                                           <b class="vimtag"> <a name="items()">items()</a> </b>
+                返回  <a href="eval.html#List">List</a> ，<code class="special">{expr}</code> 的所有键/索引-值组对。每个  <a href="eval.html#List">List</a>  项目是两
+                个项目的列表:
+                - 对  <a href="eval.html#Dict">Dict</a>  而言: 键和值
+                - 对  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Blob">Blob</a>  和  <a href="eval.html#String">String</a>  而言：索引和值
+                对  <a href="eval.html#Dict">Dict</a>  而言，返回的  <a href="eval.html#List">List</a>  项目的顺序不定。否则，依索引值升
+                序排序。
+
                 另见  <a href="builtin.html#keys()">keys()</a>  和  <a href="builtin.html#values()">values()</a> 。
+
                 示例: 
+<code class="example">                        let mydict = #{a: 'red', b: 'blue'}</code>
 <code class="example">                        for [key, value] in items(mydict)</code>
-<code class="example">                           echo key .. ': ' .. value</code>
+<code class="example">                           echo $"{key} = {value}"</code>
 <code class="example">                        endfor</code>
+<code class="example">                        echo items([1, 2, 3])</code>
+<code class="example">                        echo items(('a', 'b', 'c'))</code>
+<code class="example">                        echo items("foobar")</code>
+<code class="example">                        echo items(0z0102)</code>
 
-                也支持  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a>  或  <a href="eval.html#String">String</a>  参数。此时 items() 返回包含
-                索引和索引对应值的列表。
-
-&lt;               也可用作  <a href="eval.html#method">method</a> : 
+                也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mydict-&gt;items()</code>
 
                 返回类型: list&lt;list<code class="special">&lt;any&gt;</code>&gt; 或 list<code class="special">&lt;any&gt;</code>
@@ -6479,14 +6509,16 @@ matchbufline(<code class="special">{buf}</code>, <code class="special">{pat}</co
 <code class="example">                    [{'lnum': 3, 'byteidx': 0, 'text': 'a'}]</code>
 <code class="example">                    " 假定缓冲区 10 第 4 行包含了 "tik tok"</code>
 <code class="example">                    :echo matchbufline(10, '\&lt;\k\+\&gt;', 1, 4)</code>
-<code class="example">                    [{'lnum': 4, 'byteidx': 0, 'text': 'tik'}, {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]</code>
+<code class="example">                    [{'lnum': 4, 'byteidx': 0, 'text': 'tik'},</code>
+<code class="example">                     {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]</code>
 
                 如果给出 <code class="special">{submatch}</code> 且为 v:true，同时返回 "\1"、"\2" 等的子表
                 达式。例如: 
 <code class="example">                    " 假定缓冲区 2 第 2 行包含了 "acd"</code>
 <code class="example">                    :echo matchbufline(2, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2, 2</code>
 <code class="example">                                                \ {'submatches': v:true})</code>
-<code class="example">                    [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]</code>
+<code class="example">                    [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches':</code>
+<code class="example">                    ['a', '', 'c', 'd', '', '', '', '', '']}]</code>
                 "submatches" 列表永远包含 9 个项目。如果没找到某子表达式，对应
                 位置返回空串。
 
@@ -6539,8 +6571,6 @@ matchfuzzy(<code class="special">{list}</code>, <code class="special">{str}</cod
                     matchseq    如果此项目存在，只返回按照 <code class="special">{str}</code> 里字符的出现
                                 顺序的匹配。
                     limit       <code class="special">{list}</code> 里返回的最大匹配数。零代表没有限制。
-                    camelcase   使用增强驼峰式计分，使结果更适合和程序语言相关
-                                的补全。缺省为 v:true。
 
                 如果 <code class="special">{list}</code> 为字典列表，则可选的 <code class="special">{dict}</code> 参数还支持以下项目:
                     key         用于模糊匹配 <code class="special">{str}</code> 项目的键。该项目值必须为字
@@ -6600,7 +6630,8 @@ matchfuzzypos(<code class="special">{list}</code>, <code class="special">{str}</
                 返回 [[<code class="badlink">'testing'</code>], [[0, 2, 6]], <code class="special">[99]</code>] 
 <code class="example">                        :echo matchfuzzypos(['clay', 'lacy'], 'la')</code>
                 返回 [[<code class="badlink">'lacy'</code>, <code class="badlink">'clay'</code>], [[0, 1], [1, 2]], [153, 133]] 
-<code class="example">                        :echo [{'text': 'hello', 'id' : 10}]-&gt;matchfuzzypos('ll', {'key' : 'text'})</code>
+<code class="example">                        :echo [{'text': 'hello', 'id' : 10}]</code>
+<code class="example">                          \ -&gt;matchfuzzypos('ll', {'key' : 'text'})</code>
                 返回 [[{<code class="badlink">'id'</code>: 10, <code class="badlink">'text'</code>: <code class="badlink">'hello'</code>}], [[2, 3]], <code class="special">[127]</code>]
 
                 返回类型: list&lt;list<code class="special">&lt;any&gt;</code>&gt;
@@ -6641,15 +6672,18 @@ matchstrlist(<code class="special">{list}</code>, <code class="special">{pat}</c
 
                 示例: 
 <code class="example">                    :echo matchstrlist(['tik tok'], '\&lt;\k\+\&gt;')</code>
-<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'tik'}, {'idx': 0, 'byteidx': 4, 'text': 'tok'}]</code>
+<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'tik'},</code>
+<code class="example">                     {'idx': 0, 'byteidx': 4, 'text': 'tok'}]</code>
 <code class="example">                    :echo matchstrlist(['a', 'b'], '\&lt;\k\+\&gt;')</code>
-<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'a'}, {'idx': 1, 'byteidx': 0, 'text': 'b'}]</code>
+<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'a'},</code>
+<code class="example">                     {'idx': 1, 'byteidx': 0, 'text': 'b'}]</code>
 
                 如果给出 <code class="special">{submatch}</code> 且为 v:true，同时返回 "\1"、"\2" 等的子表
                 达式。例如: 
 <code class="example">                    :echo matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)',</code>
 <code class="example">                                                \ #{submatches: v:true})</code>
-<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]</code>
+<code class="example">                    [{'idx': 0, 'byteidx': 0, 'text': 'acd',</code>
+<code class="example">                      'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]</code>
                 "submatches" 列表永远包含 9 个项目。如果没找到某子表达式，对应
                 位置返回空串。
 
@@ -6713,7 +6747,7 @@ max(<code class="special">{expr}</code>)                                        
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mylist-&gt;max()</code>
 
-                返回类型:  <a href="eval.html#Number">Number</a> 
+                返回类型: any，取决于 <code class="special">{expr}</code>
 
 
 menu_info(<code class="special">{name}</code> [, <code class="special">{mode}</code>])                            <b class="vimtag"> <a name="menu_info()">menu_info()</a> </b>
@@ -6796,7 +6830,7 @@ min(<code class="special">{expr}</code>)                                        
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        mylist-&gt;min()</code>
 
-                返回类型:  <a href="eval.html#Number">Number</a> 
+                返回类型: any，取决于 <code class="special">{expr}</code>
 
 
 mkdir(<code class="special">{name}</code> [, <code class="special">{flags}</code> [, <code class="special">{prot}</code>]])                    <b class="vimtag"> <a name="mkdir()">mkdir()</a> </b> <b class="vimtag"> <a name="E739">E739</a> </b>
@@ -7882,8 +7916,8 @@ remote_send(<code class="special">{server}</code>, <code class="special">{string
 
                 <code class="note">注意</code>: 任何错误会在服务器端报告，从而影响那里的显示。
                 例如: 
-<code class="example">                :echo remote_send("gvim", ":DropAndReply " .. file, "serverid") ..</code>
-<code class="example">                 \ remote_read(serverid)</code>
+<code class="example">                :echo remote_send("gvim", ":DropAndReply " .. file,</code>
+<code class="example">                 \ "serverid") .. remote_read(serverid)</code>
 <code class="example"></code>
 <code class="example">                :autocmd NONE RemoteReply *</code>
 <code class="example">                 \ echo remote_read(expand("&lt;amatch&gt;"))</code>
@@ -8259,11 +8293,12 @@ searchcount([<code class="special">{options}</code>])                           
                 <code class="special">{options}</code> 见下。
 
                 要取得最近一次按下  <a href="pattern.html#n">n</a>  或  <a href="pattern.html#N">N</a>  时的搜索计数，调用此函数，并带上
-                `recompute: 0`。有时，因为  <a href="pattern.html#n">n</a>  和  <a href="pattern.html#N">N</a>  的最大计数为 99，这会返
-                回错误的信息。如果超过 99，结果必是最大计数 + 1 (100)。如果要
-                得到正确的信息，指定 `recompute: 1`: 
+                `recompute: 0`。有时，因为 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a>，这会返回错误的信
+                息。如果计数超过 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a>，结果必是
+                <a href="options.html#'maxsearchcount'">'maxsearchcount'</a> + 1。如果要得到正确的信息，指定
+                `recompute: 1`: 
 <code class="example"></code>
-<code class="example">                        " result == 最大计数 + 1 (100) 如果有很多匹配</code>
+<code class="example">                        " result == 'maxsearchcount' + 1 如果有很多匹配</code>
 <code class="example">                        let result = searchcount(#{recompute: 0})</code>
 <code class="example"></code>
 <code class="example">                        " 以下则返回正确结果 (recompute 缺省为 1)</code>
@@ -8341,7 +8376,7 @@ searchcount([<code class="special">{options}</code>])                           
                                                 算时匹配文本的最大计数。如果搜
                                                 索超过总数，"total" 值成为
                                                 `maxcount + 1`
-                                                (缺省: 99)
+                                                (缺省: <a href="options.html#'maxsearchcount'">'maxsearchcount'</a>)
                   pos            <a href="eval.html#List">List</a>           重计算结果时的
                                                 `[lnum, col, off]` 值。
                                                 这会改变 "current" 返回值。见
@@ -9835,7 +9870,7 @@ strridx(<code class="special">{haystack}</code>, <code class="special">{needle}<
 
 strtrans(<code class="special">{string}</code>)                                      <b class="vimtag"> <a name="strtrans()">strtrans()</a> </b>
                 返回等于 <code class="special">{string}</code> 的字符串，但所有的不可显示字符被翻译成可显示
-                的字符序列  <a href="options.html#'isprint'">'isprint'</a> ，类似于窗口里显示的形式。例如: 
+                的字符序列 <a href="options.html#'isprint'">'isprint'</a>，类似于窗口里显示的形式。例如: 
 <code class="example">                        echo strtrans(@a)</code>
                 会显示寄存器里的换行符为 "^@" 而不是开启新行。
 
@@ -10289,8 +10324,8 @@ taglist(<code class="special">{expr}</code> [, <code class="special">{filename}<
                 函数的工作速度。
                 关于标签搜索正则表达式模式的详情见  <a href="tagsrch.html#tag-regexp">tag-regexp</a> 。
 
-                 <a href="options.html#'tags'">'tags'</a>  提供 Vim 如何定位标签文件的信息。 <a href="tagsrch.html#tags-file-format">tags-file-format</a> 
-                说明不同的 ctags 工具生成的标签文件的格式。
+                <a href="options.html#'tags'">'tags'</a> 提供 Vim 如何定位标签文件的信息。 <a href="tagsrch.html#tags-file-format">tags-file-format</a>  说
+                明不同的 ctags 工具生成的标签文件的格式。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetTagpattern()-&gt;taglist()</code>
@@ -10654,7 +10689,8 @@ undofile(<code class="special">{name}</code>)                                   
 
 
 undotree([<code class="special">{buf}</code>])                                       <b class="vimtag"> <a name="undotree()">undotree()</a> </b>
-                返回当前缓冲区或 <code class="special">{buf}</code> 给出时所指定的缓冲区的撤销树的当前状态。
+                返回当前缓冲区或 <code class="special">{buf}</code> 给出时所指定的缓冲区的撤销树的当前状
+                态。
                 返回值是包含以下项目的  <a href="eval.html#Dictionary">Dictionary</a> :
                   "seq_last"    最大使用的撤销序列号。
                   "seq_cur"     撤销树中当前位置的序列号。如果有撤销过的改变，
@@ -10701,6 +10737,54 @@ uniq(<code class="special">{list}</code> [, <code class="special">{func}</code> 
 
                 返回类型: list&lt;<code class="special">{type}</code>&gt;
 
+
+uri_decode(<code class="special">{string}</code>)                                    <b class="vimtag"> <a name="uri_decode()">uri_decode()</a> </b>
+                返回 <code class="special">{string}</code> 的 URI 解码形式。逆转百分号编码 (把 "%3D" 这样的
+                序列还原为对应的字符)。
+
+                解码遵循如下标准的百分符解码规则:
+                    - "%HH" 被替换为十六进制 HH 对应的字符。
+                    - 如果解码的字节序列构成合法的 UTF-8，合并为对应的字符。否
+                      则，保留原先的字节序列。
+                    - 非法或不完整的编码 (如 "%GZ"、"%3" 或拖尾的 "%") 保持不
+                      变。
+
+                <code class="special">{string}</code> 为空时返回空串。
+
+                示例: 
+<code class="example">                        :echo uri_decode('c%3A%5Cmy%5Cdir%5Cfoo%20bar')</code>
+<code class="example">                        c:\my\dir\foo bar</code>
+<code class="example">                        :echo uri_decode('%CE%B1%CE%B2%CE%B3')</code>
+<code class="example">                        αβγ</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        mystr-&gt;uri_decode()</code>
+
+                Return type:  <a href="eval.html#String">String</a> 
+
+uri_encode(<code class="special">{string}</code>)                                    <b class="vimtag"> <a name="uri_encode()">uri_encode()</a> </b>
+                返回 <code class="special">{string}</code> 的 URI 编码形式。URI 编码把不安全或保留的字符替
+                换为百分号编码的序列。
+
+                编码遵循如下标准的百分符编码规则:
+                    - 字母数字字符 [0-9A-Za-z] 保持不变。
+                    - "-"、"_"、"." 和 "~" 也保持不变。
+                    - 所有其它字符被替换为 "%HH"，其中的 HH 是两位大写十六进制
+                      数字。
+                    - 已有的百分符编码序列不作修改。
+
+                <code class="special">{string}</code> 为空时返回空串。
+
+                示例: 
+<code class="example">                        :echo uri_encode('c:\my\dir\foo bar')</code>
+<code class="example">                        c%3A%5Cmy%5Cdir%5Cfoo%20bar</code>
+<code class="example">                        :echo uri_encode('key=value&amp;name=αβγ')</code>
+<code class="example">                        key%3Dvalue%26name%3D%CE%B1%CE%B2%CE%B3</code>
+
+                也可用作  <a href="eval.html#method">method</a> : 
+<code class="example">                        mystr-&gt;uri_encode()</code>
+
+                返回类型:  <a href="eval.html#String">String</a> 
 
                                                         <b class="vimtag"> <a name="utf16idx()">utf16idx()</a> </b>
 utf16idx(<code class="special">{string}</code>, <code class="special">{idx}</code> [, <code class="special">{countcc}</code> [, <code class="special">{charidx}</code>]])
@@ -10762,7 +10846,7 @@ virtcol(<code class="special">{expr}</code> [, <code class="special">{list}</cod
                 如果使用 <a href="options.html#'virtualedit'">'virtualedit'</a>，<code class="special">{expr}</code> 可以用 [lnum, col, off]，其中
                 "off" 是字符位置开始计算的屏幕列。例如，制表中或最后一个字符之
                 后的某个位置。"off" 若省略，则假定为零。如果在当前模式下使用了
-                虚拟编辑，也可能返回行尾之后的位置。另见  <a href="options.html#'virtualedit'">'virtualedit'</a> 
+                虚拟编辑，也可能返回行尾之后的位置。另见 <a href="options.html#'virtualedit'">'virtualedit'</a>
 
                 <code class="special">{list}</code> 如果存在且非零，virtcol() 返回字符占据的首个和末个屏幕
                 位置组成的列表。
@@ -10846,6 +10930,34 @@ wildmenumode()                                  <b class="vimtag"> <a name="wild
                 (<code class="note">备注</code>: 这需要 <a href="options.html#'wildcharm'">'wildcharm'</a> 合适的设置配合)。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
+
+
+wildtrigger()                                           <b class="vimtag"> <a name="wildtrigger()">wildtrigger()</a> </b>
+                启动命令行上的通配扩展，其行为应用 <a href="options.html#'wildmode'">'wildmode'</a> 和 <a href="options.html#'wildoptions'">'wildoptions'</a>
+                设置的定义。见  <a href="cmdline.html#cmdline-completion">cmdline-completion</a> 。
+
+                此函数也打开搜索模式的补全，如  <a href="pattern.html#%2F">/</a> 、 <a href="pattern.html#?">?</a> 、 <a href="change.html#:s">:s</a> 、 <a href="repeat.html#:g">:g</a> 、 <a href="repeat.html#:v">:v</a>  和
+                 <a href="quickfix.html#:vimgrep">:vimgrep</a> 。
+
+                不像手动按 <a href="options.html#'wildchar'">'wildchar'</a> 那样，此函数在找不到匹配时不响铃，一般而
+                言操作会更安静。这样更适合补全的自动触发，如在  <a href="autocmd.html#:autocmd">:autocmd</a>  里的
+                情形。
+                                                <b class="vimtag"> <a name="cmdline-autocompletion">cmdline-autocompletion</a> </b>
+                示例: 要在命令行上键入时自动弹出补全菜单，可用: 
+<code class="example">                        autocmd CmdlineChanged [:/\?] call wildtrigger()</code>
+<code class="example">                        set wildmode=noselect:lastused,full wildoptions=pum</code>
+
+                要保留正常的历史导航 (上/下键): 
+<code class="example">                        cnoremap &lt;Up&gt;   &lt;C-U&gt;&lt;Up&gt;</code>
+<code class="example">                        cnoremap &lt;Down&gt; &lt;C-U&gt;&lt;Down&gt;</code>
+
+                要为搜索时特别设置选项，如要设置 <a href="options.html#'pumheight'">'pumheight'</a>: 
+<code class="example">                        autocmd CmdlineEnter [/\?] set pumheight=8</code>
+<code class="example">                        autocmd CmdlineLeave [/\?] set pumheight&amp;</code>
+
+                返回值永远是 0。
+
+                返回类型: <a href="eval.html#Number">Number</a> 
 
 
 win_execute(<code class="special">{id}</code>, <code class="special">{command}</code> [, <code class="special">{silent}</code>])               <b class="vimtag"> <a name="win_execute()">win_execute()</a> </b>
@@ -11324,12 +11436,12 @@ clipboard_working       编译时加入了 <a href="options.html#'clipboard'">'c
 cmdline_compl           编译时加入了  <a href="cmdline.html#cmdline-completion">cmdline-completion</a>  的支持。
 cmdline_hist            编译时加入了  <a href="cmdline.html#cmdline-history">cmdline-history</a>  的支持。
 cmdline_info            编译时加入了 <a href="options.html#'showcmd'">'showcmd'</a> 和 <a href="options.html#'ruler'">'ruler'</a> 的支持。
-comments                编译时加入了  <a href="options.html#'comments'">'comments'</a>  的支持。
+comments                编译时加入了 <a href="options.html#'comments'">'comments'</a> 的支持。
 compatible              编译时确保和 Vi 非常兼容。
 conpty                   <a href="terminal.html#ConPTY">ConPTY</a>  可用的平台。
 cryptv                  编译时加入了加密的支持。 <a href="editing.html#encryption">encryption</a> 。
 cscope                  编译时加入了  <a href="if_cscop.html#cscope">cscope</a>  的支持。
-cursorbind              编译时加入了  <a href="options.html#'cursorbind'">'cursorbind'</a>  的支持 (总为真)
+cursorbind              编译时加入了 <a href="options.html#'cursorbind'">'cursorbind'</a> 的支持 (总为真)
 debug                   编译时定义了 "DEBUG"。
 dialog_con              编译时加入了控制台对话框的支持。
 dialog_con_gui          编译时加入了控制台和 GUI 对话框的支持。
@@ -11343,7 +11455,7 @@ ebcdic                  在使用 ebcdic 字符集的机器上编译。
 emacs_tags              编译时加入了 Emcac 标签的支持。
 eval                    编译时加入了表达式计算的支持。当然总要打开啦！
 ex_extra                 <a href="various.html#+ex_extra">+ex_extra</a>  (总为真)
-extra_search            编译时加入了  <a href="options.html#'incsearch'">'incsearch'</a>  和  <a href="options.html#'hlsearch'">'hlsearch'</a>  的支持。
+extra_search            编译时加入了 <a href="options.html#'incsearch'">'incsearch'</a> 和 <a href="options.html#'hlsearch'">'hlsearch'</a> 的支持。
 farsi                   删除了波斯语的支持  <a href="farsi.html#farsi">farsi</a> 。
 file_in_path            编译时加入了  <a href="editing.html#gf">gf</a>  和  <a href="cmdline.html#%3Ccfile%3E">&lt;cfile&gt;</a>  的支持。(总为真)
 filterpipe              <a href="options.html#'shelltemp'">'shelltemp'</a> 关闭时，外壳读/写/过滤命令使用管道
@@ -11442,6 +11554,7 @@ scrollbind              编译时加入了 <a href="options.html#'scrollbind'">'
 showcmd                 编译时加入了 <a href="options.html#'showcmd'">'showcmd'</a> 的支持。
 signs                   编译时加入了  <a href="sign.html#:sign">:sign</a>  的支持。
 smartindent             编译时加入了 <a href="options.html#'smartindent'">'smartindent'</a> 的支持。(总为真)
+socketserver            编译时加入了套接字服务器功能。(只限 Unix)
 sodium                  编译时加入了 libsodium 以提供更好的加密支持
 sound                   编译时加入了声音的支持，例如  <a href="builtin.html#sound_playevent()">sound_playevent()</a> 
 spell                   编译时加入了拼写检查的支持  <a href="spell.html#spell">spell</a> 。
@@ -11466,14 +11579,14 @@ textprop                编译时加入了  <a href="textprop.html#text-properti
 tgetent                 编译时加入了 tgetent 的支持，可以使用外部 termcap 或
                         terminfo 文件。
 timers                  编译时加入了  <a href="builtin.html#timer_start()">timer_start()</a>  支持。
-title                   编译时加入了窗口标题的支持。 <a href="options.html#'title'">'title'</a> 。(总为真)
+title                   编译时加入了窗口标题的支持。<a href="options.html#'title'">'title'</a>。(总为真)
 toolbar                 编译时加入了  <a href="gui.html#gui-toolbar">gui-toolbar</a>  的支持。
 ttyin                   输入是终端 (tty)
 ttyout                  输出是终端 (tty)
 unix                    Vim 的 Unix 版本。 <b class="vimtag"> <a name="+unix">+unix</a> </b>
 unnamedplus             编译时加入了 <a href="options.html#'clipboard'">'clipboard'</a> 对 "unnamedplus" 的支持。
 user_commands           用户定义命令支持。(总为真)
-vartabs                 编译时加入了可变制表位的支持  <a href="options.html#'vartabstop'">'vartabstop'</a> 。
+vartabs                 编译时加入了可变制表位的支持 <a href="options.html#'vartabstop'">'vartabstop'</a>。
 vcon                    Win32: 有虚拟终端支持，可用 <a href="options.html#'termguicolors'">'termguicolors'</a>。另见
                          <a href="various.html#+vtp">+vtp</a> 。
 vertsplit               编译时加入了垂直分割窗口的支持  <a href="windows.html#:vsplit">:vsplit</a> 。(总为真)

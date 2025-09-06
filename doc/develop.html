@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年5月
+<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年9月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -45,9 +45,9 @@ Vim 的开发                                              <b class="vimtag"> <a
 这一节的内容对那些想进一步开发 Vim 的人来说是很重要的。
 
 1. 设计目标              <a href="develop.html#design-goals">design-goals</a> 
-2. 编程风格              <a href="develop.html#coding-style">coding-style</a> 
-3. 设计决定              <a href="develop.html#design-decisions">design-decisions</a> 
-4. 假定                  <a href="develop.html#design-assumptions">design-assumptions</a> 
+2. 设计决定              <a href="develop.html#design-decisions">design-decisions</a> 
+3. 假定                  <a href="develop.html#design-assumptions">design-assumptions</a> 
+4. 编程风格              <a href="develop.html#coding-style">coding-style</a> 
 
 请先看一下 "src" 目录下的 README.txt 以便对源代码有一个总体的了解。
 
@@ -159,7 +159,177 @@ VIM 不 是 ...                                           <b class="vimtag"> <a 
   依然欢迎有效的 GUI 特性。
 
 </section><hr class="doubleline" /><section class=inner>
-<h4>2. 编程风格                                             <b class="vimtag"> <a name="coding-style">coding-style</a> </b></h4>
+<h4>2. 设计决定                                             <b class="vimtag"> <a name="design-decisions">design-decisions</a> </b></h4>
+折叠
+
+对同一个缓冲区可以有多种折叠形式。例如，一个窗口显示函数体折叠后的文本，另一个
+窗口显示函数体。
+
+折叠是一种显示文本的方式。它不应该改变文本自身。所以折叠是被当作缓冲区文本 (缓
+冲区行) 和窗口内显示的文本 (逻辑行) 之间的过滤器来实现的。
+
+
+为窗口命名
+
+我们一般用单词 "窗口" 来称呼很多东西: 屏幕上的一个窗口、xterm 窗口、Vim 中一个
+用来查看缓冲区内容的窗口。
+为避免混淆，我们给其他有时被称作窗口的项目起了其他的名称。这些是相关项目的概
+述:
+
+screen          整个屏幕。对于 GUI 来说，就是类似于 1024x768 像素之类的东西。
+                Vim 外壳可以使用整个屏幕 (例如，在控制台上运行时) 或它的一部分
+                (xterm 或 GUI)。
+shell           Vim 这个应用程序。它可以覆盖整个屏幕 (例如，在控制台上运行时)
+                或它的一部分 (xterm 或 GUI)。
+window          用来查看缓冲区内容的地方。Vim 中可以包括很多窗口，还有命令行、
+                菜单栏、工具栏等。它们被整合到外壳中。
+
+
+拼写检查                                                <b class="vimtag"> <a name="develop-spell">develop-spell</a> </b>
+
+当要把拼写检查加进 Vim 时，考察了一些可用的拼写检查库和程序。不幸的是，没有一
+个能提供足够的能力使其能够作为 Vim 的拼写检查引擎，原因很多:
+
+- 缺乏对多字节编码的支持。至少要支持 UTF-8，以便同一文件能使用多种语言。
+  实时转换未必总是可行的 (这需要 iconv 支持)。
+- 对于那些程序和库: 如果不作任何改动，需要和 Vim 分开单独安装才能使用。一般来
+  说，这不是不可以，但总是个问题。
+- 性能: 测试表明这些程序和库可以像语法高亮那样支持 (重画时) 实时的拼写检查，但
+  那些代码所用的机制太慢了。例如使用哈希表的 Myspell。大部分的拼写检查程序使用
+  字缀压缩 (affix compression) 算法也会使其速度减慢不少。
+- 使用像 aspell 这样的外部程序需要设置通信机制。这会使可移植性变得复杂 (只考虑
+  Unix 系统相对简单点，但还远远不够)。而且性能也是个问题 (大量的进程切换)。
+- 缺乏对包含非单词字符的单词的支持，如 "Etten-Leur" 和 "et al."。需要把词中每
+  个部分都标识为好词，但这样就降低了检测的可靠性。
+- 缺乏对区域或方言的支持。例如，接受所有英语单词并且单独高亮出非加拿大的单词是
+  很困难的。
+- 缺乏对生僻词的支持。有很多词拼写正确但几乎很少使用，却有可能是拼写错误的常用
+  词。
+- 对于拼写建议，速度不太重要，要安装其他的程序或者库也是可以接受的。但是这些程
+  序或库提供的单词列表也许与拼写检查程序使用的不一致，给出的建议可能是拼写检查
+  程序检测出的拼写错误的单词。
+
+
+拼写建议                                        <b class="vimtag"> <a name="develop-spell-suggestions">develop-spell-suggestions</a> </b>
+
+对于实现拼写建议，有两种基本的方法:
+1. 尝试轻微改变错误的单词，然后检查能否和正确的单词匹配。或者浏览正确单词列
+   表，轻微改变它们，看能否和错误的单词匹配。这里所指的改动包括: 删除一个字
+   符，插入一个字符，交换两个字符等。
+2. 比较坏词和好词列表的发音来寻找匹配。可能也需要像第一种方法那样对单词做少许
+   改变。
+
+第一种方法的优势在于查找录入错误。在使用哈希表试验和参考了其他拼写检查程序的方
+案后，得出结论: trie (一种树结构) 是理想方案。既可以减少内存占用，又可以尝试合
+理的改变。例如，只有在能够拼成正确单词的情况下才插入字符。其他方式 (使用哈希
+表) 需要在单词的所有位置尝试所有可能的字符。而且，哈希表需要单独标识单词的边
+界。而 trie 就不需要这样做。这样会简化很多。
+
+当我们知道单词如何发音却不知道如何拼写时，按发音折叠匹配就很有用了。例如，单词
+"dictionary" 可能写成 "daktonerie"。第一种方法需要尝试的次数非常多，很难找到正
+确的单词。按发音匹配后，这两个单词变成了 "tkxnry" 和 "tktnr"，两者仅有两个字符
+的差异。
+
+为了通过相似的发音来查找单词 (寻找按发音折叠等价的单词)，我们需要所有发音相似
+的单词列表。为此，我们作了一些试验来寻找最好的方法。可供选择的方案是:
+1. 在寻找拼写建议时，实时进行发音匹配。这意味着浏览 trie 树以寻找正确单词，匹
+   配每个单词发音，并检查它与错误单词的不同。这种方式内存占用少，但花费时间
+   多。在一台比较快的电脑上，对于英文需要几秒，这对于交互式使用还可以接受。但
+   是对于某些语言，则超过 10 秒 (如: 德语、加泰罗尼亚语)，这就慢得无法忍受了。
+   对于成批处理 (自动更正)，所有的语言处理起来都很慢。
+2. 把 trie 用于发音匹配的单词，这样查找时就可以和没有用发音折叠的方法一模一
+   样。但这需要对每个相近的发音记住所有好词的列表。这种方式搜索匹配很快，但是
+   要占用大量内存，其级别大约在 1M 到 10M 之间。对于某些语言，甚至会大于原单词
+   列表。
+3. 类似于第二种方案，但用字缀压缩 (affix compression) 并且只保存发音相近的单词
+   基本部分 (字根) 来减少内存开销。aspell 就是这么做的。缺点是，在按发音进行匹
+   配前，需要从错误的单词上分开字缀，这意味着在单词头和/或尾出现的错误会导致本
+   方案失败。而且当错误的单词和正确的单词间有很大不同时，本方案会变得很慢。
+
+我们作出的选择是使用第二种方案，并使用单独的文件。这样，有足够内存的用户可以得
+到很好的拼写建议，而内存不足或者只想要拼写检查而不需要建议的用户就可以不用那么
+多内存。
+
+
+单词频率
+
+对建议进行排序时，知道单词常见与否很有帮助。理论上，我们可以在字典中对应单词保
+存一个单词频率。但是每个单词都需要计数。这会使单词树的压缩效率大为降低。而且对
+所有的语言都要维护单词频率，将是个繁重的任务。另外，最好优先考虑文本里已经出现
+的单词。这样在特定文本里出现的单词可以被建议列表优先列出。
+
+现已实现的是统计已经显示的单词。哈希表用于快速查找单词的计数。字缀文件的
+COMMON 项目中列出的单词会先有初始计数，这样，即使新编辑文件时也能马上用此功
+能。
+
+这还不够理想，因为 Vim 运行的时间越长，单词计数就会越大。但实际应用中，这仍然
+比不使用单词计数的情形要改进不少。
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>3. 假定                                                 <b class="vimtag"> <a name="design-assumptions">design-assumptions</a> </b></h4>
+下列小节规定了所有的 Vim 代码和编译工具必须遵循的可移植性和兼容性限制。
+
+
+MAKEFILES                                       <b class="vimtag"> <a name="assumptions-makefiles">assumptions-makefiles</a> </b>
+                                                <b class="vimtag"> <a name="POSIX.1-2001">POSIX.1-2001</a> </b>
+
+Vim 的那些主 Makefile 目标是最高的可移植性，主要依赖 POSIX.1-20001  <code class="badlink">make</code>  定义
+的功能，而忽略之后的 POSIX 标准或 GNU/BSD 扩展。实际点说，应避免:
+
+        - % 模式规则
+        - POSIX.1-2001 之外的现代赋值 ( <a href="various.html#:%20">:=</a> 、 <code class="badlink">::=</code> )
+        - 特殊目标 ( <code class="badlink">.ONESHELL</code> 、 <code class="badlink">.NOTPARALLEL</code> 、 <code class="badlink">.SILENT</code> 、...)
+        - 唯顺序前提 (order-only prerequisites) ( <code class="badlink">|</code> ) 或自动目录建立
+        - GNU/BSD 条件语句 ( <code class="badlink">ifdef</code> 、 <code class="badlink">ifndef</code> 、 <code class="badlink">.for</code> / <code class="badlink">.endfor</code> 、...)
+
+因为 POSIX.1-2001 只支持传统的后缀规则，不同目录里构造的每个目标必须有自己的显
+式规则。例如:
+
+        objects/evalbuffer.o: evalbuffer.c
+                $(CCC) -o $@ evalbuffer.c
+
+这种冗余确保相同的 Makefile 不作修改就可以在 Linux、*BSD、macOS、Solaris、
+AIX、HP-UX 和基本上任何类 Unix 的操作系统上用缺省的  <code class="badlink">make</code>  生成 Vim。
+
+一些平台特定的 Makefile (如用于 Windows、NSIS 或 Cygwin 的) 可用更高级的特性，
+因为此时没有必要和基本 make 保持兼容。
+
+
+C COMPILER                                      <b class="vimtag"> <a name="assumptions-C-compiler">assumptions-C-compiler</a> </b>
+                                                <b class="vimtag"> <a name="ANSI-C">ANSI-C</a> </b> <b class="vimtag"> <a name="C89">C89</a> </b> <b class="vimtag"> <a name="C90">C90</a> </b> <b class="vimtag"> <a name="C95">C95</a> </b> <b class="vimtag"> <a name="C99">C99</a> </b>
+
+Vim 致力于最高可移植性 (见  <a href="develop.html#design-multi-platform">design-multi-platform</a> ) 且必须仍然可在 OpenVMS VAX
+V7.3 上的 Compaq C V6.4-005 上编译。
+
+因此，我们遵循最新的 ISO C 标准是:
+
+         <a href="develop.html#C95">C95</a>  (ISO/IEC 9899:1990/AMD1:1995)
+
+此外，显式允许以下的  <a href="develop.html#C99">C99</a>  特性:
+        -  <a href="version7.html#%2F%2F">//</a>  注释，因为  <a href="develop.html#style-comments">style-comments</a>  有规定；
+        - 代码块内的混合声明和语句；
+        - 可变参数宏 `(..., __VA_ARGS__)`；
+        -  <a href="vim9class.html#enum">enum</a>  列表的拖尾逗号；
+        -  <code class="badlink">_Bool</code>  类型 (用于  <code class="badlink">bool</code> 、 <a href="vim9.html#true">true</a>  和  <a href="vim9.html#false">false</a> )；
+        -  <code class="badlink">__func__</code>  预定义标识符；
+        -  <code class="badlink">inline</code>  函数 (为可移植性，用 `static inline`)；
+        - 复合常量 `(type){ initializer-list }`；
+        - 不超过 4095 个字符的源代码逻辑行。
+
+平台特定的代码可使用任何该平台支持的更新的编译器特性。
+
+
+变 量 的 大 小                                  <b class="vimtag"> <a name="assumptions-variables">assumptions-variables</a> </b>
+
+我们遵循 POSIX.1-2001 (SUSv3) 的类型大小规格，实践中，这意味着:
+
+        char_u      8 位无符号数
+        int         32 位或更大的有符号数
+        unsigned    32 位或更大的无符号数
+
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>4. 编程风格                                             <b class="vimtag"> <a name="coding-style">coding-style</a> </b></h4>
 这些是改变 Vim 源代码的时候必须遵循的准则。为了保持源代码的可读性和可维护性，
 请坚持使用这些原则。
 
@@ -190,21 +360,6 @@ VIM 不 是 ...                                           <b class="vimtag"> <a 
 被重排版。
 
 
-C COMPILER                              <b class="vimtag"> <a name="style-compiler">style-compiler</a> </b> <b class="vimtag"> <a name="ANSI-C">ANSI-C</a> </b> <b class="vimtag"> <a name="C89">C89</a> </b> <b class="vimtag"> <a name="C99">C99</a> </b>
-
-支持的 C 编译器最低版本是 C89，也即 ANSI C。之后的标准，如 C99，还没有得到广泛
-的支持，或至少没有得到 100% 的支持。因此我们只使用部分 C99 特性而显式地禁止其
-它的一些特性 (随着时间推移会作调整)。
-
-不使用的特性
-
-不使用以下 C99 特性，因为支持的编译器尚不广泛:
-- 可变长度数组 (即便在 C11 中也是一个可选的特性)。
-- C99 _Bool 和 _Complex 类型。
-- "inline" (也几乎用不到，让优化器自己去做吧)
-- 灵活数组成员 (Flexible Array Member): HP-UX C 编译器不支持 (John Marriott)
-
-
 注 释                                                   <b class="vimtag"> <a name="style-comments">style-comments</a> </b>
 
 尽量避免在函数内部使用多行注释: 如果函数如此复杂，以致需要不同的部分需要分别注
@@ -226,6 +381,9 @@ C COMPILER                              <b class="vimtag"> <a name="style-compil
 做任何设置。
 
 对其他编辑器，在代码库的根目录提供了  <code class="badlink">.editorconfig</code> 。
+
+源代码  <code class="badlink">sign.c</code>  和  <code class="badlink">sound.c</code>  和任何新文件只用空格而不用制表。此外，所有的新文
+件必须包含带 `set et` 的模式行才能通过缩进测试。
 
 
 声 明                                                   <b class="vimtag"> <a name="style-declarations">style-declarations</a> </b>
@@ -498,125 +656,6 @@ get_env_value() Linux 系统函数
                 a = 1;
             while (cond);
 
-
-</section><hr class="doubleline" /><section class=inner>
-<h4>3. 设计决定                                             <b class="vimtag"> <a name="design-decisions">design-decisions</a> </b></h4>
-折叠
-
-对同一个缓冲区可以有多种折叠形式。例如，一个窗口显示函数体折叠后的文本，另一个
-窗口显示函数体。
-
-折叠是一种显示文本的方式。它不应该改变文本自身。所以折叠是被当作缓冲区文本 (缓
-冲区行) 和窗口内显示的文本 (逻辑行) 之间的过滤器来实现的。
-
-
-为窗口命名
-
-我们一般用单词 "窗口" 来称呼很多东西: 屏幕上的一个窗口、xterm 窗口、Vim 中一个
-用来查看缓冲区内容的窗口。
-为避免混淆，我们给其他有时被称作窗口的项目起了其他的名称。这些是相关项目的概
-述:
-
-screen          整个屏幕。对于 GUI 来说，就是类似于 1024x768 像素之类的东西。
-                Vim 外壳可以使用整个屏幕 (例如，在控制台上运行时) 或它的一部分
-                (xterm 或 GUI)。
-shell           Vim 这个应用程序。它可以覆盖整个屏幕 (例如，在控制台上运行时)
-                或它的一部分 (xterm 或 GUI)。
-window          用来查看缓冲区内容的地方。Vim 中可以包括很多窗口，还有命令行、
-                菜单栏、工具栏等。它们被整合到外壳中。
-
-
-拼写检查                                                <b class="vimtag"> <a name="develop-spell">develop-spell</a> </b>
-
-当要把拼写检查加进 Vim 时，考察了一些可用的拼写检查库和程序。不幸的是，没有一
-个能提供足够的能力使其能够作为 Vim 的拼写检查引擎，原因很多:
-
-- 缺乏对多字节编码的支持。至少要支持 UTF-8，以便同一文件能使用多种语言。
-  实时转换未必总是可行的 (这需要 iconv 支持)。
-- 对于那些程序和库: 如果不作任何改动，需要和 Vim 分开单独安装才能使用。一般来
-  说，这不是不可以，但总是个问题。
-- 性能: 测试表明这些程序和库可以像语法高亮那样支持 (重画时) 实时的拼写检查，但
-  那些代码所用的机制太慢了。例如使用哈希表的 Myspell。大部分的拼写检查程序使用
-  字缀压缩 (affix compression) 算法也会使其速度减慢不少。
-- 使用像 aspell 这样的外部程序需要设置通信机制。这会使可移植性变得复杂 (只考虑
-  Unix 系统相对简单点，但还远远不够)。而且性能也是个问题 (大量的进程切换)。
-- 缺乏对包含非单词字符的单词的支持，如 "Etten-Leur" 和 "et al."。需要把词中每
-  个部分都标识为好词，但这样就降低了检测的可靠性。
-- 缺乏对区域或方言的支持。例如，接受所有英语单词并且单独高亮出非加拿大的单词是
-  很困难的。
-- 缺乏对生僻词的支持。有很多词拼写正确但几乎很少使用，却有可能是拼写错误的常用
-  词。
-- 对于拼写建议，速度不太重要，要安装其他的程序或者库也是可以接受的。但是这些程
-  序或库提供的单词列表也许与拼写检查程序使用的不一致，给出的建议可能是拼写检查
-  程序检测出的拼写错误的单词。
-
-
-拼写建议                                        <b class="vimtag"> <a name="develop-spell-suggestions">develop-spell-suggestions</a> </b>
-
-对于实现拼写建议，有两种基本的方法:
-1. 尝试轻微改变错误的单词，然后检查能否和正确的单词匹配。或者浏览正确单词列
-   表，轻微改变它们，看能否和错误的单词匹配。这里所指的改动包括: 删除一个字
-   符，插入一个字符，交换两个字符等。
-2. 比较坏词和好词列表的发音来寻找匹配。可能也需要像第一种方法那样对单词做少许
-   改变。
-
-第一种方法的优势在于查找录入错误。在使用哈希表试验和参考了其他拼写检查程序的方
-案后，得出结论: trie (一种树结构) 是理想方案。既可以减少内存占用，又可以尝试合
-理的改变。例如，只有在能够拼成正确单词的情况下才插入字符。其他方式 (使用哈希
-表) 需要在单词的所有位置尝试所有可能的字符。而且，哈希表需要单独标识单词的边
-界。而 trie 就不需要这样做。这样会简化很多。
-
-当我们知道单词如何发音却不知道如何拼写时，按发音折叠匹配就很有用了。例如，单词
-"dictionary" 可能写成 "daktonerie"。第一种方法需要尝试的次数非常多，很难找到正
-确的单词。按发音匹配后，这两个单词变成了 "tkxnry" 和 "tktnr"，两者仅有两个字符
-的差异。
-
-为了通过相似的发音来查找单词 (寻找按发音折叠等价的单词)，我们需要所有发音相似
-的单词列表。为此，我们作了一些试验来寻找最好的方法。可供选择的方案是:
-1. 在寻找拼写建议时，实时进行发音匹配。这意味着浏览 trie 树以寻找正确单词，匹
-   配每个单词发音，并检查它与错误单词的不同。这种方式内存占用少，但花费时间
-   多。在一台比较快的电脑上，对于英文需要几秒，这对于交互式使用还可以接受。但
-   是对于某些语言，则超过 10 秒 (如: 德语、加泰罗尼亚语)，这就慢得无法忍受了。
-   对于成批处理 (自动更正)，所有的语言处理起来都很慢。
-2. 把 trie 用于发音匹配的单词，这样查找时就可以和没有用发音折叠的方法一模一
-   样。但这需要对每个相近的发音记住所有好词的列表。这种方式搜索匹配很快，但是
-   要占用大量内存，其级别大约在 1M 到 10M 之间。对于某些语言，甚至会大于原单词
-   列表。
-3. 类似于第二种方案，但用字缀压缩 (affix compression) 并且只保存发音相近的单词
-   基本部分 (字根) 来减少内存开销。aspell 就是这么做的。缺点是，在按发音进行匹
-   配前，需要从错误的单词上分开字缀，这意味着在单词头和/或尾出现的错误会导致本
-   方案失败。而且当错误的单词和正确的单词间有很大不同时，本方案会变得很慢。
-
-我们作出的选择是使用第二种方案，并使用单独的文件。这样，有足够内存的用户可以得
-到很好的拼写建议，而内存不足或者只想要拼写检查而不需要建议的用户就可以不用那么
-多内存。
-
-
-单词频率
-
-对建议进行排序时，知道单词常见与否很有帮助。理论上，我们可以在字典中对应单词保
-存一个单词频率。但是每个单词都需要计数。这会使单词树的压缩效率大为降低。而且对
-所有的语言都要维护单词频率，将是个繁重的任务。另外，最好优先考虑文本里已经出现
-的单词。这样在特定文本里出现的单词可以被建议列表优先列出。
-
-现已实现的是统计已经显示的单词。哈希表用于快速查找单词的计数。字缀文件的
-COMMON 项目中列出的单词会先有初始计数，这样，即使新编辑文件时也能马上用此功
-能。
-
-这还不够理想，因为 Vim 运行的时间越长，单词计数就会越大。但实际应用中，这仍然
-比不使用单词计数的情形要改进不少。
-
-</section><hr class="doubleline" /><section class=inner>
-<h4>4. 假定                                                 <b class="vimtag"> <a name="design-assumptions">design-assumptions</a> </b></h4>
-变量的大小:
-char        8 位有符号数
-char_u      8 位无符号数
-int         32 或 64 位有符号数 (16 位是可能的，但功能会有限制)
-unsigned    32 或 64 位无符号数 (16 位情况同 int)
-long        32 或 64 位有符号数，可具有指针
-
-<code class="note">注意</code>: 某些编译器不能处理过长的源码行或者字符串。C89 标准规定限制在 509 个字符
-以内。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
