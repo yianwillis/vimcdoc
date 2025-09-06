@@ -1,4 +1,4 @@
-*insert.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年6月
+*insert.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -33,10 +33,10 @@
 "CTRL-V 000"。在有的系统上，你必须使用 "CTRL-V 003" 来插入 CTRL-C。注意: 如果
 CTRL-V 被映射，你也许会经常使用 CTRL-Q 来代替 |i_CTRL-Q|。
 
-如果插入时你在特殊的语言模式下工作，参见 'langmap' 选项 |'langmap'| 了解如何避
-免反复进出这些模式。
+如果插入时你在特殊的语言模式下工作，参见 'langmap' 选项 'langmap' 了解如何避免
+反复进出这些模式。
 
-如果置位了 'insertmode'，<Esc> 和一些其它的键有另外的含义。见 |'insertmode'|。
+如果置位了 'insertmode'，<Esc> 和一些其它的键有另外的含义。见 'insertmode'。
 
 字符		动作	~
 -----------------------------------------------------------------------
@@ -232,12 +232,14 @@ CTRL-]		触发缩写，不插入字符。
 项目	    动作 ~
 indent	    允许退格删除自动缩进
 eol	    允许退格删除换行符 (连接行)
-start	    允许退格删除插入开始之前的位置；CTRL-W 和 CTRL-U 在开始位置停止
+start	    允许退格删除插入开始之前的位置；CTRL-W 和 CTRL-U 在开始位置停止一
+	    次。
+nostop	    和 start 类似，但 CTRL-W 和 CTRL-U 不在开始位置停止。
 
 如果 'backspace' 为空，则使用 Vi 兼容的退格方式。不能退格删除自动缩进、回到第
 一列之前、或者超过插入开始的地方。
 
-为了后向兼容起见，取值 "0"、"1"、"2" 和 "3" 也是允许的，见 |'backspace'|。
+为了后向兼容起见，取值 "0"、"1"、"2" 和 "3" 也是允许的，见 'backspace'。
 
 如果 'backspace' 选项的确包含 "eol"，光标在第一列，而使用了这三个键中的一个，
 当前行会和上一行连接。这实际上删除了光标之前的 <EOL>。
@@ -506,7 +508,7 @@ CTRL-G j 和 CTRL-G k 命令可用来在同一列前插入文本。例如: >
 在 'list' 模式下，虚拟替换模式的行为和不在 'list' 模式下一样，除非 'cpoptions'
 里设置了 "L"。
 
-注意 在此模式下，光标之后的字符看起来在移动的情况仅有列表模式 |'list'|，置位
+注意 在此模式下，光标之后的字符看起来在移动的情况仅有列表模式 'list'，置位
 'wrap' 时偶尔也会出现 (当行改变了长度，使得比屏幕宽度更窄或者更宽时)。其他情况
 下空格会被插入，以防止之后的字符移动。
 
@@ -533,7 +535,7 @@ CTRL-G j 和 CTRL-G k 命令可用来在同一列前插入文本。例如: >
 10. 用户定义的补全					|i_CTRL-X_CTRL-U|
 11. 全能 (omni) 补全					|i_CTRL-X_CTRL-O|
 12. 拼写建议						|i_CTRL-X_s|
-13. 'complete' 的关键字					|i_CTRL-N| |i_CTRL-P|
+13. 'complete' 的补全					|i_CTRL-N| |i_CTRL-P|
 14. 寄存器里的内容					|i_CTRL-X_CTRL-R|
 
 此外，|i_CTRL-X_CTRL-Z| 停止补全而不改动现有的文本。
@@ -892,19 +894,19 @@ CTRL-X s		定位光标之前的单词，并寻找它的第一个拼写建议。
 	CTRL-P		反向搜索下一个建议。替换前次的建议。
 
 
-从不同的来源补全关键字					*compl-generic*
+从不同的来源补全					*compl-generic*
 
 							*i_CTRL-N*
-CTRL-N			在 'complete' 选项给出的地方搜索下一个以光标前面的关键
-			字开始的单词。在光标的前面插入找到的关键字名。
+CTRL-N			在 'complete' 选项给出的源里搜索下一个终止在光标位置的
+			单词。除函数外，所有的源都从关键字补全，而函数可以从非
+			关键字补全。匹配的文本在光标前插入。
 
 							*i_CTRL-P*
-CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的关键
-			字开始的单词。在光标的前面插入找到的关键字名。
+CTRL-P			同 CTRL-N，但搜索上一个匹配。
 
-	CTRL-N		正向搜索下一个匹配的关键字。替换前次匹配的关键字。
+	CTRL-N		正向继续搜索匹配，插入下一个匹配。
 
-	CTRL-P		反向搜索下一个匹配的关键字。替换前次匹配的关键字。
+	CTRL-P		反向继续搜索匹配，插入上一个匹配。
 
 	CTRL-X CTRL-N 或
 	CTRL-X CTRL-P	继续使用 CTRL-X CTRL-N 或 CTRL-X CTRL-P 会复制上次本类
@@ -916,6 +918,21 @@ CTRL-P			在 'complete' 选项给出的地方搜索上一个以光标前面的�
 
 							*i_CTRL-X_CTRL-Z*
 CTRL-X CTRL-Z		停止补全而不改变原有的文本。
+
+
+自 动 补 全						*ins-autocompletion*
+
+Vim 可以在你一边输入时一边显示补全菜单，和 |i_CTRL-N| 类似，但菜单会自动触发。
+见 'autocomplete'。菜单项目从 'complete' 选项列出的源里依次收集。
+
+使用衰减的超时使 Vim 保持响应灵敏。'complete' 列表里更早的源会提供更多时间 (更
+高优先级)，但所有的源都会确保少量的时间片。
+
+此模式和其他补全模式完全兼容。可在任何时候通过按 CTRL-X 激活其中的任何一种，而
+暂停自动补全模式。特别地，要使用 |i_CTRL-N| 或 |i_CTRL-X_CTRL-N|，先按
+|CTRL-E| 来关掉弹出菜单 (见 |complete_CTRL-E|)。
+
+另见 'autocomplete'、'autocompletetimeout' 和 'autocompletedelay'。
 
 
 寻 找 补 全 的 函 数					*complete-functions*
@@ -1014,12 +1031,13 @@ CTRL-X CTRL-Z		停止补全而不改变原有的文本。
 例如: >
 	:set completepopup=height:10,width:60,highlight:InfoPopup
 
-如果 "align" 值是 "item"，弹出的位置靠近选择的项目。改变选择也会移动弹出。如果
-"align" 是 "menu"，如果菜单在文本之下，弹出和菜单顶部对齐，否则和菜单底部对
-齐。
+如果 "align" 值是 `"item"`，弹出位置靠近选择的项目，改变选择项目时也会移动弹出
+位置。
+如果是`"menu"`，弹出和菜单顶部对齐 (如果菜单出现在文本之下)，或者和底部对齐
+(如果菜单出现在文本上方)。
 
-info 弹出被创建后，可在 |popup_findinfo()| 里找到，其属性可由
-|popup_setoptions()| 改变。
+info 弹出被创建后，可在 |popup_findinfo()| 里找到，可由 |popup_setoptions()|
+改变。
 
 						*complete-popuphidden*
 如果是通过异步获取弹出的信息，在 'completeopt' 中用 "popuphidden"。info 弹出会
@@ -1208,7 +1226,7 @@ C 代码补全需要标签文件。你应该使用 Universal/Exuberant ctags 软
 
 对 Exuberant ctags 而言，建议使用 5.6 或更新版本。对于 5.5.4 版本，你应该打上
 增加 "typename:" 字段的补丁:
-	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
+	https://ftp.nluug.nl/pub/vim/unstable/patches/ctags-5.5.4.patch
 可以在这里找到 MS-Windows 上已经编译好的可执行版本:
 	http://ctags.sourceforge.net/
 	https://github.com/universal-ctags/ctags-win32

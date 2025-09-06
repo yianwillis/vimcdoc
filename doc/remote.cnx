@@ -1,4 +1,4 @@
-*remote.txt*    适用于 Vim 9.1 版本。	最近更新: 2022年7月
+*remote.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年9月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -10,6 +10,7 @@ Vim 客户-服务器 通信					*client-server*
 1. 通用功能			|clientserver|
 2. X11 专用条目			|x11-clientserver|
 3. MS-Windows 专用条目		|w32-clientserver|
+4. 套接字服务器专用条目		|socketserver-clientserver|
 
 ==============================================================================
 1. 通用功能						*clientserver*
@@ -54,7 +55,9 @@ Vim 客户-服务器 通信					*client-server*
 								*--servername*
    --servername {name}		成为用 {name} 作为名字的服务器。如果同时也用了
 				某个 --remote 命令，连接到服务器 {name}，而不
-				使用缺省的名字。(见下)。用大写形式的名字。
+				使用缺省的名字。(见下)。用大写形式的名字。要使
+				用套接字服务器，可指定路径，详见
+				|socketserver-name|。
 								*--remote-send*
    --remote-send {keys}		发送键序列 {keys} 到服务器，然后退出。{keys}
 				不通过映射。能识别特殊的键名，如 "<CR>" 会生成
@@ -64,6 +67,11 @@ Vim 客户-服务器 通信					*client-server*
 				果。
 								*--serverlist*
    --serverlist			输出可用的服务器名字的列表。
+								*--clientserver*
+   --clientserver {method}	客户端-服务器功能的后端使用指定方法 {method}。
+				可选值为 "socket" 或 "x11"。
+				{仅当编译时加入 |+X11| 和 |+socketserver| 特性
+				才有效}
 
 
 示例 ~
@@ -94,7 +102,8 @@ Vim 客户-服务器 通信					*client-server*
 --servername 参数覆盖之。如果不能用指定的名字，尝试附加一个后缀，直到找到一个
 空闲的名字为止。比如，在同一个 X 服务器上，第二次启动 gvim 的服务器名会是
 "gvim1"。可以通过 |v:servername| 得到最终的服务器名。这里忽略大小写的区别，所
-以 "gvim" 和 "GVIM" 重复。
+以 "gvim" 和 "GVIM" 重复。注意 使用套接字服务器时有若干差异，见
+|socketserver-differences|。
 
 当 Vim 启动时带有 --remote、--remote-wait 或者 --remote-send 参数时，会根据上
 述的方法由启动名和指定的 --servername 参数决定要访问的服务器名。如果准确的匹
@@ -106,7 +115,7 @@ Vim 客户-服务器 通信					*client-server*
 动。
 
 --serverlist 参数让 Vim 在标准输出 (stdout) 上打出所有已经注册的命令服务器，然
-后退出。
+后退出。注意 使用套接字服务器时有若干限制，见 |socketserver-differences|。
 							*{server}*
 若干函数使用 {server} 参数。如为空串，Unix 上会使用缺省服务器名，即 "GVIM"。
 MS-Windows 上空串不能工作。
@@ -180,4 +189,52 @@ X11 GUI 的 Vim (gvim) 启动时，会试图在根窗口的 'VimRegistry' 属性
 
 	start /w gvim --remote-wait file.txt
 <
+==============================================================================
+4. 套接字服务器专用条目				    *socketserver-clientserver*
+				    *E1563* *E1564* *E1565* *E1566* *E1567*
+
+客户端和服务器间的通讯使用 Unix 域套接字。放置这些套接字的目录，按照目录的可用
+性顺序，如下所示:
+    1. "$XDG_RUTIME_DIR/vim"，如果设置了环境变量 $XDG_RUNTIME_DIR。
+    2. "$TMPDIR/vim-[uid]"，其中 "[uid]" 为用户的 uid。此目录会设置访问权限为
+       700，只有用户本人可以从中读写。如未设置 $TMPDIR，使用 "/tmp"。
+
+						    *socketserver-name*
+服务器的 id/名字可是通用名，也可是绝对或相对路径。以 "/" (绝对路径) 或
+"./" | "../" (相对路径) 开始的服务器 id 被解读为指向套接字的路径。否则，服务
+器 id 被当作套接字文件名，它会放置在上述的通用目录下。注意 服务器 id/名字只有
+被视作路径时才能包含斜杠 "/"，因而 "abc/dir" 作为名字是非法的。
+
+套接字服务器功能在 Vim 的 GTK GUI 和终端版本里可用。除非 Vim 编译时加入了
+|+autoservername| 特性，套接字服务器必须要显式启动，就像 X11 那样，即使 GUI 版
+本也是如此。
+
+如果 Vim 崩溃或非正常退出，套接字文件不会被套接字服务器删除而遗留下来。通常这
+不是问题，因为 Vim 接受套接字名时会检查那里的套接字是否失效 (不附着于任何进
+程)，如果是的话会替代之，而不是寻找新名字。
+
+要从另一个应用发送命令到 Vim 套接字服务器，请阅读源码 src/os_unix.c，那里有所
+用协议的完整描述。
+
+						    *socketserver-differences*
+绝大多数功能和 X11 相同，但和 X11 里客户端不需要自己是服务器才能和其他服务器通
+信不同，套接字服务器需要客户端本身也作为服务器运行。|serverlist()| 和
+|--serverlist| 参数是例外，那里不需要服务器处于运行状态。
+
+另外，和 X11 或 MS-Windows 不同，服务器 id 或客户端 id 不是 (以十六进制显示的)
+数值，而是套接字的绝对路径。它可通过 |v:servername| 变量查看。
+
+|--serverlist| 参数类似于 X11，但只检查上述的通用目录位置。如果套接字使用定制
+路径，也就是不在 $XDG_RUNTIME_DIR 或 <$TMPDIR 或 /tmp>/vim 对应带
+|--serverlist| Vim 进程的子目录里，就不会被检测到。
+
+如果编译时同时加入了 |+socketserver| 和 |+X11|，则除了 |--serverlist| 给出可用
+服务器列表以外，也需要加入 |--clientserver| 参数且设为 "socket"。一个命令可以
+同时列出这两种类型的后端。
+
+						    *socketserver-x11*
+如果 Vim 编译时同时加入了 |+socketserver| 和 |+X11|，使用哪种后端的决定发生在
+启动时间，借助 |--clientserver| 参数完成。如果该参数未指定，缺省使用 X11。使用
+套接字服务器的 Vim 实例和使用 X11 的实例间无法通信。
+
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

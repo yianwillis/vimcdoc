@@ -1,4 +1,4 @@
-*version9.txt*  适用于 Vim 9.1 版本。	最近更新: 2025年6月
+*version9.txt*  适用于 Vim 9.1 版本。	最近更新: 2025年9月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -41492,9 +41492,15 @@ Vim9 脚本 ~
 
 Vim9 脚本的枚举支持 |:enum|
 
+Vim9 脚本的泛型函数支持 |generic-functions|
+
 支持 protected _new() 方法
 
-新增用作变量数据类型 |vim9-types| 的 object<{type}> 支持，
+支持用 |:defcompile| 编译 Vim9 类里的所有方法。
+
+新增用作变量数据类型 |vim9-types| 的 object<{type}> 支持
+
+支持 Vim 脚本和 Vim9 脚本里的 |Tuple| 数据类型。
 
 比较模式 ~
 ---------
@@ -41504,25 +41510,71 @@ Vim9 脚本的枚举支持 |:enum|
 
 改善了行内改动的比较高亮。可用 'diffopt' 设置的 "inline" 子选项值配置，缺省
 "diffopt" 值加入了 "inline:simple" (但这不改变比较模式的工作方式)。
+
+'diffanchors' 选项指定缓冲区里的逗号分隔的地址列表，作为锚点来分割及独立比较若
+干缓冲区段落，以改进比较的对齐度。仅当 'diffopt' 包含 "anchor" 时才使用此功
+能，所有指定的地址必须在每个缓冲区里能够解析，否则忽略所有锚点。
+
+补全~
+----------
+- 新的插入模式补全: |i_CTRL-X_CTRL-R| 来从寄存器里补全单词。
+- 'wildchar' 打开搜索上下文补全，包括 |/|、|?|、|:g|、|:v| 和 |:vimgrep| 命令
+- ":filetype" 命令补全和用于 |getcompletion()| 的 "filetypecmd" 补全类型。
+- 支持 'keymap' 选项值的命令行补全。
+- 用 'completeopt' 设置里的 "fuzzy" 值支持 |ins-completion| 里的
+  |fuzzy-matching|。
+- 允许 |:command-complete| 和 |getcmdcomplpat()| 使用新的 shellcmdline 补全类
+  型来补全外壳命令和文件
+- 'wildmode' 新选项值:
+	"noselect"	- wildmenu 里不自动选择项目
+	"exacttext"	- 搜索补全时 wildmenu 里显示准确匹配
+- 'complete' 的新标志位:
+	"F{func}"	- 使用给定函数补全
+	"F"		- 使用 'completefunc' 补全
+	"o"		- 使用 'omnifunc' 补全
+- 'completeopt' 新选项值:
+	"nosort"	- 不排序补全结果
+	"preinsert"	- 高亮待插入的值
+	"nearest"	- 按照到光标的距离排序补全结果
+- 新函数 |wildtrigger()| 以激活通配扩展
+- 新增自动补全的支持 |ins-autocompletion|
+
+平台特定~
+-----------------
+- 新增 Wayland UI 和 Wayland 剪贴板的支持 |wayland|。
+
+- 新增加 XDG 桌面规范 |xdg-base-dir| 的支持，而环境变量 |$MYVIMDIR| 设为用户的
+  个人运行时目录 (Linux 上 $HOME/.vim 或 $HOME/.config/vim，Windows 上
+  $HOME/vimfiles)
+
+- 新增 OpenVMS 的 Python3 支持。
+
+- Win32 GUI 提供了更好的工具栏图标。
 							*new-other-9.2*
 其他新功能 ~
 ------------------
-包含新插件 |package-comment|、|package-nohlsearch| 和 |package-hlyank|。
+- 支持 GTK 里用 <D-Key> 的 Super 键映射。
 
-支持 Wayland UI 和 Wayland 剪贴板。
+- 包含新插件 |package-comment|、|package-nohlsearch|、|package-hlyank| 和
+  |help-TOC|。
 
-支持 XDG 桌面规范 |xdg-base-dir|
+- 包含了互动教程插件 |vim-tutor-mode|，可用 |:Tutor| 启动。
 
-支持用 |gettext()| 和 |bindtextdomain()| 函数来翻译 Vim 脚本插件里的消息。
+- 支持用 |gettext()| 和 |bindtextdomain()| 函数来翻译 Vim 脚本插件里的消息。
 
-支持 |ins-completion-menu| 里插入模式补全和命令行补全的匹配文本和补全类型的高
-亮，见 |complete-items|
+- 支持 |ins-completion-menu| 里插入模式补全和命令行补全的匹配文本和补全类型的
+  高亮，见 |complete-items|。
 
-支持 Vim 脚本和 Vim9 脚本里的 |Tuple| 数据类型。
+- 支持相当于垂直 'tabline' 的垂直 |tabpanel| 窗口。
 
-支持类似于 'tabline' 的垂直 |tabpanel| 窗口。
+- 加入 |dist#vim9#Launch()| 和 |dist#vim9#Open()| 到 |vim-script-library|，从
+  |netrw| 里解绑。
 
-新的插入模式补全: |i_CTRL-X_CTRL-R| 来从寄存器里补全单词。
+- 新增用 ".=" 的二合字母 "APPROACHES THE LIMIT"。
+
+- 新增用于语法脚本的缺省高亮组 "Bold"、"Italic" 和 "BoldItatic"。
+
+- |items()| 函数现在支持 blob。
 
 							*changed-9.2*
 改动~
@@ -41535,39 +41587,28 @@ Vim9 脚本的枚举支持 |:enum|
   显示器
 - 'keyprotocol' 选项的缺省值更新，新增 ghostty 终端模拟器 (使用 kitty 协议) 的
   支持
+- 改进的可视高亮 |hl-Visual|
+- 使用非兼容模式时 'showcmd' 的缺省值总是打开 (之前，UNIX 系统上是关闭的)，相
+  应地并从 |defaults.vim| 里去除
 
 补全: ~
 - 允许用于 |:cd| 和类似命令从 'cdpath' 选取目录的补全，为 |:command-complete|
   和 |getcompletion()| 加入 "cd_in_path" 补全类型
-- 允许 |:command-complete| 和 |getcmdcomplpat()| 使用新的 shellcmdline 补全类
-  型来补全外壳命令和文件
 - 允许补全菜单指定额外属性 (可以标记来自 LSP 服务器的废弃的属性)
   |complete-items|
 - 处理 |CompleteDone| 自动命令时在 |v:event| 字典里提供补全单词和补全类型
 - |complete_info()| 通过 "matches" 键返回弹出菜单中的匹配列表
-- 'completeopt' 新选项值:
-	"nosort"	- 不排序补全结果
-	"preinsert"	- 高亮待插入的值
-	"nearest"	- 按照到光标的距离排序补全结果
 - 正确处理多行补全项目
 - 改进用于 |:hi| 命令的命令行补全
-- 'wildmode' 新选项值:
-	"noselect"	- wildmenu 里不自动选择项目
-- 'complete' 的新标志位:
-	"F{func}"	- 使用给定函数补全
-	"F"		- 使用 'completefunc' 补全
-	"o"		- 使用 'omnifunc' 补全
 - 用 "{flag}^<limit>" 记法来限制 'complete' 源的匹配数目
-- 新增 ":filetype" 命令补全
-- 新增用于 |getcompletion()| 的 "filetypecmd" 补全类型
 - 'smartcase' 适用于补全过滤
-- 'wildchar' 打开搜索上下文补全，包括 |/|、|?|、|:g|、|:v| 和 |:vimgrep| 命令
 
 选项: ~
 - 'commentstring' 的缺省包含空白填充使自动注释更美观 |comment-install|
 - 'completeopt' 现在是 |global-local| 选项。
 - 新增 'cpoptions' 标志位 "z" |cpo-z|，以关闭一些 (传统) vi 行为/不一致性 (见
   |d-special| 和 |cw|)。
+- 新增 'cpoptions' 标志位 "~" |cpo-~|，以关闭 |:cd| 诸命令的符号链接解析。
 - 'fillchars' 的新选项值:
 	"trunc"		- 配置截断指示符，'pummaxwidth'
 	"truncrl"	- 类似于 "trunc" 但用于 'rl' 模式，'pummaxwidth'
@@ -41586,6 +41627,7 @@ Ex 命令: ~
 - 用 |:bnext| 和类似命令在缓冲区列表中移动的行为符合文档并跳过帮助缓冲区 (如果
   不是运行在帮助缓冲区的话，否则移动到下一个/前一个帮助缓冲区)。
 - |:keeppatterns| 和 |:s| 一起使用时保留最近替代模式
+- |:retab| 接受新可选参数 -indentonly，只影响缩进行的空白。
 
 函数: ~
 - 用 get(func, "arity") 函数可提供函数参数的信息 |get()-func|
@@ -41596,20 +41638,37 @@ Ex 命令: ~
 - |v:stacktrace| 最近捕获且未完成的例外的栈追踪
 - 新增 |getchar()| 可选的 {opts} |Dict| 参数以控制: 光标行为、返回类型和是否简
   化返回键
+- |chdir()| 接受可选的作用域参数
+- |matchfuzzy()| 和 |matchfuzzypos()| 使用改进了的模糊匹配算法 (和 fzy 相同)。
 
 其他: ~
 - 正则表达式引擎正确匹配大小写不敏感多字节字符 (并适用合适的大小写折叠)
 - |defaults.vim| 里用 |TermResponse| 自动命令可以检测 putty 终端，并且 Vim 切
   换到深色背景
 - 包含了 |help-TOC| 包，方便文档间导航。
-- 包含了互动教程插件 |vim-tutor-mode|，可用 |:Tutor| 启动
 - 改进 |vimtutor| 并加入另一章提供更高级的技巧
-- 加入 |dist#vim9#Launch()| 和 |dist#vim9#Open()| 到 |vim-script-library|，从
-  |netrw| 里解绑
-- 用 ".=" 的新二合字母 "APPROACHES THE LIMIT"
 - |CTRL-C| 总是关闭激活的 |popup-window|。
 - configure 脚本在自动检测 gui 工具包时会优先考虑 GTK3 而不是 GTK2
 - |gv| 可用于操作符等待模式而不中止
+- 非-GUI 'tabline' 里显示的关闭按钮仅当 'mouse' 选项包含 "a" 或以下标志位之一
+  "n"、"v" 或 "i" 时才出现。
+- |C-indenting| 处理复合常量。
+- 二合字母 "</" (LEFT-POINTING ANGLE BRACKET) 和 ">/" (RIGHT-POINTING
+  ANGLE BRACKET) 被修改，现在它们代表 LEFT ANGLE BRACKET 和 RIGHT ANGLE
+  BRACKET 以匹配 Unicode 16 里的 Unicode 杂项技术符号码表。
+- Two additional digraphs have been added: LEFT ANGLE BRACKET "<[" and RIGHT
+  ANGLE BRACKET "]>".
+- 新增用于客户端-服务器功能的 Unix 域套接字支持，见
+  |socketserver-clientserver|。
+- |CmdlineLeave| 设置 |v:char| 为导致命令行退出的字符。
+- |min()|/|max()| 可以处理所有的数据类型。
+- Vim triggers the |TermResponseAll| autocommand for any terminal OSC value.
+- Vim 包含 $VIMRUNTIME/plugins/colorresp.vim，能解析终端 OSC 响应，触发
+  |TermResponseAll|，带上 "background" 或 "foreground" 值。
+
+平台特定~
+- MS-Winodws: "\Windows" 和 "/Windows" 这样的路径现在被视作 (在当前驱动器上的)
+  绝对路径而不再是相对路径。
 
 							*added-9.2*
 新增 ~
@@ -41630,6 +41689,7 @@ Ex 命令: ~
 |getcellpixels()|	取得字符单元像素尺寸
 |getcmdcomplpat()|	外壳命令行补全
 |getcmdprompt()|	得到 input()/confirm() 提示符
+|getcompletiontype()|	得到命令行的补全类型
 |getregion()|		从缓冲区里得到区域文本
 |getregionpos()|	从区域里得到位置列表
 |getstacktrace()|	得到 Vim 脚本的当前栈追踪
@@ -41642,6 +41702,9 @@ Ex 命令: ~
 |str2blob()|		转换字符串列表为 blob
 |test_null_tuple()|	返回 null 元组
 |tuple2list()|		把项目元组转换为列表
+|uri_decode()|		URI-解码字符串
+|uri_encode()|		URI-编码字符串
+|wildtrigger()|		触发通配扩展
 
 
 自动命令: ~
@@ -41679,13 +41742,20 @@ Ex-命令: ~
 
 选项: ~
 
-'chistory'		快速修复堆栈的大小 |quickfix-stack|。
+'autocomplete'		打开自动补全 |ins-autocompletion|
+'autocompletedelay'	键入后菜单显示的以毫秒计的延迟
+'autocompletetimeout'	用于自动补全算法的初始衰减超时
+'chistory'		快速修复堆栈的大小 |quickfix-stack|
+'clipmethod'		如何访问剪贴板
 'completefuzzycollect'	为 (若干) |ins-completion| 模式打开候选的模糊收集
 'completeitemalign'	插入模式补全弹出里的 |complete-items| 顺序
+'completetimeout'	用于 CTRL-N 和 CTRL-P 的初始衰减超时
+'diffanchors'		用于比较的强制同步使用的 {address} 列表
 'eventignorewin'	窗口中忽略自动命令事件
 'findfunc'		用于取得 |:find| 命令结果的 Vim 函数
 'isexpand'		定义用于补全的触发器
-'lhistory'		位置列表堆栈的大小 |quickfix-stack|。
+'lhistory'		位置列表堆栈的大小 |quickfix-stack|
+'maxsearchcount'	用于搜索统计 |shm-S| 的最大值
 'messagesopt'		配置 |:messages| 和 |hit-enter| 提示
 'pummaxwidth'		补全弹出菜单的最大宽度
 'showtabpanel'		是否显示 |tabpanel|
@@ -41694,31 +41764,25 @@ Ex-命令: ~
 'tabpanelopt'		用于 |tabpanel| 的可选设置
 't_xo'			终端使用 XON/XOFF 握手协议 (如 vt420)
 't_CF'			备选字体高亮终端代码的支持
+'t_Ms'			OSC 52 命令格式
 'winfixbuf'		维持窗口焦点的缓冲区不变
+'wlseat'		指定用于 |wayland| 功能的 Wayland 座位 (seat)
+'wlsteal'		盗取焦点用来访问 |wayland| 剪贴板
+'wltimeout'		指定用于 |wayland| 合成器的连接超时
+
+Vim 变量: ~
+|v:termda1|		主设备属性查询 (DA1) 返回的转义序列。
+
+Vim 参数: ~
+|-Y|			不连接到 |wayland| 合成器。
+|--clientserver|	指定用于客户端-服务器功能的后端。
+
 
 ==============================================================================
 不 兼 容 的 改 动					*incompatible-9.2*
 
 改进/不同的 MS-Windows 映射支持
 |w32-experimental-keycode-trans-strategy|
-
-==============================================================================
-改 进							*improvements-9.2*
-
-支持 'keymap' 选项值的命令行补全。
-
-支持用 |:defcompile| 编译 Vim9 类里的所有方法。
-
-支持 GTK 里用 <D-Key> 的 Super 键映射。
-
-改进的可视高亮。
-
-OpenVMS 的 Python3 支持。
-
-用 'completeopt' 设置里的 fuzzy" 值支持 |ins-completion| 里的 |fuzzy-matching|
-
-环境变量 |$MYVIMDIR| 设为用户的个人运行时目录 (Linux 上 $HOME/.vim 或
-$HOME/.config/vim，Windows 上 $HOME/vimfiles)
 
 ==============================================================================
 编 译 时 的 改 变					*compile-changes-9.2*

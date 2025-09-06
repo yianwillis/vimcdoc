@@ -1,4 +1,4 @@
-*builtin.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年6月
+*builtin.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年9月
 
 内建函数					*builtin-functions*
 
@@ -240,6 +240,7 @@ getcmdtype()			字符串	返回当前命令行类型
 getcmdwintype()			字符串	返回当前命令行窗口类型
 getcompletion({pat}, {type} [, {filtered}])
 				列表	命令行补全匹配列表
+getcompletiontype({pat})	字符串	返回用 {pat} 时命令行补全的类型
 getcurpos([{winnr}])		列表	光标位置
 getcursorcharpos([{winnr}])	列表	光标的字符位置
 getcwd([{winnr} [, {tabnr}]])	字符串	当前工作目录
@@ -332,7 +333,7 @@ isdirectory({directory})	数值	如果 {directory} 是目录则为 |TRUE|
 islocked({expr})		数值	如果 {expr} 被锁住则为 |TRUE|
 isinf({expr})			数值	决定 {expr} 是否为无限大 (正或负)
 isnan({expr})			数值	如果 {expr} 为 NaN 则为 |TRUE|
-items({dict})			列表	{dict} 里的键-值组对
+items({expr})			列表	{expr} 里的键/索引-值组对
 job_getchannel({job})		通道	获取 {job} 的通道句柄
 job_info([{job}])		字典	获取 {job} 的信息
 job_setoptions({job}, {options}) 无	设置 {job} 选项
@@ -734,6 +735,8 @@ undofile({name})		字符串	对应 {name} 的撤销文件名
 undotree([{buf}])		列表	撤销缓冲区 {buf} 的文件树
 uniq({list} [, {func} [, {dict}]])
 				列表	从列表中删除相邻的重复项
+uri_decode({string})		字符串	URI-解码字符串
+uri_encode({string})		字符串	URI-编码字符串
 utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
 				数值	{string} 里 {idx} 字节的 UTF-16 索引
 values({dict})			列表	{dict} 的所有值
@@ -744,6 +747,7 @@ virtcol2col({winid}, {lnum}, {col})
 				数值	屏幕上字符的字节索引
 visualmode([{expr}])		字符串	最近使用的可视模式
 wildmenumode()			数值	'wildmenu' 模式是否激活
+wildtrigger()			数值	开始通配扩展
 win_execute({id}, {command} [, {silent}])
 				字符串	在窗口 {id} 执行 {command}
 win_findbuf({bufnr})		列表	寻找包含 {bufnr} 的窗口
@@ -1208,7 +1212,7 @@ base64_encode({blob})					*base64_encode()*
 		    " 对二进制文件内容进行编码
 		    echo base64_encode(readblob('somefile.bin'))
 		    " 对字符串进行编码
-		    echo base64_encode(str2blob([somestr]))
+		    echo base64_encode(str2blob(somestr->split("\n")))
 <
 		也可用作 |method|: >
 			GetBinaryData()->base64_encode()
@@ -1657,14 +1661,21 @@ charidx({string}, {idx} [, {countcc} [, {utf16}]])
 		返回类型: |Number|
 
 
-chdir({dir})						*chdir()*
-		切换当前工作目录为 {dir}。目录改变的作用域取决于当前窗口的目
-		录:
-			- 如果当然窗口有局部于窗口的目录 (|:lcd|)，则改变局部
-			  于窗口的目录。
-			- 否则，如果当前标签页有局部目录 (|:tcd|)，则改变局部
-			  于标签页的目录。
-			- 否则，返回全局目录。
+chdir({dir} [, {scope}])				*chdir()*
+		切换当前工作目录为 {dir}。目录改变的作用域见下:
+		如果没给出 {scope}，在当前目录的作用域里切换当前工作目录:
+		    - 如果设置了局部于窗口的目录 (|:lcd|)，则在该作用域里改变
+		      当前工作目录。
+		    - 否则，如果设置了局部于标签页的目录 (|:tcd|)，则在该作用
+		      域里改变当前工作目录。
+		    - 否则，改变全局目录。
+
+		如果给出 {scope}，为下面指定的作用域改变当前工作目录:
+		    "window"	改变窗口局部目录。|:lcd|
+		    "tabpage"	改变标签页局部目录。|:tcd|
+		    "global"	改变全局目录。|:cd|
+
+		{dir} 必须为字符串。
 		如果成功，返回上次的工作目录。把它传给另一个 chdir() 会恢复上
 		次目录。
 		如果失败，返回空串。
@@ -2222,8 +2233,8 @@ diff({fromlist}, {tolist} [, {options}])		*diff()*
 		    iwhiteeol		忽略行尾空白字符的更改。
 		这些选项的更多信息详见 'diffopt'。
 
-		为了计算合并风格的 diff，用换行符连接 {fromlist} 里的所有项目，
-		然后对 {tolist} 同样处理。合并风格的 diff 输出使用行号。
+		为了计算合并风格的 diff，用换行符连接 {fromlist} 里的所有项
+		目，然后对 {tolist} 同样处理。合并风格的 diff 输出使用行号。
 
 		如果 {fromlist} 和 {tolist} 等同，返回空列表或空串。
 
@@ -3560,9 +3571,9 @@ getcellpixels()						*getcellpixels()*
 
 		仅对 Unix (终端和 gVim) 和 Windows (仅 gVim) 有效。
 		其他系统返回 [] 或报错。
-		注意 不同终端可能会有变种。macOS 上系统的 Terminal.app 返回的尺
-		寸以点 (point) 计 (在视网膜缩放之前)，而第三方终端返回原始像素
-		尺寸 (在视网膜缩放之后)。
+		注意 不同终端可能会有变种。macOS 上系统的 Terminal.app 返回的
+		尺寸以点 (point) 计 (在视网膜缩放之前)，而第三方终端返回原始像
+		素尺寸 (在视网膜缩放之后)。
 
 		返回类型: list<any>
 
@@ -3762,6 +3773,9 @@ getcmdcompltype()					*getcmdcompltype()*
 		|getcmdprompt()|、|getcmdcomplpat()| 或 |setcmdline()|。
 		如果没有定义补全，返回空串。
 
+		要获取为指定字符串所使用的命令行补全的类型，可用
+		|getcompletiontype()|。
+
 		返回类型: |String|
 
 
@@ -3853,13 +3867,13 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		customlist,{func} {func} 定义的定制补全
 		diff_buffer	|:diffget| 和 |:diffput| 补全
 		dir		目录名
-		dir_in_path	|'cdpath'| 里的目录名
+		dir_in_path	'cdpath' 里的目录名
 		environment	环境变量名
 		event		自动命令事件
 		expression	Vim 表达式
 		file		文件和目录名
-		file_in_path	|'path'| 中的文件和目录名
-		filetype	文件类型名 |'filetype'|
+		file_in_path	'path' 中的文件和目录名
+		filetype	文件类型名 'filetype'
 		filetypecmd	|:filetype| 子选项
 		function	函数名
 		help		帮助主题
@@ -3873,11 +3887,12 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		messages	|:messages| 子选项
 		option		选项
 		packadd		可选包 |pack-add| 名
+		retab		|:retab| 子选项
 		scriptnames	执行过的脚本名 |:scriptnames|
 		shellcmd	外壳命令
 		shellcmdline	带文件名参数的外壳命令行
 		sign		|:sign| 子选项
-		syntax		语法文件名 |'syntax'|
+		syntax		语法文件名 'syntax'
 		syntime		|:syntime| 子选项
 		tag		标签
 		tag_listfiles	标签、文件名
@@ -3904,6 +3919,13 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		也可用作 |method|: >
 			GetPattern()->getcompletion('color')
 <
+		返回类型: list<string>
+
+getcompletiontype({pat})				*getcompletiontype()*
+		返回 {pat} 使用的命令补全的类型。如果找不到对应的补全类型，返
+		回空串。
+		要得到当前命令行补全类型，可用 |getcmdcompltype()|。
+
 		返回类型: list<string>
 
 							*getcurpos()*
@@ -5549,19 +5571,27 @@ isnan({expr})						*isnan()*
 		返回类型: |Number|
 
 
-items({dict})						*items()*
-		返回 |List|，{dict} 的所有键-值组对。每个 |List| 项目是两个项
-		目的列表: {dict} 项目的键和此项目的值。|List| 项目的顺序不定。
-		另见 |keys()| 和 |values()|。
-		示例: >
-			for [key, value] in items(mydict)
-			   echo key .. ': ' .. value
-			endfor
-<
-		也支持 |List|、|Tuple| 或 |String| 参数。此时 items() 返回包含
-		索引和索引对应值的列表。
+items({expr})						*items()*
+		返回 |List|，{expr} 的所有键/索引-值组对。每个 |List| 项目是两
+		个项目的列表:
+		- 对 |Dict| 而言: 键和值
+		- 对 |List|、|Tuple|、|Blob| 和 |String| 而言：索引和值
+		对 |Dict| 而言，返回的 |List| 项目的顺序不定。否则，依索引值升
+		序排序。
 
-<		也可用作 |method|: >
+		另见 |keys()| 和 |values()|。
+
+		示例: >
+			let mydict = #{a: 'red', b: 'blue'}
+			for [key, value] in items(mydict)
+			   echo $"{key} = {value}"
+			endfor
+			echo items([1, 2, 3])
+			echo items(('a', 'b', 'c'))
+			echo items("foobar")
+			echo items(0z0102)
+<
+		也可用作 |method|: >
 			mydict->items()
 <
 		返回类型: list<list<any>> 或 list<any>
@@ -6446,14 +6476,16 @@ matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])
 		    [{'lnum': 3, 'byteidx': 0, 'text': 'a'}]
 		    " 假定缓冲区 10 第 4 行包含了 "tik tok"
 		    :echo matchbufline(10, '\<\k\+\>', 1, 4)
-		    [{'lnum': 4, 'byteidx': 0, 'text': 'tik'}, {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]
+		    [{'lnum': 4, 'byteidx': 0, 'text': 'tik'},
+		     {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]
 <
 		如果给出 {submatch} 且为 v:true，同时返回 "\1"、"\2" 等的子表
 		达式。例如: >
 		    " 假定缓冲区 2 第 2 行包含了 "acd"
 		    :echo matchbufline(2, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2, 2
 						\ {'submatches': v:true})
-		    [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
+		    [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches':
+		    ['a', '', 'c', 'd', '', '', '', '', '']}]
 <		"submatches" 列表永远包含 9 个项目。如果没找到某子表达式，对应
 		位置返回空串。
 
@@ -6506,8 +6538,6 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		    matchseq	如果此项目存在，只返回按照 {str} 里字符的出现
 				顺序的匹配。
 		    limit	{list} 里返回的最大匹配数。零代表没有限制。
-		    camelcase	使用增强驼峰式计分，使结果更适合和程序语言相关
-				的补全。缺省为 v:true。
 
 		如果 {list} 为字典列表，则可选的 {dict} 参数还支持以下项目:
 		    key		用于模糊匹配 {str} 项目的键。该项目值必须为字
@@ -6567,7 +6597,8 @@ matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 <		返回 [['testing'], [[0, 2, 6]], [99]] >
 			:echo matchfuzzypos(['clay', 'lacy'], 'la')
 <		返回 [['lacy', 'clay'], [[0, 1], [1, 2]], [153, 133]] >
-			:echo [{'text': 'hello', 'id' : 10}]->matchfuzzypos('ll', {'key' : 'text'})
+			:echo [{'text': 'hello', 'id' : 10}]
+			  \ ->matchfuzzypos('ll', {'key' : 'text'})
 <		返回 [[{'id': 10, 'text': 'hello'}], [[2, 3]], [127]]
 
 		返回类型: list<list<any>>
@@ -6608,15 +6639,18 @@ matchstrlist({list}, {pat} [, {dict}])
 
 		示例: >
 		    :echo matchstrlist(['tik tok'], '\<\k\+\>')
-		    [{'idx': 0, 'byteidx': 0, 'text': 'tik'}, {'idx': 0, 'byteidx': 4, 'text': 'tok'}]
+		    [{'idx': 0, 'byteidx': 0, 'text': 'tik'},
+		     {'idx': 0, 'byteidx': 4, 'text': 'tok'}]
 		    :echo matchstrlist(['a', 'b'], '\<\k\+\>')
-		    [{'idx': 0, 'byteidx': 0, 'text': 'a'}, {'idx': 1, 'byteidx': 0, 'text': 'b'}]
+		    [{'idx': 0, 'byteidx': 0, 'text': 'a'},
+		     {'idx': 1, 'byteidx': 0, 'text': 'b'}]
 <
 		如果给出 {submatch} 且为 v:true，同时返回 "\1"、"\2" 等的子表
 		达式。例如: >
 		    :echo matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)',
 						\ #{submatches: v:true})
-		    [{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
+		    [{'idx': 0, 'byteidx': 0, 'text': 'acd',
+		      'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
 <		"submatches" 列表永远包含 9 个项目。如果没找到某子表达式，对应
 		位置返回空串。
 
@@ -6680,7 +6714,7 @@ max({expr})							*max()*
 		也可用作 |method|: >
 			mylist->max()
 <
-		返回类型: |Number|
+		返回类型: any，取决于 {expr}
 
 
 menu_info({name} [, {mode}])				*menu_info()*
@@ -6763,7 +6797,7 @@ min({expr})							*min()*
 		也可用作 |method|: >
 			mylist->min()
 <
-		返回类型: |Number|
+		返回类型: any，取决于 {expr}
 
 
 mkdir({name} [, {flags} [, {prot}]])			*mkdir()* *E739*
@@ -7849,8 +7883,8 @@ remote_send({server}, {string} [, {idvar}])		*remote_send()* *E241*
 
 		注意: 任何错误会在服务器端报告，从而影响那里的显示。
 		例如: >
-		:echo remote_send("gvim", ":DropAndReply " .. file, "serverid") ..
-		 \ remote_read(serverid)
+		:echo remote_send("gvim", ":DropAndReply " .. file,
+		 \ "serverid") .. remote_read(serverid)
 
 		:autocmd NONE RemoteReply *
 		 \ echo remote_read(expand("<amatch>"))
@@ -8226,11 +8260,12 @@ searchcount([{options}])					*searchcount()*
 		{options} 见下。
 
 		要取得最近一次按下 |n| 或 |N| 时的搜索计数，调用此函数，并带上
-		`recompute: 0`。有时，因为 |n| 和 |N| 的最大计数为 99，这会返
-		回错误的信息。如果超过 99，结果必是最大计数 + 1 (100)。如果要
-		得到正确的信息，指定 `recompute: 1`: >
+		`recompute: 0`。有时，因为 'maxsearchcount'，这会返回错误的信
+		息。如果计数超过 'maxsearchcount'，结果必是
+		'maxsearchcount' + 1。如果要得到正确的信息，指定
+		`recompute: 1`: >
 
-			" result == 最大计数 + 1 (100) 如果有很多匹配
+			" result == 'maxsearchcount' + 1 如果有很多匹配
 			let result = searchcount(#{recompute: 0})
 
 			" 以下则返回正确结果 (recompute 缺省为 1)
@@ -8308,7 +8343,7 @@ searchcount([{options}])					*searchcount()*
 						算时匹配文本的最大计数。如果搜
 						索超过总数，"total" 值成为
 						`maxcount + 1`
-						(缺省: 99)
+						(缺省: 'maxsearchcount')
 		  pos		|List|		重计算结果时的
 						`[lnum, col, off]` 值。
 						这会改变 "current" 返回值。见
@@ -9802,7 +9837,7 @@ strridx({haystack}, {needle} [, {start}])			*strridx()*
 
 strtrans({string})					*strtrans()*
 		返回等于 {string} 的字符串，但所有的不可显示字符被翻译成可显示
-		的字符序列 |'isprint'|，类似于窗口里显示的形式。例如: >
+		的字符序列 'isprint'，类似于窗口里显示的形式。例如: >
 			echo strtrans(@a)
 <		会显示寄存器里的换行符为 "^@" 而不是开启新行。
 
@@ -10256,8 +10291,8 @@ taglist({expr} [, {filename}])				*taglist()*
 		函数的工作速度。
 		关于标签搜索正则表达式模式的详情见 |tag-regexp|。
 
-		|'tags'| 提供 Vim 如何定位标签文件的信息。|tags-file-format|
-		说明不同的 ctags 工具生成的标签文件的格式。
+		'tags' 提供 Vim 如何定位标签文件的信息。|tags-file-format| 说
+		明不同的 ctags 工具生成的标签文件的格式。
 
 		也可用作 |method|: >
 			GetTagpattern()->taglist()
@@ -10621,7 +10656,8 @@ undofile({name})					*undofile()*
 
 
 undotree([{buf}])					*undotree()*
-		返回当前缓冲区或 {buf} 给出时所指定的缓冲区的撤销树的当前状态。
+		返回当前缓冲区或 {buf} 给出时所指定的缓冲区的撤销树的当前状
+		态。
 		返回值是包含以下项目的 |Dictionary|:
 		  "seq_last"	最大使用的撤销序列号。
 		  "seq_cur"	撤销树中当前位置的序列号。如果有撤销过的改变，
@@ -10668,6 +10704,54 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 <
 		返回类型: list<{type}>
 
+
+uri_decode({string})					*uri_decode()*
+		返回 {string} 的 URI 解码形式。逆转百分号编码 (把 "%3D" 这样的
+		序列还原为对应的字符)。
+
+		解码遵循如下标准的百分符解码规则:
+		    - "%HH" 被替换为十六进制 HH 对应的字符。
+		    - 如果解码的字节序列构成合法的 UTF-8，合并为对应的字符。否
+		      则，保留原先的字节序列。
+		    - 非法或不完整的编码 (如 "%GZ"、"%3" 或拖尾的 "%") 保持不
+		      变。
+
+		{string} 为空时返回空串。
+
+		示例: >
+			:echo uri_decode('c%3A%5Cmy%5Cdir%5Cfoo%20bar')
+			c:\my\dir\foo bar
+			:echo uri_decode('%CE%B1%CE%B2%CE%B3')
+			αβγ
+<
+		也可用作 |method|: >
+			mystr->uri_decode()
+<
+		Return type: |String|
+
+uri_encode({string})					*uri_encode()*
+		返回 {string} 的 URI 编码形式。URI 编码把不安全或保留的字符替
+		换为百分号编码的序列。
+
+		编码遵循如下标准的百分符编码规则:
+                    - 字母数字字符 [0-9A-Za-z] 保持不变。
+                    - "-"、"_"、"." 和 "~" 也保持不变。
+                    - 所有其它字符被替换为 "%HH"，其中的 HH 是两位大写十六进制
+		      数字。
+                    - 已有的百分符编码序列不作修改。
+
+		{string} 为空时返回空串。
+
+		示例: >
+			:echo uri_encode('c:\my\dir\foo bar')
+			c%3A%5Cmy%5Cdir%5Cfoo%20bar
+			:echo uri_encode('key=value&name=αβγ')
+			key%3Dvalue%26name%3D%CE%B1%CE%B2%CE%B3
+<
+		也可用作 |method|: >
+			mystr->uri_encode()
+<
+		返回类型: |String|
 
 							*utf16idx()*
 utf16idx({string}, {idx} [, {countcc} [, {charidx}]])
@@ -10729,7 +10813,7 @@ virtcol({expr} [, {list} [, {winid}]])			*virtcol()*
 		如果使用 'virtualedit'，{expr} 可以用 [lnum, col, off]，其中
 		"off" 是字符位置开始计算的屏幕列。例如，制表中或最后一个字符之
 		后的某个位置。"off" 若省略，则假定为零。如果在当前模式下使用了
-		虚拟编辑，也可能返回行尾之后的位置。另见 |'virtualedit'|
+		虚拟编辑，也可能返回行尾之后的位置。另见 'virtualedit'
 
 		{list} 如果存在且非零，virtcol() 返回字符占据的首个和末个屏幕
 		位置组成的列表。
@@ -10813,6 +10897,34 @@ wildmenumode()					*wildmenumode()*
 		(备注: 这需要 'wildcharm' 合适的设置配合)。
 
 		返回类型: |Number|
+
+
+wildtrigger()						*wildtrigger()*
+		启动命令行上的通配扩展，其行为应用 'wildmode' 和 'wildoptions'
+		设置的定义。见 |cmdline-completion|。
+
+		此函数也打开搜索模式的补全，如 |/|、|?|、|:s|、|:g|、|:v| 和
+		|:vimgrep|。
+
+		不像手动按 'wildchar' 那样，此函数在找不到匹配时不响铃，一般而
+		言操作会更安静。这样更适合补全的自动触发，如在 |:autocmd| 里的
+		情形。
+						*cmdline-autocompletion*
+		示例: 要在命令行上键入时自动弹出补全菜单，可用: >
+			autocmd CmdlineChanged [:/\?] call wildtrigger()
+			set wildmode=noselect:lastused,full wildoptions=pum
+<
+		要保留正常的历史导航 (上/下键): >
+			cnoremap <Up>   <C-U><Up>
+			cnoremap <Down> <C-U><Down>
+<
+		要为搜索时特别设置选项，如要设置 'pumheight': >
+			autocmd CmdlineEnter [/\?] set pumheight=8
+			autocmd CmdlineLeave [/\?] set pumheight&
+<
+		返回值永远是 0。
+
+		返回类型:|Number|
 
 
 win_execute({id}, {command} [, {silent}])		*win_execute()*
@@ -11292,12 +11404,12 @@ clipboard_working	编译时加入了 'clipboard' 的支持且可用。
 cmdline_compl		编译时加入了 |cmdline-completion| 的支持。
 cmdline_hist		编译时加入了 |cmdline-history| 的支持。
 cmdline_info		编译时加入了 'showcmd' 和 'ruler' 的支持。
-comments		编译时加入了 |'comments'| 的支持。
+comments		编译时加入了 'comments' 的支持。
 compatible		编译时确保和 Vi 非常兼容。
 conpty			|ConPTY| 可用的平台。
 cryptv			编译时加入了加密的支持。|encryption|。
 cscope			编译时加入了 |cscope| 的支持。
-cursorbind		编译时加入了 |'cursorbind'| 的支持 (总为真)
+cursorbind		编译时加入了 'cursorbind' 的支持 (总为真)
 debug			编译时定义了 "DEBUG"。
 dialog_con		编译时加入了控制台对话框的支持。
 dialog_con_gui		编译时加入了控制台和 GUI 对话框的支持。
@@ -11311,7 +11423,7 @@ ebcdic			在使用 ebcdic 字符集的机器上编译。
 emacs_tags		编译时加入了 Emcac 标签的支持。
 eval			编译时加入了表达式计算的支持。当然总要打开啦！
 ex_extra		|+ex_extra| (总为真)
-extra_search		编译时加入了 |'incsearch'| 和 |'hlsearch'| 的支持。
+extra_search		编译时加入了 'incsearch' 和 'hlsearch' 的支持。
 farsi			删除了波斯语的支持 |farsi|。
 file_in_path		编译时加入了 |gf| 和 |<cfile>| 的支持。(总为真)
 filterpipe		'shelltemp' 关闭时，外壳读/写/过滤命令使用管道
@@ -11410,6 +11522,7 @@ scrollbind		编译时加入了 'scrollbind' 的支持。(总为真)
 showcmd			编译时加入了 'showcmd' 的支持。
 signs			编译时加入了 |:sign| 的支持。
 smartindent		编译时加入了 'smartindent' 的支持。(总为真)
+socketserver		编译时加入了套接字服务器功能。(只限 Unix)
 sodium			编译时加入了 libsodium 以提供更好的加密支持
 sound			编译时加入了声音的支持，例如 `sound_playevent()`
 spell			编译时加入了拼写检查的支持 |spell|。
@@ -11434,14 +11547,14 @@ textprop		编译时加入了 |text-properties| 的支持。
 tgetent			编译时加入了 tgetent 的支持，可以使用外部 termcap 或
 			terminfo 文件。
 timers			编译时加入了 |timer_start()| 支持。
-title			编译时加入了窗口标题的支持。|'title'|。(总为真)
+title			编译时加入了窗口标题的支持。'title'。(总为真)
 toolbar			编译时加入了 |gui-toolbar| 的支持。
 ttyin			输入是终端 (tty)
 ttyout			输出是终端 (tty)
 unix			Vim 的 Unix 版本。 *+unix*
 unnamedplus		编译时加入了 'clipboard' 对 "unnamedplus" 的支持。
 user_commands		用户定义命令支持。(总为真)
-vartabs			编译时加入了可变制表位的支持 |'vartabstop'|。
+vartabs			编译时加入了可变制表位的支持 'vartabstop'。
 vcon			Win32: 有虚拟终端支持，可用 'termguicolors'。另见
 			|+vtp|。
 vertsplit		编译时加入了垂直分割窗口的支持 |:vsplit|。(总为真)
