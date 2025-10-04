@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年9月
+<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -56,6 +56,7 @@
 5. Ex 命令行的标志位             <a href="cmdline.html#ex-flags">ex-flags</a> 
 6. Ex 特殊字符                   <a href="cmdline.html#cmdline-special">cmdline-special</a> 
 7. 命令行窗口                    <a href="cmdline.html#cmdline-window">cmdline-window</a> 
+8. 命令行自动补全                <a href="cmdline.html#cmdline-autocompletion">cmdline-autocompletion</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 命令行编辑                                           <b class="vimtag"> <a name="cmdline-editing">cmdline-editing</a> </b></h4>
@@ -386,6 +387,8 @@
 
 帮助条目的匹配数目有上限 (目前是 300 个)，以避免过多匹配造成的延迟问题。
 
+要在输入时自动补全 (而无需按 <code class="special">&lt;Tab&gt;</code> 这样的键)，见  <a href="cmdline.html#cmdline-autocompletion">cmdline-autocompletion</a> 。
+
 以下是可以使用的命令:
 
                                                         <b class="vimtag"> <a name="c_CTRL-D">c_CTRL-D</a> </b>
@@ -442,8 +445,6 @@
 
 重复使用 <a href="options.html#'wildchar'">'wildchar'</a> 或 <code class="keystroke">CTRL-N</code> 会循环选择匹配，并最终转回到正在输入的内容。如果
 首个匹配不如所愿，可以用 <code class="special">&lt;S-Tab&gt;</code> 或 <code class="keystroke">CTRL-P</code> 直接回到刚输入的内容。
-
-另见  <a href="builtin.html#wildtrigger()">wildtrigger()</a> 。
 
 <a href="options.html#'wildmenu'">'wildmenu'</a> 选项可用于设置在命令行正上方显示可能的匹配。
 
@@ -683,11 +684,12 @@ Ex 命令有几个特别的地方:
 作范围，也可以是表达式的继续: 
 <code class="example">        var result = start</code>
 <code class="example">        + print</code>
-如果 "+" 用作范围，须在前加上冒号: 
-<code class="example">        var result = start</code>
+如果 "+" 用作范围，就像这里所示的，Vim9 脚本里须在前面加上冒号 (否则会报错
+ <a href="vim9.html#E1050">E1050</a> ): 
+<code class="example">        vim9script</code>
 <code class="example">        :+ print</code>
 
-                                                <b class="vimtag"> <a name=":,">:,</a> </b> <b class="vimtag"> <a name=":;">:;</a> </b>
+                                                                <b class="vimtag"> <a name=":,">:,</a> </b> <b class="vimtag"> <a name=":;">:;</a> </b>
 当范围被 ';' 分割时，在解释下一个行限定符之前，光标的位置会被设置为前一个行限
 定符确定的行值。这种情况不会发生在 ',' 上。例如: 
 <code class="example">   4,/this line/</code>
@@ -696,30 +698,66 @@ Ex 命令有几个特别的地方:
         从第 5 行到匹配第 5 行之后的一个 "that line" 为止的范围。
 
 对大多数命令而言，默认的行限定符就是光标的位置，但是 ":write" 和 ":global" 命
-令的默认值是整个文件 (1,$)。
+令的默认值是整个缓冲区 (1,$)。
 
-若行限定符的个数多于命令需要的数量，则第一个 (或前几个) 限定符被忽略。
+若行限定符的个数多于命令需要的数量，使用逗号分隔时，则前几个被忽略，如: 
+<code class="example">        :-2,+,-2,. print</code>
+里的 -2,+。
+
+使用分号分隔时，则倒数第二个及之前的限定符被加总，如: 
+<code class="example">        :-4;+3;-1;+2 print</code>
+里 -4 + 3 - 1 = -2。
 
 行号可以用下列符号限定:                         <b class="vimtag"> <a name=":range">:range</a> </b> <b class="vimtag"> <a name="{address}">{address}</a> </b>
         <code class="special">{number}</code>        行号  <b class="vimtag"> <a name="E1247">E1247</a> </b>
-        .               当前行                                    <b class="vimtag"> <a name=":.">:.</a> </b>
-        $               文件的最后一行                            <b class="vimtag"> <a name=":$">:$</a> </b>
-        %               相当于 1,$ (整个文件)                     <b class="vimtag"> <a name=":%">:%</a> </b>
-        't              标记 t 的位置 (小写)                      <b class="vimtag"> <a name=":'">:'</a> </b>
-        'T              标记 T 的位置 (大写)；如果标记存在于另一个文件中，则不
-                        能在范围里应用。
-        /<code class="special">{pattern}</code>[/]   下一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":%2F">:/</a> </b>
+        .               当前行                                     <b class="vimtag"> <a name=":.">:.</a> </b>
+        $               缓冲区的最后一行                           <b class="vimtag"> <a name=":$">:$</a> </b>
+        %               相当于 1,$ (整个缓冲区)                    <b class="vimtag"> <a name=":%">:%</a> </b>
+        *               相当于 '&lt;,'&gt; (最近选中的可视区域里的行；见
+                        下  <a href="cmdline.html#:star">:star</a> )
+        'x              标记 x 的位置所在行                        <b class="vimtag"> <a name=":'x">:'x</a> </b>
+                        (其中 x 是任意的 <code class="special">{a-z}</code> 位置标记)
+        'X              标记 X 的位置所在行                        <b class="vimtag"> <a name=":'X">:'X</a> </b>
+                        (其中 x 是任意的 <code class="special">{A-Z0-9}</code> 位置标记，但 X
+                        如果在另一缓冲区里，不能在范围里应用)
+        '[              最近改变或抽出的首行                       <b class="vimtag"> <a name=":'[">:'[</a> </b>
+        ']              最近改变或抽出的末行                       <b class="vimtag"> <a name=":']">:']</a> </b>
+        '&lt;              最近选择的可视区域的首行                   <b class="vimtag"> <a name=":'%3C">:'&lt;</a> </b>
+        '&gt;              最近选择的可视区域的末行                   <b class="vimtag"> <a name=":'%3E">:'&gt;</a> </b>
+        ''              到前次跳转之前或者上次 "m'" 或者 "m`" 命令 <b class="vimtag"> <a name=":''">:''</a> </b>
+                        给出的位置所在行 (但不在当前缓冲区时，''
+                        为 1)
+        '"              前次离开本缓冲区时的光标位置所在行         <b class="vimtag"> <a name=":'quote">:'quote</a> </b>
+        '^              前次插入模式关闭的光标位置所在行           <b class="vimtag"> <a name=":'^">:'^</a> </b>
+        '.              缓冲区前次改变的光标位置所在行             <b class="vimtag"> <a name=":'.">:'.</a> </b>
+        '(              当前句子的首个字符所在行                   <b class="vimtag"> <a name=":'(">:'(</a> </b>
+        ')              当前句子结尾处之后的首个字符所在行         <b class="vimtag"> <a name=":')">:')</a> </b>
+        '{              光标所在的段落之前的首个空行               <b class="vimtag"> <a name=":'{">:'{</a> </b>
+        '}              光标所在的段落之后的首个空行               <b class="vimtag"> <a name=":'}">:'}</a> </b>
+        /<code class="special">{pattern}</code>[/]   下一个匹配 <code class="special">{pattern}</code> 的行                  <b class="vimtag"> <a name=":%2F">:/</a> </b>
                                 另见下述的  <a href="cmdline.html#:range-pattern">:range-pattern</a> 
-        ?<code class="special">{pattern}</code>[?]   前一个匹配 <code class="special">{pattern}</code> 的行                 <b class="vimtag"> <a name=":?">:?</a> </b>
+        ?<code class="special">{pattern}</code>[?]   前一个匹配 <code class="special">{pattern}</code> 的行                  <b class="vimtag"> <a name=":?">:?</a> </b>
                                 另见下述的  <a href="cmdline.html#:range-pattern">:range-pattern</a> 
-        \/              下一个与前次搜索模式匹配的行
-        \?              前一个与前次搜索模式匹配的行
-        \&amp;              下一个与前次替代模式匹配的行
+        \/              下一个与最近搜索模式匹配的行
+        \?              前一个与最近搜索模式匹配的行
+        \&amp;              下一个与最近替代模式匹配的行
+
+        <code class="note">注意</code>: "下一个行" 与 "前一个行" 不包含出现在当前行里其他匹配。
 
                                                 <b class="vimtag"> <a name=":range-offset">:range-offset</a> </b>
-这些符号后面可以跟 (一个或多个) '+' 或 '-' 和一个可选的数字。该数字会与前面的
-行号相加或相减。若该数字省略，则认为是 1。如果 '+' 或 '-' 前为空，使用当前行。
-
+每个行指定符后面可跟一或多个 '+' 或 '-' 和可选的数值。该值会与前面的行号相加或
+相减. 所以，例如，'x+2 是包含位置标记 x 所在行之后的两行。如果省略数值，每个
+'+' 使用 +1 而每个 '-' 使用 -1，因而 'x++ 和 'x+2 同义。如果 '+' 或 '-' 之前未
+给出行号，用于 <code class="special">[range]</code> 里第一个行号时，使用当前行作为相对开始点。所以，-,. 代
+表 "当前行的前一行到当前行"。用于 <code class="special">[range]</code> 里的第二个行号时，取决于行号的分隔符
+是逗号还是分号 (见  <a href="cmdline.html#:,">:,</a>  或  <a href="cmdline.html#:;">:;</a> )。
+例如: 如果光标在本行下方的行，下面的任何命令会显示标签行 ":range-offset" 和
+"每个..." 行: 
+<code class="example">        :-8;+1 print</code>
+<code class="example">        :--------,-7 print</code>
+<code class="example">        :?每个行?-;+ print</code>
+<code class="example">        :'{+,'{+2 print</code>
+<code class="example">        :'{+1;')-1 print</code>
                                                 <b class="vimtag"> <a name=":range-closed-fold">:range-closed-fold</a> </b>
 逗号之后的行号如果位于关闭的折叠内部，调整为折叠的尾行，从而包含整个折叠。
 
@@ -975,7 +1013,7 @@ Ex 命令有几个特别的地方:
         :S      转义所有外壳命令使用的特殊字符 (见  <a href="builtin.html#shellescape()">shellescape()</a> )。必须是最
                 后一个修饰符。示例: 
 <code class="example">                    :!dir &lt;cfile&gt;:S</code>
-<code class="example">                    :call system('chmod +w -- ' . expand('%:S'))</code>
+<code class="example">                    :call system('chmod +w -- ' .. expand('%:S'))</code>
 <code class="example"></code>
 例如，如果文件名是 "src/version.c"，当前目录是 "/home/mool/vim": 
 <code class="example">  :p                    /home/mool/vim/src/version.c</code>
@@ -1166,7 +1204,7 @@ Ex 命令有几个特别的地方:
 另一个例子: 
 <code class="example">        :au CmdwinEnter [/\?]  startinsert</code>
 将使 Vim 在打开命令行窗口时切换到插入模式。
-<code class="note">注意</code>: "?" 需要被转义，因为那是  <a href="autocmd.html#file-pattern">file-pattern</a> 。另见  <a href="builtin.html#cmdline-autocompletion">cmdline-autocompletion</a> 。
+<code class="note">注意</code>: "?" 需要被转义，因为那是  <a href="autocmd.html#file-pattern">file-pattern</a> 。另见  <a href="cmdline.html#cmdline-autocompletion">cmdline-autocompletion</a> 。
 
                                                 <b class="vimtag"> <a name="cmdwin-char">cmdwin-char</a> </b>
 模式使用的下列字符用于指示命令行的种类:
@@ -1177,6 +1215,80 @@ Ex 命令有几个特别的地方:
         =       "= 表达式  <a href="eval.html#expr-register">expr-register</a> 
         @        <a href="builtin.html#input()">input()</a>  字符串
         -        <a href="insert.html#:insert">:insert</a>  或  <a href="insert.html#:append">:append</a>  的文本
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>8. 命令行补全                                    <b class="vimtag"> <a name="cmdline-autocompletion">cmdline-autocompletion</a> </b></h4>
+自动补全在你键入时，通过显示包含建议值的弹出菜单，会使命令行更有效率及方便导
+航，这包括搜索 (/ 或 ?) 或输入命令 (:)。
+
+基本的设置是: 
+<code class="example">        autocmd CmdlineChanged [:\/\?] call wildtrigger()</code>
+<code class="example">        set wildmode=noselect:lastused,full</code>
+<code class="example">        set wildoptions=pum</code>
+<code class="example"></code>
+通过此配置，立即出现各种建议值，可用 <code class="special">&lt;Tab&gt;</code> 或方向键在不同值间移动。
+
+要使 <code class="special">&lt;Up&gt;</code>/<code class="special">&lt;Down&gt;</code> 能保留正常的命令行历史导航功能: 
+<code class="example">        cnoremap &lt;expr&gt; &lt;Up&gt;   wildmenumode() ? "\&lt;C-E&gt;\&lt;Up&gt;"   : "\&lt;Up&gt;"</code>
+<code class="example">        cnoremap &lt;expr&gt; &lt;Down&gt; wildmenumode() ? "\&lt;C-E&gt;\&lt;Down&gt;" : "\&lt;Down&gt;"</code>
+<code class="example"></code>
+也可使选项只适用于特定命令行。如只在搜索里使弹出菜单高度更矮: 
+<code class="example">        autocmd CmdlineEnter [\/\?] set pumheight=8</code>
+<code class="example">        autocmd CmdlineLeave [\/\?] set pumheight&amp;</code>
+<code class="example"></code>
+附 加                                   <b class="vimtag"> <a name="fuzzy-file-picker">fuzzy-file-picker</a> </b> <b class="vimtag"> <a name="live-grep">live-grep</a> </b>
+
+命令行自动补全可扩展，以提供高级用法。
+例如，可把原生的  <a href="editing.html#:find">:find</a>  命令变成模糊匹配与交互的文件选择器: 
+<code class="example"></code>
+<code class="example">        set findfunc=Find</code>
+<code class="example">        func Find(arg, _)</code>
+<code class="example">          if empty(s:filescache)</code>
+<code class="example">            let s:filescache = globpath('.', '**', 1, 1)</code>
+<code class="example">            call filter(s:filescache, '!isdirectory(v:val)')</code>
+<code class="example">            call map(s:filescache, "fnamemodify(v:val, ':.')")</code>
+<code class="example">          endif</code>
+<code class="example">          return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)</code>
+<code class="example">        endfunc</code>
+<code class="example">        let s:filescache = []</code>
+<code class="example">        autocmd CmdlineEnter : let s:filescache = []</code>
+<code class="example"></code>
+ <code class="badlink">:Grep</code>  命令搜索匹配模式的行，并在键入过程中动态更新结果 (两个字符后触发；
+<code class="note">注意</code>: 需要下一个小节里的  <a href="autocmd.html#CmdlineLeavePre">CmdlineLeavePre</a>  自动命令): 
+<code class="example"></code>
+<code class="example">        command! -nargs=+ -complete=customlist,&lt;SID&gt;Grep</code>
+<code class="example">                \ Grep call &lt;SID&gt;VisitFile()</code>
+<code class="example"></code>
+<code class="example">        func s:Grep(arglead, cmdline, cursorpos)</code>
+<code class="example">          if match(&amp;grepprg, '\$\*') == -1 | let &amp;grepprg ..= ' $*' | endif</code>
+<code class="example">          let cmd = substitute(&amp;grepprg, '\$\*', shellescape(escape(a:arglead, '\')), '')</code>
+<code class="example">          return len(a:arglead) &gt; 1 ? systemlist(cmd) : []</code>
+<code class="example">        endfunc</code>
+<code class="example"></code>
+<code class="example">        func s:VisitFile()</code>
+<code class="example">          let item = getqflist(#{lines: [s:selected]}).items[0]</code>
+<code class="example">          let pos  = '[0,\ item.lnum,\ item.col,\ 0]'</code>
+<code class="example">          exe $':b +call\ setpos(".",\ {pos}) {item.bufnr}'</code>
+<code class="example">          call setbufvar(item.bufnr, '&amp;buflisted', 1)</code>
+<code class="example">        endfunc</code>
+<code class="example"></code>
+退出命令行时自动选择补全列表的首个项目，且对  <code class="badlink">:Grep</code>  而言，把键入的模式加入命
+令行历史: 
+<code class="example"></code>
+<code class="example">        autocmd CmdlineLeavePre :</code>
+<code class="example">              \ if get(cmdcomplete_info(), 'matches', []) != [] |</code>
+<code class="example">              \   let s:info = cmdcomplete_info() |</code>
+<code class="example">              \   if getcmdline() =~ '^\s*fin\%[d]\s' &amp;&amp; s:info.selected == -1 |</code>
+<code class="example">              \     call setcmdline($'find {s:info.matches[0]}') |</code>
+<code class="example">              \   endif |</code>
+<code class="example">              \   if getcmdline() =~ '^\s*Grep\s' |</code>
+<code class="example">              \     let s:selected = s:info.selected != -1</code>
+<code class="example">              \         ? s:info.matches[s:info.selected] : s:info.matches[0] |</code>
+<code class="example">              \     call setcmdline(s:info.cmdline_orig) |</code>
+<code class="example">              \   endif |</code>
+<code class="example">              \ endif</code>
+<code class="example"></code>
+关于插入模式下的自动补全，参见  <a href="insert.html#ins-autocompletion">ins-autocompletion</a> 。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年9月
+<b class="vimtag"> <a name="develop.txt">develop.txt</a> </b>   适用于 Vim 9.1 版本。   最近更新: 2025年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -48,6 +48,7 @@ Vim 的开发                                              <b class="vimtag"> <a
 2. 设计决定              <a href="develop.html#design-decisions">design-decisions</a> 
 3. 假定                  <a href="develop.html#design-assumptions">design-assumptions</a> 
 4. 编程风格              <a href="develop.html#coding-style">coding-style</a> 
+5. 政策                  <a href="develop.html#design-policy">design-policy</a> 
 
 请先看一下 "src" 目录下的 README.txt 以便对源代码有一个总体的了解。
 
@@ -328,6 +329,28 @@ V7.3 上的 Compaq C V6.4-005 上编译。
         unsigned    32 位或更大的无符号数
 
 
+函 数 原 型                                     <b class="vimtag"> <a name="assumptions-prototypes">assumptions-prototypes</a> </b>
+
+Vim 目前不使用常规的头文件 ( <code class="badlink">.h</code> ) 来定义绝大多数内部函数原型。现有的架构使用
+放在  <code class="badlink">src/proto/</code>  目录里的独立  <code class="badlink">.pro</code>  文件，每个  <code class="badlink">.c</code>  文件配一个  <code class="badlink">.pro</code> 。
+
+和常规的自包含的头文件不同，这些  <code class="badlink">.pro</code>  文件不包含 API 文档，struct 和 enum 定
+义或其他声明；只有函数原型。
+
+和这些文件的捆绑并非自动。 <code class="badlink">src/proto.h</code>  头文件包含了手动维护的  <code class="badlink">#include</code>  指令
+列表，每个对应一个单独的  <code class="badlink">.pro</code>  文件。
+
+因为此设计，在此架构下要集成新源代码文件需要先创建对应的  <code class="badlink">.pro</code>  文件，在
+ <code class="badlink">proto.h</code>  里手动加入新的  <code class="badlink">#include</code>  指令 ，然后手动在  <code class="badlink">src/Makefile</code>  和
+ <code class="badlink">src/Make_mvc.mak</code>  里加入此文件。
+
+ <code class="badlink">src/Makefile</code>  里有个 `make proto` 目标，原有的目标是自动化此  <code class="badlink">.pro</code>  文件的更
+新过程。但此目标并不可靠，在主要平台上 (如 macOS) 不可用，且只是新发布工作流的
+一部分。实务上，不管是新增、删除还是修改函数签名，贡献者都会手工编辑相关的
+ <code class="badlink">.pro</code>  文件。
+
+此系统从最早 v1.24 开始就已启用，当时 Vim 的函数还在使用 K&amp;R 风格编写。
+
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 编程风格                                             <b class="vimtag"> <a name="coding-style">coding-style</a> </b></h4>
 这些是改变 Vim 源代码的时候必须遵循的准则。为了保持源代码的可读性和可维护性，
@@ -353,6 +376,10 @@ V7.3 上的 Compaq C V6.4-005 上编译。
 
 除非是很小的改动，必须在 github 上创建拉取请求，因为这样可能触发测试套件。
 
+PR 最好为每个逻辑变动提供不同的提交。不过，如果要合并多个原子的逻辑变动，也可
+以汇总多个提交为单个 PR。这样可以使长 PR 更方便评审。每个提交的信息里请描述改
+动的原因，这会大大有助于评审过程。基于不同提交处理不同的逻辑变动的情况，在 Vim
+库里，每个提交会视作单独的补丁来应用。
 
                                                         <b class="vimtag"> <a name="style-clang-format">style-clang-format</a> </b>
  <code class="badlink">clang-format</code>  排版器可根据发布的 .clang-format 文件来 (半-) 自动排版 sound.c
@@ -367,9 +394,9 @@ V7.3 上的 Compaq C V6.4-005 上编译。
 
 对文件头部和函数描述，可用: 
 <code class="example">    /*</code>
-<code class="example">     * 描述</code>
-<code class="example">     */</code>
-
+* 描述
+     */
+&lt;
 其他注释应用: 
 <code class="example">    // 注释</code>
 
@@ -656,6 +683,26 @@ get_env_value() Linux 系统函数
                 a = 1;
             while (cond);
 
+
+</section><hr class="doubleline" /><section class=inner>
+<h4>5. 政策         <b class="vimtag"> <a name="design-policy">design-policy</a> </b> <b class="vimtag"> <a name="new-features">new-features</a> </b> <b class="vimtag"> <a name="deprecated-features">deprecated-features</a> </b></h4>
+次要 (如 9.2.0) 或主要版本 (如 10.0) 发布间相隔的时间称为开发周期。在开发周期
+里，每个单独对 C 核心的变动都会收到一个新增的人类可读的补丁号，以便引用每个特
+定的补丁版本。典型的开发发布周期可能持续数年，累积大约 1500 - 2500 个补丁。
+
+在生成发布前，会宣布进入稳定期。在此期间，只接受明确的漏洞修正、安全修正，文档
+改动、翻译更新和运行时文件更新 (只要它们不导致后向不兼容的改动)，以便我们集中
+精力打磨即将到来的发布。
+
+新特性只在开发阶段引入，在稳定阶段则暂停。开发周期内的特性允许修改，但在周期结
+束前必须完成稳定。
+
+次要版本一旦发布，此发布包含的特性不再接受后向不兼容的改动。之后的补丁应保留
+Vim 的 C 内核的兼容性。运行时文件的处理则灵活性大些，给运行时文件维护者更多修
+正旧行为的机会。
+
+在开发生命周期中，特性可以被标记为已废弃，并能通过编译时设置的开关来禁用。通常
+在一次新发布之后的版本周期内完成移除。
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>

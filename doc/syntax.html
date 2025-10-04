@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年9月
+<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.1 版本。   最近更新: 2025年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -2104,6 +2104,20 @@ lite 语法高亮有两个选项。
 <code class="example"></code>
 <code class="example">        :let lite_minlines = 200</code>
 <code class="example"></code>
+LOG                                                     <b class="vimtag"> <a name="ft-log-syntax">ft-log-syntax</a> </b>
+
+Vim 提供了简单化的通用的日志的语法高亮器。因为日志文件格式很通用，缺省不打开高
+亮，因为会让人分心。如果需要打开，手动打开 "log" 文件类型: 
+<code class="example"></code>
+<code class="example">        :set ft=log</code>
+<code class="example"></code>
+要自动打开 "*.log" 文件的高亮，在你自己的  <code class="badlink">filetype.vim</code>  文件里加入 (通常在
+Unix 上位于  <code class="badlink">~/.vim/filetype.vim</code>  或  <code class="badlink">$HOME/vimfiles/filetype.vim</code> ，另见
+ <a href="filetype.html#new-filetype">new-filetype</a> ): 
+<code class="example"></code>
+<code class="example">        augroup filetypedetect</code>
+<code class="example">          au! BufNewFile,BufRead *.log  setfiletype log</code>
+<code class="example">        augroup END</code>
 <code class="example"></code>
 LPC                                             <b class="vimtag"> <a name="lpc.vim">lpc.vim</a> </b> <b class="vimtag"> <a name="ft-lpc-syntax">ft-lpc-syntax</a> </b>
 
@@ -2208,8 +2222,8 @@ Waterloo Maple Inc 的 Maple V 支持符号代数。该语言支持很多函数�
 MARKDOWN                        <b class="vimtag"> <a name="ft-markdown-syntax">ft-markdown-syntax</a> </b> <b class="vimtag"> <a name="g:markdown_minlines">g:markdown_minlines</a> </b>
                  <b class="vimtag"> <a name="g:markdown_fenced_languages">g:markdown_fenced_languages</a> </b> <b class="vimtag"> <a name="g:markdown_syntax_conceal">g:markdown_syntax_conceal</a> </b>
 
-如果有很长的区域，高亮可能会出错。以减慢显示速度为代价，可以让引擎反向查找更
-远去同步区域开始处，例如反向 500 行 (缺省是 50 行): 
+如果有很长的区域，高亮可能不正确。以减慢显示速度为代价，可以让引擎反向查找更远
+去同步区域开始处，例如反向 500 行 (缺省是 50 行): 
 <code class="example"></code>
 <code class="example">        :let g:markdown_minlines = 500</code>
 <code class="example"></code>
@@ -2221,7 +2235,10 @@ MARKDOWN                        <b class="vimtag"> <a name="ft-markdown-syntax">
 <code class="example"></code>
 <code class="example">        :let g:markdown_syntax_conceal = 0</code>
 <code class="example"></code>
-<code class="example"></code>
+要支持如引用、脚注、数学公式、学术书写元素及内嵌代码块高亮等扩展 markdown 的增
+强功能，考虑使用 pandoc 语法插件。设置  <a href="syntax.html#g:filetype_md">g:filetype_md</a>  为 <code class="badlink">'pandoc'</code>，其配置详情
+参见  <a href="syntax.html#ft-pandoc-syntax">ft-pandoc-syntax</a> 。
+
 MATHEMATICA             <b class="vimtag"> <a name="mma.vim">mma.vim</a> </b> <b class="vimtag"> <a name="ft-mma-syntax">ft-mma-syntax</a> </b> <b class="vimtag"> <a name="ft-mathematica-syntax">ft-mathematica-syntax</a> </b>
 
 自动假设空白的 *.m 文件为 Matlab 文件，除非你在 .vimrc 里指定了: 
@@ -4260,6 +4277,11 @@ containedin=<code class="special">{group-name}</code>...                        
 "containedin" 参数跟随语法组名的列表。然后，本项目就可以包含在那些组里，就像那
 些项目使用了包含本项目的 "contains=" 参数一样。
 
+只考虑直接包含 (在语法堆栈的顶层) 的项目。Vim 不搜索其它的祖先。如果直接包含者
+没有通过  <a href="syntax.html#:syn-contains">:syn-contains</a>  包含本项目，在本项目的 "containedin=" 里也没有提到，
+即使有些祖先可以接受本项目，匹配也不会开始。<code class="note">注意</code>  <a href="syntax.html#:syn-transparent">:syn-transparent</a>  区域仍然会
+对其自身的  <a href="syntax.html#:syn-contains">:syn-contains</a>  列表执行。
+
 <code class="special">{group-name}</code>... 的使用方式和 "contains" 相同，见上面的解释。
 
 这可以用于后加的语法项目。一个项目可以告知要包含在已经存在的项目里面，而无须修
@@ -4270,6 +4292,7 @@ containedin=<code class="special">{group-name}</code>...                        
 "containedin" 的匹配被加到该项目可以出现的其它地方。像平常一样，本项目也可以使
 用 "contains" 参数。不要忘记关键字项目不可能包含其它项目。所以把它们加在
 "containedin" 里是徒劳的。
+另见:  <a href="syntax.html#:syn-contains">:syn-contains</a> 、 <a href="syntax.html#:syn-transparent">:syn-transparent</a> 。
 
 
 nextgroup=<code class="special">{group-name}</code>,..                               <b class="vimtag"> <a name=":syn-nextgroup">:syn-nextgroup</a> </b>
@@ -5211,6 +5234,8 @@ PmenuMatch      弹出菜单: 普通项目的匹配文本。和  <a href="syntax
 PmenuMatchSel   弹出菜单: 选中项目的匹配文本。和  <a href="syntax.html#hl-PmenuSel">hl-PmenuSel</a>  组合使用。
                                                         <b class="vimtag"> <a name="hl-ComplMatchIns">hl-ComplMatchIns</a> </b>
 ComplMatchIns   当前被插入的补全的匹配文本。
+                                                        <b class="vimtag"> <a name="hl-PreInsert">hl-PreInsert</a> </b>
+PreInsert       <a href="options.html#'completeopt'">'completeopt'</a> 里包含了 "preinsert" 时插入的文本。
                                                         <b class="vimtag"> <a name="hl-PopupSelected">hl-PopupSelected</a> </b>
 PopupSelected    <a href="popup.html#popup_menu()">popup_menu()</a>  创建的弹出窗口。缺省链接到  <a href="syntax.html#hl-PmenuSel">hl-PmenuSel</a> 。
                                                         <b class="vimtag"> <a name="hl-PopupNotification">hl-PopupNotification</a> </b>

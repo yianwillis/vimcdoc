@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>      适用于 Vim 9.1 版本。        最近更新: 2025年9月
+<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>      适用于 Vim 9.1 版本。        最近更新: 2025年10月
 
 内建函数                                        <b class="vimtag"> <a name="builtin-functions">builtin-functions</a> </b>
 
@@ -392,7 +392,7 @@ lispindent(<code class="special">{lnum}</code>)              数值    行 <code
 list2blob(<code class="special">{list}</code>)               blob    把数值的 <code class="special">{list}</code> 转成 blob
 list2str(<code class="special">{list}</code> [, <code class="special">{utf8}</code>])     字符串  把数值的 <code class="special">{list}</code> 转成字符串
 list2tuple(<code class="special">{list}</code>)              元组    把 <code class="special">{list}</code> 里的项目转为元组
-listener_add(<code class="special">{callback}</code> [, <code class="special">{buf}</code>])
+listener_add(<code class="special">{callback}</code> [, <code class="special">{buf}</code> [, <code class="special">{unbuffered}</code>]])
                                 数值    增加监听改动的回调
 listener_flush([<code class="special">{buf}</code>])         无      激活监听器回调
 listener_remove(<code class="special">{id}</code>)           无      删除监听器回调
@@ -474,8 +474,9 @@ popup_setbuf(<code class="special">{id}</code>, <code class="special">{buf}</cod
 popup_setoptions(<code class="special">{id}</code>, <code class="special">{options}</code>)
                                 无      设置弹出窗口 <code class="special">{id}</code> 的选项
 popup_settext(<code class="special">{id}</code>, <code class="special">{text}</code>)     无      设置弹出窗口 <code class="special">{id}</code> 的文本
-popup_show(<code class="special">{id}</code>)                无      撤销弹出窗口 <code class="special">{id}</code> 的隐藏
+popup_show(<code class="special">{id}</code>)                数值    撤销弹出窗口 <code class="special">{id}</code> 的隐藏
 pow(<code class="special">{x}</code>, <code class="special">{y}</code>)                   浮点    <code class="special">{x}</code> 的 <code class="special">{y}</code> 次方
+preinserted()                   数值    文本是否插入在光标后方
 prevnonblank(<code class="special">{lnum}</code>)            数值    最后一个 &lt;= <code class="special">{lnum}</code> 的非空白行的行号
 printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code>...)       字符串  排版文本
 prompt_getprompt(<code class="special">{buf}</code>)         字符串  获取提示文本
@@ -598,7 +599,7 @@ settabwinvar(<code class="special">{tabnr}</code>, <code class="special">{winnr}
 settagstack(<code class="special">{nr}</code>, <code class="special">{dict}</code> [, <code class="special">{action}</code>])
                                 数值    用 <code class="special">{dict}</code> 修改标签栈
 setwinvar(<code class="special">{nr}</code>, <code class="special">{varname}</code>, <code class="special">{val}</code>) 无    设置窗口 <code class="special">{expr}</code> 的 <code class="special">{varname}</code> 为 <code class="special">{val}</code>
-sha256(<code class="special">{string}</code>)                字符串  <code class="special">{string}</code> 的 SHA256 校验码
+sha256(<code class="special">{expr}</code>)                  字符串  字符串或 blob 的 SHA256 校验码
 shellescape(<code class="special">{string}</code> [, <code class="special">{special}</code>])
                                 字符串  转义 <code class="special">{string}</code> 以便用作外壳命令的参数
 shiftwidth([<code class="special">{col}</code>])             数值    <a href="options.html#'shiftwidth'">'shiftwidth'</a> 的有效值
@@ -1799,9 +1800,9 @@ col(<code class="special">{expr}</code> [, <code class="special">{winid}</code>]
 
 
 complete(<code class="special">{startcol}</code>, <code class="special">{matches}</code>)                 <b class="vimtag"> <a name="complete()">complete()</a> </b> <b class="vimtag"> <a name="E785">E785</a> </b>
-                设置插入模式补全的匹配。
-                只能用于插入模式。需要使用 <code class="keystroke">CTRL-R</code> = 的映射 (见  <a href="insert.html#i_CTRL-R">i_CTRL-R</a> )。不
-                能在 <code class="keystroke">CTRL-O</code> 之后或者在表达式映射里使用。
+                设置插入模式补全的匹配。只能用于插入模式。通常从 <code class="keystroke">CTRL-R</code> = 的映
+                射里调用 (见  <a href="insert.html#i_CTRL-R">i_CTRL-R</a> )，但也可从  <a href="map.html#%3CCmd%3E">&lt;Cmd&gt;</a>  或  <code class="badlink">&lt;ScriptCmd</code>  映
+                射里调用。不能在 <code class="keystroke">CTRL-O</code> 之后或者在表达式映射里使用。
                 <code class="special">{startcol}</code> 是行内待补全文本开始的字节偏移。直到光标为止的文本
                 就是原始的文本，它将要被匹配所替代。用 col('.') 会得到空串。而
                 "col('.') - 1" 将用匹配替换单个字符。
@@ -1811,15 +1812,31 @@ complete(<code class="special">{startcol}</code>, <code class="special">{matches
                 <code class="note">注意</code> 调用此函数后，你不应插入任何使补全停止的内容。
                 用 <code class="keystroke">CTRL-N</code> 和 <code class="keystroke">CTRL-P</code> 选择匹配，就像普通的插入模式补全那样。如果
                 指定，会出现弹出菜单，见  <a href="insert.html#ins-completion-menu">ins-completion-menu</a> 。
-                示例: 
-<code class="example">        inoremap &lt;F5&gt; &lt;C-R&gt;=ListMonths()&lt;CR&gt;</code>
+
+                示例 (使用老式 Vim 脚本): 
 <code class="example"></code>
-<code class="example">        func ListMonths()</code>
-<code class="example">          call complete(col('.'), ['January', 'February', 'March',</code>
-<code class="example">                \ 'April', 'May', 'June', 'July', 'August', 'September',</code>
-<code class="example">                \ 'October', 'November', 'December'])</code>
-<code class="example">          return ''</code>
-<code class="example">        endfunc</code>
+<code class="example">                inoremap &lt;F5&gt; &lt;C-R&gt;=ListMonths()&lt;CR&gt;</code>
+<code class="example"></code>
+<code class="example">                func ListMonths()</code>
+<code class="example">                  call complete(col('.'), ['January', 'February', 'March',</code>
+<code class="example">                        \ 'April', 'May', 'June', 'July', 'August',</code>
+<code class="example">                        \ 'September', \ 'October', 'November', 'December'])</code>
+<code class="example">                  return ''</code>
+<code class="example">                endfunc</code>
+
+                示例 (使用 Vim9 脚本): 
+<code class="example"></code>
+<code class="example">                vim9script</code>
+<code class="example">                def ListMonths(): string</code>
+<code class="example">                  const months = [ 'January', 'February', 'March', 'April',</code>
+<code class="example">                        'May', 'June', 'July', 'September', 'October',</code>
+<code class="example">                        'November', 'December']</code>
+<code class="example">                  complete(col('.'), months)</code>
+<code class="example">                  return ''</code>
+<code class="example">                enddef</code>
+<code class="example"></code>
+<code class="example">                inoremap &lt;F5&gt; &lt;ScriptCmd&gt;ListMonths()&lt;CR&gt;</code>
+<code class="example"></code>
                 此例并不很有用，但可以说明功能。<code class="note">注意</code>这里返回空串，以免插入零。
 
                 也可用作  <a href="eval.html#method">method</a> ，基是作为第二个参数传递的: 
@@ -4747,10 +4764,12 @@ gettext(<code class="special">{text}</code> [, <code class="special">{package}</
 getwininfo([<code class="special">{winid}</code>])                                   <b class="vimtag"> <a name="getwininfo()">getwininfo()</a> </b>
                 返回窗口信息，返回值是字典的  <a href="eval.html#List">List</a> 。
 
-                如果给出 <code class="special">{winid}</code>，返回给定 ID 的窗口的信息为包含单个项目的
-                 <a href="eval.html#List">List</a> 。如果窗口不存在，返回空列表。
+                如果给出 <code class="special">{winid}</code>，返回给定 ID 的窗口的信息，为包含单个项目的
+                 <a href="eval.html#List">List</a> 。如果窗口是  <a href="popup.html#popup">popup</a>  窗口，返回该弹出窗口的信息。如果窗
+                口不存在，返回空列表。
 
-                如果没有给出 <code class="special">{winid}</code>，返回所有标签页的所有窗口的信息。
+                如果没有给出 <code class="special">{winid}</code>，返回所有标签页中所有窗口 (但不包括
+                 <a href="popup.html#popup">popup</a>  窗口) 的信息。
 
                 每个列表项是包含以下项目的  <a href="eval.html#Dictionary">Dictionary</a> :
                         botline         最近完整显示的缓冲区行
@@ -5608,7 +5627,7 @@ items(<code class="special">{expr}</code>)                                      
                 返回  <a href="eval.html#List">List</a> ，<code class="special">{expr}</code> 的所有键/索引-值组对。每个  <a href="eval.html#List">List</a>  项目是两
                 个项目的列表:
                 - 对  <a href="eval.html#Dict">Dict</a>  而言: 键和值
-                - 对  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Blob">Blob</a>  和  <a href="eval.html#String">String</a>  而言：索引和值
+                - 对  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Blob">Blob</a>  和  <a href="eval.html#String">String</a>  而言: 索引和值
                 对  <a href="eval.html#Dict">Dict</a>  而言，返回的  <a href="eval.html#List">List</a>  项目的顺序不定。否则，依索引值升
                 序排序。
 
@@ -5941,11 +5960,15 @@ list2tuple(<code class="special">{list}</code>)                                 
                 返回类型: tuple&lt;<code class="special">{type}</code>&gt; (取决于给定的  <a href="eval.html#List">List</a> )
 
 
-listener_add(<code class="special">{callback}</code> [, <code class="special">{buf}</code>])                      <b class="vimtag"> <a name="listener_add()">listener_add()</a> </b>
+listener_add(<code class="special">{callback}</code> [, <code class="special">{buf}</code> [, <code class="special">{unbuffered}</code>]])     <b class="vimtag"> <a name="listener_add()">listener_add()</a> </b>
                 添加缓冲区 <code class="special">{buf}</code> 有改动时会被执行的回调函数。
                 <code class="special">{buf}</code> 可以是缓冲区名或号。它可接受的值见  <a href="builtin.html#bufname()">bufname()</a> 。省略
                 <code class="special">{buf}</code> 时使用当前缓冲区。
                 返回唯一的 ID，可传递给  <a href="builtin.html#listener_remove()">listener_remove()</a> 。
+
+                如果 <code class="special">{buf}</code> 已注册过回调，这等价于在增加新回调之前，先调用 
+<code class="example">                    listener_flush({buf})</code>
+                函数。
 
                 <code class="special">{callback}</code> 调用时带五个参数:
                     bufnr       发生改动的缓冲区
@@ -5984,15 +6007,27 @@ listener_add(<code class="special">{callback}</code> [, <code class="special">{b
                     added       0
                     col         改动发生的首列，或 1
 
-                依改动发生的次序列出项目，这样最近发生的改动在最后。行号在回调
-                发生时是合法的，但之后的改动可能使之非法，所以保存它们以备后用
-                是不可行的。
+                <code class="special">{unbuffered}</code> 为  <a href="eval.html#FALSE">FALSE</a>  或未给出时，调用 <code class="special">{callback}</code> 的时刻为:
 
-                在屏幕刚刚刷新前调用 <code class="special">{callback}</code>，此后调用  <a href="builtin.html#listener_flush()">listener_flush()</a> 
-                或进行影响行的数目的改动会使得改动列表里的行号变成非法。
+                1. 在屏幕刚刚刷新前。
+                2. 调用  <a href="builtin.html#listener_flush()">listener_flush()</a>  时。
+                3. 发生了影响行计数的改动，以致于修改列表里的某行的行号不再有
+                   效。
+
+                依改动发生的次序列出项目，这样最近发生的改动在最后。
+
+                因为上面列出的触发回调的第三个触发的原因，传递给的回调的行号未
+                必能保证有效。如果这会导致问题，把 <code class="special">{unbuffered}</code> 设为  <a href="eval.html#TRUE">TRUE</a> 。
+
+                <code class="special">{unbuffered}</code> 为  <a href="eval.html#TRUE">TRUE</a>  时，每一个改动都会触发 <code class="special">{callback}</code>。改动
+                列表只保留单一字典，字典里的 "start"、"end" 和 "added" 值和对
+                应的回调参数相同。调用回调时的行号一定是合法的，但之后的改动可
+                能会使之非法，所以不建议保留其备份为之后使用。
 
                 <code class="special">{callback}</code> 调用时文本被锁定，见  <a href="eval.html#textlock">textlock</a> 。如果需要改动缓冲
                 区，使用定时器可以在之后某时进行需要的改动  <a href="builtin.html#timer_start()">timer_start()</a> 。
+
+                <code class="special">{callback}</code> 中不能调用 listener_add()。 <b class="vimtag"> <a name="E1569">E1569</a> </b>
 
                 缓冲区初次载入时不调用 <code class="special">{callback}</code>。 <a href="autocmd.html#BufReadPost">BufReadPost</a>  自动命令事件
                 可用来处理缓冲区的初始文本。
@@ -7079,6 +7114,14 @@ pow(<code class="special">{x}</code>, <code class="special">{y}</code>)         
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        Compute()-&gt;pow(3)</code>
+
+                返回类型:  <a href="eval.html#Number">Number</a> 
+
+
+preinserted()                                           <b class="vimtag"> <a name="preinserted()">preinserted()</a> </b>
+                如果文本在光标后插入，返回非零值。这是因为 <a href="options.html#'completeopt'">'completeopt'</a> 里有
+                "preinsert"，或 <a href="options.html#'completeopt'">'completeopt'</a> 里有 "longest" 且 <a href="options.html#'autocomplete'">'autocomplete'</a>
+                已激活。否则返回零。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
@@ -9089,11 +9132,13 @@ setwinvar(<code class="special">{winnr}</code>, <code class="special">{varname}<
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
-sha256(<code class="special">{string}</code>)                                                <b class="vimtag"> <a name="sha256()">sha256()</a> </b>
-                返回 64 位十六进制字符串，即 <code class="special">{string}</code> 的 SHA256 校验码。
+sha256(<code class="special">{expr}</code>)                                          <b class="vimtag"> <a name="sha256()">sha256()</a> </b>
+                返回 64 位十六进制字符串，即 <code class="special">{expr}</code> 的 SHA256 校验码。
+                <code class="special">{expr}</code> 可以是字符串或 blob。
 
                 也可用作  <a href="eval.html#method">method</a> : 
 <code class="example">                        GetText()-&gt;sha256()</code>
+<code class="example">                        GetBlob()-&gt;sha256()</code>
 
                 返回类型:  <a href="eval.html#String">String</a> 
 
@@ -10934,26 +10979,19 @@ wildmenumode()                                  <b class="vimtag"> <a name="wild
 
 wildtrigger()                                           <b class="vimtag"> <a name="wildtrigger()">wildtrigger()</a> </b>
                 启动命令行上的通配扩展，其行为应用 <a href="options.html#'wildmode'">'wildmode'</a> 和 <a href="options.html#'wildoptions'">'wildoptions'</a>
-                设置的定义。见  <a href="cmdline.html#cmdline-completion">cmdline-completion</a> 。
+                设置的定义。
 
                 此函数也打开搜索模式的补全，如  <a href="pattern.html#%2F">/</a> 、 <a href="pattern.html#?">?</a> 、 <a href="change.html#:s">:s</a> 、 <a href="repeat.html#:g">:g</a> 、 <a href="repeat.html#:v">:v</a>  和
                  <a href="quickfix.html#:vimgrep">:vimgrep</a> 。
 
                 不像手动按 <a href="options.html#'wildchar'">'wildchar'</a> 那样，此函数在找不到匹配时不响铃，一般而
-                言操作会更安静。这样更适合补全的自动触发，如在  <a href="autocmd.html#:autocmd">:autocmd</a>  里的
-                情形。
-                                                <b class="vimtag"> <a name="cmdline-autocompletion">cmdline-autocompletion</a> </b>
-                示例: 要在命令行上键入时自动弹出补全菜单，可用: 
-<code class="example">                        autocmd CmdlineChanged [:/\?] call wildtrigger()</code>
-<code class="example">                        set wildmode=noselect:lastused,full wildoptions=pum</code>
+                言操作会更安静。这样更适合补全的自动触发，
 
-                要保留正常的历史导航 (上/下键): 
-<code class="example">                        cnoremap &lt;Up&gt;   &lt;C-U&gt;&lt;Up&gt;</code>
-<code class="example">                        cnoremap &lt;Down&gt; &lt;C-U&gt;&lt;Down&gt;</code>
+                <code class="note">注意</code>: 在浏览命令行历史后，wildtrigger() 的首个调用是空操作；需
+                要第二次调用来启动扩展。这是为了在命令行自动补全里支持历史浏
+                览。
 
-                要为搜索时特别设置选项，如要设置 <a href="options.html#'pumheight'">'pumheight'</a>: 
-<code class="example">                        autocmd CmdlineEnter [/\?] set pumheight=8</code>
-<code class="example">                        autocmd CmdlineLeave [/\?] set pumheight&amp;</code>
+                见  <a href="cmdline.html#cmdline-completion">cmdline-completion</a> 。
 
                 返回值永远是 0。
 
@@ -11607,7 +11645,8 @@ vreplace                编译时加入了  <a href="change.html#gR">gR</a>  和
 vtp                     编译时加入了 vcon 支持  <a href="various.html#+vtp">+vtp</a>  (检查 vcon 可知当前控制
                         台是否支持)。
 wayland                 编译时加入了 Wayland 协议支持。
-wayland_clipboard       编译时加入了 Wayland 选择区/剪贴板支持。
+wayland_clipboard       编译时加入了 Wayland 剪贴板支持。
+wayland_focus_steal     编译时加入了 Wayland 剪贴板焦点盗取支持。
 wildignore              编译时加入了 <a href="options.html#'wildignore'">'wildignore'</a> 选项支持。
 wildmenu                编译时加入了 <a href="options.html#'wildmenu'">'wildmenu'</a> 选项支持。
 win16                   旧版本 MS-Windows 3.1 (总为假)
