@@ -1,4 +1,4 @@
-*eval.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年6月
+*eval.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年10月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -2554,13 +2554,14 @@ v:termstyleresp	终端用于 |t_RS| termcap 项目的转义序列。用于找出
 
 					*v:termrbgresp* *termrbgresp-variable*
 v:termrbgresp	终端用于 |t_RB| termcap 项目的转义序列。用于找出终端的背景色，
-		见 'background'。Vim 通常会包含的
-		$VIMRUNTIME/plugin/colorresp.vim 插件会设置此变量，如果你确定
-		它的作用，也可以手动设置之。注意 改变此变量不会有任何影响。
+		见 'background'。设置此变量时，会激活 TermResponseAll 事件，其
+		中 <amatch> 设为 "background"。
 
 					*v:termrfgresp* *termrfgresp-variable*
 v:termrfgresp	终端用于 |t_RF| termcap 项目的转义序列。用于找出终端的前景色。
-		其行为同 |v:termrbgresp|。
+		设置此变量时，会激活 TermResponseAll 事件，其中 <amatch> 设为
+		"foreground"。
+
 
 					*v:termu7resp* *termu7resp-variable*
 v:termu7resp	终端用于 |t_u7| termcap 项目的转义序列。用于找出终端如何处理二
@@ -2574,9 +2575,7 @@ v:termda1	终端上主设备属性 (DA1) 查询返回的转义序列。设置此
 
 					*v:termosc* *termosc-variable*
 v:termosc	终端上最近接收的 OSC 响应的转义序列。设置此变量时，会激活
-		TermResponseAll 事件，其中 <amatch> 设为 "osc"。也用于通过
-		$VIMRUNTIME/plugin/colorresp.vim 插件设置 |v:termrbgresp| 和
-		|v:termrfgresp|
+		TermResponseAll 事件，其中 <amatch> 设为 "osc"。
 
 					*v:testing* *testing-variable*
 v:testing	必须在 `test_garbagecollect_now()` 之前设置。
@@ -2763,8 +2762,11 @@ v:windowid	运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim
 			置位的环境变量和空的环境变量。
 
 :let ${env-name} .= {expr1}
+:let ${env-name} ..= {expr1}
 			把 {expr1} 附加到环境变量 {env-name} 之后。如果该环境
 			变量还不存在，相当于 "="。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 :let @{reg-name} = {expr1}			*:let-register* *:let-@*
 			把表达式 {expr1} 的计算结果写到寄存器 {reg-name} 里。
@@ -2778,8 +2780,11 @@ v:windowid	运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim
 <			这和搜索空字符串不同，后者会在任何地方得到匹配。
 
 :let @{reg-name} .= {expr1}
+:let @{reg-name} ..= {expr1}
 			把 {expr1} 附加到寄存器 {reg-name} 之后。如果寄存器为
 			空，相当于把它设为 {expr1} 的值。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 :let &{option-name} = {expr1}			*:let-option* *:let-&*
 			设置选项 {option-name} 为表达式 {expr1} 的计算结果。字
@@ -2794,26 +2799,36 @@ v:windowid	运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim
 <			如果代码还不存在，会新建一个终端键值，因此不会报错。
 
 :let &{option-name} .= {expr1}
+:let &{option-name} ..= {expr1}
 			对字符串选项: 附加 {expr1} 到选项值之后。和 |:set+=|
 			不同，不会插入逗号。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 :let &{option-name} += {expr1}
 :let &{option-name} -= {expr1}
 			对数值或布尔选项: 加减 {expr1}。
 
 :let &l:{option-name} = {expr1}
-:let &l:{option-name} .= {expr1}
 :let &l:{option-name} += {expr1}
 :let &l:{option-name} -= {expr1}
+:let &l:{option-name} .= {expr1}
+:let &l:{option-name} ..= {expr1}
 			同上，但只设置选项的局部值 (如果有的话)。和
 			|:setlocal| 类似。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 :let &g:{option-name} = {expr1}
-:let &g:{option-name} .= {expr1}
 :let &g:{option-name} += {expr1}
 :let &g:{option-name} -= {expr1}
+:let &g:{option-name} .= {expr1}
+:let &g:{option-name} ..= {expr1}
 			同上，但只设置选项的全局值 (如果有的话)。和
 			|:setglobal| 类似。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
+
 						*E1093* *E1537* *E1538* *E1535*
 :let [{name1}, {name2}, ...] = {expr1}		*:let-unpack* *E687* *E688*
 			{expr1} 计算结果必须是 |List| 或 |Tuple|。该列表或元组
@@ -2830,14 +2845,17 @@ v:windowid	运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim
 				:echo x
 <			结果是 [0, 2]。
 
-:let [{name1}, {name2}, ...] .= {expr1}
 :let [{name1}, {name2}, ...] += {expr1}
 :let [{name1}, {name2}, ...] -= {expr1}
 :let [{name1}, {name2}, ...] *= {expr1}
 :let [{name1}, {name2}, ...] /= {expr1}
 :let [{name1}, {name2}, ...] %= {expr1}
+:let [{name1}, {name2}, ...] .= {expr1}
+:let [{name1}, {name2}, ...] ..= {expr1}
 			同上，但附加、加、减、乘、除或取余值到每个 |List| 或
 			|Tuple| 项目。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 :let [{name}, ..., ; {lastname}] = {expr1}				*E452*
 			类似于上面的 |:let-unpack|，但 |List| 或 |Tuple| 可以
@@ -2848,10 +2866,13 @@ v:windowid	运行基于 X11/Wayland 的任何 GUI，或者在终端运行且 Vim
 				:let [a, b; rest] = ["aval", "bval", 3, 4]
 				:let [a, b; rest] = ("aval", "bval", 3, 4)
 <
-:let [{name}, ..., ; {lastname}] .= {expr1}
 :let [{name}, ..., ; {lastname}] += {expr1}
 :let [{name}, ..., ; {lastname}] -= {expr1}
+:let [{name}, ..., ; {lastname}] .= {expr1}
+:let [{name}, ..., ; {lastname}] ..= {expr1}
 			同上，但附加/加/减值到每个 |List| 项目。
+			Vim 脚本版本 2 和之后的版本不再支持 `.=`，见
+			|vimscript-version|。
 
 						*:let=<<* *:let-heredoc*
 					*E990* *E991* *E172* *E221* *E1145*

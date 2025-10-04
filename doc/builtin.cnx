@@ -1,4 +1,4 @@
-*builtin.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年9月
+*builtin.txt*      适用于 Vim 9.1 版本。	最近更新: 2025年10月
 
 内建函数					*builtin-functions*
 
@@ -358,7 +358,7 @@ lispindent({lnum})		数值	行 {lnum} 的 Lisp 缩进
 list2blob({list})		blob	把数值的 {list} 转成 blob
 list2str({list} [, {utf8}])	字符串	把数值的 {list} 转成字符串
 list2tuple({list})		元组	把 {list} 里的项目转为元组
-listener_add({callback} [, {buf}])
+listener_add({callback} [, {buf} [, {unbuffered}]])
 				数值	增加监听改动的回调
 listener_flush([{buf}])		无	激活监听器回调
 listener_remove({id})		无	删除监听器回调
@@ -440,8 +440,9 @@ popup_setbuf({id}, {buf})	布尔型	设置弹出窗口 {id} 的缓冲区
 popup_setoptions({id}, {options})
 				无	设置弹出窗口 {id} 的选项
 popup_settext({id}, {text})	无	设置弹出窗口 {id} 的文本
-popup_show({id})		无	撤销弹出窗口 {id} 的隐藏
+popup_show({id})		数值	撤销弹出窗口 {id} 的隐藏
 pow({x}, {y})			浮点	{x} 的 {y} 次方
+preinserted()			数值	文本是否插入在光标后方
 prevnonblank({lnum})		数值	最后一个 <= {lnum} 的非空白行的行号
 printf({fmt}, {expr1}...)	字符串	排版文本
 prompt_getprompt({buf})		字符串	获取提示文本
@@ -564,7 +565,7 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})
 settagstack({nr}, {dict} [, {action}])
 				数值	用 {dict} 修改标签栈
 setwinvar({nr}, {varname}, {val}) 无	设置窗口 {expr} 的 {varname} 为 {val}
-sha256({string})		字符串	{string} 的 SHA256 校验码
+sha256({expr})			字符串	字符串或 blob 的 SHA256 校验码
 shellescape({string} [, {special}])
 				字符串	转义 {string} 以便用作外壳命令的参数
 shiftwidth([{col}])		数值	'shiftwidth' 的有效值
@@ -1766,9 +1767,9 @@ col({expr} [, {winid}])					*col()*
 
 
 complete({startcol}, {matches})			*complete()* *E785*
-		设置插入模式补全的匹配。
-		只能用于插入模式。需要使用 CTRL-R = 的映射 (见 |i_CTRL-R|)。不
-		能在 CTRL-O 之后或者在表达式映射里使用。
+		设置插入模式补全的匹配。只能用于插入模式。通常从 CTRL-R = 的映
+		射里调用 (见 |i_CTRL-R|)，但也可从 |<Cmd>| 或 |<ScriptCmd| 映
+		射里调用。不能在 CTRL-O 之后或者在表达式映射里使用。
 		{startcol} 是行内待补全文本开始的字节偏移。直到光标为止的文本
 		就是原始的文本，它将要被匹配所替代。用 col('.') 会得到空串。而
 		"col('.') - 1" 将用匹配替换单个字符。
@@ -1778,15 +1779,31 @@ complete({startcol}, {matches})			*complete()* *E785*
 		注意 调用此函数后，你不应插入任何使补全停止的内容。
 		用 CTRL-N 和 CTRL-P 选择匹配，就像普通的插入模式补全那样。如果
 		指定，会出现弹出菜单，见 |ins-completion-menu|。
-		示例: >
-	inoremap <F5> <C-R>=ListMonths()<CR>
 
-	func ListMonths()
-	  call complete(col('.'), ['January', 'February', 'March',
-		\ 'April', 'May', 'June', 'July', 'August', 'September',
-		\ 'October', 'November', 'December'])
-	  return ''
-	endfunc
+		示例 (使用老式 Vim 脚本): >
+
+		inoremap <F5> <C-R>=ListMonths()<CR>
+
+		func ListMonths()
+		  call complete(col('.'), ['January', 'February', 'March',
+			\ 'April', 'May', 'June', 'July', 'August',
+			\ 'September', \ 'October', 'November', 'December'])
+		  return ''
+		endfunc
+<
+		示例 (使用 Vim9 脚本): >
+
+		vim9script
+		def ListMonths(): string
+		  const months = [ 'January', 'February', 'March', 'April',
+			'May', 'June', 'July', 'September', 'October',
+			'November', 'December']
+		  complete(col('.'), months)
+		  return ''
+		enddef
+
+		inoremap <F5> <ScriptCmd>ListMonths()<CR>
+
 <		此例并不很有用，但可以说明功能。注意这里返回空串，以免插入零。
 
 		也可用作 |method|，基是作为第二个参数传递的: >
@@ -4714,10 +4731,12 @@ gettext({text} [, {package}])				*gettext()*
 getwininfo([{winid}])					*getwininfo()*
 		返回窗口信息，返回值是字典的 |List|。
 
-		如果给出 {winid}，返回给定 ID 的窗口的信息为包含单个项目的
-		|List|。如果窗口不存在，返回空列表。
+		如果给出 {winid}，返回给定 ID 的窗口的信息，为包含单个项目的
+		|List|。如果窗口是 |popup| 窗口，返回该弹出窗口的信息。如果窗
+		口不存在，返回空列表。
 
-		如果没有给出 {winid}，返回所有标签页的所有窗口的信息。
+		如果没有给出 {winid}，返回所有标签页中所有窗口 (但不包括
+		|popup| 窗口) 的信息。
 
 		每个列表项是包含以下项目的 |Dictionary|:
 			botline		最近完整显示的缓冲区行
@@ -5575,7 +5594,7 @@ items({expr})						*items()*
 		返回 |List|，{expr} 的所有键/索引-值组对。每个 |List| 项目是两
 		个项目的列表:
 		- 对 |Dict| 而言: 键和值
-		- 对 |List|、|Tuple|、|Blob| 和 |String| 而言：索引和值
+		- 对 |List|、|Tuple|、|Blob| 和 |String| 而言: 索引和值
 		对 |Dict| 而言，返回的 |List| 项目的顺序不定。否则，依索引值升
 		序排序。
 
@@ -5908,11 +5927,15 @@ list2tuple({list})					*list2tuple()*
 		返回类型: tuple<{type}> (取决于给定的 |List|)
 
 
-listener_add({callback} [, {buf}])			*listener_add()*
+listener_add({callback} [, {buf} [, {unbuffered}]])	*listener_add()*
 		添加缓冲区 {buf} 有改动时会被执行的回调函数。
 		{buf} 可以是缓冲区名或号。它可接受的值见 |bufname()|。省略
 		{buf} 时使用当前缓冲区。
 		返回唯一的 ID，可传递给 |listener_remove()|。
+
+		如果 {buf} 已注册过回调，这等价于在增加新回调之前，先调用 >
+		    listener_flush({buf})
+<		函数。
 
 		{callback} 调用时带五个参数:
 		    bufnr	发生改动的缓冲区
@@ -5951,15 +5974,27 @@ listener_add({callback} [, {buf}])			*listener_add()*
 		    added	0
 		    col		改动发生的首列，或 1
 
-		依改动发生的次序列出项目，这样最近发生的改动在最后。行号在回调
-		发生时是合法的，但之后的改动可能使之非法，所以保存它们以备后用
-		是不可行的。
+		{unbuffered} 为 |FALSE| 或未给出时，调用 {callback} 的时刻为:
 
-		在屏幕刚刚刷新前调用 {callback}，此后调用 |listener_flush()|
-		或进行影响行的数目的改动会使得改动列表里的行号变成非法。
+		1. 在屏幕刚刚刷新前。
+		2. 调用 |listener_flush()| 时。
+		3. 发生了影响行计数的改动，以致于修改列表里的某行的行号不再有
+		   效。
+
+		依改动发生的次序列出项目，这样最近发生的改动在最后。
+
+		因为上面列出的触发回调的第三个触发的原因，传递给的回调的行号未
+		必能保证有效。如果这会导致问题，把 {unbuffered} 设为 |TRUE|。
+
+		{unbuffered} 为 |TRUE| 时，每一个改动都会触发 {callback}。改动
+		列表只保留单一字典，字典里的 "start"、"end" 和 "added" 值和对
+		应的回调参数相同。调用回调时的行号一定是合法的，但之后的改动可
+		能会使之非法，所以不建议保留其备份为之后使用。
 
 		{callback} 调用时文本被锁定，见 |textlock|。如果需要改动缓冲
 		区，使用定时器可以在之后某时进行需要的改动 |timer_start()|。
+
+		{callback} 中不能调用 listener_add()。 *E1569*
 
 		缓冲区初次载入时不调用 {callback}。|BufReadPost| 自动命令事件
 		可用来处理缓冲区的初始文本。
@@ -7047,6 +7082,14 @@ pow({x}, {y})						*pow()*
 		也可用作 |method|: >
 			Compute()->pow(3)
 <
+		返回类型: |Number|
+
+
+preinserted()						*preinserted()*
+		如果文本在光标后插入，返回非零值。这是因为 'completeopt' 里有
+		"preinsert"，或 'completeopt' 里有 "longest" 且 'autocomplete'
+		已激活。否则返回零。
+
 		返回类型: |Number|
 
 
@@ -9056,11 +9099,13 @@ setwinvar({winnr}, {varname}, {val})			*setwinvar()*
 		返回类型: |Number|
 
 
-sha256({string})						*sha256()*
-		返回 64 位十六进制字符串，即 {string} 的 SHA256 校验码。
+sha256({expr})						*sha256()*
+		返回 64 位十六进制字符串，即 {expr} 的 SHA256 校验码。
+		{expr} 可以是字符串或 blob。
 
 		也可用作 |method|: >
 			GetText()->sha256()
+			GetBlob()->sha256()
 <
 		返回类型: |String|
 
@@ -10901,27 +10946,20 @@ wildmenumode()					*wildmenumode()*
 
 wildtrigger()						*wildtrigger()*
 		启动命令行上的通配扩展，其行为应用 'wildmode' 和 'wildoptions'
-		设置的定义。见 |cmdline-completion|。
+		设置的定义。
 
 		此函数也打开搜索模式的补全，如 |/|、|?|、|:s|、|:g|、|:v| 和
 		|:vimgrep|。
 
 		不像手动按 'wildchar' 那样，此函数在找不到匹配时不响铃，一般而
-		言操作会更安静。这样更适合补全的自动触发，如在 |:autocmd| 里的
-		情形。
-						*cmdline-autocompletion*
-		示例: 要在命令行上键入时自动弹出补全菜单，可用: >
-			autocmd CmdlineChanged [:/\?] call wildtrigger()
-			set wildmode=noselect:lastused,full wildoptions=pum
-<
-		要保留正常的历史导航 (上/下键): >
-			cnoremap <Up>   <C-U><Up>
-			cnoremap <Down> <C-U><Down>
-<
-		要为搜索时特别设置选项，如要设置 'pumheight': >
-			autocmd CmdlineEnter [/\?] set pumheight=8
-			autocmd CmdlineLeave [/\?] set pumheight&
-<
+		言操作会更安静。这样更适合补全的自动触发，
+
+		注意: 在浏览命令行历史后，wildtrigger() 的首个调用是空操作；需
+		要第二次调用来启动扩展。这是为了在命令行自动补全里支持历史浏
+		览。
+
+		见 |cmdline-completion|。
+
 		返回值永远是 0。
 
 		返回类型:|Number|
@@ -11575,7 +11613,8 @@ vreplace		编译时加入了 |gR| 和 |gr| 命令支持。(总为真)
 vtp			编译时加入了 vcon 支持 |+vtp| (检查 vcon 可知当前控制
 			台是否支持)。
 wayland			编译时加入了 Wayland 协议支持。
-wayland_clipboard	编译时加入了 Wayland 选择区/剪贴板支持。
+wayland_clipboard	编译时加入了 Wayland 剪贴板支持。
+wayland_focus_steal	编译时加入了 Wayland 剪贴板焦点盗取支持。
 wildignore		编译时加入了 'wildignore' 选项支持。
 wildmenu		编译时加入了 'wildmenu' 选项支持。
 win16			旧版本 MS-Windows 3.1 (总为假)

@@ -1,4 +1,4 @@
-*insert.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年9月
+*insert.txt*    适用于 Vim 9.1 版本。	最近更新: 2025年10月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -932,7 +932,24 @@ Vim 可以在你一边输入时一边显示补全菜单，和 |i_CTRL-N| 类似�
 暂停自动补全模式。特别地，要使用 |i_CTRL-N| 或 |i_CTRL-X_CTRL-N|，先按
 |CTRL-E| 来关掉弹出菜单 (见 |complete_CTRL-E|)。
 
-另见 'autocomplete'、'autocompletetimeout' 和 'autocompletedelay'。
+						*ins-autocompletion-example*
+示例配置 ~
+一个典型的用弹出菜单进行自动补全的配置: >
+	set autocomplete
+	set complete=.^5,w^5,b^5,u^5
+	set completeopt=popup
+
+	inoremap <silent><expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+	inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+<
+这会打开自动补全，从当前缓冲区、其它窗口和列表内缓冲区里提取建议值，在弹出菜单
+里显示。每个源只限 5 个候选。菜单可见时，用 <Tab> 和 <S-Tab> 在项目间移动。可
+选地，在 'completeopt' 里加入 "preinsert" 以自动插入最长的共用前缀。如有需要，
+可在 'complete' 里加入额外的源 (如 LSP 客户端) 以增强补全。
+
+另见 'autocomplete'、'autocompletedelay' 和 'autocompletetimeout'。
+
+命令行自动补全可见 |cmdline-autocompletion|。
 
 
 寻 找 补 全 的 函 数					*complete-functions*
@@ -1158,12 +1175,14 @@ Vim 可以用更简单的弹出菜单来显示匹配。
 在状态一下，这些键有特别的含义:
 <BS> 和 CTRL-H    删除一个字符，查找光标前单词的匹配项。这会减少列表中匹配项的
 		  数目，常常到只有一个项目，然后切换到状态二。
+		  'autocomplete' 激活时，清除菜单里选中项。
 其它非特殊字符:
 		  停止补全，不改变匹配，然后插入输入的字符。
 
 在状态二和状态三下，这些键有特别的含义:
 <BS> 和 CTRL-H    删除一个字符，并查找光标前变短的单词的匹配项。这可能会发现更
 		  多的匹配项。
+		  'autocomplete' 激活时，清除菜单里选中项。
 CTRL-L		  从当前匹配项中增加一个字符，可能会减少匹配项的数量。
 任何可显示的非空白字符:
 		  加入该字符，减少匹配项的数量。

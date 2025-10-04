@@ -1,64 +1,116 @@
 *ft_hare.txt*	Hare 程序语言的支持
 
 ==============================================================================
-内 容									*hare*
+内 容							*hare* *hare.vim*
 
-1. 介绍								  |hare-intro|
-2. 文件类型插件							 |hare-plugin|
-3. 设置							       |hare-settings|
-
-==============================================================================
-介 绍								  *hare-intro*
-
-此插件提供 Hare 编程语言的语法高亮、缩进和其他功能。也支持 Hare 模块内部的
-README 文件，但须先置位 |g:filetype_haredoc|。
+1. 介绍				|ft-hare-intro|
+2. 文件类型插件			|ft-hare-plugin|
+3. Haredoc 文件类型		|ft-haredoc-plugin|
+4. 缩进设置			|ft-hare-indent|
+5. 编译器支持			|compiler-hare|
 
 ==============================================================================
-文 件 类 型 插 件						 *hare-plugin*
+介 绍							*ft-hare-intro*
 
-此插件依据 HAREPATH 环境变量的内容自动设置 'path' 值，这样 |gf| 等命令就可以直
-接打开标准库或第三方模块。如果没设置 HAREPATH，缺省为多数 Unix-相容文件系统的
-建议路径，也就是 /usr/src/hare/stdlib 和 /usr/src/hare/third-party。
+此插件提供 Hare 编程语言的语法高亮、缩进和其他支持功能。
 
-==============================================================================
-设 置							       *hare-settings*
+文 件 类 型 插 件					*ft-hare-plugin*
 
-此插件提供少量可在 vimrc 里定义的变量，用来配置其行为。
+此插件提供可在 |vimrc| 里定义的若干变量，以调节插件行为。
 
-							  *g:filetype_haredoc*
-此插件能够自动检测 Hare 模块，并设置 README 文件为 "haredoc" 文件类型。因为递
-归目录搜索作为一种经验法则有少许效能影响，缺省关闭此特性，但可选择性打开它: >
-	let g:filetype_haredoc = 1
-<
-调节搜索行为的不同方式可见 |g:haredoc_search_depth|。
+此外也提供折叠 { } 块的支持。要打开折叠，在 |after-directory| 里一个文件 (如
+~/.vim/after/ftplugin/hare.vim) 里加入: >
 
-						    *g:hare_recommended_style*
-根据官方 Hare 风格指导，缺省置位以下选项: >
+	setlocal foldmethod=syntax
+
+因为基于块的折叠倾向于创建许多小折叠，考虑一下设置如 'foldminlines' 和
+'foldnestmax' 等若干选项。
+
+						*g:hare_recommended_style*
+根据官方 Hare 风格指导，缺省设置以下选项: >
 	setlocal noexpandtab
 	setlocal shiftwidth=0
 	setlocal softtabstop=0
 	setlocal tabstop=8
 	setlocal textwidth=80
 <
-要关闭之: >
+要关闭之，在 |vimrc| 里加入: >
 	let g:hare_recommended_style = 0
 <
-							  *g:hare_space_error*
-缺省，空格字符之后的拖尾空白和制表被高亮为错误。插入模式下会自动关闭。要完全关
-闭此高亮: >
-	let g:hare_space_error = 0
-<
-						      *g:haredoc_search_depth*
-缺省，打开 |g:filetype_haredoc| 时，只搜索当前目录及其直属子目录。可调整最大搜
-索深度: >
-	let g:haredoc_search_depth = 2
-<
-	值		效果~
-	0		仅搜索当前目录。
-	1		仅搜索当前目录及其直属子目录。
-	2		搜索当前目录及其下两层的子目录。
+						*g:hare_symbol_operators*
+缺省，符号操作符不享用任何特殊的高亮 (`!`、`?` 和 `::` 是仅有的例外)。要打开多
+数其它操作符的语法高亮，在 |vimrc| 里加入: >
 
-最大搜索深度可为任何整数，但不推荐大于 2 的值，绝大多数情况下没有可见的好处。
+	let g:hare_symbol_operators = 1
+<
+							*g:hare_space_error*
+缺省，<Tab> 字符之后的拖尾空白和制表被高亮为错误。插入模式下会自动关闭此高亮。
+要完全关闭此高亮，在 |vimrc| 里加入: >
+
+	let g:hare_space_error = 0
+
+
+HAREDOC 文 件 类 型					*ft-haredoc-plugin*
+
+此插件能够通过递归目录搜索，自动检测 Hare 模块里的 README 文件并设置其为
+"haredoc" 文件类型。因为这是个常见的文件名，此插件缺省只搜索 Hare 源代码所在的
+目录。
+
+							*g:filetype_haredoc*
+|g:filetype_haredoc| 变量可用于调节此搜索的深度，或完全跳过 Hare 文档文件的检
+测:
+
+	值		效果~
+	0		不自动检测
+	1		仅搜索当前目录 (这是缺省)
+	2		搜索一层子目录
+	3		搜索两层子目录
+
+最大搜索深度可为任何整数，但大于 2 的值绝大多数情况下没有可见的好处。
+
+
+缩 进 设 置						*ft-hare-indent*
+
+和此插件的多数其它设置不同，缩进设置可以为缓冲区局部设置，覆盖如有的话的全局设
+置。为此，简单为变量加上 |b:| 前缀而不是 |g:| 就可以了。
+
+						*g:hare_indent_match_switch*
+缺省，"match" 和 "switch" 条件的续行只缩进一层: >hare
+
+	const file = match (os::create(path, 0o644,
+		flag::WRONLY | flag::TRUNC)) {
+	case let file: io::file =>
+		yield file;
+	// ...
+
+如果要缩进两层，以和 "if" 和 "for" 条件更接近，在 |vimrc| 里加入: >
+
+	let g:hare_indent_match_switch = 2
+<
+							*g:hare_indent_case*
+缺省，"match" 和 "switch" 表达式的 case 续行缩进两层，以和 case 本体在视觉上有
+所区分: >hare
+
+	case ltok::I8, ltok::I16, ltok::I32,
+			ltok::I64, ltok::INT =>
+		// ...
+
+要使用不同的缩进量，可调整 |g:hare_indent_case|。合法值为 `0`、`1` 和 `2`。
+
+
+编 译 器 支 持						*compiler-hare*
+
+如果此插件在当前目录下检测到 Makefile 文件，会假定你使用 `make` 构造系统，不触
+碰 'makeprg'。否则，使用 `hare build`。
+
+							*g:hare_makeprg_params*
+如果使用 `hare build`，可用 |g:hare_makeprg_params| 来附加额外编译器选项到
+'makeprg' 里。设置也可以局部于缓冲区 (使用 |b:| 而不是 |g:|)，覆盖如果存在的全
+局配置。例如: >
+
+	let b:hare_makeprg_params = '-lc -t o'
+
+全局的缺省值是 "-q"，编译时不写入标准输出。
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

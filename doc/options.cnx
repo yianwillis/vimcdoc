@@ -1,4 +1,4 @@
-*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年9月
+*options.txt*	适用于 Vim 9.1 版本。	最近更新: 2025年10月
 
 
 		  VIM 参考手册	  by Bram Moolenaar
@@ -752,7 +752,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 			*'autocomplete'* *'ac'* *'noautocomplete'* *'noac'*
 'autocomplete' 'ac'	布尔型 (缺省关闭)
-			全局
+			全局或局部于缓冲区 |global-local|
 			{仅在有定时支持的平台上有效}
 	打开时，Vim 在你键入时实时显示补全菜单，类似于 |i_CTRL-N|，但菜单会自
 	动触发。见 |ins-autocompletion|。
@@ -1725,7 +1725,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	'numberwidth'	& 8		行号的最少列数
 	'preserveindent'+ 关闭		改变缩进时不保留当前缩进结构
 	'revins'	+ 关闭		没有反向插入
-	'ruler'		+ 关闭		没有标尺
+	'ruler'		& 关闭		没有标尺
 	'scrolljump'	+ 1		滚动不跳跃
 	'scrolloff'	+ 0		没有滚动偏移
 	'shelltemp'	- {不改变}	{仅当复位 'cp' 时设为 vim 缺省值}
@@ -1757,9 +1757,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'complete'* *'cpt'* *E535*
 'complete' 'cpt'	字符串	(缺省: ".,w,b,u,t,i")
 			局部于缓冲区
-	本选项控制关键字补全 |ins-completion| 在使用 CTRL-P 或 CTRL-N 时如何工
-	作，也用于整行的补全 |i_CTRL-X_CTRL-L|。它指示补全的类型和需要扫描的位
-	置。这是一个逗号分隔的标志位的列表:
+	本选项控制补全 |ins-completion| 在使用 CTRL-P、CTRL-N 或
+	|ins-autocompletion| 时如何工作，也用于整行的补全 |i_CTRL-X_CTRL-L|。
+	它指示补全的类型和需要扫描的位置。这是一个逗号分隔的标志位的列表:
 	.	扫描当前缓冲区 (忽略 'wrapscan')
 	w	扫描其它窗口的缓冲区
 	b	扫描其它缓冲区列表里载入的缓冲区
@@ -1787,7 +1787,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		如果匹配生成可能会很慢，应该定期调用 |complete_check()| 来确保
 		Vim 的响应速度。这对 |ins-autocompletion| 尤其重要。
 	F	等价于 "F{func}"，其中函数取自 'completefunc' 选项。
-	o	等价于 "F{func}"，其中函数取自 'omnifunc' 选项。
+	o	等价于 "F{func}"，其中 {func} 取自 'omnifunc' 选项。如果插件
+		(如 LSP 客户端) 定义了 'omnifunc'，可适用于本标志位。
 
 	卸载的缓冲区不会载入，因而它们的自动命令 |:autocmd| 也不会执行，这使得
 	有些文件的补全效果出人意表 (比如 gzipped 压缩的文件)。整行补全也不会扫
@@ -1801,9 +1802,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	   5. 标签
 	   6. 头文件
 
-	如你所知，CTRL-N 和 CTRL-P 可用于完成任何基于 'iskeyword' 的扩展 (比如
-	字典 |i_CTRL-X_CTRL-K|、头文件里的模式 |i_CTRL-X_CTRL-I|、标签
-	|i_CTRL-X_CTRL-]| 和普通的扩展)。
+	CTRL-N、CTRL-P 和 |ins-autocompletion| 可用于完成任何基于 'iskeyword'
+	的扩展 (比如字典 |i_CTRL-X_CTRL-K|、头文件里的模式 |i_CTRL-X_CTRL-I|、
+	标签 |i_CTRL-X_CTRL-]| 和普通的扩展)。应用 'complete' 里的 "F" 和 "o"
+	标志位，也可以补全非关键字。
 
 	在补全源标志位后附加插入符 ("^") 后跟 {count} 可以为该补全源指定可选的
 	匹配限制。例如: ".^9,w,u,t^5" 限制来自当前缓冲区的匹配数目为 9，而来自
@@ -1858,9 +1860,16 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		    筛选出补全候选。如果要 |fuzzy-matching| 为你的候选列表收集
 		    更多的备选，见 'completefuzzycollect'。
 
-	   longest  只插入匹配的最长公共文本。如果显示菜单，用 CTRL-L 来插入更
-		    多的字符。是否忽略大小写取决于补全的类型。缓冲区文本使用
-		    'ignorecase' 选项。
+	   longest
+		    如果 'autocomplete' 未激活，只插入匹配的最长公共前缀。如果
+		    显示弹出菜单，用 CTRL-L 来插入更多的字符。是否忽略大小写取
+		    决于补全的类型。缓冲区文本使用 'ignorecase' 选项。
+
+		    'autocomplete' 激活且未选中任何补全项目时，在光标后插入匹
+		    配的最长公共前缀。该前缀或者来自所有的已显示的项目，或者只
+		    选择当前缓冲区里的项目。插入的文本使用 |hl-PreInsert| 高
+		    亮，不改变光标位置 (和 `"preinsert"` 类似)。按 CTRL-Y 接
+		    受。另见 |preinserted()|。
 
 	   menu	    使用弹出菜单来显示可能的补全。只有匹配多于一个且有足够的颜
 		    色时才显示该菜单。|ins-completion-menu|
@@ -1894,15 +1903,18 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		    {仅当编译时加入 |+textprop| 特性才有效}
 
 	   preinsert
-		    预插入首个候选单词去掉当前补全头部的那部分，使用
-		    |hl-ComplMatchIns| 高亮组。只能在没打开 "fuzzy" 而打开
-		    "menuone" 的情况下使用。
+		    插入首个补全候选里当前补全头部之外的文本，使用
+		    |hl-PreInsert| 高亮。光标不移动。
+		    需要未置位 "fuzzy"，而且置位 'completeopt' 里的 "menuone"
+		    或 "autocomplete" 之一。打开 "autocomplete" 时，置位
+		    'ignorecase' 但未置位 'infercase' 时此功能不可用。
+		    另见 |preinserted()|。
 
 	   preview  在预览窗口里显示当前选择的补全的额外信息。只能和 "menu" 或
 		    "menuone" 搭配使用。
 
-	'autocomplete' 打开时，只有 "fuzzy"、"popup"、"popuphidden" 和
-	"preview" 有效。
+	'autocomplete' 打开时，只有 "fuzzy"、"longest"、"popup"、"popuphidden"、
+	"preinsert" 和 "preview" 有效。
 
 	此选项不适用于 |cmdline-completion|。为此可见 'wildoptions'。
 
@@ -2497,8 +2509,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		字符串	(缺省为
-				 "internal,filler,closeoff,inline:simple")
+'diffopt' 'dip'		字符串	(缺省为 "internal,filler,closeoff,
+						indent-heuristic,inline:char")
 			全局
 			{仅当编译时加入 |+diff| 特性才有效}
 	比较模式的设置选项。由以下几个项目组成。全都是可选的。项目之间由逗号分
@@ -3083,7 +3095,12 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		*'fileignorecase'* *'fic'* *'nofileignorecase'* *'nofic'*
 'fileignorecase' 'fic'	布尔型 (缺省在一般忽略文件名大小写的系统上打开)
 			全局
-	置位时，使用文件名和目录时忽略大小写。
+	置位时，使用文件名和目录名时忽略大小写。
+
+	传统上大小写不敏感的文件系统上，本选项缺省打开 (如 MS-Windows 和
+	macOS)。不如，Vim 在运行时不能决定特定的文件系统是大小写敏感还是不敏
+	感。
+
 	若只在补全时忽略大小写，参见 'wildignorecase'。
 
 					*'filetype'* *'ft'*
@@ -3812,7 +3829,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				     #:TabLineSel,_:TabLineFill,!:CursorColumn,
 				     .:CursorLine,o:ColorColumn,q:QuickFixLine,
 				     z:StatusLineTerm,Z:StatusLineTermNC,
-				     g:MsgArea,h:ComplMatchIns")
+				     g:MsgArea,h:ComplMatchIns,I:PreInsert")
 			全局
 	本选项可以用来为若干场合设置高亮模式。它是逗号分隔的字符对的列表。每对
 	字符中，第一个字符给出适用的场合，第二个字符设定该场合使用的模式。这些
@@ -3868,6 +3885,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-PmenuThumb|	 X  弹出菜单滚动条拇指 (thumb)
 	|hl-PmenuMatch|	 k  弹出菜单匹配文本
 	|hl-PmenuMatchSel| <  弹出菜单选中行上的匹配文本
+	|hl-PreInsert|	 I  'completeopt' 里有 "preinsert" 时插入的文本
 
 	显示模式是:
 		r	反转		(termcap 项目 "mr" 和 "me")
@@ -4175,8 +4193,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	示例: >
 		augroup vimrc-incsearch-highlight
 		  autocmd!
-		  autocmd CmdlineEnter /,\? :set hlsearch
-		  autocmd CmdlineLeave /,\? :set nohlsearch
+		  autocmd CmdlineEnter [\/\?] :set hlsearch
+		  autocmd CmdlineLeave [\/\?] :set nohlsearch
 		augroup END
 <
 	CTRL-L 可用来在命令行上给当前匹配之后增加一个字符。如果置位了
@@ -5856,7 +5874,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 					 *'ruler'* *'ru'* *'noruler'* *'noru'*
-'ruler' 'ru'		布尔型	(缺省关闭，|defaults.vim| 里置位)
+'ruler' 'ru'		布尔型	(Vim 缺省: 打开，Vi 缺省: 关闭)
 			全局
 	标尺。显示光标位置的行号和列号，逗号分隔。如果还有空间，在最右端显示文
 	本在文件中的相对位置:
@@ -6094,7 +6112,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	字符串	(缺省: "blank,buffers,curdir,folds,
-					 help,options,tabpages,winsize,terminal")
+					help,options,tabpages,winsize,terminal")
 			全局
 			{仅当编译时加入 |+mksession| 特性才有效}
 	改变 |:mksession| 命令的效果。这是逗号分隔的单词列表。每个单词允许保存
@@ -7298,7 +7316,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	Win32 控制台需要 Windows 10 1703 (Creators Updae) 或之后版本。可以这样
 	确定: >
 		if has('vcon')
-<	这需要 Vim 编译时带上 |+vtp| 特性。
+<	这需要 Vim 编译时带上 |+vtp| 特性，另见 |win32-term-colors|。
 
 	注意 仍然使用 "cterm" 属性，而不是 "gui" 那些。
 
@@ -8345,7 +8363,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				*'wlsteal'* *'wst'* *'nowlsteal'* *'nowst'*
 'wlsteal' 'wst'		布尔型  (缺省关闭)
 			全局
-			{仅当编译时加入 |+wayland_clipboard| 特性才有效}
+			{仅当编译时加入 |+wayland_focus_steal| 特性才有效}
 	打开时，Vim 可以通过创建临时表面 (surface)，来盗取焦点用来访问剪贴板。
 	详见 |wayland-focus-steal|。
 
