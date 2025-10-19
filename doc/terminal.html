@@ -80,6 +80,7 @@
       提示模式                                   <a href="terminal.html#termdebug-prompt">termdebug-prompt</a> 
       映射                                       <a href="terminal.html#termdebug-mappings">termdebug-mappings</a> 
       通信                                       <a href="terminal.html#termdebug-communication">termdebug-communication</a> 
+      远程调试                                   <code class="badlink">termdebug-remote</code> 
       定制                                       <a href="terminal.html#termdebug-customizing">termdebug-customizing</a> 
 
 <code class="notvi">{仅当编译时加入  <a href="various.html#+terminal">+terminal</a>  特性才有效}</code>
@@ -1304,8 +1305,8 @@ breakpoint"。
 
 <code class="section">浏览堆栈框架 </code>
                                 <b class="vimtag"> <a name="termdebug-frames">termdebug-frames</a> </b> <b class="vimtag"> <a name=":Frame">:Frame</a> </b> <b class="vimtag"> <a name=":Up">:Up</a> </b> <b class="vimtag"> <a name=":Down">:Down</a> </b>
-  <a href="terminal.html#:Frame">:Frame</a>  <code class="special">[frame]</code>       选择框架 <code class="special">[frame]</code>，这可以是框架编号、地址或函数名 (缺省:
-                        当前框架)
+  <a href="terminal.html#:Frame">:Frame</a>  <code class="special">[frame]</code>       选择框架 <code class="special">[frame]</code>，这可以是框架编号、地址或函数名
+                        (缺省: 当前框架)
   <a href="terminal.html#:Up">:Up</a>  <code class="special">[count]</code>          向上 <code class="special">[count]</code> 个框架 (缺省: 1；调用当前框架的那个框架)
   <a href="motion.html#+">+</a>                     同上 (要关闭之，见  <a href="terminal.html#termdebug_map_plus">termdebug_map_plus</a> )
   <a href="terminal.html#:Down">:Down</a>  <code class="special">[count]</code>        向下 <code class="special">[count]</code> 个框架 (缺省: 1; 当前框架调用的那个框架)
@@ -1435,6 +1436,89 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 <code class="keystroke">CTRL-C</code> 并不中断。因此  <a href="terminal.html#:Continue">:Continue</a>  命令用 "continue" 而不是通信通道。
 
 
+<code class="section">远程调试 </code>
+                                                        <b class="vimtag"> <a name="termdebug-remote">termdebug-remote</a> </b>
+远程调试的一个主要问题是如何得到被调试程序的源代码。此插件可利用系统和 vim 的
+网络能力来绕过这个问题。
+                                                <b class="vimtag"> <a name="termdebug-remote-example">termdebug-remote-example</a> </b>
+可复制  <a href="terminal.html#termdebug-example">termdebug-example</a>  以在通过  <code class="badlink">ssh</code>  可远程访问的 Linux 机器上用  <a href="debug.html#gdb">gdb</a>  调
+试器来调试 Vim。
+
+- 在本地示例中解释过的编译 Vim。
+
+- 如果 "socat" 在远端机器上不可用，<code class="badlink">'terminal'</code> 模式不能正确工作。退回到
+   <a href="terminal.html#termdebug_use_prompt">termdebug_use_prompt</a> : 
+<code class="example">    :let g:termdebug_config = {}</code>
+<code class="example">    :let g:termdebug_config['use_prompt'] = v:true</code>
+<code class="example"></code>
+- 指定运行远程  <a href="debug.html#gdb">gdb</a>  实例的命令行: 
+<code class="example">    :let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']</code>
+   解释如何使用  <code class="badlink">ssh</code>  超出了本例的范围，但<code class="note">注意</code>在  <code class="badlink">$HOME/.ssh/config</code>  文件里指
+   定用户名、密钥和其它选项可以极大地简化此命令行。
+
+- 提供把远程路径翻译成  <a href="pi_netrw.html#netrw">netrw</a>  路径的提示: 
+<code class="example">    :let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }</code>
+<code class="example"></code>
+- 载入 termdebug 插件并启动 Vim 的调试: 
+<code class="example">    :packadd termdebug</code>
+<code class="example">    :Termdebug vim</code>
+<code class="example"></code>
+你现在拥有了和本地示例中相同的三个窗口，后续步骤也相同。唯一区别是源窗口在
+netrw 缓冲区里而非本地的缓冲区里显示。
+
+                                                <b class="vimtag"> <a name="termdebug-substitute-path">termdebug-substitute-path</a> </b>
+使用  <code class="badlink">g:termdebug_config['substitute_path']</code>  项目来映射远端到本地文件，使用和
+gdb 的  <code class="badlink">substitute-path</code>  命令相同的策略。
+例如:
+- 用  <a href="pi_netrw.html#netrw">netrw</a>  来通过 ssh 远程访问文件: 
+<code class="example">    let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']</code>
+<code class="example">    let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }</code>
+  <code class="note">注意</code>: 此处的键指定远程机器的根路径，而值为本地路径。
+- 使用 Windows 的  <code class="badlink">UNC</code>  路径来访问  <code class="badlink">WSL2</code>  源: 
+<code class="example">    let g:termdebug_config['command'] = ['wsl', 'gdb']</code>
+<code class="example">    let g:termdebug_config['substitute_path'] = {</code>
+<code class="example">        \ '/': '\\wsl.localhost\Ubuntu-22.04\',</code>
+<code class="example">        \ '/mnt/c/': 'C:/' }</code>
+  <code class="note">注意</code>: 需要多个映射: 每个驱动器一个映射，还有一个对应 linux 文件系统 (可用
+  <code class="badlink">wslpath</code>  查询)。
+
+此模式下，可以检测任何   <code class="badlink">ssh</code>  或  <code class="badlink">wsl</code>  命令，而可用类似的命令来在远程的  <code class="badlink">tty</code> 
+终端会话中启动  <code class="badlink">socat</code>  并连接到  <a href="debug.html#gdb">gdb</a> 。
+如果  <code class="badlink">socat</code>  不可用，备选会使用普通的远程终端。
+下一部分说明如何覆盖上述的缺省行为。
+
+                                                <b class="vimtag"> <a name="termdebug-remote-window">termdebug-remote-window</a> </b>
+要使用其它的终端客户端，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  里的
+"remote_window" 项。例如:
+- 使用 "prompt" 模式，在 docker 容器里调试: 
+<code class="example">    let g:termdebug_config['use_prompt'] = v:true</code>
+<code class="example">    let g:termdebug_config['command'] = ['docker', 'run', '-i',</code>
+<code class="example">        \ '--rm', '--name', 'container-name', 'image-name', 'gdb']</code>
+<code class="example">    let g:termdebug_config['remote_window'] =</code>
+<code class="example">        \ ['docker', 'exec', '-ti', 'container-name'</code>
+<code class="example">        \ ,'socat', '-dd', '-', 'PTY,raw,echo=0']</code>
+<code class="example"></code>
+- 使用一个 "终端缓冲区"，在 docker 容器里调试。
+  此容器应已运行，因为和前例不同，在  <code class="badlink">终端模式</code>  里 "主程序" 和 "通信" pty 在
+  gdb pty 之前先建立: 
+<code class="example">    $ docker run -ti --rm --name container-name immage-name</code>
+<code class="example"></code>
+   然后，启动调试器: 
+<code class="example">    let g:termdebug_config['use_prompt'] = v:false " 缺省</code>
+<code class="example">    let g:termdebug_config['command'] =</code>
+<code class="example">        \ ['docker', 'exec', '-ti', 'container-name', 'gdb']</code>
+<code class="example">    let g:termdebug_config['remote_window'] =</code>
+<code class="example">        \ ['docker', 'exec', '-ti', 'container-name'</code>
+<code class="example">        \ ,'socat', '-dd', '-', 'PTY,raw,echo=0']</code>
+<code class="example"></code>
+<code class="note">注意</code>: "command" 在  <a href="terminal.html#termdebug-prompt">termdebug-prompt</a>  模式下不能用  <a href="starting.html#-t">-t</a>  ，因为提示缓冲区不能处
+理  <code class="badlink">tty</code>  连接。
+而 "remote_window" 命令必须使用  <a href="starting.html#-t">-t</a> 。不然的话，它没有 gdb 要连接到的
+`pty 从设备`。
+<code class="note">注意</code>: 使用 "terminal" 模式时，"socat" 必须在远程机器上可用。
+<code class="note">注意</code>: 可通过混合使用  <code class="badlink">数据卷</code>  和映射 (参见  <code class="badlink">termdebug-substitute-path</code> ) 来访问
+docker 容器源。
+
 <code class="section">GDB 命令 </code>
                                                         <b class="vimtag"> <a name="g:termdebugger">g:termdebugger</a> </b>
 要改变 gdb 命令的名字，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置 g:termdebug_config 的
@@ -1453,6 +1537,12 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
 滤参数列表: 
 <code class="example">        let g:termdebug_config['command_filter'] = MyDebugFilter</code>
+<code class="example"></code>
+"command_filter" 场景可以解决通过 "ssh" 远程调试时的转义问题。出于方便考虑，已
+经提供了一个默认过滤器，用于转义参数中的空白字符。该过滤器在 "ssh" 环境下会自
+动启用，也可在其他场景中按如下方式使用: 
+<code class="example">        let g:termdebug_config['command_filter'] =</code>
+<code class="example">        /   function('g:Termdebug_escape_whitespace')</code>
 <code class="example"></code>
 如果不想加入参数，但需要设置 "pty"，可提供一个函数添加必须的参数: 
 <code class="example">        let g:termdebug_config['command_add_args'] = MyAddArguments</code>
@@ -1511,7 +1601,8 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 要定制断点标号以在标号列中显示  <code class="badlink">&gt;&gt;</code> : 
 <code class="example">        let g:termdebug_config['sign'] = '&gt;&gt;'</code>
 可以为开始几个断点指定不同的标号: 
-<code class="example">        let g:termdebug_config['signs'] = ['&gt;1', '&gt;2', '&gt;3', '&gt;4', '&gt;5', '&gt;6', '&gt;7', '&gt;8', '&gt;9']</code>
+<code class="example">        let g:termdebug_config['signs'] = ['&gt;1', '&gt;2', '&gt;3', '&gt;4', '&gt;5',</code>
+<code class="example">         \ '&gt;6', '&gt;7', '&gt;8', '&gt;9']</code>
 <code class="example">        let g:termdebug_config['sign'] = '&gt;&gt;'</code>
 如果要使用十进制 (基底为 10) 断点标号: 
 <code class="example">        let g:termdebug_config['sign_decimal'] = 1</code>

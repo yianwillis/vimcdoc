@@ -1612,9 +1612,13 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                 x11             X11 选择
                 gui             GUI 特定的方法
                 other           一些其他方法
+                *               剪贴板提供者方法
 
         <code class="note">注意</code>: "other" 用于没有 X11/Wayland 的系统，如 MS-Windows 或 MacOS，在
         运行非 GUI 的 Vim 时的情况。
+
+        <code class="note">注意</code> 要使用给定的剪贴板提供者，这里应提供其名。详见
+         <code class="badlink">clipboard-providers</code> 。
 
         选项值是逗号分隔的项目列表。列表从左到右进行解析，首个 Vim 决定可用或
         可正常工作的方法被用作实际使用的访问剪贴板的方法。在所有系统上，设置此
@@ -1918,7 +1922,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                     没有效果。
 
            noselect 同 "noinsert"，但不预选菜单项。如果同时给出 "noinsert" 和
-                    "noselect"，"noselect" 优先级更高。
+                    "noselect"，"noselect" 优先级更高。打开 <a href="options.html#'autocomplete'">'autocomplete'</a>
+                    时，除非 "preinsert" 也打开，会自动打开本项。
 
            nosort   "fuzzy" 打开时，关闭补全候选基于模糊分数的的排序。候选使用
                     原来的顺序。
@@ -1954,10 +1959,47 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <a href="options.html#'completepopup'">'completepopup'</a> <a href="options.html#'cpp'">'cpp'</a>   字符串 (缺省: 空)
                         全局
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+textprop">+textprop</a>  或  <a href="various.html#+quickfix">+quickfix</a>  特性才有效}</code>
-        当 <a href="options.html#'completeopt'">'completeopt'</a> 包含 "popup" 时，此选项用于 info 弹出建立时的属性。如
+        当 <a href="options.html#'completeopt'">'completeopt'</a> 包含 "popup" 时，此选项指定 info 弹出建立时的属性。如
         果 info 弹出窗口已存在，关闭之，这样再次建立此窗口时才能应用此选项值。
-        你也可用  <a href="popup.html#popup_findinfo()">popup_findinfo()</a>  然后用  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  来设置已有的
-        info 弹出的属性。见  <a href="insert.html#complete-popup">complete-popup</a> 。
+
+        此选项是逗号分隔的值列表:
+                align           "item" (缺省) 或 "menu"
+                border          边框风格:
+                                "single"        窄方框绘制字符
+                                "double"        双线
+                                "round"         圆角
+                                "ascii"         ASCII 字符 (-、|、+)
+                                "custom:X;X;X;X;X;X;X;X"
+                                                分号分隔的八个字符，依序为:
+                                                顶、右、底、左、左上、右上、右
+                                                下、左下
+                                "on"            <a href="options.html#'encoding'">'encoding'</a> 为 "utf-8" 且
+                                                <a href="options.html#'ambiwidth'">'ambiwidth'</a> 为 "single" 时等同
+                                                于 "double"，否则等同于
+                                                "ascii" (缺省)
+                                "off"           无边框
+                borderhighlight 用于弹出边框字符的高亮组
+                close           显示关闭按钮: "on" (缺省) 或 "off"
+                height          弹出的最大高度
+                highlight       弹出的高亮组 (缺省是 PmenuSel)
+                resize          显示缩放柄: "on" (缺省) 或 "off"
+                shadow          "off" (缺省) 或 "on" 使用  <code class="badlink">hl-PmenuShadow</code> 
+                width           弹出的最大宽度
+
+        例如: 
+<code class="example">                :set completepopup=height:10,border:single,highlight:InfoPopup</code>
+<code class="example">                :set completepopup=width:60,border:custom:─;│;─;│;┌;┐;┘;└</code>
+
+        如果 "align" 值是  <code class="badlink">"item"</code> ，弹出位置靠近选择的项目，改变选择项目时也会
+        移动弹出位置。
+        如果是 <code class="badlink">"menu"</code> ，弹出和菜单顶部对齐 (如果菜单出现在文本之下)，或者和底
+        部对齐 (如果菜单出现在文本上方)。
+
+        只在打开 <a href="options.html#'mouse'">'mouse'</a> 时才在弹出边框上显示关闭按钮和缩放柄。
+
+        创建后，可用  <a href="popup.html#popup_findinfo()">popup_findinfo()</a>  定位 info 弹出，用
+         <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  来修改属性。另见:  <a href="insert.html#complete-popup">complete-popup</a> 。
+
 
                                                 <b class="vimtag"> <a name="'completeslash'">'completeslash'</a> </b> <b class="vimtag"> <a name="'csl'">'csl'</a> </b>
 <a href="options.html#'completeslash'">'completeslash'</a> <a href="options.html#'csl'">'csl'</a>   字符串  (缺省: "")
@@ -3171,6 +3213,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           foldopen      '-'             标记折叠开始处
           foldclose     '+'             显示关闭的折叠
           foldsep       '|'             已打开折叠的中间字符
+          foldinner     无              在窄 <a href="options.html#'foldcolumn'">'foldcolumn'</a> 容不下重复的折叠时，
+                                        用于代替显示的数值嵌套级别的字符
           diff          '-'             <a href="options.html#'diff'">'diff'</a> 选项里的被删除行
           eob           '~'             缓冲区结束之后的空行
           lastline      '@'             <a href="options.html#'display'">'display'</a> 包含的 lastline/truncate
@@ -3693,6 +3737,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
                                                                 <b class="vimtag"> <a name="'go-c'">'go-c'</a> </b>
           'c'   简单的选择使用控制台对话框而不是弹出式对话框。
+                                                                <b class="vimtag"> <a name="'go-C'">'go-C'</a> </b>
+          'C'   如果可用，使用  <code class="badlink">hl-TitleBar</code>  和  <code class="badlink">hl-TitleBarNC</code> 。
+                目前仅可用于 MS-Windows GUI。
+                详见  <code class="badlink">gui-w32-title-bar</code> 。
                                                                 <b class="vimtag"> <a name="'go-d'">'go-d'</a> </b>
           'd'   如果可能，使用深色主题变体。目前仅能用于 GTK+ GUI。
                                                                 <b class="vimtag"> <a name="'go-e'">'go-e'</a> </b>
@@ -3857,7 +3905,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                      =:PmenuSel, k:PmenuMatch,&lt;:PmenuMatchSel,
                                      [:PmenuKind,]:PmenuKindSel,
                                      <code class="special">{:PmenuExtra,}</code>:PmenuExtraSel,
-                                     x:PmenuSbar,X:PmenuThumb,*:TabLine,
+                                     x:PmenuSbar,X:PmenuThumb,j:PmenuBorder,
+                                     H:PmenuShadow,*:TabLine,
                                      #:TabLineSel,_:TabLineFill,!:CursorColumn,
                                      .:CursorLine,o:ColorColumn,q:QuickFixLine,
                                      z:StatusLineTerm,Z:StatusLineTermNC,
@@ -3917,6 +3966,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
          <a href="syntax.html#hl-PmenuThumb">hl-PmenuThumb</a>   X  弹出菜单滚动条拇指 (thumb)
          <a href="syntax.html#hl-PmenuMatch">hl-PmenuMatch</a>   k  弹出菜单匹配文本
          <a href="syntax.html#hl-PmenuMatchSel">hl-PmenuMatchSel</a>  &lt;  弹出菜单选中行上的匹配文本
+         <code class="badlink">hl-PmenuBorder</code>    j  弹出菜单边框字符
+         <code class="badlink">hl-PmenuShadow</code>    H  弹出菜单阴影
          <a href="syntax.html#hl-PreInsert">hl-PreInsert</a>    I  <a href="options.html#'completeopt'">'completeopt'</a> 里有 "preinsert" 时插入的文本
 
         显示模式是:
@@ -5603,6 +5654,38 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                         全局
         如果打开，Ex 模式使用 ":" 提示。
 
+                                                <b class="vimtag"> <a name="'pumborder'">'pumborder'</a> </b> <b class="vimtag"> <a name="'pb'">'pb'</a> </b>
+<code class="badlink">'pumborder'</code> <code class="badlink">'pb'</code>        字符串  (缺省为 "")
+                        全局
+        定义补全时弹出菜单的边框和可选的装饰。值是逗号分隔的关键字列表。
+
+        边框风格 (最多一项):
+        "single"        使用窄方框绘制字符
+        "double"        使用双线方框绘制字符
+        "round"         使用圆角
+        "ascii"         使用 ASCII 字符 (-、|、+)
+        "custom:X;X;X;X;X;X;X;X"
+                        使用分号分隔的八个字符，依序为: 顶、右、底、左、左上、
+                        右上、右下、左下
+
+        其他标志位:
+        "margin"        在左右边框内侧加上一单元的空间
+        "shadow"        在右侧和底侧边缘绘制阴影
+
+        高亮组:
+         <code class="badlink">hl-PmenuBorder</code>         用于边框字符
+         <code class="badlink">hl-PmenuShadow</code>         用于阴影
+
+        示例: 
+<code class="example">                :set pumborder=single</code>
+<code class="example">                :set pumborder=double,margin,shadow</code>
+<code class="example">                :set pumborder=custom:─;│;─;│;┌;┐;┘;└,shadow</code>
+
+        仅在  <a href="options.html#'encoding'">'encoding'</a>  为 "utf-8" 和  <a href="options.html#'ambiwidth'">'ambiwidth'</a>  为 "single" 时可用使用边
+        框绘制字符的边框风格 ("single"、"double"、"round")。"margin" 需要边框
+        风格。
+        另见:  <a href="insert.html#ins-completion-menu">ins-completion-menu</a> 。
+
                                                 <b class="vimtag"> <a name="'pumheight'">'pumheight'</a> </b> <b class="vimtag"> <a name="'ph'">'ph'</a> </b>
 <a href="options.html#'pumheight'">'pumheight'</a> <a href="options.html#'ph'">'ph'</a>        数值型  (缺省为 0)
                         全局
@@ -6412,10 +6495,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           F     编辑文件时不给出文件信息，就像给命令用了  <a href="various.html#:silent">:silent</a>       <b class="vimtag"> <a name="shm-F">shm-F</a> </b>
                 一样；<code class="note">注意</code> 这也会影响自动命令的信息和 <a href="options.html#'autoread'">'autoread'</a> 的重载
           S     搜索时不显示搜索计数，如 "[1/5]"。如果不给出 "S" 标志位 <b class="vimtag"> <a name="shm-S">shm-S</a> </b>
-                (也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W" (助记符:
-                Wrapped 环绕) 字符以代表 "search hit BOTTOM, continuing at
-                TOP" 和 "search hit TOP, continuing at BOTTOM" 消息。最大限值
-                可通过 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a> 选项设置。
+                (也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W"
+                (助记符: Wrapped 环绕) 字符以代表 "search hit BOTTOM,
+                continuing at TOP" 和 "search hit TOP, continuing at BOTTOM"
+                消息。最大限值可通过 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a> 选项设置。
 
         这给你一个机会，避免在缓冲区之间切换要按 <code class="special">&lt;Enter&gt;</code>，但仍然能够在可用的空
         间里得到有用的消息。要得到 <a href="options.html#'shm'">'shm'</a> 为空时的完整消息，使用 ":file!"。
@@ -6800,7 +6883,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         如果打开，下面列出的命令把光标移动到行首的第一个非空白。如果关闭，光
         标保持在同一列上 (如果可能的话)。这适用于以下命令:
         - <code class="keystroke">CTRL-D</code>、<code class="keystroke">CTRL-U</code>、<code class="keystroke">CTRL-B</code>、<code class="keystroke">CTRL-F</code>、"G"、"H"、"M"、"L"、gg
-        - 使用面向行操作符的 "d"、"&lt;&lt;"、"==" 和 "&gt;&gt;" ( <a href="motion.html#operator-resulting-pos">operator-resulting-pos</a> )
+        - 使用面向行操作符的 "d"、"&lt;&lt;"、"==" 和 "&gt;&gt;"
+          ( <a href="motion.html#operator-resulting-pos">operator-resulting-pos</a> )
         - 带计数的 "%"
         - 缓冲区改变命令 (<code class="keystroke">CTRL-^</code>、 :bnext、:bNext，等等)
         - 只有单个行号的 Ex 命令，比如 ":25" 或 ":+"。
@@ -8258,7 +8342,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                          <a href="pattern.html#%2F\%3C">/\&lt;</a> )。 这样可以提供匹配实际缓冲区文本的更直观的菜单
                         项目。但因为没有完整保留搜索模式，搜索不会那么精确。
                         缺省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这
-                        会保证搜索的正确,尤其是使用了正则表达式或打开
+                        会保证搜索的正确，尤其是使用了正则表达式或打开
                         <a href="options.html#'smartcase'">'smartcase'</a> 的时候。不过，附加的匹配单词的大小写未必和
                         缓冲区里单词的大小写准确匹配。
           fuzzy         使用  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a>  来找到补全匹配。指定此值时，补全
@@ -8424,6 +8508,9 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 <code class="example">                :set listchars+=precedes:&lt;,extends:&gt;</code>
         见 <a href="options.html#'sidescroll'">'sidescroll'</a>、<a href="options.html#'listchars'">'listchars'</a> 和  <a href="intro.html#wrap-off">wrap-off</a> 。
         如果 <a href="options.html#'diff'">'diff'</a> 选项置位，不能从  <a href="options.html#modeline">modeline</a>  中设置。
+        如果在  <a href="options.html#modeline">modeline</a>  或  <a href="eval.html#sandbox">sandbox</a>  里设置了 <a href="options.html#'nowrap'">'nowrap'</a>， <a href="options.html#lcs-extends">lcs-extends</a>  使用
+        '&gt;' 字符，这里无视 <a href="options.html#'list'">'list'</a> 和 <a href="options.html#'listchars'">'listchars'</a> 选项值。这是为了避免看不到视
+        口之外的恶意代码。其后，手动用 `:setlocal nowrap` 可关闭此行为。
 
                                                 <b class="vimtag"> <a name="'wrapmargin'">'wrapmargin'</a> </b> <b class="vimtag"> <a name="'wm'">'wm'</a> </b>
 <a href="options.html#'wrapmargin'">'wrapmargin'</a> <a href="options.html#'wm'">'wm'</a>       数值型  (缺省为 0)

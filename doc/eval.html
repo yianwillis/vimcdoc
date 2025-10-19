@@ -72,6 +72,7 @@
 12. 沙盘 (sandbox)       <a href="eval.html#eval-sandbox">eval-sandbox</a> 
 13. 文本锁               <a href="eval.html#textlock">textlock</a> 
 14. Vim 脚本库           <a href="eval.html#vim-script-library">vim-script-library</a> 
+15. 剪贴板提供者         <code class="badlink">clipboard-providers</code> 
 
 测试支持的文档可见  <a href="testing.html#testing.txt">testing.txt</a> 。
 剖视的文档可见  <a href="repeat.html#profiling">profiling</a> 。
@@ -2045,6 +2046,10 @@ v:clipmethod    正在使用的剪贴板的当前访问方法。可以是以下�
                         other           正在使用其它的方法
                         none            剪贴板功能被关闭，或者不可用。
                 详见 <a href="options.html#'clipmethod'">'clipmethod'</a>。
+
+                                        <b class="vimtag"> <a name="v:clipproviders">v:clipproviders</a> </b>
+v:clipproviders
+                提供剪贴板提供者的字典，详见  <code class="badlink">clipboard-providers</code> 。
 
                                         <b class="vimtag"> <a name="v:cmdarg">v:cmdarg</a> </b> <b class="vimtag"> <a name="cmdarg-variable">cmdarg-variable</a> </b>
 v:cmdarg        该变量有两个目的:
@@ -4660,7 +4665,118 @@ gx 映射缺省调用此函数。可视模式下试图打开可视选择的文�
         :call dist#vim9#Launch(<code class="special">&lt;args&gt;</code>)
         :Launch <code class="special">&lt;app&gt;</code> <code class="special">&lt;args&gt;</code>.
 &lt;
+</section><hr class="doubleline" /><section class=inner>
+<h4>15. 剪贴板提供者                                        <b class="vimtag"> <a name="clipboard-providers">clipboard-providers</a> </b></h4>
+Vim 在编译时可以加入  <code class="badlink">+clipboard_provider</code>  特性，但它依赖于  <a href="various.html#+eval">+eval</a>  特性。前者
+用于支持自定义剪贴板提供者。这些剪贴板提供者负责处理 "+" 和 "*" 寄存器。<code class="note">注意</code>
+如果没有编译进  <a href="various.html#+wayland_clipboard">+wayland_clipboard</a>  或  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a>  特性，"+" 寄存器将无
+法使用。
 
+要新增提供者，在  <code class="badlink">v:clipproviders</code>  字典里加入新项目，形式如下: 
+<code class="example">        let v:clipproviders["name"] = {</code>
+<code class="example">            \   "available": function("Available"),</code>
+<code class="example">            \   "paste": {</code>
+<code class="example">            \       '+': function("Paste"), " 用于 + 寄存器</code>
+<code class="example">            \       '*': function("Paste"), " 用于 * 寄存器</code>
+<code class="example">            \   },</code>
+<code class="example">            \   "copy": {</code>
+<code class="example">            \       '+': function("Copy"), " 同上</code>
+<code class="example">            \       '*': function("Copy"),</code>
+<code class="example">            \   },</code>
+<code class="example">            \ }</code>
+<code class="example"></code>
+键为提供者的名字，可用于 <a href="options.html#'clipmethod'">'clipmethod'</a>，例如在下例中，在 <a href="options.html#'clipboard'">'clipboard'</a> 里加入
+"name" 就可以使用对应的提供者。 
+<code class="example">        set clipmethod=name,wayland,x11,gui</code>
+<code class="example"></code>
+每个回调可以是字符串形式的函数名、 <a href="eval.html#Funcref">Funcref</a>  或者  <a href="eval.html#lambda">lambda</a>  表达式。
+
+<code class="note">注意</code> 这些字典项目是可选的，例如，如果不需要处理 "copy" 函数，可以直接省略它。
+这样当 Vim 尝试抽出/复制内容时，简单来说，将不会执行任何操作。
+
+                                                <b class="vimtag"> <a name="clipboard-provider-available">clipboard-provider-available</a> </b>
+"available" 回调应返回字符串，包含可用的剪贴板寄存器。例如，如果只有 "+" 寄存
+器可用，该函数应返回 "+"，而如果 "+" 和 "*" 两者都可用，则应返回 "+*"。
+
+                                                <b class="vimtag"> <a name="clipboard-provider-paste">clipboard-provider-paste</a> </b>
+"paste" 回调接受的首个参数是要放置的寄存器 (字符串)，第二个参数是访问类型 (字
+符串)。返回值是元组/列表或字符串。如果返回元组/列表，应包含以下两个元素:
+        - 遵循  <a href="builtin.html#setreg()">setreg()</a>  说明的寄存器规格。
+        - 字符串列表。
+如果寄存器规格为空串，系统会自动决定规格，见  <a href="builtin.html#setreg()">setreg()</a> 。如果返回字符串，可以
+是 "clear" 或 "previous" 之一。"clear" 使 Vim 清除该寄存器，而 "previous" 指示
+Vim 使用之前的寄存器内容 (也可以理解为当前内容，取决于你的视角)。
+
+第二个参数，访问类型，可为 "explicit" 或 "implicit" 之一。"explicit" 表示用户
+直接访问剪贴板，如放置文本，或调用  <a href="builtin.html#getreg()">getreg()</a>  等；而 "implicit" 表示剪贴板被间
+接访问，如调用   <a href="change.html#:registers">:registers</a> ，或一个无关的操作导致 Vim 访问剪贴板等情形。
+
+由于 Vim 的某些操作会隐式地访问剪贴板，这一特性会很有用。例如，当使用 OSC52 命
+令（通过转义序列访问剪贴板）实现提供者时，许多终端在 Vim 访问剪贴板时都会要求
+用户确认。如果每次隐式访问剪贴板都触发确认提示，会十分烦人。此时，一个较好的做
+法是返回 "previous"，以保持寄存器内容不变。
+
+                                                <b class="vimtag"> <a name="clipboard-provider-copy">clipboard-provider-copy</a> </b>
+"copy" 回调无返回值，依序接受以下参数:
+        - 待操作的寄存器
+        - 寄存器规格，遵循  <a href="builtin.html#getregtype()">getregtype()</a> 
+        - 待复制的字符串列表
+
+提供者可根据传入的信息执行任意操作。每当请求修改剪贴板寄存器时，都会调用此函
+数。
+
+                                                <b class="vimtag"> <a name="clipboard-provider-textlock">clipboard-provider-textlock</a> </b>
+"paste" 和 "copy" 回调都不允许改动缓冲区文本，见  <a href="eval.html#textlock">textlock</a> 。
+
+                                                <b class="vimtag"> <a name="clipboard-provider-example">clipboard-provider-example</a> </b>
+下面是一个使用 OSC52 命令实现剪贴板提供者功能的示例脚本: &gt;vim
+
+        func Available()
+          return "*"
+        endfunc
+
+        func Paste(reg, type)
+          " 隐式访问则不做任何事
+          if a:type == "implicit"
+            return "previous"
+          endif
+
+          augroup OSC
+            autocmd!
+            autocmd TermResponseAll osc ++once call feedkeys("\<code class="special">&lt;F30&gt;</code>", '!')
+          augroup END
+
+          " 发送命令
+          call echoraw("\<code class="special">&lt;Esc&gt;</code>]52;;?\<code class="special">&lt;Esc&gt;</code>\\")
+
+          " 等待自动命令的激活
+          while getchar(-1) != "\<code class="special">&lt;F30&gt;</code>"
+          endwhile
+
+          autocmd! OSC
+
+          " 提取 base64 内容
+          let l:stuff = matchstr(v:termosc, '52;.\+;\zs[A-Za-z0-9+/=]\+')
+
+          return ("", blob2str(base64_decode(l:stuff)))
+        endfunc
+
+        func Copy(reg, type, lines)
+          call echoraw("\<code class="special">&lt;Esc&gt;</code>]52;c;" ..
+            \ base64_encode(str2blob(a:lines)) .. "\<code class="special">&lt;Esc&gt;</code>\\")
+        endfunc
+        let v:clipproviders["myosc"] = {
+            \   "available": function("Available"),
+            \   "paste": {
+            \     '*': function("Paste")
+            \   },
+            \   "copy": {
+            \     '*': function("Copy")
+            \   },
+            \ }
+        set clipmethod=myosc
+
+&lt;
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
 </article>
