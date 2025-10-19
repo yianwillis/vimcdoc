@@ -1727,8 +1727,9 @@ HTML 文件里，标签的色彩方案工作方式如下。
 >
 	:let html_my_rendering=1
 
-要想看一个例子，从 https://www.fleiner.com/vim/download.html 下载 mysyntax.vim
-文件。
+要想看一个例子，从
+https://web.archive.org/web/20241129015117/https://www.fleiner.com/vim/download.html
+下载 mysyntax.vim 文件。
 
 在你的 vimrc 文件里加上这行，可以屏蔽这种显示方式: >
 	:let html_no_rendering=1
@@ -1926,11 +1927,14 @@ Basic 脚本和内嵌 CSS (样式表) 的特殊高亮。只有在你实际有包
 可如此识别非 JavaDoc 注释里的数值和字符串 >
 	:let g:java_comment_strings = 1
 
-'foldmethod' 设为 "syntax" 时，折叠代码块和多行注释。多行注释的首行通常没有文
-本，使用缺省的 'foldtext' 值时，折叠后的 Javadoc 注释内容缺少信息；可以选择为
-这种格式的注释显示第二行，而其他格式的注释显示第一行的内容 >
+'foldmethod' 设为 "syntax" 时，多行代码块 ("b")、普通注释 ("c")、Javadoc 注释
+("d") 和相邻的 "import" 声明 ("i") 缺省会被折叠。缩写名如下除名后，对应支持的
+语法项目类型会_不_被折叠 >
+	:let g:java_ignore_folding = "bcdi"
+多行注释的首行通常没有文本，使用缺省的 'foldtext' 值时，折叠后的 Javadoc 注释
+内容缺少信息；可以选择为这种格式的注释显示第二行，而其他格式的注释显示第一行的
+内容 >
 	:let g:java_foldtext_show_first_or_second_line = 1
-
 要额外缩进 Javadoc 注释里的 HTML 标签，可依照 |html-folding| 列出的指示，并显
 式表示同意 >
 	:let g:java_consent_to_html_syntax_folding = 1
@@ -1970,12 +1974,11 @@ Java 平台的显著变动会以 JDK 增强提案 (JDK Enhancement Proposals，J
 逐步推出，可在发布时实现，作为功能预览提供。可能需要若干 JEP 和几个发布周期才
 会使这样的功能被整合到平台里，或者被撤消。要迎合早期尝鲜者，Vim 提供了已实现的
 语法相关的预览功能的可选支持。可以指定预览功能号的列表来请求支持，如下: >
-	:let g:java_syntax_previews = [488, 494]
+	:let g:java_syntax_previews = [507]
 
 下表给出支持的 JEP 号:
 	`430`: 字符串模板 [JDK 21]
-	`488`: 模式、instanceof 和 switch 里的原始类型
-	`494`: 模块导入声明
+	`507`: 模式、instanceof 和 switch 里的原始类型
 
 注意 一旦特定的预览功能被整合进 Java 平台，项目会从此表中删除，相关功能不再可
 选。
@@ -2959,6 +2962,9 @@ $VIMRUNTIME/syntax/rst.vim。
 
 备注 某些平台上折叠可能造成性能问题。
 
+语法同步的最少行设为 50。要修改此值: >
+	let rst_minlines = 100
+
 
 REXX						*rexx.vim* *ft-rexx-syntax*
 
@@ -3929,9 +3935,9 @@ Vim 理解三种语法项目的类型:
 		[keepend]
 		[extend]
 		[excludenl]
-		start={start-pattern} ..
+		start={start-pattern} ...
 		[skip={skip-pattern}]
-		end={end-pattern} ..
+		end={end-pattern} ...
 		[{options}]
 
 	定义一个区域。区域可以覆盖多行。
@@ -4203,7 +4209,7 @@ fold							*:syn-fold*
 
 
 			*:syn-contains* *E405* *E406* *E407* *E408* *E409*
-contains={group-name},..
+contains={group-name},...
 
 "contains" 参数跟随语法组名的列表。这些组因而被允许包含在本项目里 (它们可能扩
 展包含它们的组的结束位置)。这使得匹配和区域的递归嵌套成为可能。如果没有
@@ -4213,7 +4219,7 @@ contains=ALL
 		如果唯一在包含列表里出现的名字是 "ALL"，那么本项目里可以包含所
 		有的组。
 
-contains=ALLBUT,{group-name}...
+contains=ALLBUT,{group-name},...
 		如果包含列表的第一个名字是 "ALLBUT"，那么除了列出的那些以外，
 		所有的组都可以出现在本项目里。例如: >
   :syntax region Block start="{" end="}" ... contains=ALLBUT,Function
@@ -4221,13 +4227,13 @@ contains=ALLBUT,{group-name}...
 contains=TOP
 		如果包含列表的第一个名字是 "TOP"，那么所有不包含 "contained"
 		参数的组都可以接受。
-contains=TOP，{group-name},..
+contains=TOP，{group-name},...
 		类似于 "TOP"，但除了列出的组以外。
 
 contains=CONTAINED
 		如果包含列表的第一个名字是 "CONTAINED"，那么所有包含
 		"contained" 参数的组都可以接受。
-contains=CONTAINED，{group-name},..
+contains=CONTAINED，{group-name},...
 		类似于 "CONTAINED"，但列出的组除外。
 
 
@@ -4244,7 +4250,7 @@ syntax 命令自己定义一个新组，它也不会参与匹配。小心: 在�
 目能够匹配的区域。注意 这同时可能限制了高亮的区域。
 
 
-containedin={group-name}...				*:syn-containedin*
+containedin={group-name},...				*:syn-containedin*
 
 "containedin" 参数跟随语法组名的列表。然后，本项目就可以包含在那些组里，就像那
 些项目使用了包含本项目的 "contains=" 参数一样。
@@ -4254,7 +4260,7 @@ containedin={group-name}...				*:syn-containedin*
 即使有些祖先可以接受本项目，匹配也不会开始。注意 |:syn-transparent| 区域仍然会
 对其自身的 |:syn-contains| 列表执行。
 
-{group-name}... 的使用方式和 "contains" 相同，见上面的解释。
+{group-name},... 的使用方式和 "contains" 相同，见上面的解释。
 
 这可以用于后加的语法项目。一个项目可以告知要包含在已经存在的项目里面，而无须修
 改后者的定义。例如，要在载入 C 语法以后高亮 C 注释里的一个单词:
@@ -4267,7 +4273,7 @@ containedin={group-name}...				*:syn-containedin*
 另见: |:syn-contains|、|:syn-transparent|。
 
 
-nextgroup={group-name},..				*:syn-nextgroup*
+nextgroup={group-name},...				*:syn-nextgroup*
 
 "nextgroup" (下一个组) 参数跟随语法组名的列表，以逗号分隔 (和 "contains" 类
 似，你也可以使用模式)。
@@ -4484,22 +4490,22 @@ e-{nr}	模式匹配部分的结束位置向左 {nr} 个字符
 ==============================================================================
 9. 语法簇						*:syn-cluster* *E400*
 
-:sy[ntax] cluster {cluster-name} [contains={group-name}..]
-				 [add={group-name}..]
-				 [remove={group-name}..]
+:sy[ntax] cluster {cluster-name} [contains={group-name},...]
+				 [add={group-name},...]
+				 [remove={group-name},...]
 
 本命令允许你把若干语法组捆绑在一起，以便使用单个名字访问。
 
-	contains={group-name}..
+	contains={group-name},...
 		本簇使用此处指定的组名列表。
-	add={group-name}..
+	add={group-name},...
 		将指定的组加入本簇。
-	remove={group-name}..
+	remove={group-name},...
 		将指定的组从本簇里删除。
 
-用这种方式定义的簇可以在 contains=..、containedin=..、nextgroup=..、add=.. 或
-者 remove=.. 的列表里使用，只要加上 "@" 前缀即可。用这种表示方式，你可以隐含地
-在指定一个簇的内容之前先声明之。
+用这种方式定义的簇可以在 contains=...、containedin=...、nextgroup=...、add=...
+或者 remove=... 的列表里使用，只要加上 "@" 前缀即可。用这种表示方式，你可以隐
+含地在指定一个簇的内容之前先声明之。
 
 示例: >
    :syntax match Thing "# [^#]\+ #" contains=@ThingMembers
@@ -4672,7 +4678,7 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 得多。而模式的减少意味着速度的 (大大) 加快。]
 
 					    *syn-sync-grouphere* *E393* *E394*
-    :syntax sync match {sync-group-name} grouphere {group-name} "pattern" ..
+    :syntax sync match {sync-group-name} grouphere {group-name} "pattern" ...
 
 	"这里的组"，定义用于同步的匹配。{group-name} 为匹配之后立刻出现的语法
 	组名 (译者注: 但不一定从那里开始，尤其是同步模式本身就可以属于该组)。
@@ -4681,7 +4687,7 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 	组。
 
 						*syn-sync-groupthere*
-    :syntax sync match {sync-group-name} groupthere {group-name} "pattern" ..
+    :syntax sync match {sync-group-name} groupthere {group-name} "pattern" ...
 
 	"那里的组"，类似于 "grouphere"，但 {group-name} 是在同步点的搜索起点所
 	在行的行首使用的语法组名。匹配和同步点的搜索起点之间的文本假定不会改变
@@ -4690,8 +4696,8 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
 	"*/"，你知道不在注释里，所以 "那里的组" 是 "NONE"。(实际应用中更复杂，
 	因为 "/*" 和 "*/" 可以出现在字符串中。留给读者作为练习吧……)。
 
-    :syntax sync match ..
-    :syntax sync region ..
+    :syntax sync match ...
+    :syntax sync region ...
 
 	没有 "groupthere" 参数。定义区域或匹配项目，在同步点搜索过程中跳过这些
 	项目 (译者注: 注意 同步模式只能使用匹配项目，但在这里定义的同步过程的
@@ -4711,7 +4717,7 @@ Vim 如果发现显示开始的行出现在 C 风格注释的内部，就使用�
    :syntax sync clear
 
 你也可以清除特定的同步模式: >
-   :syntax sync clear {sync-group-name} ..
+   :syntax sync clear {sync-group-name} ...
 
 ==============================================================================
 12. 列出语法项目			*:syntax* *:sy* *:syn* *:syn-list*
@@ -4827,7 +4833,7 @@ https://github.com/vim/colorschemes/blob/master/legacy_colors/
 :hi[ghlight] {group-name} NONE
 			屏蔽一个高亮组的所有高亮设置。并_不_复原缺省的颜色。
 
-:hi[ghlight] [default] {group-name} {key}={arg} ..
+:hi[ghlight] [default] {group-name} {key}={arg} ...
 			增加高亮组，或者更改已有的组高亮设置。如果给出的色彩名
 			不能识别，载入每个 'runtimepath' 里找到的
 			`colors/lists/default.vim`。
@@ -5211,6 +5217,11 @@ PmenuThumb	弹出菜单: 滚动条的拇指 (thumb)。
 PmenuMatch	弹出菜单: 普通项目的匹配文本。和 |hl-Pmenu| 组合使用。
 							*hl-PmenuMatchSel*
 PmenuMatchSel	弹出菜单: 选中项目的匹配文本。和 |hl-PmenuSel| 组合使用。
+							*hl-PmenuBorder*
+PmenuBorder	弹出菜单: 边框字符。
+		缺省链接到 |hl-Pmenu|。
+							*hl-PmenuShadow*
+PmenuShadow	弹出菜单: 用于阴影。
 							*hl-ComplMatchIns*
 ComplMatchIns	当前被插入的补全的匹配文本。
 							*hl-PreInsert*
@@ -5273,6 +5284,16 @@ TabPanelSel	标签页面板，活动标签页标签。
 Terminal	|terminal| 窗口 (见 |terminal-size-color|)。
 							*hl-Title*
 Title		":set all"、":autocmd" 等输出的标题。
+							*hl-TitleBar*
+TitleBar	用于 gui 的激活窗口的标题栏。
+		只在 MS-Windows GUI 支持此特性。
+		详见 |gui-w32-title-bar|
+		只有 `guibg` 和 `guifg` 高亮参数有效。
+							*hl-TitleBarNC*
+TitleBarNC	用于 gui 的非激活窗口的标题栏。
+		只在 MS-Windows GUI 支持此特性。
+		详见 |gui-w32-title-bar|
+		只有 `guibg` 和 `guifg` 高亮参数有效。
 							*hl-Visual*
 Visual		可视模式的选择区。
 							*hl-VisualNOS*
@@ -5358,11 +5379,11 @@ Tooltip		当前工具提示的字体、背景色和前景色。也包括工具�
 该命令也删除 "b:current_syntax" 变量，因为该命令之后没有载入的语法了。
 
 要为当前缓冲区清理特定的语法组: >
-  :syntax clear {group-name} ..
+  :syntax clear {group-name} ...
 它删除了 {group-name} 里所有的模式和关键字。
 
 要为当前缓冲区清理特定的语法组群 (簇): >
-  :syntax clear @{grouplist-name} ..
+  :syntax clear @{grouplist-name} ...
 它把 {grouplist-name} 的内容设为空表。
 
 						*:syntax-off* *:syn-off*
@@ -5613,7 +5634,7 @@ Setup / Font / Enable Bold。
 
 
 ==============================================================================
-20. 语 法 太 慢 了						*:syntime*
+20. 语 法 太 慢 了					*:synti* *:syntime*
 
 本节主要针对语法文件的作者。
 
@@ -5630,14 +5651,14 @@ Setup / Font / Enable Bold。
 
 此时会显示使用到的语法模式的列表，按匹配文本使用的时间排序。
 
-:syntime on		开始测量语法时间。会增加若干开销，用来计算语法模式匹配
+:synti[me] on		开始测量语法时间。会增加若干开销，用来计算语法模式匹配
 			的时间。
 
-:syntime off		停止测量语法时间。
+:synti[me] off		停止测量语法时间。
 
-:syntime clear		把所有的计数清零，重新开始测量。
+:synti[me] clear	把所有的计数清零，重新开始测量。
 
-:syntime report		在当前窗口显示 ":syntime on" 开始使用的语法项目。使用
+:synti[me] report	在当前窗口显示 ":syntime on" 开始使用的语法项目。使用
 			更宽的显示可以看到更多输出。
 
 			列表按总时间排序。显示以下诸列:

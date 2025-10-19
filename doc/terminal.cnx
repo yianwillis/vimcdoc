@@ -45,6 +45,7 @@
       提示模式					|termdebug-prompt|
       映射					|termdebug-mappings|
       通信					|termdebug-communication|
+      远程调试					|termdebug-remote|
       定制					|termdebug-customizing|
 
 {仅当编译时加入 |+terminal| 特性才有效}
@@ -1275,8 +1276,8 @@ breakpoint"。
 
 浏览堆栈框架 ~
 				*termdebug-frames* *:Frame* *:Up* *:Down*
- `:Frame` [frame]	选择框架 [frame]，这可以是框架编号、地址或函数名 (缺省:
-			当前框架)
+ `:Frame` [frame]	选择框架 [frame]，这可以是框架编号、地址或函数名
+			(缺省: 当前框架)
  `:Up` [count]		向上 [count] 个框架 (缺省: 1；调用当前框架的那个框架)
  `+`			同上 (要关闭之，见 |termdebug_map_plus|)
  `:Down` [count]	向下 [count] 个框架 (缺省: 1; 当前框架调用的那个框架)
@@ -1406,6 +1407,89 @@ gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，�
 CTRL-C 并不中断。因此 `:Continue` 命令用 "continue" 而不是通信通道。
 
 
+远程调试 ~
+							*termdebug-remote*
+远程调试的一个主要问题是如何得到被调试程序的源代码。此插件可利用系统和 vim 的
+网络能力来绕过这个问题。
+						*termdebug-remote-example*
+可复制 |termdebug-example| 以在通过 `ssh` 可远程访问的 Linux 机器上用 `gdb` 调
+试器来调试 Vim。
+
+- 在本地示例中解释过的编译 Vim。
+
+- 如果 "socat" 在远端机器上不可用，'terminal' 模式不能正确工作。退回到
+  |termdebug_use_prompt|: >
+    :let g:termdebug_config = {}
+    :let g:termdebug_config['use_prompt'] = v:true
+
+- 指定运行远程 `gdb` 实例的命令行: >
+    :let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']
+<  解释如何使用 `ssh` 超出了本例的范围，但注意在 `$HOME/.ssh/config` 文件里指
+   定用户名、密钥和其它选项可以极大地简化此命令行。
+
+- 提供把远程路径翻译成 |netrw| 路径的提示: >
+    :let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }
+
+- 载入 termdebug 插件并启动 Vim 的调试: >
+    :packadd termdebug
+    :Termdebug vim
+
+你现在拥有了和本地示例中相同的三个窗口，后续步骤也相同。唯一区别是源窗口在
+netrw 缓冲区里而非本地的缓冲区里显示。
+
+						*termdebug-substitute-path*
+使用 `g:termdebug_config['substitute_path']` 项目来映射远端到本地文件，使用和
+gdb 的 `substitute-path` 命令相同的策略。
+例如:
+- 用 |netrw| 来通过 ssh 远程访问文件: >
+    let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']
+    let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }
+< 注意: 此处的键指定远程机器的根路径，而值为本地路径。
+- 使用 Windows 的 `UNC` 路径来访问 `WSL2` 源: >
+    let g:termdebug_config['command'] = ['wsl', 'gdb']
+    let g:termdebug_config['substitute_path'] = {
+	\ '/': '\\wsl.localhost\Ubuntu-22.04\',
+	\ '/mnt/c/': 'C:/' }
+< 注意: 需要多个映射: 每个驱动器一个映射，还有一个对应 linux 文件系统 (可用
+ `wslpath` 查询)。
+
+此模式下，可以检测任何  `ssh` 或 `wsl` 命令，而可用类似的命令来在远程的 `tty`
+终端会话中启动 `socat` 并连接到 `gdb`。
+如果 `socat` 不可用，备选会使用普通的远程终端。
+下一部分说明如何覆盖上述的缺省行为。
+
+						*termdebug-remote-window*
+要使用其它的终端客户端，在调用 `:Termdebug` 前设置 `g:termdebug_config` 里的
+"remote_window" 项。例如:
+- 使用 "prompt" 模式，在 docker 容器里调试: >
+    let g:termdebug_config['use_prompt'] = v:true
+    let g:termdebug_config['command'] = ['docker', 'run', '-i',
+	\ '--rm', '--name', 'container-name', 'image-name', 'gdb']
+    let g:termdebug_config['remote_window'] =
+	\ ['docker', 'exec', '-ti', 'container-name'
+	\ ,'socat', '-dd', '-', 'PTY,raw,echo=0']
+
+- 使用一个 "终端缓冲区"，在 docker 容器里调试。
+  此容器应已运行，因为和前例不同，在 `终端模式` 里 "主程序" 和 "通信" pty 在
+  gdb pty 之前先建立: >
+    $ docker run -ti --rm --name container-name immage-name
+
+<  然后，启动调试器: >
+    let g:termdebug_config['use_prompt'] = v:false " 缺省
+    let g:termdebug_config['command'] =
+	\ ['docker', 'exec', '-ti', 'container-name', 'gdb']
+    let g:termdebug_config['remote_window'] =
+	\ ['docker', 'exec', '-ti', 'container-name'
+	\ ,'socat', '-dd', '-', 'PTY,raw,echo=0']
+
+注意: "command" 在 |termdebug-prompt| 模式下不能用 `-t` ，因为提示缓冲区不能处
+理 `tty` 连接。
+而 "remote_window" 命令必须使用 `-t`。不然的话，它没有 gdb 要连接到的
+`pty 从设备`。
+注意: 使用 "terminal" 模式时，"socat" 必须在远程机器上可用。
+注意: 可通过混合使用 `数据卷` 和映射 (参见 |termdebug-substitute-path|) 来访问
+docker 容器源。
+
 GDB 命令 ~
 							*g:termdebugger*
 要改变 gdb 命令的名字，在调用 `:Termdebug` 前设置 g:termdebug_config 的
@@ -1424,6 +1508,12 @@ GDB 命令 ~
 会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
 滤参数列表: >
 	let g:termdebug_config['command_filter'] = MyDebugFilter
+
+"command_filter" 场景可以解决通过 "ssh" 远程调试时的转义问题。出于方便考虑，已
+经提供了一个默认过滤器，用于转义参数中的空白字符。该过滤器在 "ssh" 环境下会自
+动启用，也可在其他场景中按如下方式使用: >
+	let g:termdebug_config['command_filter'] =
+	/   function('g:Termdebug_escape_whitespace')
 
 如果不想加入参数，但需要设置 "pty"，可提供一个函数添加必须的参数: >
 	let g:termdebug_config['command_add_args'] = MyAddArguments
@@ -1482,7 +1572,8 @@ GDB 命令 ~
 要定制断点标号以在标号列中显示 `>>`: >
 	let g:termdebug_config['sign'] = '>>'
 可以为开始几个断点指定不同的标号: >
-	let g:termdebug_config['signs'] = ['>1', '>2', '>3', '>4', '>5', '>6', '>7', '>8', '>9']
+	let g:termdebug_config['signs'] = ['>1', '>2', '>3', '>4', '>5',
+         \ '>6', '>7', '>8', '>9']
 	let g:termdebug_config['sign'] = '>>'
 如果要使用十进制 (基底为 10) 断点标号: >
 	let g:termdebug_config['sign_decimal'] = 1

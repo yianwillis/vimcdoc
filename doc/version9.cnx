@@ -41579,6 +41579,8 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 
 - |items()| 函数现在支持 blob。
 
+- |clipboard-providers| 支持。
+
 							*changed-9.2*
 改动~
 -------
@@ -41619,7 +41621,8 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 - 'fillchars' 的新选项值:
 	"trunc"		- 配置截断指示符，'pummaxwidth'
 	"truncrl"	- 类似于 "trunc" 但用于 'rl' 模式，'pummaxwidth'
-	"tpl_vert"	- 用于 'tabpanel' 的分割符
+	"tpl_vert"	- 用于 'tabpanel' 的垂直分割符
+	"foldinner"	- 用于在 'foldcolumn' 内代表嵌套折叠级别的字符
 - 'grepformat' 现在是 |global-local| 选项。
 - 'mouseshape' 为 GTK3 若干鼠标光标消失的调整
 - 'nrformats' 接受新 "blank" 子选项，根据减号前的空格来决定是有符号或无符号数
@@ -41627,6 +41630,11 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 - 'rulerformat' 现在支持 |stl-%!| 项目
 - 'smoothscroll' 逻辑可作用于 CTRL-F / CTRL-B 全页滚动和 CTRL-D / CTRL-U 半页
   滚动
+- 在模式行里设置 'nowrap' 可能导致长行在屏幕外隐藏。要使之可见，缺省设置
+  listchars "extend" 子选项为 ">"，指示有超出窗口宽度的文本。
+- 'guioptions': 新值 |'go-C'| 来风格化 Windows 11 的标题栏 (另见下面平台特定的
+  相关改动)。
+- 'completepopup': 增加更多值来风格化弹出窗口。
 
 Ex 命令: ~
 - 定义新标号时允许指定优先级 |:sign-define|
@@ -41654,8 +41662,10 @@ Ex 命令: ~
 - |zip| 插件现在支持 PowerShell Core。
 
 平台特定 ~
-- MS-Winodws: "\Windows" 和 "/Windows" 这样的路径现在被视作 (在当前驱动器上的)
+- MS-Windows: "\Windows" 和 "/Windows" 这样的路径现在被视作 (在当前驱动器上的)
   绝对路径而不再是相对路径。
+- MS-Windows: 标题栏遵循 |hl-TitleBar| 和 |hl-TitleBarNC| 高亮组
+  |gui-w32-title-bar|。
 - macOS: 提升缺省调度程序优先级为 TASK_DEFAULT_APPLICATION。
 
 其他: ~
@@ -41664,7 +41674,6 @@ Ex 命令: ~
   换到深色背景
 - 包含了 |help-TOC| 包，方便文档间导航。
 - 改进 |vimtutor| 并加入另一章提供更高级的技巧
-- |CTRL-C| 总是关闭激活的 |popup-window|。
 - configure 脚本在自动检测 gui 工具包时会优先考虑 GTK3 而不是 GTK2
 - |gv| 可用于操作符等待模式而不中止
 - 非-GUI 'tabline' 里显示的关闭按钮仅当 'mouse' 选项包含 "a" 或以下标志位之一
@@ -41680,6 +41689,7 @@ Ex 命令: ~
 - |CmdlineLeave| 设置 |v:char| 为导致命令行退出的字符。
 - |min()|/|max()| 可以处理所有的数据类型。
 - Vim 为所有的终端 OSC 值触发 |TermResponseAll| 自动命令。
+- |more-prompt| 里支持 CTRL-B 和 CTRL-F。
 
 							*added-9.2*
 新增 ~
@@ -41735,12 +41745,16 @@ Ex 命令: ~
 |hl-ComplMatchIns|	当前插入的补全的匹配文本
 |hl-DiffTextAdd|	改动行内的新增文本
 |hl-MsgArea|		命令行和消息区域的高亮
+|hl-PmenuBorder|	弹出菜单: 弹出边框字符的高亮
 |hl-PmenuMatch|		弹出菜单: 匹配文本的高亮
 |hl-PmenuMatchSel|	弹出菜单: 选中行上的匹配文本的高亮
+|hl-PmenuShadow|	弹出菜单: 弹出阴影的高亮
 |hl-PreInsert|		补全预插入文本的高亮
 |hl-TabPanel|		|tabpanel|: 非活动标签页标签
 |hl-TabPanelFill|	|tabpanel|: 填充空间
 |hl-TabPanelSel|	|tabpanel|: 活动标签页标签
+|hl-TitleBarNC|		MS-Windows 11 里配置非激活的标题栏
+|hl-TitleBar|		MS-Windows 11 里配置激活的标题栏
 
 命令: ~
 
@@ -41770,6 +41784,7 @@ Ex-命令: ~
 'lhistory'		位置列表堆栈的大小 |quickfix-stack|
 'maxsearchcount'	用于搜索统计 |shm-S| 的最大值
 'messagesopt'		配置 |:messages| 和 |hit-enter| 提示
+'pumborder'		定义弹出边框和装饰
 'pummaxwidth'		补全弹出菜单的最大宽度
 'showtabpanel'		是否显示 |tabpanel|
 'tabclose'		关闭标签页后焦点转到哪个标签页
@@ -41783,11 +41798,25 @@ Ex-命令: ~
 'wltimeout'		指定用于 |wayland| 合成器的连接超时
 
 Vim 变量: ~
+|v:clipmethod|		当前 'clipmethod'。
+|v:clipproviders|	包含剪贴板提供者信息的字典。
+|v:stacktrace|		最近捕获的例外。
+|v:t_enumvalue|		|enumvalue| 的值。
+|v:t_enum|		|enum| 类型值。
+|v:t_tuple|		|Tuple| 类型值。
 |v:termda1|		主设备属性查询 (DA1) 返回的转义序列。
+|v:termosc|		最近收到的 OSC 响应。
+|v:wayland_display|	Vim 连接到的 Wayland 显示名。
 
 Vim 参数: ~
 |-Y|			不连接到 |wayland| 合成器。
 |--clientserver|	指定用于客户端-服务器功能的后端。
+
+配置开关: ~
+--with-wayland			打开 |wayland| 特性。
+--enable-wayland-focus-steal	打开 |wayland-focus-steal| 特性。
+--enable-socketserver		打开 |socketserver-clientserver| 特性。
+--enable-clipboard-provider	打开 |clipboard-providers| 特性。
 
 
 ==============================================================================

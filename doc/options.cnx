@@ -1580,9 +1580,13 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		x11		X11 选择
 		gui		GUI 特定的方法
 		other		一些其他方法
+		*		剪贴板提供者方法
 
 	注意: "other" 用于没有 X11/Wayland 的系统，如 MS-Windows 或 MacOS，在
 	运行非 GUI 的 Vim 时的情况。
+
+	注意 要使用给定的剪贴板提供者，这里应提供其名。详见
+	|clipboard-providers|。
 
 	选项值是逗号分隔的项目列表。列表从左到右进行解析，首个 Vim 决定可用或
 	可正常工作的方法被用作实际使用的访问剪贴板的方法。在所有系统上，设置此
@@ -1886,7 +1890,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		    没有效果。
 
 	   noselect 同 "noinsert"，但不预选菜单项。如果同时给出 "noinsert" 和
-		    "noselect"，"noselect" 优先级更高。
+		    "noselect"，"noselect" 优先级更高。打开 'autocomplete'
+		    时，除非 "preinsert" 也打开，会自动打开本项。
 
 	   nosort   "fuzzy" 打开时，关闭补全候选基于模糊分数的的排序。候选使用
 		    原来的顺序。
@@ -1922,10 +1927,47 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'completepopup' 'cpp'	字符串 (缺省: 空)
 			全局
 			{仅当编译时加入 |+textprop| 或 |+quickfix| 特性才有效}
-	当 'completeopt' 包含 "popup" 时，此选项用于 info 弹出建立时的属性。如
+	当 'completeopt' 包含 "popup" 时，此选项指定 info 弹出建立时的属性。如
 	果 info 弹出窗口已存在，关闭之，这样再次建立此窗口时才能应用此选项值。
-	你也可用 |popup_findinfo()| 然后用 |popup_setoptions()| 来设置已有的
-	info 弹出的属性。见 |complete-popup|。
+
+	此选项是逗号分隔的值列表:
+		align		"item" (缺省) 或 "menu"
+		border		边框风格:
+				"single"	窄方框绘制字符
+				"double"	双线
+				"round"		圆角
+				"ascii"		ASCII 字符 (-、|、+)
+				"custom:X;X;X;X;X;X;X;X"
+						分号分隔的八个字符，依序为:
+						顶、右、底、左、左上、右上、右
+						下、左下
+				"on"		'encoding' 为 "utf-8" 且
+						'ambiwidth' 为 "single" 时等同
+						于 "double"，否则等同于
+						"ascii" (缺省)
+				"off"		无边框
+		borderhighlight	用于弹出边框字符的高亮组
+		close		显示关闭按钮: "on" (缺省) 或 "off"
+		height		弹出的最大高度
+		highlight	弹出的高亮组 (缺省是 PmenuSel)
+		resize		显示缩放柄: "on" (缺省) 或 "off"
+		shadow		"off" (缺省) 或 "on" 使用 |hl-PmenuShadow|
+		width		弹出的最大宽度
+
+	例如: >
+		:set completepopup=height:10,border:single,highlight:InfoPopup
+		:set completepopup=width:60,border:custom:─;│;─;│;┌;┐;┘;└
+<
+	如果 "align" 值是 `"item"`，弹出位置靠近选择的项目，改变选择项目时也会
+	移动弹出位置。
+	如果是`"menu"`，弹出和菜单顶部对齐 (如果菜单出现在文本之下)，或者和底
+	部对齐 (如果菜单出现在文本上方)。
+
+	只在打开 'mouse' 时才在弹出边框上显示关闭按钮和缩放柄。
+
+	创建后，可用 |popup_findinfo()| 定位 info 弹出，用
+	|popup_setoptions()| 来修改属性。另见: |complete-popup|。
+
 
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	字符串	(缺省: "")
@@ -3139,6 +3181,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  foldopen	'-'		标记折叠开始处
 	  foldclose	'+'		显示关闭的折叠
 	  foldsep	'|'		已打开折叠的中间字符
+	  foldinner	无		在窄 'foldcolumn' 容不下重复的折叠时，
+					用于代替显示的数值嵌套级别的字符
 	  diff		'-'		'diff' 选项里的被删除行
 	  eob		'~'		缓冲区结束之后的空行
 	  lastline	'@'		'display' 包含的 lastline/truncate
@@ -3661,6 +3705,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 								*'go-c'*
 	  'c'	简单的选择使用控制台对话框而不是弹出式对话框。
+								*'go-C'*
+	  'C'	如果可用，使用 |hl-TitleBar| 和 |hl-TitleBarNC|。
+		目前仅可用于 MS-Windows GUI。
+		详见 |gui-w32-title-bar|。
 								*'go-d'*
 	  'd'	如果可能，使用深色主题变体。目前仅能用于 GTK+ GUI。
 								*'go-e'*
@@ -3825,7 +3873,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				     =:PmenuSel, k:PmenuMatch,<:PmenuMatchSel,
 				     [:PmenuKind,]:PmenuKindSel,
 				     {:PmenuExtra,}:PmenuExtraSel,
-				     x:PmenuSbar,X:PmenuThumb,*:TabLine,
+				     x:PmenuSbar,X:PmenuThumb,j:PmenuBorder,
+				     H:PmenuShadow,*:TabLine,
 				     #:TabLineSel,_:TabLineFill,!:CursorColumn,
 				     .:CursorLine,o:ColorColumn,q:QuickFixLine,
 				     z:StatusLineTerm,Z:StatusLineTermNC,
@@ -3885,6 +3934,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	|hl-PmenuThumb|	 X  弹出菜单滚动条拇指 (thumb)
 	|hl-PmenuMatch|	 k  弹出菜单匹配文本
 	|hl-PmenuMatchSel| <  弹出菜单选中行上的匹配文本
+	|hl-PmenuBorder|   j  弹出菜单边框字符
+	|hl-PmenuShadow|   H  弹出菜单阴影
 	|hl-PreInsert|	 I  'completeopt' 里有 "preinsert" 时插入的文本
 
 	显示模式是:
@@ -5571,6 +5622,38 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			全局
 	如果打开，Ex 模式使用 ":" 提示。
 
+						*'pumborder'* *'pb'*
+'pumborder' 'pb'	字符串	(缺省为 "")
+			全局
+	定义补全时弹出菜单的边框和可选的装饰。值是逗号分隔的关键字列表。
+
+	边框风格 (最多一项):
+	"single"	使用窄方框绘制字符
+	"double"	使用双线方框绘制字符
+	"round"		使用圆角
+	"ascii"		使用 ASCII 字符 (-、|、+)
+	"custom:X;X;X;X;X;X;X;X"
+			使用分号分隔的八个字符，依序为: 顶、右、底、左、左上、
+			右上、右下、左下
+
+	其他标志位:
+	"margin"	在左右边框内侧加上一单元的空间
+	"shadow"	在右侧和底侧边缘绘制阴影
+
+	高亮组:
+	|hl-PmenuBorder|	用于边框字符
+	|hl-PmenuShadow|	用于阴影
+
+	示例: >
+		:set pumborder=single
+		:set pumborder=double,margin,shadow
+		:set pumborder=custom:─;│;─;│;┌;┐;┘;└,shadow
+<
+	仅在 |'encoding'| 为 "utf-8" 和 |'ambiwidth'| 为 "single" 时可用使用边
+	框绘制字符的边框风格 ("single"、"double"、"round")。"margin" 需要边框
+	风格。
+	另见: |ins-completion-menu|。
+
 						*'pumheight'* *'ph'*
 'pumheight' 'ph'	数值型	(缺省为 0)
 			全局
@@ -6380,10 +6463,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  F	编辑文件时不给出文件信息，就像给命令用了 `:silent`	*shm-F*
 		一样；注意 这也会影响自动命令的信息和 'autoread' 的重载
 	  S     搜索时不显示搜索计数，如 "[1/5]"。如果不给出 "S" 标志位	*shm-S*
-		(也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W" (助记符:
-		Wrapped 环绕) 字符以代表 "search hit BOTTOM, continuing at
-		TOP" 和 "search hit TOP, continuing at BOTTOM" 消息。最大限值
-		可通过 'maxsearchcount' 选项设置。
+		(也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W"
+		(助记符: Wrapped 环绕) 字符以代表 "search hit BOTTOM,
+		continuing at TOP" 和 "search hit TOP, continuing at BOTTOM"
+		消息。最大限值可通过 'maxsearchcount' 选项设置。
 
 	这给你一个机会，避免在缓冲区之间切换要按 <Enter>，但仍然能够在可用的空
 	间里得到有用的消息。要得到 'shm' 为空时的完整消息，使用 ":file!"。
@@ -6768,7 +6851,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如果打开，下面列出的命令把光标移动到行首的第一个非空白。如果关闭，光
 	标保持在同一列上 (如果可能的话)。这适用于以下命令:
 	- CTRL-D、CTRL-U、CTRL-B、CTRL-F、"G"、"H"、"M"、"L"、gg
-	- 使用面向行操作符的 "d"、"<<"、"==" 和 ">>" (|operator-resulting-pos|)
+	- 使用面向行操作符的 "d"、"<<"、"==" 和 ">>"
+	  (|operator-resulting-pos|)
 	- 带计数的 "%"
 	- 缓冲区改变命令 (CTRL-^、 :bnext、:bNext，等等)
 	- 只有单个行号的 Ex 命令，比如 ":25" 或 ":+"。
@@ -8226,7 +8310,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			|/\<|)。 这样可以提供匹配实际缓冲区文本的更直观的菜单
 			项目。但因为没有完整保留搜索模式，搜索不会那么精确。
 			缺省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这
-			会保证搜索的正确,尤其是使用了正则表达式或打开
+			会保证搜索的正确，尤其是使用了正则表达式或打开
 			'smartcase' 的时候。不过，附加的匹配单词的大小写未必和
 			缓冲区里单词的大小写准确匹配。
 	  fuzzy		使用 |fuzzy-matching| 来找到补全匹配。指定此值时，补全
@@ -8392,6 +8476,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set listchars+=precedes:<,extends:>
 <	见 'sidescroll'、'listchars' 和 |wrap-off|。
 	如果 'diff' 选项置位，不能从 |modeline| 中设置。
+	如果在 |modeline| 或 |sandbox| 里设置了 'nowrap'，|lcs-extends| 使用
+	'>' 字符，这里无视 'list' 和 'listchars' 选项值。这是为了避免看不到视
+	口之外的恶意代码。其后，手动用 `:setlocal nowrap` 可关闭此行为。
 
 						*'wrapmargin'* *'wm'*
 'wrapmargin' 'wm'	数值型	(缺省为 0)
