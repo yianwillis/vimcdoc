@@ -269,7 +269,7 @@ EOF
 		}
 
 		# examples
-		elsif( /^>$/ || /\s>$/ ) {
+		elsif( /^>$/ || /\s>$/ || /^>vim$/ || /\svim>$/ || /^vim9$/ || /\svim9>$/ ) {
 			if ( $inexample && /^(<)/ ) {
 				$_ = $';
 				$_ = " " . $_ if /^\s/;
