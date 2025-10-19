@@ -83,7 +83,7 @@
 
 插 件 体
 
-让我们从做实际工作的插件体开始: 
+让我们从做实际工作的插件体开始:
 <code class="example"></code>
 <code class="example"> 12     iabbrev teh the</code>
 <code class="example"> 13     iabbrev otehr other</code>
@@ -110,7 +110,7 @@
 
 你很可能对这个插件做新的修改并很快就有了好几个版本。并且当你发布文件的时候，别
 人也想知道是谁编写了这样好的插件或者给作者提点意见。所以，在你的插件头部加上一
-些描述性的注释是很必要的: 
+些描述性的注释是很必要的:
 <code class="example"></code>
 <code class="example">  2     # Vim global plugin for correcting typing mistakes</code>
 <code class="example">  3     # Last Change:  2021 Dec 30</code>
@@ -118,7 +118,7 @@
 <code class="example"></code>
 关于版权和许可: 由于插件很有用，而且几乎不值得限制其发行，请考虑对你的插件使用
 公共领域 (public domain) 或 Vim 许可  <a href="uganda.html#license">license</a> 。在文件顶部放上说明就行了。例
-如: 
+如:
 <code class="example"></code>
 <code class="example">  5     # License:      This file is placed in the public domain.</code>
 <code class="example"></code>
@@ -127,7 +127,7 @@
 
 有可能一个用户并不总希望加载这个插件。或者系统管理员在系统的插件目录中已经把这
 个插件删除了，而用户希望使用它自己安装的插件。用户应该有机会选择不加载指定的插
-件。下面的一段代码就是用来实现这个目的的: 
+件。下面的一段代码就是用来实现这个目的的:
 <code class="example"></code>
 <code class="example">  7     if exists("g:loaded_typecorrect")</code>
 <code class="example">  8       finish</code>
@@ -149,14 +149,14 @@
 
 现在让我们把这个插件变得更有趣些: 我们将加入一个映射用来校正当前光标下的单词。
 我们当然可以任意选一个键组合，但是用户可能已经将其定义为其它的什么功能了。为了
-使用户能够自己定义在插件中的键盘映射使用的键，我们可以使用 <code class="special">&lt;Leader&gt;</code> 标识: 
+使用户能够自己定义在插件中的键盘映射使用的键，我们可以使用 <code class="special">&lt;Leader&gt;</code> 标识:
 <code class="example"></code>
 <code class="example"> 20       map &lt;unique&gt; &lt;Leader&gt;a  &lt;Plug&gt;TypecorrAdd;</code>
 <code class="example"></code>
 那个 "<code class="special">&lt;Plug&gt;</code>TypecorrAdd;" 会做实际的工作，后面我们还会做更多解释。
 
 用户可以将 "g:mapleader" 变量设为用户所希望的开始插件映射的键组合。比如假设用
-户这样做: 
+户这样做:
 <code class="example"></code>
 <code class="example">        g:mapleader = "_"</code>
 <code class="example"></code>
@@ -166,14 +166,14 @@
 <code class="note">注意</code> 其中用到了 <code class="special">&lt;unique&gt;</code>，这会使得 Vim 在映射已经存在时给出错误信息。
  <a href="map.html#:map-%3Cunique%3E">:map-&lt;unique&gt;</a> 
 
-但是如果用户希望定义自己的键操作呢？我们可以用下面的方法来解决: 
+但是如果用户希望定义自己的键操作呢？我们可以用下面的方法来解决:
 <code class="example"></code>
 <code class="example"> 19     if !hasmapto('&lt;Plug&gt;TypecorrAdd;')</code>
 <code class="example"> 20       map &lt;unique&gt; &lt;Leader&gt;a  &lt;Plug&gt;TypecorrAdd;</code>
 <code class="example"> 21     endif</code>
 <code class="example"></code>
 我们先检查对 "<code class="special">&lt;Plug&gt;</code>TypecorrAdd;" 的映射是否存在。仅当不存在时我们才定义映射
-"<code class="special">&lt;Leader&gt;</code>a"。这样用户就可以在用户自己的 vimrc 文件中加入: 
+"<code class="special">&lt;Leader&gt;</code>a"。这样用户就可以在用户自己的 vimrc 文件中加入:
 <code class="example"></code>
 <code class="example">        map ,c  &lt;Plug&gt;TypecorrAdd;</code>
 <code class="example"></code>
@@ -188,7 +188,7 @@
 脚本。幸运地是， <a href="vim9.html#Vim9">Vim9</a>  脚本里这已经是缺省。在老式脚本里需要在名字的前面加上
 "s:"。
 
-我们来定义一个用来添加新的错误更正的函数: 
+我们来定义一个用来添加新的错误更正的函数:
 <code class="example"></code>
 <code class="example"> 28     def Add(from: string, correct: bool)</code>
 <code class="example"> 29       var to = input($"type the correction for {from}: ")</code>
@@ -201,13 +201,13 @@
 可以存在。
 
 映射则可用 <code class="special">&lt;SID&gt;</code>。它产生一个脚本 ID。在我们的错误更正插件中我们可以做以下的定
-义: 
+义:
 <code class="example"></code>
 <code class="example"> 22     noremap &lt;unique&gt; &lt;script&gt; &lt;Plug&gt;TypecorrAdd;  &lt;SID&gt;Add</code>
 <code class="example"> ...</code>
 <code class="example"> 26     noremap &lt;SID&gt;Add  :call &lt;SID&gt;Add(expand("&lt;cword&gt;"), true)&lt;CR&gt;</code>
 <code class="example"></code>
-这样当用户键入 "\a" 时，将触发下面的次序: 
+这样当用户键入 "\a" 时，将触发下面的次序:
 <code class="example"></code>
 <code class="example">        \a  -&gt;  &lt;Plug&gt;TypecorrAdd;  -&gt;  &lt;SID&gt;Add  -&gt;  :call &lt;SID&gt;Add(...)</code>
 <code class="example"></code>
@@ -221,7 +221,7 @@
 这的确是有点复杂，但又是使多个插件一起工作所必需的。基本规则是: 在映射中使用
 <code class="special">&lt;SID&gt;</code>Add()；在其它地方 (该脚本内部，自动命令，用户命令) 使用 Add()。
 
-我们还可以增加菜单项目来完成映射同样的功能: 
+我们还可以增加菜单项目来完成映射同样的功能:
 <code class="example"></code>
 <code class="example"> 24     noremenu &lt;script&gt; Plugin.Add\ Correction      &lt;SID&gt;Add</code>
 <code class="example"></code>
@@ -259,7 +259,7 @@
 
 用 户 命 令
 
-现在让我们来定义一个用来添加更正的用户命令: 
+现在让我们来定义一个用来添加更正的用户命令:
 <code class="example"></code>
 <code class="example"> 36     if !exists(":Correct")</code>
 <code class="example"> 37       command -nargs=1  Correct  :call Add(&lt;q-args&gt;, false)</code>
@@ -268,7 +268,7 @@
 这个用户命令只在系统中没有同样名称的命令时才被定义。否则我们会得到一个错误。用
 ":command!" 来覆盖现存的用户命令是个坏主意。这很可能使用户不明白自己定义的命令
 为什么不起作用。 <a href="map.html#:command">:command</a> 
-如果确实发生了，可以找到谁该被骂: 
+如果确实发生了，可以找到谁该被骂:
 <code class="example"></code>
 <code class="example">        verbose command Correct</code>
 <code class="example"></code>
@@ -285,7 +285,7 @@
 
 脚本局部变量也可以在脚本定义的函数、自动命令和用户命令中使用。所以它们是插件各
 部分共享信息而不用担心外泄的最佳途径。在我们的例子中我们可以加入几行用来统计更
-正的个数: 
+正的个数:
 <code class="example"></code>
 <code class="example"> 17     var count = 4</code>
 <code class="example"> ...</code>
@@ -302,7 +302,7 @@
 
 结 果
 
-下面就是完整的例子: 
+下面就是完整的例子:
 <code class="example"></code>
 <code class="example">  1     vim9script noclear</code>
 <code class="example">  2     # Vim global plugin for correcting typing mistakes</code>
@@ -354,7 +354,7 @@
 要。关于帮助文件使用的语法，可查阅  <a href="helphelp.html#help-writing">help-writing</a> ，而关于如何安装本地帮助文
 档，请查阅  <a href="usr_05.html#add-local-help">add-local-help</a> 。
 
-下面是一个插件帮助文档的简单例子，名叫 "typecorrect.txt": 
+下面是一个插件帮助文档的简单例子，名叫 "typecorrect.txt":
 <code class="example"></code>
 <code class="example">  1     *typecorrect.txt*       Plugin for correcting typing mistakes</code>
 <code class="example">  2</code>
@@ -416,7 +416,7 @@ exists(":Cmd")          检查一个用户命令是否存在。
 禁 用
 
 如果你在编写一个提供很多人使用的文件类型插件，这些用户应该有机会选择不加载该插
-件。你应该在插件的顶端加上: 
+件。你应该在插件的顶端加上:
 <code class="example"></code>
 <code class="example">        # Only do this when not done yet for this buffer</code>
 <code class="example">        if exists("b:did_ftplugin")</code>
@@ -428,7 +428,7 @@ exists(":Cmd")          检查一个用户命令是否存在。
 命令时就会发生)。
 
 现在用户只要编写一个如下几行的文件类型插件就可以完全避免加载缺省的文件类型插件
-了: 
+了:
 <code class="example"></code>
 <code class="example">        vim9script</code>
 <code class="example">        b:did_ftplugin = 1</code>
@@ -437,7 +437,7 @@ exists(":Cmd")          检查一个用户命令是否存在。
 $VIMRUNTIME 之前！
 
 如果你的确希望使用缺省的插件，但是又想自行支配其中的某一选项，你可以用一个类似
-下例的插件: 
+下例的插件:
 <code class="example"></code>
 <code class="example">        set textwidth=70</code>
 <code class="example"></code>
@@ -449,7 +449,7 @@ $VIMRUNTIME 之前！
 
 选 项
 
-为了确保文件类型插件仅仅影响当前缓冲区，应该使用 
+为了确保文件类型插件仅仅影响当前缓冲区，应该使用
 <code class="example"></code>
 <code class="example">        setlocal</code>
 <code class="example"></code>
@@ -459,18 +459,18 @@ $VIMRUNTIME 之前！
 
 当一个选项的值是多个标志位或项目的 "合" 时，考虑使用 "+=" 和 "-="，这样可以保
 留现有的值。<code class="note">注意</code> 用户可能已经改变了该选项的值了。通常先将选项的值复位成缺省值
-再做改动是个好主意。例: 
+再做改动是个好主意。例:
 <code class="example"></code>
 <code class="example">        setlocal formatoptions&amp; formatoptions+=ro</code>
 <code class="example"></code>
 <code class="example"></code>
 映 射
 
-为了确保键盘映射只对当前缓冲区生效，应该使用 
+为了确保键盘映射只对当前缓冲区生效，应该使用
 <code class="example"></code>
 <code class="example">        map &lt;buffer&gt;</code>
 <code class="example"></code>
-命令。这还应该和上面讲述的两步映射法连起来使用。下面是一个例子: 
+命令。这还应该和上面讲述的两步映射法连起来使用。下面是一个例子:
 <code class="example"></code>
 <code class="example">        if !hasmapto('&lt;Plug&gt;JavaImport;')</code>
 <code class="example">          map &lt;buffer&gt; &lt;unique&gt; &lt;LocalLeader&gt;i &lt;Plug&gt;JavaImport;</code>
@@ -486,7 +486,7 @@ $VIMRUNTIME 之前！
 以允许进行脚本中以 <code class="special">&lt;SID&gt;</code> 开头的映射。
 
 一定要给用户保留禁止一个文件类型插件内的映射而不影响其它功能的能力。下面通过
-一个邮件文件类型插件来演示如何做到这一点: 
+一个邮件文件类型插件来演示如何做到这一点:
 <code class="example"></code>
 <code class="example">        # 增加映射，除非用户反对。</code>
 <code class="example">        if !exists("g:no_plugin_maps") &amp;&amp; !exists("g:no_mail_maps")</code>
@@ -507,7 +507,7 @@ $VIMRUNTIME 之前！
 用 户 命 令
 
 在使用  <a href="map.html#:command">:command</a>  命令时，如果加上 "-buffer" 开关，就可以为某一类型的文件加入
-一个用户命令，而该命令又只能用于一个缓冲区。例: 
+一个用户命令，而该命令又只能用于一个缓冲区。例:
 <code class="example"></code>
 <code class="example">        command -buffer  Make  make %:r.s</code>
 <code class="example"></code>
@@ -521,7 +521,7 @@ $VIMRUNTIME 之前！
 函 数
 
 一个函数只需要定义一次就行了。可是文件类型插件会在每次打开相应类型的文件时都被
-调用。下面的结构可以确保函数只被定义一次: 
+调用。下面的结构可以确保函数只被定义一次:
 <code class="example"></code>
 <code class="example">        if !exists("*Func")</code>
 <code class="example">          def Func(arg)</code>
@@ -535,7 +535,7 @@ $VIMRUNTIME 之前！
 撤 销                                           <b class="vimtag"> <a name="undo_indent">undo_indent</a> </b> <b class="vimtag"> <a name="undo_ftplugin">undo_ftplugin</a> </b>
 
 当用户执行 ":setfiletype xyz" 时，之前的文件类型命令应该被撤销。在你的文件类型
-插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如: 
+插件中设定 b:undo_ftplugin 变量，用来撤销该插件的各种设置。例如:
 <code class="example"></code>
 <code class="example">        b:undo_ftplugin = "setlocal fo&lt; com&lt; tw&lt; commentstring&lt;"</code>
 <code class="example">                \ .. "| unlet b:match_ignorecase b:match_words b:match_skip"</code>
@@ -563,7 +563,7 @@ $VIMRUNTIME 之前！
 
 如果 Vim 还不能检测到你的文件类型，你需要在单独的文件里创立一个文件类型检测的
 代码段。通常，它的形式是一个自动命令，它在文件名字匹配某模式时设置文件类型。例
-如: 
+如:
 <code class="example"></code>
 <code class="example">        au BufNewFile,BufRead *.foo                     set filetype=foofoo</code>
 <code class="example"></code>
@@ -599,14 +599,14 @@ exists("*s:Func")       查看是否已经定义了某个函数。
 编译器插件可以用来设定于某一特定编译器相关的选项。用户可以使用  <a href="quickfix.html#:compiler">:compiler</a>  命
 令来加载之。主要是用以设定 <a href="options.html#'errorformat'">'errorformat'</a> 及 <a href="options.html#'makeprg'">'makeprg'</a> 选项。
 
-最简单的方法就是学习一个例子。下面的命令将编辑所有缺省安装的编译器插件: 
+最简单的方法就是学习一个例子。下面的命令将编辑所有缺省安装的编译器插件:
 <code class="example"></code>
 <code class="example">        next $VIMRUNTIME/compiler/*.vim</code>
 <code class="example"></code>
 用  <a href="editing.html#:next">:next</a>  可以查阅下一个插件文件。
 
 这类文件有两个特别之处。一是允许用户否决或者增强缺省文件的机制。缺省的文件以下
-面的代码开始: 
+面的代码开始:
 <code class="example"></code>
 <code class="example">        vim9script</code>
 <code class="example">        if exists("g:current_compiler")</code>
@@ -618,7 +618,7 @@ exists("*s:Func")       查看是否已经定义了某个函数。
 时，你需要设置 "current_compiler" 变量，使得缺省文件不进行设置。
                                                         <b class="vimtag"> <a name=":CompilerSet">:CompilerSet</a> </b>
 第二个特别之处是: 用 ":set" 命令来配合 ":compiler!" 而用 ":setlocal" 来配合
-":compiler"。Vim 为此定义了 ":CompilerSet" 用户命令。下面是一个例子: 
+":compiler"。Vim 为此定义了 ":CompilerSet" 用户命令。下面是一个例子:
 <code class="example"></code>
 <code class="example">  CompilerSet errorformat&amp;              " use the default 'errorformat'</code>
 <code class="example">  CompilerSet makeprg=nmake</code>
