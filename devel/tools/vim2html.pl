@@ -270,12 +270,12 @@ EOF
 
 		# examples
 		elsif( /^>$/ || /\s>$/ || /^>vim$/ || /\>svim$/ || /^>vim9$/ || /\s>vim9$/ ) {
+			$_ = $`;
 			if ( $inexample && /^(<)/ ) {
 				$_ = $';
 				$_ = " " . $_ if /^\s/;
 			}
 			$inexample = 1;
-			chop;
 		}
 		elsif ( $inexample && /^([<\S])/ ) {
 			$inexample = 0;
