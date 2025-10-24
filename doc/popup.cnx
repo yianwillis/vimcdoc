@@ -570,7 +570,7 @@ popup_setoptions({id}, {options})			*popup_setoptions()*
 popup_settext({id}, {text})				*popup_settext()*
 		设置弹出窗口 {id} 缓冲区的文本。{text} 为弹出中要显示的字符串
 		或字符串列表。
-		除了文本的改变引起的以外，不改变窗口大小或位置。
+		除非因文本内容的改变引起，不会影响窗口大小或位置。
 
 		也可用作 |method|: >
 			GetPopup()->popup_settext('hello')
@@ -818,13 +818,13 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 
 弹 出 过 滤						*popup-filter*
 
-弹出显示时接收任何输入键的回调。弹出隐藏时过滤回调不被调用。
+这是弹出显示时接收可能输入键的回调。弹出隐藏时不调用该过滤回调。
 
-过滤可以返回 TRUE，指示键已处理完所以可以放弃，或者 FALSE 来让 Vim 按照当前状
-态的通常做法处理键。如果返回 FALSE 而且有另一个弹出窗口可见，也调用那个的过
-滤。先调用带最高 zindex 的弹出窗口的过滤。
+过滤可返回 TRUE 来指示键已处理完所以可以放弃，也可返回 FALSE 来让 Vim 按照当前
+状态的通常做法处理键。如果返回 FALSE 而且有另一个弹出窗口可见，接着调用该弹出
+的过滤。优先调用带最高 zindex 的弹出窗口的过滤。
 
-过滤函数调用时有两个参数: 弹出的 ID 的字符串形式的键，例如: >
+过滤函数调用时有两个参数: 弹出 ID 和字符串形式的键值，例如: >
 	func MyFilter(winid, key)
 	  if a:key == "\<F2>"
 	    " 做点什么
@@ -838,7 +838,7 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 	endfunc
 <							*popup-filter-mode*
 "filtermode" 属性可用来指定调用过滤的模式。缺省是 "a": 所有模式。如果使用
-"nvi"，不包含命令行模式，这样任何命令行上的命令不接受过滤。不如，要能到命令行
+"nvi"，不包含命令行模式，这样命令行上的任何命令不被过滤。不如，要能进入命令行
 模式，过滤不能消耗掉 ":"。就像不能消耗 "v" 才能进入可视模式一样。
 
 							*popup-mapping*
@@ -857,8 +857,8 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 
 Vim 提供标准过滤 |popup_filter_menu()| 和 |popup_filter_yesno()|。
 
-`:normal` 命令生成的键不通过过滤。可用于在置位 "cursorline" 选项的弹出中移动光
-标: >
+`:normal` 命令生成的键不通过过滤。这方便了在置位 "cursorline" 选项的弹出中移动
+光标: >
 	call win_execute(winid, 'normal! 10Gzz')
 而 `feedkeys()` 生成的键则通过过滤。
 
