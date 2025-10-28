@@ -76,9 +76,9 @@
   File* 和 Buf* 事件。
 
 建议用法:
-- 总是使用自动命令组，方便需要时自动命令的删除。
+- 总是使用自动命令组，以便需要时方便删除自动命令。
 - 保持命令本身简短，繁重工作可用函数完成。
-- 确保定义所在的脚本被重复执行时，自动命令不会被重复。
+- 确保定义所在的脚本被重复执行时，自动命令不会被重复定义。
 
 Vim9 脚本示例:
 <code class="example">   autocmd_add([{replace: true,</code>
@@ -182,12 +182,13 @@ Vim9 脚本示例:
 件触发并执行相应命令时，该命令在定义脚本的上下文内执行。如果命令里用到
  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a> ，这一点很重要。
 
-执行命令时，某个命令的消息覆盖前一个的。这和手动执行命令不同。通常，屏幕不会滚
-动，所以也不会有按-回车的提示。但当一个命令输出两条消息时，这仍会发生。
+执行命令时，后面的命令消息会把前一个的覆盖，这种情况与手动执行命令时不同。屏幕
+通常不会滚动，所以也不会有按-回车的提示。但当一个命令输出两条消息时，这种情况
+仍会发生。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 删除自动命令                                         <b class="vimtag"> <a name="autocmd-remove">autocmd-remove</a> </b></h4>
-除了以下命令以外，Vim 脚本里也可用  <a href="builtin.html#autocmd_delete()">autocmd_delete()</a>  函数来删除一组自动命令和
+除了以下命令之外，Vim 脚本里也可用  <a href="builtin.html#autocmd_delete()">autocmd_delete()</a>  函数来删除一组自动命令和
 自动命令组。
 
 :au[tocmd]! <code class="special">[group]</code> <code class="special">{event}</code> <code class="special">{aupat}</code> [++once] [++nested] <code class="special">{cmd}</code>
@@ -231,7 +232,7 @@ Vim9 脚本示例:
 :au[tocmd] <code class="special">[group]</code>      显示所有自动命令。
 
 如果给出 <code class="special">{group}</code> 参数，Vim 只列出 <code class="special">[group]</code> 里的自动命令；不然，Vim 列出 <code class="emphasis">所有</code> 组
-里的自动命令。<code class="note">注意</code> 此处该参数的行为和定义与删除自动命令时的不同。
+里的自动命令。<code class="note">注意</code> 此处该参数的行为与其在定义与删除自动命令时的行为不同。
 
 要列出局部于缓冲区的自动命令，使用如下形式的模式 <code class="special">&lt;buffer&gt;</code> 或 &lt;buffer=N&gt;。见
  <a href="autocmd.html#autocmd-buflocal">autocmd-buflocal</a> 。
@@ -262,15 +263,16 @@ Vim 读入文件时，只用这四类中的一类。"Pre" 和 "Post" 事件被�
 读取的前后。
 
 <code class="note">注意</code> *ReadPre 和所有的过滤事件的自动命令不能更换当前缓冲区 (如果你这么做，会得
-到错误信息)。可用来防止文件被读入错误的缓冲区。
+到错误信息)。这样可以防止文件被读入错误的缓冲区。
 
-<code class="note">注意</code> 执行完 BufReadPost 和 BufNewFile 自动命令 <code class="emphasis">之后</code> 复位 <a href="options.html#'modified'">'modified'</a> 标志位，但
-如果自动命令已经置位了 <a href="options.html#'modified'">'modified'</a> 选项除外。
+<code class="note">注意</code> 执行完 BufReadPost 和 BufNewFile 自动命令 <code class="emphasis">之后</code> 会复位 <a href="options.html#'modified'">'modified'</a> 标志位，
+但如果自动命令已经置位了 <a href="options.html#'modified'">'modified'</a> 选项，复位不会发生。
 
-你可以使用 <a href="options.html#'eventignore'">'eventignore'</a> 选项来忽略若干甚至全部事件。
+<a href="options.html#'eventignore'">'eventignore'</a> 选项可用来忽略若干甚至全部事件。
+
                                         <b class="vimtag"> <a name="autocommand-events">autocommand-events</a> </b> <b class="vimtag"> <a name="{event}">{event}</a> </b>
-Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使用 "BUFread" 或者
-"bufread" 来取代 "BufRead")。
+Vim 识别以下事件，事件名忽略大小写 (例如，可用 "BUFread" 或者 "bufread" 来取代
+"BufRead")。
 
 这里首先提供功能的总览并提供简短说明。然后，按字母顺序列出它们的详细解释
  <a href="autocmd.html#autocmd-events-abc">autocmd-events-abc</a> 。
@@ -445,7 +447,7 @@ Vim 识别以下事件，事件名的大小写被忽略 (例如，你可以使�
  <a href="autocmd.html#WinScrolled">WinScrolled</a>            滚动窗口或改变窗口大小后
 
 
-自动命令事件按字母顺序排列的列表                        <b class="vimtag"> <a name="autocmd-events-abc">autocmd-events-abc</a> </b>
+按字母顺序排列的自动命令事件列表                        <b class="vimtag"> <a name="autocmd-events-abc">autocmd-events-abc</a> </b>
 
                                                         <b class="vimtag"> <a name="BufCreate">BufCreate</a> </b> <b class="vimtag"> <a name="BufAdd">BufAdd</a> </b>
 BufAdd 或 BufCreate             缓冲区列表加入缓冲区后。可以是刚建立的新缓冲区
@@ -473,14 +475,14 @@ BufFilePost                     ":file" 或 ":saveas" 命令改变当前缓冲�
 BufFilePre                      ":file" 或 ":saveas" 命令改变当前缓冲区的名字
                                 前。
                                                         <b class="vimtag"> <a name="BufHidden">BufHidden</a> </b>
-BufHidden                       缓冲区刚被隐藏前。也就是说，没有窗口显示该缓冲
+BufHidden                       缓冲区刚被隐藏前。隐藏是指没有窗口显示该缓冲
                                 区，但是它没有被卸载或者删除。":qa" 或者 ":q"
                                 退出 Vim 时不会触发该事件。
                                 <code class="note">注意</code>: 执行此自动命令时，当前缓冲区 "%" 可能会
                                 和被隐藏的缓冲区 "<code class="special">&lt;afile&gt;</code>" 不同。
                                                         <b class="vimtag"> <a name="BufLeave">BufLeave</a> </b>
 BufLeave                        转到别的缓冲区前、或离开/关闭当前窗口并且新的
-                                当前窗口编辑的不是相同的缓冲区前，
+                                当前窗口不再编辑相同缓冲区之前。
                                 ":qa" 或 ":q" 退出 Vim 时不会触发此事件。
                                                         <b class="vimtag"> <a name="BufNew">BufNew</a> </b>
 BufNew                          刚建立新缓冲区或给缓冲区换名后。缓冲区被加到缓
@@ -493,11 +495,11 @@ BufNewFile                      开始编辑尚未存在的文件时。可用来
 BufRead 或 BufReadPost          开始编辑新的缓冲区并把文件读入缓冲区后，执行模
                                 式行之前。模式行之后的事件，见  <a href="autocmd.html#BufWinEnter">BufWinEnter</a> 。
                                 以下情况也会触发:
-                                - 写回未命名缓冲区时以使缓冲区取得名字
+                                - 当未命名缓冲区被写入文件并获得名称时
                                 - 成功恢复文件后
                                 - 执行 ":filetype detect" 时，用于
                                   filetypedetect 自动命令组
-                                 <code class="emphasis">不</code> 触发:
+                                但下列情况 <code class="emphasis">不</code> 触发:
                                 - ":r file" 命令
                                 - 文件还不存在时
                                                         <b class="vimtag"> <a name="BufReadCmd">BufReadCmd</a> </b>
@@ -515,25 +517,26 @@ BufUnload                       缓冲区卸载前。此时，缓冲区里的文
                                                                 <b class="vimtag"> <a name="E1546">E1546</a> </b>
                                 此处不可切换到其它缓冲区或窗口，否则会引起问
                                 题。
-                                退出时如果 v:dying 至少为 2，不触发此事件。
+                                如果 v:dying 不小于 2，退出时不触发此事件。
                                                         <b class="vimtag"> <a name="BufWinEnter">BufWinEnter</a> </b>
-BufWinEnter                     窗口显示缓冲区后。可以是新缓冲区载入 (处理完模
-                                式行之后) 或者隐藏缓冲区在窗口开始显示 (从而不
-                                再隐藏)。
-                                不带参数的  <a href="windows.html#:split">:split</a>  不触发此事件，因为你继续编
-                                辑的是同一个缓冲区，":split" 已在某窗口打开的
-                                文件也是如此，同样因为它重用已有的缓冲区。但用
-                                当前缓冲区名来 ":split" 却会触发本事件，因为此
-                                时该缓冲区被重新载入。
-                                终端窗口不适用，因为以终端-作业模式启动时，普
-                                通模式不可用。可用  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  代替。
+BufWinEnter                     窗口显示缓冲区后。这可以是新缓冲区载入 (处理完
+                                模式行之后) 或者隐藏缓冲区在窗口开始显示 (从而
+                                不再隐藏)。
+                                不带参数的  <a href="windows.html#:split">:split</a>  不触发此事件，因为继续编辑
+                                的是同一个缓冲区，带的参数是已在别的窗口打开的
+                                文件的 ":split" 也不触发，同样因为它重用已有的
+                                缓冲区。但用当前缓冲区名来 ":split" 却会触发，
+                                因为此时该缓冲区被重新载入。
+                                不适用于终端窗口，因为它以终端-作业模式启动，
+                                此时普通模式命令不可用。可用  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  代
+                                替。
                                                         <b class="vimtag"> <a name="BufWinLeave">BufWinLeave</a> </b>
-BufWinLeave                     窗口删除缓冲区前。除非它在别的窗口仍然可见。
-                                系统退出时也会触发。在 BufUnload 或 BufHidden
-                                之前触发。
+BufWinLeave                     窗口删除缓冲区前，除非该缓冲区在别的窗口仍然可
+                                见。系统退出时也会触发。触发时间在 BufUnload
+                                或 BufHidden 之前。
                                 <code class="note">注意</code>: 当此自动命令被执行时，当前缓冲区 "%" 可
                                 能会和被卸载的缓冲区 "<code class="special">&lt;afile&gt;</code>" 不同。
-                                退出时如果 v:dying 至少为 2，不触发此事件。
+                                如果 v:dying 不小于 2，退出时不触发此事件。
                                                         <b class="vimtag"> <a name="BufWipeout">BufWipeout</a> </b>
 BufWipeout                      完全删除缓冲区前。可能先调用 BufUnload 和
                                 BufDelete 事件 (如果缓冲区已经载入并且在缓冲区
@@ -561,8 +564,8 @@ BufWritePost                    把整个缓冲区写回到文件后 (应该撤�
 CmdUndefined                    调用未定义的用户命令时。可以用来实现在实际调用
                                 时才提供动态定义的命令。模式匹配的是命令的名
                                 字。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都被设为该命令的名字。
-                                即使是没有  <a href="autocmd.html#autocmd-nested">autocmd-nested</a>  的自动命令定义里也
-                                会触发。
+                                即使在没有  <a href="autocmd.html#autocmd-nested">autocmd-nested</a>  的自动命令定义里也
+                                会触发本事件。
                                 <code class="note">注意</code>: 在命令未定义前，自动补全不能工作。一个替
                                 代方法是总是定义好用户命令，使之调用自动载入函
                                 数。见  <a href="userfunc.html#autoload">autoload</a> 。
@@ -575,10 +578,8 @@ CmdlineChanged                  命令行文本发生改变后。小心不要改
 CmdlineEnter                    光标移到命令行后，此时用户可输入命令或搜索字符
                                 串；这里包括映射中非交互式使用 ":" 的情形，但
                                 不包括使用  <a href="map.html#%3CCmd%3E">&lt;Cmd&gt;</a>  时。
-                                模式匹配的是代表命令行类型的字符。
-                                 <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
+                                模式匹配的是代表命令行类型的字符。 <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
                                 <code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的类型。
-                                 <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
                                                         <b class="vimtag"> <a name="CmdlineLeave">CmdlineLeave</a> </b>
 CmdlineLeave                    离开命令行前。也用于按 <code class="keystroke">CTRL-C</code> 或 <code class="special">&lt;Esc&gt;</code> 之后放
                                 弃命令行时；这里包括映射中非交互式使用 ":" 的
@@ -618,8 +619,8 @@ ColorSchemePre                  载入色彩方案前。 <a href="syntax.html#:c
                                 可用于在下个色彩方案载入之前，删除前一个色彩方
                                 案的若干设置，
 CompleteChanged                                         <b class="vimtag"> <a name="CompleteChanged">CompleteChanged</a> </b>
-                                每次插入模式补全菜单被改动后。不为弹出式菜单的
-                                隐藏触发，为此可用  <a href="autocmd.html#CompleteDonePre">CompleteDonePre</a>  或
+                                每当插入模式补全菜单发生变化后。不在弹出式菜单
+                                隐藏时触发，为此可用  <a href="autocmd.html#CompleteDonePre">CompleteDonePre</a>  或
                                  <a href="autocmd.html#CompleteDone">CompleteDone</a> 。绝不会递归触发。
 
                                 设置以下这些  <a href="eval.html#v:event">v:event</a>  键:
@@ -661,15 +662,15 @@ CursorHold                      用户在 <a href="options.html#'updatetime'">'u
                                 到用户按键时该事件才会触发 (就是说，如果你离开
                                 Vim 去煮杯咖啡，该事件不会每 <a href="options.html#'updatetime'">'updatetime'</a> 毫秒
                                 就发生一次。:)
-                                 <a href="windows.html#CursorHold-example">CursorHold-example</a>  提供了预览标签的范例。
+                                 <a href="windows.html#CursorHold-example">CursorHold-example</a>  提供了预览标签的一个范例。
                                 该事件只有在普通模式才会触发。等待输入命令参数
                                 或操作符之后的动作命令时，该事件不会发生。
-                                记录时，不触发 CursorHold 事件。 <a href="repeat.html#q">q</a> 
+                                记录时也不触发 CursorHold 事件。 <a href="repeat.html#q">q</a> 
                                                         <b class="vimtag"> <a name="%3CCursorHold%3E">&lt;CursorHold&gt;</a> </b>
                                 在内部实现里，<code class="special">&lt;CursorHold&gt;</code> 键用来触发此自动命
                                 令。此字符在  <a href="builtin.html#getchar()">getchar()</a>  表达式映射中可见。
 
-                                <code class="note">注意</code>: 该事件的处理不能使用交互的命令，不会有
+                                <code class="note">注意</code>: 该事件的处理不能使用交互命令，不会有
                                 按 - 回车 (hit-enter) 的提示。
                                 <code class="note">注意</code>: 将来设定时间可能有别的选项。
                                 提示: 要强制更新状态行，用:
@@ -677,13 +678,13 @@ CursorHold                      用户在 <a href="options.html#'updatetime'">'u
                                 {仅在 Amiga、Unix、Win32 和所有的 GUI 版本上有
                                 效}
                                                         <b class="vimtag"> <a name="CursorHoldI">CursorHoldI</a> </b>
-CursorHoldI                     类似于 CursorHold，但用于插入模式。
-                                等待其它键时不触发。譬如在 <code class="keystroke">CTRL-V</code> 之后。也不适
-                                用于 <code class="keystroke">CTRL-X</code> 模式  <a href="insert.html#insert_expand">insert_expand</a> 。
+CursorHoldI                     类似于 CursorHold，但用于插入模式。当处于等待
+                                其他键输入状态时不会触发，譬如在 <code class="keystroke">CTRL-V</code> 之后。
+                                也不适用于 <code class="keystroke">CTRL-X</code> 模式  <a href="insert.html#insert_expand">insert_expand</a> 。
 
                                                         <b class="vimtag"> <a name="CursorMoved">CursorMoved</a> </b>
-CursorMoved                     在普通或可视模式下移动光标后。也用于光标行的文
-                                本被改变时，例如，使用 "x"、"rx" 或 "p"。
+CursorMoved                     在普通或可视模式下移动光标后。光标所在行的文本
+                                被改变，例如，使用 "x"、"rx" 或 "p" 时也触发。
                                 如果有预输入、在脚本文件中执行命令、在等待操作
                                 符中、或移动到其他窗口但光标位置恰好不变的时
                                 候，不总能触发此事件。
@@ -697,8 +698,8 @@ CursorMovedC                    在命令行下移动光标后。小心不要破
                                 <code class="special">&lt;afile&gt;</code> 设为单个字符，指示命令行的类型。
                                  <a href="cmdline.html#cmdwin-char">cmdwin-char</a> 
                                                         <b class="vimtag"> <a name="CursorMovedI">CursorMovedI</a> </b>
-CursorMovedI                    在插入模式下移动光标后。但有弹出菜单时不触发。
-                                其余细节和 CursorMoved 相同。
+CursorMovedI                    在插入模式下移动光标后。但弹出菜单可见时不触
+                                发。其余细节同 CursorMoved。
                                                         <b class="vimtag"> <a name="DiffUpdated">DiffUpdated</a> </b>
 DiffUpdated                     刷新比较结果后。取决于使用什么类型的比较 (内部
                                 或外部)，触发可能在每次改动时，也可能在
@@ -833,9 +834,9 @@ FuncUndefined                   调用未定义的用户函数时。可以用来
                                 <code class="note">注意</code>: 写 Vim 脚本时，最好采用自动调入函数。
                                 见  <a href="userfunc.html#autoload-functions">autoload-functions</a> 。
                                                         <b class="vimtag"> <a name="GUIEnter">GUIEnter</a> </b>
-GUIEnter                        成功启动 GUI 并打开窗口后。用 gvim 的时候，
-                                它在 VimEnter 之前发生。在 .gvimrc 里可用它来
-                                定位窗口:
+GUIEnter                        成功启动 GUI 并打开窗口后。用 gvim 的时候，它
+                                在 VimEnter 之前发生。在 .gvimrc 里可用它来定
+                                位窗口:
 <code class="example">        :autocmd GUIEnter * winpos 100 50</code>
                                                         <b class="vimtag"> <a name="GUIFailed">GUIFailed</a> </b>
 GUIFailed                       启动 GUI 失败后。如果可能，Vim 会继续在终端模
@@ -910,13 +911,13 @@ ModeChanged                     改变模式后。自动命令的模式需匹配
 OptionSet                       设置选项时。模式匹配的是长选项名。
                                 <code class="special">&lt;amatch&gt;</code> 指出选项是否被置位。
 
-                                 <a href="eval.html#v:option_type">v:option_type</a>  说明是全局还是局部值，
+                                 <a href="eval.html#v:option_type">v:option_type</a>  说明是全局还是局部值。
                                  <a href="eval.html#v:option_command">v:option_command</a>  说明使用的 set/let 命令的类
                                 型 (跟随标签可见对应表)。
-                                 <a href="eval.html#v:option_new">v:option_new</a>  给出新设选项值，
-                                 <a href="eval.html#v:option_oldlocal">v:option_oldlocal</a>  给出旧局部选项值，
-                                 <a href="eval.html#v:option_oldglobal">v:option_oldglobal</a>  给出旧全局选项值，
-                                 <a href="eval.html#v:option_old">v:option_old</a>  给出旧选项值，
+                                 <a href="eval.html#v:option_new">v:option_new</a>  给出新设选项值。
+                                 <a href="eval.html#v:option_oldlocal">v:option_oldlocal</a>  给出旧局部选项值。
+                                 <a href="eval.html#v:option_oldglobal">v:option_oldglobal</a>  给出旧全局选项值。
+                                 <a href="eval.html#v:option_old">v:option_old</a>  给出旧选项值。
 
                                 只有用  <a href="options.html#:set">:set</a> 、 <a href="options.html#:setlocal">:setlocal</a>  或  <a href="options.html#modeline">modeline</a>  设置
                                 选项时才会设置  <a href="eval.html#v:option_oldlocal">v:option_oldlocal</a> 。相似地，只
@@ -937,7 +938,7 @@ OptionSet                       设置选项时。模式匹配的是长选项名
                                 目录是否存在，不存在时建立目录。
 
                                 <code class="note">注意</code>: 在此自动命令里建议不要复位选项，可能会对
-                                插件破坏。用  <a href="autocmd.html#:noa">:noa</a>  可避免执行此自动命令。
+                                插件造成破坏。用  <a href="autocmd.html#:noa">:noa</a>  可避免执行此自动命令。
 
                                 自动命令中使用  <a href="options.html#:set">:set</a>  时，此事件不再触发。
                                                         <b class="vimtag"> <a name="QuickFixCmdPre">QuickFixCmdPre</a> </b>
@@ -1082,7 +1083,7 @@ TerminalWinOpen                 用  <a href="terminal.html#:terminal">:terminal
                                 可用于设置终端窗口的局部于窗口的选项。
                                                         <b class="vimtag"> <a name="TermResponse">TermResponse</a> </b>
 TermResponse                    收到终端对  <a href="term.html#t_RV">t_RV</a>  的应答后。
-                                可用  <a href="eval.html#v:termresponse">v:termresponse</a>  的值判别终端版本。
+                                判别终端版本可用  <a href="eval.html#v:termresponse">v:termresponse</a>  值。
                                  <a href="starting.html#defaults.vim">defaults.vim</a>  用此事件检测 putty 终端并设置深
                                 色背景:
 <code class="example"></code>
@@ -1186,46 +1187,45 @@ VimEnter                        做完所有启动任务后，包括载入 .vimr
                                                         <b class="vimtag"> <a name="VimLeave">VimLeave</a> </b>
 VimLeave                        退出 Vim 前，刚写入 .viminfo 文件之后。和
                                 VimLeavePre 一样，只执行一次。
-                                要检测非正常的退出，使用  <a href="eval.html#v:dying">v:dying</a> 。
-                                退出时如果 v:dying 至少为 2，不触发此事件。
-                                要得到退出代码，可用  <a href="eval.html#v:exiting">v:exiting</a> 。
+                                要检测异常退出，可检查  <a href="eval.html#v:dying">v:dying</a> 。
+                                如果 v:dying 不小于 2，退出时不触发此事件。
+                                可用  <a href="eval.html#v:exiting">v:exiting</a>  得到退出代码。
                                                         <b class="vimtag"> <a name="VimLeavePre">VimLeavePre</a> </b>
-VimLeavePre                     退出 Vim 时刚写入 .viminfo 文件之前。如果匹配
-                                退出时当前缓冲区的名字匹配才会触发。只执行一
-                                次。通常指定 "*" 模式。
+VimLeavePre                     退出 Vim 时刚写入 .viminfo 文件之前。只执行一
+                                次，且只有当前缓冲区的名字匹配模式时才会触发。
+                                通常指定 "*" 模式。
 <code class="example">        :autocmd VimLeavePre * call CleanupStuff()</code>
-                                要检测非正常的退出，使用  <a href="eval.html#v:dying">v:dying</a> 。
-                                退出时如果 v:dying 至少为 2，不触发此事件。
-                                要得到退出代码，可用  <a href="eval.html#v:exiting">v:exiting</a> 。
+                                要检测异常退出，可检查  <a href="eval.html#v:dying">v:dying</a> 。
+                                如果 v:dying 不小于 2，退出时不触发此事件。
+                                可用  <a href="eval.html#v:exiting">v:exiting</a>  得到退出代码。
                                                         <b class="vimtag"> <a name="VimResized">VimResized</a> </b>
-VimResized                      在 Vim 窗口的大小改变后，因而 <a href="options.html#'lines'">'lines'</a> 和/或
-                                <a href="options.html#'columns'">'columns'</a> 也已随之改变。不过，启动时不用。
+VimResized                      在 Vim 窗口的大小改变后，也就是 <a href="options.html#'lines'">'lines'</a> 和/或
+                                <a href="options.html#'columns'">'columns'</a> 被修改时。不过启动时不会触发。
                                                         <b class="vimtag"> <a name="VimResume">VimResume</a> </b>
-VimResume                       在 Vim 实例被暂停和  <a href="autocmd.html#VimSuspend">VimSuspend</a>  触发后继续运
-                                行时。用于触发  <a href="editing.html#:checktime">:checktime</a>  以确保 Vim 暂停后
-                                缓冲区内容不改变:
+VimResume                       Vim 实例被暂停而  <a href="autocmd.html#VimSuspend">VimSuspend</a>  触发后恢复运行
+                                时。可用于调用  <a href="editing.html#:checktime">:checktime</a>  以确保 Vim 暂停时
+                                缓冲区内容未被更改:
 <code class="example">        :autocmd VimResume * checktime</code>
                                                         <b class="vimtag"> <a name="VimSuspend">VimSuspend</a> </b>
-VimSuspend                      在 Vim 实例被暂停时。仅当 Vim 内键入 <code class="keystroke">CTRL-Z</code>
-                                或 SIGTSTP 信号被发送到 Vim 时触发。而 SIGSTOP
-                                信号不会。
+VimSuspend                      Vim 实例被暂停时。仅当用户在 Vim 中键入 <code class="keystroke">CTRL-Z</code>
+                                或向 Vim 发送 SIGTSTP 信号时才会触发。而
+                                SIGSTOP 信号不会。
                                                         <b class="vimtag"> <a name="WinClosed">WinClosed</a> </b>
-WinClosed                       关闭窗口时，刚要从窗口布局中删除前。模式匹配的
-                                是  <a href="windows.html#window-ID">window-ID</a> 。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都设为
+WinClosed                       关闭窗口时，刚要从窗口布局中删除窗口前。模式匹
+                                配的是  <a href="windows.html#window-ID">window-ID</a> 。<code class="special">&lt;amatch&gt;</code> 和 <code class="special">&lt;afile&gt;</code> 都设为
                                  <a href="windows.html#window-ID">window-ID</a> 。非递归 (事件不会触发自身)。
                                                         <b class="vimtag"> <a name="WinEnter">WinEnter</a> </b>
-WinEnter                        进入别的窗口后。不包括 Vim 启动时的第一个窗
-                                口。
+WinEnter                        进入别的窗口后。Vim 启动时的第一个窗口不触发。
                                 可用来设定窗口的高度。
-                                如果该窗口显示缓冲区，Vim 在 WinEnter 自动命令
-                                之后执行 BufEnter 自动命令。
+                                如果该窗口显示其他缓冲区，Vim 在 WinEnter 自动
+                                命令之后执行 BufEnter 自动命令。
                                 <code class="note">注意</code>: 对分割和标签页诸命令来说，WinEnter 事件
                                 在这些分割或标签命令之后但在文件载入之前发生。
 
                                                         <b class="vimtag"> <a name="WinLeave">WinLeave</a> </b>
-WinLeave                        离开某窗口前。如果将要进入的窗口要显示的是别的
+WinLeave                        离开某窗口前。如果将要进入的窗口要显示的是其他
                                 缓冲区，Vim 在 WinLeave 自动命令前先执行
-                                BufLeave 自动命令 (但不包括 ":new")。
+                                BufLeave 自动命令 (但 ":new" 不会)。
                                 ":qa" 或 ":q" 退出 Vim 时不会触发此事件。
 
                                                         <b class="vimtag"> <a name="WinNewPre">WinNewPre</a> </b>
@@ -1262,9 +1262,7 @@ WinScrolled                     在当前标签页的任何窗口里滚动文本
 
                                 非递归: WinScrolled 事件执行命令时不会触发自
                                 身。不过，如果其中的命令导致窗口滚动或大小改
-                                变，之后会触发另一个 WinScrolled 事件。新增自
-                                动命令时，不会触发此事件，仅在首次滚动或改变大
-                                小后才触发。
+                                变，之后会触发另一个 WinScrolled 事件。
 
 
                                                         <b class="vimtag"> <a name="WinResized">WinResized</a> </b>
@@ -1359,80 +1357,81 @@ WinResized                      在当前标签页的某个窗口改变宽高后
 "*.foo" 此时已经不匹配该缓冲区名字。"*.foo" 在该事件被触发时匹配当时的缓冲区名
 字。
 
-不过，局部于缓冲区的自动命令在用  <a href="windows.html#:bwipe">:bwipe</a>  彻底删除的缓冲区上不会执行。如果 用
- <a href="windows.html#:bdel">:bdel</a>  删除缓冲区，该缓冲区其实还是存在的 (它只是不被列出)，因而这些自动命令
+不过，局部于缓冲区的自动命令不会在用  <a href="windows.html#:bwipe">:bwipe</a>  彻底删除的缓冲区上执行。而用
+ <a href="windows.html#:bdel">:bdel</a>  删除缓冲区时，该缓冲区其实还是存在的 (只是不被列出)，因而这些自动命令
 还会执行。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>7. 局部于缓冲区的自动命令       <b class="vimtag"> <a name="autocmd-buflocal">autocmd-buflocal</a> </b> <b class="vimtag"> <a name="autocmd-buffer-local">autocmd-buffer-local</a> </b></h4>                                        <b class="vimtag"> <a name="%3Cbuffer%20N%3E">&lt;buffer=N&gt;</a> </b> <b class="vimtag"> <a name="%3Cbuffer%20abuf%3E">&lt;buffer=abuf&gt;</a> </b> <b class="vimtag"> <a name="E680">E680</a> </b>
 
-局部于缓冲区的自动命令和特定缓冲区相联系。它们可用于没有名字或者名字不匹配特定
-模式的缓冲区。但这也意味着必须为每个缓冲区显式地加入这些自动命令。
+局部于缓冲区的自动命令和特定缓冲区相关联。它们可用于无名缓冲区或者名字不匹配特
+定模式的缓冲区。但这也意味着必须为每个缓冲区显式添加这些自动命令。
 
 局部于缓冲区的自动命令不用模式，而用如下的形式:
         <code class="special">&lt;buffer&gt;</code>        当前缓冲区
         &lt;buffer=99&gt;     缓冲区号 99
-        &lt;buffer=abuf&gt;   用 <code class="special">&lt;abuf&gt;</code> (只当执行自动命令时适用)  <a href="cmdline.html#%3Cabuf%3E">&lt;abuf&gt;</a> 
+        &lt;buffer=abuf&gt;   用 <code class="special">&lt;abuf&gt;</code> (仅在执行自动命令时生效)  <a href="cmdline.html#%3Cabuf%3E">&lt;abuf&gt;</a> 
 
 示例:
 <code class="example">    :au CursorHold &lt;buffer&gt;  echo 'hold'</code>
 <code class="example">    :au CursorHold &lt;buffer=33&gt;  echo 'hold'</code>
 <code class="example">    :au BufNewFile * au CursorHold &lt;buffer=abuf&gt;  echo 'hold'</code>
 <code class="example"></code>
-所有自动命令的命令都可用于局部于缓冲区的自动命令，只要简单地用这些特殊字符串来
-替代模式就行了。例如:
-<code class="example">    :au! * &lt;buffer&gt;                  " 删除当前缓冲区的局部于缓冲区的自动命令</code>
-<code class="example">    :au! * &lt;buffer=33&gt;               " 删除缓冲区 #33 的局部于缓冲区的自动命令</code>
+自动命令的所有命令都可用于局部于缓冲区的自动命令，只要用这些特殊字符串来替代模
+式即可。例如:
+<code class="example">    :au! * &lt;buffer&gt;                  " 删除当前缓冲区里局部于缓冲区的自动命令</code>
+<code class="example">    :au! * &lt;buffer=33&gt;               " 删除缓冲区 #33 里局部于缓冲区的自动命令</code>
 <code class="example">    :bufdo :au! CursorHold &lt;buffer&gt;  " 删除所有缓冲区里给定事件的自动命令</code>
-<code class="example">    :au * &lt;buffer&gt;                   " 列出当前缓冲区的局部于缓冲区的自动命令</code>
+<code class="example">    :au * &lt;buffer&gt;                   " 列出当前缓冲区里局部于缓冲区的自动命令</code>
 
 <code class="note">注意</code> 如果为当前缓冲区定义自动命令，保存时记住的是它的缓冲区号。这里用的形式是
 "&lt;buffer=12&gt;"，其中 12 是当前缓冲区的编号。例如，列出自动命令时你看到的就是这
 种形式。
 
-要测试局部于缓冲区的自动命令是否存在，用  <a href="builtin.html#exists()">exists()</a>  函数:
+要测试局部于缓冲区的自动命令是否存在，可用  <a href="builtin.html#exists()">exists()</a>  函数:
 <code class="example">    :if exists("#CursorHold#&lt;buffer=12&gt;") | ... | endif</code>
 <code class="example">    :if exists("#CursorHold#&lt;buffer&gt;") | ... | endif    " 指定当前缓冲区</code>
 <code class="example"></code>
-如果缓冲区被彻底删除，其局部于缓冲区的自动命令当然也没有了。<code class="note">注意</code> 缓冲区如果被
-删除，比如用 ":bdel"，它只是不被列出而已，其自动命令还是存在的。要观察局部于缓
-冲区的自动命令的删除情况:
+缓冲区如果被彻底删除，其局部于缓冲区的自动命令当然也没有了。<code class="note">注意</code> 如果只是被删
+除 (例如用 ":bdel")，缓冲区只是不被列出而已，其自动命令仍然存在。要观察局部于
+缓冲区的自动命令的删除情况:
 <code class="example">    :set verbose=6</code>
 <code class="example"></code>
 不能为还不存在的缓冲区定义局部于缓冲区的自动命令。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>8. 组                                                   <b class="vimtag"> <a name="autocmd-groups">autocmd-groups</a> </b></h4>
-自动命令可以被一起放在一个组里。这可用于删除或者执行一组自动命令。例如，所有有
-关语法高亮的自动命令被放在 "highlight" 组里，这样在 GUI 启动时可以一并执行
-":doautoall highlight BufRead"。
+自动命令可以归为同一组，以便统一删除或者执行。例如，所有有关语法高亮的自动命令
+可放在 "highlight" 组里，这样在 GUI 启动时可以用
+":doautoall highlight BufRead" 一并执行。
 
-如果没有指定特殊的组名，Vim 使用缺省组。缺省组没有名字。你不能单独执行缺省组的
-所有自动命令；只有在执行所有组里的自动命令时才会执行它们。
+没有指定特殊的组名时，Vim 使用缺省组。缺省组没有名字。你不能单独执行缺省组的所
+有自动命令；只有在执行所有组里的自动命令时才会执行它们。
 
-正常情况下，在自动执行自动命令时，Vim 使用所有组的自动命令。组只有在用
-":doautocmd" 或 ":doautoall" 执行自动命令或者在定义或删除自动命令时才用的上。
+正常情况下，在自动执行自动命令时，Vim 使用所有组的自动命令。只有在用
+":doautocmd" 或 ":doautoall" 执行自动命令，或在定义和删除自动命令时，组才有意
+义。
 
-组名可以包含任何非空白字符。但组名 "end" 保留 (包括大写形式)。
+组名可以包含任何非空白字符。但保留组名 "end" (包括其大写形式)。
 
-组名是区分大小写的。<code class="note">注意</code> 这和事件名不同！
+组名区分大小写。<code class="note">注意</code> 这和事件名不同！
 
                                                         <b class="vimtag"> <a name=":aug">:aug</a> </b> <b class="vimtag"> <a name=":augroup">:augroup</a> </b>
-:aug[roup] <code class="special">{name}</code>               定义其后的 ":autocmd" 命令使用的自动命令组名。
+:aug[roup] <code class="special">{name}</code>               定义后续 ":autocmd" 命令所属的自动命令组名。
                                 名字 "end" 或者 "END" 选择缺省组。
-                                为了避免混淆，此处不要用和已有 <code class="special">{event}</code> 名重名
-                                的名字，很可能和你想做的不同。
+                                为了避免混淆，不要使用和已有 <code class="special">{event}</code> 名重复
+                                的名字，很可能与用户预期不符。
 
                                         <b class="vimtag"> <a name=":augroup-delete">:augroup-delete</a> </b> <b class="vimtag"> <a name="E367">E367</a> </b> <b class="vimtag"> <a name="W19">W19</a> </b> <b class="vimtag"> <a name="E936">E936</a> </b>
 :aug[roup]! <code class="special">{name}</code>              删除自动命令组 <code class="special">{name}</code>。如果还有自动命令使用该
-                                组，不要这么做！不然，系统会<code class="note">警告</code>你。而且如果该
-                                组是当前组，会报错 E936。
+                                组，请勿删除！否则会收到系统<code class="note">警告</code>。如果该组是当
+                                前组，还会报错 E936。
 
-要为某个组输入自动命令，使用如下方法:
+要为某个组定义自动命令，请按以下步骤操作:
 1. 用 ":augroup <code class="special">{name}</code>" 选择组。
-2. 用 ":au!" 删除所有旧的自动命令。
-3. 定义自动命令。
-4. 用 "augroup END" 回到缺省组。
+2. 用 ":au!" 清除组里原有的自动命令。
+3. 定义所需的自动命令。
+4. 用 "augroup END" 切换回缺省组。
 
 例如:
 <code class="example">        :augroup uncompress</code>
@@ -1444,7 +1443,7 @@ WinResized                      在当前标签页的某个窗口改变宽高后
 
                                                 <b class="vimtag"> <a name="FileExplorer">FileExplorer</a> </b>
 Vim 识别以下命令组: FileExplorer。如果该组存在，Vim 便假定目录可以编辑，并触发
-一个插件来列出该目录中的文件。 <a href="pi_netrw.html#netrw">netrw</a>  插件使用此特性。这样就可以用:
+插件来列出目录中的文件。 <a href="pi_netrw.html#netrw">netrw</a>  插件使用此特性。这样就可以使用:
 <code class="example">        browse edit</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
@@ -1458,18 +1457,17 @@ Vim 也可以非自动地执行自动命令。如果你修改了自动命令或�
 :do[autocmd] [<code class="special">&lt;nomodeline&gt;</code>] <code class="special">[group]</code> <code class="special">{event}</code> <code class="special">[fname]</code>
                         应用匹配 <code class="special">[fname]</code> (缺省是当前文件名) 和针对当前缓冲区的
                         <code class="special">{event}</code> 事件的自动命令。如果当前文件不匹配正确的模式，
-                        修改完设置，或者想手动执行某一特定的事件的自动命令的时
-                        候，都可以使用该命令。
-                        自动命令中也可以使用，这样你可以用基于一个扩展名的自动
-                        命令来应用于另一个扩展名。例如:
+                        设置修改完后，或者想手动执行某一特定的事件的自动命令的
+                        时候，都可以使用该命令。
+                        也可以在自动命令中使用，这样就可在一个扩展名的自动命令
+                        里应用另一个扩展名。例如:
 <code class="example">                                :au BufEnter *.cpp so ~/.vimrc_cpp</code>
 <code class="example">                                :au BufEnter *.cpp doau BufEnter x.c</code>
-                        要小心避免死循环，参见  <a href="autocmd.html#autocmd-nested">autocmd-nested</a> 。
+                        要小心避免出现死循环，参见  <a href="autocmd.html#autocmd-nested">autocmd-nested</a> 。
 
                         如果没有给出 <code class="special">[group]</code> 参数，Vim 执行所有组里的自动命
                         令。如果给出 <code class="special">[group]</code> 参数，Vim 只执行该组里匹配的自动
-                        命令。<code class="note">注意</code>: 如果你使用未定义的组名，Vim 会报错。
-
+                        命令。<code class="note">注意</code>: 如果使用未定义的组名，Vim 会报错。
                                                         <b class="vimtag"> <a name="%3Cnomodeline%3E">&lt;nomodeline&gt;</a> </b>
                         应用完自动命令后，会执行模式行。其中的设置可以否决自动
                         命令里的设置，一如编辑文件时那样。给出 <code class="special">&lt;nomodeline&gt;</code> 参
@@ -1480,17 +1478,18 @@ Vim 也可以非自动地执行自动命令。如果你修改了自动命令或�
                                                 <b class="vimtag"> <a name=":doautoa">:doautoa</a> </b> <b class="vimtag"> <a name=":doautoall">:doautoall</a> </b>
 :doautoa[ll] [<code class="special">&lt;nomodeline&gt;</code>] <code class="special">[group]</code> <code class="special">{event}</code> <code class="special">[fname]</code>
                         类似于 ":doautocmd"，但对每个已载入的缓冲区应用自动命
-                        令。当前缓冲区被最后应用。
+                        令。当前缓冲区最后处理。
 
-                        <code class="note">注意</code> <code class="special">[fname]</code> 用于选择自动命令，而不是其应用的缓冲区。
+                        <code class="note">注意</code> <code class="special">[fname]</code> 用于选择自动命令 (<code class="vim">译者注</code>: 指定其 <code class="special">&lt;afile&gt;</code>
+                        或 <code class="special">&lt;amatch&gt;</code>)，而不是选择其应用的缓冲区。
                         示例:
 <code class="example">                                augroup mine</code>
 <code class="example">                                  autocmd!</code>
 <code class="example">                                  autocmd FileType * echo expand('&lt;amatch&gt;')</code>
 <code class="example">                                augroup END</code>
-<code class="example">                                doautoall mine FileType Loaded-Buffer</code>
-                        执行此脚本，每个已载入的缓冲区都会回显一行
-                        "Loaded-Buffer"。
+<code class="example">                                doautoall mine FileType 已加载缓冲区</code>
+                        执行此脚本后，每个已载入的缓冲区都会回显一行
+                        "已加载缓冲区"。
 
                         要小心: 不要用这个命令执行删除缓冲区、切换到别的缓冲区
                         或者修改缓冲区内容的自动命令；否则结果不可预测。该命令
@@ -1510,10 +1509,10 @@ FileWriteCmd    FileWritePre    FileWritePost   其他的文件写入
 进行，其他的事件也不会被触发。 <a href="autocmd.html#Cmd-event">Cmd-event</a> 
 
 <code class="note">注意</code> *WritePost 命令应该撤销 *WritePre 命令对缓冲区所做的任何改动；否则，文件
-的写入会有不应该有的修改缓冲区的副作用。
+写入会有不该有的修改缓冲区的副作用。
 
-开始执行自动命令前，写入的行所在的缓冲区暂时成为当前缓冲区。除非自动命令修改了
-当前缓冲区或者删除了先前的那个当前缓冲区，先前的那个又会重新成为当前的。
+自动命令开始执行前，行被写入的缓冲区会暂时成为当前缓冲区。除非自动命令修改了当
+前缓冲区或者删除了原来的当前缓冲区，否则原来的当前缓冲区会重新成为当前缓冲区。
 
 *WritePre 和 *AppendPre 自动命令不能删除写入的行所在的那个缓冲区。
 
@@ -1524,9 +1523,9 @@ FileWriteCmd    FileWritePre    FileWritePost   其他的文件写入
   内容的第一行，'] 则为其最后一行。
 小心: '[ 和 '] 指定的位置在使用修改缓冲区的命令时会改变。
 
-在期待文件名的命令里，你可以使用 "<code class="special">&lt;afile&gt;</code>" 指定被读入的文件名  <a href="cmdline.html#:%3Cafile%3E">:&lt;afile&gt;</a>  (你可
-以用 "%" 指定当前文件名)。"<code class="special">&lt;abuf&gt;</code>" 指定当前有效的缓冲区的缓冲区号。它可以用
-于没有名字的缓冲区，但不适用于没有缓冲区的文件 (例如，用 ":r file")。
+在期待文件名的命令里，你可以使用 "<code class="special">&lt;afile&gt;</code>" 指定被读入的文件名  <a href="cmdline.html#:%3Cafile%3E">:&lt;afile&gt;</a>  (也可
+用 "%" 指定当前文件名)。"<code class="special">&lt;abuf&gt;</code>" 指定当前有效缓冲区的缓冲区号。它可以用于没有
+名字的缓冲区，但不适用于没有缓冲区的文件 (例如 ":r file" 时)。
 
                                                         <b class="vimtag"> <a name="gzip-example">gzip-example</a> </b>
 读写压缩文件的示例:
@@ -1545,8 +1544,8 @@ FileWriteCmd    FileWritePre    FileWritePost   其他的文件写入
 <code class="example">  :  autocmd FileAppendPost             *.gz !gzip &lt;afile&gt;:r</code>
 <code class="example">  :augroup END</code>
 <code class="example"></code>
-我们用 "gzip" 组执行 ":autocmd!"，从而能在脚本文件被执行两次时，删除已经定义的
-自动命令。
+我们用 "gzip" 组执行 ":autocmd!"，从而能在脚本文件被执行两次时，先删除已经定义
+的自动命令。
 
 ("<code class="special">&lt;afile&gt;</code>:r" 是去掉扩展名的文件名，参见  <a href="cmdline.html#:_%:">:_%:</a> )
 
@@ -1564,23 +1563,22 @@ BufWritePre 命令所做的改变时，你也可以用 ":q" (所以，也可以�
 
                                                         <b class="vimtag"> <a name="autocmd-nested">autocmd-nested</a> </b> <b class="vimtag"> <a name="E218">E218</a> </b>
 自动命令缺省不会嵌套。例如，如果你在自动命令里用 ":e" 或者 ":w"，Vim 不会执行
-这些命令相应的 BufRead 和 BufWrite 自动命令。如果你需要这么做，在需要嵌套的命
-令的定义里加上 "nested" 标志位。例如:
+这些命令相应的 BufRead 和 BufWrite 自动命令。如果需要，可在需要嵌套的命令的定
+义里加上 "nested" 标志位。例如:
 <code class="example">  :autocmd FileChangedShell *.c ++nested e!</code>
 为了防止递归循环，嵌套限定为 10 层。
 
 自动命令里可以用 ":au" 命令。甚至可以用来实现自我修改的命令。这适用于只执行一
 次的自动命令。
 
-要想为单个命令跳过自动命令，使用  <a href="autocmd.html#:noautocmd">:noautocmd</a>  命令修饰符，或者 <a href="options.html#'eventignore'">'eventignore'</a>
-选项。
+要想为单个命令跳过自动命令，可用  <a href="autocmd.html#:noautocmd">:noautocmd</a>  命令修饰符或 <a href="options.html#'eventignore'">'eventignore'</a> 选
+项。
 
 <code class="note">注意</code>: 读入文件时 (用 ":read file" 或者过滤命令)，如果文件的最后一行没有换行符
 <code class="special">&lt;EOL&gt;</code>，Vim 记住这一点。下一次写 (用 ":write file" 或者过滤命令) 的时候，如果最
 后一行不变 <code class="emphasis">而且</code> 置位了 <a href="options.html#'binary'">'binary'</a>，Vim 不会自己提供 <code class="special">&lt;EOL&gt;</code>。这使得在刚读入的行上
-的过滤命令写入相同的文件时写的内容和读入的完全一致，也使得在刚过滤过的行上的写
-入命令写入相同文件时写的和从过滤程序读取的完全相同。例如，另一个写压缩文件的方
-法是:
+运行的过滤命令写的内容和读入的完全一致，也使得在刚过滤过的行上的写入命令写的和
+从过滤程序读取的完全相同。例如，另一个写压缩文件的方法是:
 <code class="example"></code>
 <code class="example">  :autocmd FileWritePre *.gz   set bin|'[,']!gzip</code>
 <code class="example">  :autocmd FileWritePost *.gz  undo|set nobin</code>
@@ -1627,25 +1625,24 @@ BufWritePre 命令所做的改变时，你也可以用 ":q" (所以，也可以�
 <code class="example">  :  \ strftime("%Y %b %d")</code>
 <code class="example">  :endfun</code>
 <code class="example"></code>
-要这段代码工作，你需要在文件开始的 20 行里有这行 "Last modified: &lt;date
-time&gt;"。 Vim 把 &lt;date time&gt; (包括该行其后的任何内容) 替换为当前的日期和时间。
+这段代码要工作，文件开始的 20 行内需要有 "Last modified: &lt;date time&gt;" 一行。
+Vim 把 &lt;date time&gt; (包括该行其后的任何内容) 替换为当前的日期和时间。
 解释:
         ks              保存当前位置到 's' 标记
         call LastMod()  调用 LastMod() 函数完成工作
         's              光标回到旧的位置
-LastMode() 函数先检查文件是否少于 20 行，然后用 ":g" 命令查找包含 "Last
-Modified:" 的行。在这些行上执行 ":s" 命令实现从已有的时间到当前时间的替换。
-":execute" 命令使 ":g" 和 ":s" 命令可以使用表达式。日期用 strftime() 函数取
-得。它可以用别的参数取得不同格式的日期字符串。
+LastMode() 函数先检查文件是否少于 20 行，然后用 ":g" 命令查找包含
+"Last Modified:" 的行。在这些行上执行 ":s" 命令实现从已有的时间到当前时间的替
+换。":execute" 命令使 ":g" 和 ":s" 命令可以使用表达式。日期可通过 strftime()
+函数取得。用其它参数可获取不同格式的日期字符串。
 
-在命令行上输入 :autocmd 的时候，事件和命令名字在可能的情况可以用 <code class="special">&lt;Tab&gt;</code>，<code class="keystroke">CTRL-D</code>
-等进行自动补全。
+命令行上输入 :autocmd 时，合适时可用 <code class="special">&lt;Tab&gt;</code>，<code class="keystroke">CTRL-D</code> 等自动补全事件和命令名。
 
 Vim 根据你定义的顺序执行所有匹配的自动命令。建议第一个自动命令使用 "*" 作为文
-件模式，从而使之适用于所有文件。这意味着你可以在这里设定任何选项的缺省值，如果
-有别的匹配的自动命令，可以把这些缺省值覆盖。但如果没有，至少你的缺省设置得到保
-证 (如果从另一个能够匹配自动命令的文件进入这个文件)。<code class="note">注意</code> "*" 也会匹配以 "."
-开始的文件，这一点和 Unix 外壳不同。
+件模式，从而使之适用于所有文件。这意味着你可以在这里设定任何选项的缺省值，之后
+其他匹配的自动命令可以把这些缺省值覆盖。但如果没有，至少可以恢复你的缺省设置
+(从存在匹配自动命令的另一个文件进入这类文件时需要)。<code class="note">注意</code> "*" 也会匹配以 "." 开
+始的文件，这一点和 Unix 外壳不同。
 
                                                     <b class="vimtag"> <a name="autocmd-searchpat">autocmd-searchpat</a> </b>
 自动命令不会改变当前的搜索模式。Vim 在执行自动命令前保存当前的搜索模式，在完成
@@ -1658,7 +1655,7 @@ Vim 根据你定义的顺序执行所有匹配的自动命令。建议第一个�
                                                         <b class="vimtag"> <a name="Cmd-event">Cmd-event</a> </b>
 在使用 "*Cmd" 事件之一时，匹配的自动命令应该负责执行文件读取、写入或脚本执行操
 作。这可以用以操作特殊的文件，例如在远程文件系统上。
-小心: 如果你不正确使用这些事件，造成的效果是你无法读写匹配的文件！确保你小心的
+小心: 如果你不正确使用这些事件，造成的效果是你无法读写匹配的文件！确保你小心地
 测试过这些自动命令。最好使用的是不会匹配正常文件的模式，例如 "ftp://*"。
 
 定义 BufReadCmd 以后，Vim 很难从崩溃的编辑会话恢复。从原始文件恢复的时候，Vim
