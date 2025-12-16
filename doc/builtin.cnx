@@ -1,6 +1,6 @@
-*builtin.txt*      适用于 Vim 9.1 版本。  最近更新: 2025年11月
+*builtin.txt*	适用于 Vim 9.1 版本。  最近更新: 2025年12月
 
-		  VIM 参考手册    by Bram Moolenaar
+		  VIM 参考手册	by Bram Moolenaar
 				译者: Willis
 
 
@@ -135,7 +135,6 @@ complete({startcol}, {matches}) 无	设置插入模式补全
 complete_add({expr})		数值	增加补全匹配
 complete_check()		数值	补全时检查输入的键
 complete_info([{what}])		字典	获得当前补全信息
-complete_match([{lnum}, {col}])	列表	获得补全列和触发文本
 confirm({msg} [, {choices} [, {default} [, {type}]]])
 				数值	用户选择的序号
 copy({expr})			可变	提供 {expr} 的浅备份
@@ -1929,47 +1928,6 @@ complete_info([{what}])					*complete_info()*
 		返回类型: dict<any>
 
 
-complete_match([{lnum}, {col}])				*complete_match()*
-		从给定位置开始反向查找，返回根据 'isexpand' 选项找到的匹配列
-		表。没有提供参数时，缺省使用当前光标位置。
-
-		每个匹配项表示为 [startcol, trigger_text]，其中:
-		- startcol: 补全应开始的列号，如果未找到触发器位置，则为 -1。
-		  而对多字符触发器，返回其首个字符的列号。
-		- trigger_text: 匹配 'isexpand' 的触发器字符串，如果未找到匹配
-		  或使用了缺省基于 'iskeyword' 的模式，则为空串。
-
-		'isexpand' 为空时，使用基于 'iskeyword' 的模式 "\k\+$" 来查找
-		当前关键字的开始位置。
-
-		示例: >
-	set isexpand=.,->,/,/*,abc
-	func CustomComplete()
-	  let res = complete_match()
-	  if res->len() == 0 | return | endif
-	  let [col, trigger] = res[0]
-	  let items = []
-	  if trigger == '/*'
-	    let items = ['/** */']
-	  elseif trigger == '/'
-	    let items = ['/*! */', '// TODO:', '// fixme:']
-	  elseif trigger == '.'
-	    let items = ['length()']
-	  elseif trigger =~ '^\->'
-	    let items = ['map()', 'reduce()']
-	  elseif trigger =~ '^\abc'
-	    let items = ['def', 'ghk']
-	  endif
-	  if items->len() > 0
-	    let startcol = trigger =~ '^/' ? col : col + len(trigger)
-	    call complete(startcol, items)
-	  endif
-	endfunc
-	inoremap <Tab> <Cmd>call CustomComplete()<CR>
-<
-		返回类型: list<list<any>>
-
-
 confirm({msg} [, {choices} [, {default} [, {type}]]])	*confirm()*
 		confirm() 弹出对话框，让用户从中进行选择。返回选项的序号。首个
 		个选项的序号为 1。
@@ -2444,15 +2402,16 @@ echoraw({expr})						*echoraw()*
 empty({expr})						*empty()*
 		{expr} 为空时，返回数值 1，否则返回 0。
 		- |List|、|Tuple| 或 |Dictionary| 没有项目时为空。
-		- |String| 的长度为零时为空。
-		- |Number| 或 |Float| 的值为零时为空。
+		- |String| 长度等于零时为空。
+		- |Number| 或 |Float| 值等于零时为空。
 		- |v:false|、|v:none| 和 |v:null| 为空，而 |v:true| 不是。
-		- 启动失败的 |Job| 为空。
-		- 己关闭的 |Channel| 为空。
-		- |Blob| 的长度为零时为空。
-		- |Object| (如果对象存在) 的 empty() 方法返回真值时为空
+		- |Job| 启动失败时为空。
+		- |Channel| 己关闭时为空。
+		- |Blob| 长度等于零时为空。
+		- |Object| (如果对象存在) 当其 empty() 方法返回真值时为空。见
+		  |object-empty()|
 
-		如果 |List| 很长，本函数比先获取长度再与零比较要快得多。
+		如果 |List| 很长，本函数比先获取长度再与零比较的方法要快得多。
 
 		也可用作 |method|: >
 			mylist->empty()
@@ -2529,9 +2488,11 @@ executable({expr})					*executable()*
 		MS-Windows 上，总能找到和 Vim 程序位于同一目录的可执行文件，因
 		为该目录已加入 $PATH，执行时必然可以找到 |win32-PATH|。
 					*NoDefaultCurrentDirectoryInExePath*
-		MS-Windows 上，通常也能找到 Vim 当前工作目录下的可执行文件，不
-		过，此行为可通过设置 $NoDefaultCurrentDirectoryInExePath 环境
-		变量来关闭。
+		MS-Windows 上，使用 cmd.exe 作为 'shell' 时，通常也能找到 Vim
+		当前工作目录下的可执行文件，通过设置
+		`$NoDefaultCurrentDirectoryInExePath` 环境变量，可关闭此行为。
+		为了安全原因，执行像 |:!|、|:make|、|system()| 这样的外部命令
+		时，此行为总会被关闭。
 
 		返回值为数值，其意义为:
 			1	存在
@@ -2675,7 +2636,7 @@ exists({expr})						*exists()*
 		也可用作 |method|: >
 			Varname()->exists()
 <
-		返回类型: |String|
+		返回类型: |Number|
 
 
 exists_compiled({expr})					*exists_compiled()*
@@ -2690,7 +2651,7 @@ exists_compiled({expr})					*exists_compiled()*
 		只能在 |:def| 函数的内部使用。 *E1233*
 		不能用于检查参数或局部变量。
 
-		返回类型: |String|
+		返回类型: |Number|
 
 
 exp({expr})						*exp()*
@@ -4818,17 +4779,18 @@ getwininfo([{winid}])					*getwininfo()*
 					{仅当加入 |+quickfix| 特性才有效}
 			quickfix	快速修复或位置列表窗口则为 1
 					{仅当加入 |+quickfix| 特性才有效}
+			status_height	状态行高度 (0 或 1)
+			tabnr		标签页号
 			terminal	终端窗口则为 1
 					{仅当加入 |+terminal| 特性才有效}
-			tabnr		标签页号
+			textoff		文本前由 'foldcolumn'、'signcolumn' 和
+					行号所占据的列数
 			topline		窗口中显示的首行缓冲区行号
 			variables	一个指向该窗口局部变量字典的引用
 			width		窗口宽度
 			winbar		窗口有工具条时为 1，反之为 0
 			wincol		窗口最左侧的屏幕列号，相当于
 					|win_screenpos()| 中的 "col"
-			textoff		文本前由 'foldcolumn'、'signcolumn' 和
-					行号所占据的列数
 			winid		|window-ID|
 			winnr		窗口号
 			winrow		窗口最顶侧的屏幕行号，相当于
@@ -6068,8 +6030,9 @@ listener_add({callback} [, {buf} [, {unbuffered}]])	*listener_add()*
 
 		列表项依改动发生的先后顺序排列，最近发生的改动出现在最后。
 
-		因为上面列出的触发回调的第三个触发的原因，传递给回调的行号未必
-		能保证有效。如果这会导致问题，将 {unbuffered} 设为 |TRUE|。
+		因为上面列出的触发回调的第三个原因，传递给回调的行号未必能保证
+		有效。尤其是，end 值可能会大于 line('$') + 1。如果这会导致问
+		题，将 {unbuffered} 设为 |TRUE|。
 
 		{unbuffered} 为 |TRUE| 时，每次改动都会触发 {callback}。
 		changes 列表只有单一列表项，其中字典里的 "start" (译者注: 应为
@@ -7865,7 +7828,7 @@ reduce({object}, {func} [, {initial}])			*reduce()* *E998*
 		对 {object} 中的每个项目调用 {func}，其中 {object} 可为
 		|String|、|List|、|Tuple| 或 |Blob|。调用 {func} 时传入两个参
 		数: 之前的累积结果和当前项目。处理完所有项目后，返回最终的累积
-		结果。*E1132*
+		结果。 *E1132*
 
 		{initial} 为初始值。省略时使用 {object} 的首个项目作为初始值，
 		而从第二个项目开始调用 {func}。如果 {initial} 未给出且
@@ -10353,7 +10316,7 @@ synIDtrans({synID})					*synIDtrans()*
 
 
 synconcealed({lnum}, {col})				*synconcealed()*
-		返回指定位置的可隐藏区域信息，类型为目前包含三个值的 |List|:
+		返回指定位置的可隐藏区域信息，类型为包含三个值的 |List|:
 		1. 首个项目当 {lnum} 和 {col} 指定位置上的字符不在可隐藏区域时
 		   为 0，否则为 1。{lnum} 的用法可见 |getline()|。
 		2. 第二个项目为字符串。当首项为 1 时，第二项包含用于替代被隐藏
