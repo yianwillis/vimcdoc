@@ -1,7 +1,7 @@
-*options.txt*	适用于 Vim 9.1 版本。  最近更新: 2025年11月
+*options.txt*	适用于 Vim 9.1 版本。  最近更新: 2025年12月
 
 
-		  VIM 参考手册    by Bram Moolenaar
+		  VIM 参考手册	by Bram Moolenaar
 				译者: Willis
 
 
@@ -1366,14 +1366,15 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'cdpath' 'cd'		字符串	(缺省: 等价于 $CDPATH 或 ",,")
 			全局
 	这是一个目录列表。使用 |:cd|、|:tcd| 和 |:lcd| 命令时，如果查找的是相
-	对路径，而不是以 "/"、"./" 或 "../" 开始的绝对路径，在这里搜索目录。绝
-	对路径不使用 'cdpath' 选项。
+	对路径，而不是以 "/"、"./" 或 "../" 开始的绝对路径，会在此列表中搜索目
+	录。绝对路径不使用 'cdpath' 选项。
 	'cdpath' 选项的值和 'path' 有相同的形式和语义。另见 |file-searching|。
 	缺省值取自 $CDPATH，并在前面附加 ","，以便先搜索当前目录。
-	如果取自 $CDPATH 的缺省值不是你想要的，在 vimrc 文件里加入下面命令的修
-	改版本以覆盖之: >
+	如果取自 $CDPATH 的缺省值不是你想要的，可在 vimrc 文件里加入下面命令的
+	修改版本以覆盖本选项: >
 	  :let &cdpath = ',' .. substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
-<	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
+<	环境变量被扩展 |:set_env|。
+	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 	('cdpath' 的内容可传递给外壳以便扩展文件名)。
 
 						*'cedit'*
@@ -1518,10 +1519,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			出、删除、修改和放置操作，以剪贴板 '+' 寄存器
 			(|quoteplus|) 代替 '*' 寄存器。如也包含 "unnamed"，抽
 			出动作 (但不包括删除、修改和放置) 会同时把文本放入 '*'
-			寄存器。如果使用 Wayland 且合成器不支持
-			primary-selection-unstable-v1 协议，使用常规选择区代
-			替。仅当 |+X11| 或  |+wayland_clipboard| 特性存在时才
-			可用。以下方法可检查该选项是否可用: >
+			寄存器。如果使用 Wayland 且合成器不支持主选择区，会使
+			用常规选择区代替。仅当 |+X11| 或  |+wayland_clipboard|
+			特性存在时才可用。以下方法可检查该选项是否可用: >
 				if has('unnamedplus')
 <
 						*clipboard-autoselect*
@@ -1638,7 +1638,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					*'commentstring'* *'cms'* *E537*
 'commentstring' 'cms'	字符串	(缺省为 "/* %s */")
 			局部于缓冲区
-			{仅当编译时加入 |+folding| 特性才有效}
 	注释行的样板。该值里面的 "%s" 被注释文本替换，如有可能，应以一个空格填
 	充。目前用于为折叠增加标志，见 |fold-marker|。也常用于注释插件 (如
 	|comment-install|)。
@@ -1823,9 +1822,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 						*'completefuzzycollect'* *'cfc'*
 'completefuzzycollect' 'cfc'	字符串	(缺省: 空)
 				全局
-	逗号分隔的字符串列表，为特定 |ins-completion| 模式打开模糊收集，影响补
-	全如何收集匹配。对指定的模式，模糊匹配用于找到补全候选而不是标准的基于
-	前缀的匹配。此选项包含以下值:
+	已废弃: 本选项不再使用。修改本选项值不会有任何影响。'completeopt' 包含
+	"fuzzy" 时，Vim 内部行为等价于本选项被设为:
+		"keyword,files,whole_line"
+
+	保留以下这些值以维持兼容性，同时也供可能会读取本选项的脚本使用:
 
 	keyword		当前文件里的关键字		|i_CTRL-X_CTRL-N|
 			'complete' 里标志位 "."、"w"、	|i_CTRL-N| |i_CTRL-P|
@@ -1835,9 +1836,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	files		文件名				|i_CTRL-X_CTRL-F|
 
 	whole_line	整行				|i_CTRL-X_CTRL-L|
-
-	如果用 'completeopt' "longest" 选项值，模糊收集可识别在最好的模糊匹配
-	里的最长的共同字符串，并自动插入之。
 
 						*'completeitemalign'* *'cia'*
 'completeitemalign' 'cia' 字符串 (缺省: "abbr,kind,menu")
@@ -1854,9 +1852,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	   fuzzy    为补全候选打开 |fuzzy-matching|。这能支持更灵活和直观的匹
 		    配，可以跳过字符，即使键入序列不是完全准确，也能找到匹配。
-		    注意: 此选项不影响候选列表的收集，它只控制如何从备选列表里
-		    筛选出补全候选。如果要 |fuzzy-matching| 为你的候选列表收集
-		    更多的备选，见 'completefuzzycollect'。
 
 	   longest
 		    如果 'autocomplete' 未激活，只插入匹配的最长公共前缀。如果
@@ -2504,6 +2499,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 	要在文件名里包含逗号，在它之前加上反斜杠。逗号之后的空格被忽略，其它情
 	况下空格视为文件的一部分。|option-backslash| 说明如何使用反斜杠。
+	环境变量被扩展 |:set_env|。
 	这和 |Dictionary| 变量类型完全无关。
 	什么地方可以找到单词列表呢？
 	- FreeBSD 上，有文件 "/usr/share/dict/words"。
@@ -2616,9 +2612,9 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 		internal	使用内部比较库。设置 'diffexpr' 时忽略此项
 				目。 *E960*
-				写入缓冲区时如果内存溢出，在涉及该缓冲区的比较
-				中忽略此项目。要了解这在什么时候发生过，见
-				'verbose' 选项。
+				如果写入缓冲区时内存溢出，或者差异文超过 1GB，
+				在涉及该缓冲区的比较中会忽略此项目。要了解什么
+				时候发生过这些情况，见 'verbose' 选项。
 
 		iwhite		忽略空白字符数目的更改。如果 'diffexpr' 为空，
 				在 "diff" 命令里加入 "-b" 标志位。查阅 "diff"
@@ -3704,7 +3700,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		目前仅可用于 MS-Windows GUI。
 		详见 |gui-w32-title-bar|。
 								*'go-d'*
-	  'd'	如果可能，使用深色主题变体。目前仅能用于 GTK+ GUI。
+	  'd'	如果可能，使用深色主题变体。目前仅能用于 Win32 和 GTK+ GUI。
 								*'go-e'*
 	  'e'	根据 'showtabline' 的要求加入标签页。
 		可用 'guitablabel' 来改变标签文本。
@@ -4304,21 +4300,6 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	是大写字母，补全部分被换成小写。如果输入文本没有小写字母，而且某个字母
 	之后有大写字母而在那里匹配串是小写字母，补全部分被换成大写。
 	如用 'noinfercase'，照原样给出匹配。
-
-						*'isexpand'* *'ise'*
-'isexpand' 'ise'	字符串	(缺省为 "")
-			局部于缓冲区
-	定义字符和模式用于插入模式补全。|complete_match()| 函数用本选项来确定
-	补全的开始位置。这是逗号分隔的触发器列表。每个触发器是:
-	- 单个字符，如 "." 或 "/"
-	- 一串字符，如 "->"、"/*" 或 "/**"
-
-	注意: 如果要把按本义出现的逗号作为触发器字符，可用 "\\,"，见
-	|option-backslash|。
-
-	示例: >
-		set isexpand=.,->,/*,\\,
-<
 
 			*'insertmode'* *'im'* *'noinsertmode'* *'noim'*
 'insertmode' 'im'	布尔型	(缺省关闭)
@@ -5025,7 +5006,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		:set mkspellmem=900000,3000,800
 <	如果你的内存不足 512 兆字节，|:mkspell| 可能对某些语言会失败，不管
 	'mkspellmem' 如何设置。
-
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
@@ -5377,7 +5358,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				*'packpath'* *'pp'*
 'packpath' 'pp'		字符串	(缺省: 见 'runtimepath')
 	寻找软件包的目录。见 |packages|。
-
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'paragraphs'* *'para'*
@@ -6062,6 +6043,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	$VIMRUNTIME 之前放置目录，以定位替换发布的运行时文件的文件。你也可以在
 	$VIMRUNTIME 之后放置目录，以定位改进发布的运行时文件的文件。
 	如果 Vim 启动时带了 |--clean|，跳过主目录下的项目。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'scroll'* *'scr'*
@@ -6456,11 +6438,11 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  q	用 "recording" 代替 "recording @a"			*shm-q*
 	  F	编辑文件时不给出文件信息，就像给命令用了 `:silent`	*shm-F*
 		一样；注意 这也会影响自动命令的信息和 'autoread' 的重载
-	  S     搜索时不显示搜索计数，如 "[1/5]"。如果不给出 "S" 标志位	*shm-S*
-		(也就是说，显示搜索计数)，只在搜索计数统计值前加上 "W"
-		(助记符: Wrapped 环绕) 字符以代表 "search hit BOTTOM,
+	  S     搜索时不显示搜索计数，如 "[1/5]"。不给出 "S" 标志位 (也	*shm-S*
+		就是说，搜索时显示搜索计数) 时，不显示 "search hit BOTTOM,
 		continuing at TOP" 和 "search hit TOP, continuing at BOTTOM"
-		消息。最大限值可通过 'maxsearchcount' 选项设置。
+		消息，而只在搜索计数统计值前加上 "W" (助记符: Wrapped 环绕) 字
+		符。搜索计数显示的最大值可通过 'maxsearchcount' 选项设置。
 
 	这给你一个机会，避免在缓冲区之间切换要按 <Enter>，但仍然能够在可用的空
 	间里得到有用的消息。要得到 'shm' 为空时的完整消息，使用 ":file!"。
@@ -6719,6 +6701,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	通常所有区域使用同一个文件，如果你想加入区域名也可以。但要记住，只有
 	'spellfile' 设置为该名字时才会使用区域名。使用 'spelllang' 项目的缺省
 	方法只会寻找不带区域名的文件。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'spelllang'* *'spl'*
@@ -6812,7 +6795,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	只能使用 "best"、"double" 或 "fast" 中的一个。其它项目可以出现多次，任
 	何顺序都可以。例如: >
 		:set sps=file:~/.vim/sugg,best,expr:MySuggest()
-<
+<	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 			*'splitbelow'* *'sb'* *'nosplitbelow'* *'nosb'*
@@ -7511,6 +7494,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	况下空格视为文件的一部分。|option-backslash| 说明如何使用反斜杠。
 	建议使用 |:set+=| 和 |:set-=| 来从列表里加减目录。这可以避免未来版本使
 	用其它缺省值出现的问题。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，反引号不能用于此选项里。
 
 						*'thesaurusfunc'* *'tsrfu'*
@@ -7781,6 +7765,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 'ttytype' 'tty'		字符串	(缺省取决于 $TERM)
 			全局
 	'term' 的别名，见上。
+	环境变量被扩展 |:set_env|。
 
 						*'undodir'* *'udir'*
 'undodir' 'udir'	字符串	(缺省 ".")
@@ -7797,6 +7782,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	读入时，查找所有的项目来寻找对应的撤销文件。使用第一个找到的撤销文件。
 	如果该文件不可读，报错，但不再继续查找。
 	见 |undo-persistence|。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
@@ -7924,6 +7910,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	此不一定能马上看得到写入的内容。
 	设置 'verbosefile' 为新值就像先把它清空然后再设置一样。
 	和 |:redir| 的区别是，在设置 'verbosefile' 时不再显示 verbose 消息。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'viewdir'* *'vdir'*
@@ -7936,6 +7923,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 			{仅当编译时加入 |+mksession| 特性才有效}
 	储存 |:mkview| 文件的目录名。
 	$XDG_CONFIG_HOME 可见 |xdg-base-dir|。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 						*'viewoptions'* *'vop'*
@@ -8060,6 +8048,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	如果为 "NONE"，不读取或写入 viminfo 文件。
 	可用 |-i| 命令行标志位设置此选项。|--clean| 命令行标志位设置它为
 	"NONE"。
+	环境变量被扩展 |:set_env|。
 	为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 					    *'virtualedit'* *'ve'*
