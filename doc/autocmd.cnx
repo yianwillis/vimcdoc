@@ -593,10 +593,11 @@ ColorSchemePre			载入色彩方案前。|:colorscheme|
 CompleteChanged						*CompleteChanged*
 				每当插入模式补全菜单发生变化后。不在弹出式菜单
 				隐藏时触发，为此可用 |CompleteDonePre| 或
-				|CompleteDone|。绝不会递归触发。
+				|CompleteDone|。本事件永不会递归触发。
 
-				设置以下这些 |v:event| 键:
-				    completed_item	见 |complete-items|。
+				调用时，会设置以下 |v:event| 键:
+				    completed_item	选中项目，见
+							|complete-items|。
 				    height		可见项目数目
 				    width		屏幕单元格数
 				    row			屏幕顶行号
@@ -614,7 +615,7 @@ CompleteDonePre			插入模式补全结束之后。不管补会是否成功完�
 				被放弃都会触发本事件。|ins-completion|
 				可用 |complete_info()|，CompleteDonePre 触发后
 				此信息被清空。
-				|v:completed_item| 变量包含补全项目的信息。
+				|v:completed_item| 变量包含选中补全项目的信息。
 
 							*CompleteDone*
 CompleteDone			插入模式补全结束之后。不管补会是否成功完成或是
@@ -622,9 +623,9 @@ CompleteDone			插入模式补全结束之后。不管补会是否成功完成�
 				不能用 |complete_info()|，CompleteDone 触发之
 				前此信息已被清空。如有需要可用 CompleteDonePre
 				事件。
-				|v:completed_item| 变量包含补全项目的信息。
+				|v:completed_item| 变量包含选中补全项目的信息。
 
-				设置以下 |v:event| 键值:
+				调用时，会设置以下 |v:event| 键:
 				    complete_word	选中的单词，如果放弃补
 							全则为空。
 				    complete_type	|complete_info_mode|
@@ -846,7 +847,7 @@ KeyInputPre			应用映射之后，按键刚开始处理之前。模式匹配和
 				|v:char| 变量指示按下的键，本事件可改变之，使
 				待处理的变成另一个键。|v:char| 如果不是单个字
 				符或者特殊键，使用首个字符。
-				设置下述的 |v:event| 值:
+				调用时，会设置以下 |v:event| 键:
 				   typed	键是否按下。
 				   typedchar	最近一次 |KeyInputPre| 调用后
 						(实际) 按下的键。
@@ -868,7 +869,7 @@ MenuPopup			刚要显示弹出菜单前 (鼠标右键下)。用于根据光标
 ModeChanged			改变模式后。自动命令的模式需匹配
 				`'旧模式:新模式'`，例如要模拟 |CmdlineEnter|，
 				可指定匹配模式 `*:c*`。
-				设置 |v:event| 的以下值:
+				调用时，会设置以下 |v:event| 键:
 				   old_mode	改变前的模式。
 				   new_mode	新模式，以非零参数调用
 						|mode()| 也可返回此值。
@@ -880,39 +881,41 @@ ModeChanged			改变模式后。自动命令的模式需匹配
 	:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 	:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
 <							*OptionSet*
-OptionSet			设置选项时。模式匹配的是长选项名。
-				<amatch> 指出选项是否被置位。
+OptionSet			选项被设置时。模式匹配的是选项的完整名。而
+				<amatch> 指示被设置的选项名。
 
-				|v:option_type| 说明是全局还是局部值。
+				|v:option_type| 说明设置的是全局还是局部值。
 				|v:option_command| 说明使用的 set/let 命令的类
-				型 (跟随标签可见对应表)。
-				|v:option_new| 给出新设选项值。
-				|v:option_oldlocal| 给出旧局部选项值。
-				|v:option_oldglobal| 给出旧全局选项值。
-				|v:option_old| 给出旧选项值。
+				型 (跟随该标签，可查阅所有的可能值)。
+				|v:option_new| 给出选项的新值。
+				|v:option_oldlocal| 给出选项的旧局部值。
+				|v:option_oldglobal| 给出选项的旧全局值。
+				|v:option_old| 给出选项的旧值。
 
 				只有用 |:set|、|:setlocal| 或 |modeline| 设置
 				选项时才会设置 |v:option_oldlocal|。相似地，只
 				有用 |:set| 或 |:setglobal| 时才设置
 				|v:option_oldglobal|。
 
-				不设置 |<abuf>|，可用 |bufnr()|。
+				不设置 |<abuf>|，如果需要，可用 |bufnr()|。
 
 				注意 用 |:set| 设置 |global-local| 字符串选项
-				时，|v:option_old| 是旧的全局值。但对其它类型
-				的选项 (局部字符串选项、全局-局部数值选项，等
-				等)，它是旧的局部值。
+				时，|v:option_old| 会是旧的全局值。而设置其它
+				类型的选项 (局部字符串选项、全局-局部数值选项，
+				等等) 时，它会是旧的局部值。
 
-				启动时不触发 OptionSet，'key' 选项亦然。其理甚
-				明。
+				启动时不触发 OptionSet，'key' 选项亦是如此。其
+				原因不言自明。
 
-				示例: 检查 'backupdir' 和 'undodir' 选项使用的
-				目录是否存在，不存在时建立目录。
+				示例: 设置 'backupdir' 和 'undodir' 选项时，可
+				用来检查其中的目录是否实际存在，不存在时先建立
+				目录。
 
-				注意: 在此自动命令里建议不要复位选项，可能会对
-				插件造成破坏。用 |:noa| 可避免执行此自动命令。
+				注意: 在本自动命令里建议不要复位选项，可能会对
+				插件造成破坏。用 |:noa| 可临时跳过自动命令的执
+				行。
 
-				自动命令中使用 |:set| 时，此事件不再触发。
+				本自动命令中使用 |:set| 时，此事件不再触发。
 							*QuickFixCmdPre*
 QuickFixCmdPre			开始执行快速修复命令前 (|:make|、|:lmake|、
 				|:grep|、|:lgrep|、|:grepadd|、|:lgrepadd|、
@@ -1001,22 +1004,23 @@ StdinReadPost			从标准输入读取输入到缓冲区后，执行模式行前�
 StdinReadPre			从标准输入读取输入到缓冲区前。仅用于 Vim 启动
 				时使用了 "-" 参数时发生 |--|。
 							*SwapExists*
-SwapExists			开始编辑文件时检测到交换文件已存在。只有此时，
-				可以选择处理此情形的方法，也在此时，Vim 可能会
-				询问用户应该如何做。
+SwapExists			开始编辑文件时检测到交换文件已存在。此时 Vim
+				一般会询问用户应该如何处理， 此自动命令是唯一
+				可用于选择如何处理此情况的时机。
 				|v:swapname| 变量保存找到的交换文件名。<afile>
-				则是待编辑的文件。|v:swapcommand| 可以包含该文
-				件打开后执行的命令。
-				此事件的命令应该设置 |v:swapchoice| 变量为包含
-				单字符的字符串，指示 Vim 下一步应该做什么:
+				则是待编辑的文件。|v:swapcommand| 包含打开该文
+				件后，将要执行的可能命令。
+				此事件的命令必须用包含单字符的字符串来设置
+				|v:swapchoice| 变量，以指示 Vim 下一步应执行的
+				操作:
 					'o'	以只读方式打开
-					'e'	仍然编辑文件
+					'e'	无论如何仍然编辑文件
 					'r'	恢复
 					'd'	删除交换文件
 					'q'	退出，不编辑文件
 					'a'	中止，就像按了 CTRL-C 一样
-				如果设为空串，则询问用户，就像没有 SwapExists
-				自动命令那样。
+				如果设为空串，用户会被询问，就像没有
+				SwapExists 自动命令那样。
 							*E812*
 				此处不允许切换到其它缓冲区、为缓冲区换名或者更
 				改目录。
@@ -1105,8 +1109,8 @@ TextChangedT			终端模式修改当前缓冲区文本之后。其他事项同
 				TextChanged。
 							*TextYankPost*
 TextYankPost			当前缓冲区的文本被抽出或删除后。
-				|v:event| 的值可用于决定触发此自动命令的操作，
-				如下所示:
+				调用时，会设置以下 |v:event| 键，这些值可用于
+				决定触发此自动命令的操作:
 				   inclusive	动作为 |inclusive| 时为 TRUE，
 						反之则动作为 |exclusive|。
 				   operator	执行的操作。
@@ -1225,8 +1229,8 @@ WinScrolled			在当前标签页的任何窗口里滚动文本 (横向或纵向)
 				|window-ID|。<amatch> 和 <afile> 都设为
 				|window-ID|。
 
-				|v:event| 设为大小和滚动改变的相关信息。
-				|WinScrolled-event|
+				调用时，|v:event| 会设为大小和滚动改变的相关信
+				息。|WinScrolled-event|
 
 				仅当系统启动完毕且首次屏幕重画完成后才会开始触
 				发。首个 WinScrolled 或 WinResized 事件在定义
@@ -1241,7 +1245,7 @@ WinScrolled			在当前标签页的任何窗口里滚动文本 (横向或纵向)
 WinResized			在当前标签页的某个窗口改变宽高后。
 				见 |win-scrolled-resized|。
 
-				|v:event| 设为大小改变的相关信息。
+				调用时，|v:event| 会设为大小改变的相关信息。
 				|WinResized-event|
 
 				模式、触发和递归性同 |WinScrolled|。
