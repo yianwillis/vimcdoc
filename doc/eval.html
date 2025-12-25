@@ -65,7 +65,7 @@
 5.  定义函数             <a href="eval.html#user-functions">user-functions</a> 
 6.  花括号名字           <a href="eval.html#curly-braces-names">curly-braces-names</a> 
 7.  命令                 <a href="eval.html#expression-commands">expression-commands</a> 
-8.  例外处理             <a href="eval.html#exception-handling">exception-handling</a> 
+8.  异常处理             <a href="eval.html#exception-handling">exception-handling</a> 
 9.  示例                 <a href="eval.html#eval-examples">eval-examples</a> 
 10. Vim 脚本版本         <a href="eval.html#vimscript-version">vimscript-version</a> 
 11. 不包含 +eval 特性    <a href="eval.html#no-eval-feature">no-eval-feature</a> 
@@ -117,7 +117,7 @@
 通道            用于通道的特殊类型，见  <a href="channel.html#ch_open()">ch_open()</a> 。 <b class="vimtag"> <a name="Channel">Channel</a> </b> <b class="vimtag"> <a name="Channels">Channels</a> </b>
 
 blob            二进制大对象 (Binary Large Object)。存储任意字符序列。详见
-                 <a href="eval.html#Blob">Blob</a>  (<code class="vim">译者注</code>：如果采用意译，此类型名会显得过于冗长，因此保留
+                 <a href="eval.html#Blob">Blob</a>  (<code class="vim">译者注</code>: 如果采用意译，此类型名会显得过于冗长，因此保留
                 blob 作为类型名，不译)
                 示例: 0zFF00ED015DAF
                 0z 代表空 blob。
@@ -2239,7 +2239,7 @@ v:event         包含当前  <a href="autocmd.html#autocommand">autocommand</a>
 
 
                                         <b class="vimtag"> <a name="v:exception">v:exception</a> </b> <b class="vimtag"> <a name="exception-variable">exception-variable</a> </b>
-v:exception     最近捕获到且未完成处理的例外值。见  <a href="eval.html#v:stacktrace">v:stacktrace</a> 、
+v:exception     最近捕获到且未完成处理的异常值。见  <a href="eval.html#v:stacktrace">v:stacktrace</a> 、
                  <a href="eval.html#v:throwpoint">v:throwpoint</a>  和  <a href="eval.html#throw-variables">throw-variables</a> 。
                 例如:
 <code class="example">        :try</code>
@@ -2561,7 +2561,7 @@ v:sizeofpointer pointer 值需要的字节数。此值取决于 Vim 的编译环
                 期待结果有影响。
 
                                         <b class="vimtag"> <a name="v:stacktrace">v:stacktrace</a> </b> <b class="vimtag"> <a name="stacktrace-variable">stacktrace-variable</a> </b>
-v:stacktrace    最近捕获到且未完成处理的例外的栈追踪。栈追踪的结构可见
+v:stacktrace    最近捕获到且未完成处理的异常的栈追踪。栈追踪的结构可见
                  <a href="builtin.html#getstacktrace()">getstacktrace()</a> 。另见  <a href="eval.html#v:exception">v:exception</a> 、 <a href="eval.html#v:throwpoint">v:throwpoint</a>  和
                  <a href="eval.html#throw-variables">throw-variables</a> 。
 
@@ -2689,16 +2689,16 @@ v:this_session  最近载入或者保存的会话文件的文件名  <a href="st
                  <a href="eval.html#scriptversion">scriptversion</a>  为 3 或更高。
 
                                         <b class="vimtag"> <a name="v:throwpoint">v:throwpoint</a> </b> <b class="vimtag"> <a name="throwpoint-variable">throwpoint-variable</a> </b>
-v:throwpoint    最近捕获到且未完成处理的例外的抛出位置。用户输入命令时不会设置
+v:throwpoint    最近捕获到且未完成处理的异常的抛出位置。用户输入命令时不会设置
                 本变量。另见  <a href="eval.html#v:exception">v:exception</a> 、 <a href="eval.html#v:stacktrace">v:stacktrace</a>  和
                  <a href="eval.html#throw-variables">throw-variables</a> 。
                 例如:
 <code class="example">        :try</code>
 <code class="example">        :  throw "oops"</code>
 <code class="example">        :catch /.*/</code>
-<code class="example">        :  echo "例外抛出位置是" v:throwpoint</code>
+<code class="example">        :  echo "异常抛出位置是" v:throwpoint</code>
 <code class="example">        :endtry</code>
-                输出是: "例外抛出位置是 test.vim, 第 2 行"
+                输出是: "异常抛出位置是 test.vim, 第 2 行"
 
                                         <b class="vimtag"> <a name="v:true">v:true</a> </b> <b class="vimtag"> <a name="true-variable">true-variable</a> </b>
 v:true          真值，以数值一表示。用于在 JSON 里填入 "true"。见
@@ -3190,49 +3190,50 @@ text...
                         - 在老式脚本里，会安静地忽略。
 
 :if <code class="special">{expr1}</code>                 <b class="vimtag"> <a name=":if">:if</a> </b> <b class="vimtag"> <a name=":end">:end</a> </b> <b class="vimtag"> <a name=":endif">:endif</a> </b> <b class="vimtag"> <a name=":en">:en</a> </b> <b class="vimtag"> <a name="E171">E171</a> </b> <b class="vimtag"> <a name="E579">E579</a> </b> <b class="vimtag"> <a name="E580">E580</a> </b>
-:en[dif]                如果 <code class="special">{expr}</code> 计算为非零，执行命令直到其后匹配的  <a href="eval.html#:else">:else</a> 
-                        或者  <a href="eval.html#:endif">:endif</a>  为止。
-                        虽然短形式可用，建议使用  <a href="eval.html#:endif">:endif</a>  全名以避免混淆，并使
-                        自动缩进能正确工作。
+:en[dif]                <code class="special">{expr}</code> 计算结果非零时，执行后续命令，直到遇到下一个匹
+                        配的  <a href="eval.html#:else">:else</a>  或者  <a href="eval.html#:endif">:endif</a>  为止。
+                        虽然  <a href="eval.html#:endif">:endif</a>  有短形式可用，建议使用其全名以避免混淆，
+                        并使自动缩进能正确工作。
 
-                        从 Vim 版本 4.5 到 5.0， <a href="eval.html#:if">:if</a>  和  <a href="eval.html#:endif">:endif</a>  之间的 Ex 命
-                        令被忽略。提供这两个命令只是为了后向兼容 (<code class="vim">译者注</code>，原文
-                        如此)，以方便未来的扩展。可以嵌套。<code class="note">注意</code> 任何的  <a href="eval.html#:else">:else</a> 
-                        或  <a href="eval.html#:elseif">:elseif</a>  也被忽略， <code class="badlink">else</code>  部分也一样不会执行。
+                        Vim 4.5 到 5.0 之间的版本里，忽略  <a href="eval.html#:if">:if</a>  和  <a href="eval.html#:endif">:endif</a> 
+                        之间所有的 Ex 命令。这两个命令只是为了后向兼容 (<code class="vim">译者注</code>，
+                        原文如此)，以便将来扩展。可以嵌套。<code class="note">注意</code>  <a href="eval.html#:else">:else</a>  或
+                         <a href="eval.html#:elseif">:elseif</a>  一样被忽略， <code class="badlink">else</code>  分支同样不会执行。
 
-                        利用这一点，你可以保持和旧版本的兼容:
+                        利用这一特点，可以和旧版本保持兼容:
 <code class="example">                                :if version &gt;= 500</code>
 <code class="example">                                :  版本 5 专用的命令</code>
 <code class="example">                                :endif</code>
-                        为了找到  <code class="badlink">endif</code> ，仍然需要分析命令。有时，旧版本的 Vim
-                        不能识别新的命令。比如， <a href="various.html#:silent">:silent</a>  被识别为
-                         <a href="change.html#:substitute">:substitute</a>  命令。这种情形可以用  <a href="eval.html#:execute">:execute</a>  来避
-                        免:
+                        为了找到  <code class="badlink">endif</code> ，即使不执行命令，仍然需要解析命令。有
+                        些情况下，旧版本的 Vim 不能识别新的命令。比如，
+                         <a href="various.html#:silent">:silent</a>  会被识别为  <a href="change.html#:substitute">:substitute</a>  命令。可用
+                         <a href="eval.html#:execute">:execute</a>  来避免这个问题:
 <code class="example">                                :if version &gt;= 600</code>
 <code class="example">                                :  execute "silent 1,$delete"</code>
 <code class="example">                                :endif</code>
 
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:endif">:endif</a>  的
-                        短形式。
-                        <code class="note">注意</code>:  <a href="insert.html#:append">:append</a>  和  <a href="insert.html#:insert">:insert</a>  命令在  <a href="eval.html#:if">:if</a>  和  <a href="eval.html#:endif">:endif</a> 
-                        之间不能正常工作。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:endif">:endif</a> 
+                        的短形式。
+                        <code class="note">注意</code>: 在  <a href="eval.html#:if">:if</a>  和  <a href="eval.html#:endif">:endif</a>  之间， <a href="insert.html#:append">:append</a>  和
+                         <a href="insert.html#:insert">:insert</a>  命令不能正常工作。
 
                                                 <b class="vimtag"> <a name=":else">:else</a> </b> <b class="vimtag"> <a name=":el">:el</a> </b> <b class="vimtag"> <a name="E581">E581</a> </b> <b class="vimtag"> <a name="E583">E583</a> </b>
-:el[se]                 如果这之前的命令没有被执行，执行命令直到其后匹配的
-                         <a href="eval.html#:else">:else</a>  或  <a href="eval.html#:endif">:endif</a> 。
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:else">:else</a>  的短
-                        形式。
+:el[se]                 如果此语句之前的命令没有被执行，执行后续命令，直到遇到
+                        下一个匹配的  <a href="eval.html#:else">:else</a>  或  <a href="eval.html#:endif">:endif</a>  为止。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:else">:else</a> 
+                        的短形式。
 
                                         <b class="vimtag"> <a name=":elseif">:elseif</a> </b> <b class="vimtag"> <a name=":elsei">:elsei</a> </b> <b class="vimtag"> <a name="E582">E582</a> </b> <b class="vimtag"> <a name="E584">E584</a> </b>
 :elsei[f] <code class="special">{expr1}</code>        <a href="eval.html#:else">:else</a>   <a href="eval.html#:if">:if</a>  的缩写，而且无需另一个  <a href="eval.html#:endif">:endif</a> 。
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:elseif">:elseif</a>  的
-                        短形式。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:elseif">:elseif</a> 
+                        的短形式。
 
 :wh[ile] <code class="special">{expr1}</code>                        <b class="vimtag"> <a name=":while">:while</a> </b> <b class="vimtag"> <a name=":endwhile">:endwhile</a> </b> <b class="vimtag"> <a name=":wh">:wh</a> </b> <b class="vimtag"> <a name=":endw">:endw</a> </b>
                                                 <b class="vimtag"> <a name="E170">E170</a> </b> <b class="vimtag"> <a name="E585">E585</a> </b> <b class="vimtag"> <a name="E588">E588</a> </b> <b class="vimtag"> <a name="E733">E733</a> </b>
-:endw[hile]             只要 <code class="special">{expr1}</code> 计算的结果非零，重复  <a href="eval.html#:while">:while</a>  和
+:endw[hile]             只要 <code class="special">{expr1}</code> 计算的结果非零，就会重复执行  <a href="eval.html#:while">:while</a>  和
                          <a href="eval.html#:endwhile">:endwhile</a>  之间的命令。
-                        如果发现循环里有命令出错，从  <code class="badlink">endwhile</code>  之后继续执行。
+                        如果循环体内的某个命令出错，执行会从  <code class="badlink">endwhile</code>  之后继
+                        续。
                         例如:
 <code class="example">                                :let lnum = 1</code>
 <code class="example">                                :while lnum &lt;= line("$")</code>
@@ -3240,76 +3241,79 @@ text...
 <code class="example">                                   :let lnum = lnum + 1</code>
 <code class="example">                                :endwhile</code>
 
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:while">:while</a>  和
-                         <a href="eval.html#:endwhile">:endwhile</a>  的短形式。
-                        <code class="note">注意</code>:  <a href="insert.html#:append">:append</a>  和  <a href="insert.html#:insert">:insert</a>  命令在  <a href="eval.html#:while">:while</a>  和  <a href="eval.html#:for">:for</a> 
-                        循环里不能正常工作。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:while">:while</a> 
+                        和  <a href="eval.html#:endwhile">:endwhile</a>  的短形式。
+                        <code class="note">注意</code>: 在  <a href="eval.html#:while">:while</a>  和  <a href="eval.html#:for">:for</a>  循环里， <a href="insert.html#:append">:append</a>  和
+                         <a href="insert.html#:insert">:insert</a>  命令不能正常工作。
 
 :for <code class="special">{var}</code> in <code class="special">{object}</code>                                  <b class="vimtag"> <a name=":for">:for</a> </b> <b class="vimtag"> <a name="E690">E690</a> </b> <b class="vimtag"> <a name="E732">E732</a> </b>
 :endfo[r]                                               <b class="vimtag"> <a name=":endfo">:endfo</a> </b> <b class="vimtag"> <a name=":endfor">:endfor</a> </b>
-                        为每个 <code class="special">{object}</code> 项目重复执行  <a href="eval.html#:for">:for</a>  和  <a href="eval.html#:endfor">:endfor</a>  之间
-                        的命令。<code class="special">{object}</code> 可以是  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Blob">Blob</a>  或
+                        对 <code class="special">{object}</code> 里的每个项目，重复执行  <a href="eval.html#:for">:for</a>  和  <a href="eval.html#:endfor">:endfor</a> 
+                        之间的命令。<code class="special">{object}</code> 可以是  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Blob">Blob</a>  或
                          <a href="eval.html#String">String</a> 。 <b class="vimtag"> <a name="E1177">E1177</a> </b>
 
-                        变量 <code class="special">{var}</code> 设为每个项目的值。 <a href="vim9.html#Vim9">Vim9</a>  脚本里循环变量不能
-                        事先声明过，除非是全局/窗口/标签页/缓冲区变量。
+                        在循环体里，变量 <code class="special">{var}</code> 会被设为每个项目的值。在  <a href="vim9.html#Vim9">Vim9</a> 
+                        脚本里，循环变量不能事先声明，除非它是全局/窗口/标签页
+                        /缓冲区变量。
 
-                        如果循环里某个命令出错，从  <code class="badlink">endfor</code>  之后继续执行。
-                        在循环里修改 <code class="special">{object}</code> 影响使用的项目。如果不希望如此，
-                        构建一个备份:
+                        如果循环体的某个命令出错，执行从  <code class="badlink">endfor</code>  之后继续。在
+                        循环体里，如果 <code class="special">{object}</code> 被修改，会影响使用的项目。如果
+                        不希望如此，先构建一个备份:
 <code class="example">                                :for item in copy(mylist)</code>
 
-                        如果 <code class="special">{object}</code> 为  <a href="eval.html#List">List</a>  且没有备份，老式脚本里 Vim 在
-                        为当前项目执行命令前保存列表里下一个项目的引用。这样，
-                        删除当前项目不会影响循环的继续。而删除任何后来的项目也
-                        会使循环跳过它。这意味着下例可以工作 (一个效率低下的清
-                        空列表的方法):
+                        <code class="special">{object}</code> 为  <a href="eval.html#List">List</a>  时，如果没有备份，在老式脚本里，Vim
+                        会在为当前项目执行命令前，先保存列表里下一个项目的引用。
+                        这样，即使删除了当前项目，也不会影响循环的继续。而删除
+                        后续的项目会使循环跳过被删除的项目。这意味着，下例可以
+                        工作 (一个效率低下的清空列表的方法):
 <code class="example">                                for item in mylist</code>
 <code class="example">                                   call remove(mylist, 0)</code>
 <code class="example">                                endfor</code>
                         <code class="note">注意</code> 给  <a href="eval.html#List">List</a>  调整顺序 (例如用 sort() 或 reverse())
                         可能会有意想不到的效果。
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本使用索引。如果当前项目之前的一个项目被删
-                        除，跳过下个项目。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，使用索引。如果删除了位于当前项目之前
+                        的一个项目，循环将跳过下一个项目。
 
-                        如果 <code class="special">{object}</code> 为  <a href="eval.html#Blob">Blob</a> ，Vim 总是先建立备份再循环。和
-                         <a href="eval.html#List">List</a>  不同，对  <a href="eval.html#Blob">Blob</a>  的修改不影响循环。
+                        <code class="special">{object}</code> 为  <a href="eval.html#Blob">Blob</a>  时，Vim 总是先建立备份再循环。和
+                         <a href="eval.html#List">List</a>  不同，对  <a href="eval.html#Blob">Blob</a>  的修改不会影响循环。
 
-                        如果 <code class="special">{object}</code> 为  <a href="eval.html#String">String</a> ，每个项目是带单个字符加上可
-                        能的组合字符的字符串。
+                        <code class="special">{object}</code> 为  <a href="eval.html#String">String</a>  时，项目会是字符串的每个字符，组
+                        合字符包含在前导字符之内，算作一个字符。
 
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:endfor">:endfor</a>  的
-                        短形式。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:endfor">:endfor</a> 
+                        的短形式。
 
 :for [<code class="special">{var1}</code>, <code class="special">{var2}</code>, ...] in <code class="special">{listlist}</code>
 :endfo[r]                                                       <b class="vimtag"> <a name="E1140">E1140</a> </b>
-                        和上面  <a href="eval.html#:for">:for</a>  类似，但每个 <code class="special">{listlist}</code> 项目必须是列表，
-                        其中每个项目被依次赋予 <code class="special">{var1}</code>、<code class="special">{var2}</code> 等。例如:
+                        和上面的  <a href="eval.html#:for">:for</a>  类似，但每个 <code class="special">{listlist}</code> 项必须本身是列
+                        表，其中每个列表项被依次赋予 <code class="special">{var1}</code>、<code class="special">{var2}</code> 等。
+                        例如:
 <code class="example">                                :for [lnum, col] in [[1, 3], [2, 5], [3, 8]]</code>
 <code class="example">                                   :echo getline(lnum)[col]</code>
 <code class="example">                                :endfor</code>
 
                                                 <b class="vimtag"> <a name=":continue">:continue</a> </b> <b class="vimtag"> <a name=":con">:con</a> </b> <b class="vimtag"> <a name="E586">E586</a> </b>
-:con[tinue]             在  <a href="eval.html#:while">:while</a>  或  <a href="eval.html#:for">:for</a>  循环的内部，跳回循环开始的地方。
-                        如果在循环内部的  <a href="eval.html#:try">:try</a>  之后但在匹配的  <a href="eval.html#:finally">:finally</a>  (如
-                        果有的话) 之前， <a href="eval.html#:finally">:finally</a>  之后，匹配的  <a href="eval.html#:endtry">:endtry</a>  之前
-                        的命令会被先执行。该过程反复应用于所有函数内的嵌套
-                         <a href="eval.html#:try">:try</a>  块。在最外层  <a href="eval.html#:endtry">:endtry</a>  结束之后才跳回循环的开始
-                        处。
+:con[tinue]             在  <a href="eval.html#:while">:while</a>  或  <a href="eval.html#:for">:for</a>  循环的内部使用时，会跳回循环开始
+                        的地方。
+                        在循环内部的  <a href="eval.html#:try">:try</a>  之后，但在其匹配的  <a href="eval.html#:finally">:finally</a>  (如
+                        果有的话) 之前使用时，会先执行  <a href="eval.html#:finally">:finally</a>  之后，在其匹
+                        配的  <a href="eval.html#:endtry">:endtry</a>  之前的命令。该过程会反复应用于函数内的
+                        所有嵌套  <a href="eval.html#:try">:try</a>  块。在最外层  <a href="eval.html#:endtry">:endtry</a>  结束之后才会跳
+                        回循环的开始处。
 
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性， <code class="badlink">:cont</code>  是可接受的最
-                        短形式。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性， <code class="badlink">:cont</code>  是可接受的
+                        最短形式。
                                                 <b class="vimtag"> <a name=":break">:break</a> </b> <b class="vimtag"> <a name=":brea">:brea</a> </b> <b class="vimtag"> <a name="E587">E587</a> </b>
-:brea[k]                在  <a href="eval.html#:while">:while</a>  或  <a href="eval.html#:for">:for</a>  循环的内部，跳到相匹配的
+:brea[k]                在  <a href="eval.html#:while">:while</a>  或  <a href="eval.html#:for">:for</a>  循环的内部使用时，会跳到相匹配的
                          <a href="eval.html#:endwhile">:endwhile</a>  或  <a href="eval.html#:endfor">:endfor</a>  之后的命令。
-                        如果在循环内部的  <a href="eval.html#:try">:try</a>  之后但在匹配的  <a href="eval.html#:finally">:finally</a>  (如
-                        果有的话) 之前， <a href="eval.html#:finally">:finally</a>  之后，匹配的  <a href="eval.html#:endtry">:endtry</a>  之前
-                        的命令会被先执行。该过程反复应用于所有函数内的嵌套
-                         <a href="eval.html#:try">:try</a>  块。在最外层  <a href="eval.html#:endtry">:endtry</a>  结束之后才跳到循环之后的
-                        命令。
+                        在循环内部的  <a href="eval.html#:try">:try</a>  之后，但在其匹配的  <a href="eval.html#:finally">:finally</a>  (如
+                        果有的话) 之前使用时，会先执行  <a href="eval.html#:finally">:finally</a>  之后，在其匹
+                        配的  <a href="eval.html#:endtry">:endtry</a>  之前的命令。该过程会反复应用于函数内的
+                        所有嵌套  <a href="eval.html#:try">:try</a>  块。在最外层  <a href="eval.html#:endtry">:endtry</a>  结束之后才会跳
+                        到循环体之后的命令。
 
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:break">:break</a>  的
-                        短形式。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:break">:break</a> 
+                        的短形式。
 
 :try                                            <b class="vimtag"> <a name=":try">:try</a> </b> <b class="vimtag"> <a name=":endt">:endt</a> </b> <b class="vimtag"> <a name=":endtry">:endtry</a> </b>
                                                 <b class="vimtag"> <a name="E600">E600</a> </b> <b class="vimtag"> <a name="E601">E601</a> </b> <b class="vimtag"> <a name="E602">E602</a> </b> <b class="vimtag"> <a name="E1032">E1032</a> </b>
@@ -3328,14 +3332,14 @@ text...
 <code class="example">                echomsg "not reached"</code>
 
                         另外， <a href="eval.html#:try">:try</a>  和  <a href="eval.html#:endtry">:endtry</a>  之间如果出现了错误或者 (动态
-                        的) 中断，它们也会被转换成一个例外。如同 `: throw` 命
-                        令抛出的例外一样 (见  <a href="eval.html#:catch">:catch</a> )，可以被捕获。这种情况
+                        的) 中断，它们也会被转换成一个异常。如同 `: throw` 命
+                        令抛出的异常一样 (见  <a href="eval.html#:catch">:catch</a> )，可以被捕获。这种情况
                         下，脚本的处理不会被终止。
 
-                        中断例外使用 "Vim:Interrupt" 值。Vim 命令中的错误转换
-                        后的例外使用形如 "Vim(<code class="special">{command}</code>):<code class="special">{errmsg}</code>" 的值，而其
-                        它错误转换后的例外使用形如 "Vim:<code class="special">{errmsg}</code>" 的值。这里，
-                        <code class="special">{command}</code> 是完整的命令名，而 <code class="special">{errmsg}</code> 是错误例外没有被
+                        中断异常使用 "Vim:Interrupt" 值。Vim 命令中的错误转换
+                        后的异常使用形如 "Vim(<code class="special">{command}</code>):<code class="special">{errmsg}</code>" 的值，而其
+                        它错误转换后的异常使用形如 "Vim:<code class="special">{errmsg}</code>" 的值。这里，
+                        <code class="special">{command}</code> 是完整的命令名，而 <code class="special">{errmsg}</code> 是错误异常没有被
                         捕获时会显示的消息，它总以错误号开始。
                         示例:
 <code class="example">                try | sleep 100 | catch /^Vim:Interrupt$/ | endtry</code>
@@ -3343,28 +3347,28 @@ text...
 
                                         <b class="vimtag"> <a name=":cat">:cat</a> </b> <b class="vimtag"> <a name=":catch">:catch</a> </b>
                                         <b class="vimtag"> <a name="E603">E603</a> </b> <b class="vimtag"> <a name="E604">E604</a> </b> <b class="vimtag"> <a name="E605">E605</a> </b> <b class="vimtag"> <a name="E654">E654</a> </b> <b class="vimtag"> <a name="E1033">E1033</a> </b>
-:cat[ch] [/<code class="special">{pattern}</code>/]  <code class="special">{pattern}</code> 给出时，如果有匹配 <code class="special">{pattern}</code> 的例外被抛出且
+:cat[ch] [/<code class="special">{pattern}</code>/]  <code class="special">{pattern}</code> 给出时，如果有匹配 <code class="special">{pattern}</code> 的异常被抛出且
                         还没有被先前的  <a href="eval.html#:catch">:catch</a>  捕获过，则执行本语句之后的命令
                         序列，直到遇到和本  <a href="eval.html#:catch">:catch</a>  处于同一  <a href="eval.html#:try">:try</a>  块的下一个
                          <a href="eval.html#:catch">:catch</a> 、`:finally ` 或者  <a href="eval.html#:endtry">:endtry</a>  为止。否则，跳过
                         这些命令。
-                        <code class="special">{pattern}</code> 省略时，捕获所有其余的例外。
+                        <code class="special">{pattern}</code> 省略时，捕获所有其余的异常。
                         示例:
 <code class="example">                :catch /^Vim:Interrupt$/         " 捕获中断 (CTRL-C)</code>
 <code class="example">                :catch /^Vim\%((\a\+)\)\=:E/     " 捕获所有的 Vim 错误</code>
 <code class="example">                :catch /^Vim\%((\a\+)\)\=:/      " 捕获错误和中断</code>
 <code class="example">                :catch /^Vim(write):/            " 捕获所有 :write 的错误</code>
 <code class="example">                :catch /^Vim\%((\a\+)\)\=:E123:/ " 捕获错误 E123</code>
-<code class="example">                :catch /my-exception/            " 捕获用户例外</code>
+<code class="example">                :catch /my-exception/            " 捕获用户异常</code>
 <code class="example">                :catch /.*/                      " 捕获一切</code>
 <code class="example">                :catch                           " 同 /.*/</code>
 
                         除了 / 以外，也可以用别的字符包围 <code class="special">{pattern}</code>，前提是该
                         字符没有特殊含义 (比如 '|' 或 '"')，而且也不出现在
                         <code class="special">{pattern}</code> 本身之中。 <b class="vimtag"> <a name="E1067">E1067</a> </b>
-                        关于例外，可见  <a href="eval.html#v:exception">v:exception</a> 。另见  <a href="eval.html#throw-variables">throw-variables</a> 。
+                        关于异常，可见  <a href="eval.html#v:exception">v:exception</a> 。另见  <a href="eval.html#throw-variables">throw-variables</a> 。
                         <code class="note">注意</code>: 通过匹配错误信息的 <code class="emphasis">文本内容</code>  (<code class="vim">译者注</code>: 即上述的
-                        <code class="special">{errmsg}</code>) 来让 ":catch" 捕获例外是不可靠的，因为不同的
+                        <code class="special">{errmsg}</code>) 来让 ":catch" 捕获异常是不可靠的，因为不同的
                         locale 下，错误信息文本可能不同。
                          <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，不能使用  <a href="eval.html#:catch">:catch</a>  的
                         短形式。
@@ -3374,14 +3378,14 @@ text...
                         令和其后匹配的  <a href="eval.html#:endtry">:endtry</a>  之间的命令序列。这种执行不仅
                         发生在代码正常运行到  <a href="eval.html#:finally">:finally</a>  的情况，还包括通过
                          <a href="eval.html#:continue">:continue</a> 、 <a href="eval.html#:break">:break</a> 、 <a href="repeat.html#:finish">:finish</a>  或  <a href="userfunc.html#:return">:return</a>  提前结
-                        束，以及由于错误、中断或者例外 (见  <a href="eval.html#:throw">:throw</a> ) 而中途退
+                        束，以及由于错误、中断或者异常 (见  <a href="eval.html#:throw">:throw</a> ) 而中途退
                         出的情况。
 
                          <a href="vim9.html#Vim9">Vim9</a>  脚本里，为了脚本的可读性，也为了避免和  <a href="vim9.html#:final">:final</a> 
                         混淆，不能使用  <a href="eval.html#:finally">:finally</a>  的短形式。
 
                                                 <b class="vimtag"> <a name=":th">:th</a> </b> <b class="vimtag"> <a name=":throw">:throw</a> </b> <b class="vimtag"> <a name="E608">E608</a> </b> <b class="vimtag"> <a name="E1129">E1129</a> </b>
-:th[row] <code class="special">{expr1}</code>        计算 <code class="special">{expr1}</code>，将其值作为例外抛出。
+:th[row] <code class="special">{expr1}</code>        计算 <code class="special">{expr1}</code>，将其值作为异常抛出。
                         在  <a href="eval.html#:try">:try</a>  之后使用 ":throw" 时，跳过之后的命令，直到遇
                         到首个匹配 <code class="special">{expr1}</code> 的  <a href="eval.html#:catch">:catch</a>  为止。
                         当这样的  <a href="eval.html#:catch">:catch</a>  不存在，或者在  <a href="eval.html#:catch">:catch</a>  之后使用
@@ -3392,7 +3396,7 @@ text...
                         到达  <a href="eval.html#:endtry">:endtry</a>  后，会在动态确定的外层  <a href="eval.html#:try">:try</a>  块上 (此
                          <a href="eval.html#:try">:try</a>  可能出现在外部调用的函数中，或者位于正在执行的
                         脚本上)，重复本过程，直到找到一个匹配的  <a href="eval.html#:catch">:catch</a>  为
-                        止。如果该例外从始至终都没有被捕获，终止命令的处理。
+                        止。如果该异常从始至终都没有被捕获，终止命令的处理。
                         示例:
 <code class="example">                :try | throw "oops" | catch /^oo/ | echo "caught" | endtry</code>
                         <code class="note">注意</code>  <code class="badlink">catch</code>  可能需要放在单独一行上，因为某些错误可以
@@ -3403,171 +3407,176 @@ text...
                         短形式。
 
                                                         <b class="vimtag"> <a name=":ec">:ec</a> </b> <b class="vimtag"> <a name=":echo">:echo</a> </b>
-:ec[ho] <code class="special">{expr1}</code> ...     回显每个 <code class="special">{expr1}</code>，以空格分隔。第一个 <code class="special">{expr1}</code> 开启一个
-                        新行。另见  <a href="cmdline.html#:comment">:comment</a> 。
-                        使用 "\n" 来开启新行。使用 "\r" 把光标移到第一列。
-                        使用  <a href="eval.html#:echohl">:echohl</a>  命令的高亮设置。
-                        后面不能跟注释。
+:ec[ho] <code class="special">{expr1}</code> ...     回显每个 <code class="special">{expr1}</code> 项目，项目之间以空格分隔。首个
+                        <code class="special">{expr1}</code> 会开启一个新行。
+                        另见  <a href="cmdline.html#:comment">:comment</a> 。
+                        要开启新行，可用 "\n"。来把光标移动首列，可用 "\r"。
+                        会使用  <a href="eval.html#:echohl">:echohl</a>  命令定义的高亮设置。
+                        此命令不能后跟注释。
                         示例:
 <code class="example">                :echo "'shell' 的值是 " &amp;shell</code>
                                                         <b class="vimtag"> <a name=":echo-redraw">:echo-redraw</a> </b>
-                        后来的重画可能使消息再次消失。因为 Vim 常常会推迟重画
-                        直到整个命令序列执行完为止，这个问题会频繁出现。要避免
-                         <a href="eval.html#:echo">:echo</a>  之前的命令引起它之后的重画 (通常，重画被延迟到
-                        有输入的时候才进行)，使用  <a href="various.html#:redraw">:redraw</a>  命令强制重画。例
-                        如:
+                        此命令之后重画可能会使消息再次消失。因为 Vim 常常会推
+                        迟重画直到一整个命令序列执行完为止，这个问题会频繁出
+                        现。为了避免因为执行  <a href="eval.html#:echo">:echo</a>  之前的命令而导致在它之后
+                        的重画 (通常，重画会延迟到有输入时才发生)，可用
+                         <a href="various.html#:redraw">:redraw</a>  命令强制重画。例如:
 <code class="example">                :new | redraw | echo "这里有一个新窗口"</code>
 
                                                         <b class="vimtag"> <a name=":echon">:echon</a> </b>
-:echon <code class="special">{expr1}</code> ...      回显每个 <code class="special">{expr1}</code>，不附加其它字符。另见  <a href="cmdline.html#:comment">:comment</a> 。
-                        使用  <a href="eval.html#:echohl">:echohl</a>  命令的高亮设置。
-                        后面不能跟注释。
+:echon <code class="special">{expr1}</code> ...      回显每个 <code class="special">{expr1}</code> 项目，不附加其它字符。
+                        另见  <a href="cmdline.html#:comment">:comment</a> 。
+                        会使用  <a href="eval.html#:echohl">:echohl</a>  命令定义的高亮设置。
+                        此命令不能后跟注释。
                         例如:
 <code class="example">                                :echon "'shell' 的值是 " &amp;shell</code>
 
-                        <code class="note">注意</code> 两者的区别:  <a href="eval.html#:echo">:echo</a>  是一个 Vim 命令，而  <code class="badlink">:!echo</code> 
-                        是一个外部的外壳命令:
-<code class="example">                :!echo %                --&gt; filename</code>
-                        ":!" 的参数被扩展，见  <a href="cmdline.html#:_%">:_%</a> 。
-<code class="example">                :!echo "%"              --&gt; filename or "filename"</code>
-                        和前例类似，你是否会看到双引号取决于你的 <a href="options.html#'shell'">'shell'</a>。
-<code class="example">                :echo %                 --&gt; nothing</code>
-                        '%' 不是一个表达式合法的字符。
+                        <code class="note">注意</code> 区分下面两者:  <a href="eval.html#:echo">:echo</a>  是 Vim 命令，而  <code class="badlink">:!echo</code>  是
+                        外部的外壳命令:
+<code class="example">                :!echo %                --&gt; 文件名</code>
+                        会扩展 ":!" 的参数，见  <a href="cmdline.html#:_%">:_%</a> 。
+<code class="example">                :!echo "%"              --&gt; 文件名 或 "文件名"</code>
+                        和前例类似，能否看到双引号取决于 <a href="options.html#'shell'">'shell'</a>。
+<code class="example">                :echo %                 --&gt; 无回显</code>
+                        '%' 不是一个表达式里的合法的字符。
 <code class="example">                :echo "%"               --&gt; %</code>
-                        只会回显 '%' 字符。
-<code class="example">                :echo expand("%")       --&gt; filename</code>
-                        调用 expand() 函数来扩展 '%'。
+                        只回显 '%' 字符。
+<code class="example">                :echo expand("%")       --&gt; 文件名</code>
+                        会调用 expand() 函数来扩展 '%'。
 
                                                         <b class="vimtag"> <a name=":echoh">:echoh</a> </b> <b class="vimtag"> <a name=":echohl">:echohl</a> </b>
-:echoh[l] <code class="special">{name}</code>        让其后的  <a href="eval.html#:echo">:echo</a> 、 <a href="eval.html#:echon">:echon</a>  和  <a href="eval.html#:echomsg">:echomsg</a>  命令使用高亮
-                        组 <code class="special">{name}</code>。也可用于  <a href="builtin.html#input()">input()</a>  的提示。示例:
+:echoh[l] <code class="special">{name}</code>        让其后的  <a href="eval.html#:echo">:echo</a> 、 <a href="eval.html#:echon">:echon</a>  和  <a href="eval.html#:echomsg">:echomsg</a>  命令使用指定
+                        高亮组 <code class="special">{name}</code>。也用于  <a href="builtin.html#input()">input()</a>  的提示。示例:
 <code class="example">                :echohl WarningMsg | echo "Don't panic!" | echohl None</code>
-                        不要忘记把组设回 "None"。不然其后的 echo 都会被高亮。
+                        不要忘记把组设回 "None"。否则，以后所有的 echo 都会使
+                        用此高亮。
 
                                                         <b class="vimtag"> <a name=":echom">:echom</a> </b> <b class="vimtag"> <a name=":echomsg">:echomsg</a> </b>
-:echom[sg] <code class="special">{expr1}</code> ...  回显表达式的结果，将其作为一个真正的消息，并把该消息保
-                        存在  <a href="message.html#message-history">message-history</a>  里。
-                        参数之间加入空格，和  <a href="eval.html#:echo">:echo</a>  类似。但不可显示的字符只
-                        是回显而不会被解释。
-                        这里的分析过程和  <a href="eval.html#:echo">:echo</a>  略有不同，而更像  <a href="eval.html#:execute">:execute</a> 。
-                        所有的表达式都先经计算后进行连接，然后再进行回显。
-                        如果表达式返回的不是数值或字符串，使用 string() 把它转
-                        化为字符串。
-                        应用  <a href="eval.html#:echohl">:echohl</a>  命令的高亮设置。
+:echom[sg] <code class="special">{expr1}</code> ...  将表达式的结果作为一个真正的消息，加以回显，并把该消息
+                        保存到  <a href="message.html#message-history">message-history</a> 。
+                        和  <a href="eval.html#:echo">:echo</a>  类似，参数之间会以空格分隔。但不可显示的字
+                        符只是回显而不会被解释。
+                        这里的解析过程和  <a href="eval.html#:echo">:echo</a>  略有不同，更接近  <a href="eval.html#:execute">:execute</a> 
+                        的工作方式。所有的表达式都会先被求值，再进行连接，最后
+                        统一回显。
+                        如果表达式返回的不是数值或字符串，会使用 string() 把它
+                        转化为字符串。
+                        会使用  <a href="eval.html#:echohl">:echohl</a>  命令定义的高亮设置。
                         示例:
 <code class="example">                :echomsg "It's a Zizzer Zazzer Zuzz, as you can plainly see."</code>
-                         <a href="eval.html#:echo-redraw">:echo-redraw</a>  说明如何避免屏幕重画时消息的消失问题。
+                         <a href="eval.html#:echo-redraw">:echo-redraw</a>  说明如何避免屏幕重画时消息消失的问题。
 
                                         <b class="vimtag"> <a name=":echow">:echow</a> </b> <b class="vimtag"> <a name=":echowin">:echowin</a> </b> <b class="vimtag"> <a name=":echowindow">:echowindow</a> </b>
 :[N]echow[indow] <code class="special">{expr1}</code> ..
-                        类似于  <a href="eval.html#:echomsg">:echomsg</a> ，但如消息弹出窗口可用，在那里显示消
-                        息。会显示三秒后消失，而省去了  <a href="message.html#hit-enter">hit-enter</a>  提示。如果
-                        要在那之前就要隐藏，可在普通模式下按 Esc (否则会响
-                        铃)。如果消失太快了也没关系， <a href="message.html#:messages">:messages</a>  还是可以看到
-                        文本。
-                        <code class="special">[N]</code> 给出时窗口会停留给定的秒数。只有最近一次带计数的
-                         <a href="eval.html#:echowindow">:echowindow</a>  的计数有效，且仅当次有效。
-                        仅当 Vim 编译时加入了 +timer 和 +popupwin 特性时消息窗
-                        口才可用。
+                        和  <a href="eval.html#:echomsg">:echomsg</a>  类同，但如果消息弹出窗口可用，会在那里显
+                        示消息。显示三秒后消失，从而省去了  <a href="message.html#hit-enter">hit-enter</a>  提示。
+                        如果要在那之前就隐藏消息，可在普通模式下按 Esc (否则会
+                        响铃)。如果消失太快了也没关系， <a href="message.html#:messages">:messages</a>  还是可以看
+                        到文本。
+                        <code class="special">[N]</code> 给出时，指定窗口会停留的秒数。只有最近一次带计数的
+                         <a href="eval.html#:echowindow">:echowindow</a>  的计数会生效，且仅当次有效。
+                        {仅当编译时加入了 +timer 和 +popupwin 特性时，消息窗口
+                        才可用}
 
                                                         <b class="vimtag"> <a name=":echoe">:echoe</a> </b> <b class="vimtag"> <a name=":echoerr">:echoerr</a> </b>
-:echoe[rr] <code class="special">{expr1}</code> ...  回显表达式的结果，将其作为一个错误消息，并把该消息保
-                        存在  <a href="message.html#message-history">message-history</a>  里。如果用在脚本或函数里，会加
-                        入行号。
-                        参数之间加入空格的方法和  <a href="eval.html#:echomsg">:echomsg</a>  类似。如果在 try
-                        条件句里使用，该消息会抛出一个错误例外 (见
+:echoe[rr] <code class="special">{expr1}</code> ...  将表达式的结果作为一个错误消息，加以回显，并把该消息保
+                        存到  <a href="message.html#message-history">message-history</a> 。在脚本或函数里使用时，会加入行
+                        号。
+                        和  <a href="eval.html#:echomsg">:echomsg</a>  类似，参数之间会以空格分隔。在 try 条件
+                        句里使用时，该消息会抛出一个错误异常，而非回显错误 (见
                          <a href="eval.html#try-echoerr">try-echoerr</a> )。
                         示例:
-<code class="example">                :echoerr "This script just failed!"</code>
-                        如果你只想要使用  <a href="eval.html#:echohl">:echohl</a>  高亮的消息。
+<code class="example">                :echoerr "此错误刚刚出错了！"</code>
+                        如果只想高亮消息，可用  <a href="eval.html#:echohl">:echohl</a> 。
                         要得到铃声:
 <code class="example">                :exe "normal \&lt;Esc&gt;"</code>
 
 
 :echoc[onsole] <code class="special">{expr1}</code> ...                              <b class="vimtag"> <a name=":echoc">:echoc</a> </b> <b class="vimtag"> <a name=":echoconsole">:echoconsole</a> </b>
-                        用于测试: 类似于  <a href="eval.html#:echomsg">:echomsg</a>  但在 GUI 中运行且原来从终
-                        端启动时，把文本写到标准输出。
+                        用于测试: 和  <a href="eval.html#:echomsg">:echomsg</a>  类同，但在 GUI 中运行且原来从
+                        终端启动时，会把文本写到终端的标准输出。
 
                                                         <b class="vimtag"> <a name=":eval">:eval</a> </b>
 :eval <code class="special">{expr}</code>            计算 <code class="special">{expr}</code> 并忽略其返回值。例如:
 <code class="example">                                :eval Getlist()-&gt;Filter()-&gt;append('$')</code>
 <code class="example"></code>
-                        因为不使用返回值，表达式假定有副作用。此例中
-                         <a href="builtin.html#append()">append()</a>  调用会在缓冲区后附加列表中的文本。它类似于
-                         <a href="userfunc.html#:call">:call</a> ，但可用于所有表达式。
-                         <a href="vim9.html#Vim9">Vim9</a>  脚本里没有副作用的表达式会报错 <b class="vimtag"> <a name="E1207">E1207</a> </b> 。这有助
-                        于发现问题。
+                        因为不使用返回值，表达式会被假定有副作用。此例中，
+                         <a href="builtin.html#append()">append()</a>  调用会在缓冲区末尾附加列表中的文本。此命令
+                        和  <a href="userfunc.html#:call">:call</a>  类似，但可用于所有的表达式。
+                        在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，没有副作用的表达式会报错 <b class="vimtag"> <a name="E1207">E1207</a> </b> 。
+                        这有助于及早发现问题。
 
-                        此命令本可缩短为  <code class="badlink">:ev</code>  或  <code class="badlink">:eva</code> ，但不易记，所以不提
-                        供。
+                        此命令本可以被缩短为  <code class="badlink">:ev</code>  或  <code class="badlink">:eva</code> ，但不易记，所以不
+                        予提供。
 
-                        此命令不能后跟 "|" 加其它命令，因为 "|" 视为表达式的一
-                        部分。
+                        此命令不能后跟 "|" 和其它命令，因为 "|" 会被视为表达式
+                        的一部分。
 
 
                                                         <b class="vimtag"> <a name=":exe">:exe</a> </b> <b class="vimtag"> <a name=":execute">:execute</a> </b>
-:exe[cute] <code class="special">{expr1}</code> ...  计算 <code class="special">{expr1}</code>，返回的字符串作为 Ex 命令执行。
-                        多个参数用空格连接。如果不想有额外的空格，使用 ".." 操
-                        作符来连接字符串使之成为一个参数。
-                        <code class="special">{expr1}</code> 用作被处理的命令，命令行编辑的键不会被识别。
-                        后面不能跟注释。
+:exe[cute] <code class="special">{expr1}</code> ...  计算 <code class="special">{expr1}</code>，返回的字符串会被作为 Ex 命令来执行。
+                        多个参数之间会用空格连接。如果不想有额外的空格，可用
+                        ".." 操作符来连接字符串，使之成为单个参数。
+                        <code class="special">{expr1}</code> 被视为已经过处理的命令，所以不会识别其中会在命
+                        令行上进行编辑的键。
+                        此命令不能后跟注释。
                         示例:
 <code class="example">                :execute "buffer" nextbuf</code>
 <code class="example">                :execute "normal" count .. "w"</code>
 
-                        ":execute" 可以用来把命令附加到不能接受 '|' 的命令后
-                        面。比如:
+                        ":execute" 可用于向那些不能直接后跟 '|' 的命令后附加其
+                        他命令。例如:
 <code class="example">                :execute '!ls' | echo "theend"</code>
 <code class="example"></code>
-                        ":execute" 也是一个避免在 Vim 脚本里为 ":normal" 命令
-                        输入控制字符的好方法:
+                        ":execute" 也是在 Vim 脚本里避免在 ":normal" 命令中直
+                        接输入控制字符的一个好方法:
 <code class="example">                :execute "normal ixxx\&lt;Esc&gt;"</code>
-                        这里给出一个 <code class="special">&lt;Esc&gt;</code> 字符，见  <a href="eval.html#expr-string">expr-string</a> 。
+                        这里需要给出一个 <code class="special">&lt;Esc&gt;</code> 字符，见  <a href="eval.html#expr-string">expr-string</a> 。
 
-                        要谨慎对待文件名中特殊字符的正确转义。 <a href="builtin.html#fnameescape()">fnameescape()</a> 
-                        可用于 Vim 命令， <a href="builtin.html#shellescape()">shellescape()</a>  可用于  <a href="various.html#:!">:!</a>  命令。示
-                        例:
+                        要谨慎处理文件名中特殊字符，确保它们得到正确转义。
+                         <a href="builtin.html#fnameescape()">fnameescape()</a>  可用于 Vim 命令，而  <a href="builtin.html#shellescape()">shellescape()</a>  可
+                        用于  <a href="various.html#:!">:!</a>  命令。示例:
 <code class="example">                :execute "e " .. fnameescape(filename)</code>
 <code class="example">                :execute "!ls " .. shellescape(filename, 1)</code>
 
-                        <code class="note">注意</code>: 执行的字符串可以是任何命令行，但开始或结束一个
-                        "if"、"while" 和 "for" 命令不能保证没有问题，因为跳过
-                        命令时，不执行 ":execute"，Vim 就不能准确找到块开始和
-                        结束的地方。另外，"break" 和 "continue" 不应出现在
-                        ":execute" 内部。
-                        下例不能工作，因为 ":execute" 不被执行，Vim 看不见
-                        ":while"，找到 ":endwhile" 时就报错:
+                        <code class="note">注意</code>: 待执行的字符串可以是任何命令行，但使用 "if"、
+                        "while" 和 "for" 块的开始或结束命令时，并不能保证其执
+                        行不出问题，因为如果":execute" 语句被跳过，不执行其中
+                        的命令，Vim 就不能准确找到该块的开始和结束的地方。另
+                        外，"break" 和 "continue" 也不应出现在 ":execute" 里。
+                        下例不能工作，因为 ":execute" 不会被执行，所以 Vim 看
+                        不见 ":while"，遇见 ":endwhile" 时，就会报错:
 <code class="example">                :if 0</code>
 <code class="example">                : execute 'while i &gt; 5'</code>
 <code class="example">                :  echo "test"</code>
 <code class="example">                : endwhile</code>
 <code class="example">                :endif</code>
 
-                        但如果执行的字符串里有完整的 "while" 和 "if" 命令就没
-                        有问题:
+                        执行的字符串里包含完整的 "while" 和 "if" 命令块时，就
+                        没有问题:
 <code class="example">                :execute 'while i &lt; 5 | echo i | let i = i + 1 | endwhile'</code>
 
 
                                                         <b class="vimtag"> <a name=":exe-comment">:exe-comment</a> </b>
                         ":execute"、":echo" 和 ":echon" 后面不能直接跟注释。
-                        因它们把 '"' 看成字符串的开始。但你可以把注释加到 '|'
+                        因它们会把 '"' 看成字符串的开始。但可以把注释加到 '|'
                         后面。例如:
 <code class="example">                :echo "foo" | "这是一个注释</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
-<h4>8. 例外处理                                             <b class="vimtag"> <a name="exception-handling">exception-handling</a> </b></h4>
-Vim 脚本语言包含了例外处理特性。本节解释如何在 Vim 脚本里应用该机制。
+<h4>8. 异常处理                                             <b class="vimtag"> <a name="exception-handling">exception-handling</a> </b></h4>
+Vim 脚本语言包含了异常处理特性。本节解释如何在 Vim 脚本里应用该机制。
 
-Vim 在出错或者中断的时候可以抛出例外。见  <a href="eval.html#catch-errors">catch-errors</a>  和  <a href="eval.html#catch-interrupt">catch-interrupt</a> 。
-你也可以显式地使用 ":throw" 命令抛出例外。见  <a href="eval.html#throw-catch">throw-catch</a> 。
+Vim 在出错或者中断的时候可以抛出异常。见  <a href="eval.html#catch-errors">catch-errors</a>  和  <a href="eval.html#catch-interrupt">catch-interrupt</a> 。
+也可以显式地使用 ":throw" 命令来抛出异常。见  <a href="eval.html#throw-catch">throw-catch</a> 。
 
 
 TRY 条 件 句                                            <b class="vimtag"> <a name="try-conditionals">try-conditionals</a> </b>
 
-例外可以被捕获或者用来激发清理代码的运行。你可以使用 try 条件句来指定 catch 子
-句 (捕获例外) 和/或 finally 子句 (执行清理)。
-   try 条件句以  <a href="eval.html#:try">:try</a>  命令开始，以匹配的  <a href="eval.html#:endtry">:endtry</a>  命令结束。两者之间，你可以
-使用  <a href="eval.html#:catch">:catch</a>  命令开始 catch 子句，或者用  <a href="eval.html#:finally">:finally</a>  命令开始 finally 子句。
+异常可以被捕获，或者用来触发清理代码的运行。为些，可用 try 条件句来指定 catch
+子句 (捕获异常) 和/或 finally 子句 (执行清理)。
+   try 条件句以  <a href="eval.html#:try">:try</a>  命令开始，以匹配的  <a href="eval.html#:endtry">:endtry</a>  命令结束。两者之间，可用
+ <a href="eval.html#:catch">:catch</a>  命令开启 catch 子句，或用  <a href="eval.html#:finally">:finally</a>  命令开启 finally 子句。
 catch 子句可有零到多个，但 finally 子句至多只有一个，且它之后不能再有 catch 子
 句。catch 子句和 finally 子句之前的行称为 try 块。
 
@@ -3589,84 +3598,84 @@ catch 子句可有零到多个，但 finally 子句至多只有一个，且它�
      :  ...
      :endtry
 
-try 子句允许观察代码里是否有例外，并采取合适的行动。try 块里的例外可能被捕获。
-try 块和 catch 子句里的例外可能引起清理动作。
-   如果 try 块的执行过程中没有抛出例外，控制转移到 finally 子句。在它执行后，
-脚本从 ":endtry" 之后的行继续。
-   如果 try 块的执行过程中抛出了例外，该 try 块其余的行被跳过。例外和 ":catch"
-命令的模式参数一一比较。第一个匹配的 ":catch" 之后的 catch 子句被采用，其余的
-catch 子句则不会执行。catch 子句在下一个最早遇到的 ":catch"、":finally" 或
-":endtry" 命令结束。这时，finally 子句 (如果有的话) 被执行。当遇到 ":endtry"
-的时候，脚本从后面的行继续，一如往常。
-   如果 try 块抛出的例外不能匹配任何 ":catch" 命令的模式，该例外不能由本 try
-条件句捕获，因而不会执行任何的 catch 子句。只有 finally 子句，如果有的话，被采
-用。该例外在 finally 子句的执行时被暂时搁置。在 ":endtry" 之后才继续。这样，
-":endtry" 之后的命令不会被执行，而该例外可以在别的地方捕获，见  <a href="eval.html#try-nesting">try-nesting</a> 。
-   如果在 catch 子句的执行过程中抛出了另一个错误，catch 子句的其余部分不再执
-行。新的例外不会和试图和同一个 try 条件句的任何 ":catch" 命令的模式匹配，因而
-也不会执行任何它的 catch 子句。不过，如果有 finally 子句，它还是会被执行，而在
-它的执行过程中暂时搁置新的例外。":endtry" 之后的命令也不会执行。而新的例外仍可
-能在别的地方捕获，见  <a href="eval.html#try-nesting">try-nesting</a> 。
-   如果在 finally 子句 (如果有的话) 的执行过程中抛出了另一个错误，finally 子句
-的其余部分不再执行。如果 finally 子句是因为 try 块或者某个 catch 子句里产生的
-例外引起的，原先的 (被暂时搁置的) 例外被放弃。":endtry" 之后的命令也不会执行。
-而 finally 子句的这个例外被传播，而可以在别的地方捕获，见  <a href="eval.html#try-nesting">try-nesting</a> 。
+try 子句会观察代码里是否有异常，并采取合适的行动。try 块里的异常可被捕获。try
+块和 catch 子句里的异常还可以触发清理动作。
+   如果 try 块的执行过程中没有抛出任何异常，控制会转移到 finally 子句 (如有)。
+在它执行后，脚本从 ":endtry" 之后的行继续。
+   如果 try 块的执行过程中抛出了异常，会跳过该 try 块里其余的行。然后将此异常
+和 ":catch" 命令的模式参数一一比较。第一个匹配的 ":catch" 对应的 catch 子句会
+被采用，其余的 catch 子句则不会被执行。catch 子句会在下一个最早遇到的
+":catch"、":finally" 或 ":endtry" 命令结束。此时，执行 finally 子句 (如有)。遇
+到 ":endtry" 时，脚本会从之后的行正常继续。
+   如果 try 块抛出的异常不能匹配任何 ":catch" 命令的模式，该异常无法由本 try
+条件句捕获，因而不会执行任何的 catch 子句。只执行 finally 子句 (如有)。
+该异常在 finally 子句的执行期间被暂时搁置。到达 ":endtry" 时恢复。这意味着
+":endtry" 之后的命令不会被执行，而该异常可能在别的地方被捕获，见
+ <a href="eval.html#try-nesting">try-nesting</a> 。
+   如果在 catch 子句的执行过程中抛出了另一个异常，catch 子句的其余部分不再执
+行。新异常不会试图和同一个 try 条件句的任何 ":catch" 命令的模式匹配，因而也不
+会执行任何其它的 catch 子句。不过，如果有 finally 子句，它还是会被执行，而在其
+执行过程中会暂时搁置新异常。":endtry" 之后的命令也不会执行。而新异常仍可能在别
+的地方捕获，见  <a href="eval.html#try-nesting">try-nesting</a> 。
+   如果在 finally 子句 (如有) 的执行过程中抛出了另一个异常，finally 子句的其余
+部分不再执行。如果 finally 子句是因为 try 块或者某个 catch 子句里产生的异常引
+起的，原先的 (被暂时搁置的) 异常被放弃。":endtry" 之后的命令也不会执行。而
+finally 子句的这个新异常会被传播，而可能在别的地方被捕获，见  <a href="eval.html#try-nesting">try-nesting</a> 。
 
-在 ":while" 循环包含的完整的 try 条件句里的 try 块或者某个 catch 子句里遇到
-":break" 或 ":continue" 时，或者在函数或者被执行的脚本里的 try 条件句里的 try
-块或者某个 catch 子句里执行 ":return" (函数) 或者 ":finish" (脚本) 的时候，也
-会执行 finally 子句。":break"、":continue"、":return" 或者 ":finish" 在
-finally 子句的执行时被暂停，而在遇到 ":endtry" 时继续。不过，如果在执行
-finally 子句时抛出例外，它们都被抛弃。
-   在 ":while" 循环包含的完整的 try 条件句里的 finally 子句里遇到 ":break" 或
-":continue" 时，或者在函数或者被执行的脚本里的 finally 子句里执行 ":return"
-(函数) 或者 ":finish" (脚本) 的时候，finally 子句的其余部分被跳过，而
-":break"、":continue"、":return" 或 ":finish" 会如常继续执行。如果 finally 的
-执行是因为例外或者早先的 try 块或者 catch 子句的 ":break"、":continue"、
-":return" 或者 ":finish" 引起的，暂停的例外或者命令被放弃。
+在 ":while" 循环里如果包含完整的 try 条件句。而在其中的 try 块或者某个 catch
+子句里遇到 ":break" 或 ":continue" 时，或者在函数或者被执行的脚本里，在包含的
+try 条件句里的 try 块或者某个 catch 子句里遇到 ":return" (函数) 或者 ":finish"
+(脚本) 时，也会执行 finally 子句。":break"、":continue"、":return" 或
+":finish" 在 finally 子句的执行期间都会被暂停，而在到达 ":endtry" 时恢复。不
+过，如果在执行 finally 子句时有异常抛出，它们都会被抛弃。
+   以上情况下，如果这四个命令出现在 finally 子句而不是 try 块或者 catch 子句，
+finally 子句的其余部分会被跳过，然后这四个命令会如常继续执行。如果 finally 子
+句的执行是因为异常或者早先的 try 块或者 catch 子句里出现的四个命令之一 (和在
+finally 里出现的未必是同一个命令) 引起的，暂停的异常或者命令会被放弃。
 
 例子可见  <a href="eval.html#throw-catch">throw-catch</a>  和  <a href="eval.html#try-finally">try-finally</a> 。
 
 
 TRY 条 件 句 的 嵌 套                                   <b class="vimtag"> <a name="try-nesting">try-nesting</a> </b>
 
-try 条件句可以任意嵌套。也就是说，完整的 try 条件句可以在另一个 try 条件句的
-try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能捕获
-它的 try 块抛出的例外，或者在它的某个 catch 子句后者 finally 子句里抛出新的例
-外的话，那么根据上述规则由外层的 try 条件句继续检查是否能捕获该例外。如果内层
-try 条件句在外层 try 条件句的 try 块里，检查外层的 catch 子句，不然只有
-finally 子句会被执行。对嵌套的处理而言，内层 try 条件句是直接包含在外层里面，
-还是外层执行了脚本或者调用了函数，而后者又包含了内层 try 条件句，无关紧要。
+try 条件句可以任意嵌套。也就是说， 一个完整的 try 条件句可以在另一个 try 条件
+句的 try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能
+捕获它的 try 块抛出的异常，或者在它的某个 catch 子句或者 finally 子句里抛出新
+的异常的话，那么根据上述规则，由外层的 try 条件句继续检查是否能捕获该异常。如
+果内层 try 条件句在外层 try 条件句的 try 块里，会检查外层的 catch 子句，不然只
+会执行外层的 finally 子句。不管内层 try 条件句是直接包含在外层里面，还是由外层
+执行脚本或者调用了函数，而后者再包含内层 try 条件句，对嵌套 try 的处理方式并无
+区别。
 
-如果没有活动的 try 条件句能捕获某个例外，只有它们的 finally 子句会执行。最后，
-脚本结束它的处理。如果是 ":throw" 命令显式地抛出的未捕获的例外，显示错误信息。
-对于 Vim 隐含抛出的未捕获的错误或者中断例外，错误信息或者中断信息也会像平常一
-样显示。
+如果没有任何活跃的 try 条件句能捕获某个异常，则只执行这些 try 条件句的 finally
+子句。最后，脚本处理被中止。对于 ":throw" 命令显式抛出的未捕获的异常，会显示错
+误信息。而对于 Vim 隐含抛出的未捕获的错误或者中断异常，也会像平常一样显示错误
+或者中断信息。
 
 例子可见  <a href="eval.html#throw-catch">throw-catch</a> 。
 
 
-检 查 例 外 处 理 代 码                                 <b class="vimtag"> <a name="except-examine">except-examine</a> </b>
+检 查 异 常 处 理 代 码                                 <b class="vimtag"> <a name="except-examine">except-examine</a> </b>
 
-例外处理的代码的编写可能很麻烦。如果你不知道发生了什么，把 <a href="options.html#'verbose'">'verbose'</a> 设为 13，
-或者在执行脚本文件时使用 ":13verbose" 命令修饰符。这样，你能看到什么时候例外被
-抛出、放弃、捕获、或者最终处理。如果详细程度大于等于 14，finally 子句暂停什么
-也会显示。这些信息在调试模式里也会给出 (见  <a href="repeat.html#debug-scripts">debug-scripts</a> )。
+异常处理代码可能会变得很棘手。如果不确定会发生了什么，可将 <a href="options.html#'verbose'">'verbose'</a> 设为 13，
+或者在执行脚本文件时使用 ":13verbose" 命令修饰符。这样就能看到异常在什么时候被
+抛出、放弃、捕获、或者被最终处理。如果详细度大于等于 14，也会显示 finally 子句
+暂停执行的内容。这些信息在调试模式里也会给出 (见  <a href="repeat.html#debug-scripts">debug-scripts</a> )。
 
 
-抛 出 和 捕 获 例 外                                    <b class="vimtag"> <a name="throw-catch">throw-catch</a> </b>
+抛 出 和 捕 获 异 常                                    <b class="vimtag"> <a name="throw-catch">throw-catch</a> </b>
 
-你可以抛出任何数值或者字符串作为例外。使用  <a href="eval.html#:throw">:throw</a>  命令然后把要抛出的值作为参
-数传入:
+可以抛出任何数值或者字符串，作为异常值。使用  <a href="eval.html#:throw">:throw</a>  命令，然后把要抛出的异常
+值作为参数传入:
 <code class="example">        :throw 4711</code>
 <code class="example">        :throw "string"</code>
                                                         <b class="vimtag"> <a name="throw-expression">throw-expression</a> </b>
-你可以指定表达式参数。该表达式先进行计算，然后抛出其结果:
+也可以指定表达式作为参数。该表达式会先进行计算，然后抛出其结果:
 <code class="example">        :throw 4705 + strlen("string")</code>
 <code class="example">        :throw strpart("strings", 0, 6)</code>
 <code class="example"></code>
-在计算 ":throw" 命令的参数的时候，也可能会抛出例外。除非它被捕获，不然表达式的
-计算会被放弃。":throw" 命令这时不会抛出新的例外。
+在计算 ":throw" 命令的参数时，也可能会抛出异常。除非它在表达式内部就被捕获，不
+然表达式的计算会被放弃。":throw" 命令这时不会抛出新的异常。
    例如:
 <code class="example"></code>
 <code class="example">        :function! Foo(arg)</code>
@@ -3684,12 +3693,12 @@ finally 子句会被执行。对嵌套的处理而言，内层 try 条件句是�
 <code class="example">        :</code>
 <code class="example">        :throw Foo("arrgh") + Bar()</code>
 <code class="example"></code>
-这里抛出了 "arrgh"，而不会显示 "in Bar"，因为 Bar() 没有执行。
+这里会抛出 "arrgh" 异常，而不会显示 "in Bar"，因为 Bar() 并没有执行。
 <code class="example">        :throw Foo("foo") + Bar()</code>
-却显示 "in Bar" 并且抛出 4711。
+则会显示 "in Bar" 并且抛出 4711 异常。
 
-别的接受表达式作为参数的命令也可能因为表达式计算过程的 (未捕获的) 例外而被放
-弃。例外这时被传播给该命令的调用者。
+其他接受表达式作为参数的命令也可能因为表达式计算过程的 (未捕获的) 异常而被放
+弃。此时，会向该命令的调用者传播该异常。
    例如:
 <code class="example"></code>
 <code class="example">        :if Foo("arrgh")</code>
@@ -3701,27 +3710,27 @@ finally 子句会被执行。对嵌套的处理而言，内层 try 条件句是�
 这里 "then" 和 "else" 都不会显示。
 
                                                         <b class="vimtag"> <a name="catch-order">catch-order</a> </b>
-try 条件句里的例外可以用一个或多个  <a href="eval.html#:catch">:catch</a>  命令捕获，见  <a href="eval.html#try-conditionals">try-conditionals</a> 。
-每个 ":catch" 命令可以捕获的值通过模式参数指定。捕获匹配的例外时，执行其后的
-catch 子句。
+try 条件句里的异常可以用一个或多个  <a href="eval.html#:catch">:catch</a>  命令捕获，见  <a href="eval.html#try-conditionals">try-conditionals</a> 。
+每个 ":catch" 命令通过其模式参数指定可捕获的异常值。匹配的异常被捕获后，执行其
+后的 catch 子句。
    例如:
 <code class="example"></code>
 <code class="example">        :function! Foo(value)</code>
 <code class="example">        :  try</code>
 <code class="example">        :    throw a:value</code>
 <code class="example">        :  catch /^\d\+$/</code>
-<code class="example">        :    echo "Number thrown"</code>
+<code class="example">        :    echo "捕获数值"</code>
 <code class="example">        :  catch /.*/</code>
-<code class="example">        :    echo "String thrown"</code>
+<code class="example">        :    echo "捕获字符串"</code>
 <code class="example">        :  endtry</code>
 <code class="example">        :endfunction</code>
 <code class="example">        :</code>
 <code class="example">        :call Foo(0x1267)</code>
 <code class="example">        :call Foo('string')</code>
 <code class="example"></code>
-第一个 Foo() 的调用显示 "Number thrown"，第二个 "String thrown"。
-按照 ":catch" 命令本身的顺序，依次匹配例外。只用第一个成功匹配。所以，你应该把
-更专门的 ":catch" 放在前面。下面的顺序并不合理:
+第一个 Foo() 的调用显示 "捕获数值"，第二个会 "捕获字符串"。
+按照 ":catch" 命令出现的顺序，依次对异常进行匹配。只使用第一个成功匹配。所以，
+应该把更专门的 ":catch" 放在前面。下面的顺序并不合理:
 <code class="example"></code>
 <code class="example">        :  catch /.*/</code>
 <code class="example">        :    echo "String thrown"</code>
@@ -3731,21 +3740,22 @@ catch 子句。
 这里，第一个 ":catch" 总是会被匹配，所以第二个子句永远不可能被采用。
 
                                                         <b class="vimtag"> <a name="throw-variables">throw-variables</a> </b>
-如果你使用通用的模式捕获到例外，可以通过变量  <a href="eval.html#v:exception">v:exception</a>  得到准确的例外值:
+使用通用的模式捕获到异常时，要得到具体的异常值，可以通过变量  <a href="eval.html#v:exception">v:exception</a> :
 <code class="example"></code>
 <code class="example">        :  catch /^\d\+$/</code>
-<code class="example">        :    echo "Number thrown.  Value is" v:exception</code>
+<code class="example">        :    echo "捕获到数值。值为 " v:exception</code>
 <code class="example"></code>
-你也许会对在什么地方抛出例外也感兴趣。它被保存在  <a href="eval.html#v:throwpoint">v:throwpoint</a>  里。可用
- <a href="eval.html#v:stacktrace">v:stacktrace</a>  找到栈追踪。<code class="note">注意</code> "v:exception"、"v:stacktrace" 和
-"v:throwpoint" 可用于最近捕获的例外，只要该例外还没有完成处理。
+要知道在什么位置抛出异常，可用  <a href="eval.html#v:throwpoint">v:throwpoint</a> 。要找到栈追踪，可用
+ <a href="eval.html#v:stacktrace">v:stacktrace</a> 。
+<code class="note">注意</code> "v:exception"、"v:stacktrace" 和 "v:throwpoint" 仅当最近捕获的异常尚未完
+成处理时有效。
    例如:
 <code class="example"></code>
 <code class="example">        :function! Caught()</code>
 <code class="example">        :  if v:exception != ""</code>
-<code class="example">        :    echo 'Caught "' .. v:exception .. '" in ' .. v:throwpoint</code>
+<code class="example">        :    echo '捕获到 "' .. v:exception .. '"，位于 ' .. v:throwpoint</code>
 <code class="example">        :  else</code>
-<code class="example">        :    echo 'Nothing caught'</code>
+<code class="example">        :    echo '未捕获到任何异常'</code>
 <code class="example">        :  endif</code>
 <code class="example">        :endfunction</code>
 <code class="example">        :</code>
@@ -3772,12 +3782,12 @@ catch 子句。
 <code class="example"></code>
 会显示
 <code class="example"></code>
-<code class="example">        Nothing caught</code>
-<code class="example">        Caught "4711" in function Foo, line 4</code>
-<code class="example">        Caught "oops" in function Foo, line 10</code>
-<code class="example">        Nothing caught</code>
+<code class="example">        未捕获到任何异常</code>
+<code class="example">        捕获到 "4711"，位于 function Foo, 第 4 行</code>
+<code class="example">        捕获到 "oops"，位于 function Foo, 第 10 行</code>
+<code class="example">        未捕获到任何异常</code>
 <code class="example"></code>
-更实际的例子:  下面的命令 ":LineNumber" 显示调用它时，脚本或者函数里的行号:
+更实际的例子:  下面的命令 ":LineNumber" 会显示调用者在脚本或者函数中的行号:
 <code class="example"></code>
 <code class="example">        :function! LineNumber()</code>
 <code class="example">        :    return substitute(v:throwpoint, '.*\D\(\d\+\).*', '\1', "")</code>
@@ -3785,7 +3795,7 @@ catch 子句。
 <code class="example">        :command! LineNumber try | throw "" | catch | echo LineNumber() | endtry</code>
 
                                                         <b class="vimtag"> <a name="try-nested">try-nested</a> </b>
-try 条件句没有捕获的例外可以在包围它的 try 条件句中捕获:
+没有被一个 try 条件句捕获的异常可以被包围它的外层 try 条件句捕获:
 <code class="example"></code>
 <code class="example">        :try</code>
 <code class="example">        :  try</code>
@@ -3799,11 +3809,11 @@ try 条件句没有捕获的例外可以在包围它的 try 条件句中捕获:
 <code class="example">        :  echo "foo"</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-内层的 try 条件句没有捕获例外，只执行了 finally 子句。例外在外层得到捕获。本例
-显示 "inner finally" 然后是 "foo"。
+在此例中，内层 try 条件句未能捕获异常，只执行了 finally 子句。异常则在外层被捕
+获。本例会先显示 "inner finally" 然后是 "foo"。
 
                                                         <b class="vimtag"> <a name="throw-from-catch">throw-from-catch</a> </b>
-你可以捕获某例外，然后抛出另一个。它在该 catch 子句之外捕获:
+可以捕获一个异常的同时抛出另一个。后者将会在该 catch 子句之外被捕获:
 <code class="example"></code>
 <code class="example">        :function! Foo()</code>
 <code class="example">        :  throw "foo"</code>
@@ -3813,7 +3823,7 @@ try 条件句没有捕获的例外可以在包围它的 try 条件句中捕获:
 <code class="example">        :  try</code>
 <code class="example">        :    call Foo()</code>
 <code class="example">        :  catch /foo/</code>
-<code class="example">        :    echo "Caught foo, throw bar"</code>
+<code class="example">        :    echo "捕获到 foo，抛出 bar"</code>
 <code class="example">        :    throw "bar"</code>
 <code class="example">        :  endtry</code>
 <code class="example">        :endfunction</code>
@@ -3821,26 +3831,27 @@ try 条件句没有捕获的例外可以在包围它的 try 条件句中捕获:
 <code class="example">        :try</code>
 <code class="example">        :  call Bar()</code>
 <code class="example">        :catch /.*/</code>
-<code class="example">        :  echo "Caught" v:exception</code>
+<code class="example">        :  echo "捕获到" v:exception</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-显示 "Caught foo, throw bar" 然后是 "Caught bar"。
+会显示 "捕获到 foo，抛出 bar" 然后是 "捕获到 bar"。
 
                                                         <b class="vimtag"> <a name="rethrow">rethrow</a> </b>
-Vim 脚本语言没有真正的 rethrow。但可以抛出 "v:exception" 来代替:
+Vim 脚本语言没有真正的 rethrow。但可以用重新抛出 "v:exception" 来模拟:
 <code class="example"></code>
 <code class="example">        :function! Bar()</code>
 <code class="example">        :  try</code>
 <code class="example">        :    call Foo()</code>
 <code class="example">        :  catch /.*/</code>
-<code class="example">        :    echo "Rethrow" v:exception</code>
+<code class="example">        :    echo "重新抛出" v:exception</code>
 <code class="example">        :    throw v:exception</code>
 <code class="example">        :  endtry</code>
 <code class="example">        :endfunction</code>
                                                         <b class="vimtag"> <a name="try-echoerr">try-echoerr</a> </b>
-<code class="note">注意</code> 这个方法不能用来 "rethrow" Vim 错误或者中断例外，因为不能伪造 Vim 的内部
-例外。试图这么做会产生一个错误例外。你应该抛出自己的例外来说明这种情形。如果你
-想产生 Vim 的错误例外并包含原来的错误例外的值，可以使用  <a href="eval.html#:echoerr">:echoerr</a>  命令:
+<code class="note">注意</code> 这个方法不能用来 "rethrow" Vim 错误或者中断异常，因为用户无法伪造 Vim 的
+内部异常。试图这么做会产生一个错误异常。正确的方法是抛出自己的异常，用于表明发
+生了这种情况。如果希望产生 Vim 的错误异常，并包含原来错误的异常值，可以使用
+ <a href="eval.html#:echoerr">:echoerr</a>  命令:
 <code class="example"></code>
 <code class="example">        :try</code>
 <code class="example">        :  try</code>
@@ -3854,17 +3865,18 @@ Vim 脚本语言没有真正的 rethrow。但可以抛出 "v:exception" 来代�
 <code class="example"></code>
 本代码会显示
 
-<code class="section">        Vim(echoerr):Vim:E492: Not an editor command:   asdf </code>
+<code class="section">        Vim(echoerr):Vim:E492: 不是编辑器的命令:   asdf </code>
 
 
 清 理 代 码                                             <b class="vimtag"> <a name="try-finally">try-finally</a> </b>
 
-脚本经常需要改变全局设定然后结束时恢复之。不过，如果用户按了 <code class="keystroke">CTRL-C</code> 中止脚本，
-这些设定会处于不一致的状态。如果你处于某脚本的开发阶段而发生了错误或者你显式地
-抛出例外而没有试图捕获之，也会有相同的情况。用带有 finally 子句的 try 条件句，
-可以恢复设置，从而解决这个问题。可以保证无论是正常的控制流、出错或者显式的例外
-":throw"、还是被中断，都会执行 finally 子句 (<code class="note">注意</code> try 条件句的错误和中断被转换
-成例外。如果没有捕获，它们在 finally 子句执行完之后会终止脚本。)
+脚本经常需要临时改变全局设定，然后在结束时恢复原值。不过，如果用户按了 <code class="keystroke">CTRL-C</code>
+中止脚本，这些设定就会处于不一致的状态。在脚本的开发阶段，如果发生了错误或显式
+抛出的异常未被捕获，也会出现相同的情况。要解决这个问题，可用带有 finally 子句
+的 try 条件句，其中的 finally 子句进行设置恢复操作。系统保证无论是正常控制流、
+出错、显式 ":throw" 的异常还是中断，都会执行 finally 子句 (<code class="note">注意</code> try 条件句内部
+出现的错误和中断会先被转换成异常。这些异常如果没有被捕获，在 finally 子句执行
+完毕后，脚本会被终止)。
 例如:
 <code class="example"></code>
 <code class="example">        :try</code>
@@ -3878,11 +3890,11 @@ Vim 脚本语言没有真正的 rethrow。但可以抛出 "v:exception" 来代�
 <code class="example">        :  unlet s:saved_ts</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-无论任何函数还是脚本的一部分，只要它需要修改全局设置，而在失败或者成功退出该函
-数或者脚本部分时需要恢复这些设置，就应该在本地应用本方法。
+在函数或脚本的某个部分中，如果需要临时修改全局设置，并且希望在操作完成后，无论
+是失败还是成功退出都能恢复这些设置，建议在该局部使用本方法。
 
                                                         <b class="vimtag"> <a name="break-finally">break-finally</a> </b>
-清理代码也适用于 ":continue"、":break"、":return" 或 ":finish" 退出的 try 块或
+代码清理也适用于 ":continue"、":break"、":return" 或 ":finish" 退出的 try 块或
 catch 子句。
    例如:
 <code class="example"></code>
@@ -3890,47 +3902,47 @@ catch 子句。
 <code class="example">        :while 1</code>
 <code class="example">        :  try</code>
 <code class="example">        :    if first</code>
-<code class="example">        :      echo "first"</code>
+<code class="example">        :      echo "首次执行"</code>
 <code class="example">        :      let first = 0</code>
 <code class="example">        :      continue</code>
 <code class="example">        :    else</code>
-<code class="example">        :      throw "second"</code>
+<code class="example">        :      throw "再次执行"</code>
 <code class="example">        :    endif</code>
 <code class="example">        :  catch /.*/</code>
 <code class="example">        :    echo v:exception</code>
 <code class="example">        :    break</code>
 <code class="example">        :  finally</code>
-<code class="example">        :    echo "cleanup"</code>
+<code class="example">        :    echo "清理中"</code>
 <code class="example">        :  endtry</code>
-<code class="example">        :  echo "still in while"</code>
+<code class="example">        :  echo "还在 while 里"</code>
 <code class="example">        :endwhile</code>
-<code class="example">        :echo "end"</code>
+<code class="example">        :echo "结束"</code>
 <code class="example"></code>
-会显示 "first"、"cleanup"、"second"、"cleanup" 和 "end"。
+会依次显示 "首次执行"、"清理中"、"再次执行"、"清理中" 和 "结束"。
 <code class="example"></code>
 <code class="example">        :function! Foo()</code>
 <code class="example">        :  try</code>
 <code class="example">        :    return 4711</code>
 <code class="example">        :  finally</code>
-<code class="example">        :    echo "cleanup\n"</code>
+<code class="example">        :    echo "清理中\n"</code>
 <code class="example">        :  endtry</code>
-<code class="example">        :  echo "Foo still active"</code>
+<code class="example">        :  echo "Foo 仍然在活动"</code>
 <code class="example">        :endfunction</code>
 <code class="example">        :</code>
-<code class="example">        :echo Foo() "returned by Foo"</code>
+<code class="example">        :echo Foo() "由 Foo 返回"</code>
 <code class="example"></code>
-会显示 "cleanup" 和 "4711 returned by Foo"。你不需要在 finally 子句里加上附加
-的 ":return"。(最终，它会覆盖原来的返回值。)
+会显示 "清理中" 和 "4711 由 Foo 返回"。在 finally 子句中无需额外的的
+":return" (尤其要<code class="note">注意</code>，这会覆盖原来的返回值)。
 
                                                         <b class="vimtag"> <a name="except-from-finally">except-from-finally</a> </b>
-finally 子句里可以使用 ":continue"、":break"、":return"、":finish" 或
-":throw"，但不推荐，因为它放弃了 try 条件句的清理工作。不过当然了，finally 子
-句里仍然可能有中断或者错误例外。
-   finally 子句的错误引起中断不能正常工作的例子:
+在 finally 子句里，可以使用 ":continue"、":break"、":return"、":finish" 或
+":throw"，但不推荐这样做，因为它会跳过 try 条件句应执行的清理工作。不过当然
+了，finally 子句里仍然可能发生中断或者错误异常。
+   finally 子句的错误导致中断不能正常工作的例子:
 <code class="example"></code>
 <code class="example">        :try</code>
 <code class="example">        :  try</code>
-<code class="example">        :    echo "Press CTRL-C for interrupt"</code>
+<code class="example">        :    echo "要中断，请按 CTRL-C"</code>
 <code class="example">        :    while 1</code>
 <code class="example">        :    endwhile</code>
 <code class="example">        :  finally</code>
@@ -3938,105 +3950,105 @@ finally 子句里可以使用 ":continue"、":break"、":return"、":finish" 或
 <code class="example">        :  endtry</code>
 <code class="example">        :catch /novar/</code>
 <code class="example">        :endtry</code>
-<code class="example">        :echo "Script still running"</code>
+<code class="example">        :echo "脚本仍然在运行"</code>
 <code class="example">        :sleep 1</code>
 <code class="example"></code>
-如果你需要在 finally 里放入可能出错的命令，考虑捕获或者忽略这些命令的错误，见
- <a href="eval.html#catch-errors">catch-errors</a>  和  <a href="eval.html#ignore-errors">ignore-errors</a> 。
+如果需要在 finally 里放入可能会出错的命令，应该考虑捕获或者忽略这些命令里的错
+误，见  <a href="eval.html#catch-errors">catch-errors</a>  和  <a href="eval.html#ignore-errors">ignore-errors</a> 。
 
 
 捕 获 错 误                                             <b class="vimtag"> <a name="catch-errors">catch-errors</a> </b>
 
-如果你想捕获特定的错误，你需要把要关注的代码放到 try 块里，然后为该错误消息加
-入 catch 子句。try 条件句的存在使得所有的错误被转换为例外。不会显示消息，而
- <a href="eval.html#v:errmsg">v:errmsg</a>  也不会设置。要找到 ":catch" 命令右边的模式，你需要知道错误例外的格
-式。
-   错误例外使用如下的格式:
+如果想捕获特定的错误，需要把关注的代码放到 try 块里，然后加上对应该错误信息的
+catch 子句。try 条件句的存在会使其中所有的错误都被转换为异常。消息不会显示，也
+不设置  <a href="eval.html#v:errmsg">v:errmsg</a> 。要确定 ":catch" 命令应使用的的匹配模式，需要了解错误异常的
+格式。
+   错误异常使用如下的格式:
 <code class="example"></code>
 <code class="example">        Vim({cmdname}):{errmsg}</code>
 或
 <code class="example">        Vim:{errmsg}</code>
 <code class="example"></code>
-<code class="special">{cmdname}</code> 是失败的命令名；第二种形式用于命令名未知的场合。<code class="special">{errmsg}</code> 是错误在
-try 条件句发生时，本应产生的错误消息。它总是以大写的 "E" 开始，后面跟两或者三
-位的错误号，一个冒号和一个空格。
+<code class="special">{cmdname}</code> 是出错命令的名字；第二种形式用于命令名未知的场合。<code class="special">{errmsg}</code> 是 try 条
+件句里发生的错误本应产生的错误消息。它的开头总是大写的 "E"，后跟两或者三位的错
+误号，一个冒号和一个空格。
 
 例如:
 
 命令
 <code class="example">        :unlet novar</code>
-通常产生错误信息
-<code class="example">        E108: No such variable: "novar"</code>
-它在 try 条件句里被转换为例外
-<code class="example">        Vim(unlet):E108: No such variable: "novar"</code>
+通常会产生错误信息
+<code class="example">        E108: 无此变量: "novar"</code>
+在 try 条件句里，它会被转换为异常
+<code class="example">        Vim(unlet):E108: 无此变量: "novar"</code>
 <code class="example"></code>
 命令
 <code class="example">        :dwim</code>
-通常产生错误信息
-<code class="example">        E492: Not an editor command: dwim</code>
-它在 try 条件句里被转换为例外
-<code class="example">        Vim:E492: Not an editor command: dwim</code>
+通常会产生错误信息
+<code class="example">        E492: 不是编辑器的命令: dwim</code>
+在 try 条件句里，它会被转换为异常
+<code class="example">        Vim:E492: 不是编辑器的命令: dwim</code>
 <code class="example"></code>
-你可以这样捕获所有的 ":unlet" 错误
+要捕获所有的 ":unlet" 错误
 <code class="example">        :catch /^Vim(unlet):/</code>
-或者这样捕获所有拼错命令名字的错误
+或者要捕获所有拼错命令名字的错误
 <code class="example">        :catch /^Vim:E492:/</code>
 <code class="example"></code>
-有的错误信息可能由不同的命令产生:
+有的错误信息可能会由不同的命令产生:
 <code class="example">        :function nofunc</code>
 和
 <code class="example">        :delfunction nofunc</code>
 都会产生错误信息
-<code class="example">        E128: Function name must start with a capital: nofunc</code>
-它在 try 条件句里被分别转换为例外
-<code class="example">        Vim(function):E128: Function name must start with a capital: nofunc</code>
+<code class="example">        E128: 函数名必须以大写字母开头: nofunc</code>
+在 try 条件句里，它们被分别转换为异常
+<code class="example">        Vim(function):E128: 函数名必须以大写字母开头: nofunc</code>
 或
-<code class="example">        Vim(delfunction):E128: Function name must start with a capital: nofunc</code>
-使用下面的模式，你可以根据其号码捕获错误，而不管产生的命令是什么:
+<code class="example">        Vim(delfunction):E128: 函数名必须以大写字母开头: nofunc</code>
+使用下面的模式，可以根据错误号来捕获错误，而不关心具体出错的命令是什么:
 <code class="example">        :catch /^Vim(\a\+):E128:/</code>
 <code class="example"></code>
 有些命令，比如
 <code class="example">        :let x = novar</code>
-产生多个错误信息，这里:
-<code class="example">        E121: Undefined variable: novar</code>
-<code class="example">        E15: Invalid expression:  novar</code>
-只有第一个会用做例外的值，因为它是最专门的那个 (见  <a href="eval.html#except-several-errors">except-several-errors</a> )。
-所以你应该这样捕获它
+会产生多个错误信息，这里包括:
+<code class="example">        E121: 未定义的变量: novar</code>
+<code class="example">        E15: 无效的表达式:  novar</code>
+只有第一个错误会被用做异常值，因为它是最特定的那个 (见
+ <a href="eval.html#except-several-errors">except-several-errors</a> )。所以应该这样捕获它
 <code class="example">        :catch /^Vim(\a\+):E121:/</code>
 <code class="example"></code>
-你可以这样捕获所有和名字 "nofunc" 相关的错误
+要捕获所有和名字 "nofunc" 相关的错误
 <code class="example">        :catch /\&lt;nofunc\&gt;/</code>
 <code class="example"></code>
-你可以这样捕获 ":write" 和 ":read" 命令产生的所有 Vim 的错误
+要捕获所有 ":write" 和 ":read" 命令产生的 Vim 错误
 <code class="example">        :catch /^Vim(\(write\|read\)):E\d\+:/</code>
 <code class="example"></code>
-你可以这样捕获所有的 Vim 错误
+要捕获所有的 Vim 错误
 <code class="example">        :catch /^Vim\((\a\+)\)\=:E\d\+:/</code>
 
                                                         <b class="vimtag"> <a name="catch-text">catch-text</a> </b>
-<code class="note">注意</code>: 永远不要根据错误信息文本本身捕获错误:
+<code class="note">注意</code>: 切勿根据错误信息文本本身来捕获错误:
 <code class="example">        :catch /No such variable/</code>
-只适用于英语的 locale，如果用户用  <a href="mlang.html#:language">:language</a>  命令使用别的语言就不行了。不过，
-在注释里引用该消息或许有帮助:
+因为这只适用于英语 locale，如果用户用  <a href="mlang.html#:language">:language</a>  命令来选择别的语言就失效了。
+不过，在注释里引用该消息文本会有所帮助:
 <code class="example">        :catch /^Vim(\a\+):E108:/   " No such variable</code>
 <code class="example"></code>
 <code class="example"></code>
 忽 略 错 误                                             <b class="vimtag"> <a name="ignore-errors">ignore-errors</a> </b>
 
-你可以通过在本地捕获来忽略某个 Vim 命令的错误:
+可以在局部捕获并忽略某个 Vim 命令中的错误:
 <code class="example"></code>
 <code class="example">        :try</code>
 <code class="example">        :  write</code>
 <code class="example">        :catch</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-但强烈建议， <code class="emphasis">不要</code> 使用这种简单的形式，因为它捕获的东西超过你的想象。":write"
-命令里，会执行一些自动命令，它们可能引起与写入无关的错误。例如:
+但强烈建议， <code class="emphasis">不要</code> 使用这种简单形式，因为它捕获的内容可能超出你的预期。此例中，
+":write" 命令执行时会执行一些自动命令，而它们可能触发与写入无关的错误。例如:
 <code class="example"></code>
 <code class="example">        :au BufWritePre * unlet novar</code>
 <code class="example"></code>
-作为脚本的作者，你不应该负责处理这些错误: 使用你书写的脚本的用户可能定义了这些
-自动命令。而你这么做只会屏蔽用户自己的错误。
+有些错误并非脚本作者应当负责：这些自动命令可能是脚本用户自行定义的。采用这种捕
+获方式会因此屏蔽脚本用户自身的错误。
    更好的方法是用
 <code class="example"></code>
 <code class="example">        :try</code>
@@ -4044,18 +4056,18 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :catch /^Vim(write):/</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-这样，只捕获真正的 write 错误。总之，只应该捕获你有意忽略的错误。
+这样就只会捕获真正的 write 错误。总之，只应该捕获那些你明确打算忽略的错误。
 
-对于单个不会执行自动命令的命令，你可以用 ":silent!" 命令来关闭错误到例外的转
+对于单个不会执行自动命令的命令，可用  <a href="various.html#:silent!">:silent!</a>  命令来直接关闭错误到异常的转
 换:
 <code class="example">        :silent! nunmap k</code>
-即使在活动的 try 条件句里也能这么用。
+即使在活跃的 try 条件句里，此用法一样有效。
 
 
 捕 获 中 断                                             <b class="vimtag"> <a name="catch-interrupt">catch-interrupt</a> </b>
 
-如果有活动的 try 条件句，中断 (<code class="keystroke">CTRL-C</code>) 被转换为例外 "Vim:Interrupt"。你可以和
-其他例外一样捕获它。那样，脚本就不会中止。
+在活跃的 try 条件句里，中断 (<code class="keystroke">CTRL-C</code>) 被转换为 "Vim:Interrupt" 异常。可以像其他
+异常一样对其进行捕获。那样脚本就不会中止运行。
    例如:
 <code class="example"></code>
 <code class="example">        :function! TASK1()</code>
@@ -4067,7 +4079,7 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :endfunction</code>
 <code class="example"></code>
 <code class="example">        :while 1</code>
-<code class="example">        :  let command = input("Type a command: ")</code>
+<code class="example">        :  let command = input("输入命令: ")</code>
 <code class="example">        :  try</code>
 <code class="example">        :    if command == ""</code>
 <code class="example">        :      continue</code>
@@ -4078,20 +4090,20 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :    elseif command == "TASK2"</code>
 <code class="example">        :      call TASK2()</code>
 <code class="example">        :    else</code>
-<code class="example">        :      echo "\nIllegal command:" command</code>
+<code class="example">        :      echo "\n非法命令:" command</code>
 <code class="example">        :      continue</code>
 <code class="example">        :    endif</code>
 <code class="example">        :  catch /^Vim:Interrupt$/</code>
-<code class="example">        :    echo "\nCommand interrupted"</code>
-<code class="example">        :    " Caught the interrupt.  Continue with next prompt.</code>
+<code class="example">        :    echo "\n命令被中断"</code>
+<code class="example">        :    " 中断被捕获。继续下一个提示。</code>
 <code class="example">        :  endtry</code>
 <code class="example">        :endwhile</code>
 <code class="example"></code>
-这里，你可以用 <code class="keystroke">CTRL-C</code> 中止任务；脚本会询问新的命令。如果你在提示上按 <code class="keystroke">CTRL-C</code>，
-脚本就会中止。
+这里，可用 <code class="keystroke">CTRL-C</code> 中止执行中的任务；然后脚本会询问新的命令。但如果在提示上按
+<code class="keystroke">CTRL-C</code>，脚本就会中止。
 
-要测试在你脚本的某一行上如果按了 <code class="keystroke">CTRL-C</code> 会发生什么，使用调试模式，然后在那行上
-执行  <a href="repeat.html#%3Equit">&gt;quit</a>  或  <a href="repeat.html#%3Einterrupt">&gt;interrupt</a> 。见  <a href="repeat.html#debug-scripts">debug-scripts</a> 。
+要测试在脚本的某行上按了 <code class="keystroke">CTRL-C</code> 会发生什么，可用调试模式，然后在那行上执行
+ <a href="repeat.html#%3Equit">&gt;quit</a>  或  <a href="repeat.html#%3Einterrupt">&gt;interrupt</a> 。见  <a href="repeat.html#debug-scripts">debug-scripts</a> 。
 
 
 捕 获 一 切                                             <b class="vimtag"> <a name="catch-all">catch-all</a> </b>
@@ -4102,8 +4114,8 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :catch //</code>
 <code class="example">        :catch</code>
 <code class="example"></code>
-会捕获一切: 错误例外，中断例外和  <a href="eval.html#:throw">:throw</a>  命令显式抛出的例外。脚本的顶层可用此
-捕获所有意料不到的问题。
+会捕获一切异常: 包括错误异常，中断异常和  <a href="eval.html#:throw">:throw</a>  命令显式抛出的异常。脚本的顶
+层可用此捕获所有意料不到的问题。
    示例:
 <code class="example"></code>
 <code class="example">        :try</code>
@@ -4122,9 +4134,9 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :endtry</code>
 <code class="example">        :" 脚本结束</code>
 
-<code class="note">注意</code>: 捕获一切可能会捕获到比你想得到的更多的错误。所以，强烈建议你只用指定模式
-参数的 ":catch" 来捕获你真正处理的错误。
-   例如: 捕获一切会使得按 <code class="keystroke">CTRL-C</code> 来中断脚本几乎没有办法:
+<code class="note">注意</code>: 捕获一切可能会捕获到超出预期的各种错误。所以，强烈建议只用指定模式参数的
+":catch" 来捕获真正打算处理的错误。
+   例如: 捕获一切异常会使得按 <code class="keystroke">CTRL-C</code> 来中断脚本几乎成为不可能:
 <code class="example"></code>
 <code class="example">        :while 1</code>
 <code class="example">        :  try</code>
@@ -4134,9 +4146,9 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :endwhile</code>
 <code class="example"></code>
 <code class="example"></code>
-例 外 和 自 动 命 令                                    <b class="vimtag"> <a name="except-autocmd">except-autocmd</a> </b>
+异 常 和 自 动 命 令                                    <b class="vimtag"> <a name="except-autocmd">except-autocmd</a> </b>
 
-执行自动命令的过程中可以使用例外。例如:
+自动命令的执行过程中可以使用异常。例如:
 <code class="example"></code>
 <code class="example">        :autocmd User x try</code>
 <code class="example">        :autocmd User x   throw "Oops!"</code>
@@ -4144,7 +4156,7 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :autocmd User x   echo v:exception</code>
 <code class="example">        :autocmd User x endtry</code>
 <code class="example">        :autocmd User x throw "Arrgh!"</code>
-<code class="example">        :autocmd User x echo "Should not be displayed"</code>
+<code class="example">        :autocmd User x echo "这里不应该显示"</code>
 <code class="example">        :</code>
 <code class="example">        :try</code>
 <code class="example">        :  doautocmd User x</code>
@@ -4155,9 +4167,9 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 会显示 "Oops!" 和 "Arrgh!"。
 
                                                         <b class="vimtag"> <a name="except-autocmd-Pre">except-autocmd-Pre</a> </b>
-有些命令里，自动命令在命令执行的主要动作之前执行。如果在自动命令的序列中抛
-出没有捕获的例外，该序列和导致其执行的命令本身被放弃，而例外被传播到命令的调用
-者那里。
+对于有些命令，会在其主要操作开始之前执行自动命令。如果在这些前置自动命令序列中
+抛出了异常且未被捕获，那么该命令序列和触发它的命令本身都会被放弃，而异常会向上
+传播到该命令的调用者。
    例如:
 <code class="example"></code>
 <code class="example">        :autocmd BufWritePre * throw "FAIL"</code>
@@ -4166,19 +4178,19 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :try</code>
 <code class="example">        :  write</code>
 <code class="example">        :catch</code>
-<code class="example">        :  echo "Caught:" v:exception "from" v:throwpoint</code>
+<code class="example">        :  echo "捕获到:" v:exception "位于" v:throwpoint</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-这里，":write" 命令不会写入当前编辑的文件 (你可以通过查看 <a href="options.html#'modified'">'modified'</a> 发现)。因
-为例外来自 BufWritePre 自动命令，它放弃了 ":write"。然后，该例外被捕获而脚本会
-显示:
+这里，":write" 命令不会将当前编辑的文件写回 (可以通过查看 <a href="options.html#'modified'">'modified'</a> 确认)。因
+为来自 BufWritePre 自动命令异常导致了 ":write" 被放弃。随后，该异常被捕获，而
+脚本会显示:
 <code class="example"></code>
-<code class="example">        Caught: FAIL from BufWrite Auto commands for "*"</code>
+<code class="example">        捕获到: FAIL 位于 BufWrite 自动命令 "*"</code>
 
                                                         <b class="vimtag"> <a name="except-autocmd-Post">except-autocmd-Post</a> </b>
-有些命令里，自动命令在命令执行的主要动作之后执行。如果主要动作失败，而命令包含
-在活动的 try 条件句里，将跳过这些自动命令并抛出错误例外，该命令的调用者可以捕
-获这些例外。
+对于有些命令，会在其主要操作之后执行自动命令。如果主要操作失败且命令在在活跃的
+try 条件句里，那么会跳过这些后置自动命令，然后抛出错误异常，而异常可被该命令的
+调用者捕获到。
    例如:
 <code class="example"></code>
 <code class="example">        :autocmd BufWritePost * echo "文件被成功写入！"</code>
@@ -4191,10 +4203,10 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example"></code>
 只会显示:
 <code class="example"></code>
-<code class="example">        Vim(write):E212: Can't open file for writing (/i/m/p/o/s/s/i/b/l/e)</code>
+<code class="example">        Vim(write):E212: 无法打开并写入文件 (/i/m/p/o/s/s/i/b/l/e)</code>
 <code class="example"></code>
-如果你真想在主要动作失败的时候也执行自动命令的话，在 catch 子句里激活自动命令
-事件。
+如果确实想要在主要操作失败时也执行后置自动命令，可在 catch 子句里激活这些自动
+命令事件。
    例如:
 <code class="example"></code>
 <code class="example">        :autocmd BufWritePre  * set noreadonly</code>
@@ -4206,12 +4218,12 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :  doautocmd BufWritePost /i/m/p/o/s/s/i/b/l/e</code>
 <code class="example">        :endtry</code>
 
-你也可以用 ":silent!":
+也可用 ":silent!":
 <code class="example"></code>
 <code class="example">        :let x = "ok"</code>
 <code class="example">        :let v:errmsg = ""</code>
 <code class="example">        :autocmd BufWritePost * if v:errmsg != ""</code>
-<code class="example">        :autocmd BufWritePost *   let x = "after fail"</code>
+<code class="example">        :autocmd BufWritePost *   let x = "失败之后"</code>
 <code class="example">        :autocmd BufWritePost * endif</code>
 <code class="example">        :try</code>
 <code class="example">        :  silent! write /i/m/p/o/s/s/i/b/l/e</code>
@@ -4219,9 +4231,9 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :endtry</code>
 <code class="example">        :echo x</code>
 <code class="example"></code>
-会显示 "after fail"。
+会显示 "失败之后"。
 
-如果命令的主要动作没有失败，可以在命令的调用者那里捕获自动命令产生的例外:
+如果命令的主要操作没有失败，后置自动命令产生的异常可被该命令的调用者捕获到:
 <code class="example"></code>
 <code class="example">        :autocmd BufWritePost * throw ":-("</code>
 <code class="example">        :autocmd BufWritePost * echo "这里不应该被显示"</code>
@@ -4233,10 +4245,10 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :endtry</code>
 
                                                         <b class="vimtag"> <a name="except-autocmd-Cmd">except-autocmd-Cmd</a> </b>
-有的命令的正常动作可以被自动命令的序列代替。可以在命令的调用者那里捕获该序列产
-生的例外。
-   例如: 对于 ":write" 命令，调用者并不知道发生例外时，文件是不是已经被写入。
-你需要想办法告知调用者。
+对于有些命令，其正常操作可以被自动命令序列代替。该序列产生的异常可被该命令的调
+用者捕获到。
+   例如: 对于 ":write" 命令，调用者并不知道发生异常时，文件是不是已经被写入。
+需要想办法告知调用者。
 <code class="example"></code>
 <code class="example">        :if !exists("cnt")</code>
 <code class="example">        :  let cnt = 0</code>
@@ -4250,7 +4262,7 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :  autocmd BufWriteCmd *   if cnt % 3 == 0</code>
 <code class="example">        :  autocmd BufWriteCmd *     throw "BufWriteCmdError"</code>
 <code class="example">        :  autocmd BufWriteCmd *   endif</code>
-<code class="example">        :  autocmd BufWriteCmd *   echo "File successfully written!"</code>
+<code class="example">        :  autocmd BufWriteCmd *   echo "文件被成功写入！"</code>
 <code class="example">        :  autocmd BufWriteCmd * endif</code>
 <code class="example">        :endif</code>
 <code class="example">        :</code>
@@ -4258,25 +4270,24 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :       write</code>
 <code class="example">        :catch /^BufWriteCmdError$/</code>
 <code class="example">        :  if &amp;modified</code>
-<code class="example">        :    echo "Error on writing (file contents not changed)"</code>
+<code class="example">        :    echo "写入时出错 (文件内容未被写回)"</code>
 <code class="example">        :  else</code>
-<code class="example">        :    echo "Error after writing"</code>
+<code class="example">        :    echo "写入后出错"</code>
 <code class="example">        :  endif</code>
 <code class="example">        :catch /^Vim(write):/</code>
-<code class="example">        :    echo "Error on writing"</code>
+<code class="example">        :    echo "写入时出错"</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-如果脚本在修改后执行了多次，它先显示
-<code class="example">        File successfully written!</code>
-然后
-<code class="example">        Error on writing (file contents not changed)</code>
-然后
-<code class="example">        Error after writing</code>
-等等。
+此脚本在修改文件后多次执行时，会依次显示如下信息。先显示
+<code class="example">        文件被成功写入！</code>
+随后显示
+<code class="example">        写入时出错 (文件内容未被写回)</code>
+接着显示
+<code class="example">        写入后出错</code>
+依此类推。
 
                                                         <b class="vimtag"> <a name="except-autocmd-ill">except-autocmd-ill</a> </b>
-你不能把一个 try 条件句分散到不同事件的自动命令。
-下面的代码是非法的构造:
+不能把一个 try 条件句分散到不同事件的自动命令里。下面的代码属于非法构造:
 <code class="example"></code>
 <code class="example">        :autocmd BufWritePre  * try</code>
 <code class="example">        :</code>
@@ -4287,16 +4298,16 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :write</code>
 <code class="example"></code>
 <code class="example"></code>
-例 外 层 次 和 参 数 化 的 例 外                        <b class="vimtag"> <a name="except-hier-param">except-hier-param</a> </b>
+异 常 层 次 和 参 数 化 的 异 常                        <b class="vimtag"> <a name="except-hier-param">except-hier-param</a> </b>
 
-有些编程语言支持使用例外类的层次结构，或者在例外类的对象里传入附加的信息。你可
-以在 Vim 里完成类似的工作。
-   为了抛出属于某层次的例外，只要抛出完整的类名，部件之间用冒号分隔。比如，在
-某个数学库里的溢出错误可以抛出字符串 "EXCEPT:MATHERR:OVERFLOW"。
-   如果你想给例外类传递附加的信息，把它加到括号里。比如写入文件 "myfile" 时的
-错误，可以抛出字符串 "EXCEPT:IO:WRITEERR(myfile)"。
-   在 ":catch" 命令里使用合适的模式，可以捕获你的层次中的基本类或者派生类。括
-号里的附加信息也可以运用 ":substitute" 命令从  <a href="eval.html#v:exception">v:exception</a>  里切出。
+有些编程语言支持使用异常类的层次结构，或者在异常类的对象里传入附加的信息。Vim
+可以完成类似的工作。
+   为了抛出属于某层次的异常，只要抛出完整的类名，部件之间用冒号分隔。例如，在
+某个数学库里，可以为溢出错误抛出字符串 "EXCEPT:MATHERR:OVERFLOW"。
+   如果想给异常类传递附加的信息，可以把它加到括号里。例如对于写入文件 "myfile"
+时出现的错误，可以抛出字符串 "EXCEPT:IO:WRITEERR(myfile)"。
+   使用合适模式的 ":catch" 命令，可以捕获异常层次中的基类或者派生类。括号里的
+附加信息也可以运用 ":substitute" 命令从  <a href="eval.html#v:exception">v:exception</a>  里提取出来。
    例如:
 <code class="example"></code>
 <code class="example">        :function! CheckRange(a, func)</code>
@@ -4334,14 +4345,14 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :</code>
 <code class="example">        :try</code>
 <code class="example">        :</code>
-<code class="example">        :  " 一些算术和 I/O</code>
+<code class="example">        :  " 一些算术和 I/O 操作</code>
 <code class="example">        :</code>
 <code class="example">        :catch /^EXCEPT:MATHERR:RANGE/</code>
 <code class="example">        :  let function = substitute(v:exception, '.*(\(\a\+\)).*', '\1', "")</code>
-<code class="example">        :  echo "Range error in" function</code>
+<code class="example">        :  echo "范围错误，位于" function</code>
 <code class="example">        :</code>
 <code class="example">        :catch /^EXCEPT:MATHERR/        " 捕获 OVERFLOW 和 ZERODIV</code>
-<code class="example">        :  echo "Math error"</code>
+<code class="example">        :  echo "数学错误"</code>
 <code class="example">        :</code>
 <code class="example">        :catch /^EXCEPT:IO/</code>
 <code class="example">        :  let dir = substitute(v:exception, '.*(\(.\+\),\s*.\+).*', '\1', "")</code>
@@ -4349,107 +4360,106 @@ try 条件句发生时，本应产生的错误消息。它总是以大写的 "E"
 <code class="example">        :  if file !~ '^/'</code>
 <code class="example">        :    let file = dir .. "/" .. file</code>
 <code class="example">        :  endif</code>
-<code class="example">        :  echo 'I/O error for "' .. file .. '"'</code>
+<code class="example">        :  echo 'I/O 错误，对应文件 "' .. file .. '"'</code>
 <code class="example">        :</code>
 <code class="example">        :catch /^EXCEPT/</code>
-<code class="example">        :  echo "Unspecified error"</code>
+<code class="example">        :  echo "未知错误"</code>
 <code class="example">        :</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
-Vim 自己抛出的例外 (错误或者按了 <code class="keystroke">CTRL-C</code>) 使用扁平的层次: 它们都在 "Vim" 类里。
-你自己不能抛出带有 "Vim" 前缀的例外；它们是 Vim 保留的。
-   如果已知失败的命令名，Vim 错误例外使用该命令名作为参数。见  <a href="eval.html#catch-errors">catch-errors</a> 。
+Vim 自身抛出的异常 (错误或者按了 <code class="keystroke">CTRL-C</code>) 使用的扁平层次结构: 它们都属于 "Vim"
+类。用户不能自行抛出带有 "Vim" 前缀的异常；该前缀为 Vim 保留。
+   如果失败的命令名已知，Vim 的错误异常会使用该命令名作为参数。见
+ <a href="eval.html#catch-errors">catch-errors</a> 。
 
 
 特 别 之 处
                                                         <b class="vimtag"> <a name="except-compat">except-compat</a> </b>
-例外处理的概念需要产生例外的命令序列被立即中止，而控制转移到 finally 子句和/或
-catch 子句。
+异常处理的核心在于，一旦某个命令序列产生异常，该序列被立即中止，控制权转移到
+finally 子句和/或 catch 子句。
 
-在 Vim 脚本语言里，有一些情况下脚本和函数在错误后还会继续: 在没有 "abort" 标志
-位的函数或者 ":silent!" 之后的命令里，控制流转到下一行。而在函数外，控制流转到
-最外层 ":endwhile" 或者 ":endif" 之后的行。另一方面，错误应该可以作为例外被捕
-获 (因而，需要立即被中止)。
+在 Vim 脚本语言里的一些情况下，脚本和函数在错误后还会继续: 在没有 "abort" 标志
+位的函数或者出现在 ":silent!" 之后的命令里，控制流会转到下一行。而在函数之外，
+控制流会转到最外层 ":endwhile" 或者 ":endif" 之后的行。另一方面，错误应该能够
+作为异常被捕获 (因而，需要立即中止执行)。
 
-这个问题的解决方法是把仅在有活动 try 条件句的时候，把错误转化为例外，并立即中
-止 (如果没有用 ":silent!" 抑制的话)。这不是一个限制，因为 (错误) 例外只能在活
-动的 try 条件句里被捕获。如果你需要立即终止而不需要捕获错误的话，只要用一个没
-有 catch 子句的 try 子句就可以了 (你可以用 finally 子句指定终止前执行的清理代
-码。)
+这个问题的解决方法是仅在活跃的 try 条件句里，才把错误转化为异常，并立即中止
+(除非被 ":silent!" 抑制)。这不是一个限制，因为 (错误) 异常只能在活跃的 try 条
+件句里才能被捕获。如果需要立即终止而不捕获错误，只需使用一个不带 catch 子句的
+try 条件句就可以了 (仍然可用 finally 子句来指定终止前须执行的清理代码)。
 
-如果没有活动的 try 条件句，使用通常的中止和继续行为，而不是立即中止。这样，保
-证了与 Vim 6.1 和之前版本编写的脚本的兼容性。
+如果不处于活跃的 try 条件句里，会使用通常的中止和继续行为，而不是立即中止执
+行。这样可以保证与 Vim 6.1 和之前版本编写的脚本保持兼容。
 
-不过，如果在活动的 try 条件句里执行已有的不使用例外处理命令的脚本 (或者调用它
-的一个函数)，你也许会改变已有脚本发生错误时的控制流。你会在错误时立即中止并且
-在新的脚本里捕获错误。如果被执行的脚本通过 ":silent!" 命令抑制了错误 (在合适的
-时候测试  <a href="eval.html#v:errmsg">v:errmsg</a>  来检查错误)，它的执行路径没有改变。错误也不会转换为例外。
-(见  <a href="various.html#:silent">:silent</a> 。) 所以唯一留下的可能是不关心错误并产生错误信息的脚本。可能，你
-也不希望在新的脚本里使用这样的代码吧。
+不过，如果在活跃的 try 条件句里执行现有的不使用异常处理命令的脚本 (或者调用其
+中的一个函数)，可能会改变现有脚本中错误处理的控制流。错误会立即导致中止，而在
+新的脚本里也可以捕获错误。如果被执行的脚本通过 ":silent!" 命令抑制了错误 (在合
+适的时候会测试  <a href="eval.html#v:errmsg">v:errmsg</a>  来检查错误)，其执行路径并不会改变。错误也不会转换为
+异常。(见  <a href="various.html#:silent">:silent</a> 。) 所以唯一可能的遗留问题是对那些不关心错误却会产生错误信
+息的脚本。这样的代码可能也不适合在新脚本里继续使用。
 
                                                         <b class="vimtag"> <a name="except-syntax-err">except-syntax-err</a> </b>
-例外处理命令的语法错误永远不会被它所属的 try 条件句的任何 ":catch" 命令所捕
-获。不过，还是会执行它的 finally 子句。
+异常处理命令的语法错误永远不会被其所属的 try 条件句的任何 ":catch" 命令捕获。
+不过，仍然会执行对应的 finally 子句。
    例如:
 <code class="example"></code>
 <code class="example">        :try</code>
 <code class="example">        :  try</code>
 <code class="example">        :    throw 4711</code>
-<code class="example">        :  catch /\(/ " 有语法错误</code>
-<code class="example">        :    echo "in catch with syntax error"</code>
+<code class="example">        :  catch /\(/</code>
+<code class="example">        :    echo "catch 语句中有语法错误"</code>
 <code class="example">        :  catch</code>
-<code class="example">        :    echo "inner catch-all"</code>
+<code class="example">        :    echo "内层的 catch-all"</code>
 <code class="example">        :  finally</code>
-<code class="example">        :    echo "inner finally"</code>
+<code class="example">        :    echo "内层的 finally"</code>
 <code class="example">        :  endtry</code>
 <code class="example">        :catch</code>
-<code class="example">        :  echo 'outer catch-all caught "' .. v:exception .. '"'</code>
+<code class="example">        :  echo '外层的 catch-all 捕获到 "' .. v:exception .. '"'</code>
 <code class="example">        :  finally</code>
-<code class="example">        :    echo "outer finally"</code>
+<code class="example">        :    echo "外层的 finally"</code>
 <code class="example">        :endtry</code>
 <code class="example"></code>
 会显示:
-<code class="example">    inner finally</code>
-<code class="example">    outer catch-all caught "Vim(catch):E54: Unmatched \("</code>
-<code class="example">    outer finally</code>
-原来的例外被丢弃了，抛出的是取而代之的语法错误的错误例外。
+<code class="example">    内层的 finally</code>
+<code class="example">    外层的 catch-all 捕获到 "Vim(catch):E54: 不匹配的 \("</code>
+<code class="example">    外层的 finally</code>
+原来的异常被丢弃了，抛出的是取而代之的语法错误异常。
 
                                                         <b class="vimtag"> <a name="except-single-line">except-single-line</a> </b>
-":try"、":catch"、":finally" 和 ":endtry" 命令可以放在一行里，但这样如果有语法
-错误，可能使得 "catch" 行无法被识别。所以，最好不要这么做。
+":try"、":catch"、":finally" 和 ":endtry" 命令可以写在一行里，但在这种情况下，
+如果有语法错误，可能会导致 "catch" 行无法被识别。所以，不建议采用这种写法。
    例如:
 <code class="example">        :try | unlet! foo # | catch | endtry</code>
-":unlet!" 参数之后的拖尾字符抛出了错误例外，但因此无法看到 ":catch" 和
-":endtry" 命令，从而只能丢弃该错误例外并且显示消息 "E488: Trailing
-characters"。
+":unlet!" 参数之后的拖尾字符会抛出错误异常，但因此无法识别 ":catch" 和
+":endtry" 命令，从而只能丢弃该错误异常并且显示消息 "E488: 多余的尾部字符 #"。
 
                                                         <b class="vimtag"> <a name="except-several-errors">except-several-errors</a> </b>
 如果多个错误在一个命令里出现，第一个错误信息通常是最专门的，因而它被转换为错误
-例外。
+异常。
    例如:
 <code class="example">        echo novar</code>
-产生
-<code class="example">        E121: Undefined variable: novar</code>
-<code class="example">        E15: Invalid expression: novar</code>
-try 条件句里错误例外的值是:
-<code class="example">        Vim(echo):E121: Undefined variable: novar</code>
+会产生
+<code class="example">        E121: 未定义的变量: novar</code>
+<code class="example">        E15: 无效的表达式: novar</code>
+try 条件句里会抛出的错误异常值是:
+<code class="example">        Vim(echo):E121: 未定义的变量: novar</code>
                                                         <b class="vimtag"> <a name="except-syntax-error">except-syntax-error</a> </b>
-不过，如果同一命令在普通错误之后发现了语法错误，语法错误被用作抛出的例外。
+不过，如果同一命令在普通错误之后又发现了语法错误，语法错误会被用作抛出的异常。
    例如:
 <code class="example">        unlet novar #</code>
-产生
-<code class="example">        E108: No such variable: "novar"</code>
-<code class="example">        E488: Trailing characters</code>
-try 条件句里错误例外的值是:
-<code class="example">        Vim(unlet):E488: Trailing characters</code>
-这么做是因为语法错误可能会以用户意想不到的方式改变执行的路径。例如:
+会产生
+<code class="example">        E108: 无此变量: "novar"</code>
+<code class="example">        E488: 多余的字符: #</code>
+try 条件句里会抛出的错误异常值是:
+<code class="example">        Vim(unlet):E488: 多余的字符: #</code>
+这是因为语法错误可能会以用户意想不到的方式改变程序的执行路径。例如:
 <code class="example">        try</code>
 <code class="example">            try | unlet novar # | catch | echo v:exception | endtry</code>
 <code class="example">        catch /.*/</code>
-<code class="example">            echo "outer catch:" v:exception</code>
+<code class="example">            echo "外层捕获到:" v:exception</code>
 <code class="example">        endtry</code>
-显示 "outer catch: Vim(unlet):E488: Trailing characters"，然后给出错误信息
-"E600: Missing :endtry"，见  <a href="eval.html#except-single-line">except-single-line</a> 。
+会显示 "外层捕获到: Vim(unlet):E488: 多余的字符: #"，然后给出错误信息
+"E600: 缺少 :endtry"，见  <a href="eval.html#except-single-line">except-single-line</a> 。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>9. 示例                                                 <b class="vimtag"> <a name="eval-examples">eval-examples</a> </b></h4>
