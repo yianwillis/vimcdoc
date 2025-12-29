@@ -687,7 +687,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	字节，因而它们在这些字体里用 "宽" 字形显示。这也包括文本文件里制表用的
 	一些画线字符。因此如果 GUI Vim 使用 CJK 字体、或者在使用 CJK 字体的终
 	端 (模拟器) (包括带有 "-cjkwidth" 选项的 xterm) 里运行 Vim，应把本选项
-	设为 "double"，这样可以匹配这些字体里 Vim 实际看到相关字形的宽度。 CJK
+	设为 "double"，这样可以匹配这些字体里 Vim 实际看到相关字形的宽度。CJK
 	MS-Windows 上，如果系统 locale 为 CJK locale 之一，也应把本选项设为
 	"double"。见 Unicode Standard Annex #11
 	(http://www.unicode.org/reports/tr11)。
@@ -760,8 +760,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					*'autocompletedelay'* *'acl'*
 'autocompletedelay' 'acl'	数值型	(缺省为 0)
 				全局
-	键入后以毫秒计自动补全菜单的显示延迟。 如果希望不要太快打开菜单，把此
-	值设置为稍高于你打字速度的值。见 |ins-autocompletion|。
+	键入后以毫秒计自动补全菜单的显示延迟。如果希望不要太快打开菜单，把此值
+	设置为稍高于你打字速度的值。见 |ins-autocompletion|。
 
 					*'autocompletetimeout'* *'act'*
 'autocompletetimeout' 'act'	数值型	(缺省为 80)
@@ -1498,13 +1498,17 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 					"autoselect,exclude:cons\|linux"，
 				其它为 "")
 			全局
-			{仅有在 GUI 版本或者包含 |+xterm_clipboard| 或
-			|+wayland_clipboard| 特性时才有效}
+			{仅当在 GUI 版本或者包含 |+xterm_clipboard| 或
+			|+wayland_clipboard| 或 |+clipboard_provider| 特性时才
+			有效}
 	本选项是逗号分隔的名字列表。
 	注意: 如果其中的一项是 "exclude:"，其后不能再附加项目。因此，不要用 +=
 	附加项目，而要用 ^= 在前面加上项目，例如: >
 		set clipboard^=unnamed
 <	GUI 版本见 |'go-A'|。
+	使用 |clipboard-providers| 特性时，只识别 "unnamed" and "unnamedplus"
+	功能。如果编译时未加入 |+clipboard| 特性但加入了 |+clipboard_provider|
+	特性，那么只有这两个值是有效的，其他值都属于非法值。
 	识别以下名字:
 
 						*clipboard-unnamed*
@@ -1573,15 +1577,18 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 				 VMS: "x11"，
 				 其他: "")
 			全局
-			{仅当编译时加入 |+xterm_clipboard| 或
-			|+wayland_clipboard| 特性才有效}
-	指定正在使用的系统剪贴板的访问方法，取决于哪种方法优先或可用。支持的方
-	法是:
+			{仅当编译时加入 |+xterm_clipboard|、
+			|+wayland_clipboard| 或 |+eval| 特性才有效}
+	指定访问系统剪贴板的方法 (或剪贴板提供者)，会按给定的顺序依次尝试，使
+	用首个可用的方法。支持的方法是:
 		wayland		Wayland 选择
 		x11		X11 选择
+		<name>		使用给定名字的剪贴板提供者
 
 	注意: 当运行 GUI 或在没有 Waylang 或 X11 的系统，如 Windows 或 MacOS
-	上运行 Vim 时，忽略本选项。总是使用 GUI 或系统提供的剪贴板访问方法。
+	上运行 Vim 时，忽略本选项。此时会使用 GUI 或系统提供的剪贴板访问方法，
+	这意味着 |v:clipmethod| 会被设为 "none"。|clipboard-providers| 特性是
+	个例外，使用剪贴板提供者时，已有的剪贴板功能会被覆盖。
 
 	选项值是逗号分隔的项目列表。列表从左到右进行解析，首个 Vim 决定可用或
 	可正常工作的方法被用作实际使用的访问剪贴板的方法。
@@ -2057,7 +2064,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	注意: |Vim9| 脚本里遇到 `vim9script` 时，保存本选项值，设置
 	'cpoptions' 为 Vim 缺省值，然后在脚本结束处恢复保存的值。修改
 	'cpoptions' 值会影响保存的值，但请记住删除一个 'cpoptions' 改变时不存
-	在的标志位是无效的。 |.vimrc| 文件不恢复保存的值，因此在 |.vimrc| 文件
+	在的标志位是无效的。|.vimrc| 文件不恢复保存的值，因此在 |.vimrc| 文件
 	中使用 `vim9script` 会导致本选项使用 Vim 缺省值。
 
 	注意: 如果应该使用 Vi 的缺省值且 $VIM_POSIX 环境变量存在时，本选项设为
@@ -3185,7 +3192,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	例如: >
 	    :set fillchars=stl:\ ,stlnc:\ ,vert:\|,fold:-,diff:-,tpl_vert:\|
 <
-	所有项目支持单字节和多字节字符。但不支持双宽字符。 |E1512|
+	所有项目支持单字节和多字节字符。但不支持双宽字符。|E1512|
 
 	这些项目使用的高亮:
 	  项目名	高亮组 ~
@@ -3481,12 +3488,14 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 
 					*'fsync'* *'fs'* *'nofsync'* *'nofs'*
 'fsync' 'fs'		布尔型	(缺省打开)
-			全局
+			全局或局部于缓冲区 |global-local|
 	如果打开，写入文件后调用库函数 fsync()。它会把文件刷新到磁盘上，确保文
 	件即使在只做元数据 (metadata) 日志 (journaling) 的文件系统上也会被安全
 	写入。Linux 系统的笔记本模式下，它会强迫硬盘转上一会儿，有时候你不想这
 	样。但要警告你，关闭此选项增加崩溃时数据丢失的机率。没有 fsync() 实现
 	的系统上，此选项总是关闭的。
+	这是 |global-local| 选项，可为每个缓冲区单独设置，例如用于写入位于慢速
+	文件系统上的缓冲区。
 	另见 'swapsync'，说明如何控制交换文件的 fsync()。
 	'fsync' 也适用于 |writefile()| (除非使用了否决它的标志位) 和写入撤销文
 	件 (见 |undo-persistence|)。
@@ -3700,7 +3709,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		目前仅可用于 MS-Windows GUI。
 		详见 |gui-w32-title-bar|。
 								*'go-d'*
-	  'd'	如果可能，使用深色主题变体。目前仅能用于 Win32 和 GTK+ GUI。
+	  'd'	如果可能，使用深色主题变体。目前仅可用于 MS-Windows 和 GTK+
+		GUI。
 								*'go-e'*
 	  'e'	根据 'showtabline' 的要求加入标签页。
 		可用 'guitablabel' 来改变标签文本。
@@ -3731,6 +3741,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  't'	包含可撕下的菜单项。目前只用于 Win32、GTK+ 和 Motif 1.2 GUI。
 								*'go-T'*
 	  'T'	包含工具栏。目前只用于 Win32、GTK+、Motif 和 Photon GUI。
+								*'go-s'*
+	  's'	启动全屏模式。目前只支持 MS-Windows GUI 版本。如果存在，窗口会
+		占据整个屏幕并去除窗口装饰元素。要方便地切换此模式，可自定义映
+		射。详细的用法说明可见 |gui-w32-fullscreen|。
 								*'go-r'*
 	  'r'	右边的滚动条总是存在。
 								*'go-R'*
@@ -4951,7 +4965,7 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	搜索计数状态 |shm-S| 显示的最大匹配数。如果匹配数超过此值，Vim 显示
 	">" 而不是准确数目，使搜索保持快速。
 	注意: 更大值会影响效率。
-	此值必须在 1 到 9999 之间。
+	此值必须在 1 到 9999 之间。另见 |searchcount()| 函数。
 
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	数值型	(缺省为 25)
@@ -5643,8 +5657,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	菜单永远不会宽于此值。结束处用 'fillchars' 选项里的 "trunc" 值来指示截
 	断文本。
 
-	优先于 'pumwidth'。
-	|ins-completion-menu|.
+	本选项优先于 'pumwidth'。
+	参见 |ins-completion-menu|。
 
 						*'pumwidth'* *'pw'*
 'pumwidth' 'pw'		数值型	(缺省为 15)
@@ -6442,7 +6456,8 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 		就是说，搜索时显示搜索计数) 时，不显示 "search hit BOTTOM,
 		continuing at TOP" 和 "search hit TOP, continuing at BOTTOM"
 		消息，而只在搜索计数统计值前加上 "W" (助记符: Wrapped 环绕) 字
-		符。搜索计数显示的最大值可通过 'maxsearchcount' 选项设置。
+		符。搜索计数显示的最大值可通过 'maxsearchcount' 选项设置，另见
+		|searchcount()| 函数。
 
 	这给你一个机会，避免在缓冲区之间切换要按 <Enter>，但仍然能够在可用的空
 	间里得到有用的消息。要得到 'shm' 为空时的完整消息，使用 ":file!"。
@@ -8290,10 +8305,10 @@ se[t]			字符串 "set " 或 "se " (注意 空格)；使用 "Vim" 时必须
 	  exacttext	此标志位如果给出，搜索模式补全 (如在 |/|、|?|、|:s|、
 			|:g|、|:v| 和 |:vim| 里) 显示准确缓冲区文本作为菜单项
 			目，而不保留正则表达式的特殊项目，如位置锚点等 (例如
-			|/\<|)。 这样可以提供匹配实际缓冲区文本的更直观的菜单
-			项目。但因为没有完整保留搜索模式，搜索不会那么精确。
-			缺省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这
-			会保证搜索的正确，尤其是使用了正则表达式或打开
+			|/\<|)。这样可以提供匹配实际缓冲区文本的更直观的菜单项
+			目。但因为没有完整保留搜索模式，搜索不会那么精确。缺
+			省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这会
+			保证搜索的正确，尤其是使用了正则表达式或打开
 			'smartcase' 的时候。不过，附加的匹配单词的大小写未必和
 			缓冲区里单词的大小写准确匹配。
 	  fuzzy		使用 |fuzzy-matching| 来找到补全匹配。指定此值时，补全

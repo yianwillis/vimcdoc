@@ -37,6 +37,7 @@
 12. 沙盘 (sandbox)	|eval-sandbox|
 13. 文本锁		|textlock|
 14. Vim 脚本库		|vim-script-library|
+15. 剪贴板提供者	|clipboard-providers|
 
 测试支持的文档可见 |testing.txt|。
 剖视的文档可见 |profiling|。
@@ -1248,8 +1249,13 @@ expr5 {cmp} expr5
 表，可用 |get()| 来取得函数名进行比较: >
 	if get(Part1, 'name') == get(Part2, 'name')
 	   " Part1 和 Part2 指向相同的函数
+<
+							*E1437*
+|Object| 只能和另一个 |Object| 比较，而且只能使用 "等于"、"不等于"、"is" 和
+"isnot" 这几种操作符 |expr4|。|enum| 也属于 |Object| 类型，因此同样适用这些规
+则。
 
-<							*E1037*
+							*E1037*
 |List|、|Tuple|、|Dictionary| 或 |Blob| 用 "is" 或 "isnot" 进行比较时，会检查
 表达式是否指向同一个 |List| 、|Tuple|、|Dictionary| 或 |Blob| 实例。|List| 或
 |Tuple| 的备份和原来的 |List| 或 |Tuple| 会指向不同实例。
@@ -1946,7 +1952,7 @@ b:changedtick	当前缓冲区的改动次数。每次发生一次改动时，该
 						*script-variable* *s:var*
 在老式 Vim 脚本里，可用 "s:" 开头的变量。它们不能在脚本之外访问，因而可以称为
 局部于脚本的变量。
-在 |Vim9| 脚本里， "s:" 前缀可以省略，因为变量缺省就是局部于脚本的。
+在 |Vim9| 脚本里，"s:" 前缀可以省略，因为变量缺省就是局部于脚本的。
 
 它们可以用于:
 - 载入脚本时执行的命令
@@ -2066,7 +2072,12 @@ v:clipmethod	当前正在使用的剪贴板访问的方法。可以是以下选�
 			wayland		正在使用的是 Wayland 协议。
 			x11		正在使用的是 X11 选择机制。
 			none		剪贴板功能被关闭，或者不可用。
-		详见 'clipmethod'。
+		如果使用了不在上面列出的值，剪贴板功能会使用指定名称的剪贴板提
+		供者，详见 'clipmethod'。
+
+					*v:clipproviders*
+v:clipproviders
+		提供剪贴板提供者的字典，详见 |clipboard-providers|。
 
 					*v:cmdarg* *cmdarg-variable*
 v:cmdarg	本变量有两个作用:
@@ -2604,8 +2615,8 @@ v:termresponse	终端响应 |t_RV| termcap 项目时返回的的转义序列。V
 		终端的应答做出反应。也会触发 TermResponseAll 事件，其中
 		<amatch> 会被设为 "version"。要查看 Vim 在解析响应后对终端掌握
 		的信息。可用 |terminalprops()|。
-		新 xterm 的应答是: "<Esc>[> Pp ; Pv ; Pc c"。 Pp 是终端类型:
-		0 代表 vt100，而 1 代表 vt220。 Pv 是补丁号 (因为此功能是
+		新 xterm 的应答是: "<Esc>[> Pp ; Pv ; Pc c"。Pp 是终端类型:
+		0 代表 vt100，而 1 代表 vt220。Pv 是补丁号 (因为此功能是
 		95 补丁版本引入的，补丁号应该总是 95 或更高)。Pc 总是零。
 		Pv 为 141 或更高时，Vim 会试图请求终端键码。只可用于 xterm
 		|xterm-codes|。
@@ -3324,13 +3335,15 @@ text...
 			序列，直到遇到和本 `:catch` 处于同一 `:try` 块的下一个
 			`:catch`、`:finally ` 或者 `:endtry` 为止。否则，跳过
 			这些命令。
-			{pattern} 省略时，捕获所有其余的异常。
-			示例: >
+			以 "Vim({cmd})" 开头的模式表示异常是在执行 Ex 命令
+			{cmd} 的过程中发生的。{pattern} 省略时，捕获所有其余的
+			异常。示例: >
 		:catch /^Vim:Interrupt$/	 " 捕获中断 (CTRL-C)
-		:catch /^Vim\%((\a\+)\)\=:E/	 " 捕获所有的 Vim 错误
-		:catch /^Vim\%((\a\+)\)\=:/	 " 捕获错误和中断
-		:catch /^Vim(write):/		 " 捕获所有 :write 的错误
-		:catch /^Vim\%((\a\+)\)\=:E123:/ " 捕获错误 E123
+		:catch /^Vim\%((\S\+)\)\=:E/	 " 捕获所有的 Vim 错误
+		:catch /^Vim\%((\S\+)\)\=:/	 " 捕获错误和中断
+		:catch /^Vim(write):/		 " 捕获所有 :write 里的错误
+		:catch /^Vim(!):/		 " 捕获所有 :! 里的错误
+		:catch /^Vim\%((\S\+)\)\=:E123:/ " 捕获错误 E123
 		:catch /my-exception/		 " 捕获用户异常
 		:catch /.*/			 " 捕获一切
 		:catch				 " 同 /.*/
@@ -3546,7 +3559,7 @@ Vim 在出错或者中断的时候可以抛出异常。见 |catch-errors| 和 |c
 
 TRY 条 件 句						*try-conditionals*
 
-异常可以被捕获，或者用来触发清理代码的运行。为些，可用 try 条件句来指定 catch
+异常可以被捕获，或者用来触发清理代码的运行。为此，可用 try 条件句来指定 catch
 子句 (捕获异常) 和/或 finally 子句 (执行清理)。
    try 条件句以 |:try| 命令开始，以匹配的 |:endtry| 命令结束。两者之间，可用
 |:catch| 命令开启 catch 子句，或用 |:finally| 命令开启 finally 子句。
@@ -3611,14 +3624,14 @@ finally 里出现的未必是同一个命令) 引起的，暂停的异常或者�
 
 TRY 条 件 句 的 嵌 套					*try-nesting*
 
-try 条件句可以任意嵌套。也就是说， 一个完整的 try 条件句可以在另一个 try 条件
-句的 try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能
-捕获它的 try 块抛出的异常，或者在它的某个 catch 子句或者 finally 子句里抛出新
-的异常的话，那么根据上述规则，由外层的 try 条件句继续检查是否能捕获该异常。如
-果内层 try 条件句在外层 try 条件句的 try 块里，会检查外层的 catch 子句，不然只
-会执行外层的 finally 子句。不管内层 try 条件句是直接包含在外层里面，还是由外层
-执行脚本或者调用了函数，而后者再包含内层 try 条件句，对嵌套 try 的处理方式并无
-区别。
+try 条件句可以任意嵌套。也就是说，一个完整的 try 条件句可以在另一个 try 条件句
+的 try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能捕
+获它的 try 块抛出的异常，或者在它的某个 catch 子句或者 finally 子句里抛出新的
+异常的话，那么根据上述规则，由外层的 try 条件句继续检查是否能捕获该异常。如果
+内层 try 条件句在外层 try 条件句的 try 块里，会检查外层的 catch 子句，不然只会
+执行外层的 finally 子句。不管内层 try 条件句是直接包含在外层里面，还是由外层执
+行脚本或者调用了函数，而后者再包含内层 try 条件句，对嵌套 try 的处理方式并无区
+别。
 
 如果没有任何活跃的 try 条件句能捕获某个异常，则只执行这些 try 条件句的 finally
 子句。最后，脚本处理被中止。对于 ":throw" 命令显式抛出的未捕获的异常，会显示错
@@ -4688,9 +4701,9 @@ dist#vim9#IsSafeExecutable(filetype:string, executable:string): bool ~
 						      *g:Openprg* *gx*
 dist#vim9#Open(file: string) ~
 
-用系统缺省处理程序来打开 `path` (macOS 使用 `open`，Windows 使用
-`explorer.exe`，Linux 使用 `xdg-open`，等等)。变量 |g:Openprg| 存在时，使用该
-变量指定的字符串来代替系统缺省。
+用系统缺省处理程序来打开 `path` (macOS 使用 `open`，Windows 使用 `start`，
+Linux 使用 `xdg-open`，等等)。变量 |g:Openprg| 存在时，使用该变量指定的字符串
+来代替系统缺省。
 
 |:Open| 用户命令会为其参数使用文件补全。
 
@@ -4736,5 +4749,107 @@ dist#vim9#Launch(file: string) ~
 	:call dist#vim9#Launch(<args>)
 	:Launch <app> <args>.
 <
+==============================================================================
+15. 剪贴板提供者					*clipboard-providers*
 
+剪贴板提供者特性允许用自定义的 Vim 脚本函数来覆盖 "+" 和 "*" 寄存器。可以定义
+多个提供者，Vim 会根据 'clipboard' 的值选择使用哪个提供者。
+
+尽管名字里提到剪贴板，此特性和剪贴板功能是相对独立的。它基本上覆盖了剪贴板寄存
+器的已有行为。
+
+						*clipboard-providers-clipboard*
+剪贴板提供者特性会尊重 'clipboard' 选项里的 "unnamed" and "unnamedplus" 值。而
+忽略该选项里的其它值。
+
+					*clipboard-providers-no-clipboard*
+如果未启用 |+clipboard| 特性，除非 |v:clipboard| 设为某提供者，否则 "+" 和 "*"
+寄存器不会被启用/可用。反之，如果该选项设为某提供者，即使未启用  |+clipboard|
+特性，剪贴板寄存器也会可用。
+
+						*clipboard-providers-plus*
+在只支持 "*" 寄存器的平台上，"+" 寄存器只会在 |v:clipmethod| 设为某提供者时才
+会可用。要检查 "+" 是否可用，可以查看: >
+	if has('unnamedplus')
+<
+						*clipboard-providers-clipmethod*
+要使提供者和 Vim 的剪贴板功能集成，在所有平台上，可使用 'clipboard' 选项。该选
+项应指定剪贴板提供者的名称，当 Vim 选中该提供者时，它将覆盖 "+" 和 "*" 寄存
+器。注意 "+" 和 "*" 的内容完全不会保存到 viminfo 中。
+
+						*clipboard-providers-define*
+要定义剪贴板提供者，可用 |v:clipproviders| vim 变量。其类型为 |dict|，其中的键
+为剪贴板提供者名，而值为另一个字典，其中会声明 "available"、"copy" 和 "paste"
+回调: >vim
+	let v:clipproviders["myprovider"] = {
+	    \ "available": function("Available"),
+	    \ "paste": {
+	    \     "+": function("Paste"),
+	    \     "*": function("Paste")
+	    \	},
+	    \ "copy": {
+	    \     "+": function("Copy"),
+	    \     "*": function("Copy")
+	    \	}
+	    \ }
+	set clipmethod^=myprovider
+
+每个回调可以是字符串形式的函数名、|Funcref| 或者 |lambda| 表达式。
+
+除了 "available" 回调以外，如果不定义某回调，Vim 将不会执行任何操作，而且这不
+代表出错。
+
+						*clipboard-providers-textlock*
+"paste" 和 "copy" 回调都不允许改动缓冲区文本，见 |textlock|。
+
+						*clipboard-providers-available*
+"available" 回调可选，不接受参数，应返回 |boolean| 或非零值，告知 Vim 该提供者
+是否可用。如果该提供者不可用，Vim 会跳过它并尝试下一个 'clipmethod' 值。
+"available" 回调省略时，Vim 假定该提供者总是可用 (为真)。
+
+						*clipboard-providers-paste*
+读取寄存器值时，会调用 "paste" 回调。"paste" 回调接受按以下顺序出现的参数:
+	1. 要访问的寄存器名，可以是 "+" 或 "*"。
+
+它应返回包含下列元素的 |list| 或 |tuple|:
+	1. 寄存器类型 (以及可选的宽度规格)，其形式遵循 |setreg()|.  为空串时，
+	   系统会自动选择类型。
+	2. 返回给 Vim 的字符串 |list|，其中每个列表项代表一行。
+
+
+						*clipboard-providers-copy*
+设置寄存器时，会调用 "copy" 回调。"copy" 回调接受按以下顺序出现的参数:
+	1. 待操作的寄存器，可以是 "+" 或 "*"。
+	2. 寄存器类型，其形式遵循 |getregtype()|。
+	3. 使用的字符串列表，其中每个列表项代表一行。
+
+
+下面给出一个使用剪贴板提供者特性的示例脚本: >vim
+	func Available()
+	    return v:true
+	endfunc
+
+	func Copy(reg, type, str)
+	    echom "Register: " .. a:reg
+	    echom "Register type: " .. a:type
+	    echom "Contents: " .. string(a:str)
+	endfunc
+
+	func Paste(reg)
+	    return ("b40", ["this", "is", "the", a:reg, "register!"])
+	endfunc
+
+	let v:clipproviders["test"] = {
+	    \ "available": function("Available"),
+	    \ "copy": {
+	    \     "+": function("Copy"),
+	    \     "*": function("Copy")
+	    \	},
+	    \ "paste": {
+	    \     "+": function("Paste"),
+	    \     "*": function("Paste")
+	    \	}
+	    \ }
+	set clipmethod^=test
+<
  vim:tw=78:ts=8:noet:ft=help:norl:

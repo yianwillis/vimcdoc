@@ -41558,8 +41558,8 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 ------------------
 - 支持 GTK 里用 <D-Key> 的 Super 键映射。
 
-- 包含新插件 |package-comment|、|package-nohlsearch|、|package-hlyank| 和
-  |help-TOC|。
+- 包含新可选包 |package-comment|、|package-nohlsearch|、|package-hlyank|、
+  |help-TOC|、|package-helpcurwin| 和 |package-osc52|。
 
 - 包含了互动教程插件 |vim-tutor-mode|，可用 |:Tutor| 启动。
 
@@ -41579,6 +41579,8 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 
 - |items()| 函数现在支持 blob。
 
++- 新增剪贴板提供者特性 |clipboard-providers|。
+
 							*changed-9.2*
 改动~
 -------
@@ -41593,7 +41595,7 @@ Vim9 脚本的泛型函数支持 |generic-functions|
 - 改进的可视高亮 |hl-Visual|
 - 使用非兼容模式时 'showcmd' 的缺省值总是打开 (之前，UNIX 系统上是关闭的)，相
   应地并从 |defaults.vim| 里去除
-- 改进比较模式体验， 更新 'diffopt' 缺省值为
+- 改进比较模式体验，更新 'diffopt' 缺省值为
   "internal,filler,closeoff,indent-heuristic,inline:char"。
 - 'ruler' 选项值在非兼容模式下总是打开，并从 |defaults.vim| 里去除
 
@@ -41633,7 +41635,12 @@ Vim9 脚本的泛型函数支持 |generic-functions|
   listchars "extend" 子选项为 ">"，指示有超出窗口宽度的文本。
 - 'guioptions': 新值 |'go-C'| 来风格化 Windows 11 的标题栏 (另见下面平台特定的
   相关改动)。
+- 'guioptions': 通过 |'go-d'| 来支持 MS-Windows 上用于菜单和标题栏的深色模式
+  (另见下面平台特定的相关改动)。
+- 'guioptions': 新值 |'go-s'| 来支持 MS-Windows GUI 上的全屏 (另见下面平台特定
+  的相关改动)。
 - 'completepopup': 增加更多值来风格化弹出窗口。
+- 'fsync' 现在是 |global-local| 选项。
 
 Ex 命令: ~
 - 定义新标号时允许指定优先级 |:sign-define|
@@ -41656,6 +41663,8 @@ Ex 命令: ~
 - |matchfuzzy()| 和 |matchfuzzypos()| 使用改进了的模糊匹配算法 (和 fzy 相同)。
 - |sha256()| 也接受 |Blob| 作为参数。
 - |listener_add()| 允许注册未经缓冲的监听器，改动一旦发生就会立即被处理。
+- |redraw_listener_add()| 和 |redraw_listened_remove()| 新增/删除重画事件的回
+  调。
 
 插件~
 - |zip| 插件现在支持 PowerShell Core。
@@ -41663,11 +41672,13 @@ Ex 命令: ~
 平台特定 ~
 - MS-Windows: "\Windows" 和 "/Windows" 这样的路径现在被视作 (在当前驱动器上的)
   绝对路径而不再是相对路径。
-- MS-Windows: 标题栏遵循 |hl-TitleBar| 和 |hl-TitleBarNC| 高亮组
-  |gui-w32-title-bar|。
-- MS-Windows: Vim 在执行外部命令时不再搜索当前目录下的可执行程序，如果要保留以
-  前的行为，可用相对或绝对路径 |NoDefaultCurrentDirectoryInExePath|。
+- MS-Windows: 使用 |'go-C'| 时，标题栏遵循 |hl-TitleBar| 和 |hl-TitleBarNC| 高
+  亮组 |gui-w32-title-bar|。
+- MS-Windows: 使用 |'go-d'| 时，支持菜单和标题栏的深色模式
+- MS-Windows: Vim 在执行外部命令时不再搜索当前目录下的可执行程序，如果要保留老
+  式的行为，可用相对或绝对路径前缀 |$NoDefaultCurrentDirectoryInExePath|。
 - macOS: 提升缺省调度程序优先级为 TASK_DEFAULT_APPLICATION。
+- MS-Windows: 新值 |'go-s'| 可支持 MS-Windows GUI 上的全屏
 
 其他: ~
 - 正则表达式引擎正确匹配大小写不敏感多字节字符 (并适用合适的大小写折叠)
@@ -41725,6 +41736,8 @@ Ex 命令: ~
 |ngettext()|		查找单数/复数的消息翻译
 |popup_setbuf()|	弹出切换到另一缓冲区
 |preinserted()|		是否在补全时插入了预插入文本 (见 'completeopt')
+|redraw_listener_add()|	新增重画监听器回调
+|redraw_listener_remove()|  删除重画监听器回调
 |str2blob()|		转换字符串列表为 blob
 |test_null_tuple()|	返回 null 元组
 |tuple2list()|		把项目元组转换为列表
@@ -41801,6 +41814,7 @@ Ex-命令: ~
 
 Vim 变量: ~
 |v:clipmethod|		当前 'clipmethod'。
+|v:clipproviders|	包含剪贴板提供者配置的字典 |clipboard-providers|。
 |v:stacktrace|		最近捕获的异常。
 |v:t_enumvalue|		|enumvalue| 的值。
 |v:t_enum|		|enum| 类型值。
