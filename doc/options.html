@@ -719,7 +719,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         字节，因而它们在这些字体里用 "宽" 字形显示。这也包括文本文件里制表用的
         一些画线字符。因此如果 GUI Vim 使用 CJK 字体、或者在使用 CJK 字体的终
         端 (模拟器) (包括带有 "-cjkwidth" 选项的 xterm) 里运行 Vim，应把本选项
-        设为 "double"，这样可以匹配这些字体里 Vim 实际看到相关字形的宽度。 CJK
+        设为 "double"，这样可以匹配这些字体里 Vim 实际看到相关字形的宽度。CJK
         MS-Windows 上，如果系统 locale 为 CJK locale 之一，也应把本选项设为
         "double"。见 Unicode Standard Annex #11
         (<a href="http://www.unicode.org/reports/tr11">http://www.unicode.org/reports/tr11</a>)。
@@ -792,8 +792,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                         <b class="vimtag"> <a name="'autocompletedelay'">'autocompletedelay'</a> </b> <b class="vimtag"> <a name="'acl'">'acl'</a> </b>
 <a href="options.html#'autocompletedelay'">'autocompletedelay'</a> <a href="options.html#'acl'">'acl'</a>       数值型  (缺省为 0)
                                 全局
-        键入后以毫秒计自动补全菜单的显示延迟。 如果希望不要太快打开菜单，把此
-        值设置为稍高于你打字速度的值。见  <a href="insert.html#ins-autocompletion">ins-autocompletion</a> 。
+        键入后以毫秒计自动补全菜单的显示延迟。如果希望不要太快打开菜单，把此值
+        设置为稍高于你打字速度的值。见  <a href="insert.html#ins-autocompletion">ins-autocompletion</a> 。
 
                                         <b class="vimtag"> <a name="'autocompletetimeout'">'autocompletetimeout'</a> </b> <b class="vimtag"> <a name="'act'">'act'</a> </b>
 <a href="options.html#'autocompletetimeout'">'autocompletetimeout'</a> <a href="options.html#'act'">'act'</a>     数值型  (缺省为 80)
@@ -1530,13 +1530,17 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                         "autoselect,exclude:cons\|linux"，
                                 其它为 "")
                         全局
-                        {仅有在 GUI 版本或者包含  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a>  或
-                         <a href="various.html#+wayland_clipboard">+wayland_clipboard</a>  特性时才有效}
+                        {仅当在 GUI 版本或者包含  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a>  或
+                         <a href="various.html#+wayland_clipboard">+wayland_clipboard</a>  或  <a href="various.html#+clipboard_provider">+clipboard_provider</a>  特性时才
+                        有效}
         本选项是逗号分隔的名字列表。
         <code class="note">注意</code>: 如果其中的一项是 "exclude:"，其后不能再附加项目。因此，不要用 +=
         附加项目，而要用 ^= 在前面加上项目，例如:
 <code class="example">                set clipboard^=unnamed</code>
         GUI 版本见  <a href="options.html#'go-A'">'go-A'</a> 。
+        使用  <a href="eval.html#clipboard-providers">clipboard-providers</a>  特性时，只识别 "unnamed" and "unnamedplus"
+        功能。如果编译时未加入  <a href="various.html#+clipboard">+clipboard</a>  特性但加入了  <a href="various.html#+clipboard_provider">+clipboard_provider</a> 
+        特性，那么只有这两个值是有效的，其他值都属于非法值。
         识别以下名字:
 
                                                 <b class="vimtag"> <a name="clipboard-unnamed">clipboard-unnamed</a> </b>
@@ -1605,15 +1609,18 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                                  VMS: "x11"，
                                  其他: "")
                         全局
-                        {仅当编译时加入  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a>  或
-                         <a href="various.html#+wayland_clipboard">+wayland_clipboard</a>  特性才有效}
-        指定正在使用的系统剪贴板的访问方法，取决于哪种方法优先或可用。支持的方
-        法是:
+                        {仅当编译时加入  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a> 、
+                         <a href="various.html#+wayland_clipboard">+wayland_clipboard</a>  或  <a href="various.html#+eval">+eval</a>  特性才有效}
+        指定访问系统剪贴板的方法 (或剪贴板提供者)，会按给定的顺序依次尝试，使
+        用首个可用的方法。支持的方法是:
                 wayland         Wayland 选择
                 x11             X11 选择
+                <code class="special">&lt;name&gt;</code>          使用给定名字的剪贴板提供者
 
         <code class="note">注意</code>: 当运行 GUI 或在没有 Waylang 或 X11 的系统，如 Windows 或 MacOS
-        上运行 Vim 时，忽略本选项。总是使用 GUI 或系统提供的剪贴板访问方法。
+        上运行 Vim 时，忽略本选项。此时会使用 GUI 或系统提供的剪贴板访问方法，
+        这意味着  <a href="eval.html#v:clipmethod">v:clipmethod</a>  会被设为 "none"。 <a href="eval.html#clipboard-providers">clipboard-providers</a>  特性是
+        个例外，使用剪贴板提供者时，已有的剪贴板功能会被覆盖。
 
         选项值是逗号分隔的项目列表。列表从左到右进行解析，首个 Vim 决定可用或
         可正常工作的方法被用作实际使用的访问剪贴板的方法。
@@ -2089,7 +2096,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         <code class="note">注意</code>:  <a href="vim9.html#Vim9">Vim9</a>  脚本里遇到  <a href="vim9.html#vim9script">vim9script</a>  时，保存本选项值，设置
         <a href="options.html#'cpoptions'">'cpoptions'</a> 为 Vim 缺省值，然后在脚本结束处恢复保存的值。修改
         <a href="options.html#'cpoptions'">'cpoptions'</a> 值会影响保存的值，但请记住删除一个 <a href="options.html#'cpoptions'">'cpoptions'</a> 改变时不存
-        在的标志位是无效的。  <a href="starting.html#.vimrc">.vimrc</a>  文件不恢复保存的值，因此在  <a href="starting.html#.vimrc">.vimrc</a>  文件
+        在的标志位是无效的。 <a href="starting.html#.vimrc">.vimrc</a>  文件不恢复保存的值，因此在  <a href="starting.html#.vimrc">.vimrc</a>  文件
         中使用  <a href="vim9.html#vim9script">vim9script</a>  会导致本选项使用 Vim 缺省值。
 
         <code class="note">注意</code>: 如果应该使用 Vi 的缺省值且 $VIM_POSIX 环境变量存在时，本选项设为
@@ -3217,7 +3224,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         例如:
 <code class="example">            :set fillchars=stl:\ ,stlnc:\ ,vert:\|,fold:-,diff:-,tpl_vert:\|</code>
 
-        所有项目支持单字节和多字节字符。但不支持双宽字符。  <a href="options.html#E1512">E1512</a> 
+        所有项目支持单字节和多字节字符。但不支持双宽字符。 <a href="options.html#E1512">E1512</a> 
 
         这些项目使用的高亮:
 <code class="section">          项目名        高亮组 </code>
@@ -3513,12 +3520,14 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
 
                                         <b class="vimtag"> <a name="'fsync'">'fsync'</a> </b> <b class="vimtag"> <a name="'fs'">'fs'</a> </b> <b class="vimtag"> <a name="'nofsync'">'nofsync'</a> </b> <b class="vimtag"> <a name="'nofs'">'nofs'</a> </b>
 <a href="options.html#'fsync'">'fsync'</a> <a href="options.html#'fs'">'fs'</a>            布尔型  (缺省打开)
-                        全局
+                        全局或局部于缓冲区  <a href="options.html#global-local">global-local</a> 
         如果打开，写入文件后调用库函数 fsync()。它会把文件刷新到磁盘上，确保文
         件即使在只做元数据 (metadata) 日志 (journaling) 的文件系统上也会被安全
         写入。Linux 系统的笔记本模式下，它会强迫硬盘转上一会儿，有时候你不想这
         样。但要<code class="note">警告</code>你，关闭此选项增加崩溃时数据丢失的机率。没有 fsync() 实现
         的系统上，此选项总是关闭的。
+        这是  <a href="options.html#global-local">global-local</a>  选项，可为每个缓冲区单独设置，例如用于写入位于慢速
+        文件系统上的缓冲区。
         另见 <a href="options.html#'swapsync'">'swapsync'</a>，说明如何控制交换文件的 fsync()。
         <a href="options.html#'fsync'">'fsync'</a> 也适用于  <a href="builtin.html#writefile()">writefile()</a>  (除非使用了否决它的标志位) 和写入撤销文
         件 (见  <a href="undo.html#undo-persistence">undo-persistence</a> )。
@@ -3732,7 +3741,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                 目前仅可用于 MS-Windows GUI。
                 详见  <a href="gui_w32.html#gui-w32-title-bar">gui-w32-title-bar</a> 。
                                                                 <b class="vimtag"> <a name="'go-d'">'go-d'</a> </b>
-          'd'   如果可能，使用深色主题变体。目前仅能用于 Win32 和 GTK+ GUI。
+          'd'   如果可能，使用深色主题变体。目前仅可用于 MS-Windows 和 GTK+
+                GUI。
                                                                 <b class="vimtag"> <a name="'go-e'">'go-e'</a> </b>
           'e'   根据 <a href="options.html#'showtabline'">'showtabline'</a> 的要求加入标签页。
                 可用 <a href="options.html#'guitablabel'">'guitablabel'</a> 来改变标签文本。
@@ -3763,6 +3773,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           't'   包含可撕下的菜单项。目前只用于 Win32、GTK+ 和 Motif 1.2 GUI。
                                                                 <b class="vimtag"> <a name="'go-T'">'go-T'</a> </b>
           'T'   包含工具栏。目前只用于 Win32、GTK+、Motif 和 Photon GUI。
+                                                                <b class="vimtag"> <a name="'go-s'">'go-s'</a> </b>
+          's'   启动全屏模式。目前只支持 MS-Windows GUI 版本。如果存在，窗口会
+                占据整个屏幕并去除窗口装饰元素。要方便地切换此模式，可自定义映
+                射。详细的用法说明可见  <a href="gui_w32.html#gui-w32-fullscreen">gui-w32-fullscreen</a> 。
                                                                 <b class="vimtag"> <a name="'go-r'">'go-r'</a> </b>
           'r'   右边的滚动条总是存在。
                                                                 <b class="vimtag"> <a name="'go-R'">'go-R'</a> </b>
@@ -4983,7 +4997,7 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         搜索计数状态  <a href="options.html#shm-S">shm-S</a>  显示的最大匹配数。如果匹配数超过此值，Vim 显示
         "&gt;" 而不是准确数目，使搜索保持快速。
         <code class="note">注意</code>: 更大值会影响效率。
-        此值必须在 1 到 9999 之间。
+        此值必须在 1 到 9999 之间。另见  <a href="builtin.html#searchcount()">searchcount()</a>  函数。
 
                                                 <b class="vimtag"> <a name="'menuitems'">'menuitems'</a> </b> <b class="vimtag"> <a name="'mis'">'mis'</a> </b>
 <a href="options.html#'menuitems'">'menuitems'</a> <a href="options.html#'mis'">'mis'</a>       数值型  (缺省为 25)
@@ -5675,8 +5689,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
         菜单永远不会宽于此值。结束处用 <a href="options.html#'fillchars'">'fillchars'</a> 选项里的 "trunc" 值来指示截
         断文本。
 
-        优先于 <a href="options.html#'pumwidth'">'pumwidth'</a>。
-         <a href="insert.html#ins-completion-menu">ins-completion-menu</a> .
+        本选项优先于 <a href="options.html#'pumwidth'">'pumwidth'</a>。
+        参见  <a href="insert.html#ins-completion-menu">ins-completion-menu</a> 。
 
                                                 <b class="vimtag"> <a name="'pumwidth'">'pumwidth'</a> </b> <b class="vimtag"> <a name="'pw'">'pw'</a> </b>
 <a href="options.html#'pumwidth'">'pumwidth'</a> <a href="options.html#'pw'">'pw'</a>         数值型  (缺省为 15)
@@ -6474,7 +6488,8 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
                 就是说，搜索时显示搜索计数) 时，不显示 "search hit BOTTOM,
                 continuing at TOP" 和 "search hit TOP, continuing at BOTTOM"
                 消息，而只在搜索计数统计值前加上 "W" (助记符: Wrapped 环绕) 字
-                符。搜索计数显示的最大值可通过 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a> 选项设置。
+                符。搜索计数显示的最大值可通过 <a href="options.html#'maxsearchcount'">'maxsearchcount'</a> 选项设置，另见
+                 <a href="builtin.html#searchcount()">searchcount()</a>  函数。
 
         这给你一个机会，避免在缓冲区之间切换要按 <code class="special">&lt;Enter&gt;</code>，但仍然能够在可用的空
         间里得到有用的消息。要得到 <a href="options.html#'shm'">'shm'</a> 为空时的完整消息，使用 ":file!"。
@@ -8322,10 +8337,10 @@ se[t]                   字符串 "set " 或 "se " (<code class="note">注意</c
           exacttext     此标志位如果给出，搜索模式补全 (如在  <a href="pattern.html#%2F">/</a> 、 <a href="pattern.html#?">?</a> 、 <a href="change.html#:s">:s</a> 、
                          <a href="repeat.html#:g">:g</a> 、 <a href="repeat.html#:v">:v</a>  和  <a href="quickfix.html#:vim">:vim</a>  里) 显示准确缓冲区文本作为菜单项
                         目，而不保留正则表达式的特殊项目，如位置锚点等 (例如
-                         <a href="pattern.html#%2F\%3C">/\&lt;</a> )。 这样可以提供匹配实际缓冲区文本的更直观的菜单
-                        项目。但因为没有完整保留搜索模式，搜索不会那么精确。
-                        缺省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这
-                        会保证搜索的正确，尤其是使用了正则表达式或打开
+                         <a href="pattern.html#%2F\%3C">/\&lt;</a> )。这样可以提供匹配实际缓冲区文本的更直观的菜单项
+                        目。但因为没有完整保留搜索模式，搜索不会那么精确。缺
+                        省，Vim 保留键入的模式 (带锚点) 并附加匹配的单词。这会
+                        保证搜索的正确，尤其是使用了正则表达式或打开
                         <a href="options.html#'smartcase'">'smartcase'</a> 的时候。不过，附加的匹配单词的大小写未必和
                         缓冲区里单词的大小写准确匹配。
           fuzzy         使用  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a>  来找到补全匹配。指定此值时，补全

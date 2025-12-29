@@ -72,6 +72,7 @@
 12. 沙盘 (sandbox)       <a href="eval.html#eval-sandbox">eval-sandbox</a> 
 13. 文本锁               <a href="eval.html#textlock">textlock</a> 
 14. Vim 脚本库           <a href="eval.html#vim-script-library">vim-script-library</a> 
+15. 剪贴板提供者         <a href="eval.html#clipboard-providers">clipboard-providers</a> 
 
 测试支持的文档可见  <a href="testing.html#testing.txt">testing.txt</a> 。
 剖视的文档可见  <a href="repeat.html#profiling">profiling</a> 。
@@ -1281,7 +1282,12 @@ expr5 <code class="special">{cmp}</code> expr5
 表，可用  <a href="builtin.html#get()">get()</a>  来取得函数名进行比较:
 <code class="example">        if get(Part1, 'name') == get(Part2, 'name')</code>
 <code class="example">           " Part1 和 Part2 指向相同的函数</code>
-<code class="example"></code>
+
+                                                        <b class="vimtag"> <a name="E1437">E1437</a> </b>
+ <a href="vim9class.html#Object">Object</a>  只能和另一个  <a href="vim9class.html#Object">Object</a>  比较，而且只能使用 "等于"、"不等于"、"is" 和
+"isnot" 这几种操作符  <a href="eval.html#expr4">expr4</a> 。 <a href="vim9class.html#enum">enum</a>  也属于  <a href="vim9class.html#Object">Object</a>  类型，因此同样适用这些规
+则。
+
                                                         <b class="vimtag"> <a name="E1037">E1037</a> </b>
  <a href="eval.html#List">List</a> 、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Dictionary">Dictionary</a>  或  <a href="eval.html#Blob">Blob</a>  用 "is" 或 "isnot" 进行比较时，会检查
 表达式是否指向同一个  <a href="eval.html#List">List</a>  、 <a href="eval.html#Tuple">Tuple</a> 、 <a href="eval.html#Dictionary">Dictionary</a>  或  <a href="eval.html#Blob">Blob</a>  实例。 <a href="eval.html#List">List</a>  或
@@ -1978,7 +1984,7 @@ b:changedtick   当前缓冲区的改动次数。每次发生一次改动时，�
                                                 <b class="vimtag"> <a name="script-variable">script-variable</a> </b> <b class="vimtag"> <a name="s:var">s:var</a> </b>
 在老式 Vim 脚本里，可用 "s:" 开头的变量。它们不能在脚本之外访问，因而可以称为
 局部于脚本的变量。
-在  <a href="vim9.html#Vim9">Vim9</a>  脚本里， "s:" 前缀可以省略，因为变量缺省就是局部于脚本的。
+在  <a href="vim9.html#Vim9">Vim9</a>  脚本里，"s:" 前缀可以省略，因为变量缺省就是局部于脚本的。
 
 它们可以用于:
 - 载入脚本时执行的命令
@@ -2098,7 +2104,12 @@ v:clipmethod    当前正在使用的剪贴板访问的方法。可以是以下�
                         wayland         正在使用的是 Wayland 协议。
                         x11             正在使用的是 X11 选择机制。
                         none            剪贴板功能被关闭，或者不可用。
-                详见 <a href="options.html#'clipmethod'">'clipmethod'</a>。
+                如果使用了不在上面列出的值，剪贴板功能会使用指定名称的剪贴板提
+                供者，详见 <a href="options.html#'clipmethod'">'clipmethod'</a>。
+
+                                        <b class="vimtag"> <a name="v:clipproviders">v:clipproviders</a> </b>
+v:clipproviders
+                提供剪贴板提供者的字典，详见  <a href="eval.html#clipboard-providers">clipboard-providers</a> 。
 
                                         <b class="vimtag"> <a name="v:cmdarg">v:cmdarg</a> </b> <b class="vimtag"> <a name="cmdarg-variable">cmdarg-variable</a> </b>
 v:cmdarg        本变量有两个作用:
@@ -2636,8 +2647,8 @@ v:termresponse  终端响应  <a href="term.html#t_RV">t_RV</a>  termcap 项目�
                 终端的应答做出反应。也会触发 TermResponseAll 事件，其中
                 <code class="special">&lt;amatch&gt;</code> 会被设为 "version"。要查看 Vim 在解析响应后对终端掌握
                 的信息。可用  <a href="builtin.html#terminalprops()">terminalprops()</a> 。
-                新 xterm 的应答是: "<code class="special">&lt;Esc&gt;</code>[&gt; Pp ; Pv ; Pc c"。 Pp 是终端类型:
-                0 代表 vt100，而 1 代表 vt220。 Pv 是补丁号 (因为此功能是
+                新 xterm 的应答是: "<code class="special">&lt;Esc&gt;</code>[&gt; Pp ; Pv ; Pc c"。Pp 是终端类型:
+                0 代表 vt100，而 1 代表 vt220。Pv 是补丁号 (因为此功能是
                 95 补丁版本引入的，补丁号应该总是 95 或更高)。Pc 总是零。
                 Pv 为 141 或更高时，Vim 会试图请求终端键码。只可用于 xterm
                  <a href="term.html#xterm-codes">xterm-codes</a> 。
@@ -3352,13 +3363,15 @@ text...
                         序列，直到遇到和本  <a href="eval.html#:catch">:catch</a>  处于同一  <a href="eval.html#:try">:try</a>  块的下一个
                          <a href="eval.html#:catch">:catch</a> 、`:finally ` 或者  <a href="eval.html#:endtry">:endtry</a>  为止。否则，跳过
                         这些命令。
-                        <code class="special">{pattern}</code> 省略时，捕获所有其余的异常。
-                        示例:
+                        以 "Vim(<code class="special">{cmd}</code>)" 开头的模式表示异常是在执行 Ex 命令
+                        <code class="special">{cmd}</code> 的过程中发生的。<code class="special">{pattern}</code> 省略时，捕获所有其余的
+                        异常。示例:
 <code class="example">                :catch /^Vim:Interrupt$/         " 捕获中断 (CTRL-C)</code>
-<code class="example">                :catch /^Vim\%((\a\+)\)\=:E/     " 捕获所有的 Vim 错误</code>
-<code class="example">                :catch /^Vim\%((\a\+)\)\=:/      " 捕获错误和中断</code>
-<code class="example">                :catch /^Vim(write):/            " 捕获所有 :write 的错误</code>
-<code class="example">                :catch /^Vim\%((\a\+)\)\=:E123:/ " 捕获错误 E123</code>
+<code class="example">                :catch /^Vim\%((\S\+)\)\=:E/     " 捕获所有的 Vim 错误</code>
+<code class="example">                :catch /^Vim\%((\S\+)\)\=:/      " 捕获错误和中断</code>
+<code class="example">                :catch /^Vim(write):/            " 捕获所有 :write 里的错误</code>
+<code class="example">                :catch /^Vim(!):/                " 捕获所有 :! 里的错误</code>
+<code class="example">                :catch /^Vim\%((\S\+)\)\=:E123:/ " 捕获错误 E123</code>
 <code class="example">                :catch /my-exception/            " 捕获用户异常</code>
 <code class="example">                :catch /.*/                      " 捕获一切</code>
 <code class="example">                :catch                           " 同 /.*/</code>
@@ -3573,7 +3586,7 @@ Vim 在出错或者中断的时候可以抛出异常。见  <a href="eval.html#c
 
 TRY 条 件 句                                            <b class="vimtag"> <a name="try-conditionals">try-conditionals</a> </b>
 
-异常可以被捕获，或者用来触发清理代码的运行。为些，可用 try 条件句来指定 catch
+异常可以被捕获，或者用来触发清理代码的运行。为此，可用 try 条件句来指定 catch
 子句 (捕获异常) 和/或 finally 子句 (执行清理)。
    try 条件句以  <a href="eval.html#:try">:try</a>  命令开始，以匹配的  <a href="eval.html#:endtry">:endtry</a>  命令结束。两者之间，可用
  <a href="eval.html#:catch">:catch</a>  命令开启 catch 子句，或用  <a href="eval.html#:finally">:finally</a>  命令开启 finally 子句。
@@ -3638,14 +3651,14 @@ finally 里出现的未必是同一个命令) 引起的，暂停的异常或者�
 
 TRY 条 件 句 的 嵌 套                                   <b class="vimtag"> <a name="try-nesting">try-nesting</a> </b>
 
-try 条件句可以任意嵌套。也就是说， 一个完整的 try 条件句可以在另一个 try 条件
-句的 try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能
-捕获它的 try 块抛出的异常，或者在它的某个 catch 子句或者 finally 子句里抛出新
-的异常的话，那么根据上述规则，由外层的 try 条件句继续检查是否能捕获该异常。如
-果内层 try 条件句在外层 try 条件句的 try 块里，会检查外层的 catch 子句，不然只
-会执行外层的 finally 子句。不管内层 try 条件句是直接包含在外层里面，还是由外层
-执行脚本或者调用了函数，而后者再包含内层 try 条件句，对嵌套 try 的处理方式并无
-区别。
+try 条件句可以任意嵌套。也就是说，一个完整的 try 条件句可以在另一个 try 条件句
+的 try 块、某个 catch 子句或者 finally 子句里出现。如果内层的 try 条件句不能捕
+获它的 try 块抛出的异常，或者在它的某个 catch 子句或者 finally 子句里抛出新的
+异常的话，那么根据上述规则，由外层的 try 条件句继续检查是否能捕获该异常。如果
+内层 try 条件句在外层 try 条件句的 try 块里，会检查外层的 catch 子句，不然只会
+执行外层的 finally 子句。不管内层 try 条件句是直接包含在外层里面，还是由外层执
+行脚本或者调用了函数，而后者再包含内层 try 条件句，对嵌套 try 的处理方式并无区
+别。
 
 如果没有任何活跃的 try 条件句能捕获某个异常，则只执行这些 try 条件句的 finally
 子句。最后，脚本处理被中止。对于 ":throw" 命令显式抛出的未捕获的异常，会显示错
@@ -4709,9 +4722,9 @@ Vim 发布捆绑了 Vim 脚本库，可在运行时使用，也可供脚本作�
                                                       <b class="vimtag"> <a name="g:Openprg">g:Openprg</a> </b> <b class="vimtag"> <a name="gx">gx</a> </b>
 <code class="section">dist#vim9#Open(file: string) </code>
 
-用系统缺省处理程序来打开  <code class="badlink">path</code>  (macOS 使用  <code class="badlink">open</code> ，Windows 使用
- <code class="badlink">explorer.exe</code> ，Linux 使用  <code class="badlink">xdg-open</code> ，等等)。变量  <a href="eval.html#g:Openprg">g:Openprg</a>  存在时，使用该
-变量指定的字符串来代替系统缺省。
+用系统缺省处理程序来打开  <code class="badlink">path</code>  (macOS 使用  <code class="badlink">open</code> ，Windows 使用  <code class="badlink">start</code> ，
+Linux 使用  <code class="badlink">xdg-open</code> ，等等)。变量  <a href="eval.html#g:Openprg">g:Openprg</a>  存在时，使用该变量指定的字符串
+来代替系统缺省。
 
  <a href="eval.html#:Open">:Open</a>  用户命令会为其参数使用文件补全。
 
@@ -4757,7 +4770,108 @@ gx 映射缺省调用此函数。在可视模式下，会试图打开可视选�
         :call dist#vim9#Launch(<code class="special">&lt;args&gt;</code>)
         :Launch <code class="special">&lt;app&gt;</code> <code class="special">&lt;args&gt;</code>.
 &lt;
+</section><hr class="doubleline" /><section class=inner>
+<h4>15. 剪贴板提供者                                        <b class="vimtag"> <a name="clipboard-providers">clipboard-providers</a> </b></h4>
+剪贴板提供者特性允许用自定义的 Vim 脚本函数来覆盖 "+" 和 "*" 寄存器。可以定义
+多个提供者，Vim 会根据 <a href="options.html#'clipboard'">'clipboard'</a> 的值选择使用哪个提供者。
 
+尽管名字里提到剪贴板，此特性和剪贴板功能是相对独立的。它基本上覆盖了剪贴板寄存
+器的已有行为。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-clipboard">clipboard-providers-clipboard</a> </b>
+剪贴板提供者特性会尊重 <a href="options.html#'clipboard'">'clipboard'</a> 选项里的 "unnamed" and "unnamedplus" 值。而
+忽略该选项里的其它值。
+
+                                        <b class="vimtag"> <a name="clipboard-providers-no-clipboard">clipboard-providers-no-clipboard</a> </b>
+如果未启用  <a href="various.html#+clipboard">+clipboard</a>  特性，除非  <code class="badlink">v:clipboard</code>  设为某提供者，否则 "+" 和 "*"
+寄存器不会被启用/可用。反之，如果该选项设为某提供者，即使未启用   <a href="various.html#+clipboard">+clipboard</a> 
+特性，剪贴板寄存器也会可用。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-plus">clipboard-providers-plus</a> </b>
+在只支持 "*" 寄存器的平台上，"+" 寄存器只会在  <a href="eval.html#v:clipmethod">v:clipmethod</a>  设为某提供者时才
+会可用。要检查 "+" 是否可用，可以查看:
+<code class="example">        if has('unnamedplus')</code>
+
+                                                <b class="vimtag"> <a name="clipboard-providers-clipmethod">clipboard-providers-clipmethod</a> </b>
+要使提供者和 Vim 的剪贴板功能集成，在所有平台上，可使用 <a href="options.html#'clipboard'">'clipboard'</a> 选项。该选
+项应指定剪贴板提供者的名称，当 Vim 选中该提供者时，它将覆盖 "+" 和 "*" 寄存
+器。<code class="note">注意</code> "+" 和 "*" 的内容完全不会保存到 viminfo 中。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-define">clipboard-providers-define</a> </b>
+要定义剪贴板提供者，可用  <a href="eval.html#v:clipproviders">v:clipproviders</a>  vim 变量。其类型为  <a href="eval.html#dict">dict</a> ，其中的键
+为剪贴板提供者名，而值为另一个字典，其中会声明 "available"、"copy" 和 "paste"
+回调: &gt;vim
+        let v:clipproviders["myprovider"] = {
+            \ "available": function("Available"),
+            \ "paste": {
+            \     "+": function("Paste"),
+            \     "*": function("Paste")
+            \   },
+            \ "copy": {
+            \     "+": function("Copy"),
+            \     "*": function("Copy")
+            \   }
+            \ }
+        set clipmethod^=myprovider
+
+每个回调可以是字符串形式的函数名、 <a href="eval.html#Funcref">Funcref</a>  或者  <a href="eval.html#lambda">lambda</a>  表达式。
+
+除了 "available" 回调以外，如果不定义某回调，Vim 将不会执行任何操作，而且这不
+代表出错。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-textlock">clipboard-providers-textlock</a> </b>
+"paste" 和 "copy" 回调都不允许改动缓冲区文本，见  <a href="eval.html#textlock">textlock</a> 。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-available">clipboard-providers-available</a> </b>
+"available" 回调可选，不接受参数，应返回  <a href="options.html#boolean">boolean</a>  或非零值，告知 Vim 该提供者
+是否可用。如果该提供者不可用，Vim 会跳过它并尝试下一个 <a href="options.html#'clipmethod'">'clipmethod'</a> 值。
+"available" 回调省略时，Vim 假定该提供者总是可用 (为真)。
+
+                                                <b class="vimtag"> <a name="clipboard-providers-paste">clipboard-providers-paste</a> </b>
+读取寄存器值时，会调用 "paste" 回调。"paste" 回调接受按以下顺序出现的参数:
+        1. 要访问的寄存器名，可以是 "+" 或 "*"。
+
+它应返回包含下列元素的  <a href="eval.html#list">list</a>  或  <a href="eval.html#tuple">tuple</a> :
+        1. 寄存器类型 (以及可选的宽度规格)，其形式遵循  <a href="builtin.html#setreg()">setreg()</a> .  为空串时，
+           系统会自动选择类型。
+        2. 返回给 Vim 的字符串  <a href="eval.html#list">list</a> ，其中每个列表项代表一行。
+
+
+                                                <b class="vimtag"> <a name="clipboard-providers-copy">clipboard-providers-copy</a> </b>
+设置寄存器时，会调用 "copy" 回调。"copy" 回调接受按以下顺序出现的参数:
+        1. 待操作的寄存器，可以是 "+" 或 "*"。
+        2. 寄存器类型，其形式遵循  <a href="builtin.html#getregtype()">getregtype()</a> 。
+        3. 使用的字符串列表，其中每个列表项代表一行。
+
+
+下面给出一个使用剪贴板提供者特性的示例脚本: &gt;vim
+        func Available()
+            return v:true
+        endfunc
+
+        func Copy(reg, type, str)
+            echom "Register: " .. a:reg
+            echom "Register type: " .. a:type
+            echom "Contents: " .. string(a:str)
+        endfunc
+
+        func Paste(reg)
+            return ("b40", ["this", "is", "the", a:reg, "register!"])
+        endfunc
+
+        let v:clipproviders["test"] = {
+            \ "available": function("Available"),
+            \ "copy": {
+            \     "+": function("Copy"),
+            \     "*": function("Copy")
+            \   },
+            \ "paste": {
+            \     "+": function("Paste"),
+            \     "*": function("Paste")
+            \   }
+            \ }
+        set clipmethod^=test
+&lt;
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
 </article>
