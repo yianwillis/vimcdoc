@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>   适用于 Vim 9.1 版本。  最近更新: 2025年12月
+<b class="vimtag"> <a name="builtin.txt">builtin.txt</a> </b>   适用于 Vim 9.2 版本。  最近更新: 2026年2月
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
                                 <code class="vim">译者</code>: Willis
@@ -1327,6 +1327,8 @@ blob2str(<code class="special">{blob}</code> [, <code class="special">{options}<
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBlob()-&gt;blob2str()</code>
+
+                如果  <code class="badlink">iconv</code>  不可用且无法用内建转换规则转换编码，会报错。
 
                 返回类型: list<code class="special">&lt;string&gt;</code>
 
@@ -4280,7 +4282,7 @@ getmarklist([<code class="special">{buf}</code>])                               
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;getmarklist()</code>
 
-                返回类型: list&lt;dict<code class="special">&lt;any&gt;</code>&gt; 或 list<code class="special">&lt;any&gt;</code>
+                返回类型: list&lt;dict<code class="special">&lt;any&gt;</code>&gt; 或 dict<code class="special">&lt;any&gt;</code>
 
 
 getmatches([<code class="special">{win}</code>])                                     <b class="vimtag"> <a name="getmatches()">getmatches()</a> </b>
@@ -4391,6 +4393,9 @@ getpos(<code class="special">{expr}</code>)                                     
                 返回值列表中的列号是行内的字节位置。要得到行内的字符位置，可用
                  <a href="builtin.html#getcharpos()">getcharpos()</a> 。
 
+                可视位置标记  <a href="motion.html#'%3C">'&lt;</a>  和  <a href="motion.html#'%3E">'&gt;</a>  这里代表可视选择区相对于缓冲区的起止
+                位置。<code class="note">注意</code> 这与  <a href="builtin.html#setpos()">setpos()</a>  不同，那里使用相对于光标的位置。
+
                 <code class="note">注意</code> '&lt; 和 '&gt; 的值和可视模式有关: 当使用 "V" (可视行模式) 时，
                 '&lt; 的列号为零，而 '&gt; 的列号是等于  <a href="eval.html#v:maxcol">v:maxcol</a>  的极大数。
                 等于  <a href="eval.html#v:maxcol">v:maxcol</a>  的极大值用来表示 "在行尾之后"。
@@ -4497,9 +4502,7 @@ getqflist([<code class="special">{what}</code>])                                
 <code class="example">                        :echo getqflist({'nr': 2, 'title': 1})</code>
 <code class="example">                        :echo getqflist({'lines' : ["F1:10:L10"]})</code>
 
-                返回类型: list&lt;dict<code class="special">&lt;any&gt;</code>&gt; 或 list<code class="special">&lt;any&gt;</code> (<code class="vim">译者注</code>: 原文如此，应为
-                dict<code class="special">&lt;any&gt;</code>)
-
+                返回类型: list&lt;dict<code class="special">&lt;any&gt;</code>&gt; 或 dict<code class="special">&lt;any&gt;</code>
 
 
 getreg([<code class="special">{regname}</code> [, 1 [, <code class="special">{list}</code>]]])                    <b class="vimtag"> <a name="getreg()">getreg()</a> </b>
@@ -4920,7 +4923,7 @@ glob(<code class="special">{expr}</code> [, <code class="special">{nosuf}</code>
                 如果需要进行更复杂的操作，例如限制匹配项的数目，可以考虑
                  <a href="builtin.html#readdir()">readdir()</a>  。
 
-                扩展结果不包含不存在的文件句。符号链接只有在指向已存在的文件时
+                扩展结果不包含不存在的文件名。符号链接只有在指向已存在的文件时
                 才会包含在扩展结果内。但 <code class="special">{alllinks}</code> 参数给出且为  <a href="eval.html#TRUE">TRUE</a>  时，所
                 有符号链接都会被包含。
 
@@ -9070,8 +9073,15 @@ setpos(<code class="special">{expr}</code>, <code class="special">{list}</code>)
                 首选列。"curswant" 省略时，不设置首选列。如果给出此值但用于设
                 置位置标记，不会有任何效果。
 
-                <code class="note">备注</code> 对于 '&lt; 和 '&gt; (即可视选择的起止位置)，改变它们的行号可能
-                会使两者在实际中被调换，以保证 '&lt; 始终在 '&gt; 之前。
+                <code class="note">备注</code> 对于  <a href="motion.html#'%3C">'&lt;</a>  和  <a href="motion.html#'%3E">'&gt;</a>  (即可视选择的起止位置)，改变它们的行号
+                可能会使两者在实际中被调换，以保证  <a href="motion.html#'%3C">'&lt;</a>  始终在  <a href="motion.html#'%3E">'&gt;</a>  之前。
+
+                可视位置标记  <a href="motion.html#'%3C">'&lt;</a>  和  <a href="motion.html#'%3E">'&gt;</a>  这里代表可视选择区相对于光标位置的
+                起止位置。<code class="note">注意</code> 这与  <a href="builtin.html#getpos()">getpos()</a>  不同，那里使用相对于缓冲区的位
+                置 (<code class="vim">译者注</code>: 可换一种方式解释。 <a href="builtin.html#getpos()">getpos()</a>  假定  <a href="motion.html#'%3C">'&lt;</a>  总在  <a href="motion.html#'%3E">'&gt;</a> 
+                之前，因此两个位置的先后顺序取决于其在缓冲区的相对位置。而在本
+                函数中， <a href="motion.html#'%3C">'&lt;</a>  表示选择开始时的光标位置， <a href="motion.html#'%3E">'&gt;</a>  表示选择结束时的光
+                标位置，其先后顺序由光标移动方向决定)。
 
                 成功设置指定位置时返回 0，否则返回 -1。
                 如果 <code class="special">{expr}</code> 不合法，报错。
@@ -11276,7 +11286,7 @@ win_findbuf(<code class="special">{bufnr}</code>)                               
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;win_findbuf()</code>
 
-                返回类型: list<code class="special">&lt;number&gt;</code> 或 list<code class="special">&lt;any&gt;</code>
+                返回类型: list<code class="special">&lt;number&gt;</code>
 
 
 win_getid([<code class="special">{win}</code> [, <code class="special">{tab}</code>]])                            <b class="vimtag"> <a name="win_getid()">win_getid()</a> </b>

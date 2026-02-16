@@ -33,11 +33,11 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="ft_context.txt">ft_context.txt</a> </b>        适用于 Vim 9.1 版本。  最近更新: 2025年3月
+<b class="vimtag"> <a name="ft_context.txt">ft_context.txt</a> </b>        适用于 Vim 9.2 版本。  最近更新: 2026年2月
 
 这是 ConTeXt 文件类型插件的文档。
 
-<code class="note">注意</code>: 此插件需要 +vim9script。
+<code class="note">注意</code>: 此插件需要  <a href="various.html#+vim9script">+vim9script</a> 。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>内 容                                                   <b class="vimtag"> <a name="context.vim">context.vim</a> </b> <b class="vimtag"> <a name="ft-context">ft-context</a> </b></h4>
@@ -52,10 +52,10 @@
 ConTeXt，与 LaTeX 类似，是基于宏的在 TeX 上构造的排版系统:
 
 <code class="example">        https://wiki.contextgarden.net</code>
-<code class="example">        https://wiki.contextgarden.net/Vim</code>
+<code class="example">        https://wiki.contextgarden.net/Input_and_compilation/Text_editors/Vim</code>
 
-ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。排版文档的建议方式是
-使用  <a href="ft_context.html#:ConTeXt">:ConTeXt</a> 。这会调用在  <code class="badlink">$PATH</code>  上找到的  <code class="badlink">mtxrun</code>  脚本。
+ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。建议使用  <a href="ft_context.html#:ConTeXt">:ConTeXt</a> 
+来排版文档，这会调用在  <code class="badlink">$PATH</code>  上找到的  <code class="badlink">mtxrun</code>  脚本。
 
 要更精细地控制命令及其环境，可直接调用  <code class="badlink">context.Typeset()</code>  (老式 Vim 脚本里可
 用  <code class="badlink">context#Typeset()</code> )。例如，如果在  <code class="badlink">~/context</code>  下安装了 ConTeXt，可类似于下
@@ -63,25 +63,30 @@ ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。排
 
 <code class="example">        import autoload 'context.vim'</code>
 <code class="example"></code>
+<code class="example">        var os = "linux"    # 更换为用户的实际系统</code>
+<code class="example">        var arch = "arm64"  # 更换为用户的实际架构</code>
+<code class="example"></code>
 <code class="example">        def MyConTeXt()</code>
-<code class="example">            const env = {'PATH':</code>
-<code class="example">              printf("%s/context/tex/texmf-&lt;os&gt;-&lt;arch&gt;/bin:%s", $HOME, $PATH)}</code>
-<code class="example">            context.Typeset("%", env)</code>
+<code class="example">          var env = {</code>
+<code class="example">            'PATH': $'{$HOME}/context/tex/texmf-{os}-{arch}/bin:{$PATH}'</code>
+<code class="example">          }</code>
+<code class="example">          context.Typeset("%", env)</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-代码可放在  <code class="badlink">~/.vim/after/ftplugin/context.vim</code> 。然后可定义映射来调用此定制函
-数:
-
 <code class="example">        nnoremap &lt;silent&gt;&lt;buffer&gt;&lt;leader&gt;t &lt;scriptcmd&gt;MyConTeXt()&lt;cr&gt;</code>
+<code class="example"></code>
+此代码应放在  <code class="badlink">~/.vim/after/ftplugin/context.vim</code> 。
 
  <code class="badlink">context.Typeset()</code>  接受第三个可选的参数，用于指定定制的排版命令。此参数必须是
-函数，接受路径，返回以列表形式出现的命令。例如:
+接受一个路径参数的函数，并返回以  <a href="eval.html#list">list</a>  形式出现的命令。例如:
 
 <code class="example">        def ConTeXtCustomCommand(path: string): list&lt;string&gt;</code>
 <code class="example">          return ['mtxrun', '--script', 'context', '--nonstopmode', path]</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-<code class="example">        context.ConTeXtTypeset("%", v:none, ConTeXtCustomCommand)</code>
+<code class="example">        def MyContext()</code>
+<code class="example">            context.Typeset("%", v:none, ConTeXtCustomCommand)</code>
+<code class="example">        enddef</code>
 
 大型项目的组织方式通常是一个根文档和若干章节文件。编辑章节文件时，最好可以直接
 在其上调用  <a href="ft_context.html#:ConTeXt">:ConTeXt</a> ，而不用先切换到根文件。为此，可在每个章节文件的头部加入
@@ -92,8 +97,8 @@ ConTeXt 插件提供语法高亮、补全和排版 ConTeXt 文档的支持。排
 Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行指定的文档而不是当前缓冲
 区进行排版。根文档不须在 Vim 中打开。
 
-要扩展补全和语法高亮，可用 ConTeXt 生成支持文件，并加入到你的配置中。如果配置
-文件位于  <code class="badlink">~/.vim</code> ，可用:
+要扩展补全和语法高亮，可用 ConTeXt 生成支持文件，并加入到用户配置文件中。如果
+配置文件位于  <code class="badlink">~/.vim</code> ，可用:
 
 <code class="example">        mkdir -p ~/.vim/syntax/shared</code>
 <code class="example">        cd ~/.vim/syntax/shared</code>
@@ -106,7 +111,8 @@ Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行�
 -  <code class="badlink">context-data-metafun.vim</code> ;
 -  <code class="badlink">context-data-tex.vim</code> .
 
-相同的命令也可用于这些语法文件的更新。
+这些文件如果已存在会被自动载入，以增强语法高亮。相同的命令也可用于更新这些语法
+文件。
 
                                                         <b class="vimtag"> <a name="ft-context-commands">ft-context-commands</a> </b>
 <code class="section">命令 </code>
@@ -132,7 +138,8 @@ Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行�
 
 <code class="example">        g:context_ignore_makefile = 0</code>
 
-<code class="note">注意</code>: 用  <a href="quickfix.html#:make">:make</a>  前，先把缓冲区的工作目录设为要排版的文件所在的目录。
+<code class="note">注意</code>: 在使用  <a href="quickfix.html#:make">:make</a>  前，必须确保缓冲区的工作目录设为待排版文件所在的目录。此
+外，请<code class="note">注意</code>  <a href="quickfix.html#:make">:make</a>  会在 $PATH 里搜索  <code class="badlink">mtxrun</code> 。
 
                                         <b class="vimtag"> <a name="'g:context_extra_options'">'g:context_extra_options'</a> </b>
 传递给  <code class="badlink">mtxrun</code>  的额外选项的列表。
@@ -156,11 +163,11 @@ Vim 在当前缓冲区的头十行里寻找魔术行: 如果找到，对该行�
                                                         <b class="vimtag"> <a name="ft-context-mappings">ft-context-mappings</a> </b>
 <code class="section">映射 </code>
 
-tp                      "重新排版 TeX 段落"。
+tp                      "重新排版 TeX 段落" (动作)。
 
-i$                      "内含内嵌数学块"。
+i$                      "内含内嵌数学块" (文本对象选择)。
 
-a$                      "一个内嵌数学块"。
+a$                      "一个内嵌数学块" (文本对象选择)。
 
 ]]                      <code class="special">[count]</code> 个正向小节开始处。
 

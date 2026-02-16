@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.1 版本。  最近更新: 2025年12月
+<b class="vimtag"> <a name="map.txt">map.txt</a> </b>       适用于 Vim 9.2 版本。  最近更新: 2026年2月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -1294,7 +1294,7 @@ non-id    匹配的前面是一个空格、制表或者行或插入的开始。
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 用户定义的命令                               <b class="vimtag"> <a name="user-commands">user-commands</a> </b></h4>
 可以定义你自己的 Ex 命令。用户自定义命令可以像内建命令一样运行 (支持范围或参
-数，参数可被作为文件句或缓冲区名进行自动补全，等等)，只不过当该命令执行时，它
+数，参数可被作为文件名或缓冲区名进行自动补全，等等)，只不过当该命令执行时，它
 会先被转换成一个普通的 Ex 命令再执行。
 
 对于初学者来说: 参考用户手册中的  <a href="usr_40.html#40.2">40.2</a> 。
@@ -1445,8 +1445,9 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
         -complete=runtime       <a href="options.html#'runtimepath'">'runtimepath'</a> 里的文件和目录名
         -complete=scriptnames   已载入的脚本名
         -complete=shellcmd      外壳命令
-        -complete=shellcmdline  第一部分是外壳命令，其余是文件句。行为与
-                                 <a href="various.html#:!cmd">:!cmd</a>  相同
+        -complete=shellcmdline  第一部分是外壳命令，其余是文件名。其行为与
+                                 <a href="various.html#:!cmd">:!cmd</a>  相同。要获取正确的补全结果，
+                                 <a href="map.html#:command-nargs">:command-nargs</a>  必须为 '*' 或 '+'
         -complete=sign           <a href="sign.html#:sign">:sign</a>  子选项
         -complete=syntax        语法文件名 <a href="options.html#'syntax'">'syntax'</a>
         -complete=syntime        <a href="syntax.html#:syntime">:syntime</a>  子选项
@@ -1471,20 +1472,21 @@ Vim 和任何其它 Ex 命令一样对待用户自定义命令。它能有参数
 
 该函数不需要使用所有的这些参数，它应该提供自动补全候选作为返回值，
 
-对于 "custom" 参数，函数应该返回字符串，每行一个候选，用换行符分隔。
+对于 "custom" 参数，函数应该返回以换行符分隔的单个字符串，每个候选文本一行。
                                                         <b class="vimtag"> <a name="E1303">E1303</a> </b>
-对于 "customlist" 参数，函数应该返回 Vim 列表形式的补全候选。忽略列表里的非字
-符串项目。
+对于 "customlist" 参数，函数应该返回 Vim 列表形式的补全候选项。非字符串列表项
+会被忽略。
 
 该函数的参数是:
-        ArgLead         当前自动补全的前导参数
+        ArgLead         当前补全参数的前导文本；<code class="note">注意</code>仅捕获当前单词 (以空格分
+                        隔) 中的前导部分，即使使用了 "-nargs=1" 也是如此
         CmdLine         完整的命令行
-        CursorPos       里面的光标位置 (字节位置)
-该函数可能要根据这些来判别上下文。对 "custom" 参数，它无须用 ArgLead (里面的隐
-式规则) 来过滤候选。在函数返回时 Vim 将用它的正则表达式引擎来进行过滤，这种方
-式在大多数情况下效率更高。如果 <a href="options.html#'wildoptions'">'wildoptions'</a> 包含 "fuzzy"，候选会用
- <a href="pattern.html#fuzzy-matching">fuzzy-matching</a>  过滤。对于 "customlist" 参数，Vim 不会过滤返回的补全候选，用
-户提供的函数应该自己过滤候选。
+        CursorPos       其中光标所在的位置 (字节位置)
+该函数可能要根据这些来判别上下文。对于 "custom" 参数，函数无须使用 ArgLead (其
+中包含的隐式模式) 来过滤候选。在函数返回后，Vim 会用其正则表达式引擎根据前导文
+本过滤候选项，在大多数情况下，这种方式效率更高。<a href="options.html#'wildoptions'">'wildoptions'</a> 包含 "fuzzy"
+时，则会用  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a>  来过滤候选。而对于 "customlist" 参数，Vim 不会自动
+过滤返回的补全候选项，用户提供的函数应自行过滤候选项。
 
 以下的例子为列出 Finger 命令的用户名
 <code class="example">    :com -complete=custom,ListUsers -nargs=1 Finger !finger &lt;args&gt;</code>

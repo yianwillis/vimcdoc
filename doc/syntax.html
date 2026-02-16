@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.1 版本。  最近更新: 2025年10月
+<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.2 版本。  最近更新: 2026年2月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -1033,6 +1033,7 @@ CANGJIE                                 <b class="vimtag"> <a name="cangjie.vim"
 
 缺省打开所有的高亮。要关闭特定组的高亮，在  <a href="starting.html#vimrc">vimrc</a>  里设置对应的变量为 0。
 关闭高亮的所有选项是:
+<code class="example">        :let g:cangjie_builtin_color = 0</code>
 <code class="example">        :let g:cangjie_comment_color = 0</code>
 <code class="example">        :let g:cangjie_identifier_color = 0</code>
 <code class="example">        :let g:cangjie_keyword_color = 0</code>
@@ -1682,6 +1683,14 @@ GSP 页面的缺省色彩风格由  <a href="syntax.html#html.vim">html.vim</a> 
 反引号里的内含 Java 使用 htmlError 组高亮，使之更易看清。
 
 
+GDB                                             <b class="vimtag"> <a name="gdb.vim">gdb.vim</a> </b> <b class="vimtag"> <a name="ft-gdb-syntax">ft-gdb-syntax</a> </b>
+
+GDB 语法文件提供用于注释和块语句的语法  <a href="fold.html#folding">folding</a>  (见  <a href="syntax.html#:syn-fold">:syn-fold</a> )。可以这样打
+开:
+<code class="example"></code>
+<code class="example">        :set foldmethod=syntax</code>
+<code class="example"></code>
+<code class="example"></code>
 GROFF                                           <b class="vimtag"> <a name="groff.vim">groff.vim</a> </b> <b class="vimtag"> <a name="ft-groff-syntax">ft-groff-syntax</a> </b>
 
 groff 语法文件是  <a href="syntax.html#nroff.vim">nroff.vim</a>  的包装，见该标题下的说明参阅使用和配置的示例。提
@@ -2386,60 +2395,61 @@ NCF 语法高亮有一个选项。
 
 NROFF                                           <b class="vimtag"> <a name="nroff.vim">nroff.vim</a> </b> <b class="vimtag"> <a name="ft-nroff-syntax">ft-nroff-syntax</a> </b>
 
-nroff 语法文件可直接用于 AT&amp;T n/troff 而无需修改。如果要使用 GNU groff，你需要
-在使用之前激活语法文件里的一些附加特性。
-
-例如，Linux 和 BSD 的发布版本使用 groff 作为缺省的文本处理包。要激活 groff
-附加的语法高亮特性，使文件被识别为 groff 文件 (见  <a href="syntax.html#ft-groff-syntax">ft-groff-syntax</a> ) 或在你的
-启动文件里加入以下选项:
+nroff 语法文件可直接用于 AT&amp;T n/troff 而无需修改。要支持作为 Linux 和 BSD 发布
+版缺省的文本排版包的 GNU troff (groff)，可将文件识别为 groff 格式 (见
+ <a href="syntax.html#ft-groff-syntax">ft-groff-syntax</a> ) 或在启动文件里加入以下选项:
 <code class="example"></code>
 <code class="example">  :let nroff_is_groff = 1</code>
 <code class="example"></code>
-Groff 和老的 AT&amp;T n/troff 不同，后者还可以在 Solaris 找到。Groff 宏和请求名可
-以超过 2 个字符，而且有语言基本命令之外的扩展。例如，AT&amp;T troff 里你可以用请求
-\(yr 得到 2 位数的年份。groff 里为了照顾兼容性，可以使用相同的请求，你也可以直
-接使用 groff 本身的宏: \[year]。宏请求可以超过 2 个字符，比如，GNU mm 接受
-".VERBON" 和 ".VERBOFF" 请求，以创建 verbatim (不作转换的) 环境。
+GNU troff 和老式 AT&amp;T n/troff (现在仍可在 Solaris 或 Plan 9 里找到) 的区别在于
+扩展了 *roff 语言的语法。例如，在 AT&amp;T troff 里，可用 \n(yr 转义序列访问自
+1900 年起的两位数年份。在 groff 里，为了兼容性也支持此行为，但也可使用 groff
+的扩展语法 \n[yr]。AT&amp;T troff 文档指出 yr 寄存器应存储 "当前年份的后两位"，但
+存在 Y2K 问题；在 groff 里，可使用 \n[year] 正确访问完整 4 位公历年份。在
+groff 里，寄存器、宏、字符串和请求名都可超过两个字符，例如，GNU mm 接受
+".VERBON" 和 ".VERBOFF" 控制行，用以调用同名宏包围 verbatim (不作转换的) 环
+境。
 
 要得到 g/troff 能给出的最好的输出，需要遵循一些关于空格和标点的简单的规则。
 
-1. 不要在行尾留空白。
+1. 在每个句子之后断行 (放上换行符)。换行符前不能有拖尾空白。
 
-2. 在句尾的句号、感叹号等之后留且只留一个空格。
+2. 对于以句号、问号或感叹号结尾的行，如果该行不是句子结尾，在行尾附加一个虚拟
+   字符转义序列 \%。
 
-3. 由于下面的原因，最好在所有的句号之后立即回车。
+3. 使用宏包时，使用其段落宏来实现段落缩进和段落间距。
 
-这些不寻常的提示的背后原因是，如果你不遵循上面的这些规则，g/n/troff 使用的换行
-算法很容易弄错。
+3. 可自由使用空请求，即单独一行的 '.'，以在文档中视觉上分隔内容，便于维护。
 
-和 TeX 不同，troff 逐行而不是逐段填充文本。此外，它没有 glue (可伸缩的距离) 或
-stretch 的概念，所有的水平和垂直空白输入都直接成为输出。
+这些提示的背后原因是，g/n/troff 会试图检测句子结束位置，并据此应用句子间距。这
+些提示也会尽量减少因文本编辑器重新填充行而导致的差异大小。宏包通常会使用不同于
+一 vee (空输入行产生的间距) 的段落间距，并将段落间距和缩进量保存在用户可配置的
+寄存器中，以保证页面布局一致。
 
-因此你必须小心，不要在句子之间留下比你在最终文档想要的更多的空白。因此，通常在
-每个标点符号之后都立即插入一个回车。如果你想要最终处理过的文本 "对齐"，需要在
-输入文本里维持常规的空间。要把行尾的空格和标点之后两个或更多的空格标为错误，可
-用:
+和 TeX 不同，troff 逐行而不是逐段填充文本。如果希望在排版输出中，单词间距和句
+子间距都保持一致，必须在输入文本里维持统一的间距。要把拖尾的空格和标点之后两个
+或更多的空格标为错误，可用:
 <code class="example"></code>
 <code class="example">  :let nroff_space_errors = 1</code>
 <code class="example"></code>
-另一个检测额外的空格和其它错误的技术会影响你文件的正确排版。这个方法是在你的配
-置文件里定义语法组 "nroffDefinition" 和 "nroffDefSpecial" 显眼的高亮定义。例
-如:
+另有一个检测额外的空格和其它错误的技术，但它会干扰文件的正确排版。这个方法是在
+用户配置文件里，为语法组 "nroffDefinition" 和 "nroffDefSpecial" 提供醒目的高亮
+定义。例如:
 <code class="example"></code>
 <code class="example">  hi def nroffDefinition term=italic cterm=italic gui=reverse</code>
 <code class="example">  hi def nroffDefSpecial term=italic,bold cterm=italic,bold</code>
 <code class="example">                         \ gui=reverse,bold</code>
 <code class="example"></code>
-如果你想像段标记符那样方便地浏览源文件里的预处理项目，可以在 .vimrc 文件里激活
+如果希望像小节标记符那样方便地浏览源文件里的预处理项目，可在 .vimrc 文件里激活
 以下选项:
 <code class="example"></code>
 <code class="example">        let b:preprocs_as_sections = 1</code>
 <code class="example"></code>
-还有，语法文件为 ms 包里设置带缩进的 (exdented) 段落宏 (.XP) 增加了一个附加的
-段标记符。
+进一步地，语法文件为 ms 宏包额外提供了用于 XP 段落宏的段落标记符，这是
+Berkeley 和 GNU 扩展。
 
-最后，有一个  <a href="syntax.html#groff.vim">groff.vim</a>  语法文件，可以基于每个文件或，缺省情况下，在全局打开
-groff 的语法高亮。
+最后，还有一个  <a href="syntax.html#groff.vim">groff.vim</a>  语法文件，可针对每个文件或全局 (这是缺省) 启用
+groff 语法高亮。
 
 
 OCAML                                           <b class="vimtag"> <a name="ocaml.vim">ocaml.vim</a> </b> <b class="vimtag"> <a name="ft-ocaml-syntax">ft-ocaml-syntax</a> </b>
@@ -2849,7 +2859,7 @@ PROGRESS                                <b class="vimtag"> <a name="progress.vim
 <code class="example"></code>
 PYTHON                                          <b class="vimtag"> <a name="python.vim">python.vim</a> </b> <b class="vimtag"> <a name="ft-python-syntax">ft-python-syntax</a> </b>
 
-有六个选项可以控制 Python 的语法高亮。
+有七个选项可以控制 Python 的语法高亮。
 
 关于高亮数值:
 <code class="example">        :let python_no_number_highlight = 1</code>
@@ -2869,16 +2879,21 @@ PYTHON                                          <b class="vimtag"> <a name="pyth
 要高亮行尾的空白还有空格和制表的混合:
 <code class="example">        :let python_space_error_highlight = 1</code>
 <code class="example"></code>
-如果你想要所有可能的 Python 高亮:
+要为内建高亮使用与其他关键字不同的高亮:
+<code class="example">        :let python_constant_highlight = 1</code>
+<code class="example"></code>
+如果希望打开所有可能的 Python 高亮:
 <code class="example">        :let python_highlight_all = 1</code>
-这里的效果等同于置位 python_space_error_highlight 及复位其余选项。
+其效果相当于置位 python_space_error_highlight 和 python_constant_highlight，并
+复位其余选项。
 
 如果使用 Python 2 或跨式代码 (同时兼容 Python 2 和 3)，可以强制使用支持 Python
 2 直到 Python 3.5 的旧语法文件。
 <code class="example">        :let python_use_python2_syntax = 1</code>
-此选项会排除所有 Python 3.6 或更新的版本的现代特性。
+此选项会排除所有 Python 3.6 或更新的版本中的现代特性。
 
-<code class="note">注意</code>: 对以上选项，只关心其存在于否，值并不重要，可以把上面的 1 换成任何值。
+<code class="note">注意</code>: 对于以上选项，只需关注其是否存在，值无关重要，可将上面的 1 换成任何值。
+
 
 QUAKE                                           <b class="vimtag"> <a name="quake.vim">quake.vim</a> </b> <b class="vimtag"> <a name="ft-quake-syntax">ft-quake-syntax</a> </b>
 
@@ -4130,7 +4145,7 @@ concealends                                             <b class="vimtag"> <a na
 如果给出 "concealends" 参数，区域的开始和结束匹配 (不包括区域内容本身) 被标为
 可隐藏，实际隐藏与否取决于 <a href="options.html#'conceallevel'">'conceallevel'</a> 选项的设置。只有这种方式，区域结束处
 才可以用 "matchgroup" 来定义自己单独的高亮隐藏方式。 <a href="builtin.html#synconcealed()">synconcealed()</a>  函数可用
-于获取隐藏项目的信息。
+于获取可隐藏项目的信息。
 
 cchar                                                   <b class="vimtag"> <a name=":syn-cchar">:syn-cchar</a> </b>
                                                         <b class="vimtag"> <a name="E844">E844</a> </b>
