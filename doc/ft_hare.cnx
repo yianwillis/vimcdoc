@@ -18,63 +18,65 @@
 
 此插件提供可在 |vimrc| 里定义的若干变量，以调节插件行为。
 
-此外也提供折叠 { } 块的支持。要打开折叠，在 |after-directory| 里一个文件 (如
+							*hare-folding*
+此插件提供折叠 { } 块的支持。要打开折叠，在 |after-directory| 里某个文件 (如
 ~/.vim/after/ftplugin/hare.vim) 里加入: >
 
 	setlocal foldmethod=syntax
 
-因为基于块的折叠倾向于创建许多小折叠，考虑一下设置如 'foldminlines' 和
+因为基于语法的折叠往往会创建许多小折叠，建议根据需要调整 'foldminlines' 和
 'foldnestmax' 等若干选项。
 
+						*hare-symbol-operators*
+绝大多数的符号操作符缺省不高亮 ("!"、"?" 和 "::" 是仅有的例外)。要打开所有操作
+符的高亮，可在 |vimrc| 里将它们链接到用户偏好的高亮组。例如: >
+
+	hi def link hareCast hareSymbolOperator
+	hi def link hareSymbolOperator hareOperator
+<
 						*g:hare_recommended_style*
-根据官方 Hare 风格指导，缺省设置以下选项: >
+根据官方 Hare 风格指导，缺省会设置以下选项: >
 	setlocal noexpandtab
-	setlocal shiftwidth=0
+	setlocal shiftwidth=8
 	setlocal softtabstop=0
 	setlocal tabstop=8
 	setlocal textwidth=80
 <
-要关闭之，在 |vimrc| 里加入: >
+要关闭这些建议风格，在 |vimrc| 里加入: >
 	let g:hare_recommended_style = 0
 <
-						*g:hare_symbol_operators*
-缺省，符号操作符不享用任何特殊的高亮 (`!`、`?` 和 `::` 是仅有的例外)。要打开多
-数其它操作符的语法高亮，在 |vimrc| 里加入: >
-
-	let g:hare_symbol_operators = 1
-<
 							*g:hare_space_error*
-缺省，<Tab> 字符之后的拖尾空白和制表被高亮为错误。插入模式下会自动关闭此高亮。
-要完全关闭此高亮，在 |vimrc| 里加入: >
+缺省，<Tab> 字符之后的拖尾空白和制表符会被高亮为错误。在插入模式下，此高亮会自
+动关闭。如果要完全关闭此高亮，可在 |vimrc| 里加入: >
 
 	let g:hare_space_error = 0
 
 
 HAREDOC 文 件 类 型					*ft-haredoc-plugin*
 
-此插件能够通过递归目录搜索，自动检测 Hare 模块里的 README 文件并设置其为
-"haredoc" 文件类型。因为这是个常见的文件名，此插件缺省只搜索 Hare 源代码所在的
-目录。
+此插件能够通过递归的目录搜索，来自动检测 Hare 模块里的 README 文件，并将其文件
+类型设为 "haredoc"。因为这是个常见的文件名，此插件缺省只搜索 Hare 源代码所在的
+目录下的 README 文件。
 
 							*g:filetype_haredoc*
-|g:filetype_haredoc| 变量可用于调节此搜索的深度，或完全跳过 Hare 文档文件的检
-测:
+`g:filetype_haredoc` 变量可用于调节此搜索的深度，甚至可以完全跳过 Hare 文档文
+件的检测:
 
 	值		效果~
 	0		不自动检测
 	1		仅搜索当前目录 (这是缺省)
 	2		搜索一层子目录
-	3		搜索两层子目录
 
-最大搜索深度可为任何整数，但大于 2 的值绝大多数情况下没有可见的好处。
+最大搜索深度可为任意整数，但在绝大多数情况下，超过 2 的值并无明显收益，且会影
+响性能。
 
 
 缩 进 设 置						*ft-hare-indent*
 
-和此插件的多数其它设置不同，缩进设置可以为缓冲区局部设置，覆盖如有的话的全局设
-置。为此，简单为变量加上 |b:| 前缀而不是 |g:| 就可以了。
+和其它设置不同，缩进设置可以为每个缓冲区单独设置，从而覆盖全局设置 (如有)。为
+此，使用 |b:| 变量前缀而不是 |g:| 即可。
 
-						*g:hare_indent_match_switch*
+		*g:hare_indent_match_switch* *b:hare_indent_match_switch*
 缺省，"match" 和 "switch" 条件的续行只缩进一层: >hare
 
 	const file = match (os::create(path, 0o644,
@@ -83,34 +85,30 @@ HAREDOC 文 件 类 型					*ft-haredoc-plugin*
 		yield file;
 	// ...
 
-如果要缩进两层，以和 "if" 和 "for" 条件更接近，在 |vimrc| 里加入: >
+如果要缩进两层，使其在视觉上更接近 "if" 和 "for" 条件，可在 |vimrc| 里加入: >
 
 	let g:hare_indent_match_switch = 2
 <
-							*g:hare_indent_case*
-缺省，"match" 和 "switch" 表达式的 case 续行缩进两层，以和 case 本体在视觉上有
-所区分: >hare
+				*g:hare_indent_case* *b:hare_indent_case*
+缺省，"match" 和 "switch" 分支 (case) 子句的续行缩进两层，以和 case 本体在视觉
+上有所区分: >hare
 
 	case ltok::I8, ltok::I16, ltok::I32,
 			ltok::I64, ltok::INT =>
 		// ...
 
-要使用不同的缩进量，可调整 |g:hare_indent_case|。合法值为 `0`、`1` 和 `2`。
+如果要使用其他缩进层次，可调整 `g:hare_indent_case`。合法值为 `0`、`1` 和
+`2`。
 
 
 编 译 器 支 持						*compiler-hare*
 
-如果此插件在当前目录下检测到 Makefile 文件，会假定你使用 `make` 构造系统，不触
-碰 'makeprg'。否则，使用 `hare build`。
+如果在当前目录下检测到 Makefile 文件，此插件会假定当前使用 "make" 构造系统，并
+不修改 'makeprg'。否则，会使用 `hare build`。
 
-							*g:hare_makeprg_params*
-如果使用 `hare build`，可用 |g:hare_makeprg_params| 来附加额外编译器选项到
-'makeprg' 里。设置也可以局部于缓冲区 (使用 |b:| 而不是 |g:|)，覆盖如果存在的全
-局配置。例如: >
-
-	let b:hare_makeprg_params = '-lc -t o'
-
-全局的缺省值是 "-q"，编译时不写入标准输出。
+						*g:hare_makeprg_params*
+使用 `hare build` 时，可通过 `g:hare_makeprg_params` 向 'makeprg' 追加额外的编
+译器选项。缺省值是 "-q"，以确保编译时不在标准输出上显示。
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

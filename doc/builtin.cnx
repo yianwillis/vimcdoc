@@ -1,4 +1,4 @@
-*builtin.txt*	适用于 Vim 9.1 版本。  最近更新: 2025年12月
+*builtin.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年2月
 
 		  VIM 参考手册	by Bram Moolenaar
 				译者: Willis
@@ -1295,6 +1295,8 @@ blob2str({blob} [, {options}])				*blob2str()*
 		也可用作 |method|: >
 			GetBlob()->blob2str()
 <
+		如果 `iconv` 不可用且无法用内建转换规则转换编码，会报错。
+
 		返回类型: list<string>
 
 
@@ -4247,7 +4249,7 @@ getmarklist([{buf}])					*getmarklist()*
 		也可用作 |method|: >
 			GetBufnr()->getmarklist()
 <
-		返回类型: list<dict<any>> 或 list<any>
+		返回类型: list<dict<any>> 或 dict<any>
 
 
 getmatches([{win}])					*getmatches()*
@@ -4358,6 +4360,9 @@ getpos({expr})						*getpos()*
 		返回值列表中的列号是行内的字节位置。要得到行内的字符位置，可用
 		|getcharpos()|。
 
+		可视位置标记 |'<| 和 |'>| 这里代表可视选择区相对于缓冲区的起止
+		位置。注意 这与 |setpos()| 不同，那里使用相对于光标的位置。
+
 		注意 '< 和 '> 的值和可视模式有关: 当使用 "V" (可视行模式) 时，
 		'< 的列号为零，而 '> 的列号是等于 |v:maxcol| 的极大数。
 		等于 |v:maxcol| 的极大值用来表示 "在行尾之后"。
@@ -4464,9 +4469,7 @@ getqflist([{what}])					*getqflist()*
 			:echo getqflist({'nr': 2, 'title': 1})
 			:echo getqflist({'lines' : ["F1:10:L10"]})
 <
-		返回类型: list<dict<any>> 或 list<any> (译者注: 原文如此，应为
-		dict<any>)
-
+		返回类型: list<dict<any>> 或 dict<any>
 
 
 getreg([{regname} [, 1 [, {list}]]])			*getreg()*
@@ -4887,7 +4890,7 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])	*glob()*
 		如果需要进行更复杂的操作，例如限制匹配项的数目，可以考虑
 		|readdir()| 。
 
-		扩展结果不包含不存在的文件句。符号链接只有在指向已存在的文件时
+		扩展结果不包含不存在的文件名。符号链接只有在指向已存在的文件时
 		才会包含在扩展结果内。但 {alllinks} 参数给出且为 |TRUE| 时，所
 		有符号链接都会被包含。
 
@@ -9037,8 +9040,15 @@ setpos({expr}, {list})					*setpos()*
 		首选列。"curswant" 省略时，不设置首选列。如果给出此值但用于设
 		置位置标记，不会有任何效果。
 
-		备注 对于 '< 和 '> (即可视选择的起止位置)，改变它们的行号可能
-		会使两者在实际中被调换，以保证 '< 始终在 '> 之前。
+		备注 对于 |'<| 和 |'>| (即可视选择的起止位置)，改变它们的行号
+		可能会使两者在实际中被调换，以保证 |'<| 始终在 |'>| 之前。
+
+		可视位置标记 |'<| 和 |'>| 这里代表可视选择区相对于光标位置的
+		起止位置。注意 这与 |getpos()| 不同，那里使用相对于缓冲区的位
+		置 (译者注: 可换一种方式解释。|getpos()| 假定 |'<| 总在 |'>|
+		之前，因此两个位置的先后顺序取决于其在缓冲区的相对位置。而在本
+		函数中，|'<| 表示选择开始时的光标位置，|'>| 表示选择结束时的光
+		标位置，其先后顺序由光标移动方向决定)。
 
 		成功设置指定位置时返回 0，否则返回 -1。
 		如果 {expr} 不合法，报错。
@@ -11243,7 +11253,7 @@ win_findbuf({bufnr})					*win_findbuf()*
 		也可用作 |method|: >
 			GetBufnr()->win_findbuf()
 <
-		返回类型: list<number> 或 list<any>
+		返回类型: list<number>
 
 
 win_getid([{win} [, {tab}]])				*win_getid()*

@@ -1,4 +1,4 @@
-*vim9.txt*	适用于 Vim 9.1 版本。  最近更新: 2025年12月
+*vim9.txt*	适用于 Vim 9.2 版本。  最近更新: 2025年12月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -951,20 +951,23 @@ Vim9 脚本中，正常使用索引就可以了，如果项目被删除，列表
 JavaScript，唯一的例外是空列表和字典也被视为准假值:
 
 	类型		何时为准真值 ~
-	bool		true、v:true 或 1
-	number		非零
-	float		非零
-	string		非空
-	blob		非空
-	list		非空 (和 JavaScript 不同)
-	tuple		非空 (和 JavaScript 不同)
-	dictionary	非空 (和 JavaScript 不同)
+	bool		为 true、v:true 或 1 时
+	number		非零时
+	float		非零时
+	string		非空时
+	blob		非空时
+	list		非空时 (和 JavaScript 不同)
+	tuple		非空时 (和 JavaScript 不同)
+	dictionary	非空时 (和 JavaScript 不同)
 	func		有函数名时
-	special		true 或 v:true
+	special		为 true 或 v:true 时
 	job		非 NULL 时
 	channel		非 NULL 时
-	class		非 NULL 时
-	object		非 NULL 时 (TODO: 应为 isTrue() 返回 true 时)
+	class		不适用
+	object		非 NULL 时
+	enum		不适用
+	enum value	总是
+	typealias	不适用
 
 布尔操作符 "||" 和 "&&" 期待值为布尔型、零或一: >
 	1 || false   == true
@@ -2286,10 +2289,11 @@ Vim9 脚本不支持 |flatten()|，因为它的目的就是修改类型。即使
 	echo FlexArgs('3', '2', '1', 'GO!')
 <
 
-				*E1211* *E1217* *E1218* *E1219* *E1220* *E1221* *E1222*
-				*E1223* *E1224* *E1225* *E1226* *E1228* *E1235* *E1238*
-				*E1251* *E1253* *E1256* *E1297* *E1298* *E1301* *E1528*
-				*E1529* *E1530* *E1531* *E1534*
+				*E1211* *E1217* *E1218* *E1219* *E1220*
+				*E1221* *E1222* *E1223* *E1224* *E1225*
+				*E1226* *E1228* *E1235* *E1238* *E1251*
+				*E1253* *E1256* *E1297* *E1298* *E1301*
+				*E1528* *E1529* *E1530* *E1531* *E1534*
 大多数内建函数会检查类型，以便查找错误。下面的单行 |:vim9| 调用内建函数的命令
 展示了许多类型检查相关的错误: >vim9
 
@@ -2301,23 +2305,23 @@ Vim9 脚本不支持 |flatten()|，因为它的目的就是修改类型。即使
 	vim9 null_channel->ch_evalraw(9)  # E1221: 参数 1 需要字符串或 blob
 	vim9 9->col()                     # E1222: 参数 1 需要字符串或列表
 	vim9 9->complete_add()            # E1223: 参数 1 需要字符串或字典
-	vim9 setbufline(9, 9, {})         # E1224: 参数 3 需要字符串或整数或列
-	vim9 9->count(9)                  # E1225: String, List, Tuple or Dict
+	vim9 setbufline(9, 9, {})         # E1224: 参数 3 需要字符串或整数 ...
+	vim9 9->count(9)                  # E1225: 参数 1 需要字符串、列表 ...
 	vim9 9->add(9)                    # E1226: 参数 1 需要列表或 blob
-	vim9 9->remove(9)                 # E1228: 需要列表、字典或 blob
-	vim9 getcharstr('9')              # E1235: Bool or number required for
-	vim9 9->blob2list()               # E1238: 需要 blob
-	vim9 9->filter(9)                 # E1251: List, Tuple, Dictionary, Bl
-	vim9 9->reverse()                 # E1253: String, List, Tuple or Blob
+	vim9 9->remove(9)                 # E1228: 参数 1 需要列表、字典或 ...
+	vim9 getcharstr('9')              # E1235: 参数 1 需要布尔值或整数
+	vim9 9->blob2list()               # E1238: 参数 1 需要 blob
+	vim9 9->filter(9)                 # E1251: 参数 1 需要列表、元组、B...
+	vim9 9->reverse()                 # E1253: 参数 1 需要字符串、列表 ...
 	vim9 9->call(9)                   # E1256: 参数 1 需要字符串或函数
-	vim9 null_dict->winrestview()     # E1297: Non-NULL Dictionary require
-	vim9 {}->prop_add_list(null_list) # E1298: Non-NULL List required for
-	vim9 {}->repeat(9)                # E1301: String, Number, List, Tuple
-	vim9 9->index(9)                  # E1528: List or Tuple or Blob
-	vim9 9->join()                    # E1529: List or Tuple required for
-	vim9 9->max()                     # E1530: List or Tuple or Dictionary
-	vim9 9->get(9)                    # E1531: Argument of get() must be a
-	vim9 9->tuple2list()              # E1534: Tuple required for argument
+	vim9 null_dict->winrestview()     # E1297: 参数 1 需要非空字典
+	vim9 {}->prop_add_list(null_list) # E1298: 参数 2 需要非空列表
+	vim9 {}->repeat(9)                # E1301: 参数 1 需要字符串、数字 ...
+	vim9 9->index(9)                  # E1528: 参数 1 需要列表、元组或 ...
+	vim9 9->join()                    # E1529: 参数 1 需要列表或元组
+	vim9 9->max()                     # E1530: 参数 1 需要列表、元组或字典
+	vim9 9->get(9)                    # E1531: get() 的参数必须是列表、...
+	vim9 9->tuple2list()              # E1534: 参数 1 需要元组
 <
 保留作将来使用:					*E1227* *E1250* *E1252*
 	E1227: 参数 %d 需要列表或字典
@@ -2803,7 +2807,7 @@ Vim9 类方法可以是泛型函数: >vim9
 ==============================================================================
 
 6. 命名空间、导入和导出
-					*vim9script* *vim9-export* *vim9-import*
+				*vim9script* *vim9-export* *vim9-import*
 
 可编写 Vim9 脚本，被其它脚本导入。具体地说，有意地导出若干项目，使之被其它脚本
 所用。导出项目的脚本被其它脚本导入，后者就可以使用那些导出项目了。导出脚本的其
