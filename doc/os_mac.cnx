@@ -7,9 +7,9 @@
 
 					*mac* *Mac* *macintosh* *Macintosh*
 
-本文件阐述 Vim 的 Macintonsh 版本的特性。
+本文描述了 Vim 的 Macintonsh 版本的特性。
 
-注意: 本文档已经略有过时。在这里你可以找到更多有用的信息:
+注意: 本文档已经略有过时。更多有用的最新信息可见:
 	http://macvim.org
 
 1. 文件名约定			|mac-filename|
@@ -21,7 +21,7 @@
 7. 编译 Vim			|mac-compile|
 8. Darwin 特性			|mac-darwin-feature|
 
-Vim 的 3.0 版有一个移植到 Mac 的版本。这是当时文档中开始的几句话:
+Vim 的 3.0 版曾有 Mac 的移植版本。这是当时文档中开始的几句话:
 
 VIM Release Notes
 Initial Macintosh release, VIM version 3.0
@@ -35,12 +35,14 @@ Indianapolis IN 46220 USA
 ==============================================================================
 1. 文件名约定						*mac-filename*
 
-从 Vim 版本 7 开始，你只能用 unix 的路径分隔符。为了确定指定的文件名是与当前目
-录相关 (相对路径)，还是绝对路径 (即: 和 "桌面" 相关)，我们使用了如下的算法:
+从 Vim 版本 7 开始，只能使用 unix 风格的路径分隔符。在此之前，Mac 可以同时支持
+: 与 / 两种路径分隔符。为了确定指定的文件名是相对路径 (和当前目录相关)，还是绝
+对路径 (即: 和 "桌面" 相关)，使用以下算法:
 
-	如果路径以 "/" 开始，则为绝对路径
-	如果路径以 ":" 开始，则为相对路径
-	如果路径不以 "/" 和 ":" 开始，但是 ":" 在 "/" 之前出现，则为绝对路径
+	以 "/" 开始的路径为绝对路径
+	以 ":" 开始的路径为相对路径
+	不以 "/" 或 ":" 开始，但 ":" 先于 "/" 出现的路径为绝对路径
+	其他形式的路径均为相对路径
 >
 		:e /HD/text
 		:e HD:text
@@ -51,7 +53,7 @@ Indianapolis IN 46220 USA
 		:e os_mac.c
 <	编辑当前目录下的文件 "os_mac.c"。
 
-您可以使用变量 |$VIM| 和 |$VIMRUNTIME| >
+路径中，可以使用变量 |$VIM| 和 |$VIMRUNTIME| >
 
 		:so $VIMRUNTIME:syntax:syntax.vim
 
@@ -60,12 +62,12 @@ Indianapolis IN 46220 USA
 
 对于 Vim 脚本，建议使用 Unix 风格的换行符，也就是单个 NL 字符。
 
-当 Vim 启动时，它会载入 $VIMRUNTIME/macmap.vim 脚本以定义默认的命令键
-(command-key) 映射。
+当 Vim 启动时，它会载入 $VIMRUNTIME/macmap.vim 脚本，其中定义了缺省的 Command
+(⌘)) 键映射。
 
 在旧版系统上，一般应避免使用以 "." 开头的文件，所以那些 rc 文件被命名为
 "vimrc" 或 "_vimrc"，以及 "gvimrc" 或 "_gvimrc"。这些文件可以是任何格式 (mac、
-dos 或 unix)。如果 'nocompatible' 选项打开，Vim 可以处理任何文件格式，否则它只
+dos 或 unix)。如果打开 'nocompatible' 选项，Vim 可以处理任何文件格式，否则它只
 能处理 mac 格式的文件。
 
 ==============================================================================
@@ -79,42 +81,56 @@ Command-c		"*y			复制可视文本     *<D-c>*
 Command-x		"*d			剪切可视文本     *<D-x>*
 Backspace		"*d			剪切可视文本
 
+(译者注:
+macmap.vim 定义的其他标准映射如下:
+
+Command-n 新建窗口
+Command-o 打开...
+Command-w 关闭
+Command-s 保存
+Shift-Command-s 存储为...
+Command-z 撤销
+Command-a 全选
+Command-f 查找...
+Command-g 下个查找
+)
+
 ==============================================================================
 4. Mac FAQ						*mac-faq*
 
 在互联网上:  https://github.com/macvim-dev/macvim/wiki/FAQ
 
-问题: 我不能在 Apple 终端输入非 ASCII 的字符。
-回答: 在 Windows Setting，Emulation，确信没有选上 "Escape non-ASCII
+问题: 不能在 Apple 终端输入非 ASCII 的字符。
+回答: 在 Windows Setting，Emulation 里，确信未勾选上 "Escape non-ASCII
       characters"。
 
-问题: 怎么从命令行启动 GUI？
-回答: 假设 Vim.app 存放在 /Applications 中:
+问题: 如何从命令行启动 GUI？
+回答: 假定 Vim.app 存放在 /Applications 中，可用:
 	open /Applications/Vim.app
    或:
 	/Applications/Vim.app/Contents/MacOS/Vim -g  {arguments}
 
-问题: 如果我用 GUI 或 open 启动 Vim.app，如何合理设置 $PATH？
-回答: 下面这个窍门能用于多数外壳。把它放到 vimrc 文件中。macvim.org 发布的二进
-      制发行包中带有的系统 vimrc 文件已经包含。 >
+问题: 从 GUI 或 open 启动 Vim.app 时，如何合理设置 $PATH？
+回答: 下面这个技巧适用于大多数外壳。可将其放入 vimrc 文件。macvim.org 发布的二
+      进制发行包所附带的系统 vimrc 文件已包含了该设置。 >
 	let s:path = system("echo echo VIMPATH'${PATH}' | $SHELL -l")
 	let $PATH = matchstr(s:path, 'VIMPATH\zs.\{-}\ze\n')
 
 ==============================================================================
 5. 已知的不足之处					*mac-lack*
 
-在终端中，CTRL-^ 需要用 Shift-Control-6 来输入。而 CTRL-@ 则用 Shift-Control-2
-输入。
+在终端中，CTRL-^ 需要通过 Shift-Control-6 输入。而 CTRL-@ 则需要通过
+Shift-Control-2 输入。
 
 ==============================================================================
 6. Mac 错误报告						*mac-bug*
 
-当报告任何与 Mac 平台相关的 bug 或特性时，请使用 vim-mac 邮件列表 |vim-mac|。
-然而，您必须先订阅它。另一个办法是直接在 Vim github 库报告问题:
+要报告任何与 Mac 平台相关的漏洞或新特性需求，请使用 vim-mac 邮件列表
+|vim-mac|。报告前必须先订阅该列表。另一个办法是直接在 Vim github 库报告问题:
 
 https://github.com/vim/vim/issues
 
-对 MacVim 特定的问题，可以在这里报告问题:
+可以在这里报告 MacVim 的特定问题:
 
 https://github.com/macvim-dev/macvim/issues
 
@@ -126,45 +142,45 @@ https://github.com/macvim-dev/macvim/issues
 ==============================================================================
 8. Darwin 特性						*mac-darwin-feature*
 
-如果你的 Mac 不是太老，你运行的会是 OS X，也叫 Darwin。Darwin 之前的最后的 OS
-版本是 Mac OS 9。Darwin 特性意味着 Vim 能使用 Darwin 特定的属性。
+如果使用的 Mac 不是太旧，运行的通常会是 OS X，也叫 Darwin。最后一个 Darwin 之
+前的版本是 Mac OS 9。Darwin 特性支持代表 Vim 可以使用 Darwin 的特定属性。
 
 此特性可以完成两重目的:
 
 - Vim 可以和系统剪贴板互动。
-- 给 Vim 引入转换模块，为一些平台特定的字符编码和 Vim 所知编码之间弥合差异。
+- 为 Vim 引入转换模块，用于弥合平台特定字符编码和 Vim 所知编码之间的差异。
 
-不需要讲，任何像样的文本编辑器要在同一桌面环境下和其它应用友好互动，没有这两条
-是不行的。
+无需多言，任何合格的文本编辑器要想在同一桌面环境下和其它应用友好互动，这两条是
+必不可少的。
 
-Vim 不是专为 macOS 设计的应用，需要额外的特性来使 macOS 的用户享受其它平台用户
-相同的用户体验。
+Vim 不是专为 macOS 设计的应用，需要额外的特性，以便让 macOS 用户能够享受到与其
+他平台用户相同的使用体验。
 
 为简明起见，此特性称为 "darwin"，用来表示它是专为此特定平台提供的 Vim 特性。
 
-此特性是个配置选项。亦即，它的打开与否是在编译时间决定的；一旦选择打开，编译时
-带入就不能在运行时关闭。
+此特性是个配置选项。亦即，它的打开与否是在编译时间决定的；一旦选择在编译时打
+开，就不能在运行时关闭。
 
-缺省打开此特性。对于多数 macOS 用户，这就足够了，除非他们有以下简要说明的特殊
-需要。
+缺省打开此特性。对于多数 macOS 用户，除此以外无需进行额外设置，除非存在以下简
+要说明的特殊需要。
 
 要关闭此特性，给 configure 脚本传递 `--disable-darwin`: >
 
     ./configure --disable-darwin <other options>
 
-然后运行 `make` 来编译 Vim。选项的顺序无关紧要。
+然后运行 `make` 来编译 Vim。选项的顺序不影响功能。
 
-要在运行时确定是否编译进 darwin 特性，可用 `has('osxdarwin')`，如果编译时有此
-特性，返回 1；否则返回 0。为了后向兼容，继续可以用 'macunix' 代替
+要在运行时确定编译时是否加入 darwin 特性，可用 `has('osxdarwin')`，编译时加入
+此特性时，返回 1；否则返回 0。为了后向兼容，可以继续用 'macunix' 代替
 'osxdarwin'。
 
-值得提出的 `--disable-darwin` 实际有用的用例包括:
+`--disable-darwin` 的一些值得注意的实际用例包括:
 
-- 想用 |x11-selection| 而不是系统剪贴板。
-- 想用 |x11-clientserver|。
+- 想使用 |x11-selection| 而不是系统剪贴板。
+- 想使用 |x11-clientserver|。
 
-因为两者都需要 X11 客户间通信才能正常工作，而该通信机制和系统剪贴板时有冲突，
-可以通过关闭 darwin 特性以防止 Vim 运行时挂起。
+这是因为两者都依赖于 X11 客户端间通信，而该通信机制与系统剪贴板时有冲突，通过
+关闭 darwin 特性，可以防止 Vim 在运行时挂起。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:
