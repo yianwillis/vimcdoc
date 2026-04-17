@@ -19,9 +19,9 @@ Copyright: (c) 2004-2015 by Charles E. Campbell		*Vimball-copyright*
 	this software. Use at your own risk!
 
 ==============================================================================
-1. 内容					*vba* *vimball* *vimball-contents*
+1. 目录					*vba* *vimball* *vimball-contents*
 
-	1. 内容..........................................: |vimball-contents|
+	1. 目录..........................................: |vimball-contents|
 	2. Vimball 简介..................................: |vimball-intro|
 	3. Vimball 手册..................................: |vimball-manual|
 	   MkVimball.....................................: |:MkVimball|
@@ -33,26 +33,28 @@ Copyright: (c) 2004-2015 by Charles E. Campbell		*Vimball-copyright*
 ==============================================================================
 2. Vimball 简介							*vimball-intro*
 
-	Vimball 的目标就是使插件用户的使用更方便。有了 vimball 以后，用户只需
-	要: >
+	Vimball 的设计目标，是让插件使用者的操作更加简便。有了 vimball 以后，
+	用户只需执行: >
 		vim someplugin.vba
 		:so %
 		:q
-<	然后插件和它的所有部件都会被安装在合适的目录里。注意 用户无须刻意进到
-	某个特定的目录来执行此命令。另外，插件的帮助也会被自动安装。
+<	该插件及其所有部件将自动安装到合适的目录里。注意 用户在执行此命令前，
+	无须刻意先切换到特定目录。此外，插件的帮助文档也会一并被自动安装。
 
-	如果用户决定使用 AsNeeded 插件，vimball 会聪明地把本来要放到
-	.vim/plugin/ 中的脚本放到 .vim/AsNeeded/ 里去。
+	如果用户安装使用了 AsNeeded 插件 (译者注: 见
+		https://www.vim.org/scripts/script.php?script_id=915
+	)，vimball 会自动适配，将原本应放置到 .vim/plugin/ 目录下的脚本，智能
+	转移到 .vim/AsNeeded/ 目录中去。
 
-	删除 vimball 安装的插件很容易: >
+	删除 vimball 安装的插件也很方便: >
 		vim
 		:RmVimball someplugin
-<	举例说吧，zip 和 tarball 对应的操作就不是那么简单了。
+<	相比之下，通过 zip 和 tarball 安装的插件，卸载操作就要繁琐不少。
 
-	Vimball 检视用户的 'runtimepath' 来确定把脚本放在哪里。如果可能，通常
-	使用 runtimepath 提到的第一个目录。用 >
+	Vimball 会检视用户的 'runtimepath' 来确定脚本放置的位置。默认使用
+	runtimepath 里首个有效目录。执行 >
 		:echo &rtp
-<	来查看该目录。
+<	可查看该目录。
 
 
 ==============================================================================
@@ -61,91 +63,91 @@ Copyright: (c) 2004-2015 by Charles E. Campbell		*Vimball-copyright*
 创 建 VIMBALL							*:MkVimball*
 		:[range]MkVimball[!] filename [path]
 
-	行范围内指定要保存在 vimball 里的文件的路径，但不包含通常在
-	runtimepath ('rtp') 指定的那部分。例如: >
+	行范围中的文本用于指定需要打包进 vimball 的文件路径，不包含
+	runtimepath ('rtp') 中定义的默认路径前缀。例如: >
 		plugin/something.vim
 		doc/something.txt
-<	在此范围的行上使用 >
+<	对上述范围的行行为 >
 		:[range]MkVimball filename
 <
-	建立文件 "filename.vba"，Vimball.vim 随后可以用它来还原那些文件。如果
-	文件 "filename.vba" 已经存在，MKVimball 会给出警告而不建立文件。注意
-	这些路径都相对于你的 .vim (vimfiles) 目录，而所有文件都应该在该目录
-	下。更准确地说，vimball 插件通常使用 'runtimepath' 里第一个存在的目录
-	作为前缀；它不使用绝对路径，除非用户指定的就是如此。
+	会生成文件 "filename.vba"，Vimball.vim 可通过该文件还原原先的文件。如
+	果文件 "filename.vba" 已存在，本命令会给出警告而不会创建文件。注意所有
+	路径均相对于用户的 .vim (vimfiles) 目录，而所有文件必须存放在该目录
+	下。更准确地说，vimball 插件默认使用 'runtimepath' 里首个有效目录作为
+	路径前缀；不会使用绝对路径，除非用户手动指定 [path]。
 
-	如果使用感叹号 (!)，MkVimball 总是建立 "filename.vba" 文件。如果已经存
-	在则覆盖之。此行为和 |:w| 类似。
+	使用感叹号 (!) 形式时，本命令会强制创建 "filename.vba" 文件。如果文件
+	已存在则直接覆盖。此用法和 |:w| 一致。
 
-	如要强制允许文件名中包含斜杠，也可用感叹号版本实现 (即 :MkVimball!
-	path/filename)。
+	感叹号版本也支持在文件名中包含斜杠 (即 `:MkVimball! path/filename`)。
 
-	http://vim.wikia.com/wiki/Using_VimBall_with_%27Make%27 给出的技巧提供
-	了用 make 自动生成 vimball 的好方法。
+	http://vim.wikia.com/wiki/Using_VimBall_with_%27Make%27 给出一种技巧，
+	提供了用 make 自动生成 vimball 的好方法。
 
 
 通 过 VIMBALL 建 立 目 录				*g:vimball_mkdir*
 
-	首先尝试 |mkdir()| 命令 (并非所有系统都支持)。
+	优先尝试 |mkdir()| 函数 (并非所有系统都支持)。
 
-	如果该命令不存在，而且 g:vimball_mkdir 也不存在，它被设为: >
-	  |g:netrw_localmkdir|，如果存在的话
-	  "mkdir"             ，如果可执行的话
-	  "makedir"           ，如果可执行的话
-	  否则                ，未定义
-<	用户可以自定义 g:vimball_mkdir 来直接指定建立目录的命令。vimball 如有
-	需要，会通过该命令来建立目录。
+	如果该函数不可用，用户可通过自定义 g:vimball_mkdir 变量直接指定建立目
+	录的命令。vimball 会在需要时使用该命令建立目录。
 
-控 制 VIMBALL 提 取 目 录				*g:vimball_home*
+	如果 g:vimball_mkdir 未定义，其缺省值为: >
+	  |g:netrw_localmkdir|，如该变量存在
+	  "mkdir"             ，如该命令可执行
+	  "makedir"           ，如该命令可执行
+	  未定义              ，以上皆不满足时 (会给出警告)
 
-	通过指定变量 g:vimball_home，你可以覆盖 'runtimepath' 的使用。
+控 制 VIMBALL 解 包 目 录				*g:vimball_home*
+
+	变量 g:vimball_home 可覆盖默认的基于 'runtimepath' 的安装目录。
 
 							*vimball-extract*
 		vim filename.vba
 
-	简单编辑一个 vimball 文件，Vimball.vim 会告诉用户必须执行 (source) 该
-	归档的内容才能提取其中的文件。
+	只需简单编辑 Vimball 文件，Vimball.vim 就会提示用户必须执行 (source)
+	该归档内容，才能提取其中文件。
 
-	只有首行是 "Vimball Archiver by Charles E. Campbell" 的文件才会被认为
-	是 vimball 文件，从而才会继续提取操作。
+	仅当文件首行是 "Vimball Archiver by Charles E. Campbell" 时，才会被识
+	别为合法的 vimball 文件，并继续解包操作。
 
 列 出 VIMBALL 中 的 文 件				*:VimballList*
 
 		:VimballList
 
-	本命令告诉 Vim 列出归档里的所有文件，包括每个文件的行数。
+	本命令会列出 Vimball 归档里的所有文件，并显示每个文件的行数。
 
-手 动 执 行 VIMABALL 提 取				*:UseVimball*
+手 动 解 包 VIMABALL					*:UseVimball*
 
 		:UseVimball [path]
 
-	vimball 文件本身包含了该命令；它调用 vimball#Vimball() 例程，后者负责
-	对 vimball 解包。用户可以手动执行该命令，而无须执行 vimball；用户还可
-	以指定安装的路径来覆盖自动的选择，即 'runtimepath' 里的第一个存在的目
-	录。
+	vimball 文件自身已内置本命令；它会调用 vimball#Vimball() 例程完成对
+	vimball 解包工作。用户如果不想直接执行 vimball 文件，也可手动运行本命
+	令；同时支持指定安装路径，覆盖从 'runtimepath' 里选取首个有效目录的默
+	认路径选择。
 
 删 除 VIMBALL						*:RmVimball*
 
 		:RmVimball vimballfile [path]
 
-	本命令删除制定 vimball 产生的所有文件 (但不包括它可能建立的任何目录)。
-	用户也选择卸载文件的路径 (见 'runtimepath')；否则，缺省是
-	'runtimepath' 里的第一个存在的目录。
-	为了实现这一点，该目录下包含一个文件 (.VimballRecord)，它包含了目前为
-	止所有使用过的 vimball 中要删除的文件的记录。
+	本命令会删除指定 vimball 安装生成的所有文件，但不会删除其创建的目录。
+	用户可指定卸载路径 (见 'runtimepath')；省略时默认使用 'runtimepath' 里
+	首个有效目录。
+	为了实现这一点，该目录下会生成特殊文件 .VimballRecord，用于记录所有已
+	安装 Vimball 的文件信息，以便执行卸载操作。
 
 禁 止 载 入
 
-	如果由于某种原因你不想使用 vimball 提取插件，在 <.vimrc> 中加入以下两
-	个变量就可以不载入 vimball.vim: >
+	如果出于某种原因，不希望使用 vimball 提取插件，可在 <.vimrc> 中定义以
+	下两个变量: >
 
 		let g:loaded_vimballPlugin= 1
 		let g:loaded_vimball      = 1
 <
 WINDDOWS						*vimball-windows*
 
-	许多 vimball 文件使用 gzip 压缩。Windows 不幸地没有自带解压 gzip 文件
-	的工具。幸运的是，Windows 用户可以找到不少解压 gzip 的工具:
+	许多 vimball 文件会使用 gzip 进行压缩。遗憾的是，Windows 并未自带 gzip
+	解压工具。不过，Windows 用户可以使用多种第三方 gzip 的解压工具:
 >
 	    项目     工具/套件    免费   网站
 	    ----     ----------   ----   -------
