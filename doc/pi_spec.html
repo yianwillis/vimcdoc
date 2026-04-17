@@ -38,12 +38,12 @@
 <code class="section">                                作者: Gustavo Niemeyer </code>
                                 <code class="vim">译者</code>: Willis
 
-这是一个针对 rpm 规格文件的文件类型插件。
+这是一个用于 rpm 规格文件的文件类型插件。
 
-此 Vim 插件让你轻松更新 RPM 规格 (spec) 文件的更新记录段 (%changelog section)
-的内容。如果该段还不存在，它可以为你新建段。如果你今天还没有更新，它会帮你建立
-新的说明入口 (entry)。如果你还没有提供格式串 ( <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a> )，它会询问
-你的 email 地址，然后自动为你提供该格式串。
+此 Vim 插件目前的主要功能是方便轻松更新 RPM 规格 (spec) 文件的更新日志
+(%changelog) 章节的内容。如果该章节不存在，插件会自动创建。如果今天已经添加过
+新条目，插件会在今日条目下追加新的修改项。如果未指定格式字符串
+( <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a> )，插件会询问邮箱地址，然后自动生成对应的格式字符串。
 
 1. 如何使用              <a href="pi_spec.html#spec-how-to-use-it">spec-how-to-use-it</a> 
 2. 自定义                <a href="pi_spec.html#spec-customizing">spec-customizing</a> 
@@ -54,27 +54,27 @@ spec_chglog 插件提供如下映射:
 
         :map <code class="special">&lt;buffer&gt;</code> <code class="special">&lt;LocalLeader&gt;</code>c <code class="special">&lt;Plug&gt;</code>SpecChangelog
 
-这意味着在规格文件里你可以通过按  <a href="map.html#maplocalleader">maplocalleader</a>  键 (缺省是 '\') 加 'c' 来执
-行这个插件。如果你还没有设置  <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a> ，此时插件会要求你提供 email
-地址，编辑过程里会用到这个地址。
+在 spec 文件里。可按  <a href="map.html#maplocalleader">maplocalleader</a>  键 (缺省是 '\') 加 'c' 来调用插件功能。
+如果尚未设置过  <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a> ，插件会提示输入邮箱地址，并在本编辑会话中
+记住该地址。
 
-每次你运行此插件，它检查更新记录，看看最近的说明入口是否今天由你写入。如果是，
-在此入口中插入新建更新记录，如果不是，它会建立一个新的更新记录入口。如果你打开
- <a href="pi_spec.html#spec_chglog_release_info">spec_chglog_release_info</a> ，它同时还会检查文件名，版本和发布版本是不是匹配。如
-果你自己还没有更新该软件包的发布号的话。这个插件能够智能地询问你是否要这么做。
+每次执行时，都会检查更新日志的最新条目，是否为当前用户在今天创建。如果是，则直
+接在该条目下插入新的修改项，否则，则先新建一条今日更新条目。打开
+ <a href="pi_spec.html#spec_chglog_release_info">spec_chglog_release_info</a>  时，同时还会检查文件名，版本号和发布号是否一致。如
+果用户尚未手动更新发布号。插件会智能询问是否自动更新发布号。
 
 设置键盘映射                                    <b class="vimtag"> <a name="spec-setting-a-map">spec-setting-a-map</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-正如你应该已经知道的，可以设置键盘映射执行任何 Vim 命令 (对此而言，其实还有别
-的)。如果你不喜欢缺省的映射 <code class="special">&lt;LocalLeader&gt;</code>c，可以自己定义。下面说明在 .vimrc 文
-件里如何作此设置。比如，要把本插件映射到 <code class="special">&lt;F5&gt;</code> 键:
+众所周知，可设置键盘映射来执行任意 Vim 命令 (以及其他功能)。如果不喜欢插件的缺
+省映射 <code class="special">&lt;LocalLeader&gt;</code>c，可自行修改。以下是在 .vimrc 文件里自定义映射到 <code class="special">&lt;F5&gt;</code> 键
+的示例:
 
 <code class="example">        au FileType spec map &lt;buffer&gt; &lt;F5&gt; &lt;Plug&gt;SpecChangelog</code>
 
-<code class="note">备注</code>: 本插件会尊重你的本人意愿，不会再次把它的缺省设置强加于你。
+<code class="note">备注</code>: 插件会尊重自定义设置，不会强制覆盖。
 
-该命令只会在规格文件的缓冲区中定义这个映射。
+该映射命令只会在 spec 文件缓冲区中生效。
 
 
 </section><hr class="doubleline" /><section class=inner>
@@ -82,42 +82,42 @@ spec_chglog 插件提供如下映射:
 格式串                                          <b class="vimtag"> <a name="spec_chglog_format">spec_chglog_format</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-你可以轻松地定制自己的规格文件入口的样式。为此，只须在 .vimrc 文件中这样设置
+可以轻松自定义规格文件更新日志条目的样式。为此，只须在 .vimrc 文件中设置
 "spec_chglog_format" 变量:
 <code class="example"></code>
 <code class="example">        let spec_chglog_format = "%a %b %d %Y My Name &lt;my@email.com&gt;"</code>
 
-<code class="note">注意</code> "%a %b %d %Y" 是最常用的格式。如果你不提供格式串，第一次运行 SpecChanglog
-命令时，它会询问 email 地址，然后为你构造  <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a>  变量。这种方式
-下，你只要提供 email 地址一次。
+<code class="note">注意</code> "%a %b %d %Y" 是最常用的时间格式。如果不手动定义此变量，在首次运行
+SpecChanglog 命令时，会询问邮箱地址，然后自动构造  <a href="pi_spec.html#spec_chglog_format">spec_chglog_format</a>  变量。
+采用此方式时, 只需提供邮箱地址一次。
 
-要知道可用的格式串选项，察看 strftime() 函数的 man 手册页。
+要了解可用的格式串选项，请察阅 strftime() 函数的 man 手册页。
 
-何处插入新的更新记录                            <b class="vimtag"> <a name="spec_chglog_prepend">spec_chglog_prepend</a> </b>
+插入新项目的位置                                <b class="vimtag"> <a name="spec_chglog_prepend">spec_chglog_prepend</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-本插件通常把新的 %changelog 更新记录 (<code class="note">注意</code>: 不是入口本身) 加在现有的记录之后。
-如果你设置了 spec_chglog_prepend 变量
+插件通常将 %changelog 新的修改项 (<code class="note">注意</code>: 不是条目本身) 附加在现有项目之后。不
+过，如果设置 spec_chglog_prepend 变量
 <code class="example"></code>
 <code class="example">        let spec_chglog_prepend = 1</code>
 <code class="example"></code>
-那么新记录将加在已有记录之前。
+那么新项目将加在现有记录之前。
 
 加入发布信息                                    <b class="vimtag"> <a name="spec_chglog_release_info">spec_chglog_release_info</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-如果你愿意，本插件自动在每个更新记录入口中加入发布信息。这么做的一个好处是能控
-制软件包每次更改之后是否更新发布号。如果包的版本或发行号没有更新，它询问你是否
-要这么做。要打开这个功能，在 .vimrc 中加入以下代码:
+如果愿意，插件会自动在每个更新日志条目中加入发布信息。这么做的好处是可以控制每
+次修改后，是否自动更新软件包的发布号。如果包的版本或发行号未更新，插件会主动询
+问是否需要更新。要打开此功能，可在 .vimrc 中加入:
 <code class="example"></code>
 <code class="example">        let spec_chglog_release_info = 1</code>
 <code class="example"></code>
-这样，更新记录入口的首个记录就会像这样:
+启用后，更新日志当前条目的的首个修改项会自动包含发布信息:
 <code class="example"></code>
 <code class="example">        + name-1.0-1cl</code>
 <code class="example"></code>
-如果你不喜欢发布更新功能，也不想每次检测到旧的发布号时都回答 "No"，可以关闭此
-功能
+如果不需要发布更新功能，也不想每次检测到旧发布号时都手动选 "No"，可以关闭此功
+能
 <code class="example"></code>
 <code class="example">        let spec_chglog_never_increase_release = 1</code>
 <code class="example"></code>

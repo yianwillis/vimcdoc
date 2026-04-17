@@ -42,16 +42,16 @@
 
 高亮匹配括号                                            <b class="vimtag"> <a name="matchparen">matchparen</a> </b>
 
-这里提到的功能是一个标准插件  <a href="usr_05.html#standard-plugin">standard-plugin</a> 。
-只有 <a href="options.html#'compatible'">'compatible'</a> 不置位时才能使用此插件。
+此插件属于系统内置标准插件   <a href="usr_05.html#standard-plugin">standard-plugin</a> 。
+仅当 <a href="options.html#'compatible'">'compatible'</a> 选项未置位时，插件才生效。
 
-设置 "loaded_matchparen" 变量可以避免载入此插件:
+可通过设置变量 "loaded_matchparen" 来跳过插件的加载:
 <code class="example">        :let loaded_matchparen = 1</code>
 <code class="example"></code>
-此插件安装 CursorMoved、CursorMovedI 和 WinEnter 自动命令来重新定义匹配高亮。
+插件会安装 CursorMoved、CursorMovedI 和 WinEnter 自动命令来重新定义匹配高亮。
 
                                         <b class="vimtag"> <a name=":NoMatchParen">:NoMatchParen</a> </b> <b class="vimtag"> <a name=":DoMatchParen">:DoMatchParen</a> </b>
-要在载入此插件后关闭它，用:
+载入插件后，要关闭其效果，用:
 <code class="example"></code>
 <code class="example">        :NoMatchParen</code>
 <code class="example"></code>
@@ -59,34 +59,37 @@
 <code class="example"></code>
 <code class="example">        :DoMatchParen</code>
 <code class="example"></code>
-使用的高亮是 MatchParen。":highlight" 命令可用来为它指定不同的颜色。例如:
+插件使用的高亮组是 MatchParen。":highlight" 命令可为其指定各种颜色。例如:
 <code class="example"></code>
 <code class="example">        :hi MatchParen ctermbg=blue guibg=lightblue</code>
 <code class="example"></code>
-缺省插件会用  <a href="syntax.html#hl-MatchParen">hl-MatchParen</a>  高亮组高亮光标下的括号还有和其配对的括号。这可能
-导致光标从屏幕上短暂消失，因为 MatchParen 色彩会接管光标的高亮。如果不想这样，
-只想让配对的括号高亮而不是光标下的 (效果就是保持光标的风格不变)，可设置
-"matchparen_disable_cursor_hl" 变量:
+插件缺省使用  <a href="syntax.html#hl-MatchParen">hl-MatchParen</a>  高亮组来高亮显示光标所在的括号还及其匹配括号。这
+可能导致光标在屏幕上短暂消失，因为 MatchParen 的高亮样式会覆盖光标的原有高亮。
+如果不希望如此，只想高亮匹配括号，而不高亮光标所在的括号 (即保持光标原有样式不
+变)，可将 "matchparen_disable_cursor_hl" 变量设置为:
 <code class="example"></code>
 <code class="example">        :let matchparen_disable_cursor_hl = 1</code>
 <code class="example"></code>
-匹配的字符组来自 <a href="options.html#'matchpairs'">'matchpairs'</a> 选项。你可以改变该值来高亮不同的匹配。<code class="note">注意</code> 不是
-什么值都可以。比如，你不能高亮单引号或双引号，因为它们的开始和结束字符相同。
+匹配的字符对由 <a href="options.html#'matchpairs'">'matchpairs'</a> 选项定义。修改该选项即可切换需要高亮的匹配对。<code class="note">注意</code>
+并非所有取值都被支持。例如不能高亮单引号或双引号，因为它们的起始和结束字符完全
+相同。
 
-使用语法高亮的属性。如果光标目前不在字符串或注释语法项目里，则忽略字符串和注释
-里的匹配。任何名字里包含 "string" 或 "comment" 的语法项目都被认为是字符串或注
-释项目。
+匹配过程会自动识别语法高亮属性。除非光标已在字符串或注释语法项目内部，否则会忽
+略字符串和注释内部的匹配括号。所有名称里包含 "string" 或 "comment" 的语法组均
+被视为字符串或注释。
 
-移动光标时，限制搜索范围以避免延迟。这些限制包括:
-- 窗口的可见部分。
-- 光标上下 100 行，避免关闭折叠存在时的延迟过长。
-- 光标前后 <a href="options.html#'synmaxcol'">'synmaxcol'</a> 乘以 2 个字节，避免存在带语法高亮的长行时延迟过长。
-- 300 毫秒 (插入模式下是 60 毫秒) 的超时。可用 "g:matchparen_timeout" 和
-  "g:matchparen_insert_timeout" 变量或局部于缓冲区的 "b:matchparen_timeout" 和
-  "b:matchparen_insert_timeout" 来改变。
+移动光标时，会限制匹配搜索范围以降低延迟。具体限制如下:
+- 搜索只限窗口可见区域。
+- 仅搜索光标上下各 100 行，避免因已关闭折叠导致的延迟过长。
+- 仅搜索光标前后各两倍于 <a href="options.html#'synmaxcol'">'synmaxcol'</a> 的字节范围，避免带语法高亮的长行带来的卡
+  顿。
+- 超时限制: 插入模式下是 60 毫秒，其他模式下是 300 毫秒。可通过全局变量
+   <code class="badlink">g:matchparen_timeout</code>  和  <code class="badlink">g:matchparen_insert_timeout</code>  或缓冲区局部变量
+   <code class="badlink">b:matchparen_timeout</code>  和  <code class="badlink">b:matchparen_insert_timeout</code>  自自定义超时时间。
 
-如果你希望  <a href="motion.html#%">%</a>  命令更好的工作，可以使用 matchit 插件，见  <a href="usr_05.html#matchit-install">matchit-install</a> 。该
-插件也可用于跳过注释里的匹配。这不同于 matchparen 高亮，两者使用不同的机制。
+如果想让  <a href="motion.html#%">%</a>  命令使用效果更好，可以安装 matchit 插件，见  <a href="usr_05.html#matchit-install">matchit-install</a> 。该
+插件也可用于跳过注释内部的匹配项。该插件与 matchparen 高亮无关，两者使用不同的
+工作机制。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4> vim:tw=78:ts=8:noet:ft=help:norl:</h4></section>
