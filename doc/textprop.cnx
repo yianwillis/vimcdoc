@@ -1,4 +1,4 @@
-*textprop.txt*	适用于 Vim 9.2 版本。  最近更新: 2025年10月
+*textprop.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年4月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -121,8 +121,8 @@ prop_add({lnum}, {col}, {props})
 				本属性
 		   bufnr	加入属性的缓冲区；省略时使用当前缓冲区
 		   id		用户定义的属性 ID；必须为正的数值 |E1510|；
-				使用 "text" 时不应给出 "id"，且会自动设为负
-				数；否则使用零
+				使用 "text" 时，忽略 "id" 值且会自动生成负值的
+				ID；否则使用零
 							*E1305*
 		   text		{col} 之前要显示的文本，或者当 {col} 为零时在
 				行之上/下显示；要带高亮的空白填充，在文本前面
@@ -184,11 +184,8 @@ prop_add({lnum}, {col}, {props})
 		计算文本的尺寸)。
 		会选择负数的 "id" 并返回。
 
-		提供带 text 的文本属性的支持之前，可以使用负数 "id"，但很罕
-		见。现在负数 "id" 专为带 text 的文本属性保留，给出负数 "id" 会
-		报错。一旦缓冲区加入了有 "text" 的文本属性，任何其它的文本属性
-		如果使用负数 "id" 会报错 *E1293* 。如果先使用了负数 "id"，之后
-		使用了带 "text" 的文本属性，则会报错 *E1339* 。
+		负数 "id" 专为带 "text" 的文本属性保留，除此以外禁止使用。使用
+		负数 "id" 会报错 *E1293* 。
 
 		也可用作 |method|: >
 			GetLnum()->prop_add(col, props)
@@ -224,6 +221,8 @@ prop_add_list({props}, [{item}, ...])			*prop_add_list()*
 <
 		也可用作 |method|: >
 			GetProp()->prop_add_list([[1, 1, 1, 2], [1, 4, 1, 8]])
+<
+		返回类型: 无
 
 
 prop_clear({lnum} [, {lnum-end} [, {props}]])		*prop_clear()*
@@ -237,7 +236,7 @@ prop_clear({lnum} [, {lnum-end} [, {props}]])		*prop_clear()*
 		也可用作 |method|: >
 			GetLnum()->prop_clear()
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 prop_find({props} [, {direction}])			*prop_find()*
@@ -373,7 +372,7 @@ prop_type_add({name}, {props})		*prop_type_add()* *E969* *E970*
 		也可用作 |method|: >
 			GetPropName()->prop_type_add(props)
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 prop_type_change({name}, {props})			*prop_type_change()*
@@ -383,7 +382,7 @@ prop_type_change({name}, {props})			*prop_type_change()*
 		也可用作 |method|: >
 			GetPropName()->prop_type_change(props)
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 prop_type_delete({name} [, {props}])			*prop_type_delete()*
@@ -398,7 +397,7 @@ prop_type_delete({name} [, {props}])			*prop_type_delete()*
 		也可用作 |method|: >
 			GetPropName()->prop_type_delete()
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 prop_type_get({name} [, {props}])			*prop_type_get()*
@@ -430,7 +429,8 @@ prop_type_list([{props}])				*prop_type_list()*
 Vim 会尽力保持文本属性在原先附属的文本上。插入或删除文本后，属性会相应地移动。
 
 当文本删除后导致文本属性不再包含任何文本，会删除文本属性。不过，定义时就是零宽
-度的文本属性会保留，除非整行都被删除。
+度的文本属性会保留，除非整行都被删除。当使用多行替换命令合并行时，被删除行上的
+虚拟文本属性会转移到最终合并后的行上。
 								*E275*
 卸载缓冲区时，所有的文本属性都消失了。没有办法把属性保存在文件里。你可以重建它
 们。缓冲区隐藏时，保留文本所以也保留文本属性。不可以给卸载的缓冲区增加文本属

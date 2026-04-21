@@ -22,6 +22,7 @@
    弹出过滤			|popup-filter|
    弹出回调			|popup-callback|
    弹出滚动条			|popup-scrollbar|
+   弹出不透明度			|popup-opacity|
    弹出掩码			|popup-mask|
 4. 示例				|popup-examples|
 
@@ -223,7 +224,7 @@ popup_clear([{force}])
 		如果给出 {force} 且为 |TRUE|，即使当前窗口为弹出也关闭之。弹出
 		中如果有终端在运行，一并终止。
 
-		返回类型: |Number|
+		返回类型: 无
 
 
 popup_close({id} [, {result}])				*popup_close()*
@@ -236,7 +237,7 @@ popup_close({id} [, {result}])				*popup_close()*
 		也可用作 |method|: >
 			GetPopup()->popup_close()
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 popup_create({what}, {options})				*popup_create()*
@@ -322,7 +323,7 @@ popup_filter_yesno({id}, {key})				*popup_filter_yesno()*
 		-1 调用回调。忽略其它键。
 		例子可见: |popup_dialog-example|
 
-		返回类型: |Number|
+		返回类型: |vim9-boolean|
 
 
 popup_findecho()					*popup_findecho()*
@@ -421,7 +422,7 @@ popup_hide({id})						*popup_hide()*
 		也可用作 |method|: >
 			GetPopup()->popup_hide()
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 popup_list()						 *popup_list()*
@@ -487,7 +488,7 @@ popup_move({id}, {options})					*popup_move()*
 		也可用作 |method|: >
 			GetPopup()->popup_move(options)
 <
-		返回类型: |Number|
+		返回类型: 无
 
 popup_notification({what}, {options})			 *popup_notification()*
 		用三秒钟在 Vim 窗口顶部显示 {what}。
@@ -564,7 +565,7 @@ popup_setoptions({id}, {options})			*popup_setoptions()*
 		也可用作 |method|: >
 			GetPopup()->popup_setoptions(options)
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 popup_settext({id}, {text})				*popup_settext()*
@@ -575,7 +576,7 @@ popup_settext({id}, {text})				*popup_settext()*
 		也可用作 |method|: >
 			GetPopup()->popup_settext('hello')
 <
-		返回类型: |Number|
+		返回类型: 无
 
 
 popup_show({id})						*popup_show()*
@@ -672,6 +673,12 @@ POPUP_CREATE() 参 数				 *popup_create-arguments*
 			为 "click" 时，在弹出上任何鼠标点击会关闭之。
 			为 "none" (缺省) 时，鼠标点击不关闭弹出窗口。
 	highlight	文本使用的高亮组名，在 'wincolor' 选项里保存。
+	highlights	高亮组覆盖，在 'winhighlight' 选项里保存 (格式相同)。
+	opacity		弹出的不透明度，取值范围 0 到 100: 0 表示完全透明 (背
+			景文字完全可见) 100 表示完全不透明 (缺省，无透明效果)
+			中间值会将弹出窗口背景与下方文字混合，实现半透明。需要
+			开启 'termguicolors' 才能生效。
+			另见 |popup-opacity|。
 	padding		数值列表，定义弹出上/右/下/左的填充 (和 CSS 类似)。空
 			列表使用四周填充均为 1。填充包围文本，在任何边框之内。
 			填充使用 'wincolor' 高亮。
@@ -893,6 +900,39 @@ Vim 提供标准过滤 |popup_filter_menu()| 和 |popup_filter_yesno()|。
 或下滚动。点击滚动条上半部会下滚文本一行。点击滚动条下半部会上滚文本一行。不
 过，滚动有限制，以确保弹出不会变小。
 
+
+
+弹 出 不 透 明 度					*popup-opacity*
+
+通过设置 "opacity" 选项，可让弹出窗口实现半透明效果。不透明度取值范围为 0 到
+100:
+    0		完全透明 - 弹出背景不可见，下方的文本完全显示。
+    100		完全不透明 (缺省) - 弹出无任何透明效果。
+    1–99	部分透明 - 弹出背景与下方文本混合显示，两者都能部分看见。
+
+透明效果需要 GUI 版本或在终端里开启 'termguicolors'。不满足条件时，opacity 设
+置无效。
+
+弹出透明时的行为:
+- 弹出的背景色会与下方文本混合
+- 弹出的文本 (前景色) 保持完全清晰、不混合
+- 弹出下方的文本可透过透明区域看见
+- 透明度越高 (数值越小)，背景文本看得越清楚
+
+用途:
+- 创建不会完全遮挡内容的悬浮窗口
+- 显示上下文信息但不阻挡视线
+- 实现现代化界面视觉效果
+
+示例 (50% 不透明度): >
+	let winid = popup_create('Semi-transparent text', #{
+	\ line: 5,
+	\ col: 10,
+	\ opacity: 50,
+	\ })
+
+可通过 |popup_setoptions()| 动态修改不透明度: >
+	call popup_setoptions(winid, #{opacity: 80})
 
 弹 出 掩 码						*popup-mask*
 
