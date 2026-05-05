@@ -1,4 +1,4 @@
-*version9.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年4月
+*version9.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年5月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -41844,7 +41844,7 @@ Vim 参数: ~
 
 配置开关: ~
 --with-wayland			打开 |wayland| 特性。
---enable-wayland-focus-steal	打开 |wayland-focus-steal| 特性。
+--enable-wayland-focus-steal	打开 wayland-focus-steal 特性。
 --enable-socketserver		打开 |socketserver-clientserver| 特性。
 
 
@@ -52473,6 +52473,7 @@ Patch 9.1.2148
 ------
 - 支持透明度，见 |popup-opacity|。
 - 'previewpopup' 支持与 'completepopup' 相同的取值 ("align" 除外)。
+- 支持 'completepopup' 选项的 "opacity" 设置。
 
 比较模式 ~
 ---------
@@ -52499,10 +52500,18 @@ Vim 在 |restricted-mode| 受限模式下运行时，不再允许使用外部 di
 - 允许在 'statusline'、'tabline' 和 'tabpanel' 中通过 |stl-%[FuncName]| 原子实
   现鼠标可点击区域。
 - 为 |:terminal| 启用自动重排 (reflow) 支持。
+- 标签页面板在标签页列表超出屏幕高度时支持滚动。同时为 'tabpanelopt' 新增
+  "scrollbar" 子选项。
+- 为 'wildmode' 选项新增 "noinsert" 值，与 'completeopt' 选项保持功能对称。
+- 通道现已支持处理 |Blob| 消息 |channel-open-options|。
+- 'shortmess' 新增 "u" 标志位，可屏蔽撤销、重做的提示信息，参见 |shm-u|。
+- |:command-completion-customlist| 可返回包含 kind/menu/info/abbr 字段的字典列
+  表，供弹出菜单展示。
 
 平台特定 ~
 -----------------
 - Win32 平台使用 DirectWrite 时，在 'guifont' 中支持指定 OpenType 字体特性
+- 为 MS-Windows 系统补充 strptime() 兼容实现
 
 xxd ~
 ---
@@ -52516,6 +52525,10 @@ xxd ~
 - |js_decode()| 拒绝孤立代理对。
 - 多行替换时，删除行上的虚拟文本属性会转移到合并后的行，而非直接丢弃。
 - 为提升安全性，模式行仅允许设置少数白名单选项，详见 'modelinestrict'。
+- 移除 Wayland 抢占焦点功能 'wlsteal'，该功能引发过多兼容性问题；如有需要，可
+  通过 |clipboard-providers| 特性重新实现，例见 |wayland-primary-selection|。
+- 在 Unix 上，单文件 Ex 命令的文件名补全，现已将文件名内嵌空格视作文件名的一部
+  分，与其他平台行为保持一致。
 
 							*added-9.3*
 新增 ~
@@ -52525,6 +52538,8 @@ xxd ~
 函数: ~
 
 |ch_listen()|		在 {address} 上监听
+|tabpanel_getinfo()|	获取 |tabpanel| 的当前状态
+|tabpanel_scroll()|	滚动 |tabpanel|
 
 自动命令: ~
 
@@ -52534,7 +52549,7 @@ xxd ~
 
 'modelinestrict'	仅允许从模式行设置安全选项。
 'pumopt'		弹出菜单的附加选项。
-'scrolloffpad'		在文件末尾保留 'scrolloff' 上下文。
+'scrolloffpad'		允许光标在文件末尾时保持垂直居中。
 'statuslineopt'		'statusline' 的窗口局部附加选项，用于配置高度。
 't_BS'			开始同步更新模式。
 't_ES'			结束同步更新模式。

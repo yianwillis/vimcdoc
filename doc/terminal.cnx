@@ -1,4 +1,4 @@
-*terminal.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年4月
+*terminal.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年5月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -826,6 +826,17 @@ term_start({cmd} [, {options}])			*term_start()*
 		分开。原因是 CreatePseudoConsole() API 只接受一个输入句柄和一
 		个输出句柄，没有为 stderr 单独提供句柄。
 
+		注意: 本函数在回调中始终使用 RAW 模式。"out_cb" 和 "err_cb" 接
+		收到的是从操作系统读取的原始数据块。一次回调调用中可能包含多行
+		数据 (以 NL 分隔)，并且 (对于通过 pty 获取的 stdout) 每一行末
+		尾可能带有由行规处理 (ONLCR) 产生的 CR。如果需要按行处理数据，
+		回调函数必须自行按 NL 分割 "msg"，并去除行尾的 CR。示例如下: >
+			func Handle(ch, msg)
+			  for line in split(a:msg, "\n")
+			    echom substitute(line, '\r$', '', '')
+			  endfor
+			endfunc
+<
 		以下还有一些额外的选项:
 		   "term_name"	     使用的缓冲区名，缺省是命令名。
 		   "term_rows"	     终端使用的垂直尺寸，缺省是
