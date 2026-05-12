@@ -510,7 +510,7 @@ void assign_str(char **dest, char *src)
         *dest = SALLOC(src);
     else
         *dest = SREALLOC(*dest, src);
-    strcpy(*dest, src);
+    snprintf(*dest, strlen(src) + 1, "%s", src);
 }
 
 void init_opts()
@@ -697,7 +697,7 @@ file_t *find_file(file) char *file;
         DEBUG_P("FILEADDED\n");
         n->next = *p_file;
         n->name = SALLOC(file);
-        strcpy(n->name, file);
+        snprintf(n->name, strlen(file) + 1, "%s", file);
         n->nr = nr_files++;
         n->link = NULL;
         n->exists = access(file, R_OK) == 0;
@@ -730,7 +730,7 @@ void add_name(file, name, copied) char *file; char *name; bool copied;
        n->next = NULL;
        n->kind = A_NAME;
        n->info.name.name = SALLOC(name);
-       strcpy(n->info.name.name, name);
+       snprintf(n->info.name.name, strlen(name) + 1, "%s", name);
        n->info.name.exists = TRUE;
        n->info.name.repeated = repeated;
        n->info.name.referenced = FALSE;
@@ -763,7 +763,7 @@ char *file; int ln; char *to_file; char *name;
             n->info.ref.name = NULL;
        else
        {   n->info.ref.name = SALLOC(name);
-           strcpy(n->info.ref.name, name);
+           snprintf(n->info.ref.name, strlen(name) + 1, "%s", name);
        }
        n->info.ref.re_name = NULL;
        n->info.ref.status = S_CORRECT; /* temporary */
@@ -971,7 +971,7 @@ file_t *file; int ln; char *name; file_t *file_to; char *name_to; bool copied;
            n->next = NULL;
            n->kind = A_NAME;
            n->info.name.name = SALLOC(name_to);
-           strcpy(n->info.name.name, name_to);
+           snprintf(n->info.name.name, strlen(name_to) + 1, "%s", name_to);
            n->info.name.exists = FALSE;
            n->info.name.repeated = FALSE;         
            n->info.name.ref_by = NULL;
