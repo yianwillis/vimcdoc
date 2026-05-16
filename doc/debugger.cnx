@@ -5,111 +5,108 @@
 				译者: iCrazy <icrazy@ustc.edu>
 
 
-支持调试器的特性					*debugger-support*
+调试器支持功能					*debugger-support*
 
-这里的特性是为了和调试器、集成编程环境 (IPE) 或集成开发环境 (IDE) 集成使用的。
-要在 Vim 终端窗口中运行调试器，可见 |terminal-debugger|。
+本文档介绍 Vim 与调试器、集成编程环境 (IPE) 或集成开发环境 (IDE) 集成的内置支
+持功能。要在 Vim 终端窗口中运行调试器，参见 |terminal-debugger|。
 
-1. 调试器的功能			|debugger-features|
+1. 调试器功能			|debugger-features|
 2. Vim 编译选项			|debugger-compilation|
 
 ==============================================================================
-1. 调试器的功能						*debugger-features*
+1. 调试器功能						*debugger-features*
 
-有以下功能可用:
+可用内置功能如下:
 
-	替代命令输入					|alt-input|
+	备用命令输入					|alt-input|
 	调试标号					|debug-signs|
 	调试源代码高亮					|debug-highlight|
 	信息页脚					|gui-footer|
 	气泡表达式求值					|balloon-eval|
 
-这些特性主要是针对图形界面的 gvim 而新增的。然而，|alt-input| 和
-|debug-highlight| 是同时针对 vim 和 gvim 进行开发的。一些其他的功能略做修改，
-即可在非 GUI 的 vim 上使用。但是，我没有这样做，我也没有测试过针对非图形 GUI
-界面编译出的 vim 的可靠性。
+这些功能最初为 gvim 的 Motif 版本设计。其中，|alt-input| 和 |debug-highlight|
+原生同时支持 vim 和 gvim。而其余部分功能略作修改，也可在非 GUI 的 vim 上使用。
+但是，开发者未做适配开发，也未对非 GUI 界面或非 Motif GUI 版本做可靠性测试。
 
 
-1.1 替代命令输入					*alt-input*
+1.1 备用命令输入					*alt-input*
 
-要使 Vim 和一个调试器一起工作，至少必须有一种和调试器进行输入连接的方式，或者
-有一个外部工具。尽管很多情况下，也同时会有一个输出连接，但这并不是必要的。
+Vim 要与调试器联动，至少需要和调试器或外部工具建立输入通信通道，向 Vim 下发指
+令。多数情况下，也会配套输出通道，但并非必需。
 
-输入连接的目的是让外部调试器把命令传送给 Vim。调试器送来的命令必须足以使它自己
-显示当前的调试环境和状态。
+输入通道的作用是允许外部调试器向 Vim 发送命令。这些命令必须能让调试器能够完整
+掌控、展示当前调试环境和程序运行状态。
 
-目前的实现是基于 X 工具包中的 dispatch 循环和对 XtAddInput() 函数的调用的。
+当前实现基于 X 工具包中事件分发循环、依赖 XtAddInput() 函数调用实现。
 
 
 1.2 调试标号						*debug-signs*
 
-很多调试器用在一些行前面加一个小记号或使这些行颜色高亮的方式来给它们做标记。命
-令 |:sign| 可以使得调试器设定这种图形标号。这项特性有什么作用呢？举例来说，它
-可以用来使调试器显示一个箭头，从而指示正在被调试的程序的程序计数器 (PC)。另一
-个用处是在有断点的行后面显示一个小的停止标号。这些可见的标号可以使用户得知一些
-调试器的状态信息。
+很多调试器常会在代码行上显示小图标或使用颜色高亮来标记特定行。Vim 的 |:sign|
+命令可供调试器设定此类图形标记。该功能的典型用法包括，用箭头标记被调试程序的程
+序计数器 (PC) 所在行。用小停止符号标记断点行。这些可视化标号可让用户直观掌握调
+试运行状态。
 
-这些特性不仅仅可以和调试器一起使用。它们可以使一个 IPE 高亮显示编译错误、查找
-到的文本等等。标号功能还可以和 |debug-highlight| 一起工作，从而保证标号可以被
-显眼的显示出来。
+标号功能不只局限于调试器。IPE 也可用标号高亮显示编译错误、搜索文件等。标号功能
+还可与 |debug-highlight| 配合使用，提升视觉辨识度。
 
-调试标号可以用命令 |:sign| 来定义和设置。
+可通过 |:sign| 命令定义和放置调试标号。
 
 
 1.3 调试源代码高亮					*debug-highlight*
 
-这项特性可以使得您把一行文字突出地高亮。这种高亮是用来使某一行突出显示的。高亮
-功能在 vim 和 gvim 中都可以工作，而调试标号一般仅在 gvim 下工作。Sun
-Microsystem 的 dtterm 是一个例外，它有一个 "sign gutter" 可以用来显示标号。
+此功能可为指定代码行设置醒目整行高亮。突出当前调试行。高亮功能在 vim 和 gvim
+中都可用，而调试标号一般仅适用于 gvim。Sun Microsystem 的 dtterm 终端是个例
+外，它提供了 "sign gutter" (标号槽) 功能，可原生显示标号。
 
 
 1.4 信息页脚						*gui-footer*
 
-信息页脚可以用来显示调试器或 IPE 中传来的信息。它还可以用来显示菜单和工具栏提
-示。页脚区域位于 GUI 窗口的底部，在用来显示冒号 (:) 命令的那一行的下方。
+信息页脚可用来显示调试器或 IPE 输出的提示信息。也可用来显示菜单和工具栏提示。
+页脚区域位于 GUI 窗口底部，在命令行区域下方。
 
-页脚的显示是用 'guioptions' 中的字母 'F' 来控制的。
+页脚显示与否，可通过 'guioptions' 中的字母 'F' 控制。
 
 
 1.5 气泡表达式求值					*balloon-eval*
 
-这项特性可以使一个调试器或其他的外部工具根据鼠标所指的位置显示动态的信息。它的
-目的在于使 Sun 的 Visual WorkShop 调试器能够显示表达式表达式求值。实际上，这个
-特性是用通用的方式实现的，所以它还可以用来显示其他的信息。不过此功能很有限，更
-高级的弹出界面可见 |popup-window|。
+此项功能可使调试器或外部工具根据鼠标所指位置动态显示信息。虽然最初为 Sun
+Visual WorkShop 调试器设计，用于显示表达式计算结果。但通过通用实现，可扩展于展
+示其他自定义信息。该功能的能力依然有限，如需更高级的弹出界面，参见
+|popup-window|。
 
-另一种使用气泡的方法是使用 'balloonexpr' 选项。完全由用户定义。
+另一种自定义气泡的方法是使用 'balloonexpr' 选项。完全由用户定义。
 
-气泡表达式求值还有一些可以设置的参数。对于 Motif，字体列表和颜色可以通过 X 资
-源 (XmNballoonEvalFontList、XmNballoonEvalBackground 和
-XmNballoonEvalForeground) 来设定。
+气泡表达式求值支持若干可设置参数。对于 Motif，可通过 X 资源
+(XmNballoonEvalFontList、XmNballoonEvalBackground 和 XmNballoonEvalForeground)
+配置字体列表和颜色。
 
-选项 'balloondelay' 用来设定显示气泡之前的延迟时间。
-选项 'ballooneval' 和/或 'balloonevalterm' 选项必须打开。
+选项 'balloondelay' 用于设定气泡弹出前的延迟时长。
+要启动此功能，需要同时打开选项 'ballooneval' 和/或 'balloonevalterm' 选项。
 
-气泡表达式求值仅当用 |+balloon_eval| 特性编译时有效。对终端而言，适用的是
-|+balloon_eval_term| 特性。
+{仅当编译时打开 |+balloon_eval| 特性，才可在 GUI 中使用气泡表达式功能，对终端
+而言，需要打开 |+balloon_eval_term| 特性}。
 
-气泡表达式求值功能还被用来为工具栏显示提示。对于这个用途，无须设置选项
-'ballooneval'，但是其他选项的值将被应用。
+工具栏显示提示也采用气泡表达式求值功能。为此，无须打开选项 'ballooneval'，但是
+其他配置依然生效。
 
 ==============================================================================
 2. Vim 编译选项						*debugger-compilation*
 
-调试器特性是为了和 Sun 的 Visual WorkShop 集成编程环境 (ipe) 一起使用而开发
-的。事实上，它们使用了一种通用的方式，所以其他的调试器也可以使用这些特性。
+整套调试器功能最初为适配 Sun Visual WorkShop 集成编程环境 (IPE) 开发。但通过通
+用实现，这些功能也可和其他第三方调试器对接。
 
-以下的编译时的预处理程序变量控制着这些特性:
+以下编译时预处理宏控制对应功能开关:
 
-    交替命令输入				ALT_X_INPUT
-    调试符号					FEAT_SIGNS
-    调试高亮					FEAT_SIGNS
+    备用命令输入				ALT_X_INPUT
+    调试标号					FEAT_SIGNS
+    调试源代码高亮				FEAT_SIGNS
     信息页脚					FEAT_FOOTER
     气泡表达式求值				FEAT_BEVAL
 
-Sun Visual WorkShop 的特别支持已被删除，因为该产品不复存在。
+由于 Sun Visual WorkShop 已停产，Vim 已移除其专属支持。
 
-对 Sun NetBeans 的支持，可见 |netbeans|。
+如需支持 Sun NetBeans，可见 |netbeans|。
 
 
  vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
