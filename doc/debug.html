@@ -42,150 +42,147 @@
 
 调试 Vim                                                <b class="vimtag"> <a name="debug-vim">debug-vim</a> </b>
 
-本文档是为了调试 Vim 自身而准备的，如果 Vim 不能正确工作，请看这里。
-如果要调试 Vim 脚本和函数等，见  <a href="repeat.html#debug-scripts">debug-scripts</a> 。
+本文档用于调试 Vim 程序自身，适用于 Vim 运行异常、崩溃等场景。
+要调试 Vim 脚本和函数等，见  <a href="repeat.html#debug-scripts">debug-scripts</a> 。
 
-1. 用 gcc 和 gdb 定位崩溃                        <a href="debug.html#debug-gcc">debug-gcc</a> 
+1. 用 gcc 和 gdb 定位崩溃位置                    <a href="debug.html#debug-gcc">debug-gcc</a> 
 2. 定位内存泄漏                                  <a href="debug.html#debug-leaks">debug-leaks</a> 
 3. Windows 漏洞报告                              <a href="debug.html#debug-win32">debug-win32</a> 
 
 </section><hr class="doubleline" /><section class=inner>
-<h4></h4>1. 用 gcc 和 gdb 定位崩溃                               <b class="vimtag"> <a name="debug-gcc">debug-gcc</a> </b> <b class="vimtag"> <a name="gdb">gdb</a> </b>
+<h4></h4>1. 用 gcc 和 gdb 定位崩溃位置                           <b class="vimtag"> <a name="debug-gcc">debug-gcc</a> </b> <b class="vimtag"> <a name="gdb">gdb</a> </b>
 
-如果 Vim 崩溃于某测试文件而使用的编译器是 gcc 的话，下面给出具体步骤，你可以用
-它来发现 Vim 崩溃的准确位置。MingW 工具同样适用。
+如果 Vim 在执行某测试用例时崩溃，且使用 gcc 编译 Vim，可按以下步骤精崩溃代码位
+置。该方法同样适用于 MingW 工具。
 
-1. 用 "-g" 选项编译 Vim (src/Makefile 有一行用于此目的，只要去掉注释即可)。同
-   时保证不使用 "strip" (不要安装，或者用 "STRIP = /bin/true")。
+1. 编译 Vim 时加上 "-g" 选项 (可修改 src/Makefile，取消对应 "-g" 配置行的注
+   释)。同时禁用 "strip" (不安装该程序，或设置 "STRIP = /bin/true")。
 
-2. 执行命令 (把 "11" 换成实际失败的那个测试):
+2. 执行以下命令 (将 "11" 替换成出错的实际测试用例编号):
 <code class="example">        cd testdir</code>
 <code class="example">        gdb ../vim</code>
 <code class="example">        run -u unix.vim -U NONE -s dotest.in test11.in</code>
 <code class="example"></code>
-3. 检查 Vim 在哪里崩溃，gdb 会给出这方面的消息。
+3. 等待 Vim 崩溃，gdb 会输出崩溃相关消息。
 
-4. 此 gdb 命令可以得到堆栈记录:
+4. 在 gdb 中输入以下命令查看调用栈:
 <code class="example">        where</code>
-   此命令可以查看不同的堆栈记录位置:
+   要查看调用栈中其他层级的上下文 (将 "3" 换成调用栈中的某个位置编号):
 <code class="example">        frame 3</code>
-   把 "3" 换成堆栈记录其中一个位置。
-
+<code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>2. 定位内存泄漏                                 <b class="vimtag"> <a name="debug-leaks">debug-leaks</a> </b> <b class="vimtag"> <a name="valgrind">valgrind</a> </b>
 
-如果你怀疑 Vim 泄漏内存并且使用的是 Linux，valgrind 是定位内存泄漏很有用的工
-具。
+如果怀疑 Vim 存在内存泄漏，且使用的是 Linux 平台，可借助 valgrind 工具精确定位
+内存泄漏点。
 
-首先，编译 Vim 时定义 EXITFREE。在 MAKEFILE 里查找之并去掉注释。
+首先，修改 MAKEFILE，开启 EXITFREE 宏定义 (搜索该字段并取消注释)。
 
-用以下的命令启动 Vim:
+用以下的命令启动 Vim 并做内存检测:
 
 <code class="example">        valgrind --log-file=valgrind.log --leak-check=full ./vim</code>
 <code class="example"></code>
-<code class="note">备注</code>: Vim 的运行会变慢许多。如果 .vimrc 很大或者有多个插件，启动时请耐心，也可
-使用 "--clean" 参数运行来跳过这些。
+<code class="note">备注</code>: valgrind 下，Vim 运行速度会明显变慢。如果 .vimrc 配置复杂、插件繁多，启
+动时请耐心，可加 "--clean" 参数纯净启动。
 
-常有一些库函数发生泄漏，例如 getpwuid() 和 XtVaAppCreateShell()。没法避免这种
-情况，但泄漏的字节数应该很少，不超过一千字节。
+系统库函数本身常会产生少量泄漏 (如 getpwuid()、XtVaAppCreateShell())。无法完全
+避免此类泄漏，但只要泄漏字节数很少 (1 KB 以内)，可以忽略。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4>3. Windows 漏洞报告                                     <b class="vimtag"> <a name="debug-win32">debug-win32</a> </b>
 
-如果 Vim 的 Windows 版本崩溃且崩溃可以重现，通过采取若干步骤，你可以提供有用的
-漏洞报告。
+如果 Vim 的 Windows 版本可以稳定复现崩溃，可按以下步骤收集信息，提交规范漏洞报
+告。
 
 
-<code class="section">3.1 通用 </code>
+<code class="section">3.1 通用前提 </code>
 
-首先，你需要可执行文件的调试器符号文件 (PDB): gvim.pdb 对应 gvim.exe，vim.pdb
-对应 vim.exe。在获得可执行文件的相同位置应该可以下载 PDB。确信使用和 EXE 匹配
-的 PDB 文件 (日期相同)。
+首先，必须获取可执行文件的调试器符号文件 (PDB): gvim.exe 对应 gvim.pdb，而
+vim.exe 对应 vim.pdb。PDB 文件需要和 EXE 版本、日期完全匹配，并从同一下载渠道
+获取。
 
-如果你自己用 Microsoft Visual C++ 编译器编译可执行文件，PDB 应该和 EXE 在同一
-个生成目录。
+如果使用 Microsoft Visual C++ 编译器自行编译 Vim 程序，编译时会自动生成配套的
+PDB。
 
-如果你有 Visual Studio，用它来代替 VC Toolkit 和 WinDbg。
+如果有 Visual Studio，优先使用该工具调试，而不 VC Toolkit 和 WinDbg。
 
-如果是使用其它编译器，你应该用相应的调试器: Cygwin 和 MinGW 编译器使用 gdb (见
-上  <a href="debug.html#debug-gcc">debug-gcc</a> )。
+对于其他编译器，应使用其配套的调试器: Cygwin 和 MinGW 编译器搭配 gdb (见上文
+ <a href="debug.html#debug-gcc">debug-gcc</a> )。
 
 
                                                                 <b class="vimtag"> <a name="debug-vs2005">debug-vs2005</a> </b>
-<code class="section">3.2 用 Visual Studio 2005/Visual C++ 2005 Express 调试 Vim 的崩溃 </code>
+<code class="section">3.2 用 Visual Studio 2005/Visual C++ 2005 Express 调试 Vim 崩溃 </code>
 
-首先启动 vim.exe 或 gvim.exe，然后启动 Visual Studio。(如果你没有 Visual
-Studio，按照  <a href="debug.html#get-ms-debuggers">get-ms-debuggers</a>  的指示获取免费版本 Visual C++ 2005 Express
-Edition。)
+首先正常启动 vim.exe 或 gvim.exe，然后打开 Visual Studio (如果没有 Visual
+Studio，可按照  <a href="debug.html#get-ms-debuggers">get-ms-debuggers</a>  的指示获取免费版本 Visual C++ 2005 Express
+Edition)。
 
-在 Tools 菜单上点击 Attach to Process (连接到进程)。选择 Vim 的进程。
+在 Tools 菜单上点击 Attach to Process (附加到进程)。选中 Vim 进程。
 
-在 Vim 里，重现崩溃。Visual Studio 这时会给出对话框，告诉你 Vim 进程出现了未处
-理的异常。点击 Break，中断该进程并进入调试。
+在 Vim 里复现崩溃。Visual Studio 此时会弹出对话框，提示 Vim 进程出现未处理异
+常。点击 Break，中断该进程并进入调试。
 
-Visual Studio 这时弹出另一个对话框，告诉你无法载入符号文件所以不能显示源代码。
-点击 OK。
+Visual Studio 此时会弹出另一个对话框，显示没有加载符号文件，所以无法显示源代
+码。点击 OK。
 
 这时会打开若干窗口。在 Call Stack (调用栈) 窗口按鼠标右键。然后选择 Load
-Symbols (载入符号)。Find Symbols (寻找符号) 对话框会打开以寻找 (g)vim.pdb。导
-航到你准备好的包含 PDB 文件的目录，然后选择 Open。
+Symbols (加载符号)。会弹出 Find Symbols (寻找符号) 对话框，从中选中存放
+(g)vim.pdb 的目录，选择 Open (打开)。
 
-此时，你应该有了完整的调用栈，其中包含了 vim 的函数名和行号。双击任何一行会给
-出 Find Source (寻找源代码) 对话框。导航到包含 Vim 源代码的目录 (如果有的话)。
+此时，可看到完整调用栈，包含 Vim 的函数名和代码行号。双击任何一行都会弹出 Find
+Source (寻找源代码) 对话框。选中存放 Vim 源代码的目录 (如有)。
 
-如果你不知道如何继续调试，按照 ":help bug-reports" 的步骤进行。把调用栈粘贴到
-漏洞报告里。
+如果无法自行进一步分析，可按 ":help bug-reports" 的步骤进行。将调用栈粘贴到漏
+洞报告中。
 
-如果有 Visual Studio 的付费版本，你可以用 Debug 菜单保存一个 minidump 并在漏洞
-报告里一并发送。minidump 是一个小文件 (&lt;100KB)，里面包含进程的状态信息。
-Visual C++ 2005 Express Edition 不能保存 minidump 也不能安装成为 just-in-time
-(即时) 调试器。如果你需要保存 minidump 或者需要即时 (或 postmortem，事后) 调试
-器的话，使用 WinDbg， <a href="debug.html#debug-windbg">debug-windbg</a> 。
+如果有 Visual Studio 付费版本，可用 Debug 菜单保存 minidump (转储文件) 并随漏
+洞报告一并提交。minidump 体积很小 (&lt;100KB)，保存了进程状态信息。
+Visual C++ 2005 Express Edition 不支持 minidump，也无法安装为 just-in-time (即
+时) 调试器。如果需要保存 minidump 或者需要即时调试器 (或 postmortem，事后调试
+器)，可用 WinDbg  <a href="debug.html#debug-windbg">debug-windbg</a> 。
 
                                                                 <b class="vimtag"> <a name="debug-windbg">debug-windbg</a> </b>
-<code class="section">3.3 用 WinDbg 调试 Vim 的崩溃 </code>
+<code class="section">3.3 用 WinDbg 调试 Vim 崩溃 </code>
 
- <a href="debug.html#get-ms-debuggers">get-ms-debuggers</a>  说明如何得到 WinDbg。
+先按  <a href="debug.html#get-ms-debuggers">get-ms-debuggers</a>  下载安装 WinDbg。
 
-和 Visual Studio IDE 一样，你可以连接 WinDbg 到运行中的 Vim 进程。你也可以让系
-统自动激活 WinDbg，从而使之成为事后调试器。要设置 WinDbg 成为一个事后调试器，
-运行 "windbg -I"。
+和 Visual Studio IDE 一样，可附加 WinDbg 到运行中的 Vim 进程。也可让系统在崩溃
+时自动激活 WinDbg，使之成为一个事后调试器。为此，可运行 "windbg -I"。
 
-要连接 WinDbg 到运行中的 Vim 进程，启动 WinDbg，在 File 菜单上点击 Attach to
-Process (连接到进程)。选择 Vim 进程然后点击 OK。
+要附加 WinDbg 到运行中的 Vim 进程，先启动 WinDbg，在 File 菜单上点击 Attach to
+Process (附加到进程)。选中 Vim 进程，然后点击 OK。
 
-这个时候，选择 File 菜单的 Symbol File Path (符号文件路径)，然后把包含 Vim PDB
-文件的目录加入 sympath。如果你有 Vim 源代码，使用 File 菜单的 Source File Path
-(源文件路径)。WinDbg 里可以打开源文件，如果你愿意，也可以设置断点。现在重现崩
-溃。WinDbg 应该会打开源文件并定位于崩溃所在的位置。使用 View 菜单，你可以检查
-调用栈、局部变量、观察窗口 (watch window) 和其它。
+然后，在 File 菜单上选择 Symbol File Path (符号文件路径)，然后添加 Vim PDB 文
+件所在目录到 sympath。如果有 Vim 源代码，可在 File 菜单上选择 Source File Path
+(源文件路径)，添加源代码目录。现在，就可在 WinDbg 中打开源文件并设置断点 (如有
+需要)，然后复现崩溃。WinDbg 会自动定位到崩溃所在的源码行。可通过 View 菜单检查
+调用栈、局部变量、监视窗口 (watch window) 等。
 
-如果把 WinDbg 用作事后调试器，你不需要把 WinDbg 连接到 Vim 进程上。只要简单地
-重现崩溃，WinDbg 就会自动启动。用上面相同的方法设置符号文件路径和源文件路径。
+如果 WinDbg 用作事后调试器，无需手动附加 WinDbg 到 Vim 进程。只需复现崩溃，
+WinDbg 就会自动启动。可用相同方法设置符号文件路径和源文件路径。
 
-要保存 minidump，在 WinDbg 命令行上输入:
+要保存 minidump，可在 WinDbg 命令行上输入:
 <code class="example">        .dump vim.dmp</code>
 
                                                         <b class="vimtag"> <a name="debug-minidump">debug-minidump</a> </b>
 <code class="section">3.4 打开 Minidump </code>
 
-如果你有 minidump 文件，你可以用 Visual Studio 或 WinDbg 打开它。
+可用 Visual Studio 或 WinDbg 打开 minidump 文件。
 
-Visual Studio 2005 里: File 菜单上选择 Open，然后 Project/Solution。导航到该
-.dmp 文件然后将它打开。现在按 F5 打开调试器。按照  <a href="debug.html#debug-vs2005">debug-vs2005</a>  的指示来设置
-符号文件路径。
+在 Visual Studio 2005 中: 在 File 菜单上选择 Open，然后选择 Project/Solution。
+选中 .dmp 文件并打开。按 F5 启动调试。再按  <a href="debug.html#debug-vs2005">debug-vs2005</a>  指示设置符号文件路
+径。
 
-WinDbg 里: 选择 File 菜单的 Open Crash Dump，按照  <a href="debug.html#debug-windbg">debug-windbg</a>  的指示来设置
-符号文件路径。
+在 WinDbg 中: 在 File 菜单上选择 Open Crash Dump (打开崩溃转储)，再按
+ <a href="debug.html#debug-windbg">debug-windbg</a>  指示设置符号文件路径。
 
                                                         <b class="vimtag"> <a name="get-ms-debuggers">get-ms-debuggers</a> </b>
-<code class="section">3.5 获得 Microsoft 调试工具 </code>
+<code class="section">3.5 获取 Microsoft 调试工具 </code>
 
-Debugging Tools for Windows (Windows 调试工具) 可以在这里下载
+Debugging Tools for Windows (Windows 调试工具) (含 WinDbg) 可从此处下载
     <a href="https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/debugger-download-tools">https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/debugger-download-tools</a>
-它包括 WinDbg 调试器。
 
-Visual C++ 2005 Express Edition 可以在这里免费下载:
+Visual C++ 2005 Express Edition 可从此处免费下载:
     <a href="https://visualstudio.microsoft.com/">https://visualstudio.microsoft.com/</a>
 
 </section><hr class="doubleline" /><section class=inner>
