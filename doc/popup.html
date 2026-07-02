@@ -47,18 +47,18 @@
    窗口位置和大小                <a href="popup.html#popup-position">popup-position</a> 
    关闭弹出窗口                  <a href="popup.html#popup-close">popup-close</a> 
    弹出缓冲区和窗口              <a href="popup.html#popup-buffer">popup-buffer</a> 
-   弹出窗口中的终端              <a href="popup.html#popup-terminal">popup-terminal</a> 
+   弹出窗口中运行终端            <a href="popup.html#popup-terminal">popup-terminal</a> 
 2. 函数                          <a href="popup.html#popup-functions">popup-functions</a> 
-   细节                          <a href="popup.html#popup-function-details">popup-function-details</a> 
+   详细说明                      <a href="popup.html#popup-function-details">popup-function-details</a> 
 3. 用法                          <a href="popup.html#popup-usage">popup-usage</a> 
    popup_create() 参数           <a href="popup.html#popup_create-arguments">popup_create-arguments</a> 
-   弹出文本属性                  <a href="popup.html#popup-props">popup-props</a> 
-   用文本属性定位弹出            <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 
-   弹出过滤                      <a href="popup.html#popup-filter">popup-filter</a> 
-   弹出回调                      <a href="popup.html#popup-callback">popup-callback</a> 
-   弹出滚动条                    <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 
-   弹出不透明度                  <a href="popup.html#popup-opacity">popup-opacity</a> 
-   弹出掩码                      <a href="popup.html#popup-mask">popup-mask</a> 
+   弹窗文本属性                  <a href="popup.html#popup-props">popup-props</a> 
+   通过文本属性定位弹窗          <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 
+   弹窗过滤器                    <a href="popup.html#popup-filter">popup-filter</a> 
+   弹窗回调                      <a href="popup.html#popup-callback">popup-callback</a> 
+   弹窗滚动条                    <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 
+   弹窗不透明度                  <a href="popup.html#popup-opacity">popup-opacity</a> 
+   弹窗掩码                      <a href="popup.html#popup-mask">popup-mask</a> 
 4. 示例                          <a href="popup.html#popup-examples">popup-examples</a> 
 
 
@@ -66,163 +66,164 @@
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 介绍                                                 <b class="vimtag"> <a name="popup-intro">popup-intro</a> </b></h4>
-我们这里讨论弹出窗口，文本在正常窗口之上显示，可由插件控制。弹出窗口不能像正常
-窗口一样地编辑文本。
+本节所说的弹出窗口，是悬浮在普通窗口上层，由插件全权控制的浮动窗口。不能像普通
+窗口一样，直接编辑弹窗文本。
 
-弹出窗口可用于:
-- 简短地显示信息，而无须覆盖命令行
-- 用对话框提示用户
-- 键入时显示上下文信息
-- 给出自动补全的额外信息
+弹窗可用于:
+- 临时显示信息，不挤占命令行区域
+- 弹出交互对话框
+- 键入时显示上下文提示信息
+- 为自动补全提供额外信息
 
-弹出窗口的文本可用  <a href="textprop.html#text-properties">text-properties</a>  加色。也可以使用语法高亮。
+弹窗文本可用  <a href="textprop.html#text-properties">text-properties</a>  上色。也支持语法高亮。
 
-缺省使用的颜色是 "Pmenu"。如果喜欢其它颜色，在 <a href="options.html#'wincolor'">'wincolor'</a> 选项使用 "highlight"
-参数，如:
+缺省颜色取自三组高亮组，主体  <code class="badlink">hl-Popup</code> 、边框  <code class="badlink">hl-PopupBorder</code>  和标题
+ <code class="badlink">hl-PopupTitle</code> 。为后向兼容，这些高亮组缺省都链接到  <a href="syntax.html#hl-Pmenu">hl-Pmenu</a>  组。它们可以被
+重新定义，调整所有弹窗的外观，与补全弹出菜单有所区分。也可通过 "highlight" 参
+数或 <a href="options.html#'wincolor'">'wincolor'</a> 选项单独设置单个弹窗的外观，例如:
 <code class="example">        hi MyPopupColor ctermbg=lightblue guibg=lightblue</code>
 <code class="example">        call setwinvar(winid, '&amp;wincolor', 'MyPopupColor')</code>
 <code class="example"></code>
-弹出窗口中不显示 <a href="options.html#'hlsearch'">'hlsearch'</a> 高亮。
+弹窗中不显示 <a href="options.html#'hlsearch'">'hlsearch'</a> 高亮。
 
-弹出窗口和其它窗口一样，有自己的窗口 ID，但行为不同。它可以和整个 Vim 窗口一样
-大且和其它窗口重叠。弹出窗口间也可以互相重叠。"zindex" 属性指定谁在谁之上。
+弹窗和其他窗口一样，有自己的窗口 ID，但行为特殊。最大可以铺满整个 Vim 窗口，能
+够覆盖其他窗口，弹窗间也能互相堆叠。堆叠层级由 "zindex" 属性控制。
                                                         <b class="vimtag"> <a name="E366">E366</a> </b>
-弹出窗口包含缓冲区，此缓冲区总是和弹出窗口相捆绑。此窗口不能使用普通、可视或插
-入模式，也得不到键盘焦点。可用  <a href="builtin.html#setbufline()">setbufline()</a>  函数来改变缓冲区的文本。此外，此
-窗口及缓冲区和正常的窗口及缓冲区还有更多的差别，见  <a href="popup.html#popup-buffer">popup-buffer</a> 。
+弹窗绑定专属缓冲区，也无法使用普通、可视或插入模式，不会接收键盘焦点。只能用
+ <a href="builtin.html#setbufline()">setbufline()</a>  等函数修改专属缓冲区文本。弹窗及专属缓冲区还有更多有异于普通窗
+口及缓冲区的行为，见  <a href="popup.html#popup-buffer">popup-buffer</a> 。
 
-如果这不是你想要的，查查其它的弹出功能:
+如果弹窗功能不合所需，可查阅其他弹出机制:
 - 弹出菜单，见  <a href="gui.html#popup-menu">popup-menu</a> 
 - 气泡，见  <a href="debugger.html#balloon-eval">balloon-eval</a> 
 
 
 窗 口 位 置 和 大 小                                    <b class="vimtag"> <a name="popup-position">popup-position</a> </b>
 
-窗口的高度通常等于缓冲区可能经回绕的行数。可由 "maxheight" 属性限制。可用空行
-或 "minheight" 属性来增加高度。
+弹窗高度默认等于缓冲区回绕后的行数。可由 "maxheight" 属性限制最大高度。可用插
+入空行或 "minheight" 属性增加高度。
 
-窗口的宽度通常等于缓冲区最长的可见行。可由 "maxwidth" 属性限制。可用空格或
-"minwidth" 属性来增加宽度。
+弹窗宽度默认等于缓冲区最长可见行长度。可由 "maxwidth" 属性限制最大宽度。可用补
+空格或 "minwidth" 属性增加宽度。
 
-缺省置位 <a href="options.html#'wrap'">'wrap'</a> 选项，不会有文本消失。否则，如果没有足够空间，窗口往左移以显示
-更多的文本。向右对齐时窗口向右移以显示更多文本。可用 "fixed" 属性关闭左移或右
-移。
+缺省置位 <a href="options.html#'wrap'">'wrap'</a> 选项，保证文本信息不会丢失。否则，如果空间不足，窗口会自动左移
+以显示更多内容。右对齐窗口则会自动右移以显示更多内容。可设置 "fixed" 属性关闭
+自动移位。
 
-Vim 试图在你指定的位置显示弹出。有些情况下，弹出会超出 Vim 窗口的范围，这时会
-在附近某处显示。例如，如果用  <a href="popup.html#popup_atcursor()">popup_atcursor()</a> ，弹出通常在当前光标位置之上显
-示，但如果光标靠近 Vim 窗口的顶部，这里会在光标位置下方放置。
+Vim 试图在指定位置显示弹窗。一旦弹窗可能会超出 Vim 主窗口边界，会自动就近显
+示。例如， <a href="popup.html#popup_atcursor()">popup_atcursor()</a>  通常在光标正上方显示弹窗，但如果光标靠近 Vim 窗口
+顶部，会自动改为在光标下方放置。
 
-屏幕因为 Ex 命令的输出滚动时，弹出也跟着移动，这样不会遮挡输出。
+Ex 命令输出导致屏幕向上滚动时，弹窗会跟随移动，避免遮挡命令输出。
 
-即使在弹出窗口底下，仍然显示当前光标位置。这样你仍然看到它在哪里，虽然你看不到
-它所在的文本。
+光标即使被弹窗遮挡，仍然会显示。以便看清光标位置，但无法看到其所在文本。
 
 
 关 闭 弹 出 窗 口                                       <b class="vimtag"> <a name="popup-close">popup-close</a> </b>
 
-通常创建弹出窗口的插件也负责它的关闭。如果因某些原因弹出依然残留，可以关闭所有
-的弹出:
+通常逻辑是创建弹窗的插件负责自行关闭窗口。如果弹窗因故滞留，可关闭所有弹窗:
 <code class="example">        call popup_clear(1)</code>
-有些如通知这样的弹出在指定时间后关闭。时间可用  <a href="popup.html#popup_create()">popup_create()</a>  的 "time" 属性
-设置。
-其它的弹出可由点击右上角的 X 或在弹出内部任何位置点击关闭弹出。此行为必须通过
-"close" 属性打开。通知类型缺省打开。
+通知等类型的弹窗会在指定时间后自动关闭。可在  <a href="popup.html#popup_create()">popup_create()</a> 中通过 "time" 属
+性设置自动关闭时间。
+未设置该属性的弹窗可设置 "close" 属性，控制手动关闭方式: 点击右上角 X、或点击
+弹窗内部任意位置关闭弹窗。通知类弹窗 (见  <a href="popup.html#popup_notification()">popup_notification()</a> ) 缺省已设置此
+属性。
 
 
 弹 出 缓 冲 区 和 窗 口                                 <b class="vimtag"> <a name="popup-buffer">popup-buffer</a> </b>
 
-如果调用了弹出函数来从文本中建立弹出，建立新的缓冲区来保存文本和弹出窗口的文本
-属性。此缓冲区总是和弹出窗口捆绑，且有诸多操作上的限制:
-- 缓冲区无名
+调用弹窗创建函数时，如果直接传入文本内容，会创建新缓冲区保存文本与文本属性。此
+缓冲区永久绑定本弹窗，且有诸多操作限制:
+- 无缓冲区名称
 - <a href="options.html#'buftype'">'buftype'</a> 为 "popup"
 - <a href="options.html#'swapfile'">'swapfile'</a> 关闭
 - <a href="options.html#'bufhidden'">'bufhidden'</a> 为 "hide"
 - <a href="options.html#'buflisted'">'buflisted'</a> 关闭
-- <a href="options.html#'undolevels'">'undolevels'</a> 为 -1: 完全不能撤销
-- 所有其它缓冲区局部和窗口局部选项设为其 Vim 缺省值。
+- <a href="options.html#'undolevels'">'undolevels'</a> 为 -1: 完全禁用撤销
+- 其他缓冲区局部和窗口局部选项均设为 Vim 缺省值。
 
-可以修改特别列出的选项，但不知道会出什么问题，最好不要动吧。
+虽然可以手动修改上列选项，但无法保证工作正常，建议保留原有设置。
 
-窗口有它的光标位置，但光标不显示。事实上，显示的是底下窗口的光标，这就像从弹出
-中窥视一样，这样你才能看到现在在哪里。
+弹窗本身具有光标位置，但不会显示。屏幕上显示的仍是底层窗口的光标，就像穿透弹窗
+一样，方便用户看到实际文本的操作位置。
 
-要在弹出窗口和缓冲区的上下文中执行命令，使用  <a href="builtin.html#win_execute()">win_execute()</a> 。例如:
+要在弹出窗口和缓冲区的上下文中执行命令，可用  <a href="builtin.html#win_execute()">win_execute()</a> 。例如:
 <code class="example">        call win_execute(winid, 'syntax enable')</code>
 <code class="example"></code>
-可用  <a href="builtin.html#setwinvar()">setwinvar()</a>  设置窗口上的选项，如:
+要修改窗口选项，可用  <a href="builtin.html#setwinvar()">setwinvar()</a> ，例如:
 <code class="example">        call setwinvar(winid, '&amp;wrap', 0)</code>
-可用  <a href="builtin.html#setbufvar()">setbufvar()</a>  设置缓冲区上的选项，如:
+要修改缓冲区选项，可用  <a href="builtin.html#setbufvar()">setbufvar()</a> ，例如:
 <code class="example">        call setbufvar(winbufnr(winid), '&amp;filetype', 'java')</code>
-也可用  <a href="builtin.html#win_execute()">win_execute()</a>  来执行 ":setlocal" 命令。
+另一种方案是用  <a href="builtin.html#win_execute()">win_execute()</a>  执行  <a href="options.html#:setlocal">:setlocal</a>  命令。
 
 
-弹 出 窗 口 中 的 终 端                                  <b class="vimtag"> <a name="popup-terminal">popup-terminal</a> </b>
+弹 出 窗 口 中 运 行 终 端                              <b class="vimtag"> <a name="popup-terminal">popup-terminal</a> </b>
 
-在弹出窗口中运行终端是个特例。那里许多规则有变化:       <b class="vimtag"> <a name="E863">E863</a> </b>
-- 终端窗口总占据焦点，不可能切换到其它窗口。
-- 作业结束时，弹出窗口在终端-普通模式中显示缓冲区。可用  <a href="editing.html#:q">:q</a>  或使用
-  "term_finish" 值 "close" 来关闭之。
-- 可用  <a href="popup.html#popup_close()">popup_close()</a>  关闭弹出窗口，终端缓冲区此时会被隐藏。
-- 不可打开第二个带终端的弹出窗口。 <b class="vimtag"> <a name="E861">E861</a> </b>
-- 缺省 Pmenu 色彩只用于边框和填充。要改变终端本身的颜色，在创建终端前设置
-  Terminal 高亮组。之后设置 <a href="options.html#'wincolor'">'wincolor'</a> 也可以，但这要求终端中的程序重画所有的
-  内容。
-- 缺省最小的大小为 5 行每行 20 个字符；使用 "minwidth" 和 "minheight" 参数来设
-  置其它值。
-- 终端大小会随着终端中运行程序的文本输出而增长。"maxheight" 和 "maxwidth" 可用
-  于限制其大小。
+在弹窗中运行终端是个特例。许多规则会有变化:             <b class="vimtag"> <a name="E863">E863</a> </b>
+- 终端窗口强制占据焦点，无法切换到其他窗口。
+- 作业结束后，弹窗停留在终端-普通模式。可用  <a href="editing.html#:q">:q</a>  关闭，或设置 "term_finish" 值
+  "close" 使作业结束后自动关闭 (见  <a href="terminal.html#term_start()">term_start()</a> )。
+- 可用  <a href="popup.html#popup_close()">popup_close()</a>  关闭弹窗，终端缓冲区此时会被隐藏。
+- 不可打开第二个终端弹窗。                              <b class="vimtag"> <a name="E861">E861</a> </b>
+- 缺省  <a href="syntax.html#hl-Pmenu">hl-Pmenu</a>  色彩仅用于边框和内边距。要修改终端内部颜色，必须在创建终端前
+  先设置  <a href="syntax.html#hl-Terminal">hl-Terminal</a>  高亮组。事后修改 <a href="options.html#'winhighlight'">'winhighlight'</a> 也可生效，但需要终端内
+  程序全屏重绘。
+- 缺省最小尺寸为 5 行 20 列；可通过 "minwidth" 和 "minheight" 参数自定义。
+- 终端内程序输出文本时终端会自动扩容。可通过 "maxheight" 和 "maxwidth" 参数限
+  制最大尺寸。
 
-要在弹出窗口中运行终端，先创建隐藏的终端。然后把缓冲区号传给 popup_create()。
-示例:
+要在弹窗中运行终端，可先创建隐藏终端，再将缓冲区号传给 popup_create()。示例:
 <code class="example">        hi link Terminal Search</code>
 <code class="example">        let buf = term_start(['picker', 'Something'], #{hidden: 1, term_finish: 'close'})</code>
 <code class="example">        let winid = popup_create(buf, #{minwidth: 50, minheight: 20})</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 函数                                                 <b class="vimtag"> <a name="popup-functions">popup-functions</a> </b></h4>
-建立弹出窗口:
-         <a href="popup.html#popup_create()">popup_create()</a>         在屏幕中央
-         <a href="popup.html#popup_atcursor()">popup_atcursor()</a>       在光标位置正上方，光标移开时关闭
-         <a href="popup.html#popup_beval()">popup_beval()</a>          在 v:beval_ 变量指定的位置，光标移开时关闭
-         <a href="popup.html#popup_notification()">popup_notification()</a>   用三秒钟显示通知
-         <a href="popup.html#popup_dialog()">popup_dialog()</a>         带填充和边框的中间对齐
-         <a href="popup.html#popup_menu()">popup_menu()</a>           提示从列表中选择一个项目
+弹窗创建函数:
+         <a href="popup.html#popup_create()">popup_create()</a>         在屏幕中央创建弹窗
+         <a href="popup.html#popup_atcursor()">popup_atcursor()</a>       在光标正上方创建弹窗，光标移开时自动关闭
+         <a href="popup.html#popup_beval()">popup_beval()</a>          在鼠标位置上 (由 v:beval_ 系列变量记录) 创建弹
+                                窗，鼠标移开时自动关闭
+         <a href="popup.html#popup_notification()">popup_notification()</a>   弹出通知，默认停留三秒
+         <a href="popup.html#popup_dialog()">popup_dialog()</a>         创建居中弹窗，自带内边距和边框
+         <a href="popup.html#popup_menu()">popup_menu()</a>           创建弹出菜单，供用户从列表中选择一项
 
-操作弹出窗口:
-         <a href="popup.html#popup_hide()">popup_hide()</a>           临时隐藏弹出
-         <a href="popup.html#popup_show()">popup_show()</a>           显示之前隐藏的弹出
-         <a href="popup.html#popup_move()">popup_move()</a>           改变弹出的位置和大小
-         <a href="popup.html#popup_setoptions()">popup_setoptions()</a>     覆盖弹出的选项
-         <a href="popup.html#popup_settext()">popup_settext()</a>        替换弹出缓冲区的内容
-         <a href="popup.html#popup_setbuf()">popup_setbuf()</a>         设置弹出窗口的缓冲区
+弹窗操作函数:
+         <a href="popup.html#popup_hide()">popup_hide()</a>           临时隐藏弹窗
+         <a href="popup.html#popup_show()">popup_show()</a>           恢复显示之前隐藏的弹窗
+         <a href="popup.html#popup_move()">popup_move()</a>           修改弹窗位置与大小
+         <a href="popup.html#popup_setoptions()">popup_setoptions()</a>     覆盖弹窗选项
+         <a href="popup.html#popup_settext()">popup_settext()</a>        替换弹窗缓冲区全部文本
+         <a href="popup.html#popup_setbuf()">popup_setbuf()</a>         为弹窗绑定新缓冲区
 
-关闭弹出窗口:
-         <a href="popup.html#popup_close()">popup_close()</a>          关闭一个弹出
-         <a href="popup.html#popup_clear()">popup_clear()</a>          关闭所有弹出
+弹窗关闭函数:
+         <a href="popup.html#popup_close()">popup_close()</a>          关闭单个弹窗
+         <a href="popup.html#popup_clear()">popup_clear()</a>          关闭所有弹窗
 
-过滤函数:
+弹窗过滤函数:
          <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>    从一列项目中选择
-         <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a>   等待直到按了 'y' 或 'n' 为止
+         <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a>   等待直到按下 'y' 或 'n' 为止
 
-其它:
-         <a href="popup.html#popup_getoptions()">popup_getoptions()</a>     取得弹出的当前选项
-         <a href="popup.html#popup_getpos()">popup_getpos()</a>         取得弹出的实际位置和大小
-         <a href="popup.html#popup_locate()">popup_locate()</a>         找到位于指定屏幕位置的弹出窗口
-         <a href="popup.html#popup_list()">popup_list()</a>           取得所有弹出的列表
+其他工具函数:
+         <a href="popup.html#popup_getoptions()">popup_getoptions()</a>     获取弹窗当前选项值
+         <a href="popup.html#popup_getpos()">popup_getpos()</a>         获取弹窗实际位置和大小
+         <a href="popup.html#popup_locate()">popup_locate()</a>         根据屏幕坐标查找弹出窗口
+         <a href="popup.html#popup_list()">popup_list()</a>           获取所有弹窗列表
 
 
-细 节                                           <b class="vimtag"> <a name="popup-function-details">popup-function-details</a> </b>
+详 细 说 明                                     <b class="vimtag"> <a name="popup-function-details">popup-function-details</a> </b>
 
 popup_atcursor(<code class="special">{what}</code>, <code class="special">{options}</code>)                       <b class="vimtag"> <a name="popup_atcursor()">popup_atcursor()</a> </b>
-                在光标上方显示 <code class="special">{what}</code>，光标移开时关闭。类似于:
+                在光标正上方创建弹窗显示 <code class="special">{what}</code>，光标移开时自动关闭。相当于:
 <code class="example">                        call popup_create({what}, #{</code>
 <code class="example">                                \ pos: 'botleft',</code>
 <code class="example">                                \ line: 'cursor-1',</code>
 <code class="example">                                \ col: 'cursor',</code>
 <code class="example">                                \ moved: 'WORD',</code>
 <code class="example">                                \ })</code>
-                <code class="special">{options}</code> 可用来改变属性。
-                如果 "pos" 为 "topleft"，那么 "line" 的缺省会成为 "cursor+1"。
+                可用 <code class="special">{options}</code> 覆盖缺省属性。
+                将 "pos" 设为 "topleft" 时，"line" 的缺省自动变为 "cursor+1"。
+                返回窗口 ID。详见  <a href="popup.html#popup_create()">popup_create()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetText()-&gt;popup_atcursor({})</code>
@@ -230,9 +231,9 @@ popup_atcursor(<code class="special">{what}</code>, <code class="special">{optio
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
-popup_beval(<code class="special">{what}</code>, <code class="special">{options}</code>)                  <b class="vimtag"> <a name="popup_beval()">popup_beval()</a> </b>
-                在来自 <a href="options.html#'ballooneval'">'ballooneval'</a> 的位置上方显示 <code class="special">{what}</code>，光标移开时关闭。类
-                似于:
+popup_beval(<code class="special">{what}</code>, <code class="special">{options}</code>)                          <b class="vimtag"> <a name="popup_beval()">popup_beval()</a> </b>
+                在悬停求值 (<a href="options.html#'ballooneval'">'ballooneval'</a>) 的鼠标位置上方创建弹窗显示 <code class="special">{what}</code>，
+                鼠标移开时自动关闭。相当于:
 <code class="example">                  let pos = screenpos(v:beval_winnr, v:beval_lnum, v:beval_col)</code>
 <code class="example">                  call popup_create({what}, #{</code>
 <code class="example">                        \ pos: 'botleft',</code>
@@ -240,8 +241,9 @@ popup_beval(<code class="special">{what}</code>, <code class="special">{options}
 <code class="example">                        \ col: pos.col,</code>
 <code class="example">                        \ mousemoved: 'WORD',</code>
 <code class="example">                        \ })</code>
-                <code class="special">{options}</code> 可用来改变属性。
-                相关例子可见  <a href="popup.html#popup_beval_example">popup_beval_example</a> 。
+                可用 <code class="special">{options}</code> 覆盖缺省属性。
+                示例代码可见  <a href="popup.html#popup_beval_example">popup_beval_example</a> 。
+                返回窗口 ID。详见  <a href="popup.html#popup_create()">popup_create()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetText()-&gt;popup_beval({})</code>
@@ -250,22 +252,20 @@ popup_beval(<code class="special">{what}</code>, <code class="special">{options}
 
                                                         <b class="vimtag"> <a name="popup_clear()">popup_clear()</a> </b>
 popup_clear([<code class="special">{force}</code>])
-                处理表现不良插件的紧急方案: 关闭当前标签页的所有弹出窗口和全局
-                弹出。
-                不调用关闭回调。
-                如果不给出 <code class="special">{force}</code>，当前窗口为弹出时此操作失败。
-                如果给出 <code class="special">{force}</code> 且为  <a href="eval.html#TRUE">TRUE</a> ，即使当前窗口为弹出也关闭之。弹出
-                中如果有终端在运行，一并终止。
+                用于插件异常的紧急方案: 关闭当前标签页内所有弹窗以及全局弹窗。
+                不调用任何弹窗的关闭回调。
+                省略 <code class="special">{force}</code> 时，如果当前窗口为弹窗，操作失败。
+                给出 <code class="special">{force}</code> 且为  <a href="eval.html#TRUE">TRUE</a>  时，即使当前窗口为弹窗也强制关闭。
+                弹窗中有仍在运行的终端作业时，也会一并终止。
 
                 返回类型: 无
 
 
 popup_close(<code class="special">{id}</code> [, <code class="special">{result}</code>])                          <b class="vimtag"> <a name="popup_close()">popup_close()</a> </b>
-                关闭弹出 <code class="special">{id}</code>。删除窗口。如果弹出创建了新缓冲区，也删除相关的
-                缓冲区。
+                关闭弹窗 <code class="special">{id}</code>: 删除窗口。弹窗创建的新缓冲区也会被一并删除。
 
-                如果弹出有回调，会在弹出窗口刚刚删除之前调用。如果可选的
-                <code class="special">{result}</code> 给出，作为回调的第二个参数被传递。否则传递零给回调。
+                弹窗删除前，会调用关闭回调 (如有)。可选 <code class="special">{result}</code> 给出时，会作
+                为传入回调的第二个参数。省略时默认传入零值。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_close()</code>
@@ -274,29 +274,27 @@ popup_close(<code class="special">{id}</code> [, <code class="special">{result}<
 
 
 popup_create(<code class="special">{what}</code>, <code class="special">{options}</code>)                         <b class="vimtag"> <a name="popup_create()">popup_create()</a> </b>
-                打开弹出窗口显示 <code class="special">{what}</code>，后者可以是以下之一: <b class="vimtag"> <a name="E450">E450</a> </b>
-                - 缓冲区号
+                创建弹出窗口以显示 <code class="special">{what}</code>，<code class="special">{what}</code> 支持以下类型: <b class="vimtag"> <a name="E450">E450</a> </b>
+                - 已有缓冲区编号
                 - 字符串
                 - 字符串列表
-                - 带文本属性的文本行的列表
-                如果 <code class="special">{what}</code> 不是缓冲区号，建立缓冲区并设 <a href="options.html#'buftype'">'buftype'</a> 为
-                "popup"。一旦弹出关闭，此缓冲区会被真正删除。
+                - 带文本属性的文本行列表
+                <code class="special">{what}</code> 不属于缓冲区编号时，会新建 <a href="options.html#'buftype'">'buftype'</a> 为 "popup" 的专属
+                缓冲区。弹窗关闭后，该缓冲区会被真正删除。
 
-                如果 <code class="special">{what}</code> 是缓冲区号，而载入该缓冲区会用到某个已有的交换文
-                件，该缓冲区以只读方式安静地打开，就像有  <a href="autocmd.html#SwapExists">SwapExists</a>  自动命令
-                来设置  <a href="eval.html#v:swapchoice">v:swapchoice</a>  为 'o' 一样。这是因为这里假定缓冲区只用
-                于查看。
-                缓冲区号不能指向关闭中的缓冲区。                        <b class="vimtag"> <a name="E1551">E1551</a> </b>
+                <code class="special">{what}</code> 是已有缓冲区编号且该缓冲区存在交换文件时，以只读方式静
+                默打开，相当于  <a href="autocmd.html#SwapExists">SwapExists</a>  自动命令将  <a href="eval.html#v:swapchoice">v:swapchoice</a>  设为 'o'
+                的效果。这是因为设计初衷是弹窗仅用于查看而非修改缓冲区内容。
+                缓冲区号不允许引用正在关闭的缓冲区。            <b class="vimtag"> <a name="E1551">E1551</a> </b>
 
-                <code class="special">{options}</code> 为有许多可能项目的字典。详见
-                 <a href="popup.html#popup_create-arguments">popup_create-arguments</a> 。
+                <code class="special">{options}</code> 为包含众多配置的字典。见  <a href="popup.html#popup_create-arguments">popup_create-arguments</a> 。
 
-                返回窗口 ID，可用于其它的弹出函数。用  <a href="builtin.html#winbufnr()">winbufnr()</a>  可得到窗口
-                的缓冲区号:
+                操作成功时，返回窗口 ID，供后续弹窗函数调用。要获取窗口绑定的
+                缓冲区号，可用  <a href="builtin.html#winbufnr()">winbufnr()</a> :
 <code class="example">                        let winid = popup_create('hello', {})</code>
 <code class="example">                        let bufnr = winbufnr(winid)</code>
 <code class="example">                        call setbufline(bufnr, 2, 'second line')</code>
-                如果有错，返回零。
+                如果处理失败，返回零。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetText()-&gt;popup_create({})</code>
@@ -305,23 +303,24 @@ popup_create(<code class="special">{what}</code>, <code class="special">{options
 
 
 popup_dialog(<code class="special">{what}</code>, <code class="special">{options}</code>)                         <b class="vimtag"> <a name="popup_dialog()">popup_dialog()</a> </b>
-                就像  <a href="popup.html#popup_create()">popup_create()</a>  但带以下缺省选项:
-<code class="example">                        call popup_create({what}, #{</code>
-<code class="example">                                \ pos: 'center',</code>
-<code class="example">                                \ zindex: 200,</code>
-<code class="example">                                \ drag: 1,</code>
-<code class="example">                                \ border: [],</code>
-<code class="example">                                \ padding: [],</code>
-<code class="example">                                \ mapping: 0,</code>
-<code class="example">                                \})</code>
-                <code class="special">{options}</code> 可用来改变属性，例如，加入 <code class="badlink">'filter'</code> 选项，其值为
-                'popup_filter_yesno'。示例:
+                创建居中对话框，自带内边距和边框。相当于:
+                        call popup_create(<code class="special">{what}</code>, #{
+                                \ pos: <code class="badlink">'center'</code>,
+                                \ zindex: 200,
+                                \ drag: 1,
+                                \ border: [],
+                                \ padding: [],
+                                \ mapping: 0,
+                                \})
+&lt;               可用 <code class="special">{options}</code> 覆盖缺省属性。例如，将 "filter" 属性设为
+                'popup_filter_yesno'，并设置回调处理按键。示例:
 <code class="example">                        call popup_create('do you want to quit (Yes/no)?', #{</code>
 <code class="example">                                \ filter: 'popup_filter_yesno',</code>
 <code class="example">                                \ callback: 'QuitCallback',</code>
 <code class="example">                                \ })</code>
-<code class="example"></code>
-                缺省对话框可以拖动，这样如果需要的话可以读到下面的文本。
+                返回窗口 ID。详见  <a href="popup.html#popup_create()">popup_create()</a> 。
+
+&lt;               对话框缺省可用鼠标拖动，方便查看下方被遮挡的文本。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetText()-&gt;popup_dialog({})</code>
@@ -330,84 +329,84 @@ popup_dialog(<code class="special">{what}</code>, <code class="special">{options
 
 
 popup_filter_menu(<code class="special">{id}</code>, <code class="special">{key}</code>)                          <b class="vimtag"> <a name="popup_filter_menu()">popup_filter_menu()</a> </b>
-                弹出可用的过滤。可用以下键值:
-                    j <code class="special">&lt;Down&gt;</code> <code class="special">&lt;C-N&gt;</code>      选择下面的项目
-                    k <code class="special">&lt;Up&gt;</code> <code class="special">&lt;C-P&gt;</code>        选择上面的项目
-                    <code class="special">&lt;Space&gt;</code> <code class="special">&lt;Enter&gt;</code>     接受当前选择
+                弹出专用按键过滤器。假定缓冲区每行对应一项。支持以下按键:
+                    j <code class="special">&lt;Down&gt;</code> <code class="special">&lt;C-N&gt;</code>      选中下一项
+                    k <code class="special">&lt;Up&gt;</code> <code class="special">&lt;C-P&gt;</code>        选中上一项
+                    <code class="special">&lt;Space&gt;</code> <code class="special">&lt;Enter&gt;</code>     确认当前选中项
                     x Esc <code class="keystroke">CTRL-C</code>        取消菜单
-                忽略其它键。
+                忽略其余按键。
                 总是返回  <a href="eval.html#v:true">v:true</a> 。
 
-                在选中行上设置匹配以高亮之，见  <a href="popup.html#popup_menu()">popup_menu()</a> 。
+                选中行会自动使用匹配高亮，见  <a href="popup.html#popup_menu()">popup_menu()</a> 。
 
-                如果当前选择被接受，调用弹出菜单的 "callback"，并把选中行的索
-                引作为第二个参数传递。首个项目的索引为一。取消菜单后会带参数
-                -1 调用回调。
+                按下确认键后，调用弹窗关闭回调 "callback"，第二个参数为选中项
+                编号。首项索引为一。
+                按下取消键后，调用同一回调，第二个参数值为 -1。
 
-                要加入快捷键，参见这里的例子:  <a href="popup.html#popup_menu-shortcut-example">popup_menu-shortcut-example</a> 
+                要新增快捷键，可参考示例:  <a href="popup.html#popup_menu-shortcut-example">popup_menu-shortcut-example</a> 
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
 popup_filter_yesno(<code class="special">{id}</code>, <code class="special">{key}</code>)                         <b class="vimtag"> <a name="popup_filter_yesno()">popup_filter_yesno()</a> </b>
-                弹出可用的过滤。它只处理以下键 'y'、'Y'、'n' 或 'N'。调用弹出
-                菜单的 "callback"，它所带的第二个参数当 'y' 或 'Y' 时为 1，'n'
-                或 'N' 时为零。按 Esc 和 'x' 类似于按了 'n'。<code class="keystroke">CTRL-C</code> 则带参数
-                -1 调用回调。忽略其它键。
-                例子可见:  <a href="popup.html#popup_dialog-example">popup_dialog-example</a> 
+                弹出专用按键过滤器。响应以下按键: 'y'、'Y'、'n' 和 'N'。按键后
+                调用弹窗关闭回调 "callback"，第二个参数当按下 'y' 或 'Y' 时为
+                1，按下 'n' 或 'N' 时为零。此外，按下 Esc 和 'x' 等同于按下
+                'n'。而按下 <code class="keystroke">CTRL-C</code> 会使第二个参数值为 -1。忽略其余按键。
+                示例可见:  <a href="popup.html#popup_dialog-example">popup_dialog-example</a> 
 
                 返回类型:  <a href="vim9.html#vim9-boolean">vim9-boolean</a> 
 
 
 popup_findecho()                                        <b class="vimtag"> <a name="popup_findecho()">popup_findecho()</a> </b>
-                寻找为  <a href="eval.html#:echowindow">:echowindow</a>  命令显示消息的弹出的  <a href="windows.html#window-ID">window-ID</a> 。如果找
-                不到返回零。
-                主要用于隐藏该弹出。
+                寻找执行  <a href="eval.html#:echowindow">:echowindow</a>  命令时消息弹窗的  <a href="windows.html#window-ID">window-ID</a> 。找不到则
+                返回零。
+                主要用于获取 ID 后临时隐藏该弹窗。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
 popup_findinfo()                                        <b class="vimtag"> <a name="popup_findinfo()">popup_findinfo()</a> </b>
-                寻找弹出菜单使用的弹出 info 窗口的  <a href="windows.html#window-ID">window-ID</a> ，见
-                 <a href="insert.html#complete-popup">complete-popup</a> 。info 弹出不用时会隐藏，可用  <a href="popup.html#popup_clear()">popup_clear()</a> 
-                和  <a href="popup.html#popup_close()">popup_close()</a>  删除。用  <a href="popup.html#popup_show()">popup_show()</a>  来根据弹出菜单中的
-                项目重新定位。
-                如果找不到返回零。
+                寻找补全信息弹窗的  <a href="windows.html#window-ID">window-ID</a> ，见  <a href="insert.html#complete-popup">complete-popup</a> 。信息弹窗
+                闲置时会自动隐藏，可用  <a href="popup.html#popup_clear()">popup_clear()</a>  和  <a href="popup.html#popup_close()">popup_close()</a>  删
+                除。可用  <a href="popup.html#popup_show()">popup_show()</a>  在弹出菜单对应条目旁重新显示。
+                找不到则返回零。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
 popup_findpreview()                                     <b class="vimtag"> <a name="popup_findpreview()">popup_findpreview()</a> </b>
-                寻找弹出预览窗口的  <a href="windows.html#window-ID">window-ID</a> ，
-                如果找不到返回零。
+                寻找预览弹窗的  <a href="windows.html#window-ID">window-ID</a> 。
+                找不到则返回零。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
 popup_getoptions(<code class="special">{id}</code>)                                  <b class="vimtag"> <a name="popup_getoptions()">popup_getoptions()</a> </b>
-                返回字典，弹出 <code class="special">{id}</code> 的 <code class="special">{options}</code>。
-                零值代表选项未设置。对 "zindex" 来说返回缺省值而不是零。
+                以字典形式返回弹窗 <code class="special">{id}</code> 的 <code class="special">{options}</code>。
+                零值代表对应属性未手动设置。"zindex" 例外，返回非零缺省值。
 
-                "moved" 项目是带行号、最小列和最大列的列表，没有设置的话则是
+                "moved" 项为包含行号、最小列号和最大列号的列表，未设置时则是
                 [0, 0, 0]。
 
-                "mousemoved" 项目是带屏幕行，最小屏幕列，最大屏幕列的列表。没
-                有设置的话则是 [0, 0, 0]。
+                "mousemoved" 项为包含屏幕行号，最小屏幕列号，最大屏幕列号的列
+                表。未设置时则是 [0, 0, 0]。
 
-                "firstline" 是弹出上设置的属性，和  <a href="popup.html#popup_getpos()">popup_getpos()</a>  取得的
-                "firstline" 不同，后者是实际在弹出窗口顶部的缓冲区行。
+                "firstline" 是弹窗选项里设置的属性，与  <a href="popup.html#popup_getpos()">popup_getpos()</a>  获取的
+                "firstline" 不同，后者是窗口顶部实际缓冲区行号。
 
-                "border" 和 "padding" 的值全为零时不包含在返回值内。值全是一时
-                包含一个空列表。
+                "border" 和 "padding" 的值全为零时，字典里会省略该项。全为一时
+                则包含空列表。
 
-                "borderhighlight" 所有值为空时不包含在返回值内。
-                "scrollbarhighlight" 和 "thumbhighlight" 仅在设置时被包含。
+                "borderhighlight" 的值全为空时，字典里会省略该项。
+                "scrollbarhighlight" 和 "thumbhighlight" 仅在属性被手动设置时
+                才会加入字典。
 
-                "tabpage" 对全局弹出会是 -1，当前标签页上的弹出会是零，其它标
-                签页上的弹出会是个正数。
+                "tabpage" 在全局弹窗上的值为 -1，在当前标签页弹窗上的值为零，
+                在其他标签页弹窗上的值是正数。
 
-                "textprop"、"textpropid" 和 "textpropwin" 仅在 "textprop" 设置
-                时才存在。
+                "textprop"、"textpropid" 和 "textpropwin" 仅当弹窗选项里设置
+                "textprop" 时才存在。
 
                 如果找不到弹出窗口 <code class="special">{id}</code>，返回空字典。
 
@@ -418,24 +417,24 @@ popup_getoptions(<code class="special">{id}</code>)                             
 
 
 popup_getpos(<code class="special">{id}</code>)                                      <b class="vimtag"> <a name="popup_getpos()">popup_getpos()</a> </b>
-                返回弹出 <code class="special">{id}</code> 的位置和大小。返回以下项目的字典:
-                    col         弹出的屏幕列，从一开始
-                    line        弹出的屏幕行，从一开始
-                    width       整个弹出以屏幕单元格计的宽度
-                    height      整个弹出以屏幕单元格计的高度
-                    core_col    文本框的屏幕列
-                    core_line   文本框的屏幕行
-                    core_width  文本框以屏幕单元格计的宽度
-                    core_height 文本框以屏幕单元格计的高度
-                    firstline   缓冲区的顶部行 (1 除非滚动过)
-                                (不是 "firstline" 属性的值)
-                    lastline    缓冲区的底部行 (弹出重画时会刷新)
-                    scrollbar   如果显示滚动条则非零
-                    visible     如果弹出可见则为一，隐藏则为零
-                <code class="note">注意</code> 这些是实际的屏幕位置。由于采用的大小和定位的机制，和
-                 <a href="popup.html#popup_getoptions()">popup_getoptions()</a>  的值不同。
+                以字典形式返回弹窗 <code class="special">{id}</code> 的实际位置和大小，包含以下条目:
+                    col         弹窗所在屏幕列号，从一开始
+                    line        弹窗所在屏幕行号，从一开始
+                    width       弹窗总宽度 (以屏幕单元格为单位)
+                    height      弹窗总高度 (以屏幕单元格为单位)
+                    core_col    文本框 (排除边框和内边距) 左上角屏幕列号
+                    core_line   文本框左上角屏幕行号
+                    core_width  文本框总宽度 (以屏幕单元格为单位)
+                    core_height 文本框总高度 (以屏幕单元格为单位)
+                    firstline   窗口顶部对应缓冲区行号 (除非滚动过，缺省为 1)
+                                (和 "firstline" 属性值不同)
+                    lastline    窗口底部对应缓冲区行号 (弹窗重绘时会刷新)
+                    scrollbar   非零代表显示滚动条
+                    visible     为一代表弹窗可见，为零代表隐藏
+                <code class="note">注意</code> 以上是实际屏幕位置。经过相关大小和定位自动修正，和
+                 <a href="popup.html#popup_getoptions()">popup_getoptions()</a>  的原始设置值未必一致。
 
-                "core_" 系列的值不计算填充和边框。
+                "core_" 条目计算时排除内边距和边框，仅代表文本区域。
 
                 如果找不到弹出窗口 <code class="special">{id}</code>，返回空字典。
 
@@ -445,12 +444,12 @@ popup_getpos(<code class="special">{id}</code>)                                 
                 返回类型: dict<code class="special">&lt;number&gt;</code> 或 dict<code class="special">&lt;any&gt;</code>
 
 
-popup_hide(<code class="special">{id}</code>)                                                <b class="vimtag"> <a name="popup_hide()">popup_hide()</a> </b>
-                如果 <code class="special">{id}</code> 是显示中的弹出，现在隐藏之。如果弹出有过滤，在弹出隐
-                藏期间不调用过滤。
-                如果窗口 <code class="special">{id}</code> 不存在，什么都不发生。如果窗口 <code class="special">{id}</code> 存在但不是弹
-                出窗口，报错。 <b class="vimtag"> <a name="E993">E993</a> </b>
-                如果弹出窗口 <code class="special">{id}</code> 包含着终端，报错。
+popup_hide(<code class="special">{id}</code>)                                        <b class="vimtag"> <a name="popup_hide()">popup_hide()</a> </b>
+                弹窗 <code class="special">{id}</code> 当前处于显示状态时，将其临时隐藏。弹窗隐藏期间，暂不
+                触发已有过滤器。
+                如果找不到弹出窗口 <code class="special">{id}</code>，不作任何处理。如果窗口 <code class="special">{id}</code> 存在但不
+                是弹窗，报错。                          <b class="vimtag"> <a name="E993">E993</a> </b>
+                弹窗 <code class="special">{id}</code> 内如果运行终端，无法隐藏并报错 ( <a href="popup.html#popup-terminal">popup-terminal</a> )。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_hide()</code>
@@ -459,22 +458,23 @@ popup_hide(<code class="special">{id}</code>)                                   
 
 
 popup_list()                                             <b class="vimtag"> <a name="popup_list()">popup_list()</a> </b>
-                返回存在的所有弹出的  <a href="windows.html#window-ID">window-ID</a>  列表。
+                返回当前所有弹窗的  <a href="windows.html#window-ID">window-ID</a>  列表。
 
                 返回类型: list<code class="special">&lt;number&gt;</code> 或 list<code class="special">&lt;any&gt;</code>
 
 
 popup_locate(<code class="special">{row}</code>, <code class="special">{col}</code>)                               <b class="vimtag"> <a name="popup_locate()">popup_locate()</a> </b>
-                返回在屏幕位置 <code class="special">{row}</code> 和 <code class="special">{col}</code> 上的弹出  <a href="windows.html#window-ID">window-ID</a> 。如果有多个
-                弹出，返回最高 zindex 的弹出。如果在该位置上没有弹出，返回零。
+                根据屏幕位置 <code class="special">{row}</code> 和 <code class="special">{col}</code> 寻找弹窗  <a href="windows.html#window-ID">window-ID</a> 。该位置有多个
+                弹窗堆叠时，返回最高 zindex 的弹窗 ID。如果该位置无弹窗，返回
+                零。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
 popup_menu(<code class="special">{what}</code>, <code class="special">{options}</code>)                            <b class="vimtag"> <a name="popup_menu()">popup_menu()</a> </b>
-                在光标附近显示 <code class="special">{what}</code>，用光标键处理项目的选择，用 Space 或
-                Enter 选中项目后关闭窗口。<code class="special">{what}</code> 应有多行才能实际有用。
-                类似于:
+                在光标附近弹出选择列表 <code class="special">{what}</code>，用光标键切换条目，用 Space 或
+                Enter 选中后自动关闭窗口。<code class="special">{what}</code> 应传入多行才能实际发挥作用。
+                相当于:
 <code class="example">                        call popup_create({what}, #{</code>
 <code class="example">                                \ pos: 'center',</code>
 <code class="example">                                \ zindex: 200,</code>
@@ -486,27 +486,27 @@ popup_menu(<code class="special">{what}</code>, <code class="special">{options}<
 <code class="example">                                \ filter: 'popup_filter_menu',</code>
 <code class="example">                                \ mapping: 0,</code>
 <code class="example">                                \ })</code>
-                当前行使用  <a href="syntax.html#hl-PopupSelected">hl-PopupSelected</a>  的匹配高亮，如果无定义则使用
-                "PmenuSel"。
+                选中行使用  <a href="syntax.html#hl-PopupSelected">hl-PopupSelected</a>  高亮，缺省链接到  <a href="syntax.html#hl-PmenuSel">hl-PmenuSel</a> 。
 
-                <code class="special">{options}</code> 可用来改变属性。至少要设置 "callback" 为处理选中项目
-                的函数。示例:
+&lt;               可用 <code class="special">{options}</code> 覆盖缺省属性。至少要设置 "callback"，以处理选中
+                结果。示例:
 <code class="example">                        func ColorSelected(id, result)</code>
-<code class="example">                           " use a:result</code>
+<code class="example">                           " 根据选中条目序号 a:result，进行处理</code>
 <code class="example">                        endfunc</code>
 <code class="example">                        call popup_menu(['red', 'green', 'blue'], #{</code>
 <code class="example">                                \ callback: 'ColorSelected',</code>
 <code class="example">                                \ })</code>
-<code class="example"></code>
-                也可用作  <a href="eval.html#method">method</a> :
+                返回窗口 ID。详见  <a href="popup.html#popup_create()">popup_create()</a> 。
+
+&lt;               也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetChoices()-&gt;popup_menu({})</code>
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
 
-popup_move(<code class="special">{id}</code>, <code class="special">{options}</code>)                                     <b class="vimtag"> <a name="popup_move()">popup_move()</a> </b>
-                移动弹出 <code class="special">{id}</code> 到 <code class="special">{options}</code> 指定的位置。
-                <code class="special">{options}</code> 可以包含  <a href="popup.html#popup_create()">popup_create()</a>  里指定弹出位置的选项:
+popup_move(<code class="special">{id}</code>, <code class="special">{options}</code>)                             <b class="vimtag"> <a name="popup_move()">popup_move()</a> </b>
+                移动弹窗 <code class="special">{id}</code> 到 <code class="special">{options}</code> 指定的位置，也可同时修改弹窗大小。
+                <code class="special">{options}</code> 可用  <a href="popup.html#popup_create()">popup_create()</a>  里弹窗位置与尺寸的相关属性:
                         line
                         col
                         pos
@@ -515,8 +515,8 @@ popup_move(<code class="special">{id}</code>, <code class="special">{options}</c
                         maxwidth
                         minwidth
                         fixed
-                <code class="special">{id}</code> 可见  <a href="popup.html#popup_hide()">popup_hide()</a> 。
-                其它选项见  <a href="popup.html#popup_setoptions()">popup_setoptions()</a> 。
+                <code class="special">{id}</code> 相关检查可见  <a href="popup.html#popup_hide()">popup_hide()</a> 
+                要设置其他属性，请见  <a href="popup.html#popup_setoptions()">popup_setoptions()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_move(options)</code>
@@ -524,8 +524,8 @@ popup_move(<code class="special">{id}</code>, <code class="special">{options}</c
                 返回类型: 无
 
 popup_notification(<code class="special">{what}</code>, <code class="special">{options}</code>)                    <b class="vimtag"> <a name="popup_notification()">popup_notification()</a> </b>
-                用三秒钟在 Vim 窗口顶部显示 <code class="special">{what}</code>。
-                类似于:
+                在 Vim 窗口顶部弹出通知消息 <code class="special">{what}</code>，默认停留 3 秒后自动消失。
+                相当于:
 <code class="example">                        call popup_create({what}, #{</code>
 <code class="example">                                \ line: 1,</code>
 <code class="example">                                \ col: 10,</code>
@@ -539,13 +539,14 @@ popup_notification(<code class="special">{what}</code>, <code class="special">{o
 <code class="example">                                \ close: 'click',</code>
 <code class="example">                                \ padding: [0,1,0,1],</code>
 <code class="example">                                \ })</code>
-                如果有定义，使用  <a href="syntax.html#hl-PopupNotification">hl-PopupNotification</a>  高亮组而不是
-                WarningMsg。
+                使用  <a href="syntax.html#hl-PopupNotification">hl-PopupNotification</a>  高亮，缺省链接到  <a href="syntax.html#hl-WarningMsg">hl-WarningMsg</a> 。
 
-                如果没有  <a href="various.html#+timers">+timers</a>  特性，弹出不会自动消失。用户要点击它才行。
+                编译时如果未开启  <a href="various.html#+timers">+timers</a>  特性，弹窗不会自动消失。用户要手动
+                点击关闭。
 
-                位置会经过调整以避免和其它通知重叠。
-                <code class="special">{options}</code> 可用来改变属性。
+                弹窗位置会自动微调，避免多条通知互相遮挡。
+                可用 <code class="special">{options}</code> 覆盖缺省属性。
+&lt;               返回窗口 ID。详见  <a href="popup.html#popup_create()">popup_create()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetText()-&gt;popup_notification({})</code>
@@ -554,9 +555,10 @@ popup_notification(<code class="special">{what}</code>, <code class="special">{o
 
 
 popup_setbuf(<code class="special">{id}</code>, <code class="special">{buf}</code>)                               <b class="vimtag"> <a name="popup_setbuf()">popup_setbuf()</a> </b>
-                设置弹出窗口 <code class="special">{id}</code> 显示的缓冲区为 <code class="special">{buf}</code>。<code class="special">{buf}</code> 的用法可见
-                 <a href="builtin.html#bufname()">bufname()</a>  函数。
-                为了适应缓冲区文本的长度，可能会改变窗口大小或位置。
+                为弹窗 <code class="special">{id}</code> 绑定新缓冲区 <code class="special">{buf}</code>。<code class="special">{buf}</code> 参数用法见  <a href="builtin.html#bufname()">bufname()</a> 
+                函数。
+                窗口大小和位置会自动适配新缓冲区文本尺寸。
+                成功更换缓冲区则返回  <a href="eval.html#v:true">v:true</a> ，否则返回  <a href="eval.html#v:false">v:false</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_setbuf(bufnr('foobar'))</code>
@@ -565,8 +567,8 @@ popup_setbuf(<code class="special">{id}</code>, <code class="special">{buf}</cod
 
 
 popup_setoptions(<code class="special">{id}</code>, <code class="special">{options}</code>)                       <b class="vimtag"> <a name="popup_setoptions()">popup_setoptions()</a> </b>
-                用 <code class="special">{options}</code> 里的项目来覆盖弹出 <code class="special">{id}</code> 的选项。
-                可以设置以下选项:
+                用 <code class="special">{options}</code> 字典里的条目覆盖弹窗 <code class="special">{id}</code> 的现有属性。
+                可修改的属性有:
                         border
                         borderchars
                         borderhighlight
@@ -590,10 +592,10 @@ popup_setoptions(<code class="special">{id}</code>, <code class="special">{optio
                         title
                         wrap
                         zindex
-                也可用  <a href="popup.html#popup_move()">popup_move()</a>  里的选项。
-                一般地，设置选项为零或空串会复位选项为其缺省值，但有例外。
-                对 "hidden"，用  <a href="popup.html#popup_hide()">popup_hide()</a>  和  <a href="popup.html#popup_show()">popup_show()</a> 。
-                不能改变 "tabpage"。
+                也可修改  <a href="popup.html#popup_move()">popup_move()</a>  里的位置和大小属性。
+                大多数属性设为零或空串时，会复位属性为其缺省值，但有少量例外。
+                不能直接修改 "hidden"，请用  <a href="popup.html#popup_hide()">popup_hide()</a>  和  <a href="popup.html#popup_show()">popup_show()</a> 。
+                不能修改 "tabpage"。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_setoptions(options)</code>
@@ -602,9 +604,9 @@ popup_setoptions(<code class="special">{id}</code>, <code class="special">{optio
 
 
 popup_settext(<code class="special">{id}</code>, <code class="special">{text}</code>)                             <b class="vimtag"> <a name="popup_settext()">popup_settext()</a> </b>
-                设置弹出窗口 <code class="special">{id}</code> 缓冲区的文本。<code class="special">{text}</code> 为弹出中要显示的字符串
-                或字符串列表。
-                除非因文本内容的改变引起，不会影响窗口大小或位置。
+                更新弹窗 <code class="special">{id}</code> 缓冲区的文本。<code class="special">{text}</code> 为弹窗中要显示的字符串或字
+                符串列表。
+                除非因文本内容变化需要，否则不会影响窗口大小或位置。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetPopup()-&gt;popup_settext('hello')</code>
@@ -612,17 +614,16 @@ popup_settext(<code class="special">{id}</code>, <code class="special">{text}</c
                 返回类型: 无
 
 
-popup_show(<code class="special">{id}</code>)                                                <b class="vimtag"> <a name="popup_show()">popup_show()</a> </b>
-                显示 <code class="special">{id}</code> 标识的隐藏弹出窗口。
-                使用  <a href="popup.html#popup_create()">popup_create()</a>  返回的 <code class="special">{id}</code>。
+popup_show(<code class="special">{id}</code>)                                        <b class="vimtag"> <a name="popup_show()">popup_show()</a> </b>
+                重新显示已隐藏弹窗 <code class="special">{id}</code>。
+                <code class="special">{id}</code> 来自  <a href="popup.html#popup_create()">popup_create()</a>  的返回值。
 
-                如果弹出当前是隐藏的，现在显示之。
-                 <a href="popup.html#popup_hide()">popup_hide()</a>  可用于隐藏窗口。
+                弹窗当前处于隐藏状态时，重新显示。要隐藏窗口，可用
+                 <a href="popup.html#popup_hide()">popup_hide()</a> 。
 
-                <code class="special">{id}</code> 如果是 info 弹出，它会放在弹出菜单当前选中项目的边上。
+                <code class="special">{id}</code> 指向补全信息弹窗时，会自动对齐到弹出菜单当前选中项旁。
 
-                如果 <code class="special">{id}</code> 对应的弹出窗口不存在，返回 -1。
-                成功则返回 0。
+                如果找不到弹出窗口 <code class="special">{id}</code>，返回 -1。成功则返回 0。
 
                 返回类型:  <a href="eval.html#Number">Number</a> 
 
@@ -631,192 +632,205 @@ popup_show(<code class="special">{id}</code>)                                   
 <h4>3. 用法                                                 <b class="vimtag"> <a name="popup-usage">popup-usage</a> </b></h4>
 POPUP_CREATE() 参 数                             <b class="vimtag"> <a name="popup_create-arguments">popup_create-arguments</a> </b>
 
- <a href="popup.html#popup_create()">popup_create()</a>  的首个参数 (以及  <a href="popup.html#popup_settext()">popup_settext()</a>  的第二个参数) 指定要显示的
-文本还有可选的文本属性。可以是以下四种形式之一:  <b class="vimtag"> <a name="E1284">E1284</a> </b>
+ <a href="popup.html#popup_create()">popup_create()</a>  的首个参数 (也用于  <a href="popup.html#popup_settext()">popup_settext()</a>  的第二个参数) 指定要显示
+的弹窗文本，以及可选文本属性。支持四种形式:  <b class="vimtag"> <a name="E1284">E1284</a> </b>
 - 缓冲区号
 - 字符串
 - 字符串列表
-- 字典列表，其中每个字典有以下项目:
+- 字典列表，其中每个字典项包含以下条目:
         text            要显示的文本字符串
-        props           文本属性的列表。可选。
-                        每项是一个字典，类似于  <a href="textprop.html#prop_add()">prop_add()</a>  第三个参数，但字典
-                        中用 "col" 项指定列，见下:  <a href="popup.html#popup-props">popup-props</a> 。
+        props           可选文本属性列表。
+                        每个属性项又是字典，格式见  <a href="textprop.html#prop_add()">prop_add()</a>  第三个参数，但
+                        本字典中列用 "col" 项指定，见下:  <a href="popup.html#popup-props">popup-props</a> 。
 
-如果你要自己创建新的缓冲区，用  <a href="builtin.html#bufadd()">bufadd()</a>  并传递缓冲区号给 popup_create()。
+如果要自行创建缓冲区，先用  <a href="builtin.html#bufadd()">bufadd()</a> ，再把缓冲区号传给 popup_create()。
 
- <a href="popup.html#popup_create()">popup_create()</a>  的第二个参数是以下选项的字典:
-        line            定位弹出的屏幕行。可用数值、"cursor"、"cursor+1" 或
-                        "cursor-1" 来指定光标所在行并加或减若干行。如果省略或
-                        为零，弹出会垂直中间对齐。首行的值为 1。
-                        使用 "textprop" 时此值相对于文本属性，可为负。
-        col             定位弹出的屏幕列。可用数值、"cursor" 来指定光标列、
-                        "cursor+9" 或 "cursor-9" 来加或减若干列。如果省略或为
-                        零，弹出会水平中间对齐。首列的值为 1。
-                        使用 "textprop" 时此值相对于文本属性，可为负。
-        pos             "topleft"、"topright"、"botleft" 或 "botright":
-                        定义 "line" 和 "col" 用于指定弹出的哪个角。不指定时使
-                        用 "topleft"。
-                        此外 "center" 可用来定位弹出在 Vim 窗口的中央，此时忽
-                        略 "line" 和 "col"。
-        posinvert       为 FALSE 时总是使用 "pos" 的值。为 TRUE (缺省) 时如果
-                        弹出在垂直方向放不进而在另一边有更多的空间，会把弹出放
-                        置在 "line" 指示的位置的另一边。
-        textprop        给出时定位弹出紧贴着使用此名的文本属性，文本属性移动时
-                        会跟着移动。空串会删除之。见  <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 。
-        textpropwin     文本属性搜索的窗口。省略或值非法时使用当前窗口。
-                        给出 "textprop" 时使用。
-        textpropid      给出 "textprop" 时用于识别文本属性。零会复位。
-        fixed           为 FALSE (缺省) 时，且:
+ <a href="popup.html#popup_create()">popup_create()</a>  的第二个参数为属性字典:
+        line            弹窗定位的屏幕行。支持绝对数值 (首行编号为 1)，也可用
+                        "cursor"、"cursor+1" 或 "cursor-1" 来指定光标所在行并
+                        加减行偏移。省略或为零时，弹窗会垂直居中。
+                        给出 "textprop" 时本值为相对于文本属性位置，可为负数。
+        col             弹窗定位的屏幕列。支持绝对数值 (首列编号为 1)，也可用
+                        "cursor"、"cursor+9" 或 "cursor-9" 来指定光标所在列并
+                        加减列偏移。省略或为零时，弹窗会水平居中。
+                        给出 "textprop" 时本值为相对于文本属性位置，可为负数。
+        pos             可用值 "topleft"、"topright"、"botleft" 或 "botright":
+                        用于定义 "line" 和 "col" 对应弹窗的哪个角。不指定时默
+                        认使用 "topleft"。
+                        此外，还可用 "center" 将弹窗居中在整个 Vim 窗口，此时
+                        忽略 "line" 和 "col"。
+        posinvert       为 FALSE 时严格遵守 "pos" 值设置。为 TRUE (缺省) 时，
+                        如果弹窗无法在 "pos" 指定一侧完全显示，而在垂直方向另
+                        一侧有更多可用空间，会在 "line" 行另一侧显示弹窗。
+        textprop        文本属性类型名，给出时弹窗会紧贴该类型的文本属性，并跟
+                        随其移动。设为空串取消绑定。
+                        详见  <a href="popup.html#popup-textprop-pos">popup-textprop-pos</a> 。
+        textpropwin     限定搜索文本属性的窗口。省略或无效值时使用当前窗口。仅
+                        配合 "textprop" 生效。
+        textpropid      配合 "textprop"，用于根据属性 id 精准匹配唯一文本属
+                        性。设为零解除绑定。
+        clipwindow      仅配合 "textprop" 生效。为 TRUE 时，弹窗被限制在文本属
+                        性所属窗口内: 一旦文本属性滚动到窗口的上、下、左、右边
+                        缘之外，弹窗会在相应边缘处被裁剪，而不是继续绘制到窗口
+                        外。当文本属性完全滚出窗口后，弹窗会被隐藏。
+                        缺省为 FALSE，不裁剪。详见  <a href="popup.html#popup-clipwindow">popup-clipwindow</a> 。
+        fixed           为 FALSE (缺省) 时，如果:
                          - "pos" 为 "botleft" 或 "topleft"，且
-                         - 弹出会在屏幕的右侧边缘被截断，那么
-                        弹出会移动到左侧使得内容可放得进屏幕。设为 TRUE 关闭此
-                        行为。
-        flip            为 TRUE (缺省) 时，位置相对于光标，翻转到光标之下或之
-                        上以避免和  <a href="insert.html#popupmenu-completion">popupmenu-completion</a>  或其它更多 "zindex"
-                        的弹出重叠。如果在光标上/下没有空间就在弹出或弹出菜单
-                        边上显示弹出。
+                         - 弹窗在屏幕右侧边缘被截断，那么
+                        弹窗会自动向左平移，保证内容能够完整显示。设为 TRUE 关
+                        闭自动左移。
+        flip            为 TRUE (缺省) 时，基于光标定位的弹窗会自动翻转到光标
+                        下方或上方，防止和补全菜单  <a href="insert.html#popupmenu-completion">popupmenu-completion</a>  或层
+                        级 "zindex" 更高的弹窗重叠。如果光标上下都没有足够空
+                        间，则把弹窗与补全菜单或其他弹窗并排。
                         <code class="special">{尚未实现}</code>
-        maxheight       内容的最大高度，边框和填充不计在内。
-        minheight       内容的最小高度，边框和填充不计在内。
-        maxwidth        内容的最大宽度，边框、填充和滚动条不计在内。
-        minwidth        内容的最小宽度，边框、填充和滚动条不计在内。
-        firstline       显示的首个缓冲区行。大于一时，看起来文本向上滚动了。如
-                        果超出范围，缓冲区末行出现在窗口顶部。设为零则保留命令
-                        设置的位置。另见 "scrollbar"。
-        hidden          为 TRUE 时弹出存在但不显示；用  <a href="popup.html#popup_show()">popup_show()</a>  来撤销隐
-                        藏。
-        tabpage         为 -1 时: 显示所有标签页上的弹出。
-                        为 0 (缺省) 时: 显示当前标签页上的弹出。
-                        否则，显示弹出的标签页号；非法时不创建弹出且报错。
-                        <b class="vimtag"> <a name="E997">E997</a> </b>
-        title           弹出的首个项目上方显示的文本，在边框之上。如果没有顶部
-                        边框，加上一行填充行来放置标题。你可能希望在开始和结束
-                        处加上一或更多的空格作为填充。
-        wrap            为 TRUE 时使行回绕 (缺省为 TRUE)。
-        drag            为 TRUE 时弹出可用鼠标在边框上拖曳。弹出无边框时无效。
-                        一旦开始拖曳，"pos" 如果为 "center" 就会被改为
+        maxheight       内容最大高度，边框和内边距不计在内。
+        minheight       内容最小高度，边框和内边距不计在内。
+        maxwidth        内容最大宽度，边框、内边距和滚动条不计在内。
+        minwidth        内容最小宽度，边框、内边距和滚动条不计在内。
+        firstline       窗口顶部显示的缓冲区首行行号。大于一时，效果是文本向上
+                        滚动。如果越界，缓冲区末行会置顶。设为零则保留命令缺省
+                        位置。另见 "scrollbar"。
+        hidden          为 TRUE 时，弹窗正常创建但缺省隐藏；后续可用
+                         <a href="popup.html#popup_show()">popup_show()</a>  恢复显示。
+        tabpage         为 -1 时: 全局弹窗，在所有标签页上都可见。
+                        为 0 (缺省) 时: 仅在前标签页上可见。
+                        否则，仅在指定编号的标签页上可见；如果编号非法，创建弹
+                        窗失败且报错。                          <b class="vimtag"> <a name="E997">E997</a> </b>
+        title           弹窗标题，显示在弹窗首个项目上方的，位于边框顶部。如果
+                        没有顶部边框，会自动新增一行内边距放置标题。建议在标题
+                        首尾手动填充空格调整位置。
+                        给出 "borderhighlight" 时，标题使用顶部边框高亮，其次
+                        检查 <a href="options.html#'highlight'">'highlight'</a>/<a href="options.html#'winhighlight'">'winhighlight'</a> 是否覆盖相应设置，最后
+                        缺省使用  <code class="badlink">hl-PopupTitle</code>  高亮。
+        wrap            为 TRUE (缺省) 时，开启行回绕。
+        drag            为 TRUE 时，可用鼠标拖动弹窗边框。无边框时无效。一旦开
+                        始拖动，如果 "pos" 原本为 "center"，会被自动改为
                         "topleft"。
-        dragall         为 TRUE 时弹出可以在所有位置上拖曳。此时要在弹出里选
-                        择文本就会很困难。
-        resize          为 TRUE 时弹出可用鼠标抓住右下角来调整大小。弹出无边框
-                        时无效。
-        close           为 "button" 时，在右上角显示 X，出现在任何边框、填充或
-                        文本之上。点击 X 时关闭弹出。调用回调，带参数 -2。
-                        为 "click" 时，在弹出上任何鼠标点击会关闭之。
-                        为 "none" (缺省) 时，鼠标点击不关闭弹出窗口。
-        highlight       文本使用的高亮组名，在 <a href="options.html#'wincolor'">'wincolor'</a> 选项里保存。
+        dragall         为 TRUE 时，窗口任意位置都可用鼠标拖动。此时要在弹窗里
+                        选择文本就会很困难。
+        resize          为 TRUE 时，可用鼠标拖动右下角调整大小。无边框时无效。
+        close           为 "button" 时，在窗口右上角绘制关闭按钮 X (该位置可位
+                        于边框、内边距或文本之上)。点击 X 时关闭弹窗。执行回调
+                        函数，第二个参数为 -2。
+                        为 "click" 时，在弹窗上任意点击都可关闭。
+                        为 "none" (缺省) 时，鼠标点击不会关闭。
+        highlight       文本高亮组名，在 <a href="options.html#'wincolor'">'wincolor'</a> 选项里保存。
         highlights      高亮组覆盖，在 <a href="options.html#'winhighlight'">'winhighlight'</a> 选项里保存 (格式相同)。
-        opacity         弹出的不透明度，取值范围 0 到 100: 0 表示完全透明 (背
-                        景文字完全可见) 100 表示完全不透明 (缺省，无透明效果)
-                        中间值会将弹出窗口背景与下方文字混合，实现半透明。需要
-                        开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 才能生效。
-                        另见  <a href="popup.html#popup-opacity">popup-opacity</a> 。
-        padding         数值列表，定义弹出上/右/下/左的填充 (和 CSS 类似)。空
-                        列表使用四周填充均为 1。填充包围文本，在任何边框之内。
-                        填充使用 <a href="options.html#'wincolor'">'wincolor'</a> 高亮。
-                        示例: [1, 2, 1, 3] 在上方有 1 行填充，右侧 2 列，下方
-                        1 行和左侧 3 列。
-        border          数值列表，定义弹出上/右/下/左的边框宽度 (和 CSS 类
-                        似)。目前仅识别零值和非零值。空列表代表四周均有边框。
-        borderhighlight 边框使用的高亮组名的列表。如果有一个项目用于所有边框，
-                        否则分别是上/右/下/左边的高亮。
-                        示例: ['TopColor', 'RightColor', 'BottomColor,
-                        'LeftColor']
-        borderchars     字符列表，定义用于上/右/下/左边使用的字符。可选地可后
-                        跟用于左上/右上/右下/左下角的字符。
+        opacity         弹窗的不透明度，取值范围 0 到 100:
+                        0 表示完全透明 (背景文字完全可见)
+                        100 表示完全不透明 (缺省，无透明效果)
+                        中间值会将弹出窗口背景与下方文字混合，实现半透明。
+                        需要开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 才能生效。
+                        详见  <a href="popup.html#popup-opacity">popup-opacity</a> 。
+        padding         数值列表，定义弹窗上/右/下/左内边距 (和 CSS 类似)。
+                        空列表等价于四周内边距均为 1。内边距区域包围文本，而在
+                        边框之内。内边距使用 <a href="options.html#'wincolor'">'wincolor'</a> 高亮。
+                        示例: [1, 2, 1, 3] 上方 1 行，右侧 2 列，下方 1 行和左
+                        侧 3 列内边距。
+        border          数值列表，定义弹窗上/右/下/左边框宽度 (和 CSS 类似)。
+                        目前仅区别零值和非零值。空列表代表四周均有边框。
+        borderhighlight 边框高亮组名列表。只写一项时，同时用于四边边框。否则应
+                        分别列出上/右/下/左边的高亮组。
+                        示例: ['顶边色', '右边色', '底边色', '左边色']
+        borderchars     边框字符列表，分别对应上/右/下/左边框字符。可选后跟左
+                        上/右上/右下/左下角字符。
                         示例: ['-', '|', '-', '|', '┌', '┐', '┘', '└']
-                        如果列表有一个字符，用于所有边框。
-                        如果列表有两个字符，第一个用于边框线，第二个用于角落。
-                        缺省 <a href="options.html#'encoding'">'encoding'</a> 为 "utf-8" 且 <a href="options.html#'ambiwidth'">'ambiwidth'</a> 为 "single"
-                        时使用双线，否则使用 ASCII 字符。
-        scrollbar       为 1 或真时: 如果文本放不下，显示滚动条。
-                        为零时: 不显示滚动条。缺省为非零。
-                        另见  <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 。
-        scrollbarhighlight  滚动条使用的高亮组名。重要的是背景色。如果不给出使
-                        用 PmenuSbar。
-        thumbhighlight  滚动条拇指使用的高亮组名。重要的是背景色。如果不给出使
-                        用 PmenuThumb。
-        zindex          弹出的优先级，缺省为 50。最小值是 1，最大值是 32000。
-        mask            坐标列表的列表，定义弹出的透明部分。见  <a href="popup.html#popup-mask">popup-mask</a> 。
-        time            以毫秒计的时间，在此之后关闭弹出。
-                        省略时必须使用  <a href="popup.html#popup_close()">popup_close()</a> 。
-        moved           指定光标如何移开时关闭弹出:
-                        - "any": 如果光标有任何移动
-                        - "word": 如果光标移开了  <a href="cmdline.html#%3Ccword%3E">&lt;cword&gt;</a> 
-                        - "WORD": 如果光标移开了  <a href="cmdline.html#%3CcWORD%3E">&lt;cWORD&gt;</a> 
-                        - "expr": 如果光标移开了  <a href="cmdline.html#%3Ccexpr%3E">&lt;cexpr&gt;</a> 
-                        - [<code class="special">{start}</code>, <code class="special">{end}</code>]: 如果光标移动到 <code class="special">{start}</code> 列之前或
-                          <code class="special">{end}</code> 列之后
-                        - [<code class="special">{lnum}</code>, <code class="special">{start}</code>, <code class="special">{end}</code>]: 如果光标离开了 <code class="special">{lnum}</code> 行，
-                          移动到 <code class="special">{start}</code> 列之前或 <code class="special">{end}</code> 列之后
-                        - [0, 0, 0] 光标移动时不关闭弹出
-                        光标移动到另一行或另一窗口时也关闭弹出。
-        mousemoved      类似于 "moved"，但指的是鼠标指针位置
-        cursorline      TRUE:    高亮光标行。也滚动文本以显示此行 (仅当 <a href="options.html#'wrap'">'wrap'</a>
-                                 关闭时才能正确工作)。
-                        为零时:  不高亮光标行。
-                        缺省为零，但  <a href="popup.html#popup_menu()">popup_menu()</a>  除外。
-        filter          过滤输入字符的回调，见  <a href="popup.html#popup-filter">popup-filter</a> 。
-        mapping         支持键映射。为 FALSE、弹出可见且有 filter 回调时关闭键
-                        映射。缺省值为 TRUE。
-        filtermode      过滤应用的模式 (标志位同  <a href="builtin.html#hasmapto()">hasmapto()</a> ，加上 "a"):
+                        列表只有一个字符时，用于所有边框位置。
+                        列表只有两个字符时，前者用于边框线，后者用于四角。
+                        <a href="options.html#'encoding'">'encoding'</a> 为 "utf-8" 且 <a href="options.html#'ambiwidth'">'ambiwidth'</a> 为 "single" 时缺
+                        省使用双线框，否则缺省使用 ASCII 单线字符 ('-'、'|'、
+                        '+')。
+        scrollbar       为 1 或真 (缺省) 时: 内容溢出时自动显示滚动条。
+                        为零时: 始终不显示滚动条。详见  <a href="popup.html#popup-scrollbar">popup-scrollbar</a> 。
+        scrollbarhighlight
+                        滚动条高亮组名。只应用其背景色。省略时默认为
+                         <a href="syntax.html#hl-PmenuSbar">hl-PmenuSbar</a> 。
+        thumbhighlight  滚动条拇指高亮组名。只应用其背景色。省略时默认为
+                         <a href="syntax.html#hl-PmenuThumb">hl-PmenuThumb</a> 。
+        zindex          弹窗堆叠层级，缺省为 50。最小值是 1，最大值是 32000。
+        mask            定义弹窗局部透明区域。包含坐标的二维列表。详见
+                         <a href="popup.html#popup-mask">popup-mask</a> 。
+        time            自动关闭计时，以毫秒为单位。省略时必须手动调用
+                         <a href="popup.html#popup_close()">popup_close()</a>  关闭窗口。
+        moved           光标移动时触发自动关闭的方式:
+                        - "any": 光标有任意移动就关闭
+                        - "word": 光标跳出  <a href="cmdline.html#%3Ccword%3E">&lt;cword&gt;</a>  范围就关闭
+                        - "WORD": 光标跳出  <a href="cmdline.html#%3CcWORD%3E">&lt;cWORD&gt;</a>  范围就关闭
+                        - "expr": 光标跳出  <a href="cmdline.html#%3Ccexpr%3E">&lt;cexpr&gt;</a>  范围就关闭
+                        - [<code class="special">{start}</code>, <code class="special">{end}</code>]: 光标移出当前行 [<code class="special">{start}</code>,<code class="special">{end}</code>] 列
+                          范围 (包含) 就关闭
+                        - [<code class="special">{lnum}</code>, <code class="special">{start}</code>, <code class="special">{end}</code>]: 光标移出第 <code class="special">{lnum}</code> 行
+                          [<code class="special">{start}</code>,<code class="special">{end}</code>] 列范围 (包含) 就关闭
+                        - [0, 0, 0] (缺省) 光标移动时不触发关闭
+                        光标移动到另一行或另一窗口时也关闭弹窗。
+        mousemoved      类似 "moved"，但指的是鼠标指针位置
+        cursorline      为 TRUE 时: 高亮当前光标 (选中) 行。自动滚动文本使该行
+                        可见 (仅当 <a href="options.html#'wrap'">'wrap'</a> 关闭时才能正确工作)。
+                        为零时: 不高亮光标行。
+                        缺省为零，但  <a href="popup.html#popup_menu()">popup_menu()</a>  缺省开启。
+        filter          按键过滤回调 (过滤器)，详见  <a href="popup.html#popup-filter">popup-filter</a> 。
+        mapping         是否支持键映射。为 FALSE 时，如果弹窗可见且绑定
+                        "filter" 时，按键暂时不经映射。缺省值为 TRUE。
+        filtermode      过滤器生效的模式 (标志位同  <a href="builtin.html#hasmapto()">hasmapto()</a> ，外加 "a"):
                                 n       普通模式
                                 v       可视和选择模式
                                 x       可视模式
                                 s       选择模式
                                 o       操作符等待模式
                                 i       插入模式
-                                l       Language-Argument ("r"、"f"、"t" 等等)
+                                l       语言参数模式 ( <a href="change.html#r">r</a> 、 <a href="motion.html#f">f</a> 、 <a href="motion.html#t">t</a>  等)
                                 c       命令行模式
-                                a       所有模式
+                                a       全部模式
                         缺省模式是 "a"。
-        callback        弹出关闭时调用的回调，例如在使用  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a> 
-                        时，见  <a href="popup.html#popup-callback">popup-callback</a> 。
+        callback        弹窗关闭时触发的回调，配合  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>  等过
+                        滤器使用。详见  <a href="popup.html#popup-callback">popup-callback</a> 。
 
-取决于 "zindex"，弹出可以在其它弹出之上或之下显示。补全菜单 ( <a href="gui.html#popup-menu">popup-menu</a> ) 的
-zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
+弹窗的上下堆叠顺序由 "zindex" 决定。自动补全菜单 ( <a href="gui.html#popup-menu">popup-menu</a> ) 使用固定
+zindex 值 100。临时消息通知类弹窗建议使用 zindex 值 1000。
 
-缺省文本回绕，它会使得 <code class="special">{lines}</code> 的一行占据多于一个屏幕行。"wrap" 为 FALSE 时弹
-出之外或 Vim 窗口之外的文本不会显示，也就是被截短了。
-
-
-弹 出 文 本 属 性                                       <b class="vimtag"> <a name="popup-props">popup-props</a> </b>
-
-类似于  <a href="textprop.html#prop_add()">prop_add()</a>  的第三个参数，除了:
-- "lnum" 总是列表的当前行
-- "bufnr" 总是弹出的缓冲区
-- "col" 在字典只字典而不是单独的参数
-这样我们有:
-        col             以字节计的起始列，首列为一。
-        length          以字节计的文本长度；可为零
-        end_lnum        文本结尾的行号
-        end_col         文本刚刚结束之后的列；如果给出 "length" 则不用；如果
-                        <code class="special">{col}</code> 和 "end_col" 相等，为零宽度的文本属性
-        id              用户定义的属性 ID；如果省略则用零
-        type            文本属性类型名，由  <a href="textprop.html#prop_type_add()">prop_type_add()</a>  加入
+文本缺省打开回绕，<code class="special">{lines}</code> 里单行可能占据多行显示。"wrap" 为 FALSE 时，超出弹窗
+宽度或 Vim 窗口边界的文本会被截断，无法显示。
 
 
-用 文 本 属 性 定 位 弹 出                              <b class="vimtag"> <a name="popup-textprop-pos">popup-textprop-pos</a> </b>
+弹 窗 文 本 属 性                                       <b class="vimtag"> <a name="popup-props">popup-props</a> </b>
 
-紧贴着文本属性定位弹出会在插入或删除文本时移动弹出。弹出起工具提示的作用。
+用法类似  <a href="textprop.html#prop_add()">prop_add()</a>  的第三个参数 <code class="special">{props}</code>，但有以下区别:
+- "lnum" 固定为列表的当前行，无须额外填写
+- "bufnr" 固定为弹窗绑定的缓冲区
+- "col" 固定为当前列，直接写在字典内，无须额外填写
+可用字段总结:
+        col             起始列号，以字节为单位，首列编号为一。
+        length          文本字节长度；可为零
+        end_lnum        文本结束行号
+        end_col         文本结束后一列的列号；"length" 给出时，不用此字段；和
+                        "col" 相等代表零宽度文本属性
+        id              用户定义的属性 ID；省略时默认为零
+        type            文本属性类型名，需事先通过  <a href="textprop.html#prop_type_add()">prop_type_add()</a>  注册
 
-需要三步才能完成此功能:
 
-- 定义文本属性类型，定义名字。
+通 过 文 本 属 性 定 位 弹 窗                           <b class="vimtag"> <a name="popup-textprop-pos">popup-textprop-pos</a> </b>
+
+将弹窗绑定文本属性后，窗会紧贴该类型的文本属性，并跟随其移动。弹窗实现工具提示
+效果。
+
+具体需要三步:
+
+- 注册文本属性类型，定义类型名。
 <code class="example">        call prop_type_add('popupMarker', {})</code>
 <code class="example"></code>
-- 在想要的文本上放置文本属性:
-<code class="example">        let lnum = {文本行}</code>
-<code class="example">        let col = {文本起始列}</code>
+- 在所需文本上放置文本属性:
+<code class="example">        let lnum = {文本行号}</code>
+<code class="example">        let col = {文本起始列号}</code>
 <code class="example">        let len = {文本长度}</code>
-<code class="example">        let propId = {任意但唯一的数值}</code>
+<code class="example">        let propId = {自定义属性编号，但必须唯一}</code>
 <code class="example">        call prop_add(lnum, col, #{</code>
 <code class="example">                \ length: len,</code>
 <code class="example">                \ type: 'popupMarker',</code>
 <code class="example">                \ id: propId,</code>
 <code class="example">                \ })</code>
 <code class="example"></code>
-- 创建弹出:
+- 创建弹窗并绑定文本属性:
 <code class="example">        let winid = popup_create('the text', #{</code>
 <code class="example">                \ pos: 'botleft',</code>
 <code class="example">                \ textprop: 'popupMarker',</code>
@@ -826,47 +840,67 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 <code class="example">                \ close: 'click',</code>
 <code class="example">                \ })</code>
 <code class="example"></code>
-缺省弹出定位在文本的角落上，和为弹出指定的 "pos" 相反。因而如果弹出使用
-"botleft"，弹出的左下角定位在文本属性的右上角:
+弹窗缺省定位锚点在文本属性的一角，和弹窗的 "pos" 属性刚好相反。例如弹窗使用
+"botleft" 时，弹窗左下角会对齐文本属性右上角:
                           +----------+
-                          | the text |
+                          | 弹窗文本 |
                           +----------+
-        just some PROPERTY as an example
+        just some 文本属性 as an example
 
-这里文本属性在 "PROPERTY" 上。给 popup_create() 传递负的 "col" 值可以向左平移
-弹出。用 "col: -5" 你会得到:
+这里 "文本属性" 文本上放置了文本属性。给  <a href="popup.html#popup_create()">popup_create()</a>  传递负 "col" 值可向
+左平移弹窗。例如，用 "col: -5" 会得到:
 
                      +----------+
-                     | the text |
+                     | 弹窗文本 |
                      +----------+
-        just some PROPERTY as an example
+        just some 文本属性 as an example
 
-如果文本属性移出了视窗，弹出会被隐藏。如果定义弹出的窗口被关闭，弹出也会被关
-闭。
+文本属性完全滚出窗口后，弹窗会被隐藏。定义文本属性的窗口被关闭后，弹窗也会随之
+关闭。
 
-如果弹出在指定的位置放不下，会在附近的位置上显示。
+目标位置放不下弹窗时，会自动就近显示。
+
+文 本 属 性 弹 窗 宿 主 窗 口 裁 剪                     <b class="vimtag"> <a name="popup-clipwindow">popup-clipwindow</a> </b>
+
+弹窗锚定分割窗口内的文本属性时，缺省以整个屏幕为坐标系绘制，弹窗内容可能会溢出
+包含文本属性的窗口 (宿主窗口) 边界。将 "clipwindow" 设为 TRUE 后，弹窗会严格限
+制在宿主窗口可视区域内，超出部分直接被裁剪；一旦文本属性完全滚出窗口边界，弹窗
+自动隐藏。
+
+示例: 弹窗固定显示在光标上方，禁止向下溢出到下方分割窗口:
+<code class="example">        call popup_create(body, #{</code>
+<code class="example">                \ textprop: 'marker',</code>
+<code class="example">                \ textpropid: id,</code>
+<code class="example">                \ pos: 'topleft',</code>
+<code class="example">                \ line: -1, col: 0,</code>
+<code class="example">                \ posinvert: v:false,</code>
+<code class="example">                \ clipwindow: v:true,</code>
+<code class="example">                \ })</code>
+<code class="example"></code>
+"posinvert" 缺省开启，空间不足时弹窗会自动翻转到文本属性的另一侧。要强制保持在
+指定一侧，关闭 "posinvert" 并依靠 "clipwindow" 裁剪溢出内容。
 
 一些提示:
-- 要避免和其它插件的冲突，文本属性类型名必须唯一。可用 "bufnr" 项目使之局部于
-  缓冲区。
-- 如果只有一个文本属性可见，可以略过文本属性 ID。
-- 弹出可能挡住用户要做的事，如上例所示，让点击可以关闭它，会有帮助。
-- 如果删除了文本属性，弹出会关闭。可以这么用:
+- 为避免和其他插件冲突，文本属性类型名必须唯一。也可配合 "bufnr" 项使属性局部
+  于指定缓冲区。
+- 同一文本属性类型只有一个可见时，可以省略指定属性 ID。
+- 弹窗容易干扰用户操作，如上例所示，建议开启点击关闭功能。
+- 移除文本属性时，弹窗会自动关闭。用法如下:
 <code class="example">        call prop_remove(#{type: 'popupMarker', id: propId})</code>
 <code class="example"></code>
 <code class="example"></code>
-弹 出 过 滤                                             <b class="vimtag"> <a name="popup-filter">popup-filter</a> </b>
+弹 窗 过 滤 器                                          <b class="vimtag"> <a name="popup-filter">popup-filter</a> </b>
 
-这是弹出显示时接收可能输入键的回调。弹出隐藏时不调用该过滤回调。
+弹窗显示期间，此回调接收所有键盘输入。弹窗隐藏时不调用过滤器。
 
-过滤可返回 TRUE 来指示键已处理完所以可以放弃，也可返回 FALSE 来让 Vim 按照当前
-状态的通常做法处理键。如果返回 FALSE 而且有另一个弹出窗口可见，接着调用该弹出
-的过滤。优先调用带最高 zindex 的弹出窗口的过滤。
+过滤返回 TRUE 时，指示按键已经处理完毕，Vim 不再继续处理该按键，而返回 FALSE
+时，指示过滤器不处理该按键，交给 Vim 正常处理。多弹窗叠加时，优先调用 zindex
+层级最高的弹窗过滤器，如果返回 FALSE 再交给下层弹窗的过滤器。
 
-过滤函数调用时有两个参数: 弹出 ID 和字符串形式的键值，例如:
+过滤函数接受两个参数: 弹窗 ID、按键的字符串形式。例如:
 <code class="example">        func MyFilter(winid, key)</code>
 <code class="example">          if a:key == "\&lt;F2&gt;"</code>
-<code class="example">            " 做点什么</code>
+<code class="example">            " 自定义逻辑</code>
 <code class="example">            return 1</code>
 <code class="example">          endif</code>
 <code class="example">          if a:key == 'x'</code>
@@ -876,88 +910,87 @@ zindex 是 100。短暂出现的消息建议用 zindex 值 1000。
 <code class="example">          return 0</code>
 <code class="example">        endfunc</code>
                                                         <b class="vimtag"> <a name="popup-filter-mode">popup-filter-mode</a> </b>
-"filtermode" 属性可用来指定调用过滤的模式。缺省是 "a": 所有模式。如果使用
-"nvi"，不包含命令行模式，这样命令行上的任何命令不被过滤。不如，要能进入命令行
-模式，过滤不能消耗掉 ":"。就像不能消耗 "v" 才能进入可视模式一样。
+"filtermode" 属性指定过滤器捕获按键的模式。缺省是 "a": 全部模式。例如改为
+"nvi" 时，排除命令行模式，这样就不会拦截命令行输入。不过，要能正常进入命令行模
+式，过滤器不能拦截 ":"，同样，要能正常进入可视模式，也不能拦截 "v"。
 
                                                         <b class="vimtag"> <a name="popup-mapping">popup-mapping</a> </b>
-键通常是映射后的结果，因为如果过滤不用，键作为正常输入传递。如果过滤消耗了键，
-设置 "mapping" 属性为零可以保证映射不会产生问题。这是  <a href="popup.html#popup_menu()">popup_menu()</a>  和
- <a href="popup.html#popup_dialog()">popup_dialog()</a>  的缺省。
+按键通常先经过映射，因为如果过滤器决定不处理，按键需要作为正常输入传递。如果过
+滤器全权接受所有按键，建议将 "mapping" 属性设为零，避免映射干扰过滤器操作。这
+是  <a href="popup.html#popup_menu()">popup_menu()</a>  和  <a href="popup.html#popup_dialog()">popup_dialog()</a>  的缺省行为。
 
-一些建议的键动作:
-        x               关闭弹出 (见下面 <code class="note">备注</code>)
-        cursor keys     选择另一项
-        Tab             接受当前建议值
+推荐按键设计:
+        x               关闭弹窗 (见下面 <code class="note">备注</code>)
+        光标键          切换选中条目
+        Tab             确认选中项
 
-按了 <code class="keystroke">CTRL-C</code> 后关闭弹出，不调用过滤。
+按下 <code class="keystroke">CTRL-C</code> 时会直接关闭弹窗，不会进入过滤器。
 
-鼠标点击产生 <code class="special">&lt;LeftMouse&gt;</code>。坐标可由  <a href="builtin.html#getmousepos()">getmousepos()</a>  得到。
+鼠标点击对应 <code class="special">&lt;LeftMouse&gt;</code> 按键。鼠标坐标可由  <a href="builtin.html#getmousepos()">getmousepos()</a>  获取。
 
-Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>  和  <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a> 。
+Vim 内置标准过滤器  <a href="popup.html#popup_filter_menu()">popup_filter_menu()</a>  和  <a href="popup.html#popup_filter_yesno()">popup_filter_yesno()</a> 。
 
- <a href="various.html#:normal">:normal</a>  命令生成的键不通过过滤。这方便了在置位 "cursorline" 选项的弹出中移动
-光标:
+ <a href="various.html#:normal">:normal</a>  命令执行的按键不会经过过滤器。可用于在置位 "cursorline" 属性的弹窗中
+自动移动光标:
 <code class="example">        call win_execute(winid, 'normal! 10Gzz')</code>
-而  <a href="builtin.html#feedkeys()">feedkeys()</a>  生成的键则通过过滤。
+而  <a href="builtin.html#feedkeys()">feedkeys()</a>  生成的按键则会正常经过过滤器拦截。
 
-<code class="note">备注</code> "x" 是关闭弹出的正常方法。你可能想用 Esc，但许多键以 Esc 字符开始，Vim 识
-别 Esc 键时可能有延迟。如果确实要用 Esc，建议设置 <a href="options.html#'ttimeoutlen'">'ttimeoutlen'</a> 选项为 100 并
-置位 <a href="options.html#'timeout'">'timeout'</a> 和/或 <a href="options.html#'ttimeout'">'ttimeout'</a>。
+<code class="note">备注</code> "x" 是关闭弹窗的标准方法。不建议改用 Esc，因为众多按键产生以 Esc 键开头的
+键序列，Vim 识别 Esc 键可能会有延迟。确实想用 Esc 时，建议将 <a href="options.html#'ttimeoutlen'">'ttimeoutlen'</a> 选
+项设为 100 并置位 <a href="options.html#'timeout'">'timeout'</a> 和/或 <a href="options.html#'ttimeout'">'ttimeout'</a>。
                                                         <b class="vimtag"> <a name="popup-filter-errors">popup-filter-errors</a> </b>
-如果过滤函数不能被调用，比如名字有错时，弹出会关闭。如果过滤导致出错，则假定它
-返回零。如果连续三次出现此种情形，弹出会关闭。如果在不到 10% 的调用中弹出给出
-错误，则弹出不会关闭。
+如果因为过滤器名有误等原因导致过滤函数无法执行，直接关闭弹窗。如果过滤器执行过
+程中出错，等价于返回 FALSE。如果连续报错三次，自动关闭弹窗。而错误调用比例不到
+10% 时，弹窗不会关闭。
 
 
-弹 出 回 调                                             <b class="vimtag"> <a name="popup-callback">popup-callback</a> </b>
+弹 窗 回 调                                             <b class="vimtag"> <a name="popup-callback">popup-callback</a> </b>
 
-弹出关闭时调用的回调。
+弹窗关闭时，触发此回调。
 
-调用回调时有两个参数: 弹出窗口 ID 和结果，后者可以是弹出行的索引，或者是任意传
-递给  <a href="popup.html#popup_close()">popup_close()</a>  的第二个参数。
+回调接受两个参数: 弹出窗口 ID、结果值，后者可以是弹窗选中行的序号，也可以是调
+用  <a href="popup.html#popup_close()">popup_close()</a>  时传入的第二个参数。
 
-如果弹出被强制关闭，如光标移动或按了 <code class="keystroke">CTRL-C</code>，传递数值 -1 给回调。
+如果弹窗被强制关闭 (如光标移动或按下 <code class="keystroke">CTRL-C</code>)，第二个参数会是 -1。
 
 示例:
 <code class="example">        func SelectedColor(id, result)</code>
-<code class="example">           echo 'choice made: ' .. a:result</code>
+<code class="example">           echo '选中序号是: ' .. a:result</code>
 <code class="example">        endfunc</code>
 <code class="example"></code>
 <code class="example"></code>
-弹 出 滚 动 条                                          <b class="vimtag"> <a name="popup-scrollbar">popup-scrollbar</a> </b>
+弹 窗 滚 动 条                                          <b class="vimtag"> <a name="popup-scrollbar">popup-scrollbar</a> </b>
 
-如果弹出中的文本装不下，窗口右侧显示滚动条。可通过设置 "scrollbar" 选项为零来
-关闭之。如果显示滚动条，当鼠标位于弹出之上时，鼠标滚动事件像你预期地使文本往上
-或下滚动。点击滚动条上半部会下滚文本一行。点击滚动条下半部会上滚文本一行。不
-过，滚动有限制，以确保弹出不会变小。
+弹窗装不下全部文本时，窗口右侧自动显示滚动条。可通过将 "scrollbar" 属性设为零
+关闭滚动条。显示滚动条期间，鼠标悬停在弹窗之上用滚轮可正常上下滚动文本。鼠标点
+击滚动条上半部会下滚文本一行。点击滚动条下半部会上滚文本一行。但如果导致弹窗可
+能变小会停止滚动。
 
 
 
-弹 出 不 透 明 度                                       <b class="vimtag"> <a name="popup-opacity">popup-opacity</a> </b>
+弹 窗 不 透 明 度                                       <b class="vimtag"> <a name="popup-opacity">popup-opacity</a> </b>
 
-通过设置 "opacity" 选项，可让弹出窗口实现半透明效果。不透明度取值范围为 0 到
-100:
-    0           完全透明 - 弹出背景不可见，下方的文本完全显示。
-    100         完全不透明 (缺省) - 弹出无任何透明效果。
-    1–99       部分透明 - 弹出背景与下方文本混合显示，两者都能部分看见。
+"opacity" 属性可使弹出窗口实现半透明效果。不透明度取值范围为 0 到 100:
+    0           完全透明 - 弹窗背景不可见，下方文本完全显现。
+    100         完全不透明 (缺省) - 弹窗无任何透明效果。
+    1–99       部分透明 - 弹窗背景与下方文本混合显示，两者都能部分看见。
 
 透明效果需要 GUI 版本、开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 或支持 256-色的终端环境。在少于
-256 色的终端上，opacity 设置无效。
+256 色的终端上，本属性无效。
 
-弹出透明时的行为:
-- 弹出的背景色会与下方文本混合
-- 弹出的文本 (前景色) 保持完全清晰、不混合
-- 弹出下方的文本可透过透明区域看见
-- 透明度越高 (数值越小)，背景文本看得越清楚
+弹窗透明渲染规则:
+- 弹窗的背景色会与下方文本混合
+- 弹窗的文本 (前景色) 保持完全清晰、不混合
+- 弹窗下方的文本可透过透明区域看见
+- 透明度越高 (数值越小)，背景文本看得越清晰
 
 用途:
-- 创建不会完全遮挡内容的悬浮窗口
-- 显示上下文信息但不阻挡视线
-- 实现现代化界面视觉效果
+- 创建不完全遮挡内容的悬浮提示
+- 显示上下文信息，而不阻挡视线
+- 创建视觉效果和现代化界面设计
 
 示例 (50% 不透明度):
-<code class="example">        let winid = popup_create('Semi-transparent text', #{</code>
+<code class="example">        let winid = popup_create('半透明文本', #{</code>
 <code class="example">        \ line: 5,</code>
 <code class="example">        \ col: 10,</code>
 <code class="example">        \ opacity: 50,</code>
@@ -966,16 +999,16 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 可通过  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  动态修改不透明度:
 <code class="example">        call popup_setoptions(winid, #{opacity: 80})</code>
 <code class="example"></code>
-弹 出 掩 码                                             <b class="vimtag"> <a name="popup-mask">popup-mask</a> </b>
+弹 窗 掩 码                                             <b class="vimtag"> <a name="popup-mask">popup-mask</a> </b>
 
-要使弹出遮掩的文本最少，弹出的部分可以变透明。此行为由 "mask" 定义，这是列表的
-列表，其中每个列表有四个数值:
-    col         起始列，从左开始计数为正，1 是最左边，从右开始计数为负，-1 是
+要尽量减少弹窗对文本的遮挡，可使弹窗局部透明。此行为由 "mask" 属性定义，这是二
+维列表，即由多个局部区域组成的列表，每个局部区域为包含以下四个数值的列表:
+    col         起始列，正数从左开始计数，1 是最左边，负数从右开始计数，-1 是
                 最右边
-    endcol      结束列，类似于 "col"
-    line        起始行，从顶开始计数为正，1 是最顶行，从底开始计数为负，-1 是
+    endcol      结束列，规则同 "col"
+    line        起始行，正数从顶开始计数，1 是最顶行，负数从底开始计数，-1 是
                 最底行
-    endline     结束行，类似于 "line"
+    endline     结束行，规则 "line"
 
 例如，要使最后一行的最后 10 列透明:
         [[-10, -1, -1, -1]]
@@ -985,16 +1018,16 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 示例                                                 <b class="vimtag"> <a name="popup-examples">popup-examples</a> </b></h4>
-以下例子使用  <a href="vim9.html#Vim9">Vim9</a>  脚本。
+以下例子使用  <a href="vim9.html#Vim9">Vim9</a>  脚本语法。
 
                                         <b class="vimtag"> <a name="popup_dialog-example">popup_dialog-example</a> </b>
-提示用户按 y/Y 或 n/N:
+弹出对话框，提示用户按 y/Y 或 n/N:
 <code class="example"></code>
-<code class="example">        popup_dialog('Continue? y/n', {</code>
+<code class="example">        popup_dialog('是否继续？y/n', {</code>
 <code class="example">                 filter: 'popup_filter_yesno',</code>
 <code class="example">                 callback: (id, result) =&gt; {</code>
 <code class="example">                                if result == 1</code>
-<code class="example">                                  echomsg "按了 'y' 或 'Y'"</code>
+<code class="example">                                  echomsg "按下 'y' 或 'Y'"</code>
 <code class="example">                                else</code>
 <code class="example">                                  echomsg "_没_按 'y' 或 'Y'"</code>
 <code class="example">                                endif</code>
@@ -1003,11 +1036,11 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 <code class="example">                 })</code>
 
                                         <b class="vimtag"> <a name="popup_menu-shortcut-example">popup_menu-shortcut-example</a> </b>
-用快捷键扩展 popup_filter_menu():
+扩展 popup_filter_menu()，增加快捷键:
 <code class="example"></code>
-<code class="example">        popup_menu(['Save', 'Cancel', 'Discard'], {</code>
+<code class="example">        popup_menu(['保存 (S)', '取消 (C)', '丢弃 (D)'], {</code>
 <code class="example">            callback: (_, result) =&gt; {</code>
-<code class="example">                echo 'dialog result is' result</code>
+<code class="example">                echo '对话框结果是 ' result</code>
 <code class="example">            },</code>
 <code class="example">            filter: (id, key) =&gt; {</code>
 <code class="example">                # 处理快捷键</code>
@@ -1026,7 +1059,7 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 <code class="example">        })</code>
 
                                         <b class="vimtag"> <a name="popup_beval_example">popup_beval_example</a> </b>
-使用弹出窗口用作 <a href="options.html#'ballooneval'">'ballooneval'</a> 的例子:
+<a href="options.html#'ballooneval'">'ballooneval'</a> 悬浮提示弹窗示例:
 <code class="example"></code>
 <code class="example">        set ballooneval balloonevalterm</code>
 <code class="example">        set balloonexpr=BalloonExpr()</code>
@@ -1034,12 +1067,12 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 <code class="example">        var last_text: string</code>
 <code class="example"></code>
 <code class="example">        def BalloonExpr(): string</code>
-<code class="example">            # 这里你用 "v:beval_text" 来查找些有意思的文本</code>
+<code class="example">            # 通过 "v:beval_text" 进行实际查找</code>
 <code class="example">            var text = v:beval_text</code>
 <code class="example">            if winid &gt; 0 &amp;&amp; popup_getpos(winid) != null_dict</code>
-<code class="example">                # 上次的弹出窗口还在显示</code>
+<code class="example">                # 还在显示上次弹窗</code>
 <code class="example">                if text == last_text</code>
-<code class="example">                    # 还是相同的文本，保留原有的弹出</code>
+<code class="example">                    # 文本不变，保留原有弹窗</code>
 <code class="example">                    return null_string</code>
 <code class="example">                endif</code>
 <code class="example">                popup_close(winid)</code>
@@ -1050,8 +1083,8 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 <code class="example">            return null_string</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
-如果要异步获取文本，表达式函数返回空串，而一旦文本可用，调用 popup_beval()。下
-例用定时器调用来模拟:
+要异步获取提示文本，表达式函数先返回空串，一旦数据就绪，再调用  <a href="popup.html#popup_beval()">popup_beval()</a> 
+显示悬浮窗。下例用定时器调用模拟异步网络请求:
 <code class="example"></code>
 <code class="example">        set ballooneval balloonevalterm</code>
 <code class="example">        set balloonexpr=BalloonExpr()</code>
@@ -1061,23 +1094,22 @@ Vim 提供标准过滤  <a href="popup.html#popup_filter_menu()">popup_filter_me
 <code class="example">        def BalloonExpr(): string</code>
 <code class="example">            var text = v:beval_text</code>
 <code class="example">            if winid &gt; 0 &amp;&amp; popup_getpos(winid) != null_dict</code>
-<code class="example">                # 上次的弹出窗口还在显示</code>
+<code class="example">                # 还在显示上次弹窗</code>
 <code class="example">                if text == last_text</code>
-<code class="example">                    # 还是相同的文本，保留原有的弹出</code>
+<code class="example">                    # 文本不变，保留原有弹窗</code>
 <code class="example">                    return null_string</code>
 <code class="example">                endif</code>
 <code class="example">                popup_close(winid)</code>
 <code class="example">            endif</code>
 <code class="example"></code>
-<code class="example">            # 模拟要花半秒的对要显示的文本的异步查询。</code>
-<code class="example">            # text to display.</code>
+<code class="example">            # 模拟需半秒异步查询，生成显示文本。</code>
 <code class="example">            last_text = text</code>
 <code class="example">            timer_start(500, 'ShowPopup')</code>
 <code class="example">            return null_string</code>
 <code class="example">        enddef</code>
 <code class="example"></code>
 <code class="example">        def ShowPopup(timerid: number)</code>
-<code class="example">            winid = popup_beval('Result: ' .. last_text, {})</code>
+<code class="example">            winid = popup_beval('查询结果: ' .. last_text, {})</code>
 <code class="example">        enddef</code>
 
 
