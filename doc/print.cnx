@@ -11,130 +11,128 @@
 2. 打印选项				|print-options|
 3. PostScript 打印			|postscript-printing|
 4. PostScript 打印编码			|postscript-print-encoding|
-5. PostScript CJK 打印			|postscript-cjk-printing|
+5. PostScript 中日韩打印		|postscript-cjk-printing|
 6. PostScript 打印疑难解答		|postscript-print-trouble|
 7. PostScript 工具			|postscript-print-util|
-8. 换页字符				|printing-formfeed|
+8. 换页符				|printing-formfeed|
 
 {仅当编译时加入 |+printer| 特性才有效}
 
 ==============================================================================
 1. 简介							*print-intro*
 
-在 MS-Windows 上 Vim 可以在任何打印机上打印你的文本。在别的系统上，它产生一个
-PostScript 文件。该文件能直接发送到 PostScript 打印机上，也能通过类似
-ghostscript 的程序用在别的打印机上。
+在 MS-Windows 上 Vim 可直接在系统已安装的打印机上打印文本。在其他系统上，会先
+生成 PostScript 文件。对支持 PostScript 的打印机，可直接发送文件打印，对其他类
+型的打印机，需要借助 ghostscript 等程序转换处理，完成打印操作。
 
-备注: 如果用 |:hardcopy| 打印有问题，还有一个办法是用 |:TOhtml| 并在浏览器上打
-印生成的 html。
+备注: 如果 |:hardcopy| 打印不可用，备用方案是用 |:TOhtml| 导出为 HTML，再用浏
+览器上打开打印。
 
 					*:ha* *:hardcopy* *E237* *E238* *E324*
 :[range]ha[rdcopy][!] [arguments]
-			打印 [range] 指定的行 (缺省是整个文件)。
+			打印 [range] 范围内的所有行 (缺省是整个文件)。
 
 			在 MS-Windows 上，会显示打印对话框，用来选择打印机和
 			纸张尺寸等。[!] 版本跳过对话框。这里，打印机由
 			'printdevice' 指定。如果 'printdevice' 为空，就使用
 			系统缺省打印机。
 
-			对于非 MS-Windows 的系统，先在一个临时文件写入
-			Postscript，然后用 'printexpr' 打印它。这时，
-			[arguments] 可以在 'printexpr' 里通过 |v:cmdarg| 得
-			到。
-			否则的话，[arguments] 被忽略。'printoptions' 可以用来
-			指定纸张尺寸，是否双面打印，等等。
-			备注: 如果要 pdf，有 "ps2pdf" 这样的工具可把
+			对于非 MS-Windows 的系统，先写入 Postscript 临时文件，
+			然后通过 'printexpr' 设置的命令打印。'printexpr' 里可
+			通过 |v:cmdarg| 获取 [arguments] 参数。如果未设置
+			'printexpr'，忽略 [arguments]。'printoptions' 可用于设
+			置纸张尺寸，是否双面打印等。
+			备注: 需要打印到 pdf 时，可通过 "ps2pdf" 等外部工具将
 			PostScript 转换为 PDF。
 
 :[range]ha[rdcopy][!] >{filename}
-			同上，但把 Postscript 打印到文件 {filename}。
-			其中，"%" 等结构通过 |cmdline-special| 得到扩展。
-			需要小心的是，现存的同名文件将被不加提示的覆盖。
-			{仅当编译时加入 |+postscript| 特性才能有此功能}
-			在 MS-Windows 上应使用打印机驱动程序的 "输出到文件"
-			功能。
+			功能同上，但不直接打印，而是保存 Postscript 文件
+			{filename}。
+			文件名支持展开 "%" 等特殊字符 |cmdline-special|。
+			注意同名文件会被静默覆盖。
+			{仅当编译时加入 |+postscript| 特性才有效}
+			在 MS-Windows 上应改用打印机驱动程序的 "输出到文件" 功
+			能。
 
-打印过程中显示完成的页号和百分比。要中断打印，按中断键 (CTRL-C 或者在 MS-系统
-里。CTRL-Break)。
+打印过程中会实时显示完成的页号和百分比。要中断打印，按中断键 CTRL-C (在
+MS-Windows 系统上用 CTRL-Break)。
 
-'printfont' 和 'printoptions' 选项控制打印输出。'printheader' 指定页眉的格式。
+'printfont' 和 'printoptions' 选项控制打印输出。'printheader' 指定页眉格式。
 
-打印文件根据指定的边界 (margin) 排版，这不受当前窗口的 'wrap' 或 'linebreak'
-设置影响。'printoptions' 里的 "wrap" 项可以用来关闭回绕。
+打印文件会严格限定在指定的页边距 (margin) 内，不受当前窗口 'wrap' 或
+'linebreak' 设置影响。'printoptions' 里的 "wrap" 项可以用来关闭回绕。
 
-打印的文本使用当前的高亮色彩，但有以下考虑:
-1) 正常的背景色总是白色 (白纸的颜色)。
-2) 白色文本和缺省前景总是黑色，这样你才能看得出来！
-3) 如果 'background' 是 "dark"，则颜色会加深，否则在白纸上它们因太亮而无法清晰
-   辨别。
+打印文本使用当前高亮色彩，但有以下修正:
+1) 普通背景强制渲染为白色 (白纸的颜色)。
+2) 白色文本和缺省前景统一转为黑色，保证可见！
+3) 'background' 是 "dark" 时，颜色自动加深，避免在白纸上过浅看不清。
 
 ==============================================================================
 2. 打印选项						*print-options*
 
-这里提供改变打印方式的所有选项的细节。设置选项的一般信息见 |options.txt|。
+本节详细介绍控制打印行为的所有选项。选项通用设置方法可见 |options.txt|。
 
 							*pdev-option*
 'printdevice' 'pdev'	字符串	(缺省为空)
 			全局
-|:hardcopy| 命令的感叹号 (!) 版本跳过打印机选择对话框，本选项指定此时所用的打
-印机的名字。在 Win32 上，它必须和标准打印对话框里出现的打印机名字完全一致。
-如果该选项为空，vim 会为 ":hardcopy!" 使用系统的缺省打印机。
+|:hardcopy| 命令带感叹号 (!) 会跳过打印机选择对话框，本选项指定此时使用的打印
+机名。在 Win32 上，必须严格匹配标准打印对话框出现的打印机名。
+为空时，`:hardcopy!` 自动使用系统缺省打印机。
 
 							*penc-option* *E620*
-'printencoding' 'penc'	字符串	(缺省为空，除了:
+'printencoding' 'penc'	字符串	(缺省值:
 					MS-Windows: cp1252，
 					Macintosh: mac-roman，
 					VMS: dec-mcs，
 					HPUX: hp-roman8，
-					EBCDIC: ebcdic-uk)
+					EBCDIC: ebcdic-uk，
+					其他: 空)
 			全局
-设置打印时使用的字符编码。本选项告诉 Vim 使用 'runtimepath' 的 "print" 目录里
-哪个打印字符编码文件。
+设置打印时使用的字符编码。Vim 会从 'runtimepath' 里的 "print" 目录下读取对应的
+打印字符编码文件。
 
-本选项接受任何 |encoding-names| 里的值。任何能识别的名字被转换为 Vim 的标准名
-字 - 详情见 'encoding'。Vim 不能识别的名字会被转换为小写形式，而且下划线被替换
-成 '-' 符号。
+本选项接受 |encoding-names| 内所有编码值。合法名称会被转换为 Vim 标准编码名，
+详见 'encoding'。无法识别的编码名会被转换为小写形式、并将下划线替换为 '-'。
 
-如果 'printencoding' 为空或者 Vim 找不到该文件，那么它会用 'encoding' (如果此
-选项设为 8 位编码的话) 来找到打印字符编码文件。如果 Vim 找不到字符编码文件，那
-么使用的是 "latin1" 打印字符编码文件。
+'printencoding' 为空或 Vim 找不到对应编码文件时，会改用 'encoding' (仅限设置值
+为 8 位编码) 查找打印字符编码文件。如果还是找不到编码文件，最后使用 "latin1"
+打印字符编码文件。
 
-如果 'encoding' 是多字节编码，Vim 会试图把字符转换为打印编码再进行打印 (如果
-'printencoding' 为空，那么转换到 latin1)。转换到非 latin1 的打印编码需要 Vim
-编译时加入 |+iconv| 特性。如果无法转换，打印会失败。任何不能转换的字符会被倒过
-来的问号代替。
+'encoding' 为多字节编码时，Vim 会先将字符转换为打印编码 ('printencoding' 为空
+则默认转换到 latin1)，再进行打印 {仅当编译时加入 |+iconv| 特性才能进行到非
+latin1 打印编码的转换}。如果完全无法转换，打印失败。无法转换的个别字符会被倒转
+问号 (¿) 代替。
 
-提供了四个打印字符编码文件，分别支持缺省的 Mac、VMS、HPUX 和 EBCDIC 字符编码，
-而且也是这些平台上缺省使用的。MS-Windows 平台缺省使用代码页 1252 打印字符编
-码。
+预装 Mac、VMS、HPUX 和 EBCDIC 四种平台缺省使用的打印字符编码文件。MS-Windows
+平台缺省使用代码页 1252 打印字符编码。
 
 							*pexpr-option*
 'printexpr' 'pexpr'	字符串	(缺省: 见下)
 			全局
 			{仅当编译时加入 |+printer| 和 |+postscript| 特性时才有
 			效}
-用于打印 |:hardcopy| 产生的 PostScript 文件的表达式。
-要打印的文件名在 |v:fname_in|。
-":hardcopy" 命令的参数在 |v:cmdarg|。
-该表达式必须在打印后负责删除文件。如果有错误，表达式必须返回非零值。如果没有
-错，返回零或空字符串。
-非 MS-Windows 或 VMS 系统的缺省就是简单地使用 "lpr" 来打印文件: >
+表达式，用于执行 |:hardcopy| 生成的 PostScript 文件的打印。
+要打印的临时 PostScript 文件名保存在 |v:fname_in|。
+|:hardcopy| 命令参数保存在 |v:cmdarg|。
+该表达式在打印后，必须负责删除临时文件。如果有错误，必须返回非零值。成功时则返
+回零或空串。
+非 MS-Windows 非 VMS 系统上，缺省操作是直接执行 "lpr" 外部命令打印文件: >
 
     system('lpr' .. (&printdevice == '' ? '' : ' -P' .. &printdevice)
 	.. ' ' .. v:fname_in) .. delete(v:fname_in) + v:shell_error
 <
-在 MS-Windows 机器上，缺省是把文件复制到当前指定的 printdevice 上: >
+在 MS-Windows 上，缺省操作是将临时文件复制到当前 'printdevice': >
 
     system('copy' .. ' ' .. v:fname_in .. (&printdevice == ''
 		? ' LPT1:' : (' \"' .. &printdevice .. '\"')))
 		.. delete(v:fname_in)
 <
-在 VMS 机器上，缺省是把文件发送到缺省或者当前指定的 printdevice 上: >
+在 VMS 上，缺省操作是将文件发送到缺省或者当前 'printdevice': >
 
     system('print' .. (&printdevice == '' ? '' : ' /queue=' ..
 		&printdevice) .. ' ' .. v:fname_in) .. delete(v:fname_in)
 <
-如果你改变此选项，使用函数是避免转义所有的空格的简便方法。例如: >
+要自定义本选项，为了避免转义空格的麻烦，建议使用更简洁的函数形式。例如: >
 
 	:set printexpr=PrintFile()
 	:function PrintFile()
@@ -143,57 +141,57 @@ ghostscript 的程序用在别的打印机上。
 	:  return v:shell_error
 	:endfunc
 
-此选项使用不带参数的函数调用会更效，见 |expr-option-function|。
+使用不带参数的函数调用更有效率，见 |expr-option-function|。
 
-要记住有些打印程序在读入文件之前就返回控制权。如果你过早地删除文件，它不会被打
-印。这些程序通常提供选项，在打印完成时让它们删除文件。
+小心部分打印程序在读入文件前就返回控制权，异步执行。过早删除文件会导致打印失
+败。请参考程序通常自带的在打印完成后自动清理文件的选项。
 								*E365*
-如果表达式计算失败，或者产生非零值，你会得到错误信息。那种情况下，Vim 会删除文
-件。非 MS-Windows 的缺省值里使用一个技巧: 加上 "v:shell_error" 会在 system()
-调用失败时返回非零值。
+如果表达式计算失败或返回非零值，会报错。Vim 此时会自动清理文件。非 MS-Windows
+系统上的缺省值用到一个技巧: 加上 "v:shell_error" 会在 system() 调用失败时返回
+非零值。
 
-以 s: 或 |<SID>| 开始的表达式，用脚本 ID (|local-function|) 替代之。例如: >
+表达式以 s: 或 |<SID>| 开始时，会用脚本 ID (|local-function|) 替代这些前缀。例
+如: >
 		set printexpr=s:MyPrintFile()
 		set printexpr=<SID>SomePrintFile()
-<否则，表达式在设置本选项的脚本的上下文里计算，这样就可用局部于脚本的项目。
+否则，表达式会在设置本选项的脚本上下文里计算，这样就可访问该脚本的局部项目。
 
 为了安全原因，本选项不能在 |modeline| 或 |sandbox| 里设置。
 
 							*pfn-option* *E613*
 'printfont' 'pfn'	字符串	(缺省为 "courier")
 			全局
-|:hardcopy| 命令输出使用的字体名。它和 'guifont' 选项的格式一样，但只能给出一
-个字体的名字，而且不能使用特殊的 "guifont=*" 语法。
+指定 |:hardcopy| 命令输出所用字体。格式和 'guifont' 选项相同，但只允许单个字
+体，而且不支持 "guifont=*" 特殊语法。
 
-在 Win32 GUI 版本上，它指定字体名还有附加属性，就如同 'guifont' 选项那样。
+在 Win32 GUI 版本上，除了字体名外，还可指定附加属性，和 'guifont' 选项类似。
 
-其他系统上，只能识别 ":h11"，其中 "11" 是字体的点数 (point) 大小。如果忽略，使
-用 10 点字。
+在其他系统上，只识别 ":h11"，其中 "11" 是字体点数 (point) 大小。忽略时默认使用
+10 点字。
 
 							*pheader-option*
 'printheader' 'pheader'	字符串  (缺省为 "%<%f%h%m%=Page %N")
 			全局
-定义 |:hardcopy| 输出的页眉格式。该选项和 'statusline' 选项以同样的方式定义。
-如果 Vim 编译时没有加入 |+statusline| 特性，本选项没有效果，而使用简单的缺省页
-眉，其中只包含页号。同样的简单页眉也用在此选项为空的时候。
+定义 |:hardcopy| 输出页眉格式。格式同 'statusline' 选项。选项为空时，缺省使用
+极简只包含页号的页眉。
+{仅当 Vim 编译时加入 |+statusline| 特性才有效，否则使用缺省页眉}
 
 							*pmbcs-option*
 'printmbcharset' 'pmbcs'  字符串 (缺省为 "")
 			  全局
-设置 |:hardcopy| 产生 CJK 输出时使用的 CJK 字符集。目前，Vim 识别以下这些预先
-定义的值:
+|:hardcopy| 生成中日韩文字输出时，指定使用的字符集。目前，识别以下预定义值:
 
 		值		描述 ~
   中文		GB_2312-80
   (简体)	GBT_12345-90
-		MAC		Apple Mac Simplified Chinese
-		GBT-90_MAC	GB/T 12345-90 Apple Mac Simplified Chinese
+		MAC		Apple Mac 简体中文编码
+		GBT-90_MAC	适配 Apple Mac 简体中文 的 GB/T 12345-90
 		GBK		GBK (GB 13000.1-93)
 		ISO10646	ISO 10646-1:1993
 
-  中文		CNS_1993	CNS 11643-1993, Planes 1 & 2
-  (繁体)	BIG5
-		ETEN		Big5，带 ETen 扩展
+  中文		CNS_1993	CNS 11643-1993, 第一、二字面
+  (繁体)	BIG5		标准 Big5
+		ETEN		带倚天扩展的 Big5
 		ISO10646	ISO 10646-1:1993
 
   日文		JIS_C_1978
@@ -204,11 +202,11 @@ ghostscript 的程序用在别的打印机上。
 		KANJITALK7	Apple Mac KanjiTalk V7.x
 
   韩文		KS_X_1992
-		MAC		Apple Macintosh Korean
-		MSWINDOWS	KS X 1992，带 MS 扩展
+		MAC		Apple Macintosh 韩语编码
+		MSWINDOWS	带微软扩展的 KS X 1992
 		ISO10646	ISO 10646-1:1993
 
-上面的值和 'printencoding' 只有特定的一些组合。下表显示合法的组合可能:
+上述字符集取值只有与 'printencoding' 的特定组合才有效。下表列出所有合法组合:
 
 				euc-cn	 gbk	ucs-2	utf-8 ~
   中文		GB_2312-80	   x
@@ -238,95 +236,93 @@ ghostscript 的程序用在别的打印机上。
 		MSWINDOWS		   x
 		ISO10646			  x	  x
 
-要设置打印日文文本所用的合适的编码和字符集，你需要做； >
+例如，要设置打印日文所需的编码和字符集，可用:  >
 	:set printencoding=euc-jp
 	:set printmbcharset=JIS_X_1983
 
-如果 'printmbcharset' 不是以上给出的值，就假定这是个自定义的多字节字符集，因而
-没有它是否与 'printencoding' 的值兼容的检查。Vim 会在 'runtimepath' 里的
-"print" 目录下寻找定义该字符集的文件。
+'printmbcharset' 设为上表未列值时，会假定为自定义多字节字符集，此时不再检查与
+'printencoding' 值是否兼容。Vim 会在 'runtimepath' 里的 "print" 目录下读取对应
+字符集定义文件。
 
 							*pmbfn-option*
 'printmbfont' 'pmbfn'	字符串 (缺省为 "")
 			全局
-这是逗号分隔的字段列表，用于 |:hardcopy| 生成的 CJK 输出使用的字体名。每个字体
-名必须有一个字符前导，指示要使用的字体的风格，如下:
+逗号分隔的字段列表，用于指定 |:hardcopy| 生成中日韩文字输出所用字体。每个字体
+名必须指定单字符前缀，指示字体用途:
 
-  r:{font-name}		用于普通字符的字体
-  b:{font-name}		用于粗体字符的字体
-  i:{font-name}		用于斜体字符的字体
-  o:{font-name}		用于粗体斜体字符的字体
+  r:{font-name}		普通字符字体
+  b:{font-name}		粗体字符字体
+  i:{font-name}		斜体字符字体
+  o:{font-name}		粗斜体字符字体
 
-执行 CJK 打印时，带有 r: 前缀的字体是必需的。其它字体名的描述符可选。如果某个
-描述符不存在，使用另一个字体，如下:
+执行中日韩文字打印时，r: 前缀字段必填。其它类型可选，省略时使用以下后备规则:
 
-  如果 b: 不存在，使用 r:
-  如果 i: 不存在，使用 r:
-  如果 o: 不存在，使用 b:
+  b: 未设置时，使用 r:
+  i: 未设置时，使用 r:
+  o: 未设置时，使用 b:
 
-有些 CJK 字体不包含 ASCII 代码范围内的字符编码。还有，在少量代码点上，有些 CJK
-ASCII 代码范围里的字符和传统的 ASCII 字符有差异。有两个附加的域可以用来控制
-ASCII 代码范围内的字符打印。
+部分中日韩字体缺失 ASCII 编码区字符。部分代码点字形也和标准 ASCII 有差异。为
+此，提供以下两组字段，控制 ASCII 编码区字符的打印方式。
 
-  c:yes			使用 Courier 字体打印 ASCII 代码范围内的字符。
+  c:yes			ASCII 编码区统一使用 Courier 字体渲染。
   c:no (缺省)
 
-  a:yes			在 ASCII 代码范围内的代码使用 ASCII 字符集。
-  a:no (缺省)
+  a:yes			ASCII 编码区使用标准 ASCII 字符集字形 (如 "ABC")。
+  a:no (缺省)		ASCII 编码区使用本地 (国家) 字符集字形 (如 "ＡＢＣ")。
 
-下面的例子指定两个多字节字体，一个用于普通和斜体打印，一个用于粗体和粗体斜体打
-印，它使用 Courier 打印 ASCII 代码范围内的代码，但使用国家字符集: >
+下例指定两种多字节字体，一种用于普通和斜体，一种用于粗体和粗斜体，ASCII 编码区
+使用 Courier 字体但应用国家字符集字形: >
 	:set printmbfont=r:WadaMin-Regular,b:WadaMin-Bold,c:yes
 <
 							*popt-option*
 'printoptions' 'popt'	字符串	(缺省为 "")
 			全局
 			{仅当编译时加入 |+printer| 特性才有效}
-这是逗号分隔的项目列表，控制 |:hardcopy| 的输出格式:
+逗号分隔的项目列表，控制 |:hardcopy| 的打印排版与输出行为:
 
-  left:{spec}		左边界 (缺省: 10pc)
-  right:{spec}		右边界 (缺省: 5pc)
-  top:{spec}		顶部边界 (缺省: 5pc)
-  bottom:{spec}		底部边界 (缺省: 5pc)
-			{spec} 是一个数字，后面跟 "in" 代表英寸，"pt" 代表点数
-			(1 点等于 1/72 英寸)，"mm" 代表毫米，或者 "pc" 代表媒
-			介大小的百分比。
-			古怪的例子:
+  left:{spec}		左边距 (缺省: 10pc)
+  right:{spec}		右边距 (缺省: 5pc)
+  top:{spec}		顶边距 (缺省: 5pc)
+  bottom:{spec}		底边距 (缺省: 5pc)
+			{spec} 为数值加单位，可用单位包括:
+			"in" 英寸、"pt" 点数 (1 点等于 1/72 英寸)、"mm" 毫米、
+			"pc" 纸张尺寸百分比。
+			故意混用多种单位的示例:
 			    left:2in,top:30pt,right:16mm,bottom:3pc
-			如果单位不能识别，不会出错。只是使用缺省值。
+			如果单位识别失败，不报错。直接使用该边距缺省值。
 
-  header:{nr}		保留作页眉的行数。
-			只填入第一行，所以如果 {nr} 为 2，有一个空行。页眉的格
-			式由 'printheader' 控制。
+  header:{nr}		页眉预留行数。
+			实际只使用第一行，所以 {nr} 为 2 时，第二行为空行。
+			'printheader' 控制页眉格式。
   header:0		不打印页眉。
-  header:2  (缺省)	页眉使用两行
+  header:2  (缺省)	页眉占用两行。
 
-  syntax:n		不使用语法高亮。这样更快，因而打印大文件也更实用。
+  syntax:n		不使用语法高亮。速度更快，方便打印大文件。
   syntax:y		使用语法高亮。
-  syntax:a  (缺省)	如果打印机可以打印色彩或者灰色，使用语法高亮。
+  syntax:a  (缺省)	打印机支持彩色或者灰度打印时，使用语法高亮。
 
-  number:y		打印输出里包含行号。
-  number:n  (缺省)	没有行号。
+  number:y		打印输出包含行号。
+  number:n  (缺省)	不输出行号。
 
   wrap:y    (缺省)	回绕长行。
   wrap:n		截断长行。
 
   duplex:off		单面打印。
-  duplex:long (缺省)	双面打印 (如果可以)，长边装订。
-  duplex:short		双面打印 (如果可以)，短边装订。
+  duplex:long (缺省)	双面打印 (如果可用)，长边装订。
+  duplex:short		双面打印 (如果可用)，短边装订。
 
   collate:y  (缺省)	逐份打印: 1 2 3，1 2 3，1 2 3
   collate:n		非逐份打印: 1 1 1，2 2 2，3 3 3
 
-  jobsplit:n (缺省)	单个打印任务完成所有份数
-  jobsplit:y		每份使用不同的打印任务。用于 N-路后期处理。
+  jobsplit:n (缺省)	多份打印合并成单个打印任务。
+  jobsplit:y		每份单独发起打印任务。用于 N-路后期处理。
 
-  portrait:y (缺省)	打印方向为竖向。
-  portrait:n		打印方向为横向。
+  portrait:y (缺省)	纵向打印。
+  portrait:n		横向打印。
 						*a4* *letter*
-  paper:A4   (缺省)	纸张大小: A4
-  paper:{name}		纸张大小可见下表:
-			{name}	    厘米计的尺寸     英寸计的尺寸~
+  paper:A4   (缺省)	纸张尺寸: A4
+  paper:{规格}		纸张尺寸可选规格:
+			{规格}	    厘米单位尺寸     英寸单位尺寸~
 			10x14	    25.4  x 35.57    10    x 14
 			A3	    29.7  x 42	     11.69 x 16.54
 			A4	    21	  x 29.7      8.27 x 11.69
@@ -342,296 +338,277 @@ ASCII 代码范围内的字符打印。
 			statement   13.97 x 21.59     5.5  x  8.5
 			tabloid     27.96 x 43.13    11    x 17
 
-  formfeed:n (缺省)	把换页字符 (0x0c) 看成普通的打印字符。
-  formfeed:y		遇到换页字符时，当前行从新页的第一行开始处继续打印。
+  formfeed:n (缺省)	换页符 (0x0c) 当作普通字符打印。
+  formfeed:y		换页符使当前行在新页首行继续打印。
 
-没有给出某项目时，使用标明为 (缺省) 的项目。不需要总是给出这些值，尤其是可以使
-用对话框来选择打印机和选项。
-例如: >
+某项省略时使用其缺省值。使用弹出对话框选择打印机及选项时，可覆盖本选项部分参
+数。示例: >
 	:set printoptions=paper:letter,duplex:off
 <
 ==============================================================================
 3 PostScript 打印					*postscript-printing*
 						*E455* *E456* *E457* *E624*
-只要你有足够的磁盘空间，产生一个 PostScript 文件当无问题。你需要正确安装运行时
-文件 (如果你能找到帮助文件，它们大概都已经安装好了)。
+只要磁盘空间充足，生成 PostScript 文件当无问题。前提是运行时文件正确安装 (如果
+能打开帮助文件，一般说明安装正常)。
 
 PostScript 打印有若干限制:
 
-- 'printfont' - 字体名被忽略 (总是用 Courier 家族字体 - 它应在所有 PostScript
-  打印机上可用) 但还能指定字体大小。
+- 'printfont' - 忽略字体名 (固定使用 Courier 家族字体 - 所有 PostScript 打印机
+  都应自带) 但可指定字体大小。
 
-- 'printoptions' - 产生 PostScript 输出时使用了双面打印设置，但是否如此打印决
-  定于打印机本身。如果打印机不支持双面打印，则该设置应简单给予忽略。但是有些打
-  印机彻底不能打印。
+- 'printoptions' - 生成的 PostScript 输出会强制双面打印设置，但最终是否生效取
+  决于打印机硬件。不支持的打印机多数会直接忽略。但少数打印机会完全无法打印。
 
-- 8 位支持 - 尽管很多 8 位打印字符编码得到支持，还是有可能部分字符无法打印。这
-  决定于打印机所带的字体是否能识别该字符。丢失的字符会以一个倒转的问号代替，或
-  者如果该字体不能识别该字符的话，则留一个空格。安装新版的 Courier 字体家族可
-  能会使某一个编码里的字符完全得到支持。
+- 8 位支持 - 尽管很多 8 位打印字符编码都有支持，仍存在部分字符无法打印的问题。
+  这取决于打印机内置字体是否包含该字符。缺失字符缺省会用倒转问号 (¿) 代替，如
+  果该字形也不存在，则替换为空格。安装新版 Courier 家族字体，可完整输出当前编
+  码里的所有字符。
 
-- 多字节支持 - 目前，Vim 会试图把多字节字符转换为 'printencoding'  (如果为空，
-  latin1) 所指定的 8 位编码。不能成功转换的字符会显示为未知字符。如果 Vim 不
-  能完成该转换，打印将会失败。
+- 多字节支持 - Vim 目前会试图将多字节字符转换为 'printencoding' 指定的 8 位编
+  码 (为空时默认使用 latin1)。无法转换的个别字符会显示为未知字符。如果 Vim 完
+  全无法完成编码转换，整个打印过程会失败。
 
 ==============================================================================
 4. 自定义 8 位打印字符编码			*postscript-print-encoding*
 								*E618* *E619*
-打印 8 位字符数据，如果要使用你自己的打印字符编码，你需要定义自己的 PostScript
-字体编码。关于如果定义字体编码向量的细节超出了本帮助文件的范围。为此，你可查阅
-Addison-Wesley 出版的 PostScript 语言参考手册第三版，或从
-https://www.adobe.com/ 得到 PDF 版本。以下，说明一下如果使 Vim 找到并使用你自
-己的打印字符编码。
+如需打印 8 位字符数据时使用自定义打印字符编码，需要自行编写 PostScript 字体编
+码向量。编码向量的完整编写细节超出本帮助文件的范围。可查阅 Addison-Wesley 出版
+的 PostScript 语言参考手册第三版，或从 https://www.adobe.com/ 获取 PDF 版本。
+以下仅说明使 Vim 识别并加载自定义打印字符编码的步骤。
 
-i.   为你的编码向量定义一个唯一的名字，以不与 Vim 使用的已识别的或标准的编码名
-     字冲突为原则 (这些编码可以参见 |encoding-names|)。最好是一个别人也不太可
-     能使用的名字。
-ii.  把 $VIMRUNTIME/print/latin1.ps 复制到你的 'runtimepath' 里的 print 子目录
-     并换成你选好的唯一的名字。
-iii. 编辑你换名了的 latin1.ps。把所有出现的 latin1 替代成你的编码名 (不要忘了
-     %%Title: 开头的那行)。同时，把字型名字 (glyph names) 数组改成你新定义的
-     编码向量。该数组必须恰好有 256 项，不然你无法打印！
-iv.  在 Vim 里，设置 'printencoding' 为你的唯一的编码名，然后打印你的文件。
-     Vim 会使用你自定义的打印字符编码。
+i.   为编码向量定义唯一名称，以不与 Vim 已识别或标准编码名 (编码名参见
+     |encoding-names|) 冲突、也不易和他人重复为原则。
+ii.  将 $VIMRUNTIME/print/latin1.ps 复制到用户 'runtimepath' 里的 "print" 子目
+     录下，并重命名为自定义编码名。
+iii. 编辑该文件。将所有 latin1 替换为自定义编码名 (包括 %%Title: 开头的那行)。
+     同时，将字形名 (glyph names) 数组替换为新编码向量。该数组必须恰好有 256
+     项，否则打印会直接失败！
+iv.  在 Vim 里，将 'printencoding' 设为自定义编码名。
+     设置完成后，文件打印就会使用自定义打印字符编码。
 
-除了 %%Title: 开头一行里的编码名字和 %%Version:: 开头的一行里的版本以外，如果
-你修改了前三行的顺序或者任何别的内容，Vim 会报告此资源文件有错误。
+除了 %%Title: 开头一行里的编码名和 %%Version:: 开头一行里的版本外，禁止修改前
+三行其他任何内容，包括行顺序，否则 Vim 会报告该资源文件有错。
 
-[对通晓 PostScript 者的技术解释 - Vim 打印时，查找并使用和编码同名的文件。该文
-件定义一个新的名为 /VIM-name 的 PostScript Encoding 资源，其中 name 即 Vim 会
-使用的打印字符编码。]
+[PostScript 专业技术解释 - Vim 打印时，会根据 'printencoding' 值匹配同名文件。
+该文件会定义名为 /VIM-name 的 PostScript Encoding 新资源，其中 name 为 Vim 实
+际使用的打印字符编码。]
 
 ==============================================================================
-5. PostScript CJK 打印				*postscript-cjk-printing*
+5. PostScript 中日韩打印			*postscript-cjk-printing*
 							*E673* *E674* *E675*
 
-Vim 支持打印中文、日文和韩文文件。要能正确地打印 CJK 文件，Vim 需要设置更多的
-选项。
+Vim 支持打印中日韩文本文件。相比普通英文打印，需要额外设置更多选项才能正常输
+出。
 
-这些国家有许多标准字符集和编码，打印时两者都要指定。另外，CJK 字体通常没有斜体
-字形的概念，为了在打印时达到强调的效果，需要使用不同的重量 (weight) 和风格
-(stroke style)。因此，要指定打印时使用的字体，需要不同的方法。
+中日韩各有多套标准字符集和编码，打印时必需同时指定两者。另外，这些字体通常没有
+独立斜体字形，需要依赖字重 (weight) 和笔画粗细 (stroke style) 区分强调效果。因
+此，因此，指定打印字体需要不同的设置逻辑。
 
-'printencoding' 和 'printmbcharset' 选项分别指定编码和字符集。如果没有设置
-'printencoding'，就像一般使用那样，使用 'encoding'。如果设定 'printencoding'，
-打印时字符会被翻译成此编码。你要确保该编码和文件内容需要的字符集兼容，否则有些
-字符可能打印不出来。
+'printencoding' 和 'printmbcharset' 选项分别用于指定编码和字符集。省略
+'printencoding' 时，默认如常使用 'encoding'。手动指定 'printencoding' 后，打印
+时字符会先被转换为该编码。必须确保该编码和文件内容所需字符集兼容，否则部分字符
+可能无法打印。
 
-'printmbfont' 指定 CJK 打印要用的字体。该选项允许你指定在语法高亮时使用不同字
-体风格: 普通、斜体、粗体和粗体斜体的字符使用不同的打印字体，
+'printmbfont' 指定打印所需中日韩字体。用于分别设置普通、斜体、粗体和粗斜体四种
+语法高亮风格对应的打印字体。
 
-Vim 不提供 CJK 字体。一些免费的中 (繁体) 日韩字体可以在这里得到:
+Vim 不自带中日韩字体。部分免费中 (繁体) 日韩字体可从以下资源获取:
 
   https://resources.oreilly.com/examples/9781565922242/
 
-在 readme 文件里可以找到这些字体的说明，它在
+字体说明文档
 
   https://resources.oreilly.com/examples/9781565922242/-/blob/master/00README
 
-请阅读你的打印机文档，以了解如何安装新的字体。
+字体安装方法请阅读打印机文档。
 
-CJK 字体可以很大，因为它们包含了数以千计的字形，即使如此，某个字体只包含了国家
-标准的一个子集也是很常见的。如果你发现打印输出没有半宽的罗马字符，你需要在
-'printmbfont' 里配置 Vim 使用 Courier 字体来打印半宽 ASCII 字符。如果你的字体
-不包括其它字符，也许你需要找一个能够包含所有需要的字形的字体。
+中日韩字体可以非常巨大，因为包含数以千计的字形，很多字体只包含了国家标准的子
+集。如果发现打印不出半角罗马字符，需要在 'printmbfont' 里设置对 ASCII 编码区使
+用 Courier 字体。如果打印不出其他字符，请自动寻找包含所需字形的字体。
 
-另一个 ASCII 字符的问题是若干国家字符集指定一些 ASCII 代码范围的代码使用不同的
-字形。如果你用国家字符集打印 ASCII 文本，你可能会看到意想不到的字符。如果你需
-要真正的 ASCII 代码打印，你需要用 'printmbfont' 来配置 Vim 使 ASCII 代码范围内
-的代码输出 ASCII 字符。
+ASCII 字符的另一个问题是若干国家字符集对 ASCII 编码区指定不同字形。用国家字符
+集打印 ASCII 文本时，可能不符预期。为此需要在 'printmbfont' 里设置对 ASCII 编
+码区使用标准 ASCII 字符字形。
 
-可以定义你自己的多字节字符集，虽然这个过程不应轻易尝试。关于此过程的讨论超出了
-这些帮助文件的范围。具体细节可见 https://www.adobe.com 提供的 PDF 文件格式的文
-档 'Adobe CMap and CIDFont Files Specification, Version 1.0' 里的 CMap (字符映
-射表) 文件。
+支持自建多字节字符集，但不建议新手操作。具体细节超出本帮助文件的范围，可见
+https://www.adobe.com 提供的 PDF 文件格式官方文档 'Adobe CMap and CIDFont
+Files Specification, Version 1.0' 里的 CMap (字符映射表) 相关文件。
 
 ==============================================================================
 6. PostScript 打印疑难解答			*postscript-print-trouble*
 									*E621*
-通常唯一说明打印 PostScript 出现问题的症状是你的打印结果没有出现。如果你运气
-好，你也许会得到一页打印说明，告诉你哪个 PostScript 操作符产生了使打印无法继续
-下去的错误。
+打印 PostScript 出现问题的通常唯一症状是完全没有打印输出。少数情况下会打印出一
+张报错页，标明引发打印任务中断的 PostScript 操作符。
 
-有若干使打印失败的可能的原因:
+打印失败的若干可能原因:
 
-- prolog 资源文件版本错误。prolog 资源文件包含一些 Vim 用来打印的必需的
-  PostScript。每个 Vim 版本需要它一个不同的版本。确信你安装了正确的运行时的文
-  件，而且没有在你的 'runtimepath' 里的 print 目录里保留了一个旧版本的 prolog
-  文件。
+- prolog 资源文件版本错误。prolog 资源文件存放 Vim 打印必需的 PostScript 脚
+  本。不同 Vim 版本对应不同专属版本。请确保安装了正确的运行时文件，且在用户
+  'runtimepath' 里的 "print" 目录下，没有存放旧版本 prolog 文件。
 
-- 纸张大小。有些 PostScript 打印机会因为不支持请求的纸张大小而中止打印。缺省，
-  Vim 用 A4 纸。用 'printoptions' 找到和设置你打印机合用的纸张大小。如果你找不
-  到所用纸张的名字，度量打印纸的尺寸，然后和 'printoptions' 里支持的纸张大小列
-  表逐一比较，然后用宽_和_高都最接近的纸张。注意: 实际的纸张尺寸和列出的大小可
-  能稍有差异。如果没有相近的纸张被列出，那你可以试试以下讨论的 PSUtils 里的
-  psresize 工具。
+- 纸张尺寸不兼容。部分 PostScript 打印机会因为不支持请求的纸张尺寸而中止打印。
+  Vim 缺省用 A4 纸。请确认实际打印机纸张规格，并相应设置 'printoptions' 的
+  "paper" 项。如果无法确定规格名，可实测打印纸尺寸，对照 'printoptions' 列出的
+  纸张尺寸列表，选取长宽_最_接近的规格。
+  注意: 实测纸张尺寸与文档标注会存在微小偏差。如果确实没有相近规格，可使用以下
+  讨论的 PSUtils 里的 psresize 工具缩放文件。
 
-- 双面打印 (duplex)。通常，不支持双面打印的 PostScript 打印机只是忽略该请求。
-  但有的打印机就彻底放弃该打印任务。试试关掉 duplex 再打印。注意: 用 PSUtils
-  里的工具可以手动设置双面打印 - 见下。
+- 双面打印 (duplex)。多数不支持双面打印的 PostScript 打印机会自动忽略双面打印
+  请求。但部分设备会中止打印任务。可尝试关闭 "duplex" 项再打印。
+  注意: 可使用 PSUtils 工具手动实现双面打印 - 见下。
 
-- 逐份打印 (collated)。和双面打印一样，大多数不支持逐份打印的打印机只是忽略该
-  请求。有的或许不是这样。试试关掉逐份打印的选项。
+- 逐份打印 (collated)。和双面打印情形类似，多数不支持逐份打印的打印机会自动忽
+  略此种请求。但部分设备会中止打印任务。可尝试关闭 "collate" 项再打印。
 
-- 语法高亮。有些打印管理代码不让含有语法高亮的 PostScript 文件在黑白打印机上打
-  印，即使唯一用到的颜色是黑色。试试关掉语法高亮。
+- 语法高亮。部分打印管理代码不支持在黑白打印机上打印包含语法高亮的 PostScript
+  文件，即使全文只使用黑色。可尝试关闭 "syntax" 项再打印。
 
-一个安全的 printoptions 设置是: >
+安全 'printoptions' 设置值为: >
 
 	:set printoptions=paper:A4,duplex:off,collate:n,syntax:n
 
-把 "A4" 换成你的打印机纸最适合的纸张大小。
+将 "A4" 换成适配打印机的纸张规格。
 
 ==============================================================================
 7. PostScript 工具				*postscript-print-util*
 
 7.1 Ghostscript
 
-Ghostscript 是一个 PostScript 和 PDF 的解释器，从而可以显示和在非 PostScript
-的打印机上打印 PostScript 和 PDF 文件。它还可以把 PostScript 文件转换成 PDF 文
-件。
+Ghostscript 是 PostScript 和 PDF 解释器，可预览和在非 PostScript 打印机上打印
+PostScript 和 PDF 文件。还可将 PostScript 文件转换成 PDF 文件。
 
 Ghostscript 可在多种平台上运行。
 
 有三个可用的版本:
 
-- AFPL Ghostscript (以前的 Aladdin Ghostscript) 是对非商业用途免费的。它可如下
-  得到:
+- AFPL Ghostscript (原 Aladdin Ghostscript) 对非商业用途免费。官网是:
 
     http://www.cs.wisc.edu/~ghost/
 
-- GNU Ghostscript 可在 GNU General Public License 下，从以下地址得到:
+- GNU Ghostscript 以 GNU General Public License (GPL 开源协议) 发行，官网是:
 
     https://www.gnu.org/software/ghostscript
 
-- 用于商业产品的一个商业版本。
+- 商业授权版。
 
-更多关于 Ghostscript 的信息可以在这里找到:
+Ghostscript 的更多信息可见:
 
   http://www.ghostscript.com/
 
-该发布包含对许多非 PostScript 打印机的标准支持。如果你没找到对你的打印机的支
-持，查一下 Ghostscript 网站了解如何支持其他缺省没有支持的打印机。
+发布自带众多非 PostScript 打印机支持。如果未找到所需打印机支持，可前往
+Ghostscript 网站查找额外驱动。
 
 
 7.2 Ghostscript 预览器
 
-Ghostscript 界面十分原始，所以有不少图形化的前端程序。它们提供了方便的
-PostScript 文件选择，不同放大倍数的预览，还有打印。具体细节可查看它们提供的文
-档。
+原生 Ghostscript 界面非常原始，因此衍生了不少图形化前端程序。提供便捷
+PostScript 文件选择，缩放预览，一键打印。详见相关文档。
 
 X11
 
-- Ghostview。可如下取得:
+- Ghostview。获取地址:
 
     http://www.cs.wisc.edu/~ghost/gv/
     https://www.gnu.org/software/gv/
 
-  这里也能找到 (也许不是最新的):
+  备用地址 (版本未必最新):
 
     http://www.cs.wisc.edu/~ghost/gv/
 
 OpenVMS
 
-- 看起来，在主代码已经支持 (未经测试)。见 (链接看来已失效):
+- 源码已内置支持 (未经测试)。见 (链接看来已失效):
 
     wwwthep.physik.uni-mainz.de/~plass/gv/
 
 MS-Windows
 
-- GSview。可如下取得:
+- GSview。获取地址:
 
     http://www.cs.wisc.edu/~ghost/gsview/
 
 Linux
 
-- GSview。流行的 MS-Windows 预览器的 Linux 版本。可如下取得:
+- GSview。流行 MS-Windows 预览器的 Linux 版本。获取地址:
 
     http://www.cs.wisc.edu/~ghost/gsview/
 
 7.3 PSUtils
 
-PSUtils 是一组操作 Postscript 文档的工具程序。可以得到许多平台上的二进制发布和
-完全的源代码。PSUtils 可如下得到:
+PSUtils 是一组操作 Postscript 文档的工具程序。提供多平台二进制发布与完整源码。
+获取地址:
 
   http://knackered.org/angus/psutils
 
-我们感兴趣的工具包括:
+常用工具包括:
 
-- psnup.     把 PS 文件转化为 N-路打印版本。
-- psselect.  选择页范围和打印顺序。
-- psresize.  改变页面大小。
-- psbook.    重新排列顺序和页面排版，从而打印成册。
+- psnup.     将 PS 文件转化为 N-路打印版本。
+- psselect.  选择打印页范围、调整页面打印顺序。
+- psresize.  修改页面大小。
+- psbook.    重新排列页面顺序和页面排版，方便打印成册。
 
-一个程序的输出可以作为另一个的输入，从而可以创建复杂的打印文档。
+工具支持管道串联，可组合实现复杂打印排版需求。
 
 
-N-路 打 印
+N - 路 打 印
 
-psnup 工具把一个 Vim 生成的 PostScript 文件转化为一个 n-路版本 (即在一物理页上
-打印 n 个逻辑页)。最简单的生成 2-路输出的方法是先如下一个创建 PostScript 文
-件: >
+psnup 工具可将 Vim 生成的 PostScript 文件转化为 n-路版本 (即在同一物理页上打印
+n 个逻辑页)。生成 2-路输出的简单方法是，先创建 PostScript 文件: >
 
 	:hardcopy > test.ps
 
-然后在你的命令行上执行: >
+然后在命令行上执行: >
 
 	psnup -n 2 test.ps final.ps
 <
-注意: 有些 Ghostscript 预览器可能会对 psnup 产生的文件给出警告 - 可以安全地忽
-略。
+注意: 部分 Ghostscript 预览器打开 psnup 生成的文件会给出警告 - 可安全忽略。
 
-最后，用你平台上的打印命令把 final.ps 输出到 PostScript 打印机上。(这以后，你
-需要自己删除中间文件: 两个 PostScript 文件)。可以修改 'printexpr' 来执行这项打
-印前的额外转换。
+最后，使用平台打印命令，将 final.ps 发送到 PostScript 打印机。打印完毕后，手动
+删除两个临时 PostScript 文件。可修改 'printexpr' 自动完成打印前所需额外转换。
 
 
 双 面 打 印 的 替 代 方 法
 
-用 PS 工具 psselect 可以完成一个原始的双面打印任务。该工具有 -e 和 -o 选项，
-可以分别打印一个 PS 文件的偶数页和奇数页。
+psselect 工具可手动实现双面打印任务。该工具提供 -e 和 -o 选项，可分别打印 PS
+文件的偶数页和奇数页。
 
-先用 'hardcopy' 命令生成 PS 文件，然后如下生成只包含奇数和偶数页的新文件: >
+先用 |:hardcopy| 命令生成 PS 文件，然后拆分奇数页和偶数页: >
 
 	psselect -o test.ps odd.ps
 	psselect -e test.ps even.ps
 
-然后用你平台上普通的打印命令打印 odd.ps。然后取出打印输出，翻过来，重新放到取
-纸器里。然后用你平台上的打印命令打印 even.ps。现在，所有的偶数页面应该出现在奇
-数页的反面。
+然后，使用平台打印命令，打印 odd.ps。打印完成后取出纸张，翻面放回取纸器。最
+后，使用平台打印命令，打印 even.ps。这样，偶数页就会印在奇数页背面。
 
 要记住以下几点:
 
-1. 第一页的位置。如果打印奇数页时第一页出现在最上方，那你需要倒转奇数页打印的
-   顺序。这可以通过 psselect 的 -r 选项完成。这样可以保证第 2 页打印在第 1 页
-   的反面。
-   注意: 倒转奇数页的打印顺序比倒转偶数页更合适。因为原始的 PS 文件里可能有奇
-   数页。
+1. 首页位置。打印奇数页时如果首页出现在最上方，需要给奇数页反转页码顺序，可用
+   psselect 的 -r 选项完成。这样可以保证第 2 页打印在第 1 页背面。
+   注意: 优先反转奇数页。避免总页数为奇数时出现排版错乱。
 
-2. 纸张方位。取出奇数页的打印输出时，你或者需要横向翻转 (沿着长边)，或者需要纵
-   向翻转 (沿着短边)，甚至有可能要旋转 180 度。这决定于打印机 - 桌上型的喷墨打
-   印机可能比看不见纸张打印的路径的办公室激光打印机更明显一点。
+2. 纸张方位。翻面时需要根据打印机走纸结构，选择横向翻转 (沿长边)、纵向翻转 (沿
+   短边)、甚至旋转 180 度。桌上型喷墨打印机走纸直观，而小型激光打印机走纸路径
+   不易察看，需自行测试调整。
 
 
 ==============================================================================
-8. 换页字符						*printing-formfeed*
+8. 换页符						*printing-formfeed*
 
-缺省，Vim 不对换页 formfeed 控制字符作任何特殊处理。设置 'printoptions' 的
-formfeed 项，使得 Vim 可以识别换页字符，从而在新的一页里打出当前行。换页字符
-提供了较为原始的打印控制。不过，还是有若干事情需要注意。
+Vim 缺省对换页控制符 formfeed 不作任何特殊处理。设置 'printoptions' 的
+"formfeed" 项可使 Vim 识别换页符，读到换页符立即换页，该行剩余内容在新页里继续
+打印。换页符提供了较为原始的打印控制。但有若干注意事项。
 
-Vim 总是从包含换页字符的那行开始打印 (如果有相应设置，还包括行号)，即使它是这
-一行的第一个字符。这意味着，如果以换页字符开头的一行刚好在一页的第一行，Vim 就
-会打印完全空白的一页。
+只要一行包含换页符，Vim 会先输出这一整行 (开启行号时连带行号)。如果该行是页面
+第一行且首字符就是换页符，会先打印空白页，再换到下一页输出内容。
 
-因为行号在包含换页字符的一行的开始打印，在新页打印的该行的其余部分就不会有行号
-(和 'printoptions' 里置位了 wrap 项时长行的回绕行的打印结果相同)。
+因为行号只在包含换页符的行开头打印，新页打印的该行其余部分不再打印行号。这和
+'printoptions' 里置位 "wrap" 项时，长行回绕行不显示行号的逻辑一致。
 
-如果换页字符是一行的最后一个字符，那么打印会从新页的第二行而不是第一行开始。这
-是因为 Vim 在换页字符后处理行尾，从而在继续打印之前先往下移动了一行。
+换页符在行尾时，新页内容会从第二行而非第一行开始。这是因为 Vim 处理完换页符后
+再处理行尾，从而在继续打印之前，先自行下移一行。
 
-根据以上几点，我们推荐如果使用换页字符处理，关闭行号的打印，而且不要在行尾用换
-页字符。即使如此，你还是需要调整换页符之前的行的数目，以防止偶尔出现的空白页。
+根据以上几点，推荐使用换页符处理时，关闭行号打印，且不要将换页符放在行尾。还要
+合理调整换页符上方行数，防止意外输出空白页。
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
