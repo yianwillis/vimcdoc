@@ -3742,8 +3742,8 @@ getchar([<code class="special">{expr}</code> [, <code class="special">{opts}</co
                 用  <a href="popup.html#popup-filter">popup-filter</a> 。
 
                 字符不通过映射。
-                键码被替换。因而，用户输入 <code class="special">&lt;Del&gt;</code> 键时，你得到 <code class="special">&lt;Del&gt;</code> 的键码，而
-                不是原始的字符序列。比如:
+                键码被替换。因而，用户输入 <code class="special">&lt;Del&gt;</code> 键时，返回 <code class="special">&lt;Del&gt;</code> 键码，而非原
+                始字符序列。比如:
 <code class="example">                        getchar() == "\&lt;Del&gt;"</code>
 <code class="example">                        getchar() == "\&lt;S-Left&gt;"</code>
                 下例重新定义了 "f"，使之在匹配时忽略大小写:
@@ -4421,86 +4421,79 @@ getpos(<code class="special">{expr}</code>)                                     
 
 
 getqflist([<code class="special">{what}</code>])                                     <b class="vimtag"> <a name="getqflist()">getqflist()</a> </b>
-                返回所有当前快速修复错误组成的  <a href="eval.html#List">List</a> 。每个列表项是包含以下项
+                返回包含所有当前快速修复错误的  <a href="eval.html#List">List</a> 。每个列表项是包含以下条
                 目的字典:
-                        bufnr   与该文件名对应的缓冲区编号，可用  <a href="builtin.html#bufname()">bufname()</a> 
-                                获取相应的缓冲区名
-                        module  果模块名
-                        lnum    缓冲区里的行号 (首行行号为 1)
+                        bufnr   对包含文件名的项目，相应的缓冲区编号，可用
+                                 <a href="builtin.html#bufname()">bufname()</a>  获取缓冲区名
+                        module  模块名
+                        lnum    缓冲区内行号 (首行行号为 1)
                         end_lnum
-                                多行项目的末行行号
+                                对多行项目，末行行号
                         col     列号 (首列列号为 1)
-                        end_col 范围项目的末列列号
-                        vcol     <a href="eval.html#TRUE">TRUE</a> : "col" 对应的是可视列
-                                 <a href="eval.html#FALSE">FALSE</a> : "col" 对应的是字节索引
+                        end_col 对范围项目，末列列号
+                        vcol     <a href="eval.html#TRUE">TRUE</a> : "col" 对应可视列
+                                 <a href="eval.html#FALSE">FALSE</a> : "col" 对应字节索引
                         nr      错误号
                         pattern 用于定位错误的搜索模式
                         text    错误描述
                         type    错误类型，如 'E'、'1' 等。
-                        valid    <a href="eval.html#TRUE">TRUE</a> : 该错误信息能被识别
+                        valid    <a href="eval.html#TRUE">TRUE</a> : 错误信息能被正确识别
                         user_data
                                 和项目关联的定制数据，可为任何类型。
 
-                错误列表如果不存在或者为空，返回空列表。如果快速修复列表项不对
-                应合法的缓冲区，则其 "bufnr" 值为零 (<code class="note">注意</code> 有些函数中，缓冲区号
-                为零代表轮换缓冲区，为了区别，可能需要显式检查零值)。
+                如果错误列表不存在或为空，返回空列表。如果某个列表项不对应合法
+                的缓冲区，相应 "bufnr" 值为零 (<code class="note">注意</code> 有些函数中，缓冲区号为零代
+                表轮换缓冲区，可能需要显式检查零值以便误操作)。
 
-                应用: 在多个文件里搜索指定模式的匹配，并对匹配项进行处理:
+                实用场景: 在多个文件里搜索指定模式，并对匹配项进行处理:
 <code class="example">                        :vimgrep /theword/jg *.c</code>
 <code class="example">                        :for d in getqflist()</code>
 <code class="example">                        :   echo bufname(d.bufnr) ':' d.lnum '=' d.text</code>
 <code class="example">                        :endfor</code>
 
-                可选的 <code class="special">{what}</code> 字典参数给出时，以字典形式返回 <code class="special">{what}</code> 中指定的项
-                目。<code class="special">{what}</code> 支持以下字符串条目:
-                        changedtick      <a href="quickfix.html#quickfix-changedtick">quickfix-changedtick</a>  记录列表被修改
-                                        的总次数
-                        context 获取  <a href="quickfix.html#quickfix-context">quickfix-context</a> 
-                        efm     解析 "lines" 时使用的 errorformat。缺省使用
-                                <a href="options.html#'errorformat'">'errorformat'</a> 选项值。
-                        id      获取对应给定标识符  <a href="quickfix.html#quickfix-ID">quickfix-ID</a>  的快速修复列
-                                表的相关信息。零代表当前列表或 "nr" 指定的列表
-                        idx     获取由 <code class="badlink">'id'</code> 或 <code class="badlink">'nr'</code> 指定的快速修复列表中，此索
-                                引指定的项目信息。如果设为零，使用当前项目。
-                                见  <a href="quickfix.html#quickfix-index">quickfix-index</a> 
-                        items   获取快速修复列表的所有项目
-                        lines   用 <a href="options.html#'efm'">'efm'</a> 解析给出的文本行列表，并返回生成的项
-                                目。值只支持  <a href="eval.html#List">List</a>  类型。不修改当前快速修复列
-                                表。见  <a href="quickfix.html#quickfix-parse">quickfix-parse</a> 。
-                        nr      获取对应指定编号的快速修复列表的信息；零代表当
-                                前快速修复列表，"$" 代表最后一个快速修复列表
-                        qfbufnr 快速修复窗口所显示的缓冲区号。如果快速修复缓冲
-                                区不存在，返回 0。见  <a href="quickfix.html#quickfix-buffer">quickfix-buffer</a> 。
-                        size    本快速修复列表的项目总数
+                给出可选 <code class="special">{what}</code> 字典参数时，仅返回 <code class="special">{what}</code> 中指定的错误列表属
+                性，以字典形式返回。<code class="special">{what}</code> 支持以下字符串条目:
+                        changedtick
+                                获取列表被修改的总次数  <a href="quickfix.html#quickfix-changedtick">quickfix-changedtick</a> 
+                        context 获取列表上下文  <a href="quickfix.html#quickfix-context">quickfix-context</a> 
+                        efm     指定解析 "lines" 时使用的错误格式。省略时默认
+                                使用 <a href="options.html#'errorformat'">'errorformat'</a> 选项值
+                        id      根据  <a href="quickfix.html#quickfix-ID">quickfix-ID</a>  获取指定快速修复列表；零代
+                                表 "nr" 指定的列表，后者省略时默认为当前列表
+                        idx     获取列表当前选中项索引。见  <a href="quickfix.html#quickfix-index">quickfix-index</a> 
+                        items   获取列表所有项目
+                        lines   指定错误行列表，会用 "efm" 项解析，并返回解析
+                                后的项目列表。仅支持  <a href="eval.html#List">List</a>  类型。不会修改当前
+                                快速修复列表。见  <a href="quickfix.html#quickfix-parse">quickfix-parse</a> 
+                        nr      根据快速修复栈编号指定快速修复列表；零代表当前
+                                快速修复列表，"$" 代表最后一个快速修复列表
+                        qfbufnr 获取在快速修复窗口中显示的缓冲区编号。见
+                                 <a href="quickfix.html#quickfix-buffer">quickfix-buffer</a> 
+                        size    获取列表总项数
                         title   获取列表标题  <a href="quickfix.html#quickfix-title">quickfix-title</a> 
-                        winid   获取快速修复的窗口 ID  <a href="windows.html#window-ID">window-ID</a> 
-                        all     上述所有的快速修复属性
-                使用 <code class="special">{what}</code> 参数时，忽略其中非字符串类型的条目。要获取某个特定
-                项之值，需先将该值初始化为零。
-                "nr" 省略时，使用当前快速修复列表。
-                "nr" 和非零 "id" 同时给出时，优先使用 "id" 指定的列表。
-                要取得快速修复栈的列表总数，设置 <code class="special">{what}</code> 中的 <code class="badlink">'nr'</code> 为 "$"。这
-                样，返回字典中的 "nr" 值即表示快速修复栈的大小。
+                        winid   获取快速修复窗口 ID  <a href="windows.html#window-ID">window-ID</a> 
+                        all     获取以上所有快速修复属性
+                忽略 <code class="special">{what}</code> 参数中非字符串类型键。要获取某个特定项之值，需先将
+                该值初始化为零。
+                "nr" 省略时，使用当前快速修复列表。但 "nr" 和非零 "id" 同时给
+                出时，优先使用 "id" 指定的列表。
+                要计算快速修复栈中的列表总数，在 <code class="special">{what}</code> 中将 "nr" 设为 "$"。此
+                时，返回字典中的 "nr" 值即表示快速修复栈大小。
                 "lines" 给出时，忽略除了 "efm" 之外的其它条目。返回的字典中会
-                包含 "items" 项，其值包含所有已解析完成的项目组成的列表。
+                包含 "items" 项，列出所有已解析完成的项目。
 
-                返回值为字典，包含以下条目:
-                        changedtick      <a href="quickfix.html#quickfix-changedtick">quickfix-changedtick</a>  记录列表被修改
-                                        的总次数
-                        context 快速修复列表的上下文，见  <a href="quickfix.html#quickfix-context">quickfix-context</a> 
-                                如果不存在，设为 ""。
-                        id      快速修复列表 ID  <a href="quickfix.html#quickfix-ID">quickfix-ID</a> 。如果不存在，设
-                                为 0。
-                        idx     快速修复列表中的项目索引。如果不存在，设为 0。
-                        items   快速修复列表的所有项目。如果不存在，设为空列
-                                表。
-                        nr      快速修复列表的列表号。如果不存在，设为 0
-                        qfbufnr 快速修复窗口所显示的缓冲区号。如果不存在，设为
-                                0。
-                        size    快速修复列表的项目总数。如果不存在，设为 0。
-                        title   快速修复列表标题文本。如果不存在，设为 ""。
-                        winid   快速修复的窗口 ID  <a href="windows.html#window-ID">window-ID</a> 。如果不存在，设
-                                为 0
+                使用 <code class="special">{what}</code> 参数时，返回字典包含以下条目:
+                        changedtick
+                                列表被修改的总次数  <a href="quickfix.html#quickfix-changedtick">quickfix-changedtick</a> 
+                        context 列表上下文  <a href="quickfix.html#quickfix-context">quickfix-context</a>  不存在则返回 ""
+                        id      快速修复列表 ID  <a href="quickfix.html#quickfix-ID">quickfix-ID</a> 。不存在则返回 0
+                        idx     列表当前选中项索引。不存在则返回 0
+                        items   列表所有项目。不存在则返回空列表
+                        nr      列表在快速修复栈中的编号。不存在则返回 0
+                        qfbufnr 快速修复窗口显示的缓冲区编号。不存在则返回 0
+                        size    列表总项数。不存在则返回 0
+                        title   列表标题文本。不存在则返回 ""
+                        winid   快速修复窗口 ID  <a href="windows.html#window-ID">window-ID</a> 。不存在则返回 0
 
                 (<code class="vim">译者注</code>: getqflist() 大致相当于 getqflist({<code class="badlink">'items'</code>:0}.items )
                 示例 (另见  <a href="quickfix.html#getqflist-examples">getqflist-examples</a> ):
@@ -7373,7 +7366,7 @@ printf(<code class="special">{fmt}</code>, <code class="special">{expr1}</code> 
                         段会自动扩展以容纳该值。
                         'h' 修饰符指示参数为 16 位。
                         'l' 修饰符指示参数为长整型，具体是 32 位还是 64 位取决
-                        于你的系统。
+                        于实际系统。
                         <code class="badlink">'ll'</code> 修饰符指示参数为 64 位。
                         b 和 B 转换标识符不接受宽度修饰符，默认为 64 位整型。
                         这些修饰符通常用处不大。如果类型可从参数推知，修饰符将
@@ -11650,8 +11643,8 @@ winrestview(<code class="special">{dict}</code>)                                
                 5 列 (是的，第 5 列)，而其它设置保持不变。这可用于手动设置光标
                 位置。
 
-                如果你手动修改了  <a href="builtin.html#winsaveview()">winsaveview()</a>  的返回值，结果无法预测。如果
-                窗口大小发生了改变，结果也不会完全可靠。
+                如果手动修改了  <a href="builtin.html#winsaveview()">winsaveview()</a>  的返回值，结果无法预测。如果窗
+                口大小发生了改变，结果也不会完全可靠。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetView()-&gt;winrestview()</code>
@@ -11794,8 +11787,8 @@ xor(<code class="special">{expr}</code>, <code class="special">{expr}</code>)   
 <code class="example">        :if has("patch-7.4.248")</code>
     <code class="note">注意</code> 包含补丁 249 但没有包含补丁 248 是有可能的，只适用于 cherrypick 补丁
     的情况。
-    <code class="note">注意</code> 此形式只可用于 7.4.237 补丁或之后版本，在这之前，你需要检查补丁号和
-    v:version。例如 (要确定是 version 6.2.148 或更新的版本):
+    <code class="note">注意</code> 此形式只可用于 7.4.237 补丁或之后版本，在这之前，需要检查补丁号和
+     <a href="eval.html#v:version">v:version</a> 。例如 (要确定是 version 6.2.148 或更新的版本):
 <code class="example">        :if v:version &gt; 602 || v:version == 602 &amp;&amp; has("patch148")</code>
 <code class="example"></code>
 揭示: 要知道 Vim 是否支持文件名中的反斜杠 (MS-Windows)，
