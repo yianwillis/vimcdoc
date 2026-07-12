@@ -1,4 +1,4 @@
-*popup.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年2月
+*popup.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年7月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -24,6 +24,7 @@
    弹窗滚动条			|popup-scrollbar|
    弹窗不透明度			|popup-opacity|
    弹窗掩码			|popup-mask|
+   弹窗图像			|popup-image|
 4. 示例				|popup-examples|
 
 
@@ -669,8 +670,8 @@ POPUP_CREATE() 参 数				 *popup_create-arguments*
 			没有顶部边框，会自动新增一行内边距放置标题。建议在标题
 			首尾手动填充空格调整位置。
 			给出 "borderhighlight" 时，标题使用顶部边框高亮，其次
-			检查 'highlight'/'winhighlight' 是否覆盖相应设置，最后
-			缺省使用 |hl-PopupTitle| 高亮。
+			检查 "highlight" 参数/'wincolor' 是否覆盖相应设置，最
+			后缺省使用 |hl-PopupTitle| 高亮。
 	wrap		为 TRUE (缺省) 时，开启行回绕。
 	drag		为 TRUE 时，可用鼠标拖动弹窗边框。无边框时无效。一旦开
 			始拖动，如果 "pos" 原本为 "center"，会被自动改为
@@ -688,9 +689,19 @@ POPUP_CREATE() 参 数				 *popup_create-arguments*
 	opacity		弹窗的不透明度，取值范围 0 到 100:
 			0 表示完全透明 (背景文字完全可见)
 			100 表示完全不透明 (缺省，无透明效果)
-			中间值会将弹出窗口背景与下方文字混合，实现半透明。
+			中间值会将弹窗背景与下方文字混合，实现半透明。
 			需要开启 'termguicolors' 才能生效。
 			详见 |popup-opacity|。
+	image		字典，描述要在弹窗中渲染的原始 RGB 或 RGBA 像素缓冲
+			区。设置后，弹窗会根据像素尺寸自动调整其字符单元框大
+			小，无需手动设置 "minwidth"、"minheight"、"maxwidth"
+			或 "maxheight"。字典包含以下键:
+			    data    字节 |Blob|；长度必须为 width*height*3
+				    (RGB) 或 width*height*4 (RGBA)。
+			    width   以像素为单位的图像宽度。
+			    height  以像素为单位的图像高度。
+			设为空字典可移除之前设置的图像。
+			参见 |popup-image|。
 	padding		数值列表，定义弹窗上/右/下/左内边距 (和 CSS 类似)。
 			空列表等价于四周内边距均为 1。内边距区域包围文本，而在
 			边框之内。内边距使用 'wincolor' 高亮。
@@ -701,6 +712,8 @@ POPUP_CREATE() 参 数				 *popup_create-arguments*
 	borderhighlight	边框高亮组名列表。只写一项时，同时用于四边边框。否则应
 			分别列出上/右/下/左边的高亮组。
 			示例: ['顶边色', '右边色', '底边色', '左边色']
+			省略且 "highlight" 参数/'winhighlight' 也未给出时，默
+			认使用 |hl-PopupBorder|。
 	borderchars	边框字符列表，分别对应上/右/下/左边框字符。可选后跟左
 			上/右上/右下/左下角字符。
 			示例: ['-', '|', '-', '|', '┌', '┐', '┘', '└']
@@ -983,6 +996,69 @@ Vim 内置标准过滤器 |popup_filter_menu()| 和 |popup_filter_yesno()|。
 
 要使四个角透明:
 	[[1, 1, 1, 1], [-1, -1, 1, 1], [1, 1, -1, -1], [-1, -1, -1, -1]]
+
+弹 窗 图 像						*popup-image*
+
+弹窗可通过向 |popup_create()| 或 |popup_setoptions()| 传递 "image" 字典来渲染
+图像，以替代文本或叠加在文本之上。调用方应提供已解码的原始像素缓冲区，Vim 则根
+据运行时可用的后端渲染相应图像:
+
+    sixel   在支持 sixel 的终端上输出 DEC sixel DCS 序列。|+image_sixel|。自动
+	    检测；另外还会在屏幕顶端上方裁去一行字符高度，以避免 sixel 导致终
+	    端滚屏。
+    kitty   在支持 kitty 图形协议的终端 (kitty、ghostty、WezTerm、Konsole 等)
+	    上输出 kitty 图形协议 APC 序列。|+image_kitty|。通过主动查询终端自
+	    动检测。
+    GDI     在 MS-Windows GUI 上使用 StretchDIBits 绘制到 GUI 画布。
+	    |+image_gdi|。
+    Cairo   在 GTK GUI (GTK 2 和 GTK 3) 上合成到 cairo_image_surface_t。
+	    |+image_cairo|。
+    GDK     使用 GdkTexture，将图像上传到 GPU 以加快渲染 (仅 GTK 4)。
+	    |+image_gdk|
+
+Vim 本身不会链接 libpng、libjpeg、libwebp 或其他图像解码库。图像格式的解码完全
+由调用方负责；调用方可借助任意外部工具 (GraphicsMagick、ImageMagick、ffmpeg、
+自定义转换器等) 对图像进行转换，将生成的字节数据作为 |Blob| 传给 Vim。
+
+"image" 字典包含以下键:
+    data	字节 |Blob|。长度必须为 width*height*3 (RGB) 或 width*height*4
+		(RGBA)。RGBA 缓冲区会与弹窗背景色进行 Alpha 合成。
+    width	以像素为单位的图像宽度。
+    height	以像素为单位的图像高度。
+
+弹窗会根据像素尺寸和终端/GUI 的字符单元尺寸自动计算其字符单元框大小，因此通常
+无需手动设置 "minwidth"、"minheight"、"maxwidth"、"maxheight"。
+
+如果 RGBA 缓冲区需要与编辑器实际背景色平滑融合，脚本可调用 |getbgcolor()| 获取
+当前背景色 [r, g, b]，与该背景色进行抗锯齿边缘预合成。
+
+最小化 RGB 示例 - 在光标处弹出一个 4x4 的红色方块: >vim
+	let pixels = repeat([0xff, 0x00, 0x00], 4 * 4)->list2blob()
+	call popup_create('', #{
+	      \ image: #{ data: pixels, width: 4, height: 4 },
+	      \ line: 'cursor+1', col: 'cursor',
+	      \ })
+
+实际示例 - 借助 GraphicsMagick 将 PNG 转换为原始 RGB 数据，弹出显示图像: >vim
+	let png = 'cat.png'
+	let dim = split(system('gm identify -format "%w %h" '
+		\ .. shellescape(png)))
+	let [w, h] = [str2nr(dim[0]), str2nr(dim[1])]
+	call system('gm convert ' .. shellescape(png)
+		\ .. ' -depth 8 rgb:/tmp/cat.rgb')
+	let blob = readblob('/tmp/cat.rgb')
+	call popup_create('', #{
+	      \ image: #{ data: blob, width: w, height: h },
+	      \ line: 1, col: 1, border: [], padding: [0, 0, 0, 0],
+	      \ })
+
+图像可通过 |popup_setoptions()| 在运行时替换。新图像缓冲区与当前图像宽高相同
+时，仅会原位替换像素数据，其性能足以配合 |timer| 实现逐帧动画。
+|popup_getoptions()| 返回相同的 "image" 字典；其中 "data" 项为新建 blob 副本，
+与弹窗内部缓冲区相互独立。
+
+要移除之前设置的图像，可传入空字典: >
+	call popup_setoptions(winid, #{image: {}})
 
 ==============================================================================
 4. 示例							*popup-examples*

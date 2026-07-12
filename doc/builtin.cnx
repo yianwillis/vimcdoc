@@ -1,4 +1,4 @@
-*builtin.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年5月
+*builtin.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年7月
 
 		  VIM 参考手册	by Bram Moolenaar
 				译者: Willis
@@ -226,6 +226,7 @@ garbagecollect([{atexit}])	无	释放内存，打破循环引用
 get({list}, {idx} [, {def}])	可变	获取 {list} 的列表项 {idx}，缺省 {def}
 get({dict}, {key} [, {def}])	可变	获取 {dict} 的字典项 {key}，缺省 {def}
 get({func}, {what})		可变	函数引用/偏函数 {func} 的 {what} 属性
+getbgcolor()			列表	获取 [r, g, b] 形式的背景色
 getbufinfo([{buf}])		列表	缓冲区的相关信息
 getbufline({buf}, {lnum} [, {end}])
 				列表	缓冲区 {buf} 第 {lnum} 到 {end} 行文本
@@ -1824,6 +1825,13 @@ complete({startcol}, {matches})				*complete()* *E785*
 		注意 调用本函数后，不应插入任何会导致补全停止的内容。
 		像普通插入模式补全一样，可通过 CTRL-N 和 CTRL-P 选择匹配项。如
 		果设置了相关选项，会显示弹出菜单，见 |ins-completion-menu|。
+		与其他 |ins-completion| 模式不同，此补全激活期间仍可映射
+		CTRL-N 和 CTRL-P。例如，下面的映射会使 CTRL-N 仅移动选择项，而
+		不插入当前匹配项: >
+
+		inoremap <expr> <C-N> complete_info().mode ==# 'eval'
+			\ ? '<Down>' : '<C-N>'
+<
 
 		示例 (使用老式 Vim 脚本): >
 
@@ -2596,7 +2604,7 @@ exists({expr})						*exists()*
 					   :echo exists("l[5]")
 <					   0 >
 					   :echo exists("l[xx]")
-<					   E121: Undefined variable: xx
+<					   E121: 未定义的变量: xx
 					   0
 			&option-name	Vim 选项 (只检查是否存在，而不验证其是
 					否可用)
@@ -2625,7 +2633,8 @@ exists({expr})						*exists()*
 			#group		自动命令组
 			#group#event	在该组里为特定事件定义的自动命令。
 			#group#event#pattern
-					在该组里为特定事件和模式定义的自动命令。
+					在该组里为特定事件和特定模式定义的自动
+					命令。
 			##event		支持在自动命令中使用该事件。
 
 		例如: >
@@ -2899,8 +2908,8 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 
 
 filecopy({from}, {to})					*filecopy()*
-		将文件 {from} 复制到 {to}。返回数值，文件复制成功时返回 |TRUE|，
-		失败时则返回 |FALSE|。
+		将文件 {from} 复制到 {to}。返回数值，文件复制成功时返回
+		|TRUE|，失败时则返回 |FALSE|。
 		如果名为 {to} 的文件已存在，本函数会失败。
 		注意 本函数 (尚) 不能处理目录。
 
@@ -3259,7 +3268,7 @@ foreach({expr1}, {expr2})				*foreach()* *E1525*
 			1. 当前项目的键或索引。
 			2. 当前项目的值。
 		老式匿名函数如果只接受一个参数，不会报错，而 Vim9 匿名函数会报
-		错 "E1106: One argument too many"，参数数目必须匹配。
+		错 "E1106: 1 个参数太多"，参数数目必须匹配。
 		忽略函数返回值。
 
 		所有情况下，返回 {expr1}。
@@ -3296,9 +3305,16 @@ fullcommand({name} [, {vim9}])				*fullcommand()*
 		老式脚本规则。{vim9} 存在且为 TRUE 时使用 Vim9 规则，例如 "en"
 		不用作 "endif" 的简写。
 
-		例如，`fullcommand('s')`、`fullcommand('sub')`、
-		`fullcommand(':%substitute')` 都返回 "substitute"。
-
+		注意: 不会验证命令是否合法。结果取决于 Vim 内部针对各命令的识
+		别规则。例如:
+>vim
+		  echo [fullcommand('s')]		|" ['substitute']
+		  echo [fullcommand('sub')]		|" ['substitute']
+		  echo [fullcommand(': mark word')]	|" ['mark']
+		  echo [fullcommand(': markword')]	|" ['']
+		  echo [fullcommand('en')]		|" ['endif']
+		  echo [fullcommand('en', v:true)]	|" ['']
+<
 		也可用作 |method|: >
 			GetName()->fullcommand()
 <
@@ -3603,6 +3619,22 @@ getbufvar({buf}, {varname} [, {def}])			*getbufvar()*
 			GetBufnr()->getbufvar(varname)
 <
 		返回类型: any，取决于 {varname}
+
+
+getbgcolor()						*getbgcolor()*
+		返回描述当前背景色的 |List|，格式为 [red, green, blue]，每个分
+		量范围为 0..255。
+
+		在 GUI 中 (或置位 'termguicolors' 时)，该值来自 |hl-Normal| 高
+		亮组的背景色。在终端中，该值来自 OSC 11 响应 (也可通过
+		|v:termrbgresp| 获取)。
+		无法获取该值时返回 []，例如终端尚未响应 OSC 11 查询，或
+		|hl-Normal| 未设置背景色时。
+
+		当手动生成 RGB 图像数据，并希望将透明度与终端实际在图像后方显
+		示的颜色混合时，此函数很有用。
+
+		返回类型: list<any>
 
 
 getcellpixels()						*getcellpixels()*
@@ -5277,8 +5309,8 @@ hlset({list})						*hlset()*
 
 
 hostname()						*hostname()*
-		返回运行 Vim 的机器名，类型为字符串。如果机器名超过 256 个字符，
-		会被截短。
+		返回运行 Vim 的机器名，类型为字符串。如果机器名超过 256 个字
+		符，会被截短。
 
 		返回类型: |String|
 
@@ -5536,8 +5568,8 @@ insert({object}, {item} [, {idx}])			*insert()*
 <
 		返回类型: |Number|
 
-							*instanceof()* *E614*
-instanceof({object}, {class})				*E616* *E693*
+
+instanceof({object}, {class})			*instanceof()* *E616* *E693*
 		{object} 参数为 {class} 指定的 |Class|、|Interface| 或类
 		|:type| 别名的直接或间接实例则返回 |TRUE|。
 		{class} 为可变参数时，{object} 为其中一个指定类的实例则返回
@@ -6193,8 +6225,8 @@ map({expr1}, {expr2})					*map()*
 			1. 当前项目的键或索引。
 			2. 当前项目的值。
 		在老式脚本里，匿名函数如果只接受一个参数，不会报错。但在 Vim9
-		脚本里，此时会报错 "E1106: One argument too many"，因为参数数
-		目必须匹配。
+		脚本里，此时会报错 "E1106: 1 个参数太多"，因为参数数目必须匹
+		配。
 
 		函数必须返回项目的新值。例如要改变每个值为 "键-值": >
 			func KeyValue(key, val)
@@ -6687,14 +6719,13 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 				受一个字典项目作为参数，并返回该项目中用于模糊
 				匹配的文本。
 
-		{str} 视作字符串常量，_不_会进行正则表达式匹配。{str} 能接受的
-		最大长度为 256。
+		{str} 视作字符串常量，_不_支持正则表达式匹配。匹配时仅使用
+		{str} 和 {list} 中每个列表项的前 1024 个字符，超出部分被忽略。
 
 		{str} 包含由空白分隔的多个单词时，返回的列表仅包含那些同时包含
 		所有这些单词的字符串。
 
-		如果没有字符串匹配、有出错、或者 {str} 的长度超过 256，返回空
-		列表。
+		如果没有字符串匹配或出错，返回空列表。
 
 		{limit} 给出时，matchfuzzy() 会在 {list} 中寻找不超过指定限额
 		的匹配项，排序后返回。
@@ -7439,14 +7470,12 @@ printf({fmt}, {expr1} ...)				*printf()*
 							*E1500*
 		不能混合位置和非位置参数: >
 		    echo printf("%s%1$s", "One", "Two")
-<		    E1500: Cannot mix positional and non-positional arguments:
-		    %s%1$s
+<		    E1500: 不能混合使用位置参数和非位置参数：%s%1$s
 
 							*E1501*
 		格式化字符串里，位置参数不能被跳过: >
 		    echo printf("%3$s%1$s", "One", "Two", "Three")
-<		    E1501: format argument 2 unused in $-style format:
-		    %3$s%1$s
+<		    E1501: 格式参数 2 在 $-风格格式中未使用：%3$s%1$s
 
 							*E1502*
 		[field-width] (或 [precision]) 可以重用相同的参数: >
@@ -7455,19 +7484,18 @@ printf({fmt}, {expr1} ...)				*printf()*
 
 		但不能用于不同的类型: >
 		    echo printf("%1$d 带宽度 %2$ld 显示为: %1$0*2$d", 1, 2)
-<		    E1502: Positional argument 2 used as field width reused as
-		    different type: long int/int
+<		    E1502: 作为字段宽度的位置参数 2 被重复用作不同类型：
+		    long int/int
 
 							*E1503*
 		使用位置参数时，如果给出了错误位置，报错: >
 		    echo printf("%1$d 带宽度 %2$d 显示为: %1$0*2$.*3$d", 1, 2)
-<		    E1503: Positional argument 3 out of bounds: %1$d 带宽度
-		    %2$d 显示为: %1$0*2$.*3$d
+<		    E1503: 位置参数 3 越界： %1$d 带宽度 %2$d 显示为:
+		    %1$0*2$.*3$d
 
 		有多个错误时，只报首个错误: >
 		    echo printf("%1$0*2$.*3$d %4$d", 1, 2)
-<		    E1503: Positional argument 3 out of bounds: %1$0*2$.*3$d
-		    %4$d
+<		    E1503: 位置参数 3 越界： %1$0*2$.*3$d %4$d
 
 							*E1504*
 		位置参数可以重用: >
@@ -7476,13 +7504,12 @@ printf({fmt}, {expr1} ...)				*printf()*
 
 		但不能用于不同的类型: >
 		    echo printf("%1$s %2$s %1$d", "一", "二")
-<		    E1504: Positional argument 1 type used inconsistently:
-		    int/string
+<		    E1504: 位置参数 1 的类型使用不一致：int/string
 
 							*E1505*
 		格式化字符串的其他杂项错误会报此错: >
 		    echo printf("%1$d 带宽度 %2$d 显示为: %01$*2$.3$d", 1, 2)
-<		    E1505: Invalid format specifier: %1$d 带宽度 %2$d 显示为:
+<		    E1505: 无效的格式说明符： %1$d 带宽度 %2$d 显示为:
 		    %01$*2$.3$d
 
 							*E1507*
@@ -7542,7 +7569,7 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		{仅当编译时加入 |+channel| 特性才有效}
 
 
-prompt_setinterrupt({buf}, {expr})			*prompt_setinterrupt()*
+prompt_setinterrupt({buf}, {expr})		*prompt_setinterrupt()*
 		将提示缓冲区 {buf} 的中断回调设为 {expr}。{expr} 为空串时删除
 		回调。只对 'buftype' 为 "prompt" 的 {buf} 有效。
 		(译者注: {expr} 可为函数名、匿名函数、函数引用或偏函数)
@@ -7699,7 +7726,8 @@ readblob({fname} [, {offset} [, {size}]])		*readblob()*
 		节: >
 			readblob('file.bin', 0, 100)
 <		{size} 为 -1 或省略时，读取从 {offset} 开始的全部数据。
-		Unix 上，本函数也可用于从字符设备中读取数据，须显式指定 {size}。
+		Unix 上，本函数也可用于从字符设备中读取数据，须显式指定
+		{size}。
 		仅当设备支持定位时，才可指定 {offset}。否则必须将其设为零。例
 		如要从串行终端读取 10 个字节: >
 			readblob('/dev/ttyS0', 0, 10)
@@ -7852,7 +7880,7 @@ readfile({fname} [, {type} [, {max}]])			*readfile()*
 		返回类型: list<string> 或 list<any>
 
 
-redraw_listener_add({opts})				*redraw_listener_add()*
+redraw_listener_add({opts})			*redraw_listener_add()*
 		添加回调函数形式的监听器，在重画周期的指定时间执行。
 							*E1571*
 		{opts} 是包含待定义回调函数的字典。必须提供至少一个回调。
@@ -7881,7 +7909,7 @@ redraw_listener_add({opts})				*redraw_listener_add()*
 		返回类型: |Number|
 
 
-redraw_listener_remove({id})				*redraw_listener_remove()*
+redraw_listener_remove({id})			*redraw_listener_remove()*
 		删除先前通过 |redraw_listener_add()| 添加的重画监听器。
 		如果指定 {id} 的监听器不存在，返回 FALSE，成功移除监听器 {id}
 		后返回 TRUE。
@@ -8747,15 +8775,19 @@ server2client({clientid}, {string})			*server2client()*
 		返回类型: |Number|
 
 
-serverlist()						*serverlist()*
+serverlist([{dict}])					*serverlist()*
 		返回以换行符分隔的字符串，包含所有的可用服务器名。
-		如果没有服务器可用或者该信息无法取得，返回空串。另见
-		|clientserver|。
+		如果没有服务器可用或者该信息无法取得，返回空串。
 		{仅当编译时加入 |+clientserver| 特性才有效}
+
+		可选 {dict} 为支持以下选项的 |Dictionary|:
+		    键		类型		含义 ~
+		    list	|Boolean|	返回服务器名组成的字符串列表。
+
 		示例: >
 			:echo serverlist()
 <
-		返回类型: |String|
+		返回类型: |String| 或 list<string>
 
 
 setbufline({buf}, {lnum}, {text})			*setbufline()*
@@ -9034,8 +9066,8 @@ setpos({expr}, {list})					*setpos()*
 		"bufnum" 会是位置标记的一部分。对其它的位置标记，它会用于指定
 		设置位置标记的缓冲区。|bufnr()| 函数可用来把文件名转化为缓冲区
 		号。
-		设置光标和 |''| 位置标记时，忽略 "bufnum"，因为它们和窗口相关，
-		而不是和缓冲区相关。
+		设置光标和 |''| 位置标记时，忽略 "bufnum"，因为它们和窗口相
+		关，而不是和缓冲区相关。
 		不修改跳跃表。
 
 		"lnum" 和 "col" 给出缓冲区里的行列位置。首列列号为 1。"lnum"
@@ -10343,7 +10375,8 @@ synID({lnum}, {col}, {trans})				*synID()*
 synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		返回语法 ID {synID} 的 {what} 属性，类型为字符串。可用于得到语
 		法项目的相关信息。
-		{mode} 可为 "gui"、"cterm" 或 "term"，返回所选显示模式下的属性。
+		{mode} 可为 "gui"、"cterm" 或 "term"，返回所选显示模式下的属
+		性。
 		{mode} 省略或者为非法值时，使用当前激活的显示模式 (GUI、cterm
 		或 term)。
 		|synIDtrans()| 可用来跟随链接的高亮组 (译者注: 建议始终跟随，
@@ -10654,8 +10687,8 @@ taglist({expr} [, {filename}])				*taglist()*
 					TRUE。详见 |static-tag|。
 		可能还有一些额外条目，取决于标签文件的内容: access、
 		implementation、inherits 和 signature。关于这些字段的信息参见
-		ctags 文档。C 代码里还可能出现字段 "struct"、"class" 和 "enum"，
-		它们给出标签所在实体的名字。
+		ctags 文档。C 代码里还可能出现字段 "struct"、"class" 和
+		"enum"，它们给出标签所在实体的名字。
 
 		ex 命令 "cmd" 可以是 ex 搜索模式、行号或者行号后跟字节位置 (译
 		者注: 最后一种是 emacs 标签格式)。
@@ -11629,9 +11662,9 @@ winsaveview()						*winsaveview()*
 			col		光标列号 (注意: 首列为零，和
 					|getcurpos()| 不同)
 			coladd		'virtualedit' 使用的光标列偏移量
-			curswant	垂直移动时会移动到的列 (注意: 首列为零，
-					和 |getcurpos()| 不同)。|$| 命令后，设
-					为等于 |v:maxcol| 的极大值。
+			curswant	垂直移动时会移动到的列 (注意: 首列为
+					零，和 |getcurpos()| 不同)。|$| 命令
+					后，设为等于 |v:maxcol| 的极大值。
 			topline		窗口中显示的首行行号
 			topfill		填充行行数，只用于比较模式
 			leftcol		窗口中显示的首列列号；只在 'wrap' 关闭
@@ -11835,6 +11868,12 @@ hangul_input		编译时加入了韩语输入的支持 |hangul|。
 hpux			Vim 的 HP-UX 版本。
 hurd			Vim 的 GNU/Hurd 版本。
 iconv			可以使用 iconv() 进行转换。
+image			编译时加入了弹窗 "image" 属性支持。见 |popup-image|。
+image_cairo		编译时启用了 Cairo 图像后端 (GTK2 和 GTK3 GUI)。
+image_gdi		编译时启用了 GDI 图像后端 (Windows GUI)。
+image_gdk		编译时启用了 GDK 图像后端 (GTK4 GUI)。
+image_kitty		编译时启用了 kitty 图形协议图像后端 (终端)。
+image_sixel		编译时启用了 DEC sixel 图像后端 (终端)。
 insert_expand		编译时加入了插入模式中 CTRL-X 扩展命令的支持。(总为真)
 job			编译时加入了 |channel| 和 |job| 的支持。
 ipv6			编译时加入了 |channel| 的 IPv6 网络支持。

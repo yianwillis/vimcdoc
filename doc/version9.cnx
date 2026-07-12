@@ -1,4 +1,4 @@
-*version9.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年5月
+*version9.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年7月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -54,7 +54,7 @@ Vim version 9.0 要特别向 Sven Guckes 致敬，在准备发布期间，他于
 世。Sven 是 Vim 的长期支持者。他注册了 vim.org 域名，并创建了首个 Vim 网站。我
 们永远怀念他！
 
-						 *Bram* *Moolenaar* *Bram-Moolenaar*
+					 *Bram* *Moolenaar* *Bram-Moolenaar*
 Vim version 9.1 要特别向 Bram Moolenaar 致敬，他还在全职为 Vim 工作时，不幸于
 2023 年八月三日过世。没有他 30 多年持续不断的引领及开发 Vim 的激情，Vim 项目不
 可能有今日。Bram 对帮助乌干达儿童的 ICCF 基金会一样倾注热情。如果你享受使用
@@ -41772,12 +41772,15 @@ Ex 命令: ~
 
 |hl-ComplMatchIns|	当前插入的补全的匹配文本
 |hl-DiffTextAdd|	改动行内的新增文本
-|hl-MsgArea|		命令行和消息区域的高亮
-|hl-PmenuBorder|	弹出菜单: 弹出边框字符的高亮
-|hl-PmenuMatch|		弹出菜单: 匹配文本的高亮
-|hl-PmenuMatchSel|	弹出菜单: 选中行上的匹配文本的高亮
-|hl-PmenuShadow|	弹出菜单: 弹出阴影的高亮
-|hl-PreInsert|		补全预插入文本的高亮
+|hl-MsgArea|		命令行和消息区域
+|hl-PmenuBorder|	弹出菜单: 边框字符
+|hl-PmenuMatch|		弹出菜单: 匹配文本
+|hl-PmenuMatchSel|	弹出菜单: 选中行上的匹配文本
+|hl-PmenuShadow|	弹出菜单: 阴影
+|hl-Popup|		弹出窗口: 主体部分，缺省链接到 |hl-Pmenu|
+|hl-PopupBorder|	弹出窗口: 边框字符，缺省链接到 |hl-Pmenu|
+|hl-PopupTitle|		弹出窗口: 标题，缺省链接到 |hl-Pmenu|
+|hl-PreInsert|		补全预插入文本
 |hl-TabPanel|		|tabpanel|: 非活动标签页标签
 |hl-TabPanelFill|	|tabpanel|: 填充空间
 |hl-TabPanelSel|	|tabpanel|: 活动标签页标签
@@ -52469,26 +52472,44 @@ Patch 9.1.2148
 
 本小节讨论 9.2 和 9.3 版本之间的改进，工作还在进行中。
 
+GUI ~
+---
+- 新增 GTK 4 GUI 支持 (通过补丁 9.2.0501)。可在编译时通过 `--enable-gui=gtk4`
+  configure 开关打开。
+- 新增 GTK UI 的全屏模式支持 |'go-s'|。
+
 弹出窗口 ~
-------
+--------
 - 支持透明度，见 |popup-opacity|。
 - 'previewpopup' 支持与 'completepopup' 相同的取值 ("align" 除外)。
 - 支持 'completepopup' 选项的 "opacity" 设置。
+- 支持文本属性弹窗的裁剪 |popup-clipwindow|。
+- 补全弹出菜单可用鼠标或键盘滚动 |popupmenu-keys|。
+- 弹窜支持通过 cairo、GDI、kitty 或 sixel 等后端加载图像 |popup-image|。
 
 比较模式 ~
----------
+--------
 进行行内单词级比较时，如果相邻变更之间的间隔很小 (5 字节以内) 且仅包含非单词字
 符，现在会自动合并。这可以避免仅由空白或标点分隔变更时出现的高亮碎片化问题。
 
 受限模式 ~
----------------
+--------
 Vim 在 |restricted-mode| 受限模式下运行时，不再允许使用外部 diff 模式或设置环
 境变量。
 
 也不再允许使用 |:cscope|。
 
+命令 ~
+----
+- |:command-completion-customlist| 可返回字典列表，提供菜单项类型/菜单项额外文
+本/弹窗详细描述/菜单项简写等额外内容。
+- 用户命令参数处理新方式，|:command-nargs| 用 "-nargs=_" 属性能够正确处理可内
+  含空白的单参数命令。
+- 新 |:command| 参数 |:command-completeopt| 可在自定义补全匹配里通过转义空白，
+  正确处理内含空白的参数。
+
 其他 ~
------
+----
 - 新增 |xdg.vim| 脚本，实现完整 XDG 规范兼容。
 - 从 Windows 11 开始，|ConPTY| 支持已视为稳定。
 - 支持用于 |debug-adapter-protocol| 调试适配器协议的 "dap" 通道模式。
@@ -52496,6 +52517,7 @@ Vim 在 |restricted-mode| 受限模式下运行时，不再允许使用外部 di
 - 'listchars' 设置新增 "leadtab" 取值。
 - 优化 |:set+=|、|:set^=|、|:set-=| 对逗号分隔 "键:值" 对的单独处理 (如
    'listchars'、'fillchars'、'diffopt')。
+- |:TOhtml| 命令用 Vim9 语法完全重写，改进性能，也更易维护。
 - |system()| 和 |systemlist()| 函数支持以列表作为首个参数，完全绕过外壳。
 - 允许在 'statusline'、'tabline' 和 'tabpanel' 中通过 |stl-%[FuncName]| 原子实
   现鼠标可点击区域。
@@ -52505,13 +52527,28 @@ Vim 在 |restricted-mode| 受限模式下运行时，不再允许使用外部 di
 - 为 'wildmode' 选项新增 "noinsert" 值，与 'completeopt' 选项保持功能对称。
 - 通道现已支持处理 |Blob| 消息 |channel-open-options|。
 - 'shortmess' 新增 "u" 标志位，可屏蔽撤销、重做的提示信息，参见 |shm-u|。
-- |:command-completion-customlist| 可返回包含 kind/menu/info/abbr 字段的字典列
-  表，供弹出菜单展示。
+- |C-indenting| 优化了注释检测。
+- 'comments' 已定义 C-风格的 "//" 或 "/*" 注释格式时，|%| 命令会跳过注释内的括
+  号配对。
+- |package-hlyank| 新增最后放置区域的可选高亮。
+- 'statusline' 新增 %0{} 项目，可按本义插入表达式结果，不会删除前导空白
+  |stl-%0{|。
+- 会话和视图生成脚本现在使用 Vim9 脚本编写，见 |:mksession|、|:mkview| 和
+  |:mkvimrc|。
+- |term_start()| 的 "term_finish" 选项支持新 "noclose" 值。
 
 平台特定 ~
 -----------------
 - Win32 平台使用 DirectWrite 时，在 'guifont' 中支持指定 OpenType 字体特性
 - 为 MS-Windows 系统补充 strptime() 兼容实现
+- 支持 GTK4 GUI 通过 |gtk-hwaccel| 机制实现硬件加速渲染。
+- 重写 NSIS 安装程序 (Win32):
+  - 支持单用户和单主机安装方式。
+  - 改变了安装目录结构。
+  - 将批处理文件替换为 Vim 启动程序。
+  - 提供将 Vim 目录加入 PATH 的支持。
+  - 提供通过命令行选项自选安装部件的支持。
+  - 将源代码移动到 vim/vim-win32-installer 仓库。
 
 xxd ~
 ---
@@ -52529,6 +52566,11 @@ xxd ~
   通过 |clipboard-providers| 特性重新实现，例见 |wayland-primary-selection|。
 - 在 Unix 上，单文件 Ex 命令的文件名补全，现已将文件名内嵌空格视作文件名的一部
   分，与其他平台行为保持一致。
+- 重写客户-服务器通信套接字服务器后端，改用通道 + JSON 机制。
+- 在 |complete()| 触发的补全里，CTRL-N 和 CTRL-P 现支持插入模式映射。
+- 轮换文件寄存器 |quote#| 可被清空。
+- |serverlist()| 可列出所有可用服务器名。
+
 
 							*added-9.3*
 新增 ~
@@ -52538,12 +52580,15 @@ xxd ~
 函数: ~
 
 |ch_listen()|		在 {address} 上监听
+|getbgcolor()|		以 RGB 值形式返回背景色
 |tabpanel_getinfo()|	获取 |tabpanel| 的当前状态
 |tabpanel_scroll()|	滚动 |tabpanel|
 
 自动命令: ~
 
 |SessionLoadPre|	加载 |Session| 会话文件前
+|TextPutPost|		放置文本后
+|TextPutPre|		放置文本前
 
 选项: ~
 
@@ -52553,6 +52598,7 @@ xxd ~
 'statuslineopt'		'statusline' 的窗口局部附加选项，用于配置高度。
 't_BS'			开始同步更新模式。
 't_ES'			结束同步更新模式。
+'tagsecure'		禁止标签命令打开远程文件。
 'termresize'		处理终端窗口大小调整事件的方法。
 'termsync'		启用终端 DEC 2026 同步模式支持。
 'winhighlight'		局部于窗口的高亮组映射。
@@ -52560,6 +52606,9 @@ xxd ~
 高亮组: ~
 
 |hl-VertSplitNC|	非当前窗口的垂直分隔栏。
+|hl-Popup|		弹窗主体。
+|hl-PopupBorder|	弹窗边框。
+|hl-PopupTitle|		弹窗标题。
 
 ==============================================================================
 补 丁						*patches-9.3* *bug-fixes-9.3*

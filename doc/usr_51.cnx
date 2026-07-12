@@ -117,9 +117,9 @@
 我们当然可以任意选一个键组合，但是用户可能已经将其定义为其它的什么功能了。为了
 使用户能够自己定义在插件中的键盘映射使用的键，我们可以使用 <Leader> 标识: >
 
- 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 20	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
 
-那个 "<Plug>TypecorrAdd;" 会做实际的工作，后面我们还会做更多解释。
+那个 "<Plug>(TypecorrAdd)" 会做实际的工作，后面我们还会做更多解释。
 
 用户可以将 "g:mapleader" 变量设为用户所希望的开始插件映射的键组合。比如假设用
 户这样做: >
@@ -134,14 +134,14 @@
 
 但是如果用户希望定义自己的键操作呢？我们可以用下面的方法来解决: >
 
- 19	if !hasmapto('<Plug>TypecorrAdd;')
- 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 19	if !hasmapto('<Plug>(TypecorrAdd)')
+ 20	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
  21	endif
 
-我们先检查对 "<Plug>TypecorrAdd;" 的映射是否存在。仅当不存在时我们才定义映射
+我们先检查对 "<Plug>(TypecorrAdd)" 的映射是否存在。仅当不存在时我们才定义映射
 "<Leader>a"。这样用户就可以在用户自己的 vimrc 文件中加入: >
 
-	map ,c  <Plug>TypecorrAdd;
+	map ,c  <Plug>(TypecorrAdd)
 
 那么键序列就会是 ",c" 而不是 "_a" 或者 "\a" 了。
 
@@ -169,13 +169,13 @@
 映射则可用 <SID>。它产生一个脚本 ID。在我们的错误更正插件中我们可以做以下的定
 义: >
 
- 22	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ 22	noremap <unique> <script> <Plug>(TypecorrAdd)  <SID>Add
  ...
  26	noremap <SID>Add  :call <SID>Add(expand("<cword>"), true)<CR>
 
 这样当用户键入 "\a" 时，将触发下面的次序: >
 
-	\a  ->  <Plug>TypecorrAdd;  ->  <SID>Add  ->  :call <SID>Add(...)
+	\a  ->  <Plug>(TypecorrAdd)  ->  <SID>Add  ->  :call <SID>Add(...)
 
 如果另一个脚本也定义了映射 <SID>Add，该脚本将产生另一个脚本 ID。所以它定义的映
 射也与前面定义的不同。
@@ -196,10 +196,10 @@
 "Plugin.CVS" 子菜单，并在其中定义 "Plugin.CVS.checkin"，"Plugin.CVS.checkout"
 等菜单项。
 
-注意 为了避免其它映射引起麻烦，在第 28 行使用了 ":noremap"。比如有人可能重新映
-射了 ":call"。在第 24 也用到了 ":noremap"，但我们又希望重新映射 "<SID>Add"。这
+注意 为了避免其它映射引起麻烦，在第 26 行使用了 ":noremap"。比如有人可能重新映
+射了 ":call"。在第 22 也用到了 ":noremap"，但我们又希望重新映射 "<SID>Add"。这
 就是为什么在这儿要用 "<script>"。它允许只执行局部于脚本的映射。
-|:map-<script>| 同样的道理也适用于第 26 行的 ":noremenu"。|:menu-<script>|
+|:map-<script>| 同样的道理也适用于第 24 行的 ":noremenu"。|:menu-<script>|
 
 
 <SID> 和 <Plug>						*using-<Plug>*
@@ -210,9 +210,14 @@
 <Plug>	在脚本外部可见。用于提供给用户自定义按键的映射占位符。<Plug> 是用户无
 	法直接键盘输入的特殊代码。
 	为了尽量避免与其他插件重名，建议映射名为: <Plug>{脚本名}{映射名}。在上
-	例中，脚本名是 "Typecorr"，映射名是 "Add"。并添加分号作为结尾。最终采
-	用 "<Plug>TypecorrAdd;" 作为映射名。命名规则是，仅脚本名和映射名的首字
-	符大写，以便区别名称边界。
+	例中，脚本名是 "Typecorr"，映射名是 "Add"。连接后用括号包围。最终采用
+	"<Plug>(TypecorrAdd)" 作为映射名。使用头字母大写的帕斯卡命名惯例，方便
+	区分开脚本名和映射名。
+
+	注意: "<Plug>" 后的文本完全由插件编写者自由选择，相当随意。可像上例一
+	样使用括号包围并使用帕斯卡大写形式，也可添加 ";" 终止符，如
+	"<Plug>TypeCorrAdd;"，这两种惯例都可保持名称可读而又不会和其他插件引发
+	冲突。但并非必须如此: 只要序列以 "<Plug>" 开头且保持唯一即可。
 
 <SID>	代表脚本 ID，是当前脚本的唯一标识符。Vim 内部会将 <SID> 翻译为形如
 	"<SNR>123_" 的字符串，其中 "123" 为脚本唯一标识数值。因此，函数
@@ -220,6 +225,8 @@
 	则会是 "<SNR>22_Add()"。可用 |:function| 命令看到所有函数的真实名称。
 	<SID> 在映射中的翻译规则完全一致。这就是映射可调用同一脚本内局部函数的
 	原理。
+	注意: 映射在 {rhs} 中出现 <SID> 时，应考虑使用 <script> 参数。
+	|:map-<script>|
 
 
 用 户 命 令
@@ -287,10 +294,10 @@
  16		\ synchronization
  17	var count = 4
  18
- 19	if !hasmapto('<Plug>TypecorrAdd;')
- 20	  map <unique> <Leader>a  <Plug>TypecorrAdd;
+ 19	if !hasmapto('<Plug>(TypecorrAdd)')
+ 20	  map <unique> <Leader>a  <Plug>(TypecorrAdd)
  21	endif
- 22	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
+ 22	noremap <unique> <script> <Plug>(TypecorrAdd)  <SID>Add
  23
  24	noremenu <script> Plugin.Add\ Correction      <SID>Add
  25
@@ -329,7 +336,7 @@
   6	There are currently only a few corrections.  Add your own if you like.
   7
   8	Mappings:
-  9	<Leader>a   or   <Plug>TypecorrAdd;
+  9	<Leader>a   or   <Plug>(TypecorrAdd)
  10		Add a correction for the word under the cursor.
  11
  12	Commands:
@@ -365,7 +372,7 @@ hasmapto()		用来检测插件定义的映射是否已经存在的函数。
 
 map <unique>		如果一个映射已经存在的话，给出警告信息。
 
-noremap <script>	在映射右边仅执行脚本的局部映射，而不检查全局映射。
+noremap <script>	只能用本脚本定义的，以 <SID> 开头的局部映射来重映射。
 
 exists(":Cmd")		检查一个用户命令是否存在。
 
@@ -512,6 +519,36 @@ $VIMRUNTIME 之前！
 要撤销缩进脚本的效果，必须相应地设定 b:undo_indent 变量。
 
 这两个变量使用老式脚本语法，而不是 |Vim9| 语法。
+
+推 荐 风 格					*ft_recommended_style*
+
+文件类型插件或缩进脚本可提供选项，设置该文件类型的推荐或常用但并非强制的风格。
+因为并非所有用户都喜欢这类风格设置，请确保可通过选项关闭相应风格。
+
+应检查两个变量，首先检查文件类型特定的变量，其次检查通用变量，两者都不存在则缺
+省为打开 (1): >
+
+	if get(g:, '<filetype>_recommended_style',
+		\ get(g:, 'filetype_recommended_style', 1))
+	  " set the recommended style options here
+	endif
+
+将 <filetype> 换成实际的文件类型名，如 "python" 文件应用
+`g:python_recommended_style` 变量。
+
+用户可以全局关闭所有文件类型的风格设置: >
+
+	let g:filetype_recommended_style = 0
+
+也可仅选择关闭单个文件类型的风格设置，保持其余类型的打开状态: >
+
+	let g:python_recommended_style = 0
+
+文件类型特定变量应优先于通用变量，方便用户通过 `g:filetype_recommended_style`
+全局关闭所有类型的风格设置，然后将 `g:<filetype>_recommended_style` 设为 1 来
+重新打开单个文件类型的风格设置 (反之亦然)。
+
+使语言能正确工作的必需设置 (而不是风格选择) 不应使用类似的监护变量机制。
 
 
 文 件 名
