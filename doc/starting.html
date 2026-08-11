@@ -47,7 +47,7 @@
 3. 运行 eVim                     <a href="starting.html#evim-keys">evim-keys</a> 
 4. 初始化                        <a href="starting.html#initialization">initialization</a> 
 5. $VIM 和 $VIMRUNTIME           <a href="starting.html#$VIM">$VIM</a> 
-6. 暂停                          <a href="starting.html#suspend">suspend</a> 
+6. 挂起                          <a href="starting.html#suspend">suspend</a> 
 7. 退出                          <a href="starting.html#exiting">exiting</a> 
 8. 保存设置                      <a href="starting.html#save-settings">save-settings</a> 
 9. 视图和会话                    <a href="starting.html#views-sessions">views-sessions</a> 
@@ -55,116 +55,112 @@
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. Vim 参数                                             <b class="vimtag"> <a name="vim-arguments">vim-arguments</a> </b></h4>
-最常见的是启动 Vim 编辑单个文件。使用的命令是
+最常见的 Vim 启动方式是通过以下命令编辑单个文件
 
         vim filename                                    <b class="vimtag"> <a name="-vim">-vim</a> </b>
 
-更一般的，Vim 是这么启动的:
+更通用的启动语法是:
 
         vim [option | filename] ..
 
-选项参数和文件名参数可以混合使用，使用的数目也没有限制。不过，小心带参数的选
-项。
+选项参数和文件名参数可混合使用，数量不限。但要留意带参数的选项。
 
-关于各个 Vi 版本的兼容性，见  <a href="vi_diff.html#cmdline-arguments">cmdline-arguments</a> 。
+关于和各个 Vi 版本的兼容性，见  <a href="vi_diff.html#cmdline-arguments">cmdline-arguments</a> 。
 
-开始编辑时，以下五项可以且只能选一个。
+下述五种方式只能任选一个，用于指定编辑入口:
 
                                                         <b class="vimtag"> <a name="-file">-file</a> </b> <b class="vimtag"> <a name="---">---</a> </b>
-文件名          一个或多个文件名。其中的第一个将成为当前文件并读入缓冲区。光标
-                会定位在缓冲区的第一行。
-                要避免以 '-' 开始的文件名被解释成选项，在文件名列表前加上
-                "--"。例如:
+文件名          指定一或多个文件名。首个文件将成为当前文件读入缓冲区。光标会定
+                位在缓冲区的首行。
+                要避免以 '-' 开头的文件名被误认为选项，可在文件名列表前加上
+                "--" 前缀。例如:
 <code class="example">                        vim -- -filename</code>
-                在 "--" 之后的所有参数被解释为文件名。也就是说，后面不能再跟选
-                项或者 "+command" 参数。
-                关于 MS-Windows 上引号的行为，见  <a href="os_win32.html#win32-quotes">win32-quotes</a> 。
+                "--" 之后的所有参数都会被强制解释为文件名。不再解析其他选项或
+                "+command" 形式的参数。
+                关于 MS-Windows 上的引号解析规则，见  <a href="os_win32.html#win32-quotes">win32-quotes</a> 。
 
                                                         <b class="vimtag"> <a name="--">--</a> </b>
--               该参数有两个含义，取决于是否使用 Ex 模式。
+-               指定单横线参数 '-' 有两个含义，因是否使用 Ex 模式而异。
 
-                以普通模式启动:
+                以普通模式启动时:
 <code class="example">                        vim -</code>
 <code class="example">                        ex -v -</code>
-                开始编辑新缓冲区，并以标准输入读取的文本填充之。通常从标准输入
-                读入的命令现在从标准错误 (stderr) 读入。例如:
+                会从标准输入读取文本内容，载入新建缓冲区。原本从标准输入读入的
+                交互命令，改为从标准错误 (stderr) 流读入。例如:
 <code class="example">                        find . -name "*.c" -print | vim -</code>
 <code class="example"></code>
-                缓冲区被标为已修改，如果试图退出，这会提醒你要先保存文本。如果
-                不想如此，可在 vimrc 中如此设置:
+                缓冲区此时会被标为已修改，这样试图退出时会提醒保存。如果不想触
+                发此提醒，可在 vimrc 中设置:
 <code class="example">                        " 从标准输入读取时不置位 'modified'</code>
 <code class="example">                        au StdinReadPost * set nomodified</code>
 
-                以 Ex 模式启动:
+                以 Ex 模式启动时:
 <code class="example">                        ex -</code>
 <code class="example">                        vim -e -</code>
 <code class="example">                        exim -</code>
 <code class="example">                        vim -E</code>
-                开始编辑时处于安静模式。见  <a href="starting.html#-s-ex">-s-ex</a> 。
+                会以静默模式启动。见  <a href="starting.html#-s-ex">-s-ex</a> 。
 
                                                         <b class="vimtag"> <a name="-t">-t</a> </b> <b class="vimtag"> <a name="-tag">-tag</a> </b>
--t <code class="special">{tag}</code>        一个标签。从标签文件里查找 "tag"。相关的文件成为当前文件，并执
-                行相关的命令。通常用于 C 程序，此时 "tag" 通常是函数名。其效果
-                是，包含该函数的文件称为当前文件，而光标定位在函数的开始处 (见
-                 <a href="tagsrch.html#tags">tags</a> )。
+-t <code class="special">{tag}</code>        指定标签。从标签文件里查找指定 "tag"。标签所在文件将成为当前文
+                件，并执行相关搜索命令定位光标。多用于 C 程序，"tag" 通常是函
+                数名。可一键切换到函数所在文件并跳转到函数定义处 (见  <a href="tagsrch.html#tags">tags</a> )。
 
                                                         <b class="vimtag"> <a name="-q">-q</a> </b> <b class="vimtag"> <a name="-qf">-qf</a> </b>
--q <code class="special">[errorfile]</code>  快速修复模式。名字为 <code class="special">{errorfile}</code> 的文件被读入并显示第一个错
+-q <code class="special">[errorfile]</code>  快速修复模式。读入 <code class="special">{errorfile}</code> 指定的错误文件，并跳转到首个错
                 误。见  <a href="quickfix.html#quickfix">quickfix</a> 。
-                如果不给出 <code class="special">[errorfile]</code>，使用 <a href="options.html#'errorfile'">'errorfile'</a> 选项给定的文件名。其
-                缺省值见 <a href="options.html#'errorfile'">'errorfile'</a>。
+                <code class="special">[errorfile]</code> 省略时，默认使用 <a href="options.html#'errorfile'">'errorfile'</a> 选项给定的文件名。其
+                缺省值见 <a href="options.html#'errorfile'">'errorfile'</a> 文档。
 
-(无)            不带上面四种参数的任何一种，Vim 开始编辑一个新的缓冲区。它是空
-                白的，也不带文件名。
+(无)            不提供以上四类参数时，Vim 会以新空白无名缓冲区开始编辑。
 
 
-启动模式也可以通过使用程序的名字 (替代 "vim") 来指定。具体来说，不同的名字等价
-于给出不同的选项。见下:
-ex       vim -e     以 Ex 模式启动 (见  <a href="intro.html#Ex-mode">Ex-mode</a> )。               <b class="vimtag"> <a name="ex">ex</a> </b>
-exim     vim -E     以增强的 Ex 模式启动 (见  <a href="intro.html#Ex-mode">Ex-mode</a> )。         <b class="vimtag"> <a name="exim">exim</a> </b>
-                    (通常并没有安装)
-view     vim -R     以只读模式启动 (见  <a href="starting.html#-R">-R</a> )。                    <b class="vimtag"> <a name="view">view</a> </b>
-gvim     vim -g     以 GUI 启动 (见  <a href="gui.html#gui">gui</a> )。                      <b class="vimtag"> <a name="gvim">gvim</a> </b>
-gex      vim -eg    以 Ex 模式启动 GUI。                          <b class="vimtag"> <a name="gex">gex</a> </b>
-gview    vim -Rg    以只读模式启动 GUI.                           <b class="vimtag"> <a name="gview">gview</a> </b>
-rvim     vim -Z     和 "vim" 类似，但以受限模式启动 (见  <a href="starting.html#-Z">-Z</a> )     <b class="vimtag"> <a name="rvim">rvim</a> </b>
-rview    vim -RZ    和 "view" 类似，但以受限模式启动。            <b class="vimtag"> <a name="rview">rview</a> </b>
-rgvim    vim -gZ    和 "gvim" 类似，但以受限模式启动。            <b class="vimtag"> <a name="rgvim">rgvim</a> </b>
-rgview   vim -RgZ   和 "gview" 类似，但以受限模式启动。           <b class="vimtag"> <a name="rgview">rgview</a> </b>
-evim     vim -y     简易 Vim: 置位 <a href="options.html#'insertmode'">'insertmode'</a> (见  <a href="starting.html#-y">-y</a> )         <b class="vimtag"> <a name="evim">evim</a> </b>
-eview    vim -yR    和 "evim" 类似，启用只读模式                  <b class="vimtag"> <a name="eview">eview</a> </b>
+通过调用不同程序名 (替代 "vim")，可直接切换启动模式。等价于以下对应选项:
+ex       vim -e     以 Ex 模式启动 (见  <a href="intro.html#Ex-mode">Ex-mode</a> )                 <b class="vimtag"> <a name="ex">ex</a> </b>
+exim     vim -E     以增强版 Ex 模式启动 (见  <a href="intro.html#Ex-mode">Ex-mode</a> )           <b class="vimtag"> <a name="exim">exim</a> </b>
+                    (缺省不安装)
+view     vim -R     以只读模式启动 (见  <a href="starting.html#-R">-R</a> )                      <b class="vimtag"> <a name="view">view</a> </b>
+gvim     vim -g     以 GUI 模式启动 (见  <a href="gui.html#gui">gui</a> )                    <b class="vimtag"> <a name="gvim">gvim</a> </b>
+gex      vim -eg    以 Ex 模式启动 GUI                            <b class="vimtag"> <a name="gex">gex</a> </b>
+gview    vim -Rg    以只读模式启动 GUI                            <b class="vimtag"> <a name="gview">gview</a> </b>
+rvim     vim -Z     类似 "vim"，但以受限模式启动 (见  <a href="starting.html#-Z">-Z</a> )        <b class="vimtag"> <a name="rvim">rvim</a> </b>
+rview    vim -RZ    类似 "view"，但以受限模式启动                 <b class="vimtag"> <a name="rview">rview</a> </b>
+rgvim    vim -gZ    类似 "gvim"，但以受限模式启动                 <b class="vimtag"> <a name="rgvim">rgvim</a> </b>
+rgview   vim -RgZ   类似 "gview"，但以受限模式启动                <b class="vimtag"> <a name="rgview">rgview</a> </b>
+evim     vim -y     简易 Vim: 包括置位 <a href="options.html#'insertmode'">'insertmode'</a> (见  <a href="starting.html#-y">-y</a> )     <b class="vimtag"> <a name="evim">evim</a> </b>
+eview    vim -yR    类似 "evim"，但以只读模式启动                 <b class="vimtag"> <a name="eview">eview</a> </b>
 vimdiff  vim -d     以比较模式启动  <a href="diff.html#diff-mode">diff-mode</a> 
 gvimdiff vim -gd    以比较模式启动 GUI  <a href="diff.html#diff-mode">diff-mode</a> 
 
-程序名字后面还可以有附加的字符，它们都被忽略。例如，你可以用 "gvim-8" 来启动
-GUI。当然，你必须有这个名字的可执行文件。
+程序名后方还追加任意字符，Vim 会忽略额外部分。例如，"gvim-8" 会启动 GUI。前提
+是存在包含该名字的可执行文件。
 
-Unix 上，你通常有一个可执行文件叫 "vim"，并链接该可执行文件到不同的启动名字。
-如果你的系统不支持链接，但是你不想保留该可执行文件的多个备份，可以使用别名。例
-如，在 C shell 后裔版本里:
+Unix 上，通常只有一份名为 "vim" 的可执行文件，并链接该文件到其他各类启动名。
+如果系统不支持链接，又不想复制多份程序，可使用外壳别名等机制。例如，在 C shell
+系列版本里，可用:
 <code class="example">        alias view   vim -R</code>
 <code class="example">        alias gvim   vim -g</code>
 
                                                         <b class="vimtag"> <a name="startup-options">startup-options</a> </b>
-选项参数可以任何顺序给出。单个字母的选项可以在一个连字号后一起给出。在 "--" 参
-数之后，就不能再有任何选项参数了。
+选项参数可以按任意顺序给出。单字母选项可合并写在同一个连字号后。在 "--" 参数之
+后，不再解析任何选项参数。
 
-VMS 上，所有的选项参数假定都是小写的，除非前面有一个正斜杠。这样，"-R" 应该意
-味着恢复而 "-/R" 表示只读。
+VMS 上，所有选项参数默认小写，要大写参数时，需前置斜杠。例如 "-R" 代表味着恢复
+模式、而 "-/R" 代表只读模式。
 
 --help                                                  <b class="vimtag"> <a name="-h">-h</a> </b> <b class="vimtag"> <a name="--help">--help</a> </b> <b class="vimtag"> <a name="-?">-?</a> </b>
 -?
--h              给出使用说明 (帮助) 并退出。
-                关于捕获文本，见  <a href="starting.html#info-message">info-message</a> 。
+-h              显示使用说明 (帮助) 并退出。
+                如需保存输出文本，见  <a href="starting.html#info-message">info-message</a> 。
 
                                                         <b class="vimtag"> <a name="--version">--version</a> </b>
 --version       显示版本信息并退出。和  <a href="various.html#:version">:version</a>  命令的输出结果相同。
-                关于捕获文本，见  <a href="starting.html#info-message">info-message</a> 。
+                如需保存输出文本，见  <a href="starting.html#info-message">info-message</a> 。
 
                                                         <b class="vimtag"> <a name="--noplugin">--noplugin</a> </b>
---noplugin      跳过插件的载入。复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
-                <code class="note">注意</code>  <a href="starting.html#-u">-u</a>  参数可能会屏蔽载入的插件:
-<code class="section">                        参数       载入: vimrc 文件    插件    defaults.vim</code>
+--noplugin      跳过插件加载。复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
+                <code class="note">注意</code>  <a href="starting.html#-u">-u</a>  参数也可能会跳过插件加载，具体差别是:
+<code class="section">                        参数    是否加载: vimrc 文件    插件    defaults.vim</code>
                         (无)                 是         是        是
                         -u NONE              否         否        否
                         -u DEFAULTS          否         否        是
@@ -172,453 +168,446 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
                         --noplugin           是         否        是
 
 --startuptime <code class="special">{fname}</code>                                   <b class="vimtag"> <a name="--startuptime">--startuptime</a> </b>
-                启动时把计时信息写入文件 <code class="special">{fname}</code>。可用于分析载入 .vimrc、插件
-                和打开首个文件的过程中时哪一步最耗时，
-                如果 <code class="special">{fname}</code> 已存在，在后面附加新消息。
+                将启动时的计时信息写入文件 <code class="special">{fname}</code>。可用于分析在加载 .vimrc、
+                加载插件和打开首个文件整个启动过程中的耗时瓶颈。
+                <code class="special">{fname}</code> 已存在时，日志会追加在文件末尾。
                 <code class="notvi">{仅当编译时带有  <a href="various.html#+startuptime">+startuptime</a>  特性才有效}</code>
 
                                                         <b class="vimtag"> <a name="--literal">--literal</a> </b>
---literal       按本义取文件名，不扩展通配符。在 Unix 上不需要，因为那里 Vim
-                总是按本义取文件名的 (外壳程序扩展通配符)。
-                适用于所有名字，包括本参数之前的那些名字。
+--literal       文件名按本义解析，通配符不自动展开。Unix 上无需本参数，因为通
+                配符由外壳程序负责展开，Vim 本身只负责按本义获取文件名。
+                对命令行上所有文件名生效，包括写在它之前的文件名。
 
                                                         <b class="vimtag"> <a name="-+">-+</a> </b>
-+<code class="special">[num]</code>          光标在编辑第一个文件时会定位在第 "num" 行。如果不给出 "num"，
-                光标会定位在最后一行。
++<code class="special">[num]</code>          打开首个文件时，光标定位在第 "num" 行。"num" 省略时默认光标会
+                定位在文件末行。
 
                                                         <b class="vimtag"> <a name="-+%2F">-+/</a> </b>
-+/<code class="special">{pat}</code>         光标在编辑第一个文件时会定位在第一个包含 "pat" 模式的行 (可用
-                的搜索模式可见  <a href="pattern.html#pattern">pattern</a> )。搜索从光标位置开始，这可以是第一行
-                或者来自  <a href="starting.html#viminfo">viminfo</a>  的上次使用的光标位置。要强制从第一行开始搜
-                索，用 "+1 +/pat"。
++/<code class="special">{pat}</code>         打开首个文件时，光标定位在首个匹配 "pat" 模式的行 (可用搜索模
+                式见  <a href="pattern.html#pattern">pattern</a> )。搜索起点是当前光标位置，缺省是首行或来自
+                 <a href="starting.html#viminfo">viminfo</a>  的上次使用的光标位置。要强制从首行开始搜索，可用
+                "+1 +/pat"。
 
 +<code class="special">{command}</code>                                              <b class="vimtag"> <a name="-+c">-+c</a> </b> <b class="vimtag"> <a name="-c">-c</a> </b>
--c <code class="special">{command}</code>    在读入第一个文件后执行命令 <code class="special">{command}</code> (在自动命令和文件的模式行
-                处理之后)。"command" 按 Ex 命令来解释。如果 "command" 包含空
-                格，应该用双引号括起该命令 (取决于使用的外壳)。
-                示例:
+-c <code class="special">{command}</code>    打开首个文件时，在对应文件的自动命令和模式行全部处理完毕后，执
+                行 Ex 命令 <code class="special">{command}</code>。"command" 包含空白时，必须用双引号括起
+                (具体写法取决于所用外壳)。示例:
 <code class="example">                        vim  "+set si"  main.c</code>
 <code class="example">                        vim  "+find stdio.h"</code>
 <code class="example">                        vim  -c "set ff=dos"  -c wq  mine.mak</code>
 
-                <code class="note">注意</code>: 在一个 Vim 命令里，你可以使用不超过 10 个 "+" 或者 "-c"
-                参数。它们的执行按给定的顺序进行。"-S" 参数也被当作 "-c" 参数
-                那样对待。
+                <code class="note">注意</code>: 在一条 Vim 命令里，最多可用 10 组 "+" 或 "-c" 参数。按指
+                定顺序执行。"-S" 参数占用一个 "-c" 名额。
 
 --cmd <code class="special">{command}</code>                                         <b class="vimtag"> <a name="--cmd">--cmd</a> </b>
-                在处理任何 vimrc 文件之前执行命令 <code class="special">{command}</code>。除此以外，和 -c
-                <code class="special">{command}</code> 类似。你可以使用不超过 10 个本命令，不占用 "-c" 命令
-                的数目限制。
+                在读取所有 vimrc 配置文件前，执行命令 <code class="special">{command}</code>。其余行为和
+                "-c <code class="special">{command}</code>" 一致。最多可用 10 组本命令，额度与 "-c" 命令相
+                互独立，互不占用。
 
                                                         <b class="vimtag"> <a name="-S">-S</a> </b>
--S <code class="special">{file}</code>       在第一个文件读入之后，执行脚本 <code class="special">{file}</code>。这是下面这条等价的命令
-                的一个简便方式:
+-S <code class="special">{file}</code>       打开首个文件后，执行脚本 <code class="special">{file}</code>。相当于以下命令的快捷方式:
 <code class="example">                        -c "source {file}"</code>
-                它可以和 "-c" 参数混合使用，也和 "-c" 那样可以使用多次。"-c"
-                参数的 10 个的限制也应用于此。
-                <code class="special">{file}</code> 不能以 "-" 开始。
+                可与 "-c" 参数混用以及多次使用。也适用 "-c" 的 10 条上限约束。
+                <code class="special">{file}</code> 文件名不能以 "-" 开头。
 
-                不要用此形式来执行脚本做事并退出 Vim，你不会看到错误信息。使用
-                 <a href="starting.html#-u">-u</a>  来代替。
+                不适合用来执行脚本再退出 Vim，因为错误信息无法正常察看。应改用
+                 <a href="starting.html#-u">-u</a>  参数。
 
--S              和 "-S Session.vim" 类似。只有在用作最后一个参数或者其后有另外
-                一个 "-" 选项时才会被这么理解。
+-S              单独使用时相当于 "-S Session.vim"。仅当出现在命令末尾或其后有
+                其他 "-" 选项时生效。
 
                                                         <b class="vimtag"> <a name="-r">-r</a> </b>
--r              恢复模式。如果没有文件名参数，列出已有的所有交换文件。如果给出
-                文件名，读入相应的交换文件以恢复以前崩溃的编辑会话。见
+-r              恢复模式。无文件名参数时，列出所有现存交换文件。给出文件名时，
+                读入对应的交换文件，恢复意外崩溃前的编辑会话。见
                  <a href="recover.html#crash-recovery">crash-recovery</a> 。
 
                                                         <b class="vimtag"> <a name="-L">-L</a> </b>
--L              和 -r 相同。
+-L              同  <a href="starting.html#-r">-r</a> 。
 
                                                         <b class="vimtag"> <a name="-R">-R</a> </b>
--R              只读模式。为所有编辑的文件置位 <a href="options.html#'readonly'">'readonly'</a> 选项。你仍然可以编辑
-                缓冲区，但你不能实际覆盖文件。如果你忘记了你处于只读 (View) 模
-                式而试图进行改动，仍然可以在 Ex 命令后面附加感叹号来覆盖文件，
-                比如 ":w!"。<a href="options.html#'readonly'">'readonly'</a> 选项可以用 ":set noro" 复位 (见选项一
-                章， <a href="options.html#options">options</a> )。
-                后来开始的编辑并不自动进入只读模式。调用可执行的 "view" 和给出
-                -R 参数有相同的效果。
-                <a href="options.html#'updatecount'">'updatecount'</a> 选项设为 10000，意味着交换文件不会很经常的自动更
-                新。
-                 <a href="starting.html#-M">-M</a>  可用来禁止修改。
+-R              只读模式。为所有打开的文件置位 <a href="options.html#'readonly'">'readonly'</a> 选项。此模式下，仍可
+                编辑缓冲区，但可避免意外覆盖文件。如果确实忘记处于只读 (View)
+                模式并已做出修改，可在 Ex 命令后附加感叹号强制覆盖文件，如
+                 <a href="editing.html#:w!">:w!</a> 。也可用 `:set noro` 复位 <a href="options.html#'readonly'">'readonly'</a> 选项 (见选项一章，
+                 <a href="options.html#options">options</a> )。后续再编辑文件时，并不自动进入只读模式。直接执行
+                "view" 程序名相当于给出 -R 参数。<a href="options.html#'updatecount'">'updatecount'</a> 选项在该模式下
+                会设为 10000，此时交换文件不会频繁自动更新。要完全禁止修改，可
+                用  <a href="starting.html#-M">-M</a> 。
 
                                                         <b class="vimtag"> <a name="-m">-m</a> </b>
--m              不允许写入修改的部分。复位 <a href="options.html#'write'">'write'</a> 选项，从而屏蔽了文件的写
-                入。不过，之后可以重新置位 <a href="options.html#'write'">'write'</a> 选项来打开写文件的功能。
+-m              禁止写入修改内容。会复位 <a href="options.html#'write'">'write'</a> 选项，从而屏蔽文件写入。但之
+                后可手动重新置位 <a href="options.html#'write'">'write'</a> 选项，恢复写入权限。
 
                                                         <b class="vimtag"> <a name="-M">-M</a> </b>
--M              不允许修改。复位 <a href="options.html#'modifiable'">'modifiable'</a> 选项，从而禁止任何改动。也复位
-                <a href="options.html#'write'">'write'</a> 选项，从而写入文件也被屏蔽。不过，<a href="options.html#'modifiable'">'modifiable'</a> 和
-                <a href="options.html#'write'">'write'</a> 选项都可以被重新设置来允许修改和写入文件。
+-M              完全禁止文件修改。会复位 <a href="options.html#'modifiable'">'modifiable'</a> 选项，从而禁止任何缓冲区
+                改动。同时复位 <a href="options.html#'write'">'write'</a> 选项，屏蔽文件写入。但之后可手动重新置
+                位两个选项，重新允许编辑与保存。
 
                                         <b class="vimtag"> <a name="-Z">-Z</a> </b> <b class="vimtag"> <a name="restricted-mode">restricted-mode</a> </b> <b class="vimtag"> <a name="E145">E145</a> </b> <b class="vimtag"> <a name="E981">E981</a> </b>
--Z              受限模式。使用外部外壳的任何命令都被禁止。这包括使用 <code class="keystroke">CTRL-Z</code> 暂
-                停、":sh"、过滤程序， <a href="builtin.html#system()">system()</a>  函数，反引号扩展 和
-                libcall()。
-                也禁止  <a href="builtin.html#delete()">delete()</a> 、 <a href="builtin.html#rename()">rename()</a> 、 <a href="builtin.html#mkdir()">mkdir()</a> 、  <a href="channel.html#job_start()">job_start()</a> 、
-                 <a href="builtin.html#setenv()">setenv()</a>  和环境变量的设置等等。
-                也禁止 Python、Ruby 和 Lua 接口，因为它们可用来执行外壳命令。
-                Perl 使用安全模块。
-                如果 $SHELL 的最后部分是 "nologin" 或 "false"，会使用 Unix 受
-                限模式。
-                <code class="note">注意</code> 用户仍然可能找到空子来执行外壳命令，这越来越困难了。
+-Z              受限模式。禁止所有调用外部外壳命令功能。这包括使用 <code class="keystroke">CTRL-Z</code> 暂
+                停、 <a href="various.html#:sh">:sh</a> 、过滤程序 ( <a href="change.html#filter">filter</a> )、 <a href="builtin.html#system()">system()</a>  函数，反引号展开
+                ( <a href="editing.html#backtick-expansion">backtick-expansion</a> ) 和  <a href="builtin.html#libcall()">libcall()</a> 。
+                也禁用  <a href="builtin.html#delete()">delete()</a> 、 <a href="builtin.html#rename()">rename()</a> 、 <a href="builtin.html#mkdir()">mkdir()</a> 、 <a href="channel.html#job_start()">job_start()</a> 、
+                 <a href="builtin.html#setenv()">setenv()</a>  和环境变量设置等。
+                同时关闭 Python、Ruby 和 Lua 等程可用来绕过限制执行外壳命令的
+                程序接口，Perl 则仅运行安全模块。
+                在 Unix 上，当 $SHELL 的末尾是 "nologin" 或 "false" 时，会自动
+                启用本受限模式。
+                <code class="note">注意</code> 用户仍然可能找到绕过限制执行外壳命令的方法，只是难度会越
+                来越高。
 
                                                         <b class="vimtag"> <a name="-g">-g</a> </b>
--g              启动 Vim 并进入 GUI 模式。见  <a href="gui.html#gui">gui</a> 。相反的功能可见  <a href="starting.html#-v">-v</a> 。
+-g              以 GUI 模式启动 Vim。见  <a href="gui.html#gui">gui</a> 。相反功能可见  <a href="starting.html#-v">-v</a> 。
 
                                                         <b class="vimtag"> <a name="-v">-v</a> </b>
--v              启动 Ex 进入 Vi 模式。只有在可执行文件名字叫 "ex" 或者 "gvim"
-                的时候才有意义。对于 gvim 而言，即使能够，也不启动 GUI。
+-v              以 Vi 模式启动 Ex。仅当调用程序名为 "ex" 或 "gvim" 时才需要此
+                参数。gvim 使用时会尽可能不启动图形界面。
 
                                                         <b class="vimtag"> <a name="-e">-e</a> </b>
--e              启动 Vim 进入 Ex 模式，见  <a href="intro.html#Ex-mode">Ex-mode</a> ，只有在可执行文件不叫 "ex"
-                的时候才有意义。
+-e              以 Ex 模式启动 Vim，见  <a href="intro.html#Ex-mode">Ex-mode</a> ，仅当调用程序名不为 "ex" 时才
+                需要此参数。
 
                                                         <b class="vimtag"> <a name="-E">-E</a> </b>
--E              启动 Vim 进入增强的 Ex 模式  <a href="intro.html#gQ">gQ</a> 。只有在可执行文件不叫 "exim"
-                的时候才有意义。
+-E              以增强 Ex 模式启动 Vim，见  <a href="intro.html#gQ">gQ</a> 。仅当调用程序名不为 "exim" 时
+                才需要此参数。
 
                                                         <b class="vimtag"> <a name="-s-ex">-s-ex</a> </b>
--s              安静或批处理模式。只有在 Vim 使用 "ex" 名字或者前面以 "-e" 参
-                数启动的时候才有意义。否则的话，见  <a href="starting.html#-s">-s</a> ，后者接受参数，但是本
-                参数不需要。Vim 用来从文件而不是终端读取 Ex 命令并执行之。关闭
-                大多数提示和信息消息，也包括<code class="note">警告</code>和错误消息。
-                以下这些命令的输出仍然显示 (到标准输出 (stdout)):
+-s              静默或批处理模式。仅当调用程序名为 "ex" 名或前置携带  <a href="starting.html#-e">-e</a>  参数
+                时，才解析为本模式。否则为接受参数的  <a href="starting.html#-s">-s</a>  用法。此模式用于从文
+                件而非终端读取并执行 Ex 命令。此时关闭大多数提示、通知、<code class="note">警告</code>和
+                错误消息。以下命令仍然显示输出 (写入标准输出 (stdout)):
                         :print
                         :list
                         :number
-                        :set      显示选项值。
-                如果 <a href="options.html#'verbose'">'verbose'</a> 非零，则消息也会显示 (用于调试，到标准错误
+                        :set (用于查看选项值时)。
+                <a href="options.html#'verbose'">'verbose'</a> 非零时，仍然显示各类消息 (用于调试，写入标准错误流
                 (stderr))。
-                不使用 <a href="options.html#'term'">'term'</a> 和 $TERM。
-                如果 Vim 看起来没有动静，试试输入 "qa!<code class="special">&lt;Enter&gt;</code>"。你不会得到提
-                示，所以你没法看到 Vim 在等待你输入。
-                跳过初始化 (除了通过 "-u" 参数给出的那些脚本)。
+                不考虑 <a href="options.html#'term'">'term'</a> 和 $TERM。
+                如果 Vim 看起来没有动静，可输入 "qa!<code class="special">&lt;Enter&gt;</code>" 强制退出。谨记不
+                会有等待输入的回显提示。
+                会跳过大部分初始化设置 (仅执行通过  <a href="starting.html#-u">-u</a>  参数给出的脚本)。
                 示例:
 <code class="example">                        vim -e -s  &lt; thefilter  thefile</code>
-                相反地，要看到脚本的错误，带  <a href="starting.html#-u">-u</a>  标志位执行文件:
+                如果需要执行脚本但要查看脚本错误，可改用  <a href="starting.html#-u">-u</a>  执行脚本:
 <code class="example">                        vim -u thefilter thefile</code>
 
                                                         <b class="vimtag"> <a name="-b">-b</a> </b>
--b              二进制模式。文件 I/O 只会用 <code class="special">&lt;NL&gt;</code> 来分隔行。<a href="options.html#'expandtab'">'expandtab'</a> 选项被
-                复位。<a href="options.html#'textwidth'">'textwidth'</a> 选项设为 0。<a href="options.html#'modeline'">'modeline'</a> 被复位。<a href="options.html#'binary'">'binary'</a> 选项
-                被置位。这发生在 vimrc/exrc 文件被读入以后，但在读入文件参数列
-                表之前。另见  <a href="editing.html#edit-binary">edit-binary</a> 。
+-b              二进制模式。文件读写仅识别 <code class="special">&lt;NL&gt;</code> 为行尾结束符。复位 <a href="options.html#'expandtab'">'expandtab'</a>
+                选项。<a href="options.html#'textwidth'">'textwidth'</a> 选项设为 0。复位 <a href="options.html#'modeline'">'modeline'</a>。置位 <a href="options.html#'binary'">'binary'</a>
+                选项。这些设置发生时间在执行 vimrc/exrc 后，但在打开参数列表文
+                件前。另见  <a href="editing.html#edit-binary">edit-binary</a> 。
 
                                                         <b class="vimtag"> <a name="-l">-l</a> </b>
 -l              Lisp 模式。置位 <a href="options.html#'lisp'">'lisp'</a> 和 <a href="options.html#'showmatch'">'showmatch'</a> 选项。
 
                                                         <b class="vimtag"> <a name="-A">-A</a> </b>
 -A              阿拉伯语模式。置位 <a href="options.html#'arabic'">'arabic'</a> 选项。
-                {仅当编译时加入  <a href="various.html#+arabic">+arabic</a>  特性才有效 (这也包含  <a href="various.html#+rightleft">+rightleft</a> )。
-                否则 Vim 给出错误信息并退出}
+                {仅当编译时加入  <a href="various.html#+arabic">+arabic</a>  特性才有效 (已内置  <a href="various.html#+rightleft">+rightleft</a>  支
+                持)，否则，如果使用本参数，Vim 直接报错退出}
 
                                                         <b class="vimtag"> <a name="-F">-F</a> </b>
--F              曾用于波斯语模式，此支持已删除。见  <a href="farsi.html#farsi.txt">farsi.txt</a> 。
+-F              曾用于打开波斯语模式，此支持现已删除。见  <a href="farsi.html#farsi.txt">farsi.txt</a> 。
 
                                                         <b class="vimtag"> <a name="-H">-H</a> </b>
 -H              希伯来语模式。置位 <a href="options.html#'hkmap'">'hkmap'</a> 和 <a href="options.html#'rightleft'">'rightleft'</a> 选项。
-                {仅当编译时加入  <a href="various.html#+rightleft">+rightleft</a>  特性才有效。否则 Vim 给出错误信息
-                并退出}
+                {仅当编译时加入  <a href="various.html#+rightleft">+rightleft</a>  特性才有效。否则，如果使用本参
+                数，Vim 直接报错退出}
 
                                                         <b class="vimtag"> <a name="-V">-V</a> </b> <b class="vimtag"> <a name="verbose">verbose</a> </b>
--V[N]           详细。设置 <a href="options.html#'verbose'">'verbose'</a> 选项为 <code class="special">[N]</code> (缺省: 10)。对每个被执行的脚本
-                和读入或写入的 viminfo 文件都会给出消息。可以用来了解启动和退
-                出时发生了什么事情。
+-V[N]           详细输出。将 <a href="options.html#'verbose'">'verbose'</a> 选项设为 <code class="special">[N]</code> (缺省: 10)。会显示所有加载
+                脚本和读写 viminfo 文件时的详细消息。用于排查启动和退出阶段的
+                执行流程。
                 示例:
 <code class="example">                        vim -V8 foobar</code>
 <code class="example"></code>
 -V[N]<code class="special">{filename}</code>
-                类似于 -V 并同时设置 <a href="options.html#'verbosefile'">'verbosefile'</a> 为 <code class="special">{filename}</code>。结果是，消息
-                不显示，而是写到文件 <code class="special">{filename}</code>。<code class="special">{filename}</code> 不能以数字开始。
-                示例:
+                类似 -V，同时将 <a href="options.html#'verbosefile'">'verbosefile'</a> 设为 <code class="special">{filename}</code>。效果是详细消息
+                不在终端上回显，而是写入日志文件 <code class="special">{filename}</code>。不接受以数位开头
+                的 <code class="special">{filename}</code>。示例:
 <code class="example">                        vim -V20vimlog foobar</code>
 
 --log <code class="special">{filename}</code>                                        <b class="vimtag"> <a name="--log">--log</a> </b>
-                开始日志并写入项目到 <code class="special">{filename}</code>。
+                开启日志，将日志项目写入 <code class="special">{filename}</code>。
                 相当于在启动的很早阶段调用了 `ch_logfile(<code class="special">{filename}</code>, <code class="badlink">'ao'</code>)`。
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  和  <a href="various.html#+channel">+channel</a>  特性才有效}</code>
 
                                                         <b class="vimtag"> <a name="-D">-D</a> </b>
--D              调试。在执行脚本的第一个命令的时候进入调试模式。 <a href="repeat.html#debug-mode">debug-mode</a> 
+-D              调试。在执行脚本的首个命令时自动进入调试模式。 <a href="repeat.html#debug-mode">debug-mode</a> 
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  特性才有效}</code>
 
                                                         <b class="vimtag"> <a name="-C">-C</a> </b>
--C              兼容模式。置位 <a href="options.html#'compatible'">'compatible'</a> 选项。你可以用此参数进入
-                <a href="options.html#'compatible'">'compatible'</a> 模式，即使存在 .vimrc 文件也是如此。
-                要<code class="note">注意</code>有些插件或启动脚本里的命令 ":set nocompatible" 总可以超
-                越之，所以你最后还是用了 "nocompatible"。要找出原因:
+-C              兼容模式。置位 <a href="options.html#'compatible'">'compatible'</a> 选项。即使 .vimrc 文件存在，也会强
+                制进入兼容模式，但要<code class="note">注意</code>插件或启动脚本里可通过命令
+                `:set nocompatible` 覆盖。如果仍然进入非兼容模式。可如此找出原
+                因:
 <code class="example">                        :verbose set compatible?</code>
-                有些插件在置位 <a href="options.html#'compatible'">'compatible'</a> 时不能工作，你需要在启动后这样置位
-                之:
+                不少插件无法在置位 <a href="options.html#'compatible'">'compatible'</a> 时工作，可以考虑在启动后再置
+                位。具体方式是:
 <code class="example">                        vim "+set cp" filename</code>
                 另见  <a href="starting.html#compatible-default">compatible-default</a> 。
 
                                                         <b class="vimtag"> <a name="-N">-N</a> </b>
--N              不兼容模式。复位 <a href="options.html#'compatible'">'compatible'</a> 选项。你可以用此参数设置
-                <a href="options.html#'nocompatible'">'nocompatible'</a>，即使不存在 .vimrc 文件或使用 "-u NONE" 时也是
-                如此。
+-N              非兼容模式。复位 <a href="options.html#'compatible'">'compatible'</a> 选项。即使不存在 .vimrc 文件或使
+                用 "-u NONE" 时，也可强制进入非兼容模式。
                 另见  <a href="starting.html#compatible-default">compatible-default</a> 。
 
                                                         <b class="vimtag"> <a name="-y">-y</a> </b> <b class="vimtag"> <a name="easy">easy</a> </b>
--y              简易模式。 <a href="starting.html#evim">evim</a>  和  <a href="starting.html#eview">eview</a>  隐含本参数。开始时置位
-                <a href="options.html#'insertmode'">'insertmode'</a>，并表现的像点击-输入的编辑器那样。设置该参数会执
-                行脚本 $VIMRUNTIME/evim.vim。设置相应的映射，使之和多数点击-输
-                入的编辑器行为类似。见  <a href="starting.html#evim-keys">evim-keys</a> 。如果可能，启动 GUI。
+-y              简易模式。 <a href="starting.html#evim">evim</a>  和  <a href="starting.html#eview">eview</a>  隐含启用本模式。启动时，置位
+                <a href="options.html#'insertmode'">'insertmode'</a>，行为类似普通点击-输入的所见即所得编辑器。设置本
+                参数会执行脚本 $VIMRUNTIME/evim.vim。预设相应映射，适配常见点
+                击-输入编辑器的编辑习惯，见  <a href="starting.html#evim-keys">evim-keys</a> 。环境支持时，会自动启
+                动 GUI。
 
                                                         <b class="vimtag"> <a name="-n">-n</a> </b>
--n              不使用交换文件。在崩溃后因而无法恢复。如果你只想浏览或者在很慢
-                的媒介上 (例如，软盘上) 编辑文件，这也许有用。
-                也可以通过 ":set updatecount=0" 完成。你可以通过给
-                <a href="options.html#'updatecount'">'updatecount'</a> 选项一些值来重新打开，例如 ":set uc=100"。
-                <code class="note">注意</code>: 不用混用 -n 和 -b，使之成为 -nb，这是另一个意思:  <a href="starting.html#-nb">-nb</a> 。
-                执行 vimrc 文件的命令 <code class="emphasis">后</code> ，<a href="options.html#'updatecount'">'updatecount'</a> 才置为 0，但这发生在
-                GUI 初始化之前。因此，该选项会覆盖 vimrc 文件里对
-                <a href="options.html#'updatecount'">'updatecount'</a> 的设置，但不会覆盖 gvimrc 的。见  <a href="starting.html#startup">startup</a> 。
-                如果你想减少对磁盘的访问 (例如在笔记本上)，不要使用 "-n"，而是
-                设置 <a href="options.html#'updatetime'">'updatetime'</a> 和 <a href="options.html#'updatecount'">'updatecount'</a> 为很大的值，然后在需要保存
-                你的工作的时候输入 ":preserve"。这使得你可以从崩溃中恢复。
+-n              不使用交换文件。崩溃后无法恢复。适合在极慢速媒介上 (如软盘) 浏
+                览或编辑文件。
+                `:set updatecount=0` 与此等价。后续可通过给 <a href="options.html#'updatecount'">'updatecount'</a> 选项
+                赋值重新打开交换文件，如 `:set uc=100`。
+                <code class="note">注意</code>: 不能将 -n 和 -b 合并写为 -nb，该组合有其他含义:  <a href="starting.html#-nb">-nb</a> 。
+                <a href="options.html#'updatecount'">'updatecount'</a> 设为 0 的执行时间在 vimrc 脚本执行完毕 <code class="emphasis">后</code> ，但在
+                GUI 初始化之前。因此会覆盖 vimrc 里 <a href="options.html#'updatecount'">'updatecount'</a> 的相关设置，
+                但不会影响 gvimrc 中的设置。见  <a href="starting.html#startup">startup</a> 。
+                只想减少磁盘访问 (如在笔记本上使用) 时，不建议使用 "-n"，可改
+                将 <a href="options.html#'updatetime'">'updatetime'</a> 和 <a href="options.html#'updatecount'">'updatecount'</a> 设为极大值，在需要保存时手动
+                输入  <a href="recover.html#:preserve">:preserve</a> 。保留崩溃恢复的能力。
 
                                                         <b class="vimtag"> <a name="-o">-o</a> </b>
--o[N]           打开 N 个窗口，水平分割。如果没有给出 <code class="special">[N]</code>，为每个文件参数打开
-                一个窗口。如果没有足够的空间，只打开前面数项。如果给出的窗口数
-                超过参数的数目，后面的窗口会编辑空文件。
+-o[N]           打开 N 个水平分割的窗口。[N] 省略时，默认为每个文件参数各自打
+                开一个窗口。如果没有足够空间，只打开前面数项。如果给出的窗口数
+                超过文件参数的数量，靠后的窗口会打开空文件。
 
                                                         <b class="vimtag"> <a name="-O">-O</a> </b>
--O[N]           打开 N 个窗口，垂直分割。此外和 -o 类似。如果命令行上同时给出
-                -o 和 -O 选项，较后的那个决定窗口如何分割。
+-O[N]           打开 N 个垂直分割的窗口。此外和  <a href="starting.html#-o">-o</a>  一致。如果命令行同时给出
+                -o 和 -O 选项，最后给出的参数决定窗口的分割方向。
 
                                                         <b class="vimtag"> <a name="-p">-p</a> </b>
--p[N]           打开 N 个标签页。如果没有给出 <code class="special">[N]</code>，为每个文件参数打开一个标签
-                页。最大标签页数由 <a href="options.html#'tabpagemax'">'tabpagemax'</a> 决定 (缺省为 10)。如果有比参数
-                更多的标签页，后面的标签页会编辑空文件。另见  <a href="tabpage.html#tabpage">tabpage</a> 。
+-p[N]           打开 N 个标签页。[N] 省略时，默认每个文件参数独占一个标签页。
+                最大标签页数由 <a href="options.html#'tabpagemax'">'tabpagemax'</a> 决定 (缺省为 10)。如果给出的标签页
+                数超过文件参数的数量，靠后的标签页会打开空文件。另见
+                 <a href="tabpage.html#tabpage">tabpage</a> 。
 
                                                         <b class="vimtag"> <a name="-T">-T</a> </b>
--T <code class="special">{terminal}</code>   设置终端名为 "terminal"。这影响 Vim 发送给你终端的代码。通常不
-                需要，因为 Vim 能够找到你使用的终端类型 (见  <a href="term.html#terminal-info">terminal-info</a> )。
+-T <code class="special">{terminal}</code>   手动设置终端类型。会影响 Vim 向终端发送的控制序列编码。通常不
+                需要手动设置，Vim 会自动识别终端类型 (见  <a href="term.html#terminal-info">terminal-info</a> )。
 
                                                         <b class="vimtag"> <a name="--not-a-term">--not-a-term</a> </b>
---not-a-term    告知 Vim 用户确定输入和/或输出不连接到终端。可用于避免相关<code class="note">警告</code>
-                和因此发生的两秒延迟。
-                同时也避免了 "Reading from stdin..." 和 "N files to edit" 信
-                息。
+--not-a-term    告知 Vim 标准输入和/或输出不与终端连接。可用于消除相关<code class="note">警告</code>与两
+                秒延迟。
+                同时也抑制 "从标准输入读取..." 和 "还有 N 个文件等待编辑" 等提
+                示信息。
 
 --gui-dialog-file <code class="special">{name}</code>                                <b class="vimtag"> <a name="--gui-dialog-file">--gui-dialog-file</a> </b>
-                使用 GUI 时，原来要显示对话框的地方，会把对话框的标题和消息写
-                到文件 <code class="special">{name}</code> 里。按照需要会创建或附加到文件。只用于测试，用于
-                避免显示不可见的对话框导致测试停滞。
+                使用 GUI 时，原本要弹出对话框的场景会改将对话框标题和消息写入
+                对话文件 <code class="special">{name}</code>。文件不存在时创建，否则会追加。仅用于测试，避
+                免脚本因显示不可见的对话框导致测试卡死。
                 无 GUI 时忽略此参数。
 
                                                         <b class="vimtag"> <a name="--ttyfail">--ttyfail</a> </b>
---ttyfail       标准输入或标准输出不是终端 (tty) 时立即退出。
+--ttyfail       如果标准输入或标准输出不是终端 (tty)，立即退出。
 
                                                         <b class="vimtag"> <a name="-d">-d</a> </b>
--d              以比较模式启动，和  <a href="diff.html#vimdiff">vimdiff</a>  类似。
+-d              以比较模式启动，相当于  <a href="diff.html#vimdiff">vimdiff</a> 。
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+diff">+diff</a>  特性才有效}</code>
 
--d <code class="special">{device}</code>     只出现在 Amiga 上，并且在编译时没有加入  <a href="various.html#+diff">+diff</a>  特性才适用。
-                和 "-dev" 类同。
+-d <code class="special">{device}</code>     <code class="notvi">{仅在 Amiga 平台且编译时未加入  <a href="various.html#+diff">+diff</a>  特性才有效}</code> 同 "-dev"。
                                                         <b class="vimtag"> <a name="-dev">-dev</a> </b>
--dev <code class="special">{device}</code>   只出现在 Amiga 上，打开 <code class="special">{device}</code> 设备，并用来编辑。
-                通常你会使用该参数来设置窗口位置和大小: "-d
-                con:x/y/width/height"，比如 "-d con:30/10/600/150"。但是你可以
-                用之在别的设备上启动编辑，比如，AUX:。
+-dev <code class="special">{device}</code>   <code class="notvi">{仅在 Amiga 平台上有效}</code> 指定 <code class="special">{device}</code> 设备用于编辑打开。
+                常用于设置窗口位置和大小，格式为: "-d con:x/y/width/height"，
+                示例: "-d con:30/10/600/150"。但也可用于指定其他设备 (如 AUX:)
+                启动编辑，
                                                         <b class="vimtag"> <a name="-f">-f</a> </b>
--f              GUI: 不要从启动 Vim 的程序那里断开。'f' 代表 "foreground" (前
-                台)。如果不提供，GUI 分叉 (fork) 出一个新进程，并结束当前的进
-                程。"-f" 应该用于 gvim 被别的程序启动，并且需等待编辑会话完成
-                的场合 (例如，mail 或者 readnews)。如果你希望 gvim 永远不要分
-                叉，在你的  <a href="gui.html#gvimrc">gvimrc</a>  里给 <a href="options.html#'guioptions'">'guioptions'</a> 加上 'f'。
-                小心: "-gf" 可用于在前台启动 GUI，但是 "-fg" 是用来指定前景色
-                的。 <a href="gui_x11.html#gui-fork">gui-fork</a> 
+-f              GUI: 不脱离启动 Vim 的父进程。'f' 代表 "foreground" (前台)。省
+                略时默认 GUI 会分叉 (fork) 出独立运行子进程，并退出当前进程。
+                前台运行适用于其他程序 (如 mail 或 readnews) 启动 gvim 并等待
+                编辑会话完成后继续后续流程的场合。要永久保持 gvim 启动时在前台
+                运行，在  <a href="gui.html#gvimrc">gvimrc</a>  里为 <a href="options.html#'guioptions'">'guioptions'</a> 选项加上 'f' (<code class="vim">译者注</code>: 见
+                 <code class="badlink">go-f</code> ，按照该处建议，应在  <a href="starting.html#vimrc">vimrc</a>  而非  <a href="gui.html#gvimrc">gvimrc</a>  里完成设置)。
+                小心: "-gf" 会在前台启动 GUI，而 "-fg" 指定前景色。 <a href="gui_x11.html#gui-fork">gui-fork</a> 
 
-                Amiga: 打开新窗口时不重启原有 Vim 进程。其他程序启动 Vim 并等
-                待编辑会话完成 (如 mail 或者 readnews) 时必须使用本选项。见
+                Amiga: 打开新窗口时不会重启原有 Vim 进程。其他程序 (如 mail 或
+                readnews) 时启动 Vim 并等待编辑会话完成需使用本选项。见
                  <a href="starting.html#amiga-window">amiga-window</a> 。
 
-                MS-Windows: 不支持此选项。但用已安装的 vim.bat 或 gvim.bat
-                运行 Vim 时就可以如此工作。
+                MS-Windows: 不支持此选项。可借助配套安装的 vim.bat 或 gvim.bat
+                脚本实现相同效果。
 
                                                         <b class="vimtag"> <a name="--nofork">--nofork</a> </b>
---nofork        GUI: 不分叉。和  <a href="starting.html#-f">-f</a>  相同。
+--nofork        GUI: 不分叉。同  <a href="starting.html#-f">-f</a> 。
                                                         <b class="vimtag"> <a name="-u">-u</a> </b> <b class="vimtag"> <a name="E282">E282</a> </b>
--u <code class="special">{vimrc}</code>      读入文件 <code class="special">{vimrc}</code> 执行初始化。跳过多数其他的初始化步骤；见
-                 <a href="starting.html#initialization">initialization</a> 。
+-u <code class="special">{vimrc}</code>      加载脚本文件 <code class="special">{vimrc}</code> 作为初始化配置。跳过其余绝大多数默认初始
+                化步骤；见  <a href="starting.html#initialization">initialization</a> 。
 
-                这可以用来启动 Vim 进入特殊模式，使用特殊的映射和设置。可以用
-                外壳映射来方便使用之。例如，在 C shell 后裔版本里:
+                可使用自定义映射和相关设置，以特殊模式启动 Vim。可搭配外壳别名
+                方便调用 。例如，在 C shell 系列版本里，可用:
 <code class="example">                        alias vimc 'vim -u ~/.c_vimrc \!*'</code>
-                而在 Bash 外壳里:
+                而在 Bash 外壳里，可用:
 <code class="example">                        alias vimc='vim -u ~/.c_vimrc'</code>
-                也可以考虑自动命令；见  <a href="autocmd.html#autocommand">autocommand</a> 。
+                也可考虑通过自动命令实现类似功能；见  <a href="autocmd.html#autocommand">autocommand</a> 。
 
-                如果 <code class="special">{vimrc}</code> 等于 "NONE" (全是大写)，跳过所有文件和环境变量的
-                初始化，这包括 GUI 开始时候  <a href="gui.html#gvimrc">gvimrc</a>  文件的读入。也跳过插件的
-                载入。
+                <code class="special">{vimrc}</code> 为 "NONE" (全大写) 时，跳过所有基于配置文件和环境变量
+                的初始化步骤，GUI 启动时也因此跳过  <a href="gui.html#gvimrc">gvimrc</a>  加载。所有插件均不
+                加载。
 
-                如果 <code class="special">{vimrc}</code> 等于 "NORC" (全是大写)，那么和 "NONE" 基本相同，
-                但不跳过插件的载入。
+                <code class="special">{vimrc}</code> 为 "NORC" (全大写) 时，类似 "NONE"，但仍然加载插件。
 
-                如果 <code class="special">{vimrc}</code> 等于 "DEFAULTS" (全是大写)，那么和 "NONE" 基本相
-                同，但载入  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，其中置位 <a href="options.html#'nocompatible'">'nocompatible'</a>。另见
-                 <a href="starting.html#--clean">--clean</a> 。
+                <code class="special">{vimrc}</code> 为 "DEFAULTS" (全大写) 时，类似 "NONE"，但加载
+                 <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，自动开启 <a href="options.html#'nocompatible'">'nocompatible'</a> (非兼容模式) 及其
+                他设置。另见  <a href="starting.html#--clean">--clean</a> 。
 
-                除了 DEFAULTS 以外，使用 "-u" 参数的副作用是 <a href="options.html#'compatible'">'compatible'</a> 选项
-                缺省是打开的。这可能有意想不到的效果。见 <a href="options.html#'compatible'">'compatible'</a>。
+                "-u" 参数指定非 DEFAULTS 值时，会有缺省打开 <a href="options.html#'compatible'">'compatible'</a> (兼容
+                模式) 的副作用。这可能导致意料之外的行为。见 <a href="options.html#'compatible'">'compatible'</a>。
 
                                                         <b class="vimtag"> <a name="-U">-U</a> </b> <b class="vimtag"> <a name="E230">E230</a> </b>
--U <code class="special">{gvimrc}</code>     在 GUI 启动的时候读入 <code class="special">{gvimrc}</code> 文件并执行初始化。跳过其它的
-                GUI 初始化。如果 <code class="special">{gvimrc}</code> 等于 "NONE"，GUI 初始化过程不读入任
-                何文件。 <a href="gui.html#gui-init">gui-init</a> 
-                特例: 系统菜单文件总会读入。
+-U <code class="special">{gvimrc}</code>     GUI 启动时，加载脚本文件 <code class="special">{gvimrc}</code> 作为初始化配置。跳过其余的
+                GUI 初始化步骤。<code class="special">{gvimrc}</code> 为 "NONE" 时，则完全不读取任何 GUI 配
+                置文件。 <a href="gui.html#gui-init">gui-init</a> 
+                特例: 系统菜单文件总会被加载。
 
                                                         <b class="vimtag"> <a name="-i">-i</a> </b>
--i <code class="special">{viminfo}</code>    使用 "viminfo" 文件而不是缺省的 viminfo 文件。如果使用名字
-                "NONE" (全是大写)，则即使设置了 <a href="options.html#'viminfo'">'viminfo'</a> 或者使用 ":rv" 或
-                ":wv" 的时候，也不读写 viminfo 文件。另见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
+-i <code class="special">{viminfo}</code>    使用指定 <code class="special">{viminfo}</code> 文件而非缺省的 viminfo 文件。参数为 "NONE"
+                (全大写) 时，即使设置 <a href="options.html#'viminfo'">'viminfo'</a> 或执行  <a href="starting.html#:rv">:rv</a>  或  <a href="starting.html#:wv">:wv</a>  时，也不
+                读或写任何 viminfo 文件。另见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
 
                                                         <b class="vimtag"> <a name="--clean">--clean</a> </b>
---clean         类似于 "-u DEFAULTS -U NONE -i NONE":
-                - 跳过文件和环境变量的初始化
-                - 设置 <a href="options.html#'runtimepath'">'runtimepath'</a> 和 <a href="options.html#'packpath'">'packpath'</a> 把主目录项目排除在外 (-u
-                  DEFAULTS 并不发生)。
-                - 载入  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，隐含 <a href="options.html#'nocompatible'">'nocompatible'</a>: 使用 Vim 缺省
-                  值
-                - 不载入  <a href="gui.html#gvimrc">gvimrc</a>  脚本
-                - 不读也不写 viminfo 文件
-                <code class="note">注意</code> 其后的 "-u" 参数会覆盖 "-u DEFAULTS" 的效果。
+--clean         相当于 "-u DEFAULTS -U NONE -i NONE":
+                - 跳过所有基于配置文件和环境变量的初始化步骤
+                - 设置 <a href="options.html#'runtimepath'">'runtimepath'</a> 和 <a href="options.html#'packpath'">'packpath'</a>，将所有主目录下的项目排除在
+                  外 (单纯执行 "-u DEFAULTS" 无此效果)
+                - 加载  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，自动启用 <a href="options.html#'nocompatible'">'nocompatible'</a>: 使用 Vim
+                  缺省行为
+                - 不加载  <a href="gui.html#gvimrc">gvimrc</a>  脚本
+                - 不读写任何 viminfo 文件
+                <code class="note">注意</code> 后续再追加 "-u" 参数时，会覆盖 "-u DEFAULTS" 的效果 (以上
+                第三条)。
 
                                                         <b class="vimtag"> <a name="-x">-x</a> </b>
--x              读写文件都使用加密。会提示密钥，该密钥存在 <a href="options.html#'key'">'key'</a> 选项里。所有
-                的写操作使用该密钥加密文本。'-x' 参数在读文件的时候是不需要
-                的，因为待读取的文件是否经过加密总是会检查的。Vim 会自动询问密
-                钥。 <a href="editing.html#encryption">encryption</a> 
+-x              读写文件时启用加密。启动后会提示密钥，该密钥存入 <a href="options.html#'key'">'key'</a> 选项。
+                后续所有写操作将使用该密钥加密文本。读取已加密文件无需指定本参
+                数，因为 Vim 在文件读取时总会自动识别文件是否加密，并自动请求
+                密钥。 <a href="editing.html#encryption">encryption</a> 
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+cryptv">+cryptv</a>  特性才有效}</code>
 
                                                         <b class="vimtag"> <a name="-X">-X</a> </b>
--X              不试图连接到 X 服务器以取得当前窗口的标题，也不使用 X 剪贴板进
-                行复制/粘贴。这避免了在终端模拟器里运行 Vim 的时候因为慢速的 X
-                服务器连接而导致的漫长的启动时间。
-                 <a href="starting.html#--startuptime">--startuptime</a>  可以帮助你发现是否受此问题影响。
-                只有在 Unix 或 VMS 上并在编译时使用  <a href="various.html#+X11">+X11</a>  特性才有意义。不然
-                该参数被忽略。
-                如果要为特定的终端禁止连接，见 <a href="options.html#'clipboard'">'clipboard'</a> 选项。
-                如果内建了 X11 会话管理协议 (XSMP) 的处理程序，-X 选项也关闭到
-                它的连接，以减少意想不到的延迟。
-                如果后来又希望恢复连接 (比如，客户-服务器间的消息)，调用
-                 <a href="builtin.html#serverlist()">serverlist()</a>  函数。不过，这并不会重新打开 XSMP 的处理。
+-X              不为获取当前窗口标题或使用 X 剪贴板而试图连接 X 服务器。可避免
+                终端模拟器里运行 Vim 时，因连接 X 服务器缓慢导致启动时间过长。
+                可用  <a href="starting.html#--startuptime">--startuptime</a>  判断 X 连接是否是延迟的主要因素。
+                {仅在 Unix 或 VMS 上且当编译时加入  <a href="various.html#+X11">+X11</a>  特性才有效，否则忽略
+                本参数}
+                如只需针对特定终端禁止 X 连接，可见 <a href="options.html#'clipboard'">'clipboard'</a> 选项相关设置。
+                内建 X11 会话管理协议 (XSMP) 处理器支持时，本选项也同时关闭相
+                关连接，因为它同样可能带来较长延迟。
+                之后仍需要恢复连接 (例如用于客户-服务器消息) 时，可调用
+                 <a href="builtin.html#serverlist()">serverlist()</a> ，该函数会按需建立 X 连接 (假定使用 X11 后端)，
+                但不会启用 XSMP 处理器。
 
                                                         <b class="vimtag"> <a name="-Y">-Y</a> </b>
--Y              不试图连接到 Wayland 合成器。只有在 Unix 上并在编译时使用
-                 <a href="various.html#+wayland">+wayland</a>  特性才有意义，不然该参数被忽略。<code class="note">注意</code> 这会使所有依赖
-                Wayland 的功能失效，如剪贴板。
+-Y              不试图连接到 Wayland 合成器。{仅在 Unix 上且当编译时加入
+                 <a href="various.html#+wayland">+wayland</a>  特性才有效，否则忽略本参数}
+                <code class="note">注意</code> 本选项会使所有依赖 Wayland 的功能 如剪贴板) 失效。
 
                                                         <b class="vimtag"> <a name="-s">-s</a> </b>
--s <code class="special">{scriptin}</code>   读入脚本文件 "scriptin"。文件里的字符就如同你输入那样被解释。
-                这和命令 ":source! <code class="special">{scriptin}</code>" 相同。如果在编辑器结束之前就遇
-                到文件尾，后续的字符从键盘读入。只有在不是 Ex 模式启动的时候才
-                工作。见  <a href="starting.html#-s-ex">-s-ex</a> 。另见  <a href="repeat.html#complex-repeat">complex-repeat</a> 。
+-s <code class="special">{scriptin}</code>   读取指定脚本文件 <code class="special">{scriptin}</code>。文件内容视同手动键入的按键。相当
+                于 `:source! <code class="special">{scriptin}</code>`。脚本文件结束而编辑器继续运行时，继续
+                从键盘接收输入。以 Ex 模式启动时无效，参见  <a href="starting.html#-s-ex">-s-ex</a> 。另见
+                 <a href="repeat.html#complex-repeat">complex-repeat</a> 。
 
                                                         <b class="vimtag"> <a name="-w_nr">-w_nr</a> </b>
 -w <code class="special">{number}</code>
 -w<code class="special">{number}</code>      设置 <a href="options.html#'window'">'window'</a> 选项为 <code class="special">{number}</code>。
 
                                                         <b class="vimtag"> <a name="-w">-w</a> </b>
--w <code class="special">{scriptout}</code>  所有你输入的字符记录在 "scriptout" 文件里，直到 Vim 结束为止。
-                这可用于创建一个脚本文件，以后可以用 "vim -s" 或 ":source!" 重
-                新执行之。如果 "scriptout" 文件已经存在，新的字符会附加在其
-                后。另见  <a href="repeat.html#complex-repeat">complex-repeat</a> 。
-                <code class="special">{scriptout}</code> 不能以数字开始。
-                如果要以人类可读的方式记录键入的内容，可用  <a href="channel.html#ch_logfile()">ch_logfile()</a> 。它
-                会添加 "未经处理键输入" 行。另见  <a href="starting.html#--log">--log</a> 。
+-w <code class="special">{scriptout}</code>  录制直到 Vim 结束为止的所有按键输入到 <code class="special">{scriptout}</code> 文件。录制文
+                件可用 "vim -s" 或  <a href="repeat.html#:source!">:source!</a>  重放。<code class="special">{scriptout}</code> 文件存在时，新
+                内容会追加到已有内容之后。另见  <a href="repeat.html#complex-repeat">complex-repeat</a> 。
+                不接受以数位开头的 <code class="special">{scriptout}</code> 文件名。
+                如需以可读性更高的方式记录键入内容，可用  <a href="channel.html#ch_logfile()">ch_logfile()</a> ，记录
+                "原始按键输入" 行。另见  <a href="starting.html#--log">--log</a> 。
 
                                                         <b class="vimtag"> <a name="-W">-W</a> </b>
--W <code class="special">{scriptout}</code>  和 -w 类似，但不是附加，而是覆盖已经存在的文件。
+-W <code class="special">{scriptout}</code>  类似  <a href="starting.html#-w">-w</a> ，但文件存在时覆盖而非追加。
 
 --remote [+<code class="special">{cmd}</code>] <code class="special">{file}</code> ...
-                在另外一个作为服务器的 Vim 里打开 <code class="special">{file}</code>。任何非文件的参数必须
-                在此之前出现。
+                在作为服务器运行的另一 Vim 实例中打开 <code class="special">{file}</code>。所有非文件参数必
+                须写在此参数前面。
                 见  <a href="remote.html#--remote">--remote</a> 。
 
 --remote-silent [+<code class="special">{cmd}</code>] <code class="special">{file}</code> ...
-                和 --remote 类似，但如果找不到服务器，不会抱怨。
+                类似 --remote，但无可用服务器时，不报错。
                 见  <a href="remote.html#--remote-silent">--remote-silent</a> 。
 
 --remote-wait [+<code class="special">{cmd}</code>] <code class="special">{file}</code> ...
-                和 --remote 类似，但等待服务器结束文件的编辑。
+                类似 --remote，但等待服务器结束文件编辑后再返回。
                 见  <a href="remote.html#--remote-wait">--remote-wait</a> 。
 
 --remote-wait-silent [+<code class="special">{cmd}</code>] <code class="special">{file}</code> ...
-                和 --remote-wait 类似，但如果找不到服务器，不会抱怨。
+                类似 --remote-wait，但无可用服务器时，不报错。
                 见  <a href="remote.html#--remote-wait-silent">--remote-wait-silent</a> 。
 
 --servername <code class="special">{name}</code>
-                指定 Vim 服务器的名字，用以向它发送，会用于自己建立之。
+                指定目标 Vim 服务器名，或使当前 Vim 成为指定名称的服务器。
                 见  <a href="remote.html#--servername">--servername</a> 。
 
 --remote-send <code class="special">{keys}</code>
-                向 Vim 服务器发送键码序列 <code class="special">{keys}</code> 并退出。
+                向 Vim 服务器发送键序列 <code class="special">{keys}</code> 后退出。
                 见  <a href="remote.html#--remote-send">--remote-send</a> 。
 
 --remote-expr <code class="special">{expr}</code>
-                在另外一个作为服务器的 Vim 里执行表达式 <code class="special">{expr}</code>。结果在标准输出
-                里显示。
+                在作为服务器运行的另一 Vim 上执行表达式 <code class="special">{expr}</code>。结果写到标准输
+                出。
                 见  <a href="remote.html#--remote-expr">--remote-expr</a> 。
 
---serverlist    输出 Vim 服务器名字的列表并退出。
+--serverlist    输出 Vim 服务器名列表并退出。
                 见  <a href="remote.html#--serverlist">--serverlist</a> 。
 
 --socketid <code class="special">{id}</code>                                         <b class="vimtag"> <a name="--socketid">--socketid</a> </b>
-                只限于 GTK+ GUI Vim。gvim 会试图使用 GtkPlug 机制，这样它就可
-                别的窗口里面运行。详情见  <a href="gui_x11.html#gui-gtk-socketid">gui-gtk-socketid</a> 。
+                <code class="notvi">{仅适用于 GTK+ GUI}</code> 启用 GtkPlug 嵌入机制，使 gvim 在第三方窗
+                口内运行。详见  <a href="gui_x11.html#gui-gtk-socketid">gui-gtk-socketid</a> 。
 
 --windowid <code class="special">{id}</code>                                         <b class="vimtag"> <a name="--windowid">--windowid</a> </b>
-                只限于 Win32 GUI Vim。gvim 会尝试使用窗口 <code class="special">{id}</code> 作为父窗口，这
-                样它就在该窗口内运行。详见  <a href="gui_w32.html#gui-w32-windowid">gui-w32-windowid</a> 。
+                <code class="notvi">{仅适用于 Win32 GUI}</code> 使用窗口 <code class="special">{id}</code> 作为父窗口，使 gvim 在第三
+                方窗口内运行。详见  <a href="gui_w32.html#gui-w32-windowid">gui-w32-windowid</a> 。
 
 --echo-wid                                              <b class="vimtag"> <a name="--echo-wid">--echo-wid</a> </b>
-                只限于 GTK+ GUI Vim。gvim 会在标准输出显示窗口 ID。可以用之使
-                得 gvim 在 kpart 窗口组件里运行。输出格式是:
+                <code class="notvi">{仅适用于 GTK+ GUI}</code> 在标准输出上显示窗口 ID。可用于使 gvim 在
+                kpart 窗口组件内运行。输出格式是:
 <code class="example">                        WID: 12345\n</code>
 <code class="example"></code>
 --display <code class="special">{display}</code>                                     <b class="vimtag"> <a name="--display">--display</a> </b>
-                在 <code class="special">{display}</code> 上运行 Vim，指定连接到 X 服务器而非默认的
-                $DISPLAY。"--display" 长形式仅在 GTK+ 2 或 GTK+ 3 GUI 上支持，
-                另见  <a href="gui_x11.html#-display">-display</a> 。
+                在 <code class="special">{display}</code> 上运行 Vim，连接到该 X 服务器，而非 $DISPLAY 指定
+                的 X 服务器。
+                <code class="notvi">{仅在 GTK+ 2 或 GTK+ 3 GUI 上支持本长形式参数}</code> 另见短形式
+                 <a href="gui_x11.html#-display">-display</a> 。
                 <code class="notvi">{仅当编译时加入  <a href="various.html#+xterm_clipboard">+xterm_clipboard</a>  特性才有效}</code>
 
 --role <code class="special">{role}</code>                                           <b class="vimtag"> <a name="--role">--role</a> </b>
-                只限于 GTK+ 2 GUI。设置主窗口的角色为 <code class="special">{role}</code>。窗口管理器使用窗
-                口角色来唯一表示窗口，从而可以恢复窗口布置等。登录时恢复对话时
-                会自动传递 --role 参数。见  <a href="gui_x11.html#gui-gnome-session">gui-gnome-session</a> 。
+                <code class="notvi">{仅适用于 GTK+ 2 GUI}</code> 设置主窗口角色为 <code class="special">{role}</code>。窗口管理器可依
+                靠此角色唯一标识窗口，用于恢复窗口位置等场景。登录恢复对话时会
+                自动传递本参数。见  <a href="gui_x11.html#gui-gnome-session">gui-gnome-session</a> 。
 
 -P <code class="special">{parent-title}</code>                               <b class="vimtag"> <a name="-P">-P</a> </b> <b class="vimtag"> <a name="MDI">MDI</a> </b> <b class="vimtag"> <a name="E671">E671</a> </b> <b class="vimtag"> <a name="E672">E672</a> </b>
-                只限于 Win32: 指定父应用程序的标题。如果可能，Vim 会找到该程
-                序，并在该应用程序里以 MDI 窗口运行。
-                <code class="special">{parent-title}</code> 必须出现在父应用程序的窗口标题里。确信它足够特
-                殊。
-                <code class="note">注意</code> 现在的实现还很原始。不能适用于所有的应用程序，而且也不能
-                使用菜单。
+                <code class="notvi">{仅适用于 Win32}</code> 指定父应用程序的窗口标题。Vim 会嵌入该应用作
+                为 MDI 子窗口运行 (如果可行)。
+                <code class="special">{parent-title}</code> 必须完整出现在父应用窗口标题中。建议使用足够辨
+                识度的标题文本。
+                <code class="note">注意</code> 目前实现仍不完善。无法适用于所有应用程序，且菜单无法正常
+                使用。
 
 -nb                                                     <b class="vimtag"> <a name="-nb">-nb</a> </b>
 -nb=<code class="special">{fname}</code>
 -nb:<code class="special">{hostname}</code>:<code class="special">{addr}</code>:<code class="special">{password}</code>
-                试图连接到 Netbeans 并成为它的一个编辑器服务器。第二种形式指定
-                一个文件，从该文件里可以读取连接的信息。第三种形式指定
-                Netbeans 需要的机器名、地址和密码信息。 <a href="netbeans.html#netbeans-run">netbeans-run</a> 
-                {仅当编译时加入  <a href="various.html#+netbeans_intg">+netbeans_intg</a>  特性才有效；如果没有 -nb 会使
-                 Vim 退出}
+                尝试连接 Netbeans，作为其内置编辑器服务端。第一种形式使用缺省
+                选项。第二种形式指定配置文件，从中读取连接信息。第三种形式指定
+                Netbeans 连接参数: 机器名、地址和密码信息。 <a href="netbeans.html#netbeans-run">netbeans-run</a> 
+                {仅当编译时加入  <a href="various.html#+netbeans_intg">+netbeans_intg</a>  特性才有效；否则使用本参数会
+                直接使 Vim 退出}
 
-如果可执行文件叫 "view"，Vim 会以可读模式启动。如果你可以创建从 "vim" 到
-"view" 的硬链接或者符号链接，就可以这么用。
-也可以用 "vim -R" 启动只读的 Vim。
+可执行文件名为 "view" 时，Vim 会以可读模式启动。可通过创建从 "vim" 到 "view"
+的硬链接或符号链接实现。等价命令是 "vim -R"。
 
-如果可执行文件叫 "ex"，Vim 会以 "Ex" 模式启动。这意味着它只接受 ":" 命令。不过
-如果给出 "-v" 参数，Vim 仍然会以普通模式启动。
+可执行文件名为 "ex" 时，Vim 会以 "Ex" 模式启动。仅接受 ":" 命令。但搭配 "-v"
+参数时，仍会以普通模式启动。
 
-在 Unix 系统上如果编译时加入 X11 GUI 支持，还可以使用其它参数。见
+在 Unix 系统上，编译时加入 X11 GUI 支持时，还支持额外的 GUI 资源参数。见
  <a href="gui_x11.html#gui-resources">gui-resources</a> 。
 
 </section><hr class="doubleline" /><section class=inner>
@@ -626,114 +615,117 @@ VMS 上，所有的选项参数假定都是小写的，除非前面有一个正�
 从 Workbench 启动 Vim                                   <b class="vimtag"> <a name="workbench">workbench</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-Vim 可以从 Workbench 通过双击其图标启动。这时，启动时使用空白缓冲区。
+从 Workbench (工作台) 可通过双击 Vim 图标启动程序。启动时打开空白缓冲区。
 
-Vim 可以通过 "Project" 图标开始编辑一到多个文件。图标的 "Default Tool" 应该是
-Vim 可执行文件的完整路径。".info" 文件名应该和文本文件的名字相同。通过双击图
-标，Vim 启动时编辑该文件名，并作为当前文件名，读入缓冲区 (如果该文件存在的
-话)。你可以通过点击图标时按住 Shift 键，并在最后一个文件上双击来编辑多个文件。
-所有这些图标的 "Default Tool" 都应该一致。
+也可通过 "Project" 图标启动 Vim 并编辑一到多个文件。该图标的 "Default Tool"
+(默认启动工具) 必须填写 Vim 可执行文件完整路径。".info" 文件应与文本文件同名。
+双击图标后，Vim 启动后，会加载该文件到缓冲区 (如果存在)，并成为当前文件。也可
+按住 Shift 键单击多选图标，最后一个文件上双击，即可一次性打开多个文件。所有图
+标的 "Default Tool" 必须统一。
 
-除了文件名以外，通过 workbench 不可能给 Vim 传递别的参数。
+通过工作台启动 Vim 时，仅能传递文件名，无法传递其他启动参数。
 
 Vim 窗口                                                <b class="vimtag"> <a name="amiga-window">amiga-window</a> </b>
 </section><hr class="singleline" /><section class=inner>
 
-Vim 在启动的 CLI 窗口里运行。如果 Vim 以 "run" 或 "runback" 命令启动，或者 Vim
-通过 workbench 启动的话，它会给自己打开一个窗口。
+Vim 启动时默认在启动它的命令行窗口内运行。但通过 "run" 或 "runback" 命令或从工
+作台启动时，Vim 会打开独立窗口。
 
 技术细节:
-        要打开一个新窗口，要用一点小技巧。一旦 Vim 认识到它不可能在正常的 CLI
-        窗口里运行，它会在 "t:" 建立一个脚本文件。该脚本文件包含 Vim 启动时的
-        相同命令，还有 "endcli" 命令。然后，该脚本通过 "newcli" 命令执行 (这需
-        要 "c:run" 和 "c:newcli" 命令)。脚本文件会保留，直到重启或者你删除它的
-        时候为止。该方法需要 ":sh" 和 ":!" 命令能够正确工作。但如果 Vim 以 -f
-        选项 (前台模式) 启动，就不使用这个方法。原因是，一个程序以 -f 选项启动
-        Vim 时，它等待 Vim 返回。使用这个脚本的技巧，调用程序没法知道 Vim 什么
-        时候真的退出。比如，mail 程序可以使用 -f 选项来启动 Vim，然后等待编辑
-        会话的结束。受其影响，":sh" 和 ":!" 命令在应用 -f 选项的时候不能使用。
+        为了打开一个新窗口，Vim 需要用到一点小技巧。一旦检测到自身不在标准命令
+        行窗口里运行，会在 "t:" 创建一个临时脚本文件。该脚本包含启动 Vim 的原
+        始命令，然后附加 "endcli" 命令。然后通过 "newcli" 命令执行该脚本 (这依
+        赖系统命令 "c:run" 和 "c:newcli")。生成的脚本文件会留存，直到系统重启
+        或用户手动删除为止。 <a href="various.html#:sh">:sh</a>  和  <a href="various.html#:!">:!</a>  命令都依赖该机制才能正确工作。但 Vim
+        以  <a href="starting.html#-f">-f</a>  选项 (前台模式) 启动时，不使用以上方案。因为外部程序以 -f 选项
+        启动 Vim 时会阻塞等待 Vim 返回。脚本机制会导致调用程序无法确定 Vim 何
+        时退出。比如，mail 程序适合使用 -f 选项启动 Vim，并等待编辑会话结束。
+        因此，应用 -f 选项时，":sh" 和 ":!" 命令不可用。
 
-Vim 会自动识别窗口大小，并对窗口的大小调整做出反应。在 Amiga DOS 1.3 里面，建
-议使用 fastfonts 程序 "FF"，来加快显示的重画速度。
+Vim 会自动识别窗口大小，并响应窗口缩放操作。在 Amiga DOS 1.3 里，建议使用加速
+字体工具 "FF" (fastfonts)，提升界面重绘速度。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 运行 eVim                                                    <b class="vimtag"> <a name="evim-keys">evim-keys</a> </b></h4>
-EVim 运行的 Vim 使用了点击-输入的编辑器风格。这和原来的 Vi 的设计大有分别。但
-是对不常用 Vim 的人学习 Vim 命令有帮助。希望他们能发现使用普通模式下的命令会使
-得编辑更为有效。
+eVim 以点击-输入式风格运行 Vim。这与原生 Vi 设计大相径庭。但有助于不常使用 Vim
+难以熟悉其命令的用户。希望用户有机会了解学会使用普通模式命令后，编辑效率会大幅
+提升。
 
-Evim 里，以下选项被改变，不同于缺省值:
+在 eVim 中，以下选项会被修改为非缺省值:
 
-        :set nocompatible       使用 Vim 的改进
-        :set insertmode         大部分时间里保持在插入模式里
-        :set hidden             使得不可见的缓冲区保持载入
-        :set backup             保持备份文件 (VMS 没有)
-        :set backspace=2        退格可以删除任何东西
+        :set nocompatible       使用 Vim 增强特性
+        :set insertmode         缺省常驻插入模式
+        :set hidden             隐藏缓冲区保持加载状态
+        :set backup             生成备份文件 (VMS 除外)
+        :set backspace=2        退格可删除所有内容
         :set autoindent         自动缩进新行
-        :set history=50         保持 50 行的 Ex 命令历史
+        :set history=50         保持 50 条 Ex 命令历史
         :set ruler              显示光标位置
-        :set incsearch          输入模式过程中动态显示部分模式对应的匹配
-        :set mouse=a            在所有模式下使用鼠标
-        :set hlsearch           高亮搜索模式的所有匹配
-        :set whichwrap+=&lt;,&gt;,[,] <code class="special">&lt;Left&gt;</code> 和 <code class="special">&lt;Right&gt;</code> 在换行符上回绕
-        :set guioptions-=a      只限于非 Unix: 不要自动选择
+        :set incsearch          输入搜索模式时实时预览所有匹配项
+        :set mouse=a            所有模式下启用鼠标支持
+        :set hlsearch           高亮当前搜索模式的所有匹配项
+        :set whichwrap+=&lt;,&gt;,[,] <code class="special">&lt;Left&gt;</code> 和 <code class="special">&lt;Right&gt;</code> 可跨行移动光标
+        :set guioptions-=a      <code class="notvi">{仅适用于非 Unix}</code> 关闭自动选择
 
 键盘映射:
-        &lt;<code class="keystroke">CTRL-Q</code>&gt;        退出，如有改动使用  <a href="editing.html#:confirm">:confirm</a>  提示
-        <code class="special">&lt;Down&gt;</code>          在屏幕行而不是文件行间移动
+        &lt;<code class="keystroke">CTRL-Q</code>&gt;        退出，文件有未保存改动时会弹出  <a href="editing.html#:confirm">:confirm</a>  提示
+        <code class="special">&lt;Down&gt;</code>          移动光标时按屏幕行而非文件逻辑行
         <code class="special">&lt;Up&gt;</code>            同上
-        Q               同 "gq"，排版，而不是 Ex 模式
-        <code class="special">&lt;BS&gt;</code>            可视模式: 删除选择
-        <code class="keystroke">CTRL-X</code>          可视模式: 剪切到剪贴板
+        Q               在普通模式下: 同  <a href="change.html#gq">gq</a> ，执行文本排版，而非进入 Ex 模式
+        <code class="special">&lt;BS&gt;</code>            在可视模式下: 删除选中内容
+        <code class="keystroke">CTRL-X</code>          在可视模式下: 剪切到剪贴板
         <code class="special">&lt;S-Del&gt;</code>         同上
-        <code class="keystroke">CTRL-C</code>          可视模式: 复制到剪贴板
+        <code class="keystroke">CTRL-C</code>          在可视模式下: 复制到剪贴板
         <code class="special">&lt;C-Insert&gt;</code>      同上
-        <code class="keystroke">CTRL-V</code>          粘贴到剪贴板 (在任何模式下都可以)
+        <code class="keystroke">CTRL-V</code>          粘贴到剪贴板 (可用于所有模式)
         <code class="special">&lt;S-Insert&gt;</code>      同上
-        <code class="keystroke">CTRL-Z</code>          撤销
-        <code class="keystroke">CTRL-Y</code>          重做
-        <code class="special">&lt;M-Space&gt;</code>       系统菜单
-        <code class="keystroke">CTRL-A</code>          选择所有
-        <code class="special">&lt;C-Tab&gt;</code>         下一个窗口，<code class="keystroke">CTRL-W</code> w
-        <code class="special">&lt;C-F4&gt;</code>          关闭窗口，<code class="keystroke">CTRL-W</code> c
+        <code class="keystroke">CTRL-Z</code>          撤销操作
+        <code class="keystroke">CTRL-Y</code>          重做操作
+        <code class="special">&lt;M-Space&gt;</code>       打开系统菜单
+        <code class="keystroke">CTRL-A</code>          全选文本
+        <code class="special">&lt;C-Tab&gt;</code>         切换到下一个窗口，等价于 <code class="keystroke">CTRL-W</code> w
+        <code class="special">&lt;C-F4&gt;</code>          关闭当前窗口，等价于 <code class="keystroke">CTRL-W</code> c
+        (<code class="vim">译者注</code>: 补遗
+        <code class="keystroke">CTRL-F</code>          仅适用于 GUI: 弹出搜索对话框
+        <code class="keystroke">CTRL-H</code>          仅适用于 GUI: 弹出搜索/替代对话框
+        )
 
-另外:
-- 使用 ":behave mswin"  <a href="gui.html#:behave">:behave</a> 
-- 打开语法高亮
-- 使用文件类型检测。也使用文件类型插件和缩进
-- 在文本文件里，<a href="options.html#'textwidth'">'textwidth'</a> 设为 78
+此外，该模式会:
+- 执行 `:behave mswin`，采用 Windows 标准的鼠标和选择行为  <a href="gui.html#:behave">:behave</a> 
+- 启用语法高亮
+- 开启文件类型检测。包括启用文件类型和缩进插件
+- 将文本文件的 <a href="options.html#'textwidth'">'textwidth'</a> 设为 78
 
-一个提示: 如果你想进入普通模式并可以输入一串命令，使用 <code class="keystroke">CTRL-L</code>。 <a href="insert.html#i_CTRL-L">i_CTRL-L</a> 
+提示: 要进入普通模式并批量输入一串命令，可按下 <code class="keystroke">CTRL-L</code>。 <a href="insert.html#i_CTRL-L">i_CTRL-L</a> 
 
-没有办法停止 "容易模式"，只能退出 Vim。
+本 "简易模式" 无法中途关闭，只有退出 Vim 才能结束此模式。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 初始化                                       <b class="vimtag"> <a name="initialization">initialization</a> </b> <b class="vimtag"> <a name="startup">startup</a> </b></h4>
-本节是关于 Vim 的非 GUI 版本的。关于启动 GUI 的额外初始化步骤，见  <a href="gui_x11.html#gui-fork">gui-fork</a> 。
+本节针对 Vim 的非 GUI 版本。GUI 启动的额外初始化步骤可见  <a href="gui_x11.html#gui-fork">gui-fork</a> 。
 
-启动时，Vim 检查环境变量和文件，并相应设置值。Vim 按以下顺序处理:
+启动时，Vim 会检查环境变量和设置文件，并完成参数初始化。具体处理顺序如下:
 
 1. 设置 <a href="options.html#'shell'">'shell'</a> 和 <a href="options.html#'term'">'term'</a> 选项                  <b class="vimtag"> <a name="SHELL">SHELL</a> </b> <b class="vimtag"> <a name="COMSPEC">COMSPEC</a> </b> <b class="vimtag"> <a name="TERM">TERM</a> </b>
-        环境变量 SHELL，如果存在的话，用来设置 <a href="options.html#'shell'">'shell'</a> 选项。Win32 上，如果没
-        有设置 SHELL 的话，使用 COMSPEC 变量。
-        环境变量 TERM，如果存在的话，用来设置 <a href="options.html#'term'">'term'</a> 选项。不过，后来在启动
-        GUI 时会改变 <a href="options.html#'term'">'term'</a> (下面的第 8 步)。
+        读取环境变量 SHELL (如有) 以设置 <a href="options.html#'shell'">'shell'</a> 选项。Win32 上，SHELL 未设置
+        时会改用 COMSPEC 环境变量。
+        读取环境变量 TERM (如有) 以设置 <a href="options.html#'term'">'term'</a> 选项。后续启动 GUI 后，会重新覆
+        盖 <a href="options.html#'term'">'term'</a> (见下第 8 步)。
 
-2. 处理参数
-        Vim 启动时命令行上给出的选项和文件名被检查。
-         <a href="starting.html#-V">-V</a>  参数可以用来显示或记录下一步发生了什么，用于对初始化进行调试。
-        执行  <a href="starting.html#--cmd">--cmd</a>  参数。
-        为所有的文件创建缓冲区 (但这时还没有载入)。
+2. 处理命令行参数
+        解析启动 Vim 时传入的命令行选项以及文件名。
+        可用  <a href="starting.html#-V">-V</a>  参数显示或记录初始化执行步骤，用于调试启动异常。
+        执行所有  <a href="starting.html#--cmd">--cmd</a>  参数。
+        为所有传入文件创建缓冲区 (暂不读取文件内容)。
 
-3. 根据环境变量和/或文件执行 Ex 命令
-        读入某个环境变量，作为 Ex 命令执行之，多个命令可以用 '|' 或 "<code class="special">&lt;NL&gt;</code>" 分
-        隔。
+3. 执行来自环境变量和/或配置文件的 Ex 命令
+        读入环境变量作为单行 Ex 命令执行时，可用 '|' 或 <code class="special">&lt;NL&gt;</code> 拼接多条命令。
                                                                 <b class="vimtag"> <a name="vimrc">vimrc</a> </b> <b class="vimtag"> <a name="exrc">exrc</a> </b>
-        包含初始化命令的文件叫做 "vimrc" 文件。vimrc 文件的每一行都作为 Ex 命
-        令执行。有时，它也被叫做 "exrc" 文件。它们是同一种类型文件。但是 Vi 一
-        直用 "exrc"。而 "vimrc" 是 Vim 专用的名字。另见  <a href="usr_05.html#vimrc-intro">vimrc-intro</a> 。
+        存放初始化命令的文件统称为 "vimrc" 文件。文件每行都会作为 Ex 命令执
+        行。有时也被称为 "exrc" 文件。两者格式一致。但是 Vi 一直称为 "exrc"。
+        而 "vimrc" 是 Vim 专属命名。另见  <a href="usr_05.html#vimrc-intro">vimrc-intro</a> 。
 
-        保存你个人初始化的地方是:
+        保存用户个人初始化配置文件的路径是:
                 Unix            $HOME/.vimrc、$HOME/.vim/vimrc 或
                                 $XDG_CONFIG_HOME/vim/vimrc
                 MS-Windows      $HOME/_vimrc、$HOME/vimfiles/vimrc 或
@@ -742,43 +734,45 @@ Evim 里，以下选项被改变，不同于缺省值:
                                 $VIM/.vimrc
                 Haiku           $HOME/config/settings/vim/vimrc
 
-        按上述顺序依次寻找，只读入首个成功找到的文件。
+        会按上述顺序依次查找目录，只加载首个成功找到的配置文件。
 
-        推 荐: 把所有的 Vim 配置放在 $HOME/.vim 目录底下 (MS-Windows 则是
-        $HOME/vimfiles)。这样方便复制到别的系统上。
+        推 荐: 将所有 Vim 配置放到 $HOME/.vim 目录下 (MS-Windows 为
+        $HOME/vimfiles)。方便跨设备迁移配置。
 
-        如果 Vim 启动时使用了 "-u filename" 参数，则使用文件 "filename"。直到
-        第四步以前的所有初始化都被跳过。不设置  <a href="starting.html#$MYVIMRC">$MYVIMRC</a>  和  <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  (但如
-        果  <code class="badlink">rtp</code>  被更新， <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  会被设置)。
-        "vim -u NORC" 可以用来跳过这些初始化，而且不读入任何文件。
-        "vim -u NONE" 同时也跳过插件的载入。 <a href="starting.html#-u">-u</a> 
+        Vim 启动时使用 "-u filename" 参数时，加载 "filename"，但跳过本阶段后面
+        到第四步前的全部初始化步骤。这包括跳过  <a href="starting.html#$MYVIMRC">$MYVIMRC</a>  和  <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  的设
+        置 (但修改  <code class="badlink">rtp</code>  后，仍会设置  <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a> )。
+        "vim -u NORC" 也跳过相同的初始化步骤，而且不加载任何配置文件。
+        "vim -u NONE" 同样如此，而且跳过插件的加载。 <a href="starting.html#-u">-u</a> 
 
-        如果 Vim 启动时使用了 "-s" 参数，所有直到第四步以前的所有初始化都被跳
-        过。只有 "-u" 选项会被解释。
+        通过 "-s" 参数以 Ex 模式启动 Vim 时，也跳过本阶段后面到第四步前的全部
+        初始化步骤。仅解析 "-u" 选项。
 
-        此步骤完成后， <a href="eval.html#v:vim_did_init">v:vim_did_init</a>  变量设置为 1。
+        此阶段完成后， <a href="eval.html#v:vim_did_init">v:vim_did_init</a>  变量设置为 1 (<code class="vim">译者注</code>: 包括使用  <a href="starting.html#-u">-u</a>  和
+         <a href="starting.html#-s-ex">-s-ex</a>  的情景)。
 
                                                         <b class="vimtag"> <a name="evim.vim">evim.vim</a> </b>
-     a. 如果 Vim 以  <a href="starting.html#evim">evim</a>  或  <a href="starting.html#eview">eview</a>  之名启动，或带上  <a href="starting.html#-y">-y</a>  参数，载入
-        $VIMRUNTIME/evim.vim 脚本。
+     a. 使用  <a href="starting.html#evim">evim</a>  或  <a href="starting.html#eview">eview</a>  程序名启动 Vim、或使用  <a href="starting.html#-y">-y</a>  参数时，加载
+        $VIMRUNTIME/evim.vim 脚本，进入简易模式。
                                                         <b class="vimtag"> <a name="system-vimrc">system-vimrc</a> </b>
      b. 对 Unix、MS-Windows、VMS、Macintosh 和 Amiga，读入系统 vimrc 文件执行
-        初始化。该文件的路径可见于 ":version" 命令。多数情况下，它是
-        "$VIM/vimrc"。<code class="note">注意</code> 该文件 <code class="emphasis">总</code> 是以 <a href="options.html#'compatible'">'compatible'</a> 模式读入的，因为自动复
-        位 <a href="options.html#'compatible'">'compatible'</a> 在之后才发生。如果你喜欢，加上 ":set nocp" 命令。对
-        Macintosh，读入 $VIMRUNTIME/macmap.vim。
+        初始化。 <a href="various.html#:version">:version</a>  命令可查看该文件路径。通常是 "$VIM/vimrc"。<code class="note">注意</code> <code class="emphasis">总</code> 
+        是使用 <a href="options.html#'compatible'">'compatible'</a> 模式加载该脚本，因为兼容模式自动关闭逻辑在其后发
+        生。如需关闭，可手动加上 `:set nocp` 命令。
+        对 Macintosh 平台，额外加载 $VIMRUNTIME/macmap.vim。
 
                         <b class="vimtag"> <a name="VIMINIT">VIMINIT</a> </b> <b class="vimtag"> <a name=".vimrc">.vimrc</a> </b> <b class="vimtag"> <a name="_vimrc">_vimrc</a> </b> <b class="vimtag"> <a name="EXINIT">EXINIT</a> </b> <b class="vimtag"> <a name=".exrc">.exrc</a> </b> <b class="vimtag"> <a name="_exrc">_exrc</a> </b>
                         <b class="vimtag"> <a name="$MYVIMRC">$MYVIMRC</a> </b> <b class="vimtag"> <a name="$MYVIMDIR">$MYVIMDIR</a> </b>
-     c. 在五个地方依次搜索初始化命令。第一个找到的地方被使用，余者被忽略。
-         <a href="starting.html#$MYVIMRC">$MYVIMRC</a>  环境变量被设为最先找到的文件，除非使用 VIMINIT 时
-         <a href="starting.html#$MYVIMRC">$MYVIMRC</a>  已被设置。
-         <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  环境变量被设为个人的 <a href="options.html#'rtp'">'rtp'</a> 目录，但不会验证此目录是否真正
-        存在。
+     c. 在以下五个位置，依次搜索初始化配置。只加载首个成功找到的配置，忽略其
+        余位置。
+         <a href="starting.html#$MYVIMRC">$MYVIMRC</a>   环境变量被设为首个找到的配置文件，但检查 VIMINIT 时如果该
+                    环境变量已被设置，不会覆盖原值。
+         <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  环境变量被设为用户 <a href="options.html#'rtp'">'rtp'</a> 目录 (<code class="vim">译者注</code>: 具体实现是用 <a href="options.html#'rtp'">'rtp'</a>
+        首个目录，但通常没有歧义)，但不会验证该目录是否真实存在。
 
         I   环境变量 VIMINIT (另见  <a href="starting.html#compatible-default">compatible-default</a> ) (*)
-            $VIMINIT 的值作为 Ex 命令行来使用。
-        II  用户 vimrc 文件:
+            $VIMINIT 值直接作为 Ex 命令行执行。
+        II  用户 vimrc 配置文件:
                     "$HOME/.vimrc"                (用于 Unix) (*)
                     "$HOME/.vim/vimrc"            (用于 Unix) (*)
                     "$XDG_CONFIG_HOME/vim/vimrc"  (用于 Unix) (*)
@@ -791,23 +785,22 @@ Evim 里，以下选项被改变，不同于缺省值:
                     "$VIM/_vimrc"                 (用于 Win32) (*)
                     "$HOME/config/settings/vim/vimrc"   (用于 Haiku) (*)
 
-                <code class="note">注意</code>: 对 Unix 和 Amiga 而言，如果 ".vimrc" 不存在，则尝试
-                "_vimrc"。因为有可能使用了 MS-DOS 兼容的文件系统。
-                对 MS-Windows 而言，".vimrc" 在 "_vimrc" 之后检查，因为可
-                能可以使用长文件名。
-                <code class="note">注意</code>: 对 Win32 而言，先检查 "$HOME"。如果那里没有 "_vimrc" 或
-                ".vimrc"，再找 "$VIM"。如果 $VIM 没有设置，见  <a href="starting.html#$VIM">$VIM</a> 。
+                <code class="note">注意</code>: 对 Unix 和 Amiga，".vimrc" 不存在时，会再尝试 "_vimrc"，
+                因为有可能使用 MS-DOS 兼容文件系统。而对 MS-Windows 则相反，先
+                检查 "_vimrc"，再检查 ".vimrc"，因为有可能使用长文件名环境。
+                <code class="note">注意</code>: 对 Win32，先检查 "$HOME"。无 "_vimrc" 或 ".vimrc" 时，再
+                检索 "$VIM"。$VIM 未定义的处理见  <a href="starting.html#$VIM">$VIM</a> 。
         III 环境变量 EXINIT。
-            $EXINIT 的值作为 Ex 命令行来使用。
-        IV  用户 exrc 文件。和用户 vimrc 文件一样，只不过 "vimrc" 被 "exrc" 代
-            替而已。但只会使用 ".exrc" 或 "_exec" 两者之一，取决于不同系统。而
-            且不适用 (*)！
-        V   缺省 vimrc 文件，$VIMRUNTIME/defaults.vim。它设置选项值，并执行
-            "syntax on" 和 "filetype on" 命令，这是绝大多数新用户所需要的。见
-             <a href="starting.html#defaults.vim">defaults.vim</a> 。
+            $EXINIT 值直接作为 Ex 命令行执行。
+        IV  用户 exrc 配置文件。
+            和用户 vimrc 处理方式类似，仅将 "vimrc" 替换为 "exrc"。同样会根据
+            系统选用 ".exrc" 和 "_exec" 两者之一。而且 (*) <code class="note">备注</code>不适用！
+        V   缺省 vimrc 配置文件，$VIMRUNTIME/defaults.vim。
+            内置基础选项配置，并执行 `syntax on` 和 `filetype on` 命令，适配绝
+            大多数新手使用。见  <a href="starting.html#defaults.vim">defaults.vim</a> 。
 
-     d. 如果打开 <a href="options.html#'exrc'">'exrc'</a> 选项 ( <code class="emphasis">并非</code> 缺省)，在当前目录搜索三个文件。最先找到的
-        被使用，其余的忽略。
+     d. 打开 <a href="options.html#'exrc'">'exrc'</a> 选项时 ( <code class="emphasis">并非</code> 缺省)，在当前目录搜索以下三个文件。只加载首
+        个成功找到的配置，忽略其余位置。
         -  文件 ".vimrc" (用于 Unix、Amiga) (*)
                 "_vimrc" (用于 Win32) (*)
         -  文件 "_vimrc" (用于 Unix、Amiga) (*)
@@ -815,597 +808,580 @@ Evim 里，以下选项被改变，不同于缺省值:
         -  文件 ".exrc"  (用于 Unix、Amiga)
                 "_exrc"  (用于 Win32)
 
-     (*) 如果使用该文件或环境变量，<a href="options.html#'compatible'">'compatible'</a> 缺省被关闭。见
+     (*) 使用带此标记的文件或环境变量时，缺省关闭 <a href="options.html#'compatible'">'compatible'</a>。见
           <a href="starting.html#compatible-default">compatible-default</a> 。
 
-     <code class="note">备注</code>:  <a href="if_mzsch.html#mzscheme">mzscheme</a>  接口在 vimrc 文件载入后初始化。此后再改变 <a href="options.html#'mzschemedll'">'mzschemedll'</a>
-     不会有效果。
+     <code class="note">备注</code>: 启用  <a href="if_mzsch.html#mzscheme">mzscheme</a>  接口时，其初始化发生在 vimrc 加载之后。因此，在后续
+     阶段再修改 <a href="options.html#'mzschemedll'">'mzschemedll'</a> 不会生效。
 
-4. 载入插件脚本。                                               <b class="vimtag"> <a name="load-plugins">load-plugins</a> </b>
-        相当于执行如下命令:
+4. 加载插件脚本。                                               <b class="vimtag"> <a name="load-plugins">load-plugins</a> </b>
+        相当于执行以下命令:
 <code class="example">                :runtime! plugin/**/*.vim</code>
-        结果是，<a href="options.html#'runtimepath'">'runtimepath'</a> 选项下的所有目录会搜索 "plugin" 子目录，而其中所
-        有 ".vim" 结尾的文件会被执行 (每个目录下，按字母顺序依次执行)，包括所
-        有子目录的子目录 (依此类推)。
-        不过，这里跳过 <a href="options.html#'runtimepath'">'runtimepath'</a> 里以 "after" 结尾的目录，它们只在软件包之
-        后载入，详情下述。
-        以下情况下，不载入插件:
-        - vimrc 文件里复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
-        - 使用  <a href="starting.html#--noplugin">--noplugin</a>  命令行参数。
-        - 使用  <a href="starting.html#--clean">--clean</a>  命令行参数。
-        - 使用 "-u NONE" 命令行参数  <a href="starting.html#-u">-u</a> 。
+        结果是，遍历 <a href="options.html#'runtimepath'">'runtimepath'</a> 所有目录，搜索其中的 "plugin" 子目录，依次
+        (各目录内按文件名字母顺序) 加载其中所有以 ".vim" 结尾的脚本文件，也会
+        递归读取子目录内的所有脚本。
+        不过，这里会跳过 <a href="options.html#'runtimepath'">'runtimepath'</a> 里以 "after" 结尾的目录，会在包加载后再
+        执行，见下。
+        以下几种情况不加载插件:
+        - vimrc 文件中复位 <a href="options.html#'loadplugins'">'loadplugins'</a> 选项。
+        - 使用了  <a href="starting.html#--noplugin">--noplugin</a>  命令行参数。
+        - 使用了  <a href="starting.html#--clean">--clean</a>  命令行参数。
+        - 使用了 "-u NONE" 命令行参数  <a href="starting.html#-u">-u</a> 。
         - 编译 Vim 时不带  <a href="various.html#+eval">+eval</a>  特性。
-        <code class="note">注意</code> 使用 "-c set noloadplugins" 没有用，因为命令行的命令这时还没有执
-        行。可以用 "--cmd 'set noloadplugins'"  或 "--cmd 'set loadplugins'"
+        <code class="note">注意</code> 使用 "-c set noloadplugins" 命令行参数无效，因为该命令此阶段尚未
+        执行。需改用 "--cmd 'set noloadplugins'"  或 "--cmd 'set loadplugins'"
          <a href="starting.html#--cmd">--cmd</a> 。
 
-        载入软件包。如上所述找到插件，但在 <a href="options.html#'packpath'">'packpath'</a> 的每个项目的 "start" 目
-        录里寻找。每个找到的插件目录被加入 <a href="options.html#'runtimepath'">'runtimepath'</a> 并执行找到的插件。见
+        加载插件包。和上述步骤类似，但会在 <a href="options.html#'packpath'">'packpath'</a> 的每项的 "start" 目录里
+        搜索插件。所有找到的插件目录会自动加入 <a href="options.html#'runtimepath'">'runtimepath'</a>，随后加载插件。见
          <a href="repeat.html#packages">packages</a> 。
 
-        如上所述载入插件脚本，但现在只使用 "after" 结尾的目录。<code class="note">注意</code> 如果找到软
-        件包，<a href="options.html#'runtimepath'">'runtimepath'</a> 会被改变，但不会加入 "after" 结尾的目录。
+        加载 "after" 目录插件，和上述步骤类似，但仅处理以 "after" 结尾的目录。
+        <code class="note">注意</code> 插件包搜索会自动更新 <a href="options.html#'runtimepath'">'runtimepath'</a>，但不会新增以 "after" 结尾的目
+        录。
 
 5. 设置 <a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a>
-        除非已经设置过，<a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a> 选项根据 <a href="options.html#'shell'">'shell'</a> 选项的值
-        取值。这意味着除非你自己已经选好了，Vim 会为你找到 <a href="options.html#'shellpipe'">'shellpipe'</a> 和
-        <a href="options.html#'shellredir'">'shellredir'</a> 的值。
+         <a href="options.html#'shellpipe'">'shellpipe'</a> 和 <a href="options.html#'shellredir'">'shellredir'</a> 选项会根据 <a href="options.html#'shell'">'shell'</a> 选项值自动设置。如果之
+         前已经自行设置，则保持原值不变。
 
-6. 如果使用 "-n" 命令行参数，设置 <a href="options.html#'updatecount'">'updatecount'</a> 为零。
+6. 使用  <a href="starting.html#-n">-n</a>  命令行参数时，将 <a href="options.html#'updatecount'">'updatecount'</a> 设为零。
 
-7. 置位 binary 选项
-        如果给 Vim "-b" 标志，现在会置位二进制编辑的选项。见  <a href="starting.html#-b">-b</a> 。
+7. 启用二进制相关选项
+        使用  <a href="starting.html#-b">-b</a>  命令行参数时，此时启用二进制编辑相关选项。
 
 8. 进行 GUI 初始化
-        只有启动 "gvim" 的时候，才会进行 GUI 的初始化。见  <a href="gui.html#gui-init">gui-init</a> 。
+        仅当以 "gvim" 名启动时，才会执行 GUI 初始化。见  <a href="gui.html#gui-init">gui-init</a> 。
 
 9. 读入 viminfo 文件
-        如果 <a href="options.html#'viminfo'">'viminfo'</a> 选项不为空，读入 viminfo 文件。见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
+        <a href="options.html#'viminfo'">'viminfo'</a> 选项非空时，读取 viminfo 文件。见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
 
 10. 读入快速修复文件
-        如果给 Vim "-q" 标志，读入快速修复文件。如果失败，Vim 会退出。
+        使用  <a href="starting.html#-q">-q</a>  命令行参数时，读取指定快速修复文件。如果失败，Vim 会退出。
 
 11. 打开所有窗口
-        如果给出  <a href="starting.html#-o">-o</a>  标志，打开所有窗口 (此时尚不显示)。
-        如果给出  <a href="starting.html#-p">-p</a>  标志，创建所有标签页 (此时尚不显示)。
-        屏幕的切换现在开始。启动重画。
-        如果给出 "-q" 标志，跳到第一个错误处。
-        所有窗口的缓冲区会被载入，不触发  <a href="autocmd.html#BufAdd">BufAdd</a>  自动命令。
+        使用  <a href="starting.html#-o">-o</a>  或  <a href="starting.html#-O">-O</a>  命令行参数时，打开所有窗口 (暂不渲染)。
+        使用  <a href="starting.html#-p">-p</a>  命令行参数时，创建所有标签页 (暂不渲染)。
+        需要切换屏幕时，此时会启动界面重绘。
+        使用  <a href="starting.html#-q">-q</a>  命令行参数时，跳到首个错误处。
+        加载所有窗口的缓冲区，不触发  <a href="autocmd.html#BufAdd">BufAdd</a>  自动命令。
 
-12. 执行启动命令
-        如果给 Vim "-t" 标志，跳转到标签处。
-         <a href="starting.html#-c">-c</a>  和  <a href="editing.html#+cmd">+cmd</a>  参数给出的命令现在执行。
-        如果置位了 <a href="options.html#'insertmode'">'insertmode'</a> 选项，进入插入模式。
-        复位启动标志位，has("vim_starting") 现在返回零。
+12. 执行启动相关命令
+        使用  <a href="starting.html#-t">-t</a>  命令行参数时，跳转到指定标签。
+        执行所有  <a href="starting.html#-c">-c</a>  和  <a href="editing.html#+cmd">+cmd</a>  参数给出的命令。
+        开启 <a href="options.html#'insertmode'">'insertmode'</a> 选项时，进入插入模式。
+        复位启动标志位， <code class="badlink">has("vim_starting")</code>  现在返回零。
          <a href="eval.html#v:vim_did_enter">v:vim_did_enter</a>  变量被设为 1。
         执行  <a href="autocmd.html#VimEnter">VimEnter</a>  自动命令。
 
+         <a href="starting.html#$MYVIMRC">$MYVIMRC</a>   环境变量被设为首个找到的配置文件，但检查 VIMINIT 时如果该
+                    环境变量已被设置，不会覆盖原值。
+         <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  环境变量被设为用户 <a href="options.html#'rtp'">'rtp'</a> 目录 (<code class="vim">译者注</code>: 具体实现是用 <a href="options.html#'rtp'">'rtp'</a>
+        首个目录，但通常没有歧义)，但不会验证该目录是否真实存在。
  <a href="starting.html#$MYVIMRC">$MYVIMRC</a>  或  <a href="gui.html#$MYGVIMRC">$MYGVIMRC</a>  环境变量会被设为首个找到的 vimrc 和/或 gvimrc 文件，
-而  <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  会被设为用户个人运行时目录 <a href="options.html#'rtp'">'rtp'</a> (通常是 <a href="options.html#'runtimepath'">'runtimepath'</a> 的首个项
-目)。如果 <a href="options.html#'rtp'">'rtp'</a> 被修改， <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  也会随着更新。
-<code class="note">注意</code>: 这些环境变量会解析符号链接，但 <a href="options.html#'rtp'">'rtp'</a> 不会。
+而  <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  会被设为用户 <a href="options.html#'rtp'">'rtp'</a> 目录 (具体实现是 <a href="options.html#'runtimepath'">'runtimepath'</a> 的首个目录)。
+<a href="options.html#'rtp'">'rtp'</a> 发生变更后， <a href="starting.html#$MYVIMDIR">$MYVIMDIR</a>  会同步更新。
+<code class="note">备注</code>: 这些环境变量会解析符号链接，但 <a href="options.html#'rtp'">'rtp'</a> 不会。
 
-<code class="section">初始化过程的一些提示 </code>
+
+<code class="section">初始化配置建议 </code>
 
 标准安装:
-创建 vimrc 文件，为你所有的编辑会话建立缺省的设置和映射。把它放到 3b. 指出的地
-方:
+创建 vimrc 文件，存放全局通用的选项和映射。放置在 3b. 步骤可检索的位置:
         ~/.vimrc        (Unix)
         s:.vimrc        (Amiga)
         $VIM\_vimrc     (Win32)
         ~/config/settings/vim/vimrc (Haiku)
 
-<code class="note">注意</code> 创建 vimrc 文件会使得 <a href="options.html#'compatible'">'compatible'</a> 选项缺省被关闭。见
- <a href="starting.html#compatible-default">compatible-default</a> 。
+<code class="note">注意</code> 创建 vimrc 文件会使 <a href="options.html#'compatible'">'compatible'</a> 选项缺省关闭。见  <a href="starting.html#compatible-default">compatible-default</a> 。
 
 本地安装:
-把所有在某个目录编辑所需要的命令放到 vimrc 文件里，并把它放在那个目录下并命名
-".vimrc" (Win32 使用 "_vimrc")。<code class="note">注意</code>: 要使得 Vim 查找这些特殊文件，你需要打开
-<a href="options.html#'exrc'">'exrc'</a> 选项。另见  <a href="starting.html#trojan-horse">trojan-horse</a> 。
+仅对指定目录生效的所需命令可放在该目录下的本地 vimrc 文件，名为 ".vimrc"
+(Win32 则为 "_vimrc")。<code class="note">注意</code>: 必须打开 <a href="options.html#'exrc'">'exrc'</a> 选项才能使 Vim 访问这些特殊文件，
+同时请阅读  <a href="starting.html#trojan-horse">trojan-horse</a>  安全风险提示。
 
 系统安装:
-这只适用于你管理整个多个用户的 Unix 系统，而希望为所有用户设置缺省值的场合。建
-立建立缺省设置和映射的命令的 vimrc 文件，并把它放在 ":version" 命令指定的目录
-下。
+适用于多用户 Unix 系统管理员，用于统一所有用户缺省设置。将缺省选项和映射的设置
+命令放在  <a href="various.html#:version">:version</a>  命令展示的系统 vimrc 路径下。
 
 
-<code class="section">保存当前 Vim 的状态到文件 </code>
+<code class="section">将 Vim 的当前状态保存到文件 </code>
 
-无论你何时改变选项的值或者建立新映射，你都可能想保存它们到 vimrc 文件里以备后
-用。关于如何保存当前设置的状态到文件，见  <a href="starting.html#save-settings">save-settings</a> 。
+实际使用中修改过选项值或自定义映射后，可将当前设置导出到 vimrc 文件，以备后
+用。导出当前状态的详细步骤可见  <a href="starting.html#save-settings">save-settings</a> 。
 
 
-<code class="section">Vi 用户如何避免安装问题 </code>
+<code class="section">避免和 Vi 用户的配置冲突 </code>
 
-Vi 使用 EXINIT 变量和 "~/.exrc" 文件。所以，如果你不想影响 Vi，使用 VIMINIT 变
-量和 "vimrc" 文件。
+Vi 使用 EXINIT 环境变量以及 "~/.exrc" 配置文件。所以，要不想干扰 Vi 原有设置，
+应使用 VIMINIT 环境变量以及 "vimrc" 配置文件。
 
 
 <code class="section">Amiga 环境变量 </code>
 
-Amiga 上，有两种环境变量。使用 DOS 1.3 (或以后版本) setenv 命令设置的那些可以
-识别。见 AmigaDos 1.3 手册。使用旧的 Manx Set 命令设置的环境变量 (5.0 版本以
-前) 不能识别。
+Amiga 存在两类环境变量。使用 DOS 1.3 (或以后版本) setenv 命令定义的变量可被
+Vim 识别。见 AmigaDos 1.3 官方手册。使用旧版 Manx (5.0 版本以前) Set 命令设置
+的环境变量无法被 Vim 识别。
 
 
 <code class="section">MS-Windows 行分隔符 </code>
 
-在 MS-Windows 上，Vim 假设所有的 vimrc 文件使用 <code class="special">&lt;CR&gt;</code><code class="special">&lt;NL&gt;</code> 分隔行。如果你使用只
-用 <code class="special">&lt;NL&gt;</code> 的文件，而且有类似于 ":map xx yy^M" 的行，会有问题。因为结尾的 ^M 被忽
-略。
+在 MS-Windows 上，Vim 假定所有 vimrc 文件使用 <code class="special">&lt;CR&gt;</code><code class="special">&lt;NL&gt;</code> 分隔行。只用 <code class="special">&lt;NL&gt;</code> 换行
+的配置文件，出现类似 `:map xx yy^M` 的行时，行尾的 ^M 会被忽略，引发异常。
 
 
 <code class="section">Vi 兼容缺省值 </code>
                                                      <b class="vimtag"> <a name="compatible-default">compatible-default</a> </b>
-Vim 启动时，<a href="options.html#'compatible'">'compatible'</a> 选项是打开的。Vim 开始初始化的时候使用该设置。不过一
-旦:
+Vim 启动时缺省开启 <a href="options.html#'compatible'">'compatible'</a> 选项。因此初始化流程启动时会使用兼容模式。不过
+一旦:
 - 找到用户 vimrc 文件，或者
 - 找到当前目录下的 vimrc 文件，或者
 - 设置了 "VIMINIT" 环境变量，或者
 - 给出 "-N" 命令行参数，或者
 - 给出 "--clean" 命令行参数，或者
-- 载入了  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，或者
+- 加载了  <a href="starting.html#defaults.vim">defaults.vim</a>  脚本，或者
 - 找到 gvimrc 文件，
-就会把该选项设为 <a href="options.html#'nocompatible'">'nocompatible'</a>。
+就会自动切换为 <a href="options.html#'nocompatible'">'nocompatible'</a>。
 
-<code class="note">注意</code> 这并 <code class="emphasis">不</code> 适用于找到系统范围的 vimrc 文件。
+<code class="note">注意</code> 仅找到系统 vimrc 文件 <code class="emphasis">不会</code> 自动切换。
 
-这么做的副作用是会置位或复位其它选项 (见 <a href="options.html#'compatible'">'compatible'</a>)，但只限于那些还没有设置
-或复位过的选项。这和启动 Vim 时采用 <a href="options.html#'compatible'">'compatible'</a> 的新设置效果相同。
+切换兼容模式会同步修改众多相关选项 (见 <a href="options.html#'compatible'">'compatible'</a>)，但仅限于尚未手动配置过的
+选项。其效果等同于 Vim 启动时 <a href="options.html#'compatible'">'compatible'</a> 就已设为该值。
 
-下述情况下 <code class="emphasis">不</code> 复位 <a href="options.html#'compatible'">'compatible'</a> 也不载入  <a href="starting.html#defaults.vim">defaults.vim</a> :
-- Vim 启动时用  <a href="starting.html#-u">-u</a>  命令行参数，尤其是 "-u NONE"，或者
-- 启动时用  <a href="starting.html#-C">-C</a>  命令行参数，或者
-- 可执行文件的名字以 "ex" 结尾时 (这使得 Vim 以 "ex" 的名字启动的时候，其行为
-  和 "ex" 类同)
+下述情况下，既 <code class="emphasis">不</code> 复位 <a href="options.html#'compatible'">'compatible'</a>，也不加载  <a href="starting.html#defaults.vim">defaults.vim</a> :
+- Vim 启动使用  <a href="starting.html#-u">-u</a>  命令行参数时，尤其是 "-u NONE"，或者
+- 启动使用  <a href="starting.html#-C">-C</a>  命令行参数时，或者
+- 程序名以 "ex" 结尾时 (使 Vim 以 "ex" 名启动时与原版 "ex" 程序行为一致)
 
-在找到 .vimrc 文件的这一刻置位或复位 <a href="options.html#'compatible'">'compatible'</a> 有副作用: 映射在遭遇的时候就
-被解释。因此，使用像 "<code class="special">&lt;CR&gt;</code>" 这样的值就会受到此影响。如果映射依赖于使用
-<a href="options.html#'compatible'">'compatible'</a> 某个特定值，在给出映射前先置位或复位它。
+因为找到 .vimrc 文件而切换 <a href="options.html#'compatible'">'compatible'</a> 时，要<code class="note">注意</code>以下副作用: 映射会在读取时进
+行解析。因此是否识别 "<code class="special">&lt;CR&gt;</code>" 记法等会受当前兼容模式影响。如果映射依赖于特定兼容
+模式状态，应先手动置位或复位该选项，再定义映射。
 
 
-<code class="section">没有 .vimrc 文件里的缺省值 </code>
+<code class="section">无 .vimrc 文件时的缺省值 </code>
                                                         <b class="vimtag"> <a name="defaults.vim">defaults.vim</a> </b> <b class="vimtag"> <a name="E1187">E1187</a> </b>
-如果 Vim 正常启动且没找到用户 vimrc 文件，载入 $VIMRUNTIME/defaults.vim 脚本。
-这会关闭 <a href="options.html#'compatible'">'compatible'</a>，打开语法高亮和一些更多的设置。详见该脚本。<code class="note">注意</code>: 这从
-Vim 8.0 开始，不是 Vim 7.4。(准确地说，由 7.4.2111 补丁加入)。
+Vim 正常启动且未找到用户 vimrc 文件时，会加载 $VIMRUNTIME/defaults.vim 脚本。
+该脚本会关闭 <a href="options.html#'compatible'">'compatible'</a>、打开语法高亮并提供更多新手友好设置。详见该脚本。
+<code class="note">备注</code>: 该机制从 Vim 8.0 开始提供，不是 Vim 7.4 原版 (准确来说由 7.4.2111 补丁版
+本引入)。
 
-这方便了新 Vim 用户。如果创建了自己的 .vimrc，建议在顶部附近加入这些行:
+该脚本的目的是方便新 Vim 用户。自行创建 .vimrc 时，建议在顶部附近加入以下行:
 <code class="example">        unlet! skip_defaults_vim</code>
 <code class="example">        source $VIMRUNTIME/defaults.vim</code>
-这样 Vim 就像你有自己的 .vimrc 之前一样地工作了。
-另一个方法是复制 $VIMRUNTIME/vimrc_example 到你的 .vimrc。此外，也可以复制
-defaults.vim 到 .vimrc 并自行修改 (但下次它更动时，你不会得到更新)。
+确保 Vim 行为和自建 .vimrc 前保持一致。
+替代方法之一是将 $VIMRUNTIME/vimrc_example 复制到用户 .vimrc。替代方法之二是将
+defaults.vim 复制到用户 .vimrc，并自行修改 (缺点是 Vim 更新该脚本时，不会自动
+同步官方更动)。
 
-如果你不喜欢部分缺省设置，仍然可以先执行 defaults.vim，然后回滚个别设置。参见
-defaults.vim 文件中关于如何回滚每个项目的提示。
+如果不喜欢部分缺省设置，仍可先执行 defaults.vim，再单独回退个别设置。
+defaults.vim 脚本内已附加各配置项的回退写法提示。
                                                 <b class="vimtag"> <a name="skip_defaults_vim">skip_defaults_vim</a> </b>
-如果使用系统范围的 vimrc 但不想用 defaults.vim 来改变设置，置位
-"skip_defaults_vim" 变量。如果它已经置位，而从 .vimrc 里想载入 defaults.vim，
-先 unlet skip_defaults_vim，如上例所示。
+如果使用系统 vimrc 且不希望 defaults.vim 覆盖全局设置，可在系统 vimrc 里置位
+"skip_defaults_vim" 变量。已置位该变量而又想在用户 .vimrc 里加载 defaults.vim
+时，可在用户 .vimrc 里先执行 `unlet skip_defaults_vim`，如上例所示。
 
 
                                         <b class="vimtag"> <a name="xdg-base-dir">xdg-base-dir</a> </b> <b class="vimtag"> <a name="$XDG_CONFIG_HOME">$XDG_CONFIG_HOME</a> </b>
-<code class="section">XDG 基本目录规范 </code>
+<code class="section">XDG 基础目录规范 </code>
 
-XDG 基本目录规范的目标是定义应用程序使用的配置文件所在的标准位置。主要是避免老
-式的把所有东西都放在用户主目录下的做法。可在线上找到此规范
+XDG 基础目录规范为应用程序配置文件定义统一存放位置。主要目的是避免各类文件都堆
+积在用户主目录的老式混乱做法。线上规范文本可见
 <a href="https://specifications.freedesktop.org/basedir-spec/latest/">https://specifications.freedesktop.org/basedir-spec/latest/</a>
 
-用户可通过环境变量定制标准配置目录，但也提供变量未提供时的后备值。
+用户可通过环境变量定制标准配置目录位置，变量未提供时，规范也定义了缺省值。
 
-下列是这些目录的未完整列表:
+下表为常用目录 (非完整清单):
 <code class="section">  环境变量              缺省位置                描述</code>
    <code class="badlink">$XDG_CACHE_HOME</code>      $HOME/.cache            临时数据文件
    <a href="starting.html#$XDG_CONFIG_HOME">$XDG_CONFIG_HOME</a>     $HOME/.config           配置文件
    <code class="badlink">$XDG_DATA_HOME</code>       $HOME/.local/share      永久数据文件
    <code class="badlink">$XDG_STATE_HOME</code>      $HOME/.local/state      状态数据文件
 
-Vim 只使用  <a href="starting.html#$XDG_CONFIG_HOME">$XDG_CONFIG_HOME</a>  目录，(暂时) 不用其他目录来保存各种配置和状态文
-件。
                                                         <b class="vimtag"> <a name="xdg.vim">xdg.vim</a> </b>
-Vim 本身只会使用  <a href="starting.html#$XDG_CONFIG_HOME">$XDG_CONFIG_HOME</a>  目录。对其他 XDG 规范目录的支持由脚本
-"$VIMRUNTIME/xdg.vim" 提供。
+Vim 自身仅使用  <a href="starting.html#$XDG_CONFIG_HOME">$XDG_CONFIG_HOME</a>  目录。脚本 "$VIMRUNTIME/xdg.vim" 提供对其余
+XDG 规范目录的支持。
 <code class="note">注意</code>: 仅当 $XDG_CONFIG_HOME/vim 目录 (或其缺省备用路径) 存在时，xdg.vim 才会生
-效。缺省，该脚本仅设置 <a href="options.html#'viminfofile'">'viminfofile'</a> 选项。其他选项配置均已被注释禁用，如需启
-用，请查看脚本内的详细说明。
+效。该脚本缺省仅设置 <a href="options.html#'viminfofile'">'viminfofile'</a> 选项。其余相关配置均被注释禁用，启用方法请
+查看脚本内的详细说明。
 
                                                         <b class="vimtag"> <a name="xdg-vimrc">xdg-vimrc</a> </b>
-Unix 系统上的 Vim 会在  <code class="badlink">$XDG_CONFIG_HOME/vim/vimrc</code>  查找配置 (见  <a href="starting.html#vimrc">vimrc</a> )，但
-只会在  <a href="options.html#$HOME">$HOME</a>  或  <code class="badlink">$HOME/.vim</code>  找不到其他的初始化文件的情况下 (为了此特性后向
-兼容)。不过，如果你打算迁移到  <code class="badlink">$XDG_CONFIG_HOME/vim/</code>  目录，请务必搬走
- <code class="badlink">~/.vimrc</code>  和  <code class="badlink">~/.vim/vimrc</code>  文件。
+Unix 系统上，Vim 会从  <code class="badlink">$XDG_CONFIG_HOME/vim/vimrc</code>  查找配置 (见  <a href="starting.html#vimrc">vimrc</a> )，但
+仅当  <a href="options.html#$HOME">$HOME</a>  或  <code class="badlink">$HOME/.vim</code>  下找不到任何初始化文件时才会查找 XDG 目录 (确保后
+向兼容)。如果要迁移配置文件到  <code class="badlink">$XDG_CONFIG_HOME/vim/</code> ，请务必移走  <code class="badlink">~/.vimrc</code> 
+和  <code class="badlink">~/.vim/vimrc</code>  文件。
 
                                                         <b class="vimtag"> <a name="xdg-runtime">xdg-runtime</a> </b>
-如果使用了  <a href="starting.html#xdg-vimrc">xdg-vimrc</a> ，<a href="options.html#'runtimepath'">'runtimepath'</a> 和 <a href="options.html#'packpath'">'packpath'</a> 选项会相应地被修改，以配合
- <a href="starting.html#xdg-base-dir">xdg-base-dir</a> :
+使用  <a href="starting.html#xdg-vimrc">xdg-vimrc</a>  时，<a href="options.html#'runtimepath'">'runtimepath'</a> 和 <a href="options.html#'packpath'">'packpath'</a> 会自动适配  <a href="starting.html#xdg-base-dir">xdg-base-dir</a> :
 <code class="example"></code>
 <code class="example">  "$XDG_CONFIG_HOME/vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,</code>
 <code class="example">   $XDG_CONFIG_HOME/vim/after"</code>
 
 
-<code class="section">避免特洛伊木马 </code>
+<code class="section">防范特洛伊木马 </code>
                                                         <b class="vimtag"> <a name="trojan-horse">trojan-horse</a> </b>
-读入当前目录下的 "vimrc" 或 "exrc" 文件时，为了安全原因，通过置位 <a href="options.html#'secure'">'secure'</a> 选
-项可以屏蔽某些命令。执行标签文件里的命令的时候，则总是如此。否则，你可能会不小
-心使用别人创建的 vimrc 或者标签文件，从而执行了可怕的命令。屏蔽的包括那些需要
-启动外壳的命令、写入文件的命令还有自动命令。此外会回显 ":map" 命令，从而看到那
-些键被映射了。
-        如果你想 Vim 执行本地 vimrc 文件的所有命令，可以使用 EXINIT 或者
-VIMINIT 环境变量或者在全局 "exec" 或 "vimrc" 文件里屏蔽 <a href="options.html#'secure'">'secure'</a> 选项。显然，
-不可以在当前目录下的 "vimrc" 或 "exrc" 里这么做。
-        在 Unix 系统上，只有你不是 vimrc 文件的拥有者的时候这才发生。<code class="note">警告</code>: 如
-果你解压归档文件而且其中含有 vimrc 或者 exrc 文件的时候，它们也会属于你，从而
-你不再有安全保护。启动 Vim 的时候检查当前目录 vimrc 文件，或者干脆复位 <a href="options.html#'exrc'">'exrc'</a>
-选项。有的 Unix 系统允许用户给文件 "chown" (更换拥有者)。这使得别的用户可以创
-建有问题的 vimrc，并使你成为拥有者。要小心！
-        使用标签搜索命令的时候，搜索命令的执行 (标签文件行里最后一部分) 总是在
-安全模式下执行的。这和在当前目录执行 vimrc/exrc 的命令的情况完全类似。
+读取当前目录下的 "vimrc" 或 "exrc" 文件时，可置位 <a href="options.html#'secure'">'secure'</a> 选项，出于安全限制
+禁用部分命令。执行标签文件里的命令时，总使用该安全机制。否则，可能会不慎执行他
+人编写内含恶意指令的 vimrc 或标签文件。禁用命令包括外壳调用命令、文件保存命
+令、以及自动命令。此外  <a href="map.html#:map">:map</a>  命令会回显输出，方便查看被绑定的快捷键。
+        要 Vim 执行本地 vimrc 文件里的所有命令，可通过 EXINIT、VIMINIT 环境变
+量或在全局 "exec"、"vimrc" 文件里关闭 <a href="options.html#'secure'">'secure'</a> 选项。显然，这无法在当前目录下
+的 "vimrc" 或 "exrc" 里完成。
+        在 Unix 系统上，仅当用户不是该 vimrc 文件的拥有者时，才会触发该安全机
+制。<code class="note">警告</code>: 解压包含 vimrc 或 exrc 的归档包时，文件拥有者会设为用户本人，安全保
+护会失效。在该目录下启动 Vim 时，请务必检查是否有本地 vimrc 文件，也可直接复位
+<a href="options.html#'exrc'">'exrc'</a> 选项。部分 Unix 系统允许普通用户执行 "chown" 更换文件拥有者。他人可编写
+恶意 vimrc，再将拥有者改为用户本人。务必警惕！
+        使用标签搜索命令时，标签文件内容行的末尾部分会作为搜索命令执行，此时总
+是使用安全机制。规则与当前目录下的 vimrc/exrc 里的命令执行方式一致。
 
 
-<code class="section">如果 Vim 启动太慢 </code>
+<code class="section">Vim 启动缓慢排查 </code>
                                                         <b class="vimtag"> <a name="slow-start">slow-start</a> </b>
-如果 Vim 启动时间过长，用  <a href="starting.html#--startuptime">--startuptime</a>  参数可以知道为什么。可能有几个原因:
-- 如果 Unix 版本编译时加入 GUI 和/或 X11 (检查 ":version" 的输出是否含有
-  "+GUI" 和 "+X11")，它可能需要载入共享库并连接到 X11 服务器上。尝试编译一个不
-  带有 GUI 和 X11 的版本。这也使得可执行文件小一些。
-  使用  <a href="starting.html#-X">-X</a>  命令行参数可以避免在终端运行时连接到 X 服务器上。
-- 如果你打开 "viminfo"，viminfo 文件的载入可能需要一点时间。通过暂时屏蔽
-  viminfo，你可以判断这是否是个问题 (使用 Vim 参数 "-i NONE"， <a href="starting.html#-i">-i</a> )。尝试减少
-  寄存器可存贮的行数: ":set viminfo='20,&lt;50,s10"。 <a href="starting.html#viminfo-file">viminfo-file</a> 。
-
-                                                        <b class="vimtag"> <a name=":intro">:intro</a> </b>
-如果 Vim 启动的时候没有给出文件名，它会显示一段介绍文字 (为了帮助那些不知道
-Vim 是什么的人)。一旦因为任何原因显示重画，它就被删除了。要再次看到这段文字，
-使用 ":intro" 命令 (如果空间不够，你只会看到部分内容)。
-   要避免启动时的介绍文字，在 <a href="options.html#'shortmess'">'shortmess'</a> 里加上 'I' 标志位。
+如果 Vim 启动时间过长，可用  <a href="starting.html#--startuptime">--startuptime</a>  启动参数排查耗时操作。可能原因有:
+- Unix 版本编译时加入 GUI 和/或 X11 支持 (查看  <a href="various.html#:version">:version</a>  输出是否包含 "+GUI"
+  和 "+X11") 时，可能需加载共享库并连接 X11 服务器。一个解决方案是重新编译，禁
+  用 GUI 和 X11。这也有助于减小程序体积。
+  在终端运行时，可用  <a href="starting.html#-X">-X</a>  命令行参数跳过 X 服务器连接。
+- 打开 "viminfo" 功能时，viminfo 文件的加载会拖慢启动速度。可临时屏蔽 viminfo
+  功能 (通过命令行参数 "-i NONE"  <a href="starting.html#-i">-i</a> ) 进行验证。解决方案是减少寄存器存贮行数:
+  `:set viminfo='20,&lt;50,s10`。见  <a href="starting.html#viminfo-file">viminfo-file</a> 。
 
 
 <code class="section">简介消息 </code>
+                                                        <b class="vimtag"> <a name=":intro">:intro</a> </b>
+Vim 不带文件名启动时，会显示一段介绍文字 (帮助不了解 Vim 功能的新用户)。任意界
+面重绘操作都会清空该提示。要再次看到这段文字，可用  <a href="starting.html#:intro">:intro</a>  命令 (如果空间不
+够，只会显示部分内容)。启动时要跳过介绍文字，可在 <a href="options.html#'shortmess'">'shortmess'</a> 里加上 'I' 标志
+位。
+
                                                         <b class="vimtag"> <a name="info-message">info-message</a> </b>
- <a href="starting.html#--help">--help</a>  和  <a href="starting.html#--version">--version</a>  参数使得 Vim 显示消息，并退出。通常，该消息发送到标准
-输出上。因此，它可以这样被重定向到文件里:
+ <a href="starting.html#--help">--help</a>  和  <a href="starting.html#--version">--version</a>  参数会使 Vim 显示对应消息后退出。该消息缺省发送到标准
+输出。可重定向保存到文件:
 <code class="example"></code>
 <code class="example">        vim --help &gt;file</code>
 <code class="example"></code>
-在 Vim 里面:
+在 Vim 内部，可用:
 <code class="example"></code>
 <code class="example">        :read !vim --help</code>
 <code class="example"></code>
-使用 gvim 的时候，会检测到因为从桌面启动，无法使用终端来显示消息。这是通过检测
-到标准输出 (stdout) 和标准错误 (stderr) 不全是 tty 完成的。这也使得上述例子里
-的 ":read" 命令不能工作。要使其能够工作，把 <a href="options.html#'shellredir'">'shellredir'</a> 设为 "&gt;" 而不是缺省的
-"&gt;&amp;":
+使用 gvim 时，会判断是否从桌面启动，从而无法通过终端显示消息。具体方法是检测标
+准输出 (stdout) 和标准错误 (stderr) 都不属于终端 (tty)。此时上例里  <a href="insert.html#:read">:read</a>  命
+令不能工作。可通过将 <a href="options.html#'shellredir'">'shellredir'</a> 设为 "&gt;" 而非缺省的 "&gt;&amp;" 进行修正:
 <code class="example"></code>
 <code class="example">        :set shellredir=&gt;</code>
 <code class="example">        :read !gvim --help</code>
 <code class="example"></code>
-不过，在 gvim 完全无法使用标准输出的系统中，这仍然无法工作。
+该方案仍然不适用于 gvim 完全不使用标准输出的系统环境。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>5. $VIM 和 $VIMRUNTIME</h4>                                                                <b class="vimtag"> <a name="$VIM">$VIM</a> </b>
-环境变量 "$VIM" 用于定位许多 Vim 使用的用户文件，例如用户启动脚本 ".vimrc"。不
-同的系统有所不同，见  <a href="starting.html#startup">startup</a> 。
+环境变量 "$VIM" 用于定位 Vim 的各种用户文件，包括用户启动脚本 ".vimrc"
+(<code class="vim">译者注</code>: 原文如此，逻辑上也无不妥，但该环境变量主要目的是 Vim 的安装目录)。具
+体位置因系统而异，见  <a href="starting.html#startup">startup</a> 。
 
-为了省得每个用户都设置 $VIM 环境变量，Vim 试图根据以下顺序取得 $VIM 的值:
-1. $VIM 环境变量定义的值。你可以这样使得 Vim 在特定目录下找到它的支持文件。例
-   如:
+为避免每位用户都要设置 $VIM 环境变量，Vim 会按以下顺序确定 $VIM 值:
+1. 优先读取已定义的 $VIM 环境变量值。可用于强制 Vim 在指定目录下寻找支持文件。
+   示例:
 <code class="example">        setenv VIM /home/paul/vim</code>
-2. 使用 <a href="options.html#'helpfile'">'helpfile'</a> 的路径，除非它本身也包含其它的环境变量 (因为其缺省值是
-   "$VIMRUNTIME/doc/help.txt": 鸡生蛋的问题)。文件名 ("help.txt" 或者别的) 被
-   去掉。结尾的几项目录名也被分别去掉。其顺序是: "doc"、"runtime" 和
-   "vim<code class="special">{version}</code>" (例如，"vim82")。
-3. 对 Win32 而言，Vim 试图使用可执行文件的目录名。如果以 "/src" 结尾，则去掉该
-   部分。这用于以下场合: 你把 .zip 文件解压到某个目录，然后调整搜索路径以找到
-   其中的 vim 可执行文件。结尾的目录名被去掉。其顺序是: "runtime" 和
-   "vim<code class="special">{version}</code>" (例如，"vim82")。
-4. Unix 上，使用编译时定义的安装目录 (见 ":version" 的输出结果)。
+2. 使用 <a href="options.html#'helpfile'">'helpfile'</a> 路径，但如果其中也包含其他环境变量 (缺省
+   "$VIMRUNTIME/doc/help.txt"，就会遇到先有鸡还是先有蛋的问题)，则不采用。随后
+   去掉文件名部分 ("help.txt" 或其他文件名)。再依次删除以下的末尾目录名:
+   "doc"、"runtime" 和 "vim<code class="special">{version}</code>" (如 "vim82")。
+3. 对 Win32，Vim 会试图提取可执行文件目录名。以 "/src" 结尾时，也截去该段。此
+   逻辑适用于解压 .zip 压缩包，并调整搜索路径以找到 vim 可执行文件的情况。依次
+   删除以下的末尾目录名: "runtime" 和 "vim<code class="special">{version}</code>" (如 "vim82")。
+4. 对 Unix，采用编译时预设的安装目录 (见  <a href="various.html#:version">:version</a>  输出结果 "$VIM 预设值")。
 
-一旦 Vim 完成以上操作，它据此设置 $VIM 环境变量。要在其后修改，可以这样使用
-":let" 命令:
+Vim 仅进行以上操作一次，并据此设置 $VIM 环境变量。此后要修改该值，可用  <a href="eval.html#:let">:let</a> 
+命令:
 <code class="example">        :let $VIM = "/home/paul/vim/"</code>
 
                                                                 <b class="vimtag"> <a name="$VIMRUNTIME">$VIMRUNTIME</a> </b>
-环境变量 "$VIMRUNTIME" 用于定位若干支持文件，比如在线的帮助文档和语法高亮文
-件。例如，主帮助文件正常情况下应该是 "$VIMRUNTIME/doc/help.txt"。
-你通常不需要自己设置 $VIMRUNTIME，而应该让 Vim 自己去找。以下是查找
-$VIMRUNTIME 的值所用的顺序:
-1. 如果设置了环境变量 $VIMRUNTIME，则使用之。如果运行时文件在不常见的位置，可
-   以在这里定义。
-2. 如果 "$VIM/vim<code class="special">{version}</code>" 存在，则使用之。<code class="special">{version}</code> 是 Vim 的版本号，不包括
-   任何的 '-' 或 '.'。例如: "$VIM/vim82"。这是正常情况下 $VIMRUNTIME 的值。
-3. 如果 "$VIM/runtime" 存在，使用之。
-4. 使用 $VIM 的值。这和较老的版本后向兼容。
-5. 如果设置了 <a href="options.html#'helpfile'">'helpfile'</a> 选项，并且它不包括 '$'，则使用它的值，去掉后面的
-   "doc/help.txt" 部分。
+环境变量 "$VIMRUNTIME" 用于定位运行时支持文件，包含在线帮助文档和语法高亮脚本
+等。例如，主帮助文档缺省路径是 "$VIMRUNTIME/doc/help.txt"。
+通常无需自行设置 $VIMRUNTIME，Vim 自动按以下顺序解析:
+1. 优先读取已定义的 $VIMRUNTIME 环境变量值，可用于指定特殊的运行时文件路径。
+2. 目录 "$VIM/vim<code class="special">{version}</code>" 存在时，使用该路径。<code class="special">{version}</code> 为 Vim 不含 '-' 或
+   '.' 的版本号。例如: "$VIM/vim82"。这是 $VIMRUNTIME 常规值。
+3. 目录 "$VIM/runtime" 存在时，使用该路径。
+4. 直接使用 $VIM 值。用于后向兼容老旧版本。
+5. <a href="options.html#'helpfile'">'helpfile'</a> 选项已设置且不含 '$' 符号时，使用该路径，去掉末尾 "doc/help.txt"
+   部分。
 
-在 Unix 上，有一个 $VIMRUNTIME 编译时的缺省值 (检查 ":version" 的输出)，跳过步
-骤 2、3 和 4，而在第五步之后使用编译时的缺省值。这意味着编译时的缺省值否决了
-$VIM 的值。这可以用于 $VIM 为 "/etc" 而运行时文件在 "/usr/share/vim/vim82" 的
-情况。
+对 Unix，编译时给出 $VIMRUNTIME 预设缺省值时 (见  <a href="various.html#:version">:version</a>  输出结果)，跳过第
+2、3 和 4 步，第五步判断结束后直接使用编译预设值。这意味着编译缺省值优先于
+$VIM 值。可用于 $VIM 为 "/etc" 而运行时文件位于 "/usr/share/vim/vim82" 的场
+景。
 
-一旦 Vim 完成以下操作，它据此设置 $VIMRUNTIME 环境变量。要在其后修改之，这样使
-用 ":let" 命令:
+Vim 仅进行以上操作一次，并据此设置 $VIMRUNTIME 环境变量。此后要修改该值，可用
+ <a href="eval.html#:let">:let</a>  命令:
 <code class="example">        :let $VIMRUNTIME = "/home/piet/vim/vim82"</code>
 <code class="example"></code>
-如果你需要在外壳里得到 $VIMRUNTIME 的值 (例如，在帮助文件里 grep 脚本)，你可以
-这么用:
+需要在外壳里 (如对 Vim 帮助文档进行 grep 的脚本) 获取 $VIMRUNTIME 值 ，可用:
 <code class="example"></code>
 <code class="example">        VIMRUNTIME=$(vim -es '+put=$VIMRUNTIME|print|quit!')</code>
 <code class="example"></code>
-不要设置 $VIMRUNTIME 为空值，有些东西会停止工作。
+不可将 $VIMRUNTIME 设为空值，会导致多项功能失效。
 
 </section><hr class="doubleline" /><section class=inner>
-<h4>6. 暂停                                                 <b class="vimtag"> <a name="suspend">suspend</a> </b></h4>
+<h4>6. 挂起                                                 <b class="vimtag"> <a name="suspend">suspend</a> </b></h4>
                                 <b class="vimtag"> <a name="iconize">iconize</a> </b> <b class="vimtag"> <a name="iconise">iconise</a> </b> <b class="vimtag"> <a name="CTRL-Z">CTRL-Z</a> </b> <b class="vimtag"> <a name="v_CTRL-Z">v_CTRL-Z</a> </b>
-<code class="keystroke">CTRL-Z</code>                  暂停 Vim，和 ":stop" 类似。
-                        适用于普通和可视模式。在插入和命令行模式里，<code class="keystroke">CTRL-Z</code> 作
-                        为普通的字符插入。在可视模式下，Vim 会在暂停前回到普通
-                        模式。
-                        <code class="note">注意</code>: 如果 <code class="keystroke">CTRL-Z</code> 做的是撤销改变而不是暂停，见
-                         <a href="gui_w32.html#mswin.vim">mswin.vim</a> 。
+<code class="keystroke">CTRL-Z</code>                  挂起 Vim，同 ":stop"。
+                        适用于普通和可视模式。在插入和命令行模式下，<code class="keystroke">CTRL-Z</code> 会
+                        作为普通字符插入。在可视模式下，Vim 会在挂起前先回到普
+                        通模式。
+                        <code class="note">注意</code>: 如果 <code class="keystroke">CTRL-Z</code> 触发撤销操作而非挂起，见  <a href="gui_w32.html#mswin.vim">mswin.vim</a> 。
 
 
 :sus[pend][!]   或                      <b class="vimtag"> <a name=":sus">:sus</a> </b> <b class="vimtag"> <a name=":suspend">:suspend</a> </b> <b class="vimtag"> <a name=":st">:st</a> </b> <b class="vimtag"> <a name=":stop">:stop</a> </b>
-:st[op][!]              暂停 Vim。
-                        如果没有给出 '!' 并且置位 <a href="options.html#'autowrite'">'autowrite'</a>，那么每个修改过
-                        且有文件名的缓冲区都被写回。如果给出 '!' 或
-                        <a href="options.html#'autowrite'">'autowrite'</a> 没有置位，修改过的缓冲区不会写回。
-                        迟些时候，不要忘记把 Vim 带回前台！
+:st[op][!]              挂起 Vim。
+                        '!' 省略且置位 <a href="options.html#'autowrite'">'autowrite'</a> 时，自动保存每个修改过且带
+                        文件名的缓冲区。否则，也就是给出 '!' 或 <a href="options.html#'autowrite'">'autowrite'</a> 未
+                        置位时，修改过的缓冲区不会自动保存。后续切记要将 Vim
+                        带回前台！
 
-在 GUI 上，暂停是通过使 Vim 图标化完成的。在 MS-Windows 上，gvim 被最小化。
+在 GUI 上，挂起是通过使 Vim 图标化实现的。在 MS-Windows 上，gvim 会被最小化。
 
-在许多 Unix 系统中，可以使用 <code class="keystroke">CTRL-Z</code> 暂停 Vim。这只适用于普通和可视模式 (见下一
-章， <a href="intro.html#vim-modes">vim-modes</a> )。如果你把 Vim 放回前台，它会继续工作。在其它系统中，<code class="keystroke">CTRL-Z</code> 会
-启动新的外壳。这和 ":sh" 命令相同。在退出外壳后，Vim 会继续。
+多数 Unix 系统上，仅在普通和可视模式下 (见  <a href="intro.html#vim-modes">vim-modes</a> ) <code class="keystroke">CTRL-Z</code> 会挂起 Vim。Vim
+返回前台后会恢复工作。在其他系统上，<code class="keystroke">CTRL-Z</code> 会启动新的外壳。相当于  <a href="various.html#:sh">:sh</a>  命令。
+外壳退出后会回到 Vim。
 
-在 X 窗口系统环境里，Vim 暂停时不再拥有选择区。这意味着你不能在其它应用粘贴之
-(因为 Vim 进入睡眠，试图得到选择区会使得程序挂起)。
+在 X 窗口系统环境上，Vim 挂起时不再拥有选择区。此时无法向其他应用粘贴文本 (因
+为 Vim 进程进入休眠，读取选区内容会导致外部程序卡死)。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>7. 退出                                                 <b class="vimtag"> <a name="exiting">exiting</a> </b></h4>
-有几种方式可退出 Vim:
-- 用  <a href="editing.html#:quit">:quit</a>  关闭最后一个窗口。仅当没有改动时有效。
-- 用  <code class="badlink">:quit!</code>  关闭最后一个窗口。即使有改动也可。
-- 用  <a href="editing.html#:qall">:qall</a>  关闭所有窗口。仅当没有改动时有效。
-- 用  <code class="badlink">:qall!</code>  关闭所有窗口。即使有改动也可。
-- 用  <a href="quickfix.html#:cquit">:cquit</a> 。即使有改动也可。
+Vim 提供多种退出方式:
+- 用  <a href="editing.html#:quit">:quit</a>  关闭最后一个窗口。仅当缓冲区没有改动时有效。
+- 用  <code class="badlink">:quit!</code>  强制关闭最后一个窗口。即使缓冲区有改动也可退出。
+- 用  <a href="editing.html#:qall">:qall</a>  关闭所有窗口。仅当缓冲区没有改动时有效。
+- 用  <code class="badlink">:qall!</code>  强制关闭所有窗口。即使缓冲区有改动也可退出。
+- 用  <a href="quickfix.html#:cquit">:cquit</a>  异常退出。即使缓冲区有改动也可退出。
 
-使用  <a href="quickfix.html#:cquit">:cquit</a>  或有错误信息时，Vim 退出时退出代码为 1。用  <a href="various.html#:silent!">:silent!</a>  或
- <a href="eval.html#:catch">:catch</a>  可避免错误。
+如果使用  <a href="quickfix.html#:cquit">:cquit</a>  或运行时出现报错，Vim 退出码为 1。可用  <a href="various.html#:silent!">:silent!</a>  或异常捕获
+异常  <a href="eval.html#:catch">:catch</a>   屏蔽报错。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>8. 保存设置                                             <b class="vimtag"> <a name="save-settings">save-settings</a> </b></h4>
-多数情况下，你会手动编辑你的 vimrc 文件。这给你最大程度的灵活性。有一些命令可
-以自动产生 vimrc 文件。你可以直接使用生成的文件，也可以复制/粘贴其中的一些行到
-其它的 vimrc 文件里。
+用户一般会手动编辑 vimrc 文件。这能提供最大程度的灵活性。Vim 也提供内置命令自
+动生成 vimrc 文件。生成文件可被直接使用，也可将部分内容通过复制/粘贴加入用户
+vimrc。
 
                                                         <b class="vimtag"> <a name=":mk">:mk</a> </b> <b class="vimtag"> <a name=":mkexrc">:mkexrc</a> </b>
-:mk[exrc] <code class="special">[file]</code>        写入当前的键盘映射和修改过的选项到 <code class="special">[file]</code> 里 (缺省是当
-                        前目录下的 ".exrc")，除非它已经存在。
+:mk[exrc] <code class="special">[file]</code>        将当前键盘映射和已修改的选项写入 <code class="special">[file]</code>  (缺省是当前目
+                        录下的 ".exrc")，文件已存在时不覆盖。
 
-:mk[exrc]! <code class="special">[file]</code>       总是写入当前的键盘映射和修改过的选项到 <code class="special">[file]</code> 里 (缺省
-                        是当前目录下的 ".exrc")。
+:mk[exrc]! <code class="special">[file]</code>       强制将当前键盘映射和已修改的选项写入 <code class="special">[file]</code> (缺省是当
+                        前目录下的 ".exrc")。
 
                                                 <b class="vimtag"> <a name=":mkv">:mkv</a> </b> <b class="vimtag"> <a name=":mkvi">:mkvi</a> </b> <b class="vimtag"> <a name=":mkvimrc">:mkvimrc</a> </b>
-:mkv[imrc][!] <code class="special">[file]</code>    和 ":mkexrc" 类似，但是缺省值是当前目录下的 ".vimrc"。
-                        同时，也把 ":version" 写入文件里。
+:mkv[imrc][!] <code class="special">[file]</code>    类似 ":mkexrc"，但缺省是当前目录下的 ".vimrc"。同时也
+                        写入  <a href="various.html#:version">:version</a>  版本信息。
 
-这些命令会把 ":map" 和 ":set" 命令写入到文件里，使得这些命令执行时，当前的键盘
-映射和选项会设成和现在相同的值。选项 <a href="options.html#'columns'">'columns'</a>、<a href="options.html#'endofline'">'endofline'</a>、<a href="options.html#'fileformat'">'fileformat'</a>、
-<a href="options.html#'key'">'key'</a>、<a href="options.html#'lines'">'lines'</a>、<a href="options.html#'modified'">'modified'</a>、<a href="options.html#'scroll'">'scroll'</a>、<a href="options.html#'term'">'term'</a>、<a href="options.html#'textmode'">'textmode'</a>、<a href="options.html#'ttyfast'">'ttyfast'</a> 和
-<a href="options.html#'ttymouse'">'ttymouse'</a> 不含在内，因为它们和终端和文件有关。<code class="note">注意</code> 选项 <a href="options.html#'binary'">'binary'</a>、<a href="options.html#'paste'">'paste'</a> 和
-<a href="options.html#'readonly'">'readonly'</a> 是包含在内的，有时这并不是你所希望的。
+这些命令向指定文件写入 ":map" 和 ":set" 命令，执行后可还原当前所有键盘映射和选
+项值。不含以下选项 <a href="options.html#'columns'">'columns'</a>、<a href="options.html#'endofline'">'endofline'</a>、<a href="options.html#'fileformat'">'fileformat'</a>、<a href="options.html#'key'">'key'</a>、<a href="options.html#'lines'">'lines'</a>、
+<a href="options.html#'modified'">'modified'</a>、<a href="options.html#'scroll'">'scroll'</a>、<a href="options.html#'term'">'term'</a>、<a href="options.html#'textmode'">'textmode'</a>、<a href="options.html#'ttyfast'">'ttyfast'</a> 和 <a href="options.html#'ttymouse'">'ttymouse'</a>，因为它们依
+赖终端和特定文件。<code class="note">注意</code> 选项 <a href="options.html#'binary'">'binary'</a>、<a href="options.html#'paste'">'paste'</a> 和 <a href="options.html#'readonly'">'readonly'</a> 一并包含，但这未必
+符合用户预期。
 
-如果映射使用了特殊键，<a href="options.html#'cpoptions'">'cpoptions'</a> 选项会暂时设为 Vim 的缺省值，以免映射被错误
-的解释。这使得该文件和 Vi 不兼容，但可以确保它能在不同的终端环境上使用。
+映射包含特殊键时，会暂时将 <a href="options.html#'cpoptions'">'cpoptions'</a> 选项设为 Vim 缺省值，防止映射被错误解
+析。这会使配置文件无法兼容 Vi，但能确保在不同终端环境下正常加载。
 
-只有全局映射被保存，局部于缓冲区的不会。
+只保存全局映射，缓冲区局部映射不会导出。
 
-常见的方法是使用缺省的 ".vimrc" 文件，修改一些 ":map" 和 ":set" 命令，然后写回
-修改过的文件。先用命令读入缺省的 ".vimrc" 文件，像这样
-":source ~piet/.vimrc.Cprogs"，修改设置，然后保存到当前目录: ":mkvimrc!"。若果
-你想使之成为缺省的 .vimrc，把该文件移动到主目录 (Unix 上)，s: (Amiga) 或者
-$VIM 目录 (MS-Windows)。你也可以使用自动命令  <a href="autocmd.html#autocommand">autocommand</a>  和/或模式行
- <a href="options.html#modeline">modeline</a> 。
+典型流程是从缺省 ".vimrc" 文件开始，通过 ":map" 和 ":set" 命令调整配置后导出新
+配置。示例: 先用命令 ":source ~piet/.vimrc.Cprogs" 读入缺省 ".vimrc" 文件，修
+改设置，然后用命令 ":mkvimrc!" 导出设置到当前目录。要将该文件设为用户 .vimrc，
+可将该文件移动到主目录 (Unix)，s: (Amiga) 或 $VIM 目录 (MS-Windows)。
+也可用自动命令  <a href="autocmd.html#autocommand">autocommand</a>  和/或模式行  <a href="options.html#modeline">modeline</a>  等其他机制进行设置修改。
 
                                                 <b class="vimtag"> <a name="vimrc-option-example">vimrc-option-example</a> </b>
-如果你只想增加一个选项设置到 vimrc 里，可以使用这些步骤:
-1. 用 Vim 编辑你的 vimrc 文件。
-2. 测试选项值直到正确为止。比如，试试 <a href="options.html#'guifont'">'guifont'</a> 不同的值。
-3. 附加一行设置选项的值。使用表达式寄存器 '=' 来输入值。比如，对 <a href="options.html#'guifont'">'guifont'</a> 选
-   项:
+如果仅需向 vimrc 增加一条选项，可用以下步骤:
+1. 用 Vim 编辑 vimrc 文件。
+2. 反复测试目标选项值，直到满意为止。比如更换 <a href="options.html#'guifont'">'guifont'</a> 不同字体值。
+3. 追加配置行，通过表达式寄存器 '=' 输入当前选项值。<a href="options.html#'guifont'">'guifont'</a> 选项示例:
 <code class="example">   o:set guifont=&lt;C-R&gt;=&amp;guifont&lt;CR&gt;&lt;Esc&gt;</code>
-   [<code class="special">&lt;C-R&gt;</code> 是 <code class="keystroke">CTRL-R</code>，<code class="special">&lt;CR&gt;</code> 是回车，<code class="special">&lt;Esc&gt;</code> 是 escape 键]
-   你需要转义特殊字符，特别是空格。
+   [<code class="special">&lt;C-R&gt;</code> 是 <code class="keystroke">CTRL-R</code>，<code class="special">&lt;CR&gt;</code> 是回车，<code class="special">&lt;Esc&gt;</code> 是 Esc 键]
+   特殊字符 (尤其是空格) 需要转义。
 
-<code class="note">注意</code> 你建立 .vimrc 文件本身会影响 <a href="options.html#'compatible'">'compatible'</a> 选项，这有若干副作用。见
-<a href="options.html#'compatible'">'compatible'</a>。":mkvimrc"、":mkexrc" 和 ":mksession" 首先写入置位或者复位
-<a href="options.html#'compatible'">'compatible'</a> 选项的命令到输出文件里，就是因为有这些副作用的存在。
+<code class="note">注意</code> 创建 .vimrc 文件本身会影响 <a href="options.html#'compatible'">'compatible'</a> 选项，并有一系列副作用。见
+<a href="options.html#'compatible'">'compatible'</a>。因为影响很大， <a href="starting.html#:mkvimrc">:mkvimrc</a> 、 <a href="starting.html#:mkexrc">:mkexrc</a>  和  <a href="starting.html#:mksession">:mksession</a>  会首先写入开
+关 <a href="options.html#'compatible'">'compatible'</a> 选项的命令。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>9. 视图和会话                                   <b class="vimtag"> <a name="views-sessions">views-sessions</a> </b></h4>
-在用户手册的  <a href="usr_21.html#21.4">21.4</a>  和  <a href="usr_21.html#21.5">21.5</a>  两节已有相关介绍。
+相关介绍请参考用户手册  <a href="usr_21.html#21.4">21.4</a>  和  <a href="usr_21.html#21.5">21.5</a>  两节。
 
                                                 <b class="vimtag"> <a name="View">View</a> </b> <b class="vimtag"> <a name="view-file">view-file</a> </b>
-视图是应用于一个窗口的设置的集合。你可以保存视图，并在以后恢复之，从而使文本以
-同样的方式显示。本窗口的选项和映射也会同时恢复，这样你可以从上次保存的视图开始
-继续编辑。
+视图是作用于单个窗口的一组设置集合。保存视图后，稍后恢复时会确保文本以相同方式
+显示。窗口内的所有选项和映射也一并恢复，继续以视图保存时的状态进行编辑。
 
                                                 <b class="vimtag"> <a name="Session">Session</a> </b> <b class="vimtag"> <a name="session-file">session-file</a> </b>
-会话保存所有窗口的视图，外加全局设置。你可以保存会话，并在以后恢复之，使得窗口
-的布局看起来一样。你可以创建会话在不同的项目之间快速切换，切换时自动调入你上次
-在那个项目上工作的文件。
+会话保存所有窗口的视图，外加全局设置。保存会话后，稍后恢复时会确保窗口以相同布
+局显示。可以借助会话在多个项目之间快速切换，切换时自动载入上次处理该项目时打开
+的所有文件。
 
-视图和会话是 viminfo 文件的一个很好的补充，后者用来记住所有视图和会话都使用的
-信息  <a href="starting.html#viminfo-file">viminfo-file</a> 。
+视图和会话是 viminfo 文件的有益补充，后者用于统一保存所有视图和会话都使用的相
+关信息  <a href="starting.html#viminfo-file">viminfo-file</a> 。
 
-通过  <a href="starting.html#-S">-S</a>  参数，你可以使用以前保存的视图或者会话快速启动编辑:
+可通过  <a href="starting.html#-S">-S</a>  参数加载之前保存的视图或会话，快速启动编辑:
 <code class="example">        vim -S Session.vim</code>
 
 <code class="notvi">{仅当编译时加入  <a href="various.html#+mksession">+mksession</a>  特性才有效}</code>。
 
                                                         <b class="vimtag"> <a name=":mks">:mks</a> </b> <b class="vimtag"> <a name=":mksession">:mksession</a> </b>
-:mks[ession][!] <code class="special">[file]</code>  写入一个 Vim 脚本，该脚本能够恢复当前的编辑会话。
-                        如果包含 [!]，已有的文件会被覆盖。如果不提供 <code class="special">[file]</code>，
+:mks[ession][!] <code class="special">[file]</code>  生成可用于恢复当前的编辑会话的 Vim 脚本。
+                        给出 [!] 时，会强制覆盖已有文件。省略 <code class="special">[file]</code> 时，默认
                         使用 "Session.vim"。
 
-":mksession" 的输出结果类似于 ":mkvimrc"，但文件里附加更多的命令。这取决于
-<a href="options.html#'sessionoptions'">'sessionoptions'</a> 选项的值。产生的文件在用 ":source" 命令执行时:
-1. 如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "options" 的话，恢复全局映射和选项。局部于脚本的
-   映射不会被写入。
-2. 如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "globals" 的话，恢复大写字母开始并至少包含一个小
-   写字母的全局变量。
-3. 关闭当前标签页里除了当前窗口以外的其它窗口；关闭除了当前标签页以外的其它标
-   签页 (这会导致当前载入的缓冲区被卸载，置位 <a href="options.html#'hidden'">'hidden'</a> 或其它等价方式的缓冲区
-   可能会被隐藏)；如果当前缓冲区为空且未命名，真正删除之。
-4. 如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "curdir" 的话，恢复当前目录。或者如果
-   <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "sesdir" 的话，设置当前目录为会话文件所在的位置。
-5. 如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "winpos" 的话，恢复 GUI Vim 的窗口位置。
-6. 如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "resize" 的话，恢复屏幕大小。
-7. 恢复缓冲区列表，还有它们最后的光标位置。如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含
-   "buffers" 的话，恢复所有的缓冲区，包括隐藏和未载入的。不然，只有窗口里打开
-   的缓冲区才被恢复。
-8. 恢复所有窗口并使用和过去相同的布局。如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "help" 的
-   话，帮助窗口也被恢复。如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "blank" 的话，编辑无名缓冲
-   区的窗口也被恢复。如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "winsize" 并且没有任何 (帮
-   助/空白) 窗口被放弃的话，则恢复窗口大小 (相对于屏幕大小)。否则，只为窗口给
-   定合适的大小。
-9. 如同  <a href="starting.html#:mkview">:mkview</a>  那样，恢复各个窗口的所有视图。但使用 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 而不是
+":mksession" 输出结果类似  <a href="starting.html#:mkvimrc">:mkvimrc</a> ，但额外写入更多命令。具体写入内容取决于
+<a href="options.html#'sessionoptions'">'sessionoptions'</a> 选项值。用  <a href="repeat.html#:source">:source</a>  命令执行时，会执行以下逻辑:
+1. <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "options" 时，恢复全局映射和选项，不包括脚本局部映射。
+2. <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "globals" 时，恢复符合命名规则 (首字母大写，且至少包含
+   一个小写字母) 的全局变量。
+3. 当前标签页里仅保留当前窗口，关闭其他窗口；仅保留当前标签页，关闭其他标签页
+   (当前加载的缓冲区会被卸载，置位 <a href="options.html#'hidden'">'hidden'</a> 或以其他方式指定时，部分缓冲区会被
+   隐藏)；当前缓冲区为无名空缓冲区时，会被真正删除。
+4. <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "curdir" 时，恢复工作目录。含 "sesdir" 时，则切换到会话
+   文件所在目录。两者不能同时存在。
+5. <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "winpos" 时，恢复 GUI Vim 主窗口屏幕位置。
+6. <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "resize" 时，恢复屏幕大小。
+7. 恢复缓冲区列表以及各文件最后光标位置。<a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "buffers" 时，恢
+   复包括已隐藏和未加载在内的所有缓冲区。否则仅恢复在窗口中打开的缓冲区。
+8. 恢复所有窗口及已有布局。<a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "help" 时，也恢复帮助窗口。含
+   "blank" 时，也恢复无名缓冲区窗口。含 "winsize" 且未忽略 (帮助/空白) 窗口
+   时，按屏幕比例还原窗口大小。否则，会为窗口自动分配合适大小。
+9. 恢复各个窗口的对应视图，类似 <a href="starting.html#:mkview">:mkview</a> ，但相关配置采用 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 而非
    <a href="options.html#'viewoptions'">'viewoptions'</a>。
-10. 如果存在和会话文件同名，但以 "x.vim" (x 代表 "附加" eXtra) 结尾的文件，也
-   同时执行之。你可以用 *x.vim 文件来指定和给出会话相关的附加设置和动作，比如
-   在 GUI 版本里创立菜单项目。
+10. 存在和会话文件同名，但以 "x.vim" (x 代表 "附加" eXtra) 结尾的文件时，自动
+    执行该脚本。这脚本可用于为指定会话追加额外设置及其他逻辑，在 GUI 上创建专
+    属菜单便是一例。
 
-在恢复会话后，当前会话的完整文件名可以通过内部变量 "v:this_session" 得到
- <a href="eval.html#this_session-variable">this_session-variable</a> 。映射示例:
+恢复会话后，内部变量  <a href="eval.html#v:this_session">v:this_session</a>  可获取当前会话完整路径
+ <a href="eval.html#this_session-variable">this_session-variable</a> 。用于映射的示例:
 <code class="example">  :nmap &lt;F2&gt; :wa&lt;Bar&gt;exe "mksession! " .. v:this_session&lt;CR&gt;:so ~/sessions/</code>
-这会保存当前会话，并启动载入另外一个会话的命令。
+该映射会保存当前会话，并预填命令行用于加载其他会话。
 
-会话包含所有标签页，除非从 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 里删除了 "tabpages"。 <a href="tabpage.html#tab-page">tab-page</a> 
+会话缺省包含所有标签页，除非 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 中移除了 "tabpages"。 <a href="tabpage.html#tab-page">tab-page</a> 
 
-在载入/执行会话文件前，会触发  <a href="autocmd.html#SessionLoadPre">SessionLoadPre</a>  自动命令事件，而在加载/执行完成
-之后，会触发  <a href="autocmd.html#SessionLoadPost">SessionLoadPost</a>  自动命令事件。
+加载/执行会话文件前，会触发  <a href="autocmd.html#SessionLoadPre">SessionLoadPre</a>  自动命令事件，加载/执行完成后，会
+触发  <a href="autocmd.html#SessionLoadPost">SessionLoadPost</a>  自动命令事件。
                                                 <b class="vimtag"> <a name="SessionLoad-variable">SessionLoad-variable</a> </b>
-会话文件载入期间，SessionLoad 全局变量被设为 1。用此变量，插件可以推迟部分工
-作，直到触发 SessionLoadPost 事件时才执行。
+会话文件载入期间，全局变量  <code class="badlink">g:SessionLoad</code>  会被设为 1。插件可通过此变量推迟部
+分初始化逻辑，直到 SessionLoadPost 事件触发时才执行。
 
                                                         <b class="vimtag"> <a name=":mkvie">:mkvie</a> </b> <b class="vimtag"> <a name=":mkview">:mkview</a> </b>
-:mkvie[w][!] <code class="special">[file]</code>     写入一个 Vim 脚本，该脚本能够恢复当前的窗口内容。
-                        如果包含 [!]，已有的文件会被覆盖。如果不提供 <code class="special">[file]</code> 或
-                        者它是从 1 到 9 的数字，则生成一个名字并在前面加上
-                        <a href="options.html#'viewdir'">'viewdir'</a> 的值。如果 <a href="options.html#'viewdir'">'viewdir'</a> 的最后一个路径部分不存
-                        在，则顺便建立该目录。例如 <a href="options.html#'viewdir'">'viewdir'</a> 为
-                        "$VIM/vimfiles/view" 时，在 "$VIM/vimfiles" 下建立
-                        "view"。
-                        如果该文件已存在，这时它总会被覆盖。使用  <a href="starting.html#:loadview">:loadview</a> 
-                        来重新载入该视图。
-                        如果 <code class="special">[file]</code> 是文件名 (不考虑 <a href="options.html#'viewdir'">'viewdir'</a>)，则编辑该文件
-                        的命令加入到生成的文件里。
+:mkvie[w][!] <code class="special">[file]</code>     生成可用于恢复当前窗口内容的 Vim 脚本。
+                        给出 [!] 时，会强制覆盖已有文件。
+                        省略 <code class="special">[file]</code> 或传入从 1 到 9 的数值时，会根据缓冲区文件
+                        名和数值自动生成文件名，路径名会加上 <a href="options.html#'viewdir'">'viewdir'</a> 前缀，
+                        <a href="options.html#'viewdir'">'viewdir'</a> 路径末尾部分尚不存在时，会先自动创建该目录。
+                        例如 <a href="options.html#'viewdir'">'viewdir'</a> 为 "$VIM/vimfiles/view" 时，会在
+                        "$VIM/vimfiles" 下创建 "view" 目录。使用自动命名时，总
+                        会强制覆盖已有文件。要加载该视图，可用  <a href="starting.html#:loadview">:loadview</a> 。
+                        <code class="special">[file]</code> 给出文件路径时 (此时不考虑 <a href="options.html#'viewdir'">'viewdir'</a>)，生成脚本
+                        会附加打开该文件的编辑命令。
 
-":mkview" 的输出包含如下项目:
-1. 该窗口使用的参数列表。如果使用全局参数列表，它被重设为全局列表的值。参数列
-   表的索引位置也被保存。
-2. 窗口编辑的文件。如果没有文件，该窗口被清空。
-3. 如果 <a href="options.html#'viewoptions'">'viewoptions'</a> 包含 "options" 或者 "localoptions" 的话，恢复映射、缩写
-   和局部于窗口的选项。一般，只有局部于当前缓冲区和窗口的选项值被恢复。如果视
-   图作为会话的一部分被保存，并且 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 包含 "options" 的话，局部选
-   项的全局值也被保存。
-4. 如果使用手动折叠并且 <a href="options.html#'viewoptions'">'viewoptions'</a> 包含 "folds" 的话，恢复折叠。也恢复手动
-   打开和关闭的折叠。
-5. 滚动条的位置和文件中的光标位置。如果有关闭的折叠，这不能很好的工作。
-6. 本地的当前目录，如果和全局当前目录不同且 <a href="options.html#'viewoptions'">'viewoptions'</a> 包含 "curdir" 的话。
+":mkview" 输出脚本包含以下内容:
+1. 当前窗口使用的参数列表。如果使用的是全局参数列表，则恢复为当前的全局参数列
+   表。同时恢复参数列表中的索引位置。
+2. 窗口正在编辑的文件。没有关联文件时，该窗口恢复时会被清空。
+3. <a href="options.html#'viewoptions'">'viewoptions'</a> 含 "options" 或 "localoptions" 时，恢复映射、缩写和窗口局部选
+   项。缺省只恢复缓冲区和窗口的局部选项值。当视图作为会话的一部分被保存且
+   <a href="options.html#'sessionoptions'">'sessionoptions'</a> 含 "options" 时，也一并保存局部选项的全局值。
+4. <a href="options.html#'viewoptions'">'viewoptions'</a> 含 "folds" 时，恢复手动折叠、手动展开和关闭的折叠状态。
+5. 文件内滚动位置及光标位置。有已关闭折叠时，效果不甚理想。
+6. 和全局工作目录不同且 <a href="options.html#'viewoptions'">'viewoptions'</a> 含 "curdir" 时，恢复窗口局部工作目录。
 
 <code class="note">注意</code> 视图和会话并不完善:
-- 它们并不会恢复所有的信息。比如，定义的函数、自动命令和 ":syntax on" 并不包括
-  在内。包括寄存器内容、命令行历史包含在 viminfo 里，而不是会话或者视图里。
-- 全局选项值只有在和缺省值不同时才会被设置。如果当前值不同于缺省值，载入会话不
-  会把它设为缺省值。不过，局部选项会设为它们的缺省值。
-- 已有的映射没有预警的被覆盖。其它已有的映射可能会因为这些二义性引起错误。
-- 保存手动折叠和手动打开/关闭的折叠时，保存和载入时的文件内容差异会引起折叠恢
-  复的混乱。
-- Vim 脚本效率不高。不过比你自己输入这些命令总会快点。
+- 并不恢复全部信息。例如自定义函数、自动命令和 ":syntax on" 语法高亮配置等均不
+  保存。寄存器内容、命令行历史则存于 viminfo 而非会话或视图。
+- 全局选项仅当不同于缺省值时才会保存。加载会话时，如果全局选项当前值不同于缺省
+  值，不会恢复为缺省值。但局部选项会恢复其缺省值。
+- 已有映射会被静默覆盖。已有映射可能会因产生歧义触发错误。
+- 如果保存视图后修改了文件内容，恢复视图保存的手动折叠和手动展开/关闭的折叠状
+  态会引发错乱。
+- Vim 脚本效率不高，但仍远胜于用户手动逐条输入命令。
 
                                                         <b class="vimtag"> <a name=":lo">:lo</a> </b> <b class="vimtag"> <a name=":loadview">:loadview</a> </b>
-:lo[adview] <code class="special">[nr]</code>        为当前文件载入视图。如果没有给出 <code class="special">[nr]</code>，":mkview" 保存
-                        的视图被恢复。如果指定 <code class="special">[nr]</code>，":mkview <code class="special">[nr]</code>" 保存的视图
-                        被恢复。
+:lo[adview] <code class="special">[nr]</code>        加载为当前文件生成的自动命名视图。省略 <code class="special">[nr]</code> 时，加载
+                         <a href="starting.html#:mkview">:mkview</a>  保存的视图。给出 <code class="special">[nr]</code> 时，加载
+                        `:mkview <code class="special">[nr]</code>` 保存的视图。
 
-":mkview" 和 ":loadview" 的组合可以用来保存同一文件不超过十个的不同视图。它们
-被保存于 <a href="options.html#'viewdir'">'viewdir'</a> 选项指定的目录下。使用该文件名保存视图。如果文件被换名或者
-通过 (符号) 链接访问，就找不回你的视图了。
+ <a href="starting.html#:mkview">:mkview</a>  和  <a href="starting.html#:loadview">:loadview</a>  组合可为单个文件最多保存十套独立视图。文件统一存放于
+<a href="options.html#'viewdir'">'viewdir'</a> 选项指定目录。通过原文件名查找视图文件。如果文件重命名或通过 (符号)
+链接访问，将无法匹配并读取对应视图文件。
 
-时不时，你也许要想要清除 <a href="options.html#'viewdir'">'viewdir'</a> 目录的内容。
+建议定期清理 <a href="options.html#'viewdir'">'viewdir'</a> 目录。
 
-要自动保存和恢复 *.c 文件的视图:
+自动保存和恢复 *.c 文件视图的示例:
 <code class="example">        au BufWinLeave *.c mkview</code>
 <code class="example">        au BufWinEnter *.c silent loadview</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>10. viminfo 文件                        <b class="vimtag"> <a name="viminfo">viminfo</a> </b> <b class="vimtag"> <a name="viminfo-file">viminfo-file</a> </b> <b class="vimtag"> <a name="E136">E136</a> </b></h4>                                        <b class="vimtag"> <a name="E575">E575</a> </b> <b class="vimtag"> <a name="E576">E576</a> </b> <b class="vimtag"> <a name="E577">E577</a> </b>
-如果你退出 Vim 以后又再次启动，通常你会丢失许多信息。viminfo 文件可以用来记住
-这些信息，从而允许你继续上次退出的编辑。
+退出 Vim 后再启动时，很多操作记录通常会丢失。可用 viminfo 文件持久保存这类信
+息，继续上次未完成的编辑工作。
 
-用户手册  <a href="usr_21.html#21.3">21.3</a>  一节有所介绍。
+相关介绍请参考用户手册  <a href="usr_21.html#21.3">21.3</a>  一节。
 
-viminfo 文件用来保存:
+viminfo 文件可用于保存:
 - 命令行历史。
 - 搜索字符串历史。
 - 输入行历史。
-- 非空的寄存器内容。
+- 非空寄存器内容。
 - 多个文件的位置标记。
-- 文件标记，指向文件的位置。
-- 最近搜索/替换的模式 (适用于 'n' 和 '&amp;')。
+- 文件标记，记录文件内的光标位置。
+- 最近搜索/替代模式 (用于  <a href="pattern.html#n">n</a>  和  <a href="change.html#&">&amp;</a> )。
 - 缓冲区列表。
 - 全局变量。
 
-如果  <a href="various.html#+viminfo">+viminfo</a>  特性在编译时关闭，不支持 viminfo 文件。
+<code class="notvi">{仅当编译时加入  <a href="various.html#+viminfo">+viminfo</a>  特性时才有效}</code>
 
-与此同时，你可以使用会话文件。差别是，viminfo 文件并不依赖于你工作的内容。通
-常，只有一个 viminfo 文件。而会话文件用来保存某个编辑会话的状态。你可以保存多
-个会话文件，每个针对一个你工作的项目。viminfo 和会话文件一起可以用来有效的进入
-Vim 并直接从你希望的设置开始工作。 <a href="starting.html#session-file">session-file</a> 
+与此同时，也可使用会话文件。两者差别是，viminfo 文件不和任何工程绑定，全局通常
+只保存一份。而会话文件用于保存特定编辑会话的状态。可同时保存多份会话文件，每个
+工程单独保存一份。viminfo 和会话文件可搭配使用，在 Vim 启动后有效恢复完整的编
+辑环境。 <a href="starting.html#session-file">session-file</a> 
 
                                                         <b class="vimtag"> <a name="viminfo-security">viminfo-security</a> </b>
-Vim 生成的 viminfo 文件为纯文本格式，其中  <a href="eval.html#List">List</a> 、 <a href="eval.html#Dictionary">Dictionary</a> 、 <a href="eval.html#Tuple">Tuple</a>  类型的
-值会以 Vim 表达式形式保存。处理 viminfo 文件时，如果 <a href="options.html#'viminfo'">'viminfo'</a> 选项包含 "!"，
-这些表达式就会被解析执行。
+Vim 生成的 viminfo 文件为纯文本格式，其中  <a href="eval.html#List">List</a> 、 <a href="eval.html#Dictionary">Dictionary</a> 、 <a href="eval.html#Tuple">Tuple</a>  可能会
+以 Vim 表达式形式保存。处理 viminfo 文件且 <a href="options.html#'viminfo'">'viminfo'</a> 选项含 "!" 时，这些表达式
+会被解析执行。
 
-<a href="options.html#'viminfo'">'viminfo'</a> 选项缺省值不含 "!"，因此缺省不会执行任何表达式。
+<a href="options.html#'viminfo'">'viminfo'</a> 选项缺省值不含 "!"，因此缺省不会解析执行任何表达式。
 
-在缓冲区中直接打开 viminfo 文件 (如  <a href="editing.html#:edit">:edit</a> ) 是安全的，Vim 只会原样展示文件内
-容。风险来源于让 Vim 以 viminfo 机制加载不可信文件，以下场景会触发此机制:
+直接打开 (如通过  <a href="editing.html#:edit">:edit</a> ) viminfo 文件没有安全风险，Vim 只会展示文件内容。风险
+源于通过 viminfo 机制自动加载不可信文件，以下场景会触发此机制:
 - 对该文件执行  <a href="starting.html#:rviminfo">:rviminfo</a>  命令
 - 设置 <a href="options.html#'viminfofile'">'viminfofile'</a> 指向该文件
-- 将该文件放置在 Vim 已用于读取 viminfo 的路径中，见  <a href="starting.html#viminfo-file-name">viminfo-file-name</a> 
+- 将该文件放置在 Vim 默认读取 viminfo 的标准路径，见  <a href="starting.html#viminfo-file-name">viminfo-file-name</a> 
 
-遇到以上任意情况，如果文件不可信，切勿在 <a href="options.html#'viminfo'">'viminfo'</a> 选项中加入 "!"。
+在以上任一场景下，如果文件未必可信，切勿在 <a href="options.html#'viminfo'">'viminfo'</a> 选项中加入 "!"。
 
                                                         <b class="vimtag"> <a name="viminfo-read">viminfo-read</a> </b>
-如果 Vim 启动时 <a href="options.html#'viminfo'">'viminfo'</a> 选项非空，viminfo 文件的内容被读入，而其中的信息在适
-当的地方被应用。填入  <a href="eval.html#v:oldfiles">v:oldfiles</a>  变量。启动时并不读入位置标记 (但是文件标记被
-读入)。关于如何在启动时设置 <a href="options.html#'viminfo'">'viminfo'</a> 选项，见  <a href="starting.html#initialization">initialization</a> 。
+启动 Vim 且 <a href="options.html#'viminfo'">'viminfo'</a> 选项非空时，自动读取 viminfo 文件内容并载入环境。填充
+ <a href="eval.html#v:oldfiles">v:oldfiles</a>  变量。启动时不立即导入文件内位置标记，但导入文件标记。启动时设置
+<a href="options.html#'viminfo'">'viminfo'</a> 选项的方法可见  <a href="starting.html#initialization">initialization</a> 。
 
                                                         <b class="vimtag"> <a name="viminfo-write">viminfo-write</a> </b>
-如果 Vim 退出时 <a href="options.html#'viminfo'">'viminfo'</a> 非空，相关信息被保存在 viminfo 文件里 (实际上，如果
-该文件存在的话，和已有的内容合并)。<a href="options.html#'viminfo'">'viminfo'</a> 选项是一个定义需要保存什么信息的
-字符串，也包含这些信息需要保存多少的数量限制 (见 <a href="options.html#'viminfo'">'viminfo'</a>)。
+Vim 退出且 <a href="options.html#'viminfo'">'viminfo'</a> 非空时，相关信息会被保存到 viminfo 文件 (该文件存在时，实
+际会和已有内容合并)。<a href="options.html#'viminfo'">'viminfo'</a> 选项控制应保存信息类型、以及各类记录保存条数上
+限 (见 <a href="options.html#'viminfo'">'viminfo'</a>)。
 
-合并以两种方式发生。多数项目保存当前 Vim 会话中被改变或设置的值，没有变动的则
-从原先的 viminfo 文件里的值填充。例如:
+合并有两种方式。多数项目在当前 Vim 会话中被修改或重新设置时会保存新值，而未改
+动的项目会沿用原有 viminfo 中的旧值。示例:
 - Vim 会话 A 读入 viminfo，其中包含变量 START。
-- Vim 会话 B 做同样的事
-- Vim 会话 A 设置变量 AAA 和 BOTH 然后退出
-- Vim 会话 B 设置变量 BBB 和 BOTH 然后退出
-现在 viminfo 将会包含:
-   START - 原先在 viminfo 里，会话 A 或 B 都未改变
-   AAA   - 来自会话 A，会话 B 保留
-   BBB   - 来自会话 B
-   BOTH  - 来自会话 B，会话 A 的值丢失
+- Vim 会话 B 也读入同一份 viminfo
+- Vim 会话 A 设置变量 AAA 和 BOTH 后退出
+- Vim 会话 B 设置变量 BBB 和 BOTH 后退出
+最终 viminfo 包含的内容是:
+   START - 会话 A 或 B 均未改变 viminfo 的原有内容
+   AAA   - 由会话 A 定义，会话 B 保留
+   BBB   - 由会话 B 定义
+   BOTH  - 会话 B 修改并覆盖了会话 A 的值，A 原值丢失
 
                                                         <b class="vimtag"> <a name="viminfo-timestamp">viminfo-timestamp</a> </b>
-有些项目使用时间戳来保留最近改动的版本。这和 Vim 会话退出的顺序无关，总是保存
-最新的项目 (可有多项)。用于:
+另一类项目会附带时间戳，仅保留最后修改的版本。不受 Vim 会话退出先后顺序影响，
+总是保存最新项目 (可有多项)。这类项目包括:
 - 命令行历史。
 - 搜索字符串历史。
 - 输入行历史。
@@ -1413,136 +1389,131 @@ Vim 生成的 viminfo 文件为纯文本格式，其中  <a href="eval.html#List
 - 跳跃表。
 - 文件标记。
 
-时间戳功能在 Vim 8.0 之前被加入。从 7.4.1131 开始的稍老的 Vim 版本，保存项目时
-记录时间戳，但不使用。因此使用旧版本和新版本的 Vim 时都会保存最近的数据。
+时间戳功能在 Vim 8.0 之前被引入。从 7.4.1131 开始的旧版 Vim 版本保存项目时会记
+录时间戳，但不实际使用。因此，混用新旧版本 Vim 时，仍会正确保留最新数据。
 
 Unix 上的 <code class="note">注意</code> 事项:
-- viminfo 的文件保护会被设置，使得其它用户不能够读取。因为它可能包含任何文本或
-  者工作所需的命令。
-- 如果你需要和其它用户共享 viminfo 文件 (例如，当你 "su" 到另外一个用户的时
-  候)，你可以使该文件对同组甚至所有人可写。Vim 在替换 viminfo 文件的时候会保留
-  该文件的权限。要小心，不要不加考虑的允许任何人读写你的 viminfo 文件！
-- Vim 不会覆盖当前 "实际" 用户不能写入的 viminfo 文件。这对使用 "su" 成为 root
-  但是 $HOME 仍然指向一个普通用户的主目录的用户有用。不然 Vim 会建立一个 root
-  拥有的 viminfo 文件，使得别人都无法读取。
-- viminfo 文件不能是符号链接。为了避免安全问题。
+- 因为 viminfo 文件内可能包含敏感文本和命令，该文件权限会自动设为禁止其他用户
+  读取。
+- 需要和其他用户共享 viminfo 文件 (如 "su" 切换其他用户) 时，可手动赋予用户组
+  甚至所有人写入权限。Vim 覆盖该 viminfo 文件时会保留文件权限。请谨慎使用，不
+  要随意开放 viminfo 文件权限给任意用户。
+- Vim 不会覆盖当前 "真实" 用户无法写入的 viminfo 文件。例如用 "su" 成为 root，
+  但 $HOME 仍指向普通用户主目录时，此保护可防止生成由 root 拥有，而普通用户无
+  法读取的 viminfo 文件。
+- 为规避安全漏洞，viminfo 文件不允许为符号链接。
 
-可以为每个文件分别存贮位置标记。文件读入时，如果 <a href="options.html#'viminfo'">'viminfo'</a> 非空，该文件的位置
-标记会从 viminfo 文件里读取。<code class="note">注意</code>: 位置标记只有在退出 Vim 的时候才会保存。因为
-对所有你在当前编辑会话打开的文件都保存位置标记，这应该没有问题。除非使用过
-":bdel"。如果你想保存准备用 ":bdel" 放弃的文件的位置标记，使用 ":wv"。
-'[' 和 ']' 位置标记不会保存，但 '"' 位置标记会。'"' 位置标记用于跳转到文件最近
-退出时的光标位置。用 <a href="options.html#'viminfo'">'viminfo'</a> 的 "r" 标志位指定的字符串开始的任何文件不会保存
-其位置标记。这可以用来防止为可移动媒介上的文件保存位置标记 (MS-Windows 上你可
-以用 "ra:,rb:"，Amiga 上 "rdf0:,rdf1:,rdf2:")。
- <a href="eval.html#v:oldfiles">v:oldfiles</a>  变量填入 viminfo 文件中有位置标记的那些文件名。
+位置标记按文件独立存贮。<a href="options.html#'viminfo'">'viminfo'</a> 非空时，打开文件时会从 viminfo 文件读取该文
+件专属的位置标记。<code class="note">注意</code>: 位置标记仅当退出 Vim 时才会保存。但因为当前编辑会话中
+所有打开的文件都会记住位置标记 (使用  <a href="windows.html#:bdel">:bdel</a>  时除外)，这不会引发问题。要在
+ <a href="windows.html#:bdel">:bdel</a>  放弃文件前保存位置标记，可用  <a href="starting.html#:wv">:wv</a>  命令。不会保存  <a href="motion.html#'[">'[</a>  和  <a href="motion.html#']">']</a>  位置标
+记，但 '"' 位置标记会。因为后者可用于跳转到上次关闭文件时的光标位置。文件名以
+<a href="options.html#'viminfo'">'viminfo'</a> 的 "r" 标志位 ( <a href="options.html#viminfo-r">viminfo-r</a> ) 指定的任一字符串开头时，不保存任何该文件
+的位置标记。可用于避免保存可移动介质文件的位置标记 (MS-Windows 上可用
+"ra:,rb:"，Amiga 上则是 "rdf0:,rdf1:,rdf2:")。
+ <a href="eval.html#v:oldfiles">v:oldfiles</a>  变量会填入所有在 viminfo 文件中存有位置标记的文件名。
 
                                                         <b class="vimtag"> <a name="viminfo-file-marks">viminfo-file-marks</a> </b>
-大写位置标记 ('A 到 'Z) 在写入 viminfo 文件时被保存。数字标记 ('0 到 '9) 则有
-点特殊。在写入 viminfo 文件时 (退出或者使用 ":wviminfo" 命令)，'0 设置为当前光
-标的位置和所在的文件。旧的 '0 被移到 '1，'1 到 '2，等等。这和 "1 到 "9 删除用
-的寄存器的处理类似。如果当前光标位置已经在 '0 到 '9 里，它被移动到 '0，以免保
-存相同的位置两次。结果是，使用 "'0" 可以跳转回你退出 Vim 时所在的文件和行号。
-要立刻执行之，试用以下命令:
+大写位置标记 ('A 到 'Z) 在写入 viminfo 文件时会被自动保存。编号标记 ('0 到 '9)
+会有特殊处理。写入 viminfo 文件 (退出 Vim 或执行  <a href="starting.html#:wviminfo">:wviminfo</a>  命令) 时，当前光
+标位置及所在文件会存入 '0，原有 '0 移到 '1，'1 到 '2，依此类推。逻辑类似删除寄
+存器 "1 到 "9。当前光标位置已在 '0 到 '9 标记出现时，该位置会被移到 '0，避免重
+复记录。结果是，用  <a href="motion.html#'0">'0</a>  命令总可跳转回上次退出 Vim 时光标所在的文件和行号。要
+启动时一键实现该逻辑，可用:
 <code class="example"></code>
 <code class="example">        vim -c "normal '0"</code>
 <code class="example"></code>
-在 C shell 后裔版本里，你可为此建立一个别名:
+在 C shell 系列外壳里，可为此建立别名:
 <code class="example"></code>
 <code class="example">        alias lvim vim -c '"'normal "'"0'"'</code>
 <code class="example"></code>
-在 Bash 兼容的外壳里:
+在 Bash 兼容外壳里，则可用:
 <code class="example"></code>
 <code class="example">        alias lvim='vim -c "normal '\''0"'</code>
 <code class="example"></code>
-<a href="options.html#'viminfo'">'viminfo'</a> 里可以使用 "r" 标志位来指定什么文件不需要保存位置标记。
+可通过 <a href="options.html#'viminfo'">'viminfo'</a> 的 "r" 标志位指定不保存位置标记的文件路径  <a href="options.html#viminfo-r">viminfo-r</a> 。
 
 
-viminfo 文 件 名                                        <b class="vimtag"> <a name="viminfo-file-name">viminfo-file-name</a> </b>
+VIMINFO 文 件 名                                        <b class="vimtag"> <a name="viminfo-file-name">viminfo-file-name</a> </b>
 
-- 在 Unix 上，viminfo 文件的缺省文件名是 "$HOME/.viminfo"。Amiga 是
-  "s:.viminfo"，Win32 则是 "$HOME\_viminfo"。对于 Win32，如果没有设置 $HOME，
-  使用 "$VIM\_viminfo"。如果 $VIM 也没有设置，使用 "c:\_viminfo"。
-- <a href="options.html#'viminfo'">'viminfo'</a> 选项里的 'n' 标志位可以用来指定另外一个 viminfo 文件名
-  <a href="options.html#'viminfo'">'viminfo'</a>。
-- Vim 的 "-i" 参数可以用来设置另外一个文件名  <a href="starting.html#-i">-i</a> 。如果给出的文件名是 "NONE"
-  (全是大写)，不读写任何 viminfo 文件。下面给出的命令也不会！
-- <a href="options.html#'viminfofile'">'viminfofile'</a> 选项和 "-i" 参数用法相同。事实上，"-i" 参数的值保存在
-  <a href="options.html#'viminfofile'">'viminfofile'</a> 选项里。
-- 下面给出的命令里，可以给定另外一个文件名。它覆盖缺省文件名和 <a href="options.html#'viminfo'">'viminfo'</a> 或者
-  "-i" 给定的文件名 (除非它是 NONE)。
+- 在 Unix 上，viminfo 文件缺省路径为 "$HOME/.viminfo"。Amiga 为 "s:.viminfo"。
+  在 Win32 上，缺省为 "$HOME\_viminfo"，$HOME 未设置时改用 "$VIM\_viminfo"，
+  $VIM 也未设置时，最后使用 "c:\_viminfo"。
+- <a href="options.html#'viminfo'">'viminfo'</a> 选项里的 'n' 标志位可自定义 viminfo 文件路径  <a href="options.html#viminfo-n">viminfo-n</a> 。
+- Vim 的  <a href="starting.html#-i">-i</a>  命令行参数可用于自定义文件名。传入 "NONE" (全大写) 时，不读写任
+  何 viminfo 文件。下面列出的手动读写命令也不会！
+- <a href="options.html#'viminfofile'">'viminfofile'</a> 选项和 "-i" 参数功能相同。事实上，"-i" 参数传入值会存入
+  <a href="options.html#'viminfofile'">'viminfofile'</a> 选项。
+- 下面列出的手动读写命令指定的新文件名会覆盖缺省文件名和 <a href="options.html#'viminfo'">'viminfo'</a> 或 "-i" 指
+  定的原有文件名 (NONE 除外)。
 
 
 字 符 编 码                                             <b class="vimtag"> <a name="viminfo-encoding">viminfo-encoding</a> </b>
 
-viminfo 文件的文本使用 <a href="options.html#'encoding'">'encoding'</a> 选项指定的编码。通常你总是使用相同的
-<a href="options.html#'encoding'">'encoding'</a> 值，这没有问题。不过，如果使用不同于写入时使用的 <a href="options.html#'encoding'">'encoding'</a> 的值读
-取 viminfo 文件，有些文本 (非 ASCII 字符) 可能不正确。如果不能接受，你可以在
-<a href="options.html#'viminfo'">'viminfo'</a> 选项里加上 'c' 标志位:
+viminfo 文件文本使用 <a href="options.html#'encoding'">'encoding'</a> 选项指定的编码。通常总是使用相同的 <a href="options.html#'encoding'">'encoding'</a>
+值，因此不会有问题。不过，如果读取 viminfo 文件时使用的 <a href="options.html#'encoding'">'encoding'</a> 与写入时不
+同，部分文本 (非 ASCII 字符) 可能会失效。如果无法接受这种情况，可在 <a href="options.html#'viminfo'">'viminfo'</a>
+选项里加上 'c' 标志位:
 <code class="example">        :set viminfo+=c</code>
-Vim 会试图从 viminfo 文件写入时所使用的 <a href="options.html#'encoding'">'encoding'</a> 值转换到当前的 <a href="options.html#'encoding'">'encoding'</a>
-值。这需要 Vim 编译时带上  <a href="various.html#+iconv">+iconv</a>  特性。文件名不会被转换。
+此后，Vim 会尝试将 viminfo 文件从写入时使用的 <a href="options.html#'encoding'">'encoding'</a> 编码转换为当前的
+<a href="options.html#'encoding'">'encoding'</a>。这需要 Vim 编译时加上  <a href="various.html#+iconv">+iconv</a>  特性。文件名不会进行转换。
 
 
 手 动 读 写                                             <b class="vimtag"> <a name="viminfo-read-write">viminfo-read-write</a> </b>
 
-两个命令可以用来手动读写 viminfo 文件。这可以用来在两个运行中的 Vim 程序之间交
-换寄存器的值: 先在其中一个输入 ":wv"，再在另外一个用 ":rv"。<code class="note">注意</code> 如果寄存器里
-已经有内容，那么需要 ":rv!" 才行。不过也要 <code class="note">注意</code>，这意味着所有的内容都被第一个
-Vim 实例的信息所覆盖，包括命令行历史等。
+两条命令可用于手动读写 viminfo 文件。可用于在两个运行中的 Vim 实例间交换寄存器
+值: 先在其中一个实例中输入  <a href="starting.html#:wv">:wv</a> ，然后在另一个实例中用  <a href="starting.html#:rv">:rv</a> 。<code class="note">注意</code> 目标寄存器
+已有内容时，需要  <code class="badlink">:rv!</code>  强制覆盖。但 <code class="note">注意</code> 此操作会全盘覆盖包括命令行历史在内的
+所有记录。
 
-viminfo 文件本身也可以手动修改，不过我们建议你从已有的 viminfo 开始，保证格式
-没有错误。一旦你熟悉了，该文件格式很容易理解。这可以用来建立另一个 viminfo 文
-件，比如说 "~/.my_viminfo"，包含每次启动 Vim 你想要的设置。比如，你可以用某些
-数据预先载入寄存器，或者把特定的命令放在命令行历史里。.vimrc 文件这样的一行
+viminfo 文件本身也可手动编辑，但建议基于现有 viminfo 文件开始修改，确保格式正
+确。熟悉后，应当很容易理解相关格式。可创建独立 viminfo (如 "~/.my_viminfo")，
+包含每次启动 Vim 时的所需设置。例如用于预填充寄存器，或预设命令行历史。要加载
+该文件，可在 .vimrc 文件里加入
 <code class="example">        :rviminfo! ~/.my_viminfo</code>
-可以用来载入这些信息。你甚至可以为不同的文件类型应用不同的 viminfo (比如 C 代
-码) 上。通过使用 ":autocmd" 命令 (见  <a href="autocmd.html#:autocmd">:autocmd</a> ) 就可以根据文件名自动载入。
+甚至可通过  <a href="autocmd.html#:autocmd">:autocmd</a>  命令，根据文件名针对不同文件类型 (如 C 源码) 加载专属
+viminfo。
 
                                                         <b class="vimtag"> <a name="viminfo-errors">viminfo-errors</a> </b>
-一旦 Vim 在读入 viminfo 文件时检测到错误，以后就不会覆盖那个文件。如果有超过
-10 个错误，Vim 停止该 viminfo 文件的读取。这可以防止在给错 viminfo 文件名字的
-情况下，不小心覆盖该文件。比如，这可能发生于以下场合: 输入 "vim -i file" 但实
-际想输入 "vim -R file" (是的，有人不小心这么干过)。如果你仍然想覆盖有错误的
-viminfo 文件，或者修正这个错误，或者先删除这个文件 (在 Vim 运行的时候。这样大
-部分的信息仍然可以恢复)。
+如果 Vim 在读入 viminfo 文件时检测到错误，后续不会覆盖该文件。如果报错超过 10
+次，直接停止解析，以防给错 viminfo 文件名时意外造成文件损坏。例如本来想输入
+"vim -R file" 但实际误写为 "vim -i file" (这是真实案例)。如果确实需要覆盖存在
+错误的 viminfo 文件，或者修正错误，或者在 Vim 运行时，先删除该文件，会话内大部
+分信息会重新生成写入。
 
                                                    <b class="vimtag"> <a name=":rv">:rv</a> </b> <b class="vimtag"> <a name=":rviminfo">:rviminfo</a> </b> <b class="vimtag"> <a name="E195">E195</a> </b>
-:rv[iminfo][!] <code class="special">[file]</code>   读入 viminfo 文件 <code class="special">[file]</code> (缺省: 见上
-                         <a href="starting.html#viminfo-file-name">viminfo-file-name</a> )。
-                        如果给出 [!]，那么任何已经给出的信息 (寄存器、位置标
-                        记、 <a href="eval.html#v:oldfiles">v:oldfiles</a> ，等等) 都会被覆盖。
-                        如果 <a href="options.html#'viminfofile'">'viminfofile'</a> 设为 "NONE"，可能报错 "E195"。
+:rv[iminfo][!] <code class="special">[file]</code>   读取 viminfo 文件 <code class="special">[file]</code> (缺省:  <a href="starting.html#viminfo-file-name">viminfo-file-name</a> )。
+                        给出 [!] 时，覆盖当前已存在的寄存器、位置标记、
+                         <a href="eval.html#v:oldfiles">v:oldfiles</a>  等信息。
+                        如果 <a href="options.html#'viminfofile'">'viminfofile'</a> 为 "NONE"，执行本命令会报错 E195。
 
                         <b class="vimtag"> <a name=":wv">:wv</a> </b> <b class="vimtag"> <a name=":wviminfo">:wviminfo</a> </b> <b class="vimtag"> <a name="E137">E137</a> </b> <b class="vimtag"> <a name="E138">E138</a> </b> <b class="vimtag"> <a name="E574">E574</a> </b> <b class="vimtag"> <a name="E886">E886</a> </b> <b class="vimtag"> <a name="E929">E929</a> </b>
-:wv[iminfo][!] <code class="special">[file]</code>   写到 viminfo 文件 <code class="special">[file]</code> (缺省: 见上
-                         <code class="badlink">viminfo-file_name</code> )。
-                        <a href="options.html#'viminfofile'">'viminfofile'</a> 设为 "NONE" 时，本命令没有效果。
-                        该文件的信息先被读入，以合并原有和新的信息。如果使用
-                        [!]，旧的信息不会先读取，而是只写入系统自己内部的信
-                        息。如果 <a href="options.html#'viminfo'">'viminfo'</a> 为空，会写入不超过 100 个文件的位置
-                        标记。
-                        如果你得到错误 "E929: 太多 viminfo 临时文件"，
-                        检查有没有旧的临时文件没删除 (比如 ~/.viminf*) 还有你
-                        是否可以写入 .viminfo 文件所在的目录。
+:wv[iminfo][!] <code class="special">[file]</code>   写入 viminfo 文件 <code class="special">[file]</code> (缺省:  <code class="badlink">viminfo-file_name</code> )。
+                        如果 <a href="options.html#'viminfofile'">'viminfofile'</a> 为 "NONE"，本命令无任何效果。
+                        先读入原有文件内容，新旧数据合并后写回。给出 [!] 时，
+                        不读取原有数据，直接写入当前内存数据。<a href="options.html#'viminfo'">'viminfo'</a> 为空
+                        时，默认写入不超过 100 个文件的位置标记。
+                        如果出现报错 "E929: 太多 viminfo 临时文件"，先清理残留
+                        临时文件 (如 ~/.viminf*)，然后确认对 .viminfo 文件所在
+                        目录拥有写入权限。
 
                                                 <b class="vimtag"> <a name=":ol">:ol</a> </b> <b class="vimtag"> <a name=":oldfiles">:oldfiles</a> </b>
-:ol[dfiles]             列出 viminfo 文件中存储位置标记的文件。该列表在启动时
-                        读入，其后只有  <code class="badlink">:rviminfo!</code>  能改变它。另见
+:ol[dfiles]             列出 viminfo 文件中存储位置标记的所有文件。该列表在启
+                        动时读入，仅执行  <code class="badlink">:rviminfo!</code>  后才会更新。对应变量为
                          <a href="eval.html#v:oldfiles">v:oldfiles</a> 。
-                        其中的编号可用于  <a href="cmdline.html#c_%23%3C">c_#&lt;</a> 。
-                        输出结果可用  <a href="various.html#:filter">:filter</a>  过滤，例如:
+                        列表序号可配合  <a href="cmdline.html#c_%23%3C">c_#&lt;</a>  使用。
+                        支持  <a href="various.html#:filter">:filter</a>  过滤输出，例如:
 <code class="example">                                filter /\.vim/ oldfiles</code>
-                        过滤作用于文件名。
+                        过滤匹配文件名。
                         <code class="notvi">{仅当编译时加入  <a href="various.html#+eval">+eval</a>  特性才有效}</code>
 
 :bro[wse] ol[dfiles][!]
-                        像  <a href="starting.html#:oldfiles">:oldfiles</a>  那样列出文件名，然后提示要求输入编号。
-                        如果编号合法，编辑列表里指定的文件。
-                        如果得到  <a href="message.html#press-enter">press-enter</a>  提示时你可以按 "q" 键并且还能得
-                        到输入文件编号的提示。
-                        [!] 用来放弃已修改的缓冲区。 <a href="editing.html#abandon">abandon</a> 
-                        <code class="notvi">{仅当编译时不使用 tiny 特性才有效}</code>
+                        像  <a href="starting.html#:oldfiles">:oldfiles</a>  那样列出文件名，然后提示输入序号。序号
+                        合法时，打开对应文件。
+                        出现  <a href="message.html#press-enter">press-enter</a>  提示时按 "q" 键，仍会出现输入序号的
+                        提示。
+                        给出 [!] 时，会放弃已修改的缓冲区。 <a href="editing.html#abandon">abandon</a> 
+                        <code class="notvi">{仅当编译时不使用 tiny 特性包才可用}</code>
 
  vim:tw=78:ts=8:noet:ft=help:norl:
 </section>
