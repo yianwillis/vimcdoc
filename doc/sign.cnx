@@ -12,123 +12,120 @@
 2. 命令					|sign-commands|
 3. 函数					|sign-functions-details|
 
-{仅当编译时加入 |+signs| 特性才可用}
+{仅当编译时加入 |+signs| 特性才有效}
 
 ==============================================================================
 1. 简介					*sign-intro* *signs*
 
-当调试器或者其他集成开发环境的工具控制编辑器时，它需要通过给出某些特定的高亮以
-给用户一些关于文件有用信息的反馈。一个例子是调试器在左边的列中给出图标来表示这
-里有一个断点。另一个可能的例子是用一个箭头代表当前程序计数器 PC 的位置。标号特
-性既包括在窗口的左边放置标号或者图标的支持，也包括该行使用的高亮的定义。显示图
-像化的标号可能只适用于 gvim (虽然 Sun Microsystem 的 dtterm 也支持，它是我所知
-的唯一支持的终端模拟器)。但文字化的标号和高亮应该可用于任何彩色终端模拟器。
+当调试器或其他集成开发环境工具操控编辑器时，需要提供特定高亮，以便用户快速查看
+文件关键信息。一个典型例子是调试器在左侧栏显示图标以标记断点。或用箭头标记当前
+程序计数器 PC 位置。标号特性包括两部分，在窗口左侧栏放置标号或图标，以及对整行
+应用特定高亮。图像化标号基本只适用于 gvim (已知仅 Sun Microsystem 的 dtterm 提
+供终端模拟器支持)。文字标号和行高亮则可适用于所有彩色终端模拟器。
 
-标号和相应的高亮并不仅对调试器有用。Sun 的 Visual WorkShop 用标号和高亮来标识
-错误和源程序浏览器的命中位置。它的调试器也支持 8 到 10 种不同的标号和高亮色。
-|Netbeans| 也是如此。
+标号和行高亮并不限于调试器场景。Sun Visual WorkShop 可用于标识编译错误和源码浏
+览器匹配行。该调试器也支持 8 到 10 种不同标号和高亮色，见 |Netbeans|。
 
-应用标号的过程分两步进行:
+标号使用过程分两步进行:
 
-1. 定义标号。这里指定图像，文字和高亮设定。例如，你可以定义 "break" 标号为路边
-   的停止符号和文字 "!!"。
+1. 标号名定义。指定图像、文字和高亮。例如，可定义 "break" 标号为停车路标，并配
+   文字 "!!"。
 
-2. 放置标号。这里指定标号显示的文件和行号。每个定义好的标号可以在不同的文件和
-   行号上多次放置。
+2. 标号放置。指定目标文件和行号。同一个预定义的标号名可多次放置在不同文件和行
+   号上。
 
 							*sign-column*
-如果文件里定义了标号，Vim 自动增加两个字符的纵列来显示标号。撤销最后一个标号之
-后，该列又会自动消失。'signcolumn' 选项可改变此行为。
+存在标号定义的文件会自动增加两列宽度的侧边栏，用于显示标号。撤销最后一个标号
+后，该侧边栏会自动消失。'signcolumn' 选项可修改此行为。
 
-该列的颜色由 SignColumn 高亮组定义 |hl-SignColumn|。一个设定该颜色的示例: >
+侧边栏配色由 SignColumn 高亮组定义 |hl-SignColumn|。设置示例: >
 
 	:highlight SignColumn guibg=darkgrey
 <
-打开 'cursorline' 时，使用 CursorLineSign 高亮组 |hl-CursorLineSign|。
+打开 'cursorline' 时，当前行改用 CursorLineSign 高亮组 |hl-CursorLineSign|。
 							*sign-identifier*
-已放置的标号以一个数值识别，称为标号标识符。此标识符用于跳转到标号或删除标号。
-标识符在用 |:sign-place| 命令或 |sign_place()| 函数放置标号时分配。每个标号标
-识符应是唯一的数值。如果多个已放置的标号使用相同的标识符，标号的跳转或删除将不
-可预测。为了避免标识符重复，可用标号组。|sign_place()| 函数调用时可提供零标号
-标识符来分配下个可用的标识符。
+已放置标号拥有唯一的标号标识符。此标识符可用于跳转或删除对应标号。标识符通过
+|:sign-place| 命令或 |sign_place()| 函数在放置标号时分配。每个标识符必须是唯一
+数值。如果多个已放置标号共用同一个标识符，跳转或删除行为将难以预测。可借助标号
+组避免标识符冲突。调用 |sign_place()| 时，标识符位置可传入零值，Vim 会自动分配
+下个可用的标号标识符。
 
 							*sign-group*
-每个已放置的标号可在全局组或某命名组中分配。放置标号时，如果不提供组名或组名为
-空串时，标号放置在全局组。否则标号放置在命名组。标号标识符在每个组里是唯一的。
-标号组允许 Vim 插件使用唯一的标号，而不会为其它使用标号的插件相互干扰。
+已放置标号可归属全局组或自定义命名组。放置标号时，分组名省略或为空串默认代表归
+属全局组，否则归属指定命名组。标识符的唯一性仅局限于所属分组。分组机制可以确保
+不同插件使用标号时互不干扰。
 
-要在弹出窗口中放置标号，组名必须以 "PopUp" 开始。其它标号不能在弹出窗口中显
-示。组名 "PopUpMenu" 用于 'cursorline' 置位的弹出窗口。
+要在弹窗中放置标号，组名必须以 "PopUp" 开始。否则不会正常显示。"PopUpMenu" 组
+为 'cursorline' 置位的弹窗专用。
 
 							*sign-priority*
-每个已放置的标号会分配一个优先值。同一行上如有多个标号放置，使用最高优先级的标
-号的属性，这与标号组无关。标号的缺省优先级是 10。不同的标号在定义时可给出不同
-的缺省优先级。优先级在标号放置时分配。
+每个已放置标号都带有优先值。同一行上放置多个标号时，优先级最高的标号 (不受所属
+组别影响) 生效。优先级缺省为 10，定义标号名时可自定义该标号名的缺省优先级。而
+放置标号时可另行指定优先级。
 
-当出现相同优先级的两个标号且其中一个在标号列上显示图标或文本而另一个有行高亮
-时，两个标号同时显示。
+出现两个相同优先级的标号时，如果一个在侧边栏上显示图标或文本、而另一个负责整行
+高亮，两种效果可同时显示。
 
-标号放置的行如被删除，移动标号到下一行 (如果没有下一行则为缓冲区的末行)。删除
-如被撤销，标号并不移回。
+标号放置行被删除后，标号会自动移动到下一行 (如果没有下一行，则继续留在缓冲区的
+末行)。撤销删除操作后，标号并不移回。
 
-如果同时有带行高亮的标号和 'cursorline' 高亮，对优先级为 100 或更高的标号，其
-高亮优先，反之则 'cursorline' 高亮优先。
+同时有标号整行高亮和 'cursorline' 光标行高亮时，标号优先级为 100 或更高时以标
+号高亮为准，否则以 'cursorline' 高亮为准。
 
 ==============================================================================
 2. 命令						*sign-commands* *:sig* *:sign*
 
-这里提供了一例，在当前文件的第 23 行显示 "piet" 标号，以文字 ">>" 标明。 >
+以下示例在当前文件第 23 行放置 "piet" 标号，显示文字 ">>"。 >vim
 	:sign define piet text=>> texthl=Search
 	:exe ":sign place 2 line=23 name=piet file=" .. expand("%:p")
 
-删除标号的命令: >
+删除标号的命令: >vim
 	:sign unplace 2
 <
-注意 ":sign" 命令后面不能跟其它命令或者注释。如果需要，使用 |:execute| 命令。
+注意 |:sign| 命令后不能直接拼接其他命令或注释。有需要时可用 |:execute| 命令。
 
 
 定 义 标 号				*:sign-define* *E255* *E160* *E612*
 
-见 |sign_define()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_define()|。
 
 :sig[n] define {name} {argument}...
-		定义新标号或为已存在的标号设置属性。{name} 可以是完全由数位组
-		成的数值，也可以是由非数位开头的名字。忽略开头的零，所以
-		"0012"、"012" 和 "12" 认为是相同的名字。
-		可以定义大约 120 个不同的标号。
+		定义新标号名，或修改已存在标号名的属性。{name} 可以是纯数值，
+		也可以是非数位开头的自定义名称。对数值形式，忽略前导零，因此
+		"0012"、"012" 和 "12" 为相同标号名。
+		可定义大约 120 个不同的标号名。
 
-		允许的参数是:
+		可用参数为:
 
 	icon={bitmap}
-		位图文件名。必须是完整的路径名。位图应该能够在两个字符的宽度内
-		显示。但是不会实际检查这一点，如果位图太大，刷新时会有问题。只
-		有 GTK 2 可以按比例缩放位图，使之刚好能占据可用的空间。
+		用作图标的位图文件完整路径。位图应适配两字符宽度。但不会实际检
+		查，如果尺寸过大，会造成刷新异常。仅 GTK 2 可自动缩放位图适配
+		所需空间。
 			工具包		支持
 			GTK 1		pixmap (.xpm)
-			GTK 2		许多
+			GTK 2		多种格式
 			Motif		pixmap (.xpm)
-			Win32		.bmp, .ico, .cur
-					pixmap (.xpm) |+xpm_w32|
+			Win32		.bmp、.ico、.cur、
+					pixmap (.xpm) (需要 |+xpm_w32| 特性)
 	priority={prio}
-		此标号的缺省优先级，见 |sign-priority|。
+		缺省优先级，见 |sign-priority|。
 
 	linehl={group}
-		用以显示整个标号行的高亮组。多用于定义背景色。
+		放置行整行高亮组。多用于定义背景色。
 
 	numhl={group}
-		放置标号的行的行号使用的高亮组。优先于 |hl-LineNr|、
-		|hl-LineNrAbove|、|hl-LineNrBelow| 和 |hl-CursorLineNr|。
+		放置所在行号高亮组。会覆盖 |hl-LineNr|、|hl-LineNrAbove|、
+		|hl-LineNrBelow| 和 |hl-CursorLineNr|。
 
 	text={text}						*E239*
-		没有图标或者不用 GUI 时显示的文本。只允许可显示字符，而且必须
+		无图标时或非 GUI 环境下显示的文本。只允许可显示字符，而且必须
 		占据一到两个显示单元。
 
 	texthl={group}
-		显示文本项目的高亮组。
+		文本项目高亮组。
 
 	culhl={group}
-		打开 'cursorline' 时，光标在标号所在的行时文本项目使用的高亮
-		组。
+		开启 'cursorline' 且光标位于标号行时，文本项目高亮组。
 
 	示例: >
 		:sign define MySign text=>> texthl=Search linehl=DiffText
@@ -136,10 +133,10 @@
 
 删 除 标 号					*:sign-undefine* *E155*
 
-见 |sign_undefine()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_undefine()|。
 
 :sig[n] undefine {name}
-		删除标号的定义。如果 {name} 标号已经放置，会有问题。
+		删除标号名定义。如果该名已有放置标号，会触发异常。
 
 		示例: >
 			:sign undefine MySign
@@ -147,38 +144,38 @@
 
 列 出 标 号						*:sign-list* *E156*
 
-见 |sign_getdefined()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_getdefined()|。
 
-:sig[n] list	列出所有的标号和它们的属性。
+:sig[n] list	列出所有预定义标号名及其属性。
 
 :sig[n] list {name}
-		列出单个标号和他的属性。
+		列出指定单个标号名及其属性。
 
 
 放 置 标 号						*:sign-place* *E158*
 
-见 |sign_place()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_place()|。
 
 :sig[n] place {id} line={lnum} name={name} file={fname}
-		把 {name} 指定的标号放在文件 {fname} 的第 {lnum} 行。
+		将 {name} 命名标号放置在文件 {fname} 的第 {lnum} 行。
 							*:sign-fname*
-		文件 {fname} 必须已经在某个缓冲区调入，而且必须使用准确的文件
-		名。通配符，$ENV 和 ~ 不会被扩展，空白不会被转义。结尾的空白则
-		会忽略。
+		文件 {fname} 必须已经在某个缓冲区加载，而且必须使用准确文件
+		名，通配符，$ENV 和 ~ 等记法不会被展开，文件名内含空白不转义。
+		忽略拖尾空白。
 
-		用 {id} 记住这个标号，将来可作进一步应用。{id} 必须是数值。用
-		户可以自行决定 {id} 在每个文件内是否唯一。(如果多次使用，撤销
-		放置就必须做多次，而且进行修改时未必尽如预期)。
+		{id} 指定标号标识符，后续用于操作该标号。{id} 必须是数值。用户
+		必须自行确保该值在每个文件内唯一。(如果重复使用，撤销放置必须
+		重复多次，标号修改也会异常)。
 
-		以下可选的标号属性可在 "file=" 前指定:
-			group={group}	把标号放置在标号组 {group}
-			priority={prio}	给标号分配优先级 {prio}
+		以下标号属性可选，必须在 "file=" 前指定:
+			group={group}	指定标号组 {group}
+			priority={prio}	指定优先级 {prio}
 
-		缺省，标号放置在全局标号组。
+		缺省归属全局标号组。
 
-		缺省，标号分配的缺省优先级为 10，除非标号定义时给出了不同的缺
-		省值。要分配不同的优先值，用 "priority={prio}" 来指定。优先级
-		用于在同一行有多个标号放置时决定显示哪个标号。
+		缺省优先级为 10，但定义标号名时可指定其他缺省值。
+		"priority={prio}" 可自定义本次放置的优先级。该值用于控制同行多
+		标号的显示优先级。
 
 		示例: >
 			:sign place 5 line=3 name=sign1 file=a.py
@@ -187,8 +184,8 @@
 							\ name=sign1 file=a.py
 <
 :sig[n] place {id} line={lnum} name={name} [buffer={nr}]
-		同上，但指定缓冲区 {nr}。如果不给出缓冲区参数，标号放置在当前
-		缓冲区。
+		同上，放置标号，但指定缓冲区 {nr} 而非文件名。buffer 参数省略
+		时默认为当前缓冲区。
 
 		示例: >
 			:sign place 10 line=99 name=sign3
@@ -196,19 +193,20 @@
 <
 							*E885*
 :sig[n] place {id} name={name} file={fname}
-		把文件 {fname} 里用 {id} 记住的标号换成 {name} 指定的新标号。
-		参看关于 {fname} 的说明 |:sign-fname|。可用于不移动某个标号的
-		同时，更改它的显示方式 (例如，当调试器停在某个断点时)。
+		修改已有标号。将文件 {fname} 里标识符为 {id} 的标号换成 {name}
+		命名的新标号。{fname} 规则同上 |:sign-fname|。
+		可用于在不移动标号位置的前提下更改显示方式 (如调试器停在断点时
+		更新标号外观)。
 
-		可选的 "group={group}" 属性可在 "file=" 前使用来选择特定组的标
-		号。可选的 "priority={prio}" 属性可用来发来已有标号的优先级。
+		可选 "group={group}" 属性可在 "file=" 前使用，选择特定组内的标
+		号。可选 "priority={prio}" 属性可修改已有标号的优先级。
 
 		示例: >
 			:sign place 23 name=sign1 file=/path/to/edit.py
 <
 :sig[n] place {id} name={name} [buffer={nr}]
-		同上，但指定缓冲区 {nr}。如果不给出缓冲区参数，使用当前缓冲
-		区。
+		同上，修改已有标号，但指定缓冲区 {nr} 而非文件名。buffer 参数
+		省略时默认为当前缓冲区。
 
 		示例: >
 			:sign place 23 name=sign1
@@ -217,155 +215,166 @@
 
 撤 销 放 置 标 号					*:sign-unplace* *E159*
 
-见 |sign_unplace()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_unplace()|。
 
 :sig[n] unplace {id} file={fname}
-		从文件 {fname} 里撤销已放置的标号 {id} 的放置。
-		参看关于 {fname} 的说明 |:sign-fname|。
+		撤销文件 {fname} 里全局组标号 {id} 的放置。
+		{fname} 规则同上 |:sign-fname|。
 
 :sig[n] unplace {id} group={group} file={fname}
-		同上，但撤销标号组 {group} 里的标号 {id}。
+		撤销文件 {fname} 里命名组 {group} 中的标号 {id}。
 
 :sig[n] unplace {id} group=* file={fname}
-		同上，但摊销所有标号组里的标号 {id}。
+		撤销文件 {fname} 里所有分组中的标号 {id}。
 
 :sig[n] unplace * file={fname}
-		从文件 {fname} 里撤销所有标号的放置。
+		撤销文件 {fname} 里全局组中的所有标号。
 
 :sig[n] unplace * group={group} file={fname}
-		从文件 {fname} 里撤销组 {group} 里所有标号的放置。
+		撤销文件 {fname} 里命名组 {group} 中的所有标号。
 
 :sig[n] unplace * group=* file={fname}
-		从文件 {fname} 里撤销所有组里所有标号的放置。
+		撤销文件 {fname} 里所有分组中的所有标号。
 
 :sig[n] unplace {id} buffer={nr}
-		从缓冲区 {nr} 里撤销已放置的标号 {id} 的放置。
+		撤销缓冲区 {nr} 里全局组标号 {id} 的放置。
 
 :sig[n] unplace {id} group={group} buffer={nr}
-		从缓冲区 {nr} 里撤销组 {group} 里已放置的标号 {id} 的放置。
+		撤销缓冲区 {nr} 里命名组 {group} 中的标号 {id}。
 
 :sig[n] unplace {id} group=* buffer={nr}
-		从缓冲区 {nr} 里撤销所有组里已放置的标号 {id} 的放置。
+		撤销缓冲区 {nr} 里所有分组里中的标号 {id}。
 
 :sig[n] unplace * buffer={nr}
-		从缓冲区 {nr} 里撤销所有标号的放置。
+		撤销缓冲区 {nr} 里全局组中的所有标号。
 
 :sig[n] unplace * group={group} buffer={nr}
-		从缓冲区 {nr} 里撤销组 {group} 里所有标号的放置。
+		撤销缓冲区 {nr} 里命名组 {group} 中的所有标号。
 
 :sig[n] unplace * group=* buffer={nr}
-		从缓冲区 {nr} 里撤销所有组里所有标号的放置。
+		撤销缓冲区 {nr} 里所有分组中的所有标号。
 
 :sig[n] unplace {id}
-		撤销所有文件里出现的 {id} 标号的放置。
+		撤销所有文件里全局组中的标号 {id}。
 
 :sig[n] unplace {id} group={group}
-		撤销所有文件里出现的组 {group} 里 {id} 标号的放置。
+		撤销所有文件里命名组 {group} 中的标号 {id}。
 
 :sig[n] unplace {id} group=*
-		撤销所有文件里出现的所有组里 {id} 标号的放置。
+		撤销所有文件里所有分组中的标号 {id}。
 
 :sig[n] unplace *
-		从所有文件撤销全局组里所有标号的放置。
+		撤销所有文件里全局组中的所有标号。
 
 :sig[n] unplace * group={group}
-		从所有文件撤销组 {group} 里所有标号的放置。
+		撤销所有文件里命名组 {group} 中的所有标号。
 
 :sig[n] unplace * group=*
-		从所有文件撤销所有组里所有标号的放置。
+		撤销所有文件里所有分组中的所有标号。
 
 :sig[n] unplace
-		撤销光标所在标号的放置。如果同一行有多个标号，只删除一个。
+		撤销光标所在行上全局组中的标号。有多个标号时，只撤销其中一个。
 
 :sig[n] unplace group={group}
-		撤销组 {group} 里光标所在标号的放置。
+		撤销光标所在行上命名组 {group} 中的标号。
 
 :sig[n] unplace group=*
-		撤销所有组里光标所在标号的放置。
+		撤销光标所在行上所有分组中的标号。
+
+(译者注: 总结如下:
+:sig[n] unplace [{id}] [group={group}] [file={fname}] [buffer={nr}]
+		id 省略时，指定光标所在行，此时不能指定 file 或 buffer 属性，
+		该行有多个标号时，只撤销其中一个。给出 * 代表所有标号，否则必
+		须为合法标号标识符。
+		group 省略时，指定全局组。* 代表所有分组，否则必须为合法组名。
+		file 和 buffer 最多只能选一。两者都省略代表所有文件，除非 id
+		也省略。
+)
+
 
 
 列 出 放 置 标 号					*:sign-place-list*
 
-见 |sign_getplaced()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_getplaced()|。
 
 :sig[n] place file={fname}
-		列出文件 {fname} 里所有放置的标号。
-		参看关于 {fname} 的说明 |:sign-fname|。
+		列出文件 {fname} 里全局组中所有已放置的标号。
+		{fname} 规则同上 |:sign-fname|。
 
 :sig[n] place group={group} file={fname}
-		列出文件 {fname} 里组 {group} 里所有放置的标号。
+		列出文件 {fname} 里命名组 {group} 中所有标号。
 
 :sig[n] place group=* file={fname}
-		列出文件 {fname} 里所有组里所有放置的标号。
+		列出文件 {fname} 里所有分组中的所有标号。
 
 :sig[n] place buffer={nr}
-		列出缓冲区 {nr} 里所有放置的标号。
+		列出缓冲区 {nr} 里全局组中的所有标号。
 
 :sig[n] place group={group} buffer={nr}
-		列出缓冲区 {nr} 里组 {group} 里所有放置的标号。
+		列出缓冲区 {nr} 里命名组 {group} 中的所有标号。
 
 :sig[n] place group=* buffer={nr}
-		列出缓冲区 {nr} 里所有组里所有放置的标号。
+		列出缓冲区 {nr} 里所有分组中的所有标号。
 
-:sig[n] place	列出所有文件里全局组里放置的标号。
+:sig[n] place	列出所有文件里全局组中的所有标号。
 
 :sig[n] place group={group}
-		列出所有文件里组 {group} 里放置的标号。
+		列出所有文件里命名组 {group} 中的所有标号。
 
 :sig[n] place group=*
-		列出所有文件里所有组里放置的标号。
+		列出所有文件里所有分组中的所有标号。
 
 
-跳 到 标 号						*:sign-jump* *E157*
+跳 转 到 标 号						*:sign-jump* *E157*
 
-见 |sign_jump()| 给出等价的 Vim 脚本函数。
+等价 Vim 脚本函数可见 |sign_jump()|。
 
 :sig[n] jump {id} file={fname}
-		打开文件 {fname} 或者跳转到包含 {fname} 的窗口并把光标设在标号
-		{id} 所在的位置。
-		参看关于 {fname} 的说明 |:sign-fname|。
-		如果此文件不在窗口显示但当前文件又不能被放弃 |abandon|，此动作
-		失败。
+		打开文件 {fname} 或切换到显示该文件的窗口，然后定位光标到全局
+		组中标号 {id} 的所在行。
+		{fname} 规则同上 |:sign-fname|。
+		如果该文件未在窗口中显示，但当前文件又不能被放弃 |abandon|，本
+		命令会失败。
 
 :sig[n] jump {id} group={group} file={fname}
-		同上，但跳转到组 {group} 里的标号
+		同上，但跳转到命名组 {group} 中的指定标号。
 
 :sig[n] jump {id} [buffer={nr}]					*E934*
-		同上，但指定缓冲区 {nr}。如果缓冲区 {nr} 没有名字，报错。如果
-		未给出缓冲区参数，使用当前缓冲区。
+		同上，跳转到指定标号，但指定缓冲区 {nr} 而非文件名。如果缓冲区
+		{nr} 没有文件名，报错。buffer 省略时默认使用当前缓冲区。
 
 :sig[n] jump {id} group={group} [buffer={nr}]
-		同上，但跳转到组 {group} 里的标号
+		同上，但跳转到命令组 {group} 中的指定标号。
 
 ==============================================================================
 3. 函数						*sign-functions-details*
 
 sign_define({name} [, {dict}])				*sign_define()*
 sign_define({list})
-		定义名为 {name} 的新标号或为已存在的标号设置属性。类似于
-		|:sign-define| 命令。
+		定义新标号名，或修改已存在标号名的属性。类似 |:sign-define| 命
+		令。
 
-		给 {name} 加上独有的前缀以避免名字冲突。不像放置标号那样有
-		{group} 的区隔。
+		建议 {name} 加上独有的前缀，避免命名冲突。和放置标号不同，定义
+		标号名时没有 {group} 用于区隔。
 
-		{name} 可以是字符串或数值。可选的 {dict} 参数指定标号的属性。
-		支持以下的值:
-		   icon		用于标号的位图文件完整路径。
-		   linehl	用于标号放置所在的整行的高亮组。
-		   priority	标号的缺省优先级
-		   numhl	放置标号的行的行号使用的高亮组。
-		   text		没有图标或不使用 GUI 时显示的文本。
-		   texthl	文本项目使用的高亮组
-		   culhl	打开 'cursorline' 时，光标在标号所在的行时文本
-				项目使用的高亮组。
+		{name} 可为字符串或数值。可选 {dict} 参数指定标号名属性。支持
+		以下键值:
+		   icon		用作图标的位图文件完整路径。
+		   linehl	放置行整行高亮组。
+		   priority	缺省优先级
+		   numhl	放置所在行号高亮组。
+		   text		无图标时或非 GUI 环境下显示的文本。
+		   texthl	文本项目高亮组
+		   culhl	开启 'cursorline' 且光标位于标号行时，文本项目
+				高亮组。
 
-		如果名为 {name} 的标号已存在，更新标号的属性。
+		标号名 {name} 已有定义时，更新原有标号属性。
 
-		单个参数 {list} 可用来定义一列标号。每个列表项是 {dict} 中上述
-		项目的字典，此外还有 "name" 项目指定标号名。
+		单参数 {list} 函数形式可批量定义多个标号。每个列表项相当于上述
+		{dict} 字典，并额外需要 "name" 键，指定标号名。
 
-		成功时返回 0，失败时返回 -1。如果使用单个参数 {list}，返回值的
-		列表，其中每个值对应一个定义的标号。
+		成功时返回 0，如果失败返回 -1。使用单参数 {list} 形式时，返回
+		值为每个标号名相应返回值组成的列表。
 
 		示例: >
 			call sign_define("mySign", {
@@ -386,27 +395,26 @@ sign_define({list})
 
 
 sign_getdefined([{name}])				*sign_getdefined()*
-		获取已定义标号及其属性的列表。类似于 |:sign-list| 命令。
+		获取预定义标号名及其属性的列表。类似 |:sign-list| 命令。
 
-		如果不给出 {name}，返回所有已定义标号的列表，否则返回指定标号
-		的属性。
+		{name} 省略时，返回所有预定义标号名的属性列表，否则仅返回指定
+		标号名的属性 (单元素列表)。
 
-		返回值的每个列表项是包含以下项目的字典:
-		   icon		标号的位图文件完整路径
-		   linehl	标号放置所在的整行的高亮组；有设置此项目才存在
+		返回值中，每个列表项为包含以下条目的字典:
+		   icon		标号位图文件完整路径
+		   linehl	标号放置行整行高亮组；有相应设置时才包含
 		   name		标号名
-		   priority	标号的缺省优先级
-		   numhl	放置标号的行的行号使用的高亮组；有设置此项目才
-				存在
-		   text		没有图标或不使用 GUI 时显示的文本。
-		   texthl	文本项目使用的高亮组；有设置此项目才存在
-		   culhl	打开 'cursorline' 时，光标在标号所在的行时文本
-				项目使用的高亮组；有设置此项目才存在
+		   priority	标号缺省优先级
+		   numhl	标号放置所在行号高亮组；有相应设置时才包含
+		   text		无图标时或非 GUI 环境下显示的文本
+		   texthl	文本项目高亮组；有相应设置时才包含
+		   culhl	开启 'cursorline' 且光标位于标号行时，文本项目
+				高亮组；有相应设置时才包含
 
-		如果没有标号或 {name} 找不到，返回空列表。
+		如果没有标号 ({name} 省略时) 或 {name} 找不到，返回空列表。
 
 		示例: >
-			" 获取所有定义的标号的列表
+			" 获取所有预定义标号名的属性列表
 			echo sign_getdefined()
 
 			" 获取名为 mySign 的标号的属性
@@ -419,53 +427,53 @@ sign_getdefined([{name}])				*sign_getdefined()*
 
 
 sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
-		返回一个或所有缓冲区里放置的标号的列表。类似于
-		|:sign-place-list| 命令。
+		返回缓冲区中已放置标号的列表。类似 |:sign-place-list| 命令。
 
-		如果给出可选的缓冲区名 {buf}，只返回该缓冲区里放置的标号列表。
-		{buf} 的用法见 |bufname()|。可选的 {dict} 可包含以下项目:
-		   group	只选择此组内的标号
-		   id		选择带此标识符的标号
-		   lnum		选择放置在此行的标号。{lnum} 的用法见
-				|line()|。
-		如果 {group} 为 '*'，返回包括全局组的所有组的标号。如果
-		{group} 未给出或为空串，只返回全局组里的标号。如果无参数，返回
-		所有缓冲区里放置的全局组里的所有标号。见 |sign-group|。
+		给出可选缓冲区名 {buf} 时，只返回该缓冲区里已放置标号的列表。
+		否则查询所有缓冲区。
+		{buf} 用法见 |bufname()|。可选 {dict} 支持以下条目:
+		   group	仅选择指定组中的标号
+		   id		仅选择指定标识符的标号
+		   lnum		仅选择指定行上放置的标号。用法见 |line()|
+		"group" 为 '*' 时，返回所有分组 (含全局组) 中的标号。省略或为
+		空串时，仅返回全局组中的标号。
+		省略所有参数时，返回所有缓冲区里全局组中的所有已放置标号。见
+		|sign-group|。
 
-		返回值的每个列表项目是带有以下项目的字典:
-			bufnr	带有此标号的缓冲区号
-			signs	放置在 {bufnr} 的标号列表。每个列表项目是带有
-				下列项的字典
+		返回值中，每个列表项为包含以下条目的字典:
+			bufnr	包含此标号的缓冲区编号
+			signs	{bufnr} 里的标号列表。每个列表项为包含以下条目
+				的字典
 
-		每个标号的字典包含以下项:
-			group	 标号组。全局组设为 ''。
+		标号字典包含以下条目:
+			group	 标号组。全局组设为 ''
 			id	 标号标识符
 			lnum	 标号放置的行号
-			name	 已定义的标号名
+			name	 预定义标号名
 			priority 标号优先级
 
-		缓冲区里返回的标号以行号和优先级排序。
+		缓冲区内返回的标号以行号和优先级排序。
 
-		失败或没有已放置的标号时返回空列表。
+		如果查询失败或没有任何匹配的已放置标号，返回空列表。
 
 		示例: >
-			" 获取在 eval.c 里放置的全局组里的标号列表
+			" 获取在 eval.c 里全局组中的标号列表
 			echo sign_getplaced("eval.c")
 
-			" 获取在 eval.c 里放置的组 'g1' 里的标号列表
+			" 获取在 eval.c 里命名组 'g1' 中的标号列表
 			echo sign_getplaced("eval.c", {'group' : 'g1'})
 
 			" 获取在 eval.c 里放置在第 10 行的标号列表
 			echo sign_getplaced("eval.c", {'lnum' : 10})
 
-			" 获取在 a.py 里放置的标识符为 10 的标号
+			" 获取在 a.py 里标识符为 10 的标号
 			echo sign_getplaced("a.py", {'id' : 10})
 
-			" 获取在 a.py 里放置的组 'g1' 里带 id 20 的标号
+			" 获取在 a.py 里命名组 'g1' 中标识符为 20 的标号
 			echo sign_getplaced("a.py", {'group' : 'g1',
 							\  'id' : 20})
 
-			" 获取所有放置的标号的列表
+			" 获取所有已放置标号
 			echo sign_getplaced()
 <
 		也可用作 |method|: >
@@ -475,16 +483,16 @@ sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 
 
 sign_jump({id}, {group}, {buf})				*sign_jump()*
-		打开缓冲区 {buf} 或跳转到包含 {buf} 的窗口，并定位光标到组
-		{group} 里的标号 {id}。类似于 |:sign-jump| 命令。
+		打开缓冲区 {buf} 或切换到显示 {buf} 的窗口，然后定位光标到组
+		{group} 中标号 {id} 的所在行。类似 |:sign-jump| 命令。
 
 		{group} 为空串时使用全局组。
-		{buf} 的用法见 |bufname()|。
+		{buf} 用法见 |bufname()|。
 
-		返回标号的行号。如果参数非法返回 -1。
+		返回标号所在行号。如果参数非法返回 -1。
 
 		示例: >
-			" 跳转到当前缓冲区的标号 10
+			" 跳转到当前缓冲区里的标号 10
 			call sign_jump(10, '', '')
 <
 		也可用作 |method|: >
@@ -495,44 +503,46 @@ sign_jump({id}, {group}, {buf})				*sign_jump()*
 
 							*sign_place()*
 sign_place({id}, {group}, {name}, {buf} [, {dict}])
-		把 {name} 指定的标号放在文件 {fname} 或缓冲区 {buf} 的第
-		{lnum} 行，并给标号指定 {id} 和 {group}。类似于 |:sign-place|
-		命令。
+		将 {name} 命名标号放置在文件 {fname} 或缓冲区 {buf} 的第
+		{lnum} 行，并为标号指定 {id} 和 {group}。类似 |:sign-place| 命
+		令。
 
-		如果标号标识符 {id} 为零，分配新的标识符。否则使用指定的数值。
-		{group} 为标号组名。要指定全局标号组，使用空串。{group} 相当于
-		{id} 的命名空间，这样两个组就可有相同的 ID。详情参见
-		|sign-identifier| 和 |sign-group|。
+		{id} 为零时，Vim 会自动分配新标识符。否则使用指定数值作为标号
+		标识符。
+		{group} 指定标号组。空串代表全局标号组。{group} 相当于 {id} 的
+		命名空间，跨组可使用相同的 ID。详见 |sign-identifier| 和
+		|sign-group|。
 
-		{name} 指定已定义的标号。
-		{buf} 指定缓冲区名或号。可接受的值见 |bufname()|。
+		{name} 指定预定义标号名。
+		{buf} 指定缓冲区名或编号。可用值见 |bufname()|。
 
-		可选的 {dict} 参数支持以下项目:
-			lnum		放置标号的文件或缓冲区 {buf} 的行号。
-					可接受的值见 |line()|。
+		可选 {dict} 参数支持以下条目:
+			lnum		文件或缓冲区里的行号，用于放置标
+					号。可用值见 |line()|。
 			priority	标号优先级。详见 |sign-priority|。
 
-		如果不给出可选的 {dict}，那么修改已放置的在组 {group} 里的标号
-		{id} 使用已定义的标号 {name}。
+		{dict} 省略时，仅将组 {group} 里现有已放置标号 {id} 更换新
+		{name} 标号名，改变风格但不改变位置。
 
-		成功时返回标号标识符，失败时返回 -1。
+		成功时返回标号标识符，如果失败返回 -1。
 
-		示例: >
-			" 放置名为 sign1 的标号在缓冲区 json.c 第 20 行带 id
-			" 为 5
+		示例: >vim
+			" 在缓冲区 json.c 第 20 行放置全局组 id 为 5 名为
+			" sign1 的标号
 			call sign_place(5, '', 'sign1', 'json.c',
 							\ {'lnum' : 20})
 
-			" 更新缓冲区 json.c 的标号 5 使用 sign2
+			" 修改缓冲区 json.c 里全局组 id 为 5 的标号，改用
+			" sign2 风格
 			call sign_place(5, '', 'sign2', 'json.c')
 
-			" 放置名为 sign3 的标号在缓冲区 json.c 第 30 行带新分
-			" 配的标识符
+			" 在缓冲区 json.c 第 30 行放置全局组自动分配新标识符的
+			" 名为 sign3 的标号
 			let id = sign_place(0, '', 'sign3', 'json.c',
 							\ {'lnum' : 30})
 
-			" 放置名为 sign4 的标号在缓冲区 json.c 第 40 行带 id
-			" 为 10 且优先级为 90
+			" 在缓冲区 json.c 第 40 行放置全局组 id 为 10 且优先级
+			" 为 90 名为 sign4 的标号
 			call sign_place(10, 'g3', 'sign4', 'json.c',
 					\ {'lnum' : 40, 'priority' : 90})
 <
@@ -543,29 +553,32 @@ sign_place({id}, {group}, {name}, {buf} [, {dict}])
 
 
 sign_placelist({list})				*sign_placelist()*
-		放置一或多个标号。类似于 |sign_place()| 函数。{list} 参数指定
-		要放置的一列标号。每个列表项目是带以下标号属性的字典:
-		    buffer	缓冲区名或号。可接受的值见 |bufname()|。
-		    group	标号组名。{group} 相当于 {id} 的命名空间，这样
-				两个组就可有相同的 ID。不指定或设为空串时则指
-				定全局标号组，详见 |sign-group|。
-		    id		标号标识符。如果未指定或为零，分配新的唯一的标
-				识符。否则使用指定的数值。详见
+		批量放置标号。用法类似 |sign_place()| 函数。{list} 参数指定要
+		放置标号信息的列表。每个列表项为包含以下标号属性的字典:
+		    buffer	缓冲区名或编号。可用值见 |bufname()|。
+		    group	标号组。{group} 相当于 {id} 的命名空间，跨组可
+				使用相同的 ID。省略或空串代表全局标号组，详见
+				|sign-group|。
+		    id		标号标识符。省略或为零时，Vim 会自动分配新的唯
+				一的标识符。否则使用指定数值。详见
 				|sign-identifier|。
-		    lnum	缓冲区里放置标号的行号。可接受值见 |line()|。
-		    name	放置的标号名。详见 |sign_define()|。
-		    priority	标号优先级。多个标号放置在同一行时，使用最高优
-				先级的标号。如果不指定，缺省优先级是 10，除非
-				标号定义时指定了其他值。详见 |sign-priority|。
+		    lnum	缓冲区里放置标号的行号。可用值见 |line()|。
+		    name	预定义标号名。详见 |sign_define()|。
+		    priority	标号优先级。该值用于控制同行多标号的显示优先
+				级。省略时默认优先级是 10，但定义标号名时可指
+				定其他缺省值。详见 |sign-priority|。
 
-		如果 {id} 指定已存在的桔，则修改已有的标号以使用指定的 {name}
-		和/或 {priority}。
+		{dict} 省略时，仅将组 {group} 里现有已放置标号 {id} 更换新
+		{name} 标号名，改变风格但不改变位置。
 
-		返回标号标识符列表。如果放置某标号失败，对应的列表项设为 -1。
+		{id} 指定已存在标号时，会修改该标号，使用指定的 {name} 和/或
+		{priority}。
+
+		返回标号标识符列表。如果放置某标号失败，对应列表项设为 -1。
 
 		示例: >
-			" 放置标号 s1 在缓冲区 a.c 的第 20 行带 id 5，还有第
-			" 30 行带 id 10
+			" 在缓冲区 a.c 第 20 行和第 30 行分别放置全局组 id 为
+			" 5 和 10 名为 "s1" 的标号
 			let [n1, n2] = sign_placelist([
 				\ {'id' : 5,
 				\  'name' : 's1',
@@ -577,8 +590,8 @@ sign_placelist({list})				*sign_placelist()*
 				\  'lnum' : 30}
 				\ ])
 
-			" 放置标号 s1 在缓冲区 a.c 的第 40 和 50 行带自动生成
-			" 的标识符
+			" 在缓冲区 a.c 的第 40 行和第 50 行分别放置标识符自动
+			" 分配的名为 "s1" 的标号
 			let [n1, n2] = sign_placelist([
 				\ {'name' : 's1',
 				\  'buffer' : 'a.c',
@@ -596,22 +609,23 @@ sign_placelist({list})				*sign_placelist()*
 
 sign_undefine([{name}])					*sign_undefine()*
 sign_undefine({list})
-		删除之前定义的标号 {name}。类似于 |:sign-undefine| 命令。如果
-		不给出 {name}，删除所有定义的标号。
+		删除之前定义的标号名 {name}。类似 |:sign-undefine| 命令。省略
+		{name} 时，删除全部预定义标号名。
 
-		单个参数 {list} 可用来删除一列标号的定义。每个列表项是标号名。
+		单参数 {list} 形式可用于批量删除多个标号名。每个列表项对应一个
+		标号名。
 
-		成功时返回 0，失败时返回 -1。如果使用单个参数 {list}，返回值的
-		列表，其中每个值对应一个删除定义的标号。
+		成功时返回 0，如果失败返回 -1。使用单参数 {list} 形式时，返回
+		值为每个标号名相应返回值组成的列表。
 
 		示例: >
-			" 删除名为 mySign 的标号
+			" 删除 mySign 标号名
 			call sign_undefine("mySign")
 
-			" 删除标号 'sign1' 和 'sign2'
+			" 删除 'sign1' 和 'sign2' 标号名
 			call sign_undefine(["sign1", "sign2"])
 
-			" 删除所有标号
+			" 删除所有标号名
 			call sign_undefine()
 <
 		也可用作 |method|: >
@@ -621,42 +635,41 @@ sign_undefine({list})
 
 
 sign_unplace({group} [, {dict}])			*sign_unplace()*
-		撤销在一或多个缓冲区里已放置的标号的放置。类似于
-		|:sign-unplace| 命令。
+		撤销一或多个缓冲区里标号的放置。类似 |:sign-unplace| 命令。
 
-		{group} 是标号组名。要使用全局标号组，使用空串。如果 {group}
-		设为 '*'，使用所有的组，包括全局组。
-		{group} 里标号的选择基于 {dict} 的项目。支持以下的 {dict} 可选
-		项目:
-			buffer	缓冲区名或号。见 |bufname()|。
+		{group} 为标号组。空串代表全局标号组。'*' 代表所有分组，包括全
+		局组。
+		根据 {dict} 设置筛选指定分组下需要撤销的标号。支持以下 {dict}
+		可选条目:
+			buffer	缓冲区名或编号。可用值见 |bufname()|。
 			id	标号标识符
-		如果不给出 {dict}，删除 {group} 里的所有标号。
+		{dict} 省略时，撤销 {group} 中的所有标号。
 
-		成功时返回 0，失败时返回 -1。
+		成功时返回 0，如果失败返回 -1。
 
 		示例: >
-			" 从缓冲区 a.vim 撤销标号 10
+			" 撤销缓冲区 a.vim 里全局组中的标号 10
 			call sign_unplace('', {'buffer' : "a.vim", 'id' : 10})
 
-			" 从缓冲区 3 撤销 'g1' 组里的标号 20
+			" 撤销缓冲区 3 里 'g1' 命名组中的标号 20
 			call sign_unplace('g1', {'buffer' : 3, 'id' : 20})
 
-			" 从缓冲区 10 撤销 'g2' 组里的所有标号
+			" 撤销缓冲区 10 里 'g2' 命名组中的所有标号
 			call sign_unplace('g2', {'buffer' : 10})
 
-			" 从所有缓冲区撤销 'g3' 组里的标号 30
+			" 撤销所有缓冲区里的 'g3' 命名组中的标号 30
 			call sign_unplace('g3', {'id' : 30})
 
-			" 从缓冲区 5 撤销所有已放置的标号
+			" 撤销缓冲区 5 里所有分组中所有已放置标号
 			call sign_unplace('*', {'buffer' : 5})
 
-			" 从所有缓冲区撤销 'g4' 组里的所有标号
+			" 撤销所有缓冲区里 'g4' 命名组中的所有标号
 			call sign_unplace('g4')
 
-			" 从所有缓冲区撤销标号 40
+			" 撤销所有缓冲区里所有分组中的标号 40
 			call sign_unplace('*', {'id' : 40})
 
-			" 从所有缓冲区撤销所有已放置的标号
+			" 撤销所有缓冲区里所有分组中的所有已放置标号
 			call sign_unplace('*')
 
 <		也可用作 |method|: >
@@ -666,22 +679,21 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 
 
 sign_unplacelist({list})				*sign_unplacelist()*
-		撤销在一或多个缓冲区里已放置的标号的放置。类似于
-		|sign_unplace()| 函数。
+		撤销一或多个缓冲区里标号的放置。类似 |sign_unplace()| 函数。
 
-		{list} 参数指定要撤销的标号的列表。每个列表项目是带有以下标号
-		属性的字典:
-		    buffer	缓冲区名或号。可接受的值见 |bufname()|。如无指
-				定，从所有缓冲区里撤销指定的标号。
-		    group	标号组名。如无指定或设为空串，使用全局标号组，
-				如果设为 '*'，使用所有的组，包括全局组。
-		    id		标号标识符。如无指定，撤销指定组的所有标号。
+		{list} 参数指定待撤销标号列表。每个列表项为包含以下标号属性的
+		字典:
+		    buffer	缓冲区名或编号。可用值见 |bufname()|。省略时默
+				认所有缓冲区。
+		    group	标号组。省略或空串代表全局标号组，'*' 代表所有
+				分组，包括全局组。
+		    id		标号标识符。省略时默认指定分组中的所有标号。
 
-		返回列表，如果标号被成功撤销，对应项设为 0，如果失败设为 -1。
+		返回列表，标号被成功撤销时，对应项设为 0，如果失败设为 -1。
 
 		示例: >
-			" 从缓冲区 a.vim 撤销带 id 10 的标号，从缓冲区 b.vim
-			" 撤销带 id 20 的标号
+			" 撤销缓冲区 a.vim 里全局组中 id 为 10 的标号，同时
+			" 撤销缓冲区 b.vim 里全局组中 id 为 20 的标号
 			call sign_unplacelist([
 				\ {'id' : 10, 'buffer' : "a.vim"},
 				\ {'id' : 20, 'buffer' : 'b.vim'},
