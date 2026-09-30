@@ -7,106 +7,106 @@
 
 终端信息						*terminal-info*
 
-Vim 使用你使用的终端的信息来填充屏幕和识别你输入的键。如果信息不正确，屏幕可能
-会混乱，而一些键也可能识别不了。屏幕上必须执行的动作是通过输出字符串完成的。特
-殊键会产生一系列字符的序列。这些字符串存在终端选项里，见 |terminal-options|。
+Vim 使用当前终端信息完成屏幕绘制与按键识别。如果信息有误，会出现屏幕乱码以及按
+键无法识别。屏幕操作通过向终端发送字符序列实现。而特殊按键会由终端产生相应字符
+序列。这些字符序列都会用终端选项保存，见 |terminal-options|。
 
-注意: 运行 |GUI| 的时候这里多数都用不到。
+注意: |GUI| 版本运行时，此处多数描述不生效。
 
 1. 启动				|startup-terminal|
 2. 终端选项			|terminal-options|
 3. 窗口大小			|window-size|
-4. 慢速和快速终端		|slow-fast-terminal|
+4. 低速和快速终端		|slow-fast-terminal|
 5. 使用鼠标			|mouse-using|
 
 ==============================================================================
 1. 启动							*startup-terminal*
 
-Vim 启动时，假定一个缺省终端类型。Amiga 上，这是一个标准的 CLI 窗口，
-MS-Windows 是 pc 终端，而 Unix 则是 ansi 终端。还有一些终端类型，它们都总是可
-用的，见下 |builtin-terms|。
+Vim 启动时，会预设缺省终端类型。Amiga 上是标准 CLI 窗口，MS-Windows 上是 pc 终
+端，而 Unix 上则是 ansi 终端。另有若干总是可用的内置终端类型，见下
+|builtin-terms|。
 
-使用 '-T' Vim 参数，你可以给出终端名。如果没有给出，Vim 会试图从 TERM 环境变量
-里读取名字。
+可用 |-T| Vim 参数指定终端名。未指定时，Vim 会试图从 TERM 环境变量读取。
 
 				*termcap* *terminfo* *E557* *E558* *E559*
-Unix 系统使用 terminfo 数据库或者 termcap 文件。在所有的文档里，这被统称为
-"termcap"。编译时，configure 的运行会自动决定是用 terminfo 还是 termcap。如果
-运行 Vim 时，":version" 的输出显示 |+terminfo| 的话，就意味着使用的是
-terminfo。另见 |xterm-screens|。
+Unix 系统使用 terminfo 数据库或者 termcap 文件。文档中统一称为 "termcap" (终端
+能力库)。编译阶段 configure 脚本会在 terminfo 和 termcap 中自动选择。Vim 运行
+时可查看 |:version| 输出，显示 |+terminfo| 则代表使用 terminfo。另见
+|xterm-screens|。
 
-在非 Unix 系统中，termcap 只有在 Vim 编译时定义 TERMCAP 才有效。
+非 Unix 系统上，仅当 Vim 编译时定义 TERMCAP 才有效 (译者注: 现已无需如此，此说
+明已过时)。
 
 					*builtin-terms* *builtin_terms*
-有若干内建的终端可用。从 9.0.0280 补丁开始，不同 Vim 版本间此支持不再有区别。
-用 `:set term=xxx` (在不运行 GUI 的时候)，可以看到可用的内建终端类型列表。另见
+Vim 自带若干内置终端。从 9.0.0280 补丁开始，各 Vim 版本的内置终端已经统一。
+非 GUI 环境下执行 `:set term=xxx` 时，报错信息会列出全部可用内置终端。另见
 |+builtin_terms|。
 
-如果包含了 termcap 的代码，Vim 会试图从 termcap 文件和内建的 termcap 里得到你
-使用的终端的字符串。如果你使用的终端项目确实存在，两者都会使用。哪个在前面决定
-于 'ttybuiltin' 选项的设置:
+编译包含 termcap 支持时，Vim 会同时从外部 termcap 文件和内置 termcap 读取终端
+序列。所用终端名两者都有对应条目时，两者都会使用。使用顺序取决于 'ttybuiltin'
+选项:
 
-'ttybuiltin' 打开	1: 内建 termcap		2: 外部 termcap
-'ttybuiltin' 关闭	1: 外部 termcap		2: 内建 termcap
+'ttybuiltin' 打开	1: 内置 termcap		2: 外部 termcap
+'ttybuiltin' 关闭	1: 外部 termcap		2: 内置 termcap
 
-如果其中某个选项不存在，就从另外一个那里读取。如果两个都存在，就从排名前面的那
-个读取。
+一处缺失某项终端能力时，会从另一处获取。两者都存在时，则按上述顺序读取。
 
-使用哪个外部 termcap 文件和不同的系统有关，也可能依赖于环境变量 "TERMCAP" 和
-"TERMPATH"。见 "man tgetent"。
+外部 termcap 文件路径随系统变化，也受环境变量 "TERMCAP" 和 "TERMPATH" 控制。见
+"man tgetent"。
 
-依赖于终端的设置				*term-dependent-settings*
+终端相关设置					*term-dependent-settings*
 
-如果你想根据终端名字设置选项或者映射，最好在 .vimrc 里设置。示例: >
+要根据终端名设置选项或映射，建议在 .vimrc 中设置。示例: >
 
    if &term == "xterm"
-     ... xterm 映射和设置 ...
+     ... xterm 特定映射和设置 ...
    elseif &term =~ "vt10."
-     ... vt100、vt102 映射和设置 ...
+     ... vt100、vt102 特定映射和设置 ...
    endif
 <
 						*raw-terminal-mode*
-普通的编辑会把终端设为原始 ("raw") 模式。't_ti'、't_TI' 和 't_ks' 定义的字符串
-会送到终端上。正常情况下，这把终端设为一个状态，该状态下能合法给出 termcap 代
-码，并激活光标和功能键。
-Vim 退出终端时，它会回到 Vim 启动前的模式。't_te'、't_TE' 和 't_ke' 定义的字符
-串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂时置回普
-通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <BS> 时继续。
+普通编辑时，终端会进入原始 ("raw") 模式。Vim 会依次向终端发送 't_ti'、't_TI'
+和 't_ks' 定义的字符序列。正常情况下，这会使终端进入一种 termcap 代码可用的状
+态，并启用光标和功能键。
+Vim 退出时，终端会恢复为 Vim 启动前的模式。Vim 会依次向终端发送 't_ke'、't_te'
+和 't_TE' 定义的字符序列。在 Amiga 上，执行外部命令 (如 |!!|) 时终端会短暂切回
+普通模式。此时按可显示字符可暂停屏幕输出。按 <BS> 恢复输出。
 
-注意: 如果 't_ti' 非空，Vim 假定它会切换到轮换屏幕上。执行外壳命令或退出 Vim
-时产生的结果可能会因此稍有不同。如果不想如此，用 't_TI' 和 't_TE' (但要附加而
-不是覆盖)。
+注意: 't_ti' 非空时，Vim 假定终端会切换到备用屏幕。执行外壳命令或退出 Vim 的行
+为会因此略有变化。如果不想如此，可改用 't_TI' 和 't_TE' 追加相应序列 (务必追加
+内容，而非覆盖)。
 
-Vim 会试图用 't_RK' termcap 项目来检测终端使用的键盘协议。它会在 't_TI' 之后发
-送，但只在没有工作的时候才会做 (没有预输入或等待中的命令)。这是为了防止返回的
-响应出现在外壳命令中或 Vim 结束后才到达。
+Vim 通过 't_RK' 终端能力项检测终端使用的键盘协议。该序列在 't_TI' 之后发送，但
+仅当不繁忙时 (无预输入或待执行命令) 才会进行。这可以避免应答出现在外壳命令中、
+或在 Vim 结束后才到达。
 
 						*xterm-bracketed-paste*
-如果设置了 't_BE' 选项，进入 "raw" 模式时会发送 't_BE' 到终端，退出 "raw" 模式
-时则发送 't_BD'。终端应在粘贴文本之前发送 't_PS'，而粘贴文本之后发送 't_PE'。
-这样 Vim 就能区隔粘贴的文本和键入的字符。粘贴文本的处理就像使用了鼠标中键，按
-本义插入而不作命令解释。
+设置 't_BE' 选项时，进入原始模式后会向终端发送 't_BE'，退出原始模式前则会发送
+'t_BD'。在此括号粘贴模式下，约定终端在粘贴文本前先发送 't_PS'，而粘贴文本结束
+后发送 't_PE'。借此 Vim 可以区分粘贴文本和手动键入字符。粘贴文本的处理逻辑等同
+于鼠标中键粘贴，即按本义插入，不会当作命令解析。
 
-请 注意: 尽量括号内的粘贴试图防止粘贴时讨厌的副作用 (如 CTRL-C 或 <Esc> 键)，
-它不应被视作安全保证，因为不同的终端实现的方式可能略有不同。粘贴到 Vim 时仍应
-小心。
+请 注意: 括号粘贴模式的作用是防止粘贴时带来的副作用 (如 CTRL-C 或 <Esc> 键被解
+析)，但这不应被视作安全保障，因为不同终端实现可能略有不同。粘贴内容仍应谨慎处
+理。
 
-光标在首列时，在光标前插入粘贴文本。否则在光标位置之后附加粘贴文本。这意味着你
-不能在首列之后粘贴。不幸的是 Vim 没有办法知道鼠标指针在哪里。
+光标位于首列时，粘贴文本会在光标前插入。其他情况下粘贴文本会插入在光标后。这意
+味着，无法在首列之后粘贴。不幸的是，Vim 无法提前获知鼠标指针位置，无法在括号粘
+贴时规避此限制。
 
-注意 有些情况下 Vim 不能识别这种括号内的粘贴，而只能得到原始的文本。在其它一些
-情况下，Vim 只能得到首个粘贴的字符而丢失其余的部分，例如在使用 "r" 命令时。如
-果你对此不满意，在 .vimrc 这样关闭带括号的粘贴: >
+注意 部分场景下 Vim 无法识别括号粘贴，只能获取原始文本。还有部分场景只能获取粘
+贴的首个字符，其余丢失 (如 |r| 命令)。如果出现问题而要关闭括号粘贴模式，可在
+.vimrc 里加入: >
 	set t_BE=
-如果这样做，Vim 运行时发送 't_BD' 给终端以关闭括号内的粘贴。
+设置后，Vim 运行时会向终端发送 't_BD' 以关闭括号粘贴模式。
 
-如果不设置 |t_PS| 或 |t_PE|，不使用 |t_BE|。围绕粘贴文字的转义码如果不能识别，
-这样可以确保括号内的粘贴不打开。
+如果 |t_PS| 或 |t_PE| 未设置，不会启用 |t_BE|。保证在无法识别粘贴起止转义码
+时，不开启括号粘贴模式。
 
-注意: 'esckeys' 选项如没有置位，关闭括号内的粘贴模式 (置位 'compatible' 选项时
-也是)。
+注意: 'esckeys' 选项未开启时也会关闭括号粘贴模式 ('compatible' 选项置位时，隐
+含关闭此选项)。
 
-如果你的终端支持括号内的粘贴但没有自动设置相关选项，可以试试下面: >
+确定终端支持括号粘贴模式但相关选项未自动配置时，可进行手动配置: >
 
 	if &term =~ "screen"
 	  let &t_BE = "\e[?2004h"
@@ -115,15 +115,15 @@ Vim 会试图用 't_RK' termcap 项目来检测终端使用的键盘协议。它
 	  exec "set t_PE=\e[201~"
 	endif
 
-ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、"BD"、"PS"
-和 "PE"。如果有此版本，你的终端可能不需要手动配置。
+ncurses 6.4 版本 (2023 年初) 为部分终端新增了 "BE"、"BD"、"PS" 和 "PE" 等
+terminfo 项目。已有此版本时，可能无需手动配置。
 
 							*tmux-integration*
-在 tmux 里执行 Vim 时如果有问题，下面有一些提示。可以注释掉对你不适用的部分
-(取决于 tmux 运行所在的终端): >
+在 tmux 内执行 Vim 时如果出现问题，下面给出一些提示。可将不适用的部分注释掉
+(效果取决于 tmux 运行所在的终端): >
 
     if !has('gui_running') && &term =~ '^\%(screen\|tmux\)'
-        " 更好鼠标支持，见 :help 'ttymouse'
+        " 提供更好鼠标支持，见 :help 'ttymouse'
         set ttymouse=sgr
 
         " 打开真彩，见 :help xterm-true-color
@@ -131,7 +131,7 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
         let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
         let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 
-        " 打开括号内的粘贴模式，见 :help xterm-bracketed-paste
+        " 打开括号粘贴模式，见 :help xterm-bracketed-paste
         let &t_BE = "\<Esc>[?2004h"
         let &t_BD = "\<Esc>[?2004l"
         let &t_PS = "\<Esc>[200~"
@@ -143,7 +143,7 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
 	execute "set <FocusGained>=\<Esc>[I"
         execute "set <FocusLost>=\<Esc>[O"
 
-        " 打开带修饰符的光标键，见 :help arrow_modifiers
+        " 打开带修饰符光标键，见 :help arrow_modifiers
         execute "silent! set <xUp>=\<Esc>[@;*A"
         execute "silent! set <xDown>=\<Esc>[@;*B"
         execute "silent! set <xRight>=\<Esc>[@;*C"
@@ -151,50 +151,52 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
     endif
 <
 							*cs7-problem*
-注意: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
-Solaris 2.5 上 "stty cs8 parenb"，使用 "stty cs7 parenb" 恢复就会有这个问题。
-如果你使用 "stty cs8 -parenb -istrip"，就能正确恢复了。
+注意: 如果启动 Vim 之后修改终端设置，可能造成设置组合非法。有报告在 Solaris
+2.5 上，启动 Vim 后使用 "stty cs8 parenb"，Vim 退出时会错误恢复为
+"stty cs7 parenb"。可改用 "stty cs8 -parenb -istrip"，即可正确恢复。
 
-有些 termcap 项目在某种意义上是错误的，因为发送 't_ks' 后光标键发送的代码和
-termcap 定义的不同。要避免这一点，你需要设置 't_ks' (和 't_ke') 为空值。这必须
-在初始化时进行 (见 |initialization|)，不然就太晚了。
+部分终端能力项存在缺陷，发送 't_ks' 后，光标键输出的序列和终端能力库的定义不一
+致。解决方法是，将 't_ks' (以及 't_ke') 设为空值。这必须在初始阶段设置 (见
+|initialization|)，否则为时太晚。
 
-有些终端项目假设最高位总是被复位的。例如: Amiga 上光标向上项目可以是
-":ku=\E[A:"。但是 Amiga 实际发送 "\233A"。如果最高位被复位，这没有问题，比如在
-串行线使用 Amiga 的时候。如果光标键不工作，尝试一下项目 ":ku=\233A:"。
+有些终端能力项则假设最高位为零。例如: Amiga 上，光标上移条目可能会写为
+":ku=\E[A:"。但 Amiga 实际发送 "\233A"。最高位总为零 (如在串口使用 Amiga) 的
+场景，没有问题。但如果光标键失效，应将该条目改为 ":ku=\233A:"。
 
-有些 termcap 项目使用 ":ku=\E[A:"。但 Amiga 实际发送 "\233A"。输出结果 "\E["
-和 "\233" 经常是等价的，但输入时则不然。要修正这一问题，你需要修改 termcap 项
-目，或者用 :set 命令改变键码 (译者注: 这段内容有重复，但原文如此)。
+有些终端能力项使用 ":ku=\E[A:"。但 Amiga 实际发送 "\233A"。输出时 "\E[" 和
+"\233" 通常等价，但输入时二者并不等同。要修正，需要修改终端能力项，或用 |:set|
+命令修正键码 (译者注: 这段内容略有重复，但原文如此)。
 
-许多光标键以单个 <Esc> 开始。Vim 必须找出是否这确实是 <Esc> 键单击，还是光标键
-序列的开始。它等待下一个字符到达。如果一秒钟不出现，就假设是单个 <Esc>。在很慢
-的系统里，这可能失败，使得有时候光标键不能工作。如果你发现这一问题，复位
-'timeout' 选项。Vim 会在 <Esc> 之后等待下一个字符的来临。如果你需要输入单个
-<Esc>，必须输入两次。复位 'esckeys' 选项在插入模式下避免这个问题，但是这样你不
-能在插入模式下使用光标和功能键。
+众多光标键以 <Esc> 开头。Vim 需要判断这是单独按下 <Esc> 键，还是光标键序列的开
+头。为此，Vim 会等待下一个字符到达。一秒后无后续字符，则判定为单独 <Esc>。在很
+慢的系统上此机制可能失效，造成光标键偶发失灵。如果遇到此问题，可复位 'timeout'
+选项。此时 Vim 会在接收到 <Esc> 后一直等待后续字符。要输入单独 <Esc>，需要按键
+两次。复位 'esckeys' 选项可在插入模式下避免按键两次的问题，但代价是插入模式下
+无法使用光标和功能键。
 
-Amiga 上窗口调整大小的识别只有在终端名为 "amiga" 或 "builtin_amiga" 才有可能。
+Amiga 上，仅当终端名为 "amiga" 或 "builtin_amiga" 时，才会启用窗口大小变化检
+测。
 
-有些终端的光标键的代码不明确。televideo 925 就是这样的一个终端。光标左键发送的
-是 CTRL-H。这使得退格和光标左键无法区别。要避免这一问题，CTRL-H 永远不会识别为
-光标左键。
+部分终端的光标键编码容易产生歧义。televideo 925 就是一例。左光标键发送
+CTRL-H。这会导致无法区分退格和左光标键。为规避此问题，Vim 禁止将 CTRL-H 识别为
+左光标键。
 
 				*vt100-cursor-keys* *xterm-cursor-keys*
-其它终端 (例如，vt100 和 xterm) 的光标键发送 <Esc>OA、<Esc>OB，等等。不幸的
-是，这些是插入模式下合法的命令: 结束插入，在上面打开新行，开始插入 'A'、'B'，
-等等。Vim 不会执行这些命令，相反，它会把该输入键序列识别为光标键的移动。要避免
-这一点而使 Vim 在两种情况下都能工作，你需要以下设置: >
-	:set notimeout		" 映射时不检查超时
+其他终端 (如 vt100 和 xterm) 的光标键会发送 <Esc>OA、<Esc>OB 等序列。但这些都
+是插入模式下合法的命令: 停止插入，在上方新开一行，插入字符 'A'、'B' 等。Vim 可
+能误将该键序列识别为光标键动作，而非执行以上命令。要避免这个问题，使两种场景都
+能正常工作，需要以下设置: >
+	:set notimeout		" 映射不检查超时
 	:set ttimeout		" 终端键码检查超时
-	:set timeoutlen=100	" 超时为 100 毫秒
-这要求键码在 100 毫秒的间隔内发送，从而能识别其为光标键。正常情况下，你的输入
-不会那么快，所以它们能被识别为单独输入的命令，即使 Vim 收到了相同的字节序列。
+	:set timeoutlen=100	" 100 毫秒超时
+该设置要求键码在 100 毫秒内完整送达，从而能识别其为光标键。手动输入一般达不到
+这种速度，所以即使对应相同的键序列，也会正确识别为独立输入的若干命令。
 
 				*vt100-function-keys* *xterm-function-keys*
-xterm 可以用两种模式发送功能键 F1 到 F4: vt100 兼容模式或不兼容模式。因为 Vim
-可能不知道 xterm 发送的是哪种，两种都被识别。<Home> 和 <End> 键情况相同。
-			普通			vt100 ~
+xterm 可用两种模式发送功能键 F1 到 F4: vt100 兼容模式或非兼容模式。Vim 未必能
+确定 xterm 具体使用哪种模式发送，因此同时识别两种模式。<Home> 和 <End> 键也有
+类似情况。
+			普通模式		vt100 模式 ~
 	<F1>	t_k1	<Esc>[11~	<xF1>	<Esc>OP	    *<xF1>-xterm*
 	<F2>	t_k2	<Esc>[12~	<xF2>	<Esc>OQ	    *<xF2>-xterm*
 	<F3>	t_k3	<Esc>[13~	<xF3>	<Esc>OR	    *<xF3>-xterm*
@@ -202,31 +204,31 @@ xterm 可以用两种模式发送功能键 F1 到 F4: vt100 兼容模式或不�
 	<Home>	t_kh	<Esc>[7~	<xHome>	<Esc>OH	    *<xHome>-xterm*
 	<End>	t_@7	<Esc>[4~	<xEnd>	<Esc>OF	    *<xEnd>-xterm*
 
-Vim 启动时，<xF1> 被映射到 <F1>，<xF2> 到 <F2> 等等。这意味着缺省两种代码做相
-同的事情。如果你为 <xF2> 定义了映射而你的终端支持两种键，那么就覆盖了缺省的映
-射，从而可以用 <F2> 和 <xF2> 键做不同的事情。
+Vim 启动时，<xF1> 映射到 <F1>，<xF2> 映射到 <F2>，依此类推。默认两类编码效果相
+同。对同时支持两种键的终端可单独定义 <xF2> 映射以覆盖缺省映射，可使 <F2> 和
+<xF2> 键绑定不同功能。
 
 							*xterm-shifted-keys*
-更新的 xterm 版本支持 Shift + 功能键和特殊键。Vim 识别其中的大多数。使用 ":set
-termcap" 来检查哪些是支持的，相应的代码为何。多数情况下这些不在 termcap 里，只
-有 builtin_xterm termcap 才支持。
+新版 xterm 支持带 Shift 的功能键与特殊按键。Vim 可识别其中大部分。可用
+`:set termcap` 来检查支持的按键与对应序列。这类按键大多不存于终端能力库，仅内
+置的 builtin_xterm termcap 支持。
 
 							*xterm-modifier-keys*
-新版 xterm 对于大多数功能键支持 Alt 和 Ctrl。为避免增加 Alt、Ctrl 和 Shift 对
-每个键的捆绑，在 termcap 项目末尾识别一个特殊序列: ";*X"。"X" 可以是任何字符，
-通常是 '~'。";*" 支持一个可选的修饰符参数。";2" 代表 Shift，";3" 是 Alt，";5"
-是 Ctrl，";9" 是 Meta (当它与 Alt 不同时)。它们可以组合使用。例如: >
+新版 xterm 支持带 Alt 和 Ctrl 的多数功能键。为免为每个按键对所有 Alt、Ctrl 和
+Shift 组合分别指定，终端能力项识别特殊序列后缀: ";*X"。"X" 可为任何字符，常用
+'~'。";*" 代表可选修饰符参数。";2" 对应 Shift，";3" 对应 Alt，";5" 对应 Ctrl，
+而 ";9" 对应 Meta (与 Alt 不同时)。可组合使用多个修饰符。示例: >
 	:set <F8>=^[[19;*~
 	:set <Home>=^[[1;*H
-关于这些代码的另一个特性是它们不能被另外的代码覆盖。这就避免了被来自 xterm
-|t_RV| 所包含的代码直接覆盖掉。
+(译者注: 例如，<S-M-F8> 键码为 "^[[19;2;9~"，而无修饰符的 <Home> 为 "^[[1H")
+这类键码不会被其他编码覆盖。防止 xterm 通过 |t_RV| 获取的编码将其覆盖。
 
-另一个特殊值是以 "@;*X" 结尾的 termcap 项目。这用于光标键，那里可用 "CSI X" 或
-"CSI 1 ; 修饰符 X"。所以 "@" 代表或者后面有跟修饰符的 "1"，或者为空。
+终端能力项的另一特殊序列后缀是 "@;*X"。用于光标键，这类按键编码格式为 "CSI X"
+或 "CSI 1 ; 修饰符 X"。所以 "@" 代表 "1" (必须后跟修饰符) 或空。
 							*arrow_modifiers*
-若干终端模拟器 (alacritty、gnome、konsole 等等) 为带修饰符的键发送特殊代码，但
-这些键在 termcap/terminfo 数据库里没有对应项目。可在 vimrc 里添加若干行使其工
-作。例如，要在 gnome terminal 里支持带 Control 修饰符的光标键: >
+若干终端模拟器 (alacritty、gnome、konsole 等) 会为带修饰符的光标键发送特殊代
+码，但 termcap/terminfo 数据库中没有对应项目。可在 vimrc 里添加相应配置以作补
+充。例如，要使 gnome terminal 支持带 Control 的光标键: >
 	if &term =~ 'gnome'
 	   execute "set <xUp>=\<Esc>[@;*A"
 	   execute "set <xDown>=\<Esc>[@;*B"
@@ -234,242 +236,225 @@ termcap" 来检查哪些是支持的，相应的代码为何。多数情况下�
 	   execute "set <xLeft>=\<Esc>[@;*D"
 	endif
 <							*xterm-scroll-region*
-Sun 和其它的平台上的 xterm 缺省的 termcap 项目不包含区域滚动的项目。在
-/etc/termpcap 的 xterm 项目里增加 ":cs=\E[%i%d;%dr:"，那么一切都没有问题了。
+Sun 及其他平台上 xterm 缺省终端能力项不含滚动区域定义。可在 /etc/termpcap 的
+xterm 段添加 ":cs=\E[%i%d;%dr:"，即可正常工作。
 
 							*xterm-end-home-keys*
-在一些系统上 (至少使用 XFree86 3.1.2 的 FreeBSD)，<End> 和 <Home> 键的代码里包
-含 <Nul> 字符。要使得这些键发送正确的键码，在你的 ~/.Xdefaults 文件里增加:
+部分系统 (如带 XFree86 3.1.2 的 FreeBSD)，<End> 和 <Home> 键发送序列会内含
+<Nul> 字符。可在 ~/.Xdefaults 文件里加入以下设置，使按键输出正确键码:
 >
 	*VT100.Translations:		#override \n\
 			<Key>Home: string("0x1b") string("[7~") \n\
 			<Key>End: string("0x1b") string("[8~")
 <
 						*xterm-8bit* *xterm-8-bit*
-Xterm 可以在使用 8 位转义序列的模式里运行。这里，CSI 代码代替了 <Esc>[。它的优
-点是，<Esc> 键可以在插入模式下更快的识别，因为不会和特殊键的开始相混淆。
-对于内建的 termcap 项目而言，Vim 检查 'term' 选项是否包含 "8bit"。如果是，就在
-termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，你在外壳里设置 $TERM
-为 "xterm-8bit"。Vim 会发现这一点，并自动调整 8 位设置。
-如果 Vim 接收到对 |t_RV| 序列的应答 (请求版本) 并且它以 CSI 开始，就假设终端处
-于 8 位模式，并把所有的健序列转换为它们的 8 位版本。
+Xterm 可启用 8 位转义序列模式。使用 CSI 代码替代 <Esc>[。其优点是插入模式下可
+快速识别 <Esc> 键，不会与特殊按键序列的开头部分混淆。
+对于内置终端能力项，'term' 选项值包含 "8bit" 时，会对 termcap 项目、鼠标等自动
+调整为 8 位字符设置，通常可将外壳环境变量 $TERM 设为 "xterm-8bit"。Vim 会作相
+应调整。
+Vim 收到 |t_RV| 序列 (查询终端版本) 的应答且其以 CSI 开头时，同样会判定终端处
+于 8 位模式，并把将所有按健序列调整为 8 位版本。
+(译者注: 具体会将 <Esc>[ 转为 <CSI>、<Esc>] 转为 <OSC>、<Esc>O 转为 \0x8f)
 
 						*xterm-terminfo-entries*
-一段时间里，terminfo 项目不足于描述 Vim 使用的所有功能。而内建的 xterm 则有所
-有需要的 termcap 项目，因此，若干和 xterm 足够相似的终端利用了这一点，在 $TERM
-终端名里附加 "xterm-" 前缀。
+曾有一段时间 terminfo 项目不足于描述 Vim 使用的所有功能。而内置 xterm termcap
+则具备全部项目，于是很多 xterm 兼容终端会在 $TERM 指定的终端名前加上 "xterm-"
+前缀以利用此特性。
 
-这会引发问题，因为这些终端常常并非 100% 与 xterm 兼容。2023 年初，terminfo 数
-据库新增了若干项目，这样不需要 "xterm" 变通方法就可以使用这些功能。以下是相关
-项目 (至今为止):
+但这会引发问题，因为此类终端通常并非与 xterm 完全兼容。2023 年初，terminfo 数
+据库新增若干项目，因此不再需要 "xterm" 变通方法就可使用全部功能。相关项目如下
+(至今为止):
 
 	名字	xterm 值	描述 ~
-	RV	"\033[>c"	请求版本 |t_RV|
+	RV	"\033[>c"	查询版本 |t_RV|
 
-	BE	"\033[?2004h"	打开括号内粘贴模式 |t_BE|
+	BE	"\033[?2004h"	开启括号内粘贴模式 |t_BE|
 	BD	"\033[?2004l"	关闭括号内粘贴模式 |t_BD|
 	PS	"\033[200~"	粘贴文本开始 |t_PS|
 	PE	"\033[201~"	粘贴文本结束 |t_PE|
 
 	XM	"\033[?1006;1004;1000%?%p1%{1}%=%th%el%;"
-				鼠标打开 / 关闭 |t_XM|
-	FE	"\033[?1004h"	打开焦点事件跟踪 |t_fe|
+				鼠标开启 / 关闭 |t_XM|
+	FE	"\033[?1004h"	开启焦点事件跟踪 |t_fe|
 	FD	"\033[?1004l"	关闭焦点事件跟踪 |t_fd|
 
-"XM" 项目包含了 "1006" 以打开 SGR 风格鼠标报告，支持多于 223 的列数。也包含了
-"1004"，打开焦点报告。
-备注: 到 2023 年为止，Vim 自己目前不使用 "1004"，相反地，建议用 |t_fe| 和
-|t_fd| 项目来设置焦点报告，而不要和鼠标跟踪绑定，因为 ncurses 在最新版本里也开
-始如此 (这些项目最终会在 terminfo/termcap 里出现)。
+"XM" 项目既包含 "1006"，打开 SGR 风格鼠标报告 (支持超过 223 列)，又包含
+"1004"，开启焦点报告。
+备注: 截至 2023 年，Vim 自身暂不使用 "1004"，建议改用 |t_fe| 和 |t_fd| 项目独
+立开启焦点报告，不与鼠标跟踪绑定，新版 ncurses 也开始使用此做法 (这些项目后续
+会加入 terminfo/termcap)。
 
 						*xterm-kitty* *kitty-terminal*
-Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，也因为它并不试图缺省让自
-己更像其它终端，而是规定了在 Kitty 里应用要如何工作。这使得 Vim 在 Kitty 终端
-里很难工作。有些特例需要特别代码，但为某个特定终端开特例并非理想。
+Kitty 终端是个特例。主要因为其工作方式与绝大多数其他终端不同，设计理念也不试图
+兼容任何终端，而是转而规定应用必须适配 Kitty 的工作方式。这导致 Vim 在 Kitty
+终端里运行难点很多。有些处理甚至需要专门代码，但为单一终端开特例并非理想做法。
 
-其中一个问题是 $TERM 的值设为 "xterm-kitty"。对 Vim 而言，这意味此终端和 xterm
-兼容，可使用内建的 xterm termcap 项目。许多其它终端依赖这一点。但 Kitty 并不完
-全兼容 xterm。作者建议忽略 "xterm-" 前缀并使用对应的在 terminfo 项目。现在就是
-如此，不使用内建的 xterm termcap 项目。但仍设置了 t_RV，不然很多功能不可用，一
-个例子是自动设置 'ttymouse' 为 "sgr" (直到为此可用 |t_XM| 为止)。
+问题之一是其 $TERM 值设为 "xterm-kitty"。Vim 会认为此终端兼容 xterm，可使用内
+置 xterm 终端能力项。大量其他终端依赖这一逻辑。但 Kitty 并不完全兼容 xterm。
+Kitty 作者建议忽略 "xterm-" 前缀，直接使用其自身的 terminfo 项目。Vim 当前就是
+如此处理，不再加载内置 xterm 终端能力项。但仍保留了 |t_RV|，否则部分功能会失
+效，例如自动将 'ttymouse' 设为 "sgr" (在改用 |t_XM| 之前)。
 
-不清楚为什么 kitty 设置 $TERM 为 "xterm-kitty"，此终端并不真得和 xterm 兼容。
-"kitty" 更合适，但该名字的 terminfo 项目并不广泛被接受。
+kitty 为何将 $TERM 设为 "xterm-kitty" 原因不明，该终端并不真正兼容 xterm。使用
+"kitty" 作为终端类型更合适，但使用该名的 terminfo 项目并不被广泛接受。
 
-注意 kitty 键盘协议是另一个功能，作 |kitty-keyboard-protocol|。
+注意 kitty 键盘协议是完全独立的功能，作 |kitty-keyboard-protocol|。
 
 
 ==============================================================================
 2. 终端选项			*terminal-options* *termcap-options* *E436*
 
-终端选项可以和普通选项一样设置。但不会在 ":set all" 命令里显示。相反，应该用
-":set termcap"。
+终端选项可像普通选项一样设置。但不会在 `:set all` 中显示。查看需用
+`:set termcap`。
 
-通过设置合适的选项，你总是可以调整个别字符串的值。例如: >
-	:set t_ce=^V^[[K	(CTRL-V，<Esc>，[，K)
+可通过设置适当选项单独修改各个控制字符串。示例: >
+	:set t_ce=^V^[[K	(CTRL-V、<Esc>、[、K)
 
-这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
-个 termcap 代码是必须的: 光标移动，'t_cm'。
+以下列出所有终端选项。选项名后两个字符对应终端能力项代码。仅有一项代码是必需:
+光标移动，'t_cm'。
 
-选项 't_da'、't_db'、't_ms'、't_xs'、't_xn'、't_xo' 代表 termcap 里的标志位。
-termcap 标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置
-位。而空字符串代表该标志位没有置位。't_CS' 也是这样的，虽然它不是 termcap 的标
-志位。
+'t_da'、't_db'、't_ms'、't_xs'、't_xn'、't_xo' (译者注: 还有 't_ut') 选项为终
+端能力标志位。存在该标志位时，选项值设为 "y"。但任意非空串值都代表标志位置位。
+而空串代表标志位复位。't_CS' 不属于终端能力标志位，但其行为也是如此。
 
 输 出 代 码					*terminal-output-codes*
 	选项	含义	~
 
-	t_AB	设置背景色 (ANSI)			*t_AB* *'t_AB'*
-	t_AF	设置前景色 (ANSI)			*t_AF* *'t_AF'*
+	t_AB	设置背景色 (使用 ANSI 序列)		*t_AB* *'t_AB'*
+	t_AF	设置前景色 (使用 ANSI 序列)		*t_AF* *'t_AF'*
 	t_AL	增加若干空行				*t_AL* *'t_AL'*
 	t_al	增加一行空行				*t_al* *'t_al'*
 	t_bc	退格字符				*t_bc* *'t_bc'*
 	t_cd	清除到屏幕尾				*t_cd* *'t_cd'*
 	t_ce	清除到行尾				*t_ce* *'t_ce'*
-	t_cl	清除屏幕				*t_cl* *'t_cl'*
-	t_cm	光标移动 (必需！)			*E437* *t_cm* *'t_cm'*
+	t_cl	清空屏幕				*t_cl* *'t_cl'*
+	t_cm	光标移动 (必需！)		*E437*	*t_cm* *'t_cm'*
 	t_Co	颜色数目				*t_Co* *'t_Co'*
-	t_CS	如果非空，光标相对于滚动区域		*t_CS* *'t_CS'*
+	t_CS	非空时，光标坐标相对于滚动区域		*t_CS* *'t_CS'*
 	t_cs	定义滚动区域				*t_cs* *'t_cs'*
 	t_CV	定义垂直滚动区域			*t_CV* *'t_CV'*
-	t_da	如果非空，上方的行可以向下滚动		*t_da* *'t_da'*
-	t_db	如果非空，下方的行可以向上滚动		*t_db* *'t_db'*
+	t_da	非空时，上方行会向下滚动		*t_da* *'t_da'*
+	t_db	非空时，下方行会向上滚动		*t_db* *'t_db'*
 	t_DL	删除若干行				*t_DL* *'t_DL'*
 	t_dl	删除一行				*t_dl* *'t_dl'*
 	t_fs	结束设置窗口标题 (退出 termcap 状态行)	*t_fs* *'t_fs'*
-	t_ke	结束 "keypad 传输" 模式			*t_ke* *'t_ke'*
-	t_ks	进入 "keypad 传输" 模式			*t_ks* *'t_ks'*
-	t_le	左移光标一个字符			*t_le* *'t_le'*
-	t_mb	闪烁模式				*t_mb* *'t_mb'*
-	t_md	加粗模式				*t_md* *'t_md'*
-	t_me	普通模式 (撤销 t_mr、t_mb、t_md 和颜色)	*t_me* *'t_me'*
-	t_mr	反转模式				*t_mr* *'t_mr'*
-	t_ms	如果非空，光标可以在突出/反转模式下移动	*t_ms* *'t_ms'*
-	t_nd	非破坏性的空格字符			*t_nd* *'t_nd'*
-	t_op	复位到原先的颜色对			*t_op* *'t_op'*
+	t_ke	退出 "小键盘传输" 模式			*t_ke* *'t_ke'*
+	t_ks	进入 "小键盘传输" 模式			*t_ks* *'t_ks'*
+	t_le	光标左移一个字符			*t_le* *'t_le'*
+	t_mb	进入闪烁模式				*t_mb* *'t_mb'*
+	t_md	进入粗体模式				*t_md* *'t_md'*
+	t_me	普通模式 (撤销 t_mr、t_mb、t_md 及颜色)	*t_me* *'t_me'*
+	t_mr	进入反显 (反转) 模式			*t_mr* *'t_mr'*
+	t_ms	非空时，可在突出/反转模式下移动光标	*t_ms* *'t_ms'*
+	t_nd	非破坏性空格字符 (光标右移一个字符)	*t_nd* *'t_nd'*
+	t_op	恢复原始颜色对 (前景与背景)		*t_op* *'t_op'*
 	t_RI	光标右移若干字符			*t_RI* *'t_RI'*
-	t_Sb	设置背景色				*t_Sb* *'t_Sb'*
-	t_Sf	设置前景色				*t_Sf* *'t_Sf'*
-	t_se	结束突出				*t_se* *'t_se'*
-	t_so	退出模式				*t_so* *'t_so'*
-	t_sr	反向滚动 (往下)				*t_sr* *'t_sr'*
+	t_Sb	设置背景色 (老式)			*t_Sb* *'t_Sb'*
+	t_Sf	设置前景色 (老式)			*t_Sf* *'t_Sf'*
+	t_se	退出突出模式				*t_se* *'t_se'*
+	t_so	进入突出模式				*t_so* *'t_so'*
+	t_sr	反向滚动 (文本向下滚动一行)		*t_sr* *'t_sr'*
 	t_te	退出 "termcap" 模式			*t_te* *'t_te'*
-	t_ti	让终端进入 "termcap" 模式		*t_ti* *'t_ti'*
+	t_ti	进入 "termcap" 模式			*t_ti* *'t_ti'*
 	t_ts	开始设置窗口标题 (进入 termcap 状态行)	*t_ts* *'t_ts'*
-	t_ue	下划结束				*t_ue* *'t_ue'*
-	t_us	下划模式				*t_us* *'t_us'*
-	t_ut	使用当前背景色清除			*t_ut* *'t_ut'*
-	t_vb	可视铃声				*t_vb* *'t_vb'*
-	t_ve	光标可见				*t_ve* *'t_ve'*
-	t_vi	光标不可见				*t_vi* *'t_vi'*
-	t_vs	光标 "非常" 可见 (闪烁)			*t_vs* *'t_vs'*
-	t_xs	非空时突出部分不能通过覆盖删除 (hpterm)	*t_xs* *'t_xs'*
-	t_xn	非空时在屏幕最后单元写字符不导致滚动	*t_xn* *'t_xn'*
+	t_ue	退出下划模式				*t_ue* *'t_ue'*
+	t_us	进入下划模式				*t_us* *'t_us'*
+	t_ut	非空时，清屏使用当前背景色		*t_ut* *'t_ut'*
+	t_vb	可视响铃				*t_vb* *'t_vb'*
+	t_ve	使光标可见				*t_ve* *'t_ve'*
+	t_vi	使光标隐藏				*t_vi* *'t_vi'*
+	t_vs	使光标 "非常" 可见 (闪烁)		*t_vs* *'t_vs'*
+	t_xs	非空时，覆盖写入不清除突出属性 (hpterm)	*t_xs* *'t_xs'*
+	t_xn	非空时，屏幕末单元格写入字符不触发滚动	*t_xn* *'t_xn'*
 							*t_xo* *'t_xo'*
-	t_xo	非空时，终端使用 xon/xoff 握手协议，映射
-		CTRL-S 不再可用，因为它被用作流控制 (用于 vt420
-		终端)。此标志位只在启动 Vim 时有作用。
-	t_ZH	斜体模式				*t_ZH* *'t_ZH'*
-	t_ZR	斜体结束				*t_ZR* *'t_ZR'*
+	t_xo	非空时，终端使用 xon/xoff 握手协议，此时 CTRL-S 被流控制占用
+		(如 vt420 终端)，无法用于映射。此标志位仅在 Vim 启动阶段生效
+	t_ZH	进入斜体模式				*t_ZH* *'t_ZH'*
+	t_ZR	退出斜体模式				*t_ZR* *'t_ZR'*
 
-Vim 增加的 (它们没有标准代码):
-	t_AU	设置下划线色 (ANSI)			*t_AU* *'t_AU'*
-	t_Ce	下曲 (undercurl) 和下划线结束		*t_Ce* *'t_Ce'*
-	t_Cs	下曲 (波浪状下划线) 模式		*t_Cs* *'t_Cs'*
+Vim 新增 (无对应标准代码):
+	t_AU	设置下划线颜色 (使用 ANSI 序列)		*t_AU* *'t_AU'*
+	t_Ce	退出下曲 (undercurl) 和各种下划线模式	*t_Ce* *'t_Ce'*
+	t_Cs	进入下曲 (波浪状下划线) 模式		*t_Cs* *'t_Cs'*
 	t_CF	设置备选字体 (使用索引 0 - 10)		*t_CF* *'t_CF'*
-	t_Us	双下划线模式				*t_Us* *'t_Us'*
-	t_ds	点状下划线模式				*t_ds* *'t_ds'*
-	t_Ds	虚线下划线模式				*t_Ds* *'t_Ds'*
-	t_Te	删除线结束				*t_Te* *'t_Te'*
-	t_Ts	删除线模式				*t_Ts* *'t_Ts'*
+	t_Us	进入双下划线模式			*t_Us* *'t_Us'*
+	t_ds	进入点状下划线模式			*t_ds* *'t_ds'*
+	t_Ds	进入虚线下划线模式			*t_Ds* *'t_Ds'*
+	t_Te	退出删除线模式				*t_Te* *'t_Te'*
+	t_Ts	进入删除线模式				*t_Ts* *'t_Ts'*
 	t_IS	开始设置图标文本			*t_IS* *'t_IS'*
 	t_IE	结束设置图标文本			*t_IE* *'t_IE'*
-	t_WP	设置窗口位置 (Y，X)，以像素计算		*t_WP* *'t_WP'*
-	t_GP	获取窗口位置 (Y，X)，以像素计算		*t_GP* *'t_GP'*
-	t_WS	设置窗口高度与宽度，以单元格数计算	*t_WS* *'t_WS'*
-	t_VS	光标正常可见 (无闪烁)			*t_VS* *'t_VS'*
-	t_SI    开始插入模式 (条形光标)			*t_SI* *'t_SI'*
-	t_SR	开始替换模式 (下划线光标)		*t_SR* *'t_SR'*
-	t_EI    结束插入或替换模式 (块形光标)		*t_EI* *'t_EI'*
-		|termcap-cursor-shape|
-	t_RV	请求终端版本字符串 (适用于 xterm	*t_RV* *'t_RV'*
-		和其他终端模拟器) 其响应存于 |v:termresponse| |xterm-8bit|
-		'ttymouse' |xterm-codes|
-	t_XM	打开/关闭鼠标报告。			*t_XM* *'t_XM'*
-		见下 |mouse-reporting|
-	t_RK	请求终端键盘协议状态；			*t_RK* *'t_RK'*
-		|t_TI| 之后发送
-	t_u7	请求光标位置 (适用于 xterm)		*t_u7* *'t_u7'*
-		见 'ambiwidth'
-		其响应存于 |v:term7resp|
-	t_RF	请求终端前景色				*t_RF* *'t_RF'*
-		其响应存于 |v:termfgresp|
-	t_RB	请求终端背景色				*t_RB* *'t_RB'*
-		其响应存于 |v:termbgresp|
-	t_8f	设置终端前景色 (R, G, B)		*t_8f* *'t_8f'*
-		|xterm-true-color|
-	t_8b	设置终端背景色 (R, G, B)		*t_8b* *'t_8b'*
-		|xterm-true-color|
-	t_8u	设置下划线色 (R, G, B)			*t_8u* *'t_8u'*
-	t_BE	打开括号内粘贴模式			*t_BE* *'t_BE'*
-		|xterm-bracketed-paste|
-	t_BD	关闭括号内粘贴模式			*t_BD* *'t_BD'*
-		|xterm-bracketed-paste|
+	t_WP	设置窗口像素坐标 (Y，X)			*t_WP* *'t_WP'*
+	t_GP	获取窗口像素坐标 (Y，X)			*t_GP* *'t_GP'*
+	t_WS	设置窗口大小 (单元格高度和宽度)		*t_WS* *'t_WS'*
+	t_VS	使光标常亮 (无闪烁)			*t_VS* *'t_VS'*
+	t_SI    进入插入模式 (条形光标)			*t_SI* *'t_SI'*
+	t_SR	进入替换模式 (下划线光标)		*t_SR* *'t_SR'*
+	t_EI    退出插入或替换模式 (块形光标)		*t_EI* *'t_EI'*
+		光标形状总结可见 |termcap-cursor-shape|
+							*t_RV* *'t_RV'*
+	t_RV	查询终端版本字符串 (适用于 xterm 和其他终端模拟器)，应答值存于
+		|v:termresponse|。参见 |xterm-8bit| 'ttymouse' |xterm-codes|
+	t_XM	打开/关闭鼠标报告。见 |mouse-reporting|	*t_XM* *'t_XM'*
+	t_RK	查询终端键盘协议状态；在 |t_TI| 后发送	*t_RK* *'t_RK'*
+							*t_u7* *'t_u7'*
+	t_u7	查询光标位置 (用于 xterm)，见 'ambiwidth'，值存于 |v:term7resp|
+	t_RF	查询终端前景色，值存于 |v:termrfgresp|	*t_RF* *'t_RF'*
+	t_RB	查询终端背景色，值存于 |v:termrbgresp|	*t_RB* *'t_RB'*
+	t_8f	设置终端前景色 RGB |xterm-true-color|	*t_8f* *'t_8f'*
+	t_8b	设置终端背景色 RGB |xterm-true-color|	*t_8b* *'t_8b'*
+	t_8u	设置下划线颜色 (R, G, B)		*t_8u* *'t_8u'*
+	t_BE	打开括号粘贴 |xterm-bracketed-paste|	*t_BE* *'t_BE'*
+	t_BD	关闭括号粘贴 |xterm-bracketed-paste|	*t_BD* *'t_BD'*
 	t_SC	开始设置光标颜色			*t_SC* *'t_SC'*
 	t_EC	结束设置光标颜色			*t_EC* *'t_EC'*
 	t_SH	设置光标形状				*t_SH* *'t_SH'*
-	t_RC	请求终端光标闪烁			*t_RC* *'t_RC'*
-		其响应存于 |v:termblinkresp|
-	t_RS	请求终端光标风格			*t_RS* *'t_RS'*
-		其响应存于 |v:termstyleresp|
-	t_ST	在栈中保存窗口标题			*t_ST* *'t_ST'*
-	t_RT	从栈中恢复窗口标题			*t_RT* *'t_RT'*
-	t_Si	在栈中保存图标文本			*t_Si* *'t_Si'*
-	t_Ri	从栈中恢复图标文本			*t_Ri* *'t_Ri'*
-	t_TE	结束 "raw" 模式				*t_TE* *'t_TE'*
-	t_TI	让终端进入 "raw" 模式			*t_TI* *'t_TI'*
-	t_fe	打开焦点事件跟踪			*t_fe* *'t_fe'*
-		|xterm-focus-event|
-	t_fd	关闭焦点事件跟踪			*t_fd* *'t_fd'*
-		|xterm-focus-event|
-	t_BS	打开同步更新模式			*t_BS* *'t_BS'*
-		见 'termsync'
-	t_ES	关闭同步更新模式			*t_ES* *'t_ES'*
-		见 'termsync'
+	t_RC	查询光标闪烁状态，值存于 |v:termblinkresp| *t_RC* *'t_RC'*
+	t_RS	查询光标样式，值存于 |v:termstyleresp|	*t_RS* *'t_RS'*
+	t_ST	将窗口标题压入栈			*t_ST* *'t_ST'*
+	t_RT	从栈弹出窗口标题			*t_RT* *'t_RT'*
+	t_Si	将图标文本压入栈			*t_Si* *'t_Si'*
+	t_Ri	从栈弹出图标文本			*t_Ri* *'t_Ri'*
+	t_TE	退出原始 ("raw") 模式			*t_TE* *'t_TE'*
+	t_TI	进入原始 ("raw") 模式			*t_TI* *'t_TI'*
+	t_fe	打开焦点事件跟踪 (|xterm-focus-event|)	*t_fe* *'t_fe'*
+	t_fd	关闭焦点事件跟踪 (|xterm-focus-event|)	*t_fd* *'t_fd'*
+	t_BS	打开同步更新模式，见 'termsync'		*t_BS* *'t_BS'*
+	t_ES	关闭同步更新模式，见 'termsync'		*t_ES* *'t_ES'*
 
-有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
-本。
-	设置标题文本:     t_ts {title text} t_fs
-	设置图标文本:     t_IS {icon text} t_IE
-	设置光标颜色:     t_SC  {color name}  t_EC
+部分控制码分为起始、中间、结束三段。起始和结束由终端能力项定义，中间为文本内
+容。
+	设置标题文本:     t_ts {标题文本} t_fs
+	设置图标文本:     t_IS {图标文本} t_IE
+	设置光标颜色:     t_SC  {颜色名}  t_EC
 
-t_SH 必须提供一个参数:
-	0、1 或无	闪烁块状光标
+t_SH  (DECSCUSR 序列) 必须提供一个参数，分别对应:
+	0、1 或省略	闪烁块状光标
 	2		块状光标
-	3		闪烁下划光标
-	4		下划光标
-	5		产供垂直条光标
-	6		垂直条光标
+	3		闪烁下划线光标
+	4		下划线光标
+	5		闪烁竖线光标
+	6		竖线光标
 
-仅当接收到 t_RV 的反馈时才会发送 t_RS。Mac OS 上如果 termresponse 不能识别到
-Terminal.app 也不会用它。
+仅当收到 t_RV 应答后才会发送 t_RS。Mac OS 上，通过 termresponse 识别出
+Terminal.app 时，则不使用 t_RS。
 
-t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接设置为以下缺省
-值:
+t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接设置为以下缺省值:
 	t_BS		"\033[?2026h"
 	t_ES		"\033[?2026l"
 
 							*mouse-reporting*
-许多终端报告会鼠标点击事件，有些还能报告鼠标移动和拖动。Vim 需要知道应使用哪些
-键码来处理这些情况。
+许多终端可报告鼠标点击事件，部分还支持鼠标移动和拖曳。Vim 需要获知对应的控制
+码。
 
-为此，使用 "XM" terminfo/termcap 项目。Vim 也有 'ttymouse' 选项来指定使用的鼠
-标协议。可用值见该选项。
+这由 "XM" terminfo/termcap 项目负责。Vim 另有 'ttymouse' 选项指定鼠标协议。可
+用值参见该选项。
 
-如果 Vim 可以读取 "XM" terminfo/termcap 项目，会用之打开和关闭鼠标报告。如果该
-项目不存在，则使用 'ttymouse' 的值来决定。
+"XM" 终端能力项可用时，Vim 用该项来开关鼠标报告。否则，会依赖 'ttymouse' 值决
+定。
 
-如果 "XM" 项目存在且首项为 "1006"，设置 'ttymouse' 为 "sgr"，除非它已有赋值。
+"XM" 项存在且首个数值为 "1006" 时，'ttymouse' 在尚未设置时会被自动设为 "sgr"。
 
 
 键 代 码						*terminal-key-codes*
@@ -477,241 +462,239 @@ t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接�
 
 	选项	名字		含义	~
 
-	t_ku	<Up>		光标上移		*t_ku* *'t_ku'*
-	t_kd	<Down>		光标下移		*t_kd* *'t_kd'*
-	t_kr	<Right>		光标右移		*t_kr* *'t_kr'*
-	t_kl	<Left>		光标左移		*t_kl* *'t_kl'*
-		<xUp>		替代的光标上移		*<xUp>*
-		<xDown>		替代的光标下移		*<xDown>*
-		<xRight>	替代的光标右移		*<xRight>*
-		<xLeft>		替代的光标左移		*<xLeft>*
-		<S-Up>		shift 光标上移
-		<S-Down>	shift 光标下移
-	t_%i	<S-Right>	shift 光标右移		*t_%i* *'t_%i'*
-	t_#4	<S-Left>	shift 光标左移		*t_#4* *'t_#4'*
-	t_k1	<F1>		功能键 1		*t_k1* *'t_k1'*
-		<xF1>		替代的 F1		*<xF1>*
-	t_k2	<F2>		功能键 2		*<F2>*	*t_k2* *'t_k2'*
-		<xF2>		替代的 F2		*<xF2>*
-	t_k3	<F3>		功能键 3		*<F3>*	*t_k3* *'t_k3'*
-		<xF3>		替代的 F3		*<xF3>*
-	t_k4	<F4>		功能键 4		*<F4>*	*t_k4* *'t_k4'*
-		<xF4>		替代的 F4		*<xF4>*
-	t_k5	<F5>		功能键 5		*<F5>*	*t_k5* *'t_k5'*
-	t_k6	<F6>		功能键 6		*<F6>*	*t_k6* *'t_k6'*
-	t_k7	<F7>		功能键 7		*<F7>*	*t_k7* *'t_k7'*
-	t_k8	<F8>		功能键 8		*<F8>*	*t_k8* *'t_k8'*
-	t_k9	<F9>		功能键 9		*<F9>*	*t_k9* *'t_k9'*
-	t_k;	<F10>		功能键 10		*<F10>*	*t_k;* *'t_k;'*
-	t_F1	<F11>		功能键 11		*<F11>*	*t_F1* *'t_F1'*
-	t_F2	<F12>		功能键 12		*<F12>*	*t_F2* *'t_F2'*
-	t_F3	<F13>		功能键 13		*<F13>*	*t_F3* *'t_F3'*
-	t_F4	<F14>		功能键 14		*<F14>*	*t_F4* *'t_F4'*
-	t_F5	<F15>		功能键 15		*<F15>*	*t_F5* *'t_F5'*
-	t_F6	<F16>		功能键 16		*<F16>*	*t_F6* *'t_F6'*
-	t_F7	<F17>		功能键 17		*<F17>*	*t_F7* *'t_F7'*
-	t_F8	<F18>		功能键 18		*<F18>*	*t_F8* *'t_F8'*
-	t_F9	<F19>		功能键 19		*<F19>*	*t_F9* *'t_F9'*
-		<S-F1>		shift 功能键 1
-		<S-xF1>		替代的 <S-F1>		*<S-xF1>*
-		<S-F2>		shift 功能键 2		*<S-F2>*
-		<S-xF2>		替代的 <S-F2>		*<S-xF2>*
-		<S-F3>		shift 功能键 3		*<S-F3>*
-		<S-xF3>		替代的 <S-F3>		*<S-xF3>*
-		<S-F4>		shift 功能键 4		*<S-F4>*
-		<S-xF4>		替代的 <S-F4>		*<S-xF4>*
-		<S-F5>		shift 功能键 5		*<S-F5>*
-		<S-F6>		shift 功能键 6		*<S-F6>*
-		<S-F7>		shift 功能键 7		*<S-F7>*
-		<S-F8>		shift 功能键 8		*<S-F8>*
-		<S-F9>		shift 功能键 9		*<S-F9>*
-		<S-F10>		shift 功能键 10		*<S-F10>*
-		<S-F11>		shift 功能键 11		*<S-F11>*
-		<S-F12>		shift 功能键 12		*<S-F12>*
-	t_%1	<Help>		帮助键			*t_%1* *'t_%1'*
-	t_&8	<Undo>		撤销键			*t_&8* *'t_&8'*
-	t_kI	<Insert>	插入键			*t_kI* *'t_kI'*
-		<kInsert>	keypad 插入键
-	t_kD	<Del>		删除键			*t_kD* *'t_kD'*
+	t_ku	<Up>		上箭头键		*t_ku* *'t_ku'*
+	t_kd	<Down>		下箭头键		*t_kd* *'t_kd'*
+	t_kr	<Right>		右箭头键		*t_kr* *'t_kr'*
+	t_kl	<Left>		左箭头键		*t_kl* *'t_kl'*
+		<xUp>		备用上箭头键		*<xUp>*
+		<xDown>		备用下箭头键		*<xDown>*
+		<xRight>	备用右箭头键		*<xRight>*
+		<xLeft>		备用左箭头键		*<xLeft>*
+		<S-Up>		Shift+上箭头键
+		<S-Down>	Shift+下箭头键
+	t_%i	<S-Right>	Shift+右箭头键		*t_%i* *'t_%i'*
+	t_#4	<S-Left>	Shift+左箭头键		*t_#4* *'t_#4'*
+	t_k1	<F1>		F1 功能键		*t_k1* *'t_k1'*
+		<xF1>		备用 F1			*<xF1>*
+	t_k2	<F2>		F2 功能键	*<F2>*	*t_k2* *'t_k2'*
+		<xF2>		备用 F2			*<xF2>*
+	t_k3	<F3>		F3 功能键	*<F3>*	*t_k3* *'t_k3'*
+		<xF3>		备用 F3			*<xF3>*
+	t_k4	<F4>		F4 功能键	*<F4>*	*t_k4* *'t_k4'*
+		<xF4>		备用 F4			*<xF4>*
+	t_k5	<F5>		F5 功能键	*<F5>*	*t_k5* *'t_k5'*
+	t_k6	<F6>		F6 功能键	*<F6>*	*t_k6* *'t_k6'*
+	t_k7	<F7>		F7 功能键	*<F7>*	*t_k7* *'t_k7'*
+	t_k8	<F8>		F8 功能键	*<F8>*	*t_k8* *'t_k8'*
+	t_k9	<F9>		F9 功能键	*<F9>*	*t_k9* *'t_k9'*
+	t_k;	<F10>		F10 功能键	*<F10>*	*t_k;* *'t_k;'*
+	t_F1	<F11>		F11 功能键	*<F11>*	*t_F1* *'t_F1'*
+	t_F2	<F12>		F12 功能键	*<F12>*	*t_F2* *'t_F2'*
+	t_F3	<F13>		F13 功能键	*<F13>*	*t_F3* *'t_F3'*
+	t_F4	<F14>		F14 功能键	*<F14>*	*t_F4* *'t_F4'*
+	t_F5	<F15>		F15 功能键	*<F15>*	*t_F5* *'t_F5'*
+	t_F6	<F16>		F16 功能键	*<F16>*	*t_F6* *'t_F6'*
+	t_F7	<F17>		F17 功能键	*<F17>*	*t_F7* *'t_F7'*
+	t_F8	<F18>		F18 功能键	*<F18>*	*t_F8* *'t_F8'*
+	t_F9	<F19>		F19 功能键	*<F19>*	*t_F9* *'t_F9'*
+		<S-F1>		Shift+F1
+		<S-xF1>		备用 <S-F1>		*<S-xF1>*
+		<S-F2>		Shift+F2		*<S-F2>*
+		<S-xF2>		备用 <S-F2>		*<S-xF2>*
+		<S-F3>		Shift+F3		*<S-F3>*
+		<S-xF3>		备用 <S-F3>		*<S-xF3>*
+		<S-F4>		Shift+F4		*<S-F4>*
+		<S-xF4>		备用 <S-F4>		*<S-xF4>*
+		<S-F5>		Shift+F5		*<S-F5>*
+		<S-F6>		Shift+F6		*<S-F6>*
+		<S-F7>		Shift+F7		*<S-F7>*
+		<S-F8>		Shift+F8		*<S-F8>*
+		<S-F9>		Shift+F9		*<S-F9>*
+		<S-F10>		Shift+F10		*<S-F10>*
+		<S-F11>		Shift+F11		*<S-F11>*
+		<S-F12>		Shift+F12		*<S-F12>*
+	t_%1	<Help>		Help 键			*t_%1* *'t_%1'*
+	t_&8	<Undo>		Undo 键			*t_&8* *'t_&8'*
+	t_kI	<Insert>	Ins 键			*t_kI* *'t_kI'*
+		<kInsert>	小键盘 Ins 键
+	t_kD	<Del>		Del 键			*t_kD* *'t_kD'*
 	t_kb	<BS>		退格键			*t_kb* *'t_kb'*
-	t_kB	<S-Tab>		反制表 (shift-tab)    *<S-Tab>*	*t_kB* *'t_kB'*
-	t_kh	<Home>		home 键			*t_kh* *'t_kh'*
-	t_#2	<S-Home>	shift home 键        *<S-Home>*	*t_#2* *'t_#2'*
-		<xHome>		替代的 home 键		*<xHome>*
-	t_@7	<End>		end 键			*t_@7* *'t_@7'*
-	t_*7	<S-End>		shift end 键	*<S-End>* *t_star7* *'t_star7'*
-		<xEnd>		替代的 end 键		*<xEnd>*
-	t_kP	<PageUp>	page-up 键		*t_kP* *'t_kP'*
-	t_kN	<PageDown>	page-down 键		*t_kN* *'t_kN'*
-	t_K1	<kHome>		keypad home 键		*t_K1* *'t_K1'*
-	t_K4	<kEnd>		keypad end 键		*t_K4* *'t_K4'*
-	t_K3	<kPageUp>	keypad page-up 键	*t_K3* *'t_K3'*
-	t_K5	<kPageDown>	keypad page-down 键	*t_K5* *'t_K5'*
-	t_K6	<kPlus>		keypad 加号键	      *<kPlus>*	*t_K6* *'t_K6'*
-	t_K7	<kMinus>	keypad 减号键     *<kMinus>*	*t_K7* *'t_K7'*
-	t_K8	<kDivide>	keypad 除号	    *<kDivide>*	*t_K8* *'t_K8'*
-	t_K9	<kMultiply>	keypad 乘号       *<kMultiply>*	*t_K9* *'t_K9'*
-	t_KA	<kEnter>	keypad 回车键     *<kEnter>*	*t_KA* *'t_KA'*
-	t_KB	<kPoint>	keypad 小数点     *<kPoint>*	*t_KB* *'t_KB'*
-	t_KC	<k0>		keypad 0		 *<k0>*	*t_KC* *'t_KC'*
-	t_KD	<k1>		keypad 1		 *<k1>*	*t_KD* *'t_KD'*
-	t_KE	<k2>		keypad 2		 *<k2>*	*t_KE* *'t_KE'*
-	t_KF	<k3>		keypad 3		 *<k3>*	*t_KF* *'t_KF'*
-	t_KG	<k4>		keypad 4		 *<k4>*	*t_KG* *'t_KG'*
-	t_KH	<k5>		keypad 5		 *<k5>*	*t_KH* *'t_KH'*
-	t_KI	<k6>		keypad 6		 *<k6>*	*t_KI* *'t_KI'*
-	t_KJ	<k7>		keypad 7		 *<k7>*	*t_KJ* *'t_KJ'*
-	t_KK	<k8>		keypad 8		 *<k8>*	*t_KK* *'t_KK'*
-	t_KL	<k9>		keypad 9		 *<k9>*	*t_KL* *'t_KL'*
-		<Mouse>		鼠标代码的引导键	*<Mouse>*
+	t_kB	<S-Tab>		Shift+Tab   *<S-Tab>*	*t_kB* *'t_kB'*
+	t_kh	<Home>		Home 键			*t_kh* *'t_kh'*
+	t_#2	<S-Home>	Shift+Home *<S-Home>*	*t_#2* *'t_#2'*
+		<xHome>		备用 Home 键		*<xHome>*
+	t_@7	<End>		End 键			*t_@7* *'t_@7'*
+	t_*7	<S-End>		Shift+End   *<S-End>*	*t_star7* *'t_star7'*
+		<xEnd>		备用 end 键		*<xEnd>*
+	t_kP	<PageUp>	PgUp 键			*t_kP* *'t_kP'*
+	t_kN	<PageDown>	PgDn 键			*t_kN* *'t_kN'*
+	t_K1	<kHome>		小键盘 Home 键		*t_K1* *'t_K1'*
+	t_K4	<kEnd>		小键盘 End 键		*t_K4* *'t_K4'*
+	t_K3	<kPageUp>	小键盘 PgUp 键		*t_K3* *'t_K3'*
+	t_K5	<kPageDown>	小键盘 PgDn 键		*t_K5* *'t_K5'*
+	t_K6	<kPlus>		小键盘加号 *<kPlus>*	*t_K6* *'t_K6'*
+	t_K7	<kMinus>	小键盘减号 *<kMinus>*	*t_K7* *'t_K7'*
+	t_K8	<kDivide>	小键盘除号 *<kDivide>*	*t_K8* *'t_K8'*
+	t_K9	<kMultiply>	小键盘乘号 *<kMultiply>* *t_K9* *'t_K9'*
+	t_KA	<kEnter>	小键盘回车键 *<kEnter>*	*t_KA* *'t_KA'*
+	t_KB	<kPoint>	小键盘小数点 *<kPoint>*	*t_KB* *'t_KB'*
+	t_KC	<k0>		小键盘 0	 *<k0>*	*t_KC* *'t_KC'*
+	t_KD	<k1>		小键盘 1	 *<k1>*	*t_KD* *'t_KD'*
+	t_KE	<k2>		小键盘 2	 *<k2>*	*t_KE* *'t_KE'*
+	t_KF	<k3>		小键盘 3	 *<k3>*	*t_KF* *'t_KF'*
+	t_KG	<k4>		小键盘 4	 *<k4>*	*t_KG* *'t_KG'*
+	t_KH	<k5>		小键盘 5	 *<k5>*	*t_KH* *'t_KH'*
+	t_KI	<k6>		小键盘 6	 *<k6>*	*t_KI* *'t_KI'*
+	t_KJ	<k7>		小键盘 7	 *<k7>*	*t_KJ* *'t_KJ'*
+	t_KK	<k8>		小键盘 8	 *<k8>*	*t_KK* *'t_KK'*
+	t_KL	<k9>		小键盘 9	 *<k9>*	*t_KL* *'t_KL'*
+		<Mouse>		鼠标控制码引导标记	*<Mouse>*
 
-	t_PS	<PasteStart>	括号内粘贴的开始	*t_PS* *'t_PS'*
+	t_PS	<PasteStart>	开始括号粘贴		*t_PS* *'t_PS'*
 				|xterm-bracketed-paste|
-	t_PE	<PasteEnd>	括号内粘贴的结束	*t_PE* *'t_PE'*
+	t_PE	<PasteEnd>	结束括号粘贴		*t_PE* *'t_PE'*
 				|xterm-bracketed-paste|
 		<FocusGained>	Vim 窗口获得焦点 (仅限内部使用)
 		<FocusLost>	Vim 窗口失去焦点 (仅限内部使用)
 
-关于 t_so 和 t_mr 的 注意 事项: 如果 termcap 项目 "so" 不存在，则使用 "mr" 的
-项目。反之亦然。"se" 和 "me" 也是一样。如果你的终端同时支持反转和突出模式，你
-可以看到两种不同的模式。如果只支持其中一种，则两者看起来一样。
+|t_so| 和 |t_mr| 备注: 如果终端能力项 "so" 不存在，会用 "mr" 条目代替，反之亦
+然。退出相关模式的 "se" 和 "me" 同理。终端同时支持反转和突出模式时，二者显示效
+果会有区别。如果终端只支持其中一种，则两种模式效果相同。
 
 							*keypad-comma*
-keypad 键在没有映射时和等价的普通键等价。但有一个特例: 如果你的 keypad 有逗号
-而不是小数点，Vim 仍然认为那是小数点。下面的映射可以修正这个问题: >
+小键盘键未被映射时等同于对应的普通键。但有一处例外: 如果小键盘上是逗号而非小数
+点，Vim 默认仍使用小数点。可用以下映射修正: >
 	:noremap <kPoint> ,
 	:noremap! <kPoint> ,
 <							*xterm-codes*
-有一个现在只适用于 xterm 的获取键码特殊技巧。|t_RV| 有定义且从 xterm 对该请求
-得到的响应指示了 xterm 使用的补丁版本不低于 141 时，Vim 会使用特殊的转义序列来
-从 xterm 里直接获取键码。响应的内容会用于调整各种 t_ 代码。这样就可以避免
-xterm 因为处在不同模式 (8-位、VT102、VT220，等等) 而产生不同代码的问题。这样，
-就不需要 <xF1> 这样的替代键码了。
+有一种获取键码的特殊技巧，目前仅适用于 xterm。当 |t_RV| 已定义且其应答指示
+xterm 补丁版本不低于 141 时，Vim 会通过专用转义序列直接从 xterm 查询键码。并用
+返回结果调整各种 t_ 代码。这解决了 xterm 在不同模式 (8-位、VT102、VT220 等) 下
+生成不同编码的问题。<xF1> 这类备用键码此时不再必要。
 
-其中一个可能因此被调整的代码是 't_Co'，色彩总数。这会触发重画。如果这会引起问
-题，请尽早复位 'xtermcodes' 选项: >
+'t_Co'，颜色数目，也是可能被调整的代码之一，从而触发重绘。如果这会引起问题，请
+尽早复位 'xtermcodes' 选项: >
 	set noxtermcodes
 
-注意: 只在启动时进行键码请求。如果 Vim 启动后更改了 xterm 选项，这些转义序列将
-不再被识别。
+注意: 键码查询仅在启动阶段进行。如果 Vim 启动后再更改 xterm 设置，可能导致转义
+序列无法识别。
 
 							*xterm-true-color*
-终端支持时，Vim 会支持在终端使用真彩 (使用 |highlight-guifg| 和
-|highlight-guibg|)。为此，必须置位 'termguicolors' 选项。
-https://gist.github.com/XVilka/8346728 有支持真彩的终端列表。
+终端支持真彩时，Vim 可在终端内提供相应支持 (通过 |highlight-guifg| 和
+|highlight-guibg|)。为此需要开启 'termguicolors' 选项。支持真彩的终端列表可见
+https://gist.github.com/XVilka/8346728。
 
-|t_8f| 和 |t_8b| termcap 项目告知终端使用何种 RGB 色。这些选项的缺省值应适用于
-大多数终端。不合适的话可手动设置。它们的缺省值是: >
+通过 |t_8f|、|t_8b| 和 |t_8u| 终端能力项指定终端使用的 RGB 色。其缺省值应适用
+于大多数终端。如果不合适，可手动设置。缺省值分别是: >
 	 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 	 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+	 let &t_8u = "\<Esc>[58;2;%lu;%lu;%lum"
 
-有些终端也接受类似的序列，但把所有的分号替换为冒号，并在数值 2 之后加上额外的
-冒号 (这样符合 ISO 8613-6 标准，但支持不是那么广泛): >
+部分终端接受另一种相似格式: 分号被替换为冒号，数值 2 后需要额外加上冒号 (该格
+式符合 ISO 8613-6 标准，但支持不广泛): >
 	 let &t_8f = "\<Esc>[38:2::%lu:%lu:%lum"
 	 let &t_8b = "\<Esc>[48:2::%lu:%lu:%lum"
 
-这些选项包含 printf 字符串，调用 |printf()| (实际上，它的 C 等价函数，因此带有
-`l` 修饰符) 时带上 t_ 选项值和三个无符号长整数，分别代表红、绿和蓝色的 0 到
-255 (包含) 之间的任意值。
+这些选项是 printf 格式字符串，会调用 |printf()| (实际使用底层 C 同名函数，因此
+使用 `l` 修饰符)，传入相应 t_ 选项字符串与三个取值范围在 0 到 255 (含) 的无符
+号长整数，分别代表红、绿和蓝色分量。
 
 							*xterm-resize*
-xterm 改变窗口大小的功能只用在 allowWindowOps 资源打开时才可用。有些系统或有些
-版本的 xterm 缺省该值是关闭的，因为有安全上的考虑。我们不肯定是否真有此必要。
+xterm 的窗口缩放功能，仅当开启 allowWindowOps 资源后才生效。部分系统与部分
+xterm 版本缺省关闭该资源，因为被认为存在安全隐患。但其实际风险尚无定论。
 
-要覆盖缺省值，在 ~/.Xdefaults 或 ~/.Xresources 中放入:
+要覆盖该缺省值，可在 ~/.Xdefaults 或 ~/.Xresources 中放入:
 >
 	XTerm*allowWindowOps:		true
 
-然后运行 "xrdb -merge .Xresources" 以激活之。用上下文菜单可以检查该值 (按住
-CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾。
+执行 "xrdb -merge .Xresources" 使之生效。可通过上下文菜单检查 (按住 CTRL 键并
+点击鼠标右键)，在 allow-window-ops 项应当带有勾选标记。
 
 							*xterm-focus-event*
-有些包含 xterm 支持的终端支持焦点事件跟踪特性。用 't_fe' 序列打开此功能后，每
-次终端获得或丧失焦点时，终端都会给 Vim 发送特殊的键序列。Vim 对此进行处理，并
-触发焦点事件 (|FocusGained|/|FocusLost|)。退出 "raw" 模式时，'t_fd' 序列会用来
-关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入: >
+包含 xterm 在内的部分终端支持焦点事件跟踪。通过 't_fe' 序列开启此功能后，终端
+每次获得或丧失焦点时，都会向 Vim 发送专用转义序列。Vim 解析后触发焦点事件
+(|FocusGained|/|FocusLost|)。退出原始 ("raw") 模式时，会通过 't_fd' 序列关闭焦
+点事件跟踪。要禁用此功能，可在 .vimrc 里加入: >
 	set t_fd=
 	set t_fe=
-如果终端支持但 Vim 不识别此终端，需要你自己设置这些选项: >
+如果终端支持但 Vim 无法识别终端类型时，需要手动设置: >
 	let &t_fe = "\<Esc>[?1004h"
 	let &t_fd = "\<Esc>[?1004l"
 	execute "set <FocusGained>=\<Esc>[I"
         execute "set <FocusLost>=\<Esc>[O"
-Vim 启动时如果显示出现乱码，那么这些设置有问题。
+如果 Vim 启动时出现乱码，则代表该设置不兼容。
 
 							*termcap-colors*
-关于颜色的 注意 事项: 't_Co' 选项告诉 Vim 可用的颜色数。如果非零，'t_AB' 和
-'t_AF' 选项可以用来设置颜色。如果这些都不可用，就使用 't_Sb' 和 't_Sf'。't_me'
-用来复位到缺省的颜色设置。另见 'termguicolors'。
-GUI 运行时，'t_Co' 设为 16777216。
+颜色备注: 't_Co' 选项告知 Vim 可用颜色数目。非零时，使用 't_AB' 和 't_AF' 选项
+设置颜色。如果其中之一不可用，则改用 't_Sb' 和 't_Sf'。't_me' 用于恢复缺省颜色
+设置。另见 'termguicolors'。
+GUI 运行时，'t_Co' 固定设为 16777216。
 
 				*termcap-cursor-shape* *termcap-cursor-color*
-Vim 进入插入模式时，发送 't_SI' 转义序列。Vim 进入替换模式而 't_SR' 已设置时，
-发送 't_SR' 转义序列，否则发送 't_SI'。当离开插入或替换模式时，发送 't_EI'。
-备注: 没设置 't_EI' 时，不会发送 't_SI' 和 't_SR'。而没设置 't_SI' 或 't_SR'
-时，'t_EI' 只会发送一次。
+Vim 进入插入模式时会发送 't_SI' 转义序列。进入替换模式而 't_SR' 可用时，发送
+'t_SR' 转义序列，否则发送 't_SI'。退出插入或替换模式时，发送 't_EI'。
+备注: 如果未设置 't_EI'，'t_SI' 和 't_SR' 都不会发送。而如果未设置 't_SI' 或
+'t_SR'，会仅发送 't_EI' 一次。
 
-这可以用来改变插入模式下光标的形状或颜色。它们不是标准的 termcap/terminfo 项
-目，你需要自己设定。
-一个 xterm 的例子，改变光标颜色: >
+借助这组选项，可在插入或替换模式下切换光标形状或颜色。它们不属于标准
+termcap/terminfo 项目，需要手动设置。
+xterm 修改光标颜色的示例: >
     if &term =~ "xterm"
 	let &t_SI = "\<Esc>]12;purple\x7"
 	let &t_SR = "\<Esc>]12;red\x7"
 	let &t_EI = "\<Esc>]12;blue\x7"
     endif
 <
-注意: 当 Vim 退出时，将保留普通模式的光标形状，而不会恢复 Vim 启动之前的形状。
+注意: Vim 退出后，光标将保留普通模式下的形状，而不会恢复 Vim 启动前的状态。
 
-Windows 终端可用以下代码: >
-    " 注意: 应在 `set termguicolors` 或 `set t_Co=256` 之后设置。
+Windows 终端可用以下设置: >
+    " 注意: 应在 `set termguicolors` 或 `set t_Co=256` 后设置。
     if &term =~ 'xterm' || &term == 'win32'
 	" 使用 DECSCUSR 转义序列
-	let &t_SI = "\e[5 q"    " 闪烁竖线
-	let &t_SR = "\e[3 q"    " 闪烁下划线
-	let &t_EI = "\e[1 q"    " 闪烁块状
-	let &t_ti ..= "\e[1 q"  " 闪烁块状
-	let &t_te ..= "\e[0 q"  " 缺省 (取决于终端，通常是闪烁块状)
+	let &t_SI = "\e[5 q"    " 闪烁竖线光标
+	let &t_SR = "\e[3 q"    " 闪烁下划线光标
+	let &t_EI = "\e[1 q"    " 闪烁块状光标
+	let &t_ti ..= "\e[1 q"  " 闪烁块状光标
+	let &t_te ..= "\e[0 q"  " 缺省光标 (取决于终端，通常是闪烁块状光标)
     endif
 
 {仅当编译时加入 |+cursorshape| 特性才支持}
 
 							*termcap-title*
-如果终端允许通过发送字符串设置标题的话，'t_ts' 和 't_fs' 选项用来设置窗口的标
-题。在发送标题字符串之前和之后分别发送两者。类似的，'t_IS' 和 't_IE'  用来设置
-图标文本。这些是 Vim 内部对 Unix termcap 的扩展，所以它们的值不能从外部
-termcap 获取。不过，内建的 termcap 包含 xterm 和 iris-ansi 的合适的项目，所以
-你不需要在这里设置。
+终端支持发送字符串设置标题时，可用 't_ts' 和 't_fs' 选项设置窗口标题。二者分别
+在发送标题字符串的前后发送。与之类似，'t_IS' 和 't_IE'  用于设置图标文本。这几
+项属于 Vim 内部对 Unix 终端能力库的扩展，无法不能从外部终端能力库获取。不过，
+内置终端能力库已为 xterm 和 iris-ansi 配置好对应项目，无需手动设置。
 							*hpterm*
-如果反转和其他高亮方式不工作，尝试设置 't_xs' 选项为非空字符串。这使得 't_ce'
-代码可以用于从行里撤销高亮。对 "hpterm" 这是必需的。置位 'weirdinvert' 选项和
-设置 't_xs' 非空的相同的效果，反之亦然。
+如果反显或其他高亮方式不能正常工作，可尝试将 't_xs' 选项设为非空字符串。通过
+'t_ce' 代码清除一行上的高亮。"hpterm" 终端需要此设置。置位 'weirdinvert' 选项
+等价于将 't_xs' 设为非空串，反之亦然。
 
 							*scroll-region*
-有些 termcap 不包括 "cs" (滚动区域) 的项目，尽管有些终端支持这一特性。比如，
-Sun 上的 xterm。你可以使用内建的 builtin_xterm 或者自己定义 t_cs。例如: >
+部分终端能力库不提供 "cs" (滚动区域) 条目，但终端本身支持该功能。例如 Sun 平台
+上的 xterm。可用内置 builtin_xterm 条目，或者自行定义 |t_cs|。例如: >
 	:set t_cs=^V^[[%i%d;%dr
-其中 ^V 是 CTRL-V，而 ^[ 是 <Esc>。
+其中 ^V 代表 CTRL-V，而 ^[ 代表 <Esc>。
 
-垂直滚动区域 t_CV 不是标准的 termcap 代码。Vim 在 GUI 上内部使用之。但是如果你
-能找到支持这一特性的终端，也可以在终端里定义，两个参数分别是限制滚动的区域的左
-边列和右边列。就像 t_cs 定义顶部行和底部行那样。定义 t_CV 会使得在垂直分割的窗
-口里滚动窗口快很多。如果 t_da 或者 t_db 设置了，不要设置 t_CV (文本在滚动时不
-会清除)。
+垂直滚动区域 |t_CV| 并非标准终端能力项。Vim 在 GUI 内部使用该项。终端支持时，
+也可手动定义，接受两个参数，分别代表滚动区域限制范围的左右边界列。和 |t_cs| 定
+义顶部和底部边界行类似。定义 |t_CV| 能大幅提升垂直分割窗口里的滚动速度。如果已
+定义 |t_da| 或 |t_db|，则不要设置 t_CV (否则滚动时文本不会被清除)。
 
-不幸的是无法从 termcap 里推断光标定位应不应该使用滚动区域: 是相对于屏幕的开始
-处，还是相对于滚动区域的开始处。大多数终端使用第一种方法。在光标定位相对于滚动
-区域的情况下，'t_CS' 选项应该设置为任何非空字符串。反之，则设为空字符串。
+不幸的是，无法通过终端能力项自动推断，在使用滚动区域时，光标坐标应是相对于屏幕
+起点，还是滚动区域起点。大多数终端采用第一种方式。在光标坐标基准是滚动区域起点
+时，应将 't_CS' 选项设为任意非空串。否则设为空串。
 
-xterm 用户 注意: shift + 光标键一般不工作。要使用 xmodmap 命令和 Vim 里的一些
-	设置才可以。
+xterm 用户需注意: Shift + 光标键默认无法正常工作。可以借助 xmodmap 命令和 Vim
+	里的映射解决。
 
-	在 xterm 里给出如下命令: >
+	在 xterm 中，执行如下命令: >
 		xmodmap -e "keysym Up = Up F13"
 		xmodmap -e "keysym Down = Down F16"
 		xmodmap -e "keysym Left = Left F18"
 		xmodmap -e "keysym Right = Right F19"
 <
-	然后在 Vim 里使用这些映射: >
+	然后在 Vim 内添加映射: >
 		:map <t_F3> <S-Up>
 		:map! <t_F3> <S-Up>
 		:map <t_F6> <S-Down>
@@ -721,309 +704,304 @@ xterm 用户 注意: shift + 光标键一般不工作。要使用 xmodmap 命令
 		:map <t_F9> <S-Right>
 		:map! <t_F9> <S-Right>
 
-与其使用，比如说，<S-Up>，你可以使用任何其它的命令来做你希望 shift + 光标上移
-做的事情。(注意: 为了帮助使用有左侧键的 Sun 键盘的人，不要使用 F14，因为它和撤
-销键有冲突；不要用 F15，因为它执行把窗口转到前台的操作；也不要用 F17，因为它关
-闭窗口。其他系统上，你也许可以用这些键。)
+可将 <S-Up> 替换为其他想要绑定给 Shift + 上箭头键的命令 (注意: 对使用左侧功能
+键 Sun 键盘的用户，请勿使用与 Undo 键有冲突的 F14；触发窗口前置的 F15；会最小
+化窗口的 F17。其他系统上这些键一般都可正常使用)。
 
 ==============================================================================
 3. 窗口大小						*window-size*
 
-[这是关于 Vim 使用的整个窗口，不是用 ":split" 命令创建的那种窗口。(译者注: Vim
-里的术语或者用屏幕更合适些。)]
+[本节讨论 Vim 使用的整体窗口，而非 |:split| 命令创建的那种窗口 (译者注: Vim
+里的术语或者用屏幕更合适些)。]
 
-如果你在 Amiga 上运行 Vim，而终端名是 "amiga" 或 "builtin_amiga"，打开 amiga
-专用的窗口大小调整技术。Unix 系统上，有三个方法可以得到窗口的大小:
+在 Amiga 上运行 Vim 且终端名是 "amiga" 或 "builtin_amiga" 时，会开启 Amiga 专
+属窗口缩放逻辑。Unix 系统上，获取窗口大小有三种方法:
 
-- ioctl 调用 (TIOCGSIZE 或者 TIOCGWINSZ，视乎你的系统而定)
+- ioctl 系统调用 (视乎具体系统，使用 TIOCGSIZE 或 TIOCGWINSZ 命令)
 - 环境变量 "LINES" 和 "COLUMNS"
-- termcap 项目 "li" 和 "co"
+- 终端能力项 "li" 和 "co" (译者注: 没有对应 Vim 终端选项)
 
-如果所有这些都不行，假设缺省大小为 24 行和 80 列。如果收到改变窗口大小的信号，
-大小会重新设置。如果窗口大小不正确，你可以用 'lines' 和 'columns' 选项来设置正
-确的值。
+如果以上方法都失败，默认窗口大小为 24 行和 80 列。收到窗口缩放信号时，会重新设
+置大小。如果窗口大小有误，可用 'lines' 和 'columns' 选项手动修正。
 
-这个命令可以设置屏幕大小:
+也可用以下命令设置屏幕大小:
 
 						*:mod* *:mode* *E359*
 :mod[e] [mode]
 
-如果不带参数，该命令检测屏幕大小并重画屏幕。
-[mode] 过去用于 MS-DOS，现在已经不能用了。|Vim9| 不支持此命令。
+省略参数时，检测屏幕大小并重绘屏幕。参数 [mode] 曾用于 MS-DOS 系统，现已废弃。
+|Vim9| 不支持本命令。
 
 ==============================================================================
-4. 慢速和快速终端				*slow-fast-terminal*
+4. 低速和快速终端				*slow-fast-terminal*
 						*slow-terminal*
 
-如果你有一个快速终端，你可能愿意置位 'ruler' 选项。光标位置将显示在状态行上。
-如果你使用水平滚动 (关闭 'wrap' 选项)，考虑把 'sidescroll' 设小一点。
+使用快速终端时，可置位 'ruler' 选项。在状态行显示光标位置。使用水平滚动模式
+('wrap' 选项关闭) 时，可将 'sidescroll' 适当调小。
 
-如果你有一个慢速终端，你也许希望复位 'showcmd' 选项。这样，命令字符就不会显示
-在状态行上。如果终端滚动很慢，把 'scrolljump' 设为 5 左右。如果光标离开屏幕
-(例如，用 "j")，Vim 会一次滚动 5 行。另外一个可能性是减少 Vim 使用的行数，通过
-"z{height}<CR>" 命令。
+使用低速终端时，建议复位 'showcmd' 选项。状态行不再显示命令字符。终端滚动极慢
+时，可将 'scrolljump' 设为 5 左右。光标移出屏幕 (如用 |j|)，Vim 会一次滚动 5
+行。也可用 "z{height}<CR>" 命令 (|zN<CR>|) 减少 Vim 使用的行数。
 
-如果终端的字符到达时间相距超过 1 秒，你也许希望设置 'timeout' 和/或 'ttimeout'
-选项。见 "Options" 一章 |options|。
+如果终端字符的接收间隔超过 1 秒，可调整 'timeout' 和/或 'ttimeout' 选项。见
+"选项" 一章 |options|。
 
-如果你的终端不支持滚动区域，但是支持插入/删除行命令，多个窗口的滚动也许会使得
-行跳上跳下。复位了 'ttyfast' 选项就会如此。为此，可以这样检查一下: >
+如果终端不支持滚动区域、但支持行增删相关命令，在多窗口滚动时，行可能会出现上下
+跳动。原因可能是复位了 'ttyfast' 选项。可用以下命令检查: >
 	verbose set ttyfast?
 
-如果你的终端滚动很慢，但是重画却不慢，把 'ttyscroll' 设小一点，比如 3。这使得
-Vim 在超过 3 行需要滚动时，重画屏幕而不是滚动。
+如果终端滚动很慢，但重绘速度尚可，可将 'ttyscroll' 调小。如设为 3。需要滚动超
+过 3 行时，Vim 会重绘屏幕而非滚动。
 
-如果你使用一个慢速的彩色终端，使用命令: >
+使用低速彩色终端时，可用以下命令: >
 	hi NonText cterm=NONE ctermfg=NONE
-这避免了空格在改变属性时被重复发送。大多数终端上，你反正也不会看到任何区别。
+可避免发送带有不同属性的空格。大多数终端上肉眼看不出差别。
 
-如果你在慢速的串行线上使用 Vim，你也许想要尝试在 "screen" 程序里运行 Vim。
-screen 优化终端 I/O 挺不错的。
+通过低速串行线路使用 Vim 时，可考虑在 "screen" 程序中运行 Vim。screen 会大幅优
+化终端 I/O。
 
-如果你在测试 termcap 选项，但是你看不到发生了什么，你也许希望设置 'writedelay'
-选项。如果非零，每次给终端只发一个字符。这使得屏幕刷新变慢很多，从而能看清楚发
-生了什么。
+测试终端能力项时如果看不清执行过程，可设置 'writedelay' 选项。非零时，每次只向
+终端发送一个字符。屏幕刷新会显著变慢，方便观察执行细节。
 
 ==============================================================================
 5. 使用鼠标						*mouse-using*
 
-本节说明在终端或者终端窗口里如何使用鼠标。GUI 窗口里如何使用鼠标在 |gui-mouse|
-里解释。关于使用鼠标滚轮进行滚动的部分见 |scroll-mouse-wheel|。
+本节说明在终端或终端窗口里鼠标的使用方式。GUI 窗口的鼠标用法见 |gui-mouse|。鼠
+标滚轮滚动相关见 |scroll-mouse-wheel|。
 
-不要忘记用以下命令打开鼠标: >
+请使用以下命令开启鼠标支持: >
 	:set mouse=a
 否则 Vim 不会在所有模式下识别鼠标 (见 'mouse')。
 
-目前，鼠标只有在 Unix 的 xterm 窗口、带 |sysmouse| 的 *BSD 控制台、Linux 终端
-(带 GPM |gpm-mouse|)、Windows 终端上才支持。鼠标键击可以用来定位光标，设置区域
-并粘贴。
+目前，鼠标支持包括 Unix 环境下的 xterm 窗口、带 |sysmouse| 的 *BSD 控制台、带
+GPM |gpm-mouse|的 Linux 终端，以及 Windows 控制台。
+鼠标点击可用于定位光标、选择区域、以及粘贴。
 
-'mouse' 选项的字符决定 Vim 在什么场合下会使用鼠标:
+'mouse' 选项字符用于指定 Vim 使用鼠标的场景:
 		n	普通模式
 		v	可视模式
 		i	插入模式
 		c	命令行模式
-		h	在帮助文件里，以上所有的模式
-		a	以上所有的模式
-		r	跳过 |hit-enter| 提示
+		h	编辑帮助文档时使用前面列出的所有模式
+		a	前面列出的所有模式
+		r	|hit-enter| 和 |more-prompt| 提示
 
-'mouse' 的缺省值为空，即不使用鼠标。通常你会用: >
+'mouse' 缺省值为空，代表不启用鼠标。一般使用: >
 	:set mouse=a
-来开始使用鼠标 (这等价于设置 'mouse' 为 "nvich")。如果你只想在若干模式下或者在
-某两个任务上使用鼠标，你需要专注于那些模式对应的字母。例如: >
+开启鼠标 (等价于将 'mouse' 设为 "nvich")。
+如果只需在部分模式或两个提示界面下使用鼠标，将所需模式对应字母进行拼接即可。例
+如: >
 	:set mouse=nv
-会使得鼠标在普通模式和可视模式下工作。 >
+仅在普通模式和可视模式下启用鼠标。 >
 	:set mouse=h
-会使得鼠标只有在帮助文件里工作 (这样，可以用 "g<LeftMouse>" 来进行标签跳转)。
+仅在帮助文档里启用鼠标 (可用 "g<LeftMouse>" 跳转标签)。
 
-鼠标能否在可视模式或者选择模式下开始选择，决定于 "selectmode" 选项包不包括
+用鼠标开始选区时，进入可视模式还是选择模式，取决于 'selectmode' 选项是否包含
 "mouse"。
 
 							*terminal-mouse*
-在 xterm 终端里，在 'mouse' 选项包含当前激活的模式的前提下，普通的鼠标键击归
-Vim 使用，而带 shift 或者 ctrl 键的鼠标键击由 xterm 控制。如果 'mouse' 不包括
-当前激活的模式，则所有的鼠标键击由 xterm 控制。
+在 xterm 终端里，'mouse' 选项包含当前模式时，普通鼠标点击交由 Vim 处理，按住
+Shift 或 Ctrl 键的鼠标点击则交由 xterm 处理。'mouse' 不含当前模式时，所有鼠标
+事件都交由 xterm 处理。
 
-对于自身不能通过修饰符来使用鼠标事件的终端，一个权宜之计是在 Vim 的命令模式中
-不使用鼠标事件: >
+如果终端自身无法处理带修饰符的鼠标事件，一个权宜之计是在 Vim 的命令模式下关闭
+鼠标: >
 	:set mouse=nvi
-然后在终端中选择文本，用 ":" 进入命令行模式，选择并复制文本到系统中，然后按
-Esc。
+之后如果要在终端自身选中文本，可通过 |:| 进入命令行模式，选中并复制文本到系
+统，再按 Esc 退出。
 
-另一个办法是临时地用 ":sh" 来运行外壳，复制文本，然后退出外壳。此时 'mouse' 仍
-应设为 "a"。
+另一种方案是临时执行 |:sh| 进入外壳、复制文本、然后退出。此时 'mouse' 仍可保持
+为 "a"。
 							*xterm-clipboard*
-Motif GUI 版本上，如果在终端运行但是可以访问 X-server (设置了 DISPLAY)，那么复
-制和粘贴和 GUI 上的行为相似。如果不是，那么鼠标中键会插入无名寄存器。这种情况
-下，这里是如何复制和粘贴一段文本的方法:
+Motif GUI 版本上，运行在终端且 X-server (已设置 DISPLAY 环境变量) 可访问时，复
+制和粘贴行为和 GUI 一致。否则，鼠标中键会粘贴到无名寄存器。这种情景下，要复制
+和粘贴一段文本，可用以下步骤:
 
-用鼠标和可视模式复制/粘贴 ('mouse' 选项必须设置，见上):
-1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放左
-   键。这会启动可视模式并高亮选择区域。
-2. 按 "y" 抽出可视文本到无名寄存器里。
-3. 在要插入的位置上按鼠标左键。
-4. 按鼠标中键。
+通过鼠标和可视模式进行复制/粘贴 (必须已设置 'mouse' 选项，见上):
+1. 在文本首字符上按鼠标左键、拖动鼠标到文本末字符、释放左键。此时启动可视模
+   式，高亮选区。
+2. 按 |y| 将可视选中文本抽出到无名寄存器。
+3. 移动到目标位置，点击鼠标左键。
+4. 点击鼠标中键完成粘贴。
 
-快捷方式: 如果插入位置和可视文本同时出现在屏幕上，你可以一次做 2、3 和 4: 在要
-插入的位置直接按鼠标中键。
+快捷方式: 目标位置和可视选中文本同在屏幕上出现时，可一步完成 2、3 和 4: 在目标
+位置直接点击鼠标中键即可。
 
-注意: 如果使用 |-X| 命令行参数，Vim 不会连接到 X 服务器，所以复制/粘贴到 X 剪
-贴板 (选择区) 不会工作。使用带 shift 键的鼠标键来让 xterm 完成选择。
+注意: 使用 |-X| 命令行参数时，Vim 不会连接 X 服务器，因而无法通过 X 剪贴板 (选
+择区) 进行复制/粘贴。此时可按 Shift 键配合鼠标操作，由 xterm 完成文本选取。
 
 							*xterm-command-server*
-如果 X-服务器的剪贴板可用，|x11-clientserver| 的命令服务器可以在命令行用
---servername 打开。
+X 服务器剪贴板可用时，可通过 |--servername| 命令行参数打开|x11-clientserver|
+中介绍的命令服务器。
 
 							*xterm-copy-paste*
-注意: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 或 223 列。这是
-xterm 的问题，不是 Vim 的。用新一点的 xterm 吧 |color-xterm|。另见
-'ttymouse'。
+注意: 部分 (旧版) xterm 里，光标无法移动到第 95 或 223 列之后。这是 xterm 自身
+限制，不是 Vim 的问题。更换新版 xterm 即可 |color-xterm|。另见 'ttymouse'。
 
-使用 xterm 粘贴/复制 (当前模式_不_包括在 'mouse' 里):
-1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放。
-2. 使用普通的 Vim 命令把光标移动到待插入的位置。
-3. 按 "a" 开始插入模式。
-4. 按鼠标中键。
+当前模式_不_在 'mouse' 内时，可通过 xterm 进行粘贴/复制，步骤如下:
+1. 在文本首字符上按鼠标左键，拖动鼠标到文本末字符，释放左键。
+2. 使用普通 Vim 命令，移动光标到目标位置。
+3. 按 |a|，进入插入模式。
+4. 点击鼠标中键完成粘贴。
 5. 按 ESC 退出插入模式。
-(对包含在 'mouse' 里的模式，这里的操作同样可以完成，只要你在使用鼠标的时候按住
-shift 键就行了。)
+(即使当前模式已加入 'mouse'，也可使用这套流程，操作鼠标时按住 Shift 键即可。)
 
-注意: 如果你在粘贴的时候丢失了第 8 位 (特殊字符被翻译成其他字符)，你需要在启动
-Vim 之前在外壳上执行 "stty cs8 -istrip -parenb"。
+备注: 粘贴时如果第 8 位丢失 (特殊字符被错误译成其他字符)，可在启动 Vim 前在外
+壳上执行 "stty cs8 -istrip -parenb"。
 
-这样，在 xterm 上 shift 和 ctrl 键不能和鼠标一起使用。需要 CTRL 修饰符的鼠标命
-令可以在使用鼠标前按 "g" 键模拟:
-	"g<LeftMouse>"	是 "<C-LeftMouse>	(跳转到鼠标点击的标签上)
-	"g<RightMouse>" 是 "<C-RightMouse>	("CTRL-T")
+因此，在 xterm 中，Shift 与 Ctrl 键不能与鼠标组合用于 Vim。需要 CTRL 修饰符的
+鼠标命令，可在使用鼠标前先按 "g" 键来模拟:
+	"g<LeftMouse>"	等同于 "<C-LeftMouse>	(跳转到鼠标点击所在的标签)
+	"g<RightMouse>" 等同于 "<C-RightMouse>	(等价 "CTRL-T")
 
 					*mouse-mode-table* *mouse-overview*
-如果 'mousemodel' 是 "extend"，鼠标按钮的功能的概述在此:
+'mousemodel' 设为 "extend" 时，鼠标按键行为简要说明如下:
 
 普通模式:
-事件	      移动光标	   选择		改变窗口   行动	~
-<LeftMouse>     是	   结束           是
-<C-LeftMouse>   是	   结束           是	   "CTRL-]" (2)
-<S-LeftMouse>   是	  不改变          是	   "*" (2)    *<S-LeftMouse>*
-<LeftDrag>      是	开始或者扩展 (1)  否		      *<LeftDrag>*
-<LeftRelease>   是	开始或者扩展 (1)  否
-<MiddleMouse>   是	如果没有激活      否	   放置
-<MiddleMouse>   是	 如果激活	  否	   抽出和放置
-<RightMouse>    是	开始或者扩展	  是
-<A-RightMouse>  是	开始或者扩展列块  是		      *<A-RightMouse>*
+事件	      移动光标	   选区		窗口变更   动作	~
+<LeftMouse>     是	   结束		  是
+<C-LeftMouse>   是	   结束		  是	   "CTRL-]" (2)
+<S-LeftMouse>   是	  不改变	  是	   "*" (2)    *<S-LeftMouse>*
+<LeftDrag>      是	开始或扩展 (1)	  否		      *<LeftDrag>*
+<LeftRelease>   是	开始或扩展 (1)	  否
+<MiddleMouse>   是	  未激活时	  否	   放置
+<MiddleMouse>   是	  已激活时	  否	   抽出并放置
+<RightMouse>    是	开始或扩展	  是
+<A-RightMouse>  是   开始或扩展列块模式	  是		      *<A-RightMouse>*
 <S-RightMouse>  是	  不改变	  是	   "#" (2)    *<S-RightMouse>*
 <C-RightMouse>  否	  不改变	  否	   "CTRL-T"
-<RightDrag>     是	   扩展	          否		      *<RightDrag>*
-<RightRelease>  是	   扩展	          否		      *<RightRelease>*
+<RightDrag>     是	   扩展		  否		      *<RightDrag>*
+<RightRelease>  是	   扩展		  否		      *<RightRelease>*
 
 插入或替换模式:
-事件	      移动光标	   选择		  改变窗口 行动	~
-<LeftMouse>     是      (不能激活)          是
-<C-LeftMouse>   是      (不能激活)          是	   "CTRL-O^]" (2)
-<S-LeftMouse>   是      (不能激活)          是	   "CTRL-O*" (2)
-<LeftDrag>      是     开始或者扩展 (1)     否	   类似于 CTRL-O (1)
-<LeftRelease>   是     开始或者扩展 (1)     否	   类似于 CTRL-O (1)
-<MiddleMouse>   否      (不能激活)          否	   放置寄存器内容
-<RightMouse>    是     开始或者扩展	    是	   类似于 CTRL-O
-<A-RightMouse>  是     开始或者扩展列块	    是
-<S-RightMouse>  是      (不能激活)          是	   "CTRL-O#" (2)
-<C-RightMouse>  否	(不能激活)          否	   "CTRL-O CTRL-T"
+事件	      移动光标	   选区		窗口变更   动作	~
+<LeftMouse>     是      (不能激活)	  是
+<C-LeftMouse>   是      (不能激活)	  是	   "CTRL-O^]" (2)
+<S-LeftMouse>   是      (不能激活)	  是	   "CTRL-O*" (2)
+<LeftDrag>      是     开始或扩展 (1)	  否	   类似 CTRL-O (1)
+<LeftRelease>   是     开始或扩展 (1)	  否	   类似 CTRL-O (1)
+<MiddleMouse>   否      (不能激活)	  否	   放置寄存器内容
+<RightMouse>    是     开始或扩展	  是	   类似 CTRL-O
+<A-RightMouse>  是   开始或扩展列块模式	  是
+<S-RightMouse>  是      (不能激活)	  是	   "CTRL-O#" (2)
+<C-RightMouse>  否	(不能激活)	  否	   "CTRL-O CTRL-T"
 
-在帮助窗口里:
-事件	      移动光标	   选择		  改变窗口 行动	~
-<2-LeftMouse>   是     (不能激活)           否	   "^]" (帮助标签跳转)
+在帮助窗口中:
+事件	      移动光标	   选区		窗口变更   动作	~
+<2-LeftMouse>   是     (不能激活)	  否	   "^]" (跳转到帮助标签)
 
-当 'mousemodel' 为 "popup" 时，下面这些有所差异:
+'mousemodel' 设为 "popup" 时，以下按键行为有所差异:
 
 普通模式:
-事件	      移动光标	   选择		  改变窗口 行动	~
-<S-LeftMouse>	是	开始或者扩展 (1)    否
-<A-LeftMouse>   是	开始或者扩展列块    否		      *<A-LeftMouse>*
-<RightMouse>	否	 弹出菜单	    否
+事件	      移动光标	   选区		窗口变更   动作	~
+<S-LeftMouse>	是	开始或扩展 (1)	  否
+<A-LeftMouse>   是   开始或扩展列块模式	  否		      *<A-LeftMouse>*
+<RightMouse>	否	 弹出菜单	  否
 
 插入或替换模式:
-事件	      移动光标	   选择		  改变窗口 行动	~
-<S-LeftMouse>   是	开始或者扩展 (1)    否	   类似于 CTRL-O (1)
-<A-LeftMouse>   是	开始或者扩展列块    否
-<RightMouse>    否	 弹出菜单	    否
+事件	      移动光标	   选区		窗口变更   动作	~
+<S-LeftMouse>   是	开始或扩展 (1)	  否	   类似 CTRL-O (1)
+<A-LeftMouse>   是   开始或扩展列块模式	  否
+<RightMouse>    否	 弹出菜单	  否
 
-(1) 只有当鼠标在按键后发生移动
-(2) 只有当点击发生在同一缓冲区时
+(1) 仅当按下鼠标后移动过指针才生效
+(2) 仅当点击发生在同一缓冲区时才生效
 
-点击鼠标左键改变光标的位置。如果点击发生在另一个窗口，那么那个窗口成为活动窗
-口。在编辑命令行时，光标只能定位在命令行上。在插入模式下，Vim 仍然保持在插入模
-式。如果设置了 'scrolloff'，而光标定位在窗口边界 'scrolloff' 行范围内，则文本
-被滚动。
+点击鼠标左键会定位光标。在另一个窗口点击时，该窗口会成为活动窗口。在命令行编辑
+状态下，光标只能定位在命令行内。在插入模式下，任意鼠标操作后 Vim 仍会保持在插
+入模式。设置 'scrolloff' 且新光标位置距离窗口边界小于 'scrolloff' 指定行数时，
+文本会自动滚动。
 
-在第一个字符上按鼠标左键，移动鼠标到最后一个字符，然后释放，可以进行选择。直到
-你释放鼠标键，你不一定总能看到选择的区域。只有一些版本能够 (GUI、WIN32) 使得拖
-动立即显示。注意 如果 'scrolloff' 非零，你可以在窗口的首/末行移动鼠标至少一个
-字符位置使文本滚动。
+要创建选区，可在选区首个字符上按鼠标左键、拖动到末字符再放开。在释放鼠标键前，
+并非所有版本都会实时显示拖动选区。仅部分版本 (GUI、WIN32) 可以。注意
+'scrolloff' 非零时，拖动到窗口首/末行后需再移动鼠标至少一个字符位置，才能使文
+本滚动。
 
-在普通、可视和选择模式下，单击鼠标右键使得可视区域被扩展。如果 'mousemodel' 为
-"popup"，必须使用按住 shift 键的鼠标左键。如果在编辑另外一个缓冲区时点击一个窗
-口，可视和选择模式被终止。
+在普通、可视和选择模式下，点击鼠标右键会扩展可视选区。'mousemodel' 为 "popup"
+时，须改用鼠标左键且同时需按住 Shift 键。点击编辑其他缓冲区的窗口时，会退出可
+视和选择模式。
 
-在普通、可视和选择模式下，按下 Alt 键同时单击鼠标右键，可使选择区域成为面向列
-块。当 'mousemodel' 被设置为 "popup"，鼠标左键必须和 Alt 键一起使用。注意在某
-些系统中失效，那些系统中的窗口管理器在按下 Alt 键时会吃掉鼠标事件 (可能会移动
-窗口)。
+在普通、可视和选择模式下，按住 Alt 键的同时点击鼠标右键，可视选区会使用列块模
+式。'mousemodel' 为 "popup" 时，按住 Alt 键的同时需改用鼠标左键。注意在部分系
+统上，窗口管理器在按下 Alt 键时会拦截鼠标事件 (可能触发窗口移动)，此时本功能无
+法使用。
 
 							*double-click*
-双击、三击和四击在 GUI 激活时、Win32 以及 xterm (如果有 gettimeofday() 函数)
-上得到支持。对于文本选择，附加的点击会扩展选择区:
-	点击		选择 ~
-	两次		单词或者 % 匹配		*<2-LeftMouse>*
-	三次		行			*<3-LeftMouse>*
-	四次		矩形区域		*<4-LeftMouse>*
-特例: 在帮助窗口上，双击跳到点击的单词对应的帮助。
-双击单词选择该单词。'iskeyword' 用来指定单词可以包括哪些字符。双击一个有匹配的
-字符选择直到该匹配的区域 (类似于 "v%")。如果匹配是 #if/#else/#endif 块，选择变
-为面向行。
-MS-Windows 和 xterm 上，双击相隔的时间可以通过 'mousetime' 选项设置。其他系统
-上，该值只能在 Vim 之外定义。
-一个使用双击跳转到光标所在的标签的例子: >
+支持双击、三击和四击的环境包括 GUI、Win32 以及 xterm (需 gettimeofday() 函数可
+用)。用于文本选择时，多次点击可扩展选区范围:
+	点击次数	选中范围 ~
+	两次		单词或者 % 配对范围	*<2-LeftMouse>*
+	三次		整行			*<3-LeftMouse>*
+	四次		列块区域		*<4-LeftMouse>*
+特例: 在帮助窗口中双击，会跳到点击单词对应的帮助。
+双击单词会选中该单词。单词组成字符由 'iskeyword' 决定。双击带配对标记的字符会
+选中两个配对字符之间的区域 (效果类似 `v%`)。匹配项目是 #if/#else/#endif 块时，
+进入行选择模式。
+MS-Windows 和 xterm 环境 (译者注: 还有 GUI) 可通过 'mousetime' 选项设置双击间
+隔时长。其他系统的双击时长在 Vim 之外定义。
+使用双击跳转到光标所在标签的示例: >
 	:map <2-LeftMouse> :exe "tag " .. expand("<cword>")<CR>
 
-使用双击拖动鼠标 (按下按钮、抬起按钮、按下按钮、然后拖动) 会导致完整的多个单词
-被选择，直到按钮被释放为止。这时选择重新以字符为单位。
+双击后拖动鼠标 (即按下、松开、再按下然后拖动) 会按单词扩展选区。直到按钮释放
+后，才恢复为按字符选区。
 
-鼠标滚动可见 |scroll-mouse-wheel|。
+鼠标滚动相关可见 |scroll-mouse-wheel|。
 
 							*gpm-mouse*
-GPM 鼠标只有在编译时打开 |+mouse_gpm| 特性才有效。GPM 鼠标驱动 (Linux 终端) 不
+{仅当编译时打开 |+mouse_gpm| 特性才支持 GPM 鼠标} GPM 鼠标驱动 (Linux 终端) 不
 支持四击。
 
-插入模式下，但选择开始时，Vim 暂时回到普通模式。在可视或者选择模式结束时，又回
-到插入模式。这类似于在插入模式下使用 CTRL-O 的情形。选择模式在 'selectmode' 选
-项包含 "mouse" 时被使用。
+插入模式下启动选区时，Vim 会暂时回到普通模式。退出可视或选择模式后回到插入模
+式。行为类似插入模式下按 CTRL-O。'selectmode' 选项包含 "mouse" 时，使用选择模
+式。
 							*sysmouse*
-只有编译时加入 |+mouse_sysmouse| 特性才会支持 sysmouse。sysmouse 驱动 (*BSD 控
+{仅当编译时加入 |+mouse_sysmouse| 特性才支持 sysmouse} sysmouse 驱动 (*BSD 控
 制台) 不支持键盘修饰符。
 
 							*drag-status-line*
-如果有多个窗口一起工作，窗口的大小可以用通过鼠标拖动状态行来改变。把鼠标点在状
-态行上，按左键，移动鼠标把状态行带到新的位置，再释放左键。只是用鼠标点击状态行
-而不移动鼠标使得那个窗口成为当前窗口。如果选择了一个窗口会改变状态行的位置或大
-小，状态行的拖动看起来很奇怪，但还是会工作的 (试试吧)。
+多窗口布局时，可通过鼠标拖动状态行调整窗口大小。具体步骤是，鼠标移到状态行，按
+住左键，拖动到目标位置后松开。直接点击状态行而不移动鼠标，只会将该窗口切换为当
+前窗口。如果选中窗口会使其位置或大小发生变化，拖动状态行时看来会有些混乱，但仍
+可正常工作 (不妨尝试一下)。
 
 					*<MiddleRelease>* *<MiddleDrag>*
-鼠标点击可以映射。鼠标点击的代码是:
-     代码	    鼠标按钮	一般的行动	~
- <LeftMouse>	 按住左键	设置光标位置
- <LeftDrag>	 按住并移动左键	扩展选择区
- <LeftRelease>	 释放左键	结束选择区
- <MiddleMouse>	 按住中键	在光标所在的位置上粘贴
- <MiddleDrag>	 按住并移动中键	-
- <MiddleRelease> 释放中键	-
- <RightMouse>	 按住右键	扩展选择区
- <RightDrag>	 按住并移动右键	扩展选择区
- <RightRelease>  释放右键	结束选择区
- <X1Mouse>	 按住 X1 键	    -			*X1Mouse*
- <X1Drag>	 按住并移动 X1	    -			*X1Drag*
- <X1Release>	 释放 X1 键	    -			*X1Release*
- <X2Mouse>	 按住 X2 键	    -			*X2Mouse*
- <X2Drag>	 按住并移动 X2	    -			*X2Drag*
- <X2Release>	 释放 X2 键	    -			*X2Release*
+鼠标点击事件可被映射。鼠标点击编码如下:
+ 编码		 对应鼠标按键		缺省动作	~
+ <LeftMouse>	 按住左键		设置光标位置
+ <LeftDrag>	 按住并移动左键		扩展选区
+ <LeftRelease>	 释放左键		结束选区
+ <MiddleMouse>	 按住中键		在光标处粘贴
+ <MiddleDrag>	 按住并移动中键		-
+ <MiddleRelease> 释放中键		-
+ <RightMouse>	 按住右键		扩展选区
+ <RightDrag>	 按住并移动右键		扩展选区
+ <RightRelease>  释放右键		结束选区
+ <X1Mouse>	 按住 X1 键		-		*X1Mouse*
+ <X1Drag>	 按住并移动 X1 键	-		*X1Drag*
+ <X1Release>	 释放 X1 键		-		*X1Release*
+ <X2Mouse>	 按住 X2 键		-		*X2Mouse*
+ <X2Drag>	 按住并移动 X2 键	-		*X2Drag*
+ <X2Release>	 释放 X2 键		-		*X2Release*
 
-X1 和 X2 按钮指一些鼠标上的附加按钮。'Microsoft Explorer' 鼠标在右拇指位置有这
-些键。目前 X1 和 X2 只能用于 Win32 和 X11 环境，还有支持 xterm-兼容鼠标功能的
-终端。
+X1 和 X2 按键是部分鼠标提供的额外按键。例如 'Microsoft Explorer' 鼠标在右拇指
+位置有这些按键。目前 X1 和 X2 仅在 Win32、X11，以及支持 xterm-兼容鼠标协议的终
+端中可用。
 
 示例: >
 	:noremap <MiddleMouse> <LeftMouse><MiddleMouse>
-在鼠标中键点击的位置粘贴 (不然，粘贴在光标所在的位置进行)。
+在鼠标中键点击位置粘贴文本 (缺省会在光标位置粘贴)。
 >
 	:noremap <LeftRelease> <LeftRelease>y
-在可视模式下立即抽出选择区。
+在可视模式下，释放左键会立即抽出选区文本。
 
-注意使用了 ":noremap" 而不是 "map"，以免发生递归映射。
+注意使用了 |:noremap| 而非 |:map|，防止映射递归。
 >
 	:map <X1Mouse> <C-O>
 	:map <X2Mouse> <C-I>
-把 X1 和 X2 键定义为跳跃表的前进和后退，见 |CTRL-O| 和 |CTRL-I|。
+将 X1 和 X2 键映射为跳跃表的后退与前进，见 |CTRL-O| 和 |CTRL-I|。
 
 						*mouse-swap-buttons*
-要交换鼠标左键和右键的含义: >
+要交换鼠标左键和右键功能: >
 	:noremap	<LeftMouse>	<RightMouse>
 	:noremap	<LeftDrag>	<RightDrag>
 	:noremap	<LeftRelease>	<RightRelease>
