@@ -43,9 +43,9 @@
 终端窗口支持                            <b class="vimtag"> <a name="terminal">terminal</a> </b> <b class="vimtag"> <a name="terminal-window">terminal-window</a> </b>
 
 
-终端特性是可选的，要检查你的 Vim 是否带有此特性:
+终端窗口为可选特性，要检查当前 Vim 是否支持:
 <code class="example">        echo has('terminal')</code>
-如果返回 "1" 就代表拥有此特性。
+返回 "1" 代表拥有此特性。
 
 
 1. 基本用法                              <a href="terminal.html#terminal-use">terminal-use</a> 
@@ -84,318 +84,322 @@
       定制                                       <a href="terminal.html#termdebug-customizing">termdebug-customizing</a> 
 
 <code class="notvi">{仅当编译时加入  <a href="various.html#+terminal">+terminal</a>  特性才有效}</code>
-终端特性需要  <a href="various.html#+job">+job</a>  和  <a href="various.html#+channel">+channel</a>  特性的支持。
+终端特性依赖  <a href="various.html#+job">+job</a>  和  <a href="various.html#+channel">+channel</a>  特性。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 基本用法                                             <b class="vimtag"> <a name="terminal-use">terminal-use</a> </b></h4>
-本特性用于在 Vim 窗口中运行终端模拟器。终端模拟器启动时可以连接作业。例如，运
+本特性用于在 Vim 窗口中运行终端模拟器。终端模拟器启动时可连接作业。例如，要运
 行外壳程序:
 <code class="example">     :term bash</code>
 <code class="example"></code>
-或运行编译命令:
+或运行构建命令:
 <code class="example">     :term make myprogram</code>
 <code class="example"></code>
-作业和 Vim 异步运行，窗口会刷新以显示作业的输出，同时在其它窗口上进行编辑。
+作业和 Vim 异步运行，窗口会持续刷新作业输出，编辑其他窗口时也会如此。
 
 
 <code class="section">键入 </code>
                                                         <b class="vimtag"> <a name="terminal-typing">terminal-typing</a> </b>
-键盘的焦点在终端窗口时，输入的键会发送给其中的作业。可能的话使用 pty。在终端窗
-口之外点击把键盘焦点移到别处。
+键盘焦点落在终端窗口时，输入按键会发送给关联作业。如有可能会使用伪终端 (pty)。
+在终端窗口外点击，可将键盘焦点移到别处。
 
                                                 <b class="vimtag"> <a name="t_CTRL-W_CTRL-W">t_CTRL-W_CTRL-W</a> </b> <b class="vimtag"> <a name="t_CTRL-W_:">t_CTRL-W_:</a> </b>
-<code class="keystroke">CTRL-W</code> 可用来在窗口间切换和执行其它 <code class="keystroke">CTRL-W</code> 命令，如:
-        <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-W</code>   移动焦点到下个窗口
-        <code class="keystroke">CTRL-W</code> :        输入 Ex 命令
-更多命令见  <a href="index.html#CTRL-W">CTRL-W</a> 。
+<code class="keystroke">CTRL-W</code> 可用于切换窗口，以及其他 <code class="keystroke">CTRL-W</code> 子命令功能，例如:
+        <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-W</code>   切换到下个窗口
+        <code class="keystroke">CTRL-W</code> :        进入 Ex 命令模式
+更多命令参见  <a href="index.html#CTRL-W">CTRL-W</a> 。
 
-终端窗口特有的映射:                             <b class="vimtag"> <a name="t_CTRL-W_.">t_CTRL-W_.</a> </b>  <b class="vimtag"> <a name="t_CTRL-W_N">t_CTRL-W_N</a> </b>
-        <code class="keystroke">CTRL-W</code> .        向终端中的作业发送 <code class="keystroke">CTRL-W</code>
-        <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-\</code>   向终端中的作业发送 <code class="keystroke">CTRL-\</code>
+终端窗口特有映射:                               <b class="vimtag"> <a name="t_CTRL-W_.">t_CTRL-W_.</a> </b>  <b class="vimtag"> <a name="t_CTRL-W_N">t_CTRL-W_N</a> </b>
+        <code class="keystroke">CTRL-W</code> .        向终端关联作业发送 <code class="keystroke">CTRL-W</code>
+        <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-\</code>   向终端关联作业发送 <code class="keystroke">CTRL-\</code>
         <code class="keystroke">CTRL-W</code> N        切换到终端普通模式，见  <a href="terminal.html#Terminal-mode">Terminal-mode</a> 
         <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code>   切换到终端普通模式，见  <a href="terminal.html#Terminal-mode">Terminal-mode</a> 
         <code class="keystroke">CTRL-W</code> " <code class="special">{reg}</code>  粘贴寄存器 <code class="special">{reg}</code> 内容           <b class="vimtag"> <a name="t_CTRL-W_quote">t_CTRL-W_quote</a> </b>
-                        也适用于 = 寄存器，插入表达式计算的结果。
+                        也支持 = 寄存器，插入表达式求值结果。
         <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code>   强制终止作业，见下  <a href="terminal.html#t_CTRL-W_CTRL-C">t_CTRL-W_CTRL-C</a> 
-        <code class="keystroke">CTRL-W</code> gt       转到下个标签页，相当于  <a href="tabpage.html#gt">gt</a>              <b class="vimtag"> <a name="t_CTRL-W_gt">t_CTRL-W_gt</a> </b>
-        <code class="keystroke">CTRL-W</code> gT       转到上个标签页，相当于  <a href="tabpage.html#gT">gT</a>              <b class="vimtag"> <a name="t_CTRL-W_gT">t_CTRL-W_gT</a> </b>
+        <code class="keystroke">CTRL-W</code> gt       切换到下个标签页，相当于  <a href="tabpage.html#gt">gt</a>            <b class="vimtag"> <a name="t_CTRL-W_gt">t_CTRL-W_gt</a> </b>
+        <code class="keystroke">CTRL-W</code> gT       切换到上个标签页，相当于  <a href="tabpage.html#gT">gT</a>            <b class="vimtag"> <a name="t_CTRL-W_gT">t_CTRL-W_gT</a> </b>
         (<code class="vim">译者注</code>: 后两条并非终端窗口特有)
 
-另见选项 <a href="options.html#'termwinkey'">'termwinkey'</a>，指定 <code class="keystroke">CTRL-W</code> 的替代键，和 <code class="keystroke">CTRL-W</code> 的用法相同。不过，输入
-<a href="options.html#'termwinkey'">'termwinkey'</a> 两次会给作业发送 <a href="options.html#'termwinkey'">'termwinkey'</a>。例如:
-        <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-W</code>    移动焦点到下个窗口
-        <a href="options.html#'termwinkey'">'termwinkey'</a> :         输入 Ex 命令
-        <a href="options.html#'termwinkey'">'termwinkey'</a> <a href="options.html#'termwinkey'">'termwinkey'</a> 给终端中的作业发送 <a href="options.html#'termwinkey'">'termwinkey'</a>
-        <a href="options.html#'termwinkey'">'termwinkey'</a> .         给终端中的作业发送 <a href="options.html#'termwinkey'">'termwinkey'</a>
-        <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-\</code>    给终端中的作业发送 <code class="keystroke">CTRL-\</code>
+可用 <a href="options.html#'termwinkey'">'termwinkey'</a> 选项指定 <code class="keystroke">CTRL-W</code> 的替代键，和 <code class="keystroke">CTRL-W</code> 的用法相同。不过，输入
+<a href="options.html#'termwinkey'">'termwinkey'</a> 按键两次会向作业发送 <a href="options.html#'termwinkey'">'termwinkey'</a> 本身。例如:
+        <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-W</code>    切换到下个窗口
+        <a href="options.html#'termwinkey'">'termwinkey'</a> :         进入 Ex 命令模式
+        <a href="options.html#'termwinkey'">'termwinkey'</a> <a href="options.html#'termwinkey'">'termwinkey'</a> 向终端关联业发送 <a href="options.html#'termwinkey'">'termwinkey'</a>
+        <a href="options.html#'termwinkey'">'termwinkey'</a> .         向终端关联作业发送 <a href="options.html#'termwinkey'">'termwinkey'</a>
+        <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-\</code>    向终端关联作业发送 <code class="keystroke">CTRL-\</code>
         <a href="options.html#'termwinkey'">'termwinkey'</a> N         切换到终端普通模式，见下
         <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-N</code>    同 <code class="keystroke">CTRL-W</code> N  <a href="terminal.html#t_CTRL-W_N">t_CTRL-W_N</a> 
         <a href="options.html#'termwinkey'">'termwinkey'</a> <code class="keystroke">CTRL-C</code>    同 <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code>  <a href="terminal.html#t_CTRL-W_CTRL-C">t_CTRL-W_CTRL-C</a> 
                                                         <b class="vimtag"> <a name="t_CTRL-\_CTRL-N">t_CTRL-\_CTRL-N</a> </b>
-特殊键组合 <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 可用于切换到普通模式，其它模式下也都如此。
+特殊键组合 <code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 可用于切换到普通模式，该组合在所有模式下均生效。
                                                         <b class="vimtag"> <a name="t_CTRL-W_CTRL-C">t_CTRL-W_CTRL-C</a> </b>
-可用 <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code> 来强制终止作业。MS-Windows 上 <code class="keystroke">CTRL-Break</code> 也会杀掉作业。
+<code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-C</code> 可强制终止作业。MS-Windows 上也可用 <code class="keystroke">CTRL-Break</code> 结束作业。
 
-直接按 <code class="keystroke">CTRL-C</code> 的效果取决于 pty 的相应配置。简单命令会导致 SIGINT 发送给作业，
-结果是中止作业。其它命令可能会忽略 SIGINT 或自行处理 <code class="keystroke">CTRL-C</code> (Vim 就是如此)。
+直接按 <code class="keystroke">CTRL-C</code> 的效果取决于伪终端 (pty) 配置。简单命令收到 SIGINT 信号后会自行
+终止。而其他部分程序会忽略 SIGINT，或自行处理 <code class="keystroke">CTRL-C</code> (Vim 就是如此)。
 
-要改变终端模式的映射所用的键，请见  <a href="map.html#:tmap">:tmap</a> 。和其它映射的定义类似，但适用于给终
-端中运行的作业发送的键。例如，要使 F1 切换到终端普通模式:
+可用终端模式映射自定义按键，见  <a href="map.html#:tmap">:tmap</a> 。定义方式和其他映射类似，但仅作用于向终
+端关联作业发送的按键。例如，要将 F1 绑定为切换到终端普通模式:
 <code class="example">   tnoremap &lt;F1&gt; &lt;C-W&gt;N</code>
-可以用 Esc，但务须保证不影响其它的键 (光标键以 Esc 开始，所以可能会受影响)，这
-可能只能用于 GUI:
+也可绑定 Esc，但务须保证不影响其他按键 (光标键转义序列以 Esc 开头，可能会受影
+响)，可能仅适用于 GUI:
 <code class="example">   tnoremap &lt;Esc&gt; &lt;C-W&gt;N</code>
 <code class="example">   set notimeout ttimeout timeoutlen=100</code>
 <code class="example"></code>
-类似于终端模式映射，也可建立菜单，但只能用  <a href="gui.html#:tlmenu">:tlmenu</a>  而不是  <a href="gui.html#:tmenu">:tmenu</a> 。
+与终端模式映射类似，也可创建终端模式菜单，但需用  <a href="gui.html#:tlmenu">:tlmenu</a>  而非  <a href="gui.html#:tmenu">:tmenu</a> 。
 
                                                         <b class="vimtag"> <a name="options-in-terminal">options-in-terminal</a> </b>
-打开终端窗口并设置其 <a href="options.html#'buftype'">'buftype'</a> 为 "terminal" 后，触发  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a>  自动命
-令。这样便可以设置为其窗口和缓冲区特定的选项。例如:
+打开终端窗口并将 <a href="options.html#'buftype'">'buftype'</a> 设为 "terminal" 后，会触发  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a>  自动命
+令。借此可以专门为终端设置窗口和缓冲区选项。例如:
 <code class="example">   au TerminalWinOpen * setlocal bufhidden=hide</code>
-这只适用于未隐藏的终端。
+此自动事件仅适用于未隐藏的终端。
 
-要同时支持隐藏和非隐藏终端，可用以下设置，它适用于缓冲区局部和窗口局部选项:
+隐藏和非隐藏终端均适用的写法如下，可同时设置缓冲区局部和窗口局部选项:
 <code class="example">   au TerminalWinOpen,BufWinEnter * if &amp;buftype == 'terminal'</code>
 <code class="example">        \ | setlocal bufhidden=hide colorcolumn=123</code>
 <code class="example">        \ | endif</code>
-<code class="note">注意</code>对隐藏终端而言，直到终端不再隐藏时才会设置以上选项。
+<code class="note">注意</code>对隐藏终端，选项设置会延迟到终端不再隐藏时才会进行。
 
-也有  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  事件，请记住隐藏终端也触发此事件，此时当前窗口和缓冲区未必
-用于新终端。
-这里可能需要 <code class="special">&lt;abuf&gt;</code>，它被设为终端缓冲区。例如:
+另有  <a href="autocmd.html#TerminalOpen">TerminalOpen</a>  事件，请<code class="note">注意</code>隐藏终端也触发此事件，此时当前窗口和缓冲区并非
+新建终端。
+此事件需要引用 <code class="special">&lt;abuf&gt;</code> 以访问终端缓冲区。例如:
 <code class="example">    au TerminalOpen * call setbufvar(expand('&lt;abuf&gt;')-&gt;str2nr(),</code>
 <code class="example">            \ '&amp;termwinscroll', 1000)</code>
-对窗口局部选项而言，选项的设置要延迟到终端窗口创建时 (只适用于隐藏终端):
+对窗口局部选项，需要延迟到终端窗口创建完成后再设置 (仅适用于隐藏终端):
 <code class="example">    au TerminalOpen * exe printf(</code>
 <code class="example">        \    'au BufWinEnter &lt;buffer=%d&gt; ++once setlocal colorcolumn=%d',</code>
 <code class="example">        \       expand('&lt;abuf&gt;')-&gt;str2nr(), 123)</code>
-非隐藏终端可用  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a> 。
+非隐藏终端请用  <a href="autocmd.html#TerminalWinOpen">TerminalWinOpen</a> 。
 
-鼠标事件 (点击和拖曳) 会传给终端。而鼠标移动事件只有 Vim 自身接收到时才会传
-递。对终端而言，这意味着 <a href="options.html#'balloonevalterm'">'balloonevalterm'</a> 打开。
+鼠标事件 (点击和拖放) 会传递给终端窗口。而鼠标移动事件仅当 Vim 自身能接收到时
+才会传发。对终端环境，这要求 <a href="options.html#'balloonevalterm'">'balloonevalterm'</a> 开启。
 
 
-<code class="section">大小与色彩 </code>
+<code class="section">大小与颜色 </code>
                                                         <b class="vimtag"> <a name="terminal-size-color">terminal-size-color</a> </b>
-关于控制终端窗口的大小，见 <a href="options.html#'termwinsize'">'termwinsize'</a> 选项。
-(TODO: 终端超出窗口大小时的滚动)
+要控制终端窗口大小，见 <a href="options.html#'termwinsize'">'termwinsize'</a> 选项。
+(TODO: 终端内容超出窗口大小时的滚动逻辑)
 
-终端中运行的作业可以改变色彩。缺省前景和背景色来自 Vim 的 Normal 高亮组。
+终端运行作业可修改颜色。缺省前景和背景色取自 Vim Normal 高亮组 ( <a href="syntax.html#hl-Normal">hl-Normal</a> )。
 
-对色彩终端而言，<a href="options.html#'background'">'background'</a> 选项用于决定终端窗口以白色或是黑色背景开始。
+彩色终端会依据 <a href="options.html#'background'">'background'</a> 选项决定终端窗口初始为白底还是黑底。
 
-要使用其它颜色，使用 Terminal 高亮组，例如:
+可通过 Terminal 高亮组 ( <a href="syntax.html#hl-Terminal">hl-Terminal</a> ) 自定义颜色，示例:
 <code class="example">    hi Terminal ctermbg=lightgrey ctermfg=blue guibg=lightgrey guifg=blue</code>
-可用  <a href="terminal.html#term_start()">term_start()</a>  的 "term_highlight" 选项来指定另一个组名来代替 Terminal。
+调用  <a href="terminal.html#term_start()">term_start()</a>  时，"term_highlight" 选项可指定代替 Terminal 的高亮组名。
 
                                                 <b class="vimtag"> <a name="g:terminal_ansi_colors">g:terminal_ansi_colors</a> </b>
-GUI 模式或使用 <a href="options.html#'termguicolors'">'termguicolors'</a> 时，新的终端窗口缺省使用的 16 种 ANSI 颜色可通
-过  <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a>  设置，它应是 16 种色彩名或十六制色彩代码的列表，类
-似于  <a href="syntax.html#highlight-guifg">highlight-guifg</a>  接受的格式。如果不使用 GUI 颜色，终端窗口总是使用下层终
-端的 16 种 ANSI 色。
-使用  <a href="terminal.html#term_start()">term_start()</a>  时，可用 "ansi_colors" 选项设置色彩。
- <a href="terminal.html#term_setansicolors()">term_setansicolors()</a>  函数可用来改变颜色，而  <a href="terminal.html#term_getansicolors()">term_getansicolors()</a>  可获取当
-前使用的颜色。
+使用 GUI 模式或开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 时，新建终端窗口缺省使用 16 种 ANSI 颜色，
+缺省颜色值可通过  <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a>  设置，它应是 16 种颜色的名称或十六进
+制颜色代码组成的列表，可用格式参见  <a href="syntax.html#highlight-guifg">highlight-guifg</a> 。不使用 GUI 真彩时，终端
+窗口总是直接使用底层终端自身的 16 种 ANSI 色。
+调用  <a href="terminal.html#term_start()">term_start()</a>  时，"ansi_colors" 选项可用于设置颜色。
+ <a href="terminal.html#term_setansicolors()">term_setansicolors()</a>  函数可用于修改指定终端窗口的颜色，而
+ <a href="terminal.html#term_getansicolors()">term_getansicolors()</a>  可用于获取当前所用颜色。
 
 
 <code class="section">命令语法 </code>
 
 :<code class="special">[range]</code>ter[minal] <code class="special">[options]</code> <code class="special">[command]</code>                  <b class="vimtag"> <a name=":ter">:ter</a> </b> <b class="vimtag"> <a name=":terminal">:terminal</a> </b>
-                        打开新终端窗口。
+                        新建终端窗口。
 
-                        给出 <code class="special">[command]</code> 时，把它作为作业运行，并连接其输入和输
-                        出到终端上。
-                        如果没有给出 <code class="special">[command]</code>，使用 <a href="options.html#'shell'">'shell'</a> 选项值。
-                        如果 <code class="special">[command]</code> 为 NONE，不启动作业，但终端的 pty 可被
-                        gdb 这样的命令使用。
+                        <code class="special">[command]</code> 给出时，将其作为作业运行，并把其输入输出连
+                        接到终端。
+                        <code class="special">[command]</code> 省略时，默认使用 <a href="options.html#'shell'">'shell'</a> 选项值。
+                        <code class="special">[command]</code> 为 NONE 时，不启动作业，但终端的伪终端可供
+                        gdb 这类程序使用。
 
-                        如果 <code class="special">[command]</code> 输出 NUL 字符，会被转换为换行符
+                        <code class="special">[command]</code> 输出中的 NUL 字符会被转换为换行符
                          <a href="pattern.html#NL-used-for-Nul">NL-used-for-Nul</a> 。
 
                                                         <b class="vimtag"> <a name="terminal-nospecial">terminal-nospecial</a> </b>
-                        Vim 自己仅识别 <code class="special">[command]</code> 里的  <a href="cmdline.html#cmdline-special">cmdline-special</a>  字符。
-                        其它字符完全照搬。如果需要扩展通配符、环境变量或其他外
-                        壳特殊字符，可以考虑  <a href="terminal.html#term++shell">term++shell</a>  选项。
+                        Vim 自身仅解析 <code class="special">[command]</code> 内的  <a href="cmdline.html#cmdline-special">cmdline-special</a>  特殊字
+                        符。其余字符照原样传递。需要展开通配符、环境变量或其他
+                        外壳特殊字符时，可考虑  <a href="terminal.html#term++shell">term++shell</a>  选项。
 
-                        如果没有给出 <code class="special">[command]</code>，缺省行为是外壳退出时关闭终端。
-                        可以用 ++noclose 参数改变此行为。
-                        给出 <code class="special">[command]</code> 时，缺省行为是保持终端打开在终端普通模
-                        式下。可以用 ++close 参数改变此行为。
+                        <code class="special">[command]</code> 省略时，缺省行为是外壳退出时终端自动关闭。可
+                        用 ++noclose 参数改变此行为。
+                        <code class="special">[command]</code> 给出时，缺省退出行为是终端保持打开、并留在终
+                        端普通模式。可用 ++close 参数改变此行为。
 
-                        不能后跟 Vim 命令，任何的 | 都会包含在 <code class="special">[command]</code> 中。
-                        如果必须要在同一行上后跟 Vim 命令，可用  <a href="eval.html#:execute">:execute</a> 。
+                        本命令不能后跟 Vim 命令，任意 | 都会视作 <code class="special">[command]</code> 的
+                        一部分。确实需要在同一行上接续 Vim 命令时，请使用
+                         <a href="eval.html#:execute">:execute</a> 。
 
                                                         <b class="vimtag"> <a name="terminal-bufname">terminal-bufname</a> </b>
-                        建立新缓冲区，名字使用 <code class="special">[command]</code> 或 <a href="options.html#'shell'">'shell'</a> 再加上前缀
-                        "!"。如果带此名的缓冲区已存在，加一个括起的数值。比
-                        如，如果 "gdb" 存在 (<code class="vim">译者注</code>: 似应为 "!gdb")，第二个终
-                        端缓冲区会用名字 "!gdb (1)"。
+                        本命令会新建缓冲区，缓冲区名为前缀 "!" 加上 <code class="special">[command]</code>
+                        或 <a href="options.html#'shell'">'shell'</a> 值。同名缓冲区已存在时，会追加括起的数值以
+                        区分。例如，已有 "!gdb" 时，第二个终端缓冲区会命名为
+                        "!gdb (1)"。
 
-                        如果给出 <code class="special">[range]</code>，使用给定行的范围作为作业的输入。此时
-                        终端窗口不接受键盘输入。MS-Windows 请见下面的 ++eof 参
-                        数。
+                        <code class="special">[range]</code> 给出时，使用指定范围的行文本作为作业输入。此时
+                        终端窗口不接受键盘输入。MS-Windows 见下述 ++eof 参数。
 
                                     <b class="vimtag"> <a name="term++close">term++close</a> </b> <b class="vimtag"> <a name="term++noclose">term++noclose</a> </b> <b class="vimtag"> <a name="term++open">term++open</a> </b>
                         支持的 <code class="special">[options]</code> 有:
                         ++close         作业终止时自动关闭终端窗口。
                                          <a href="terminal.html#terminal-close">terminal-close</a> 
                         ++noclose       作业终止时 <code class="emphasis">不</code> 自动关闭终端窗口。
-                        ++open          作业终止时如果没有窗口显示它，会打开窗
-                                        口。
-                                        <code class="note">注意</code> 这会打断正常的操作。
-                                最后出现的 ++close、 ++noclose 和 ++open 才起
-                                作用并否决之前的参数。
+                        ++open          作业终止时如果尚未在窗口中显示，会新开
+                                        窗口。<code class="note">注意</code> 此行为可能会干扰用户操作。
+                                ++close、 ++noclose 和 ++open 同时给出时，仅最
+                                后指定的参数生效，覆盖之前的参数设置。
 
-                        ++curwin        在当前窗口打开终端，不分割当前窗口。如
-                                        果当前缓冲区不能  <a href="editing.html#abandon">abandon</a>  则失败。
-                        ++hidden        在隐藏缓冲区打开终端，不使用窗口。
-                        ++norestore     不把此终端窗口加到会话文件中。
+                        ++curwin        直接使用当前窗口打开终端，而不通过分割
+                                        当前窗口进行。如果当前缓冲区无法被丢弃
+                                         <a href="editing.html#abandon">abandon</a> ，则命令失败。
+                        ++hidden        以隐藏缓冲区形式打开终端，不创建窗口。
+                        ++norestore     该终端窗口不加入会话文件。
 
                                                 <b class="vimtag"> <a name="term++shell">term++shell</a> </b>
-                        ++shell         不直接执行 <code class="special">{command}</code>，而使用外壳，就像
-                                         <code class="badlink">:!command</code>  那样        <b class="vimtag"> <a name="E279">E279</a> </b>
-                                        <code class="notvi">{仅能用于 Unix 和 MS-Windows}</code>
-                                        产生的命令就像
+                        ++shell         不直接执行 <code class="special">{command}</code>，而是通过外壳进
+                                        行，效果相当于  <code class="badlink">:!command</code> 。    <b class="vimtag"> <a name="E279">E279</a> </b>
+                                        <code class="notvi">{仅在 Unix 和 MS-Windows 上有效}</code>
+                                        最终执行的命令形如
                                         <a href="options.html#'shell'">'shell'</a> <a href="options.html#'shellcmdflag'">'shellcmdflag'</a> <code class="special">[command]</code>
-                                        其他和  <code class="badlink">:!command</code>  相关的选项无效。
-                        ++kill=<code class="special">{how}</code>    关闭终端窗口的尝试使用 <code class="special">{how}</code> 信号杀死
+                                        其余和  <code class="badlink">:!command</code>  相关的选项不生效。
+                        ++kill=<code class="special">{how}</code>    要关闭终端窗口时，通过 <code class="special">{how}</code> 信号终止
                                         作业。相关值见  <a href="terminal.html#term_setkill()">term_setkill()</a> 。
-                        ++rows=<code class="special">{height}</code> 使用 <code class="special">{height}</code> 作为终端窗口高度。如果终
-                                        端使用整个 Vim 的高度 (终端窗口上下没
-                                        有其它窗口)，有必要时会减少命令行高
-                                        度。
-                        ++cols=<code class="special">{width}</code>  使用 <code class="special">{width}</code> 作为终端窗口宽度。如果 终
-                                        端使用整个 Vim 的宽度 (终端窗口左右没
-                                        有其它窗口)，忽略此值。
-                        ++eof=<code class="special">{text}</code>    使用 <code class="special">[range]</code> 时: 写完最后一行后发送的
-                                        文本。之后附加 CR。MS-Windows 缺省发送
-                                        的是 <code class="keystroke">CTRL-D</code>。
-                                        例如，外壳用 "++eof=exit" 而 Python 用
-                                        "++eof=exit()"。特殊代码可以用  <a href="map.html#:map">:map</a> 
-                                        类似的用法，如 "<code class="special">&lt;C-Z&gt;</code>" 代表 <code class="keystroke">CTRL-Z</code>。
+                        ++rows=<code class="special">{height}</code> 设定终端窗口高度为 <code class="special">{height}</code>。终端占满
+                                        Vim 全部高度 (上下无其他窗口) 时，会按
+                                        需缩减命令行的高度。
+                        ++cols=<code class="special">{width}</code>  设定终端窗口宽度为 <code class="special">{width}</code>。终端占满
+                                        Vim 全部宽度 (左右无其他窗口) 时，忽略
+                                        该值。
+                        ++eof=<code class="special">{text}</code>    搭配 <code class="special">[range]</code> 使用: 写入所有行后额外发
+                                        送此文本。不可包含空白字符。末尾会追加
+                                        CR。MS-Windows 缺省发送 <code class="keystroke">CTRL-D</code>。
+                                        例如，外壳可使用 "++eof=exit"，Python
+                                        则可用 "++eof=exit()"。可用  <a href="map.html#:map">:map</a>  里
+                                        的记法指定特殊字符，如 "<code class="special">&lt;C-Z&gt;</code>" 代表
+                                        <code class="keystroke">CTRL-Z</code>。
                         ++type=<code class="special">{pty}</code>    (仅 MS-Windows): 使用 <code class="special">{pty}</code> 作为虚拟控
-                                        制台。相关值见 <a href="options.html#'termwintype'">'termwintype'</a>。
-                        ++api=<code class="special">{expr}</code>    允许以 <code class="special">{expr}</code> 开始的函数名作为
-                                         <a href="terminal.html#terminal-api">terminal-api</a>  函数调用。如果 <code class="special">{expr}</code>
-                                        为空不能调用函数。
+                                        制台。可用值见 <a href="options.html#'termwintype'">'termwintype'</a>。
+                        ++api=<code class="special">{expr}</code>    允许以 <code class="special">{expr}</code> 开头的函数名作为
+                                         <a href="terminal.html#terminal-api">terminal-api</a>  函数调用。<code class="special">{expr}</code> 为空代
+                                        表禁止调用任何函数。
 
-                        想要更多选项，可用  <a href="terminal.html#term_start()">term_start()</a>  函数。
-                        要垂直分割窗口，用:
+                        如需更多选项，请使用  <a href="terminal.html#term_start()">term_start()</a>  函数。
+                        分割窗口时要使用垂直分割，可用:
 <code class="example">                                :vertical terminal</code>
-                        或更简短:
+                        简写形式:
 <code class="example">                                :vert ter</code>
 <code class="example"></code>
-和终端相关联的缓冲区被强制卸载或真正删除时，杀死作业，相当于调用
+终端关联缓冲区被强制卸载或真正删除时，对应作业同时被终止，效果相当于
 `job_stop(job, "kill")`。
-正常关闭窗口会给出  <a href="terminal.html#E947">E947</a> 。如果用 "++kill=<code class="special">{how}</code>" 或  <a href="terminal.html#term_setkill()">term_setkill()</a>  给出杀死
-进程的方法，则窗口关闭时使用该方法杀掉或中断作业。例如:
+正常关闭终端窗口会报错  <a href="terminal.html#E947">E947</a> 。通过 "++kill=<code class="special">{how}</code>" 或  <a href="terminal.html#term_setkill()">term_setkill()</a>  指定终
+止方式后，窗口关闭会采用该方式终止或中断作业。例如:
 <code class="example">        :term ++kill=term tail -f /tmp/log</code>
 <code class="example"></code>
-只要作业还在运行，窗口把它当做包含修改过的缓冲区。用 `<code class="keystroke">CTRL-W</code> :quit` 试图关闭窗
-口会失败。如果用 `<code class="keystroke">CTRL-W</code> :quit!`，作业会结束。但窗口中的文本会丢失。缓冲区被删
-除。用 `<code class="keystroke">CTRL-W</code> :bunload!` 则缓冲区会保留但为空。
+作业运行期间，终端窗口视同包含已修改的缓冲区。用 `<code class="keystroke">CTRL-W</code> :quit` 试图关闭窗口会
+失败。而用 `<code class="keystroke">CTRL-W</code> :quit!` 时，则会结束作业、丢弃窗口文本并删除缓冲区。用
+`<code class="keystroke">CTRL-W</code> :bunload!` 时，缓冲区会保留但内容清空。
 
 用 `<code class="keystroke">CTRL-W</code> :close` 试图关闭窗口也会失败。用 `<code class="keystroke">CTRL-W</code> :close!` 会关闭窗口并隐藏
 缓冲区。
 
-用 `<code class="keystroke">CTRL-W</code> :hide` 关闭终端窗口并隐藏缓冲区，但作业继续执行。 <a href="windows.html#:buffer">:buffer</a>  命令可用
-来把当前窗口变成终端窗口。如果有未保存的改变，这会失败，但和平常一样用 ! 可以
-强制进行。
+用 `<code class="keystroke">CTRL-W</code> :hide` 可关闭终端窗口并隐藏缓冲区，但作业继续执行。用  <a href="windows.html#:buffer">:buffer</a>  命
+令可使当前窗口显示终端缓冲区，成为终端窗口。如果当前窗口存在未保存修改，命令失
+败，但按照惯例，可用 ! 强制切换。
 
                                                         <b class="vimtag"> <a name="terminal-close">terminal-close</a> </b>
-终端作业结束且没给出 <code class="special">[command]</code> 时 (如执行的是 <a href="options.html#'shell'">'shell'</a> 命令)，缺省关闭终端窗口
-(除非接收空间的下个窗口里的缓冲区置位了 <a href="options.html#'nobuflisted'">'nobuflisted'</a> 选项，此时终端窗口不会自
-动关闭，而会打开一个新的空缓冲区)。
+省略 <code class="special">[command]</code> (默认执行 <a href="options.html#'shell'">'shell'</a> 命令) 时，终端作业结束后缺省关闭终端窗口 (例
+外: 接收空间的下个窗口中的缓冲区置位了 <a href="options.html#'nobuflisted'">'nobuflisted'</a> 选项，此时终端窗口不会自
+动关闭，而会打开空白缓冲区)。
 
-如果关闭了终端窗口，比如外壳退出且使用了 "++close" 参数时，且此窗口是 Vim 最后
-一个正常的窗口，Vim 会退出。这类似于普通窗口中用了  <a href="editing.html#:quit">:quit</a> 。帮助和预览窗口不计
-在内。
+终端窗口关闭后 (如外壳退出且 (<code class="vim">译者注</code>: 或) 启用 "++close" 参数时)，如果该窗口是
+Vim 最后一个普通窗口，则 Vim 退出。等同于在普通窗口中执行  <a href="editing.html#:quit">:quit</a> 。帮助和预览
+窗口不计入普通窗口。
 
-要不打开窗口在后台运行作业，完成后再打开窗口，可以这样使用选项:
+要在后台无窗口运行作业，完成后再打开窗口，可使用如下选项组合:
 <code class="example">        :term ++hidden ++open make</code>
-<code class="note">注意</code> 窗口会在意想不到的时候打开，可能会中断你正在做的事情。
+<code class="note">注意</code> 窗口会在意想不到的时刻打开，可能打断用户当前操作。
 
                                                         <b class="vimtag"> <a name="E947">E947</a> </b> <b class="vimtag"> <a name="E948">E948</a> </b>
-只要作业还在运行，缓冲区被认为是已修改，Vim 不能随便退出，见  <a href="editing.html#abandon">abandon</a> 。
+作业运行期间，缓冲区被认为已修改，Vim 不能随意退出，见  <a href="editing.html#abandon">abandon</a> 。
 
-作业结束且缓冲区没有发生改动时: 关闭窗口会真正删除缓冲区。
+当作业结束且缓冲区未被修改时: 关闭窗口将真正删除缓冲区。
 
-在终端缓冲区可以改动之前，<a href="options.html#'modifiable'">'modifiable'</a> 选项必须置位。这只有在作业结束时才有可
-能。此时，第一个改动会把缓冲区变成正常的缓冲区并删除高亮。你也许要用  <a href="editing.html#:file">:file</a> 
-来改变缓冲区名以便写入文件，不然缓冲区名仍然对应着命令。
+要修改终端缓冲区内容，必须先置位 <a href="options.html#'modifiable'">'modifiable'</a> 选项。仅当作业结束时才可设置。
+首次修改后，缓冲区转为普通缓冲区，终端高亮失效。缓冲区名此时仍为终端启动命令，
+可用  <a href="editing.html#:file">:file</a>  修改缓冲区名称，以便保存文件。
 
 
 <code class="section">调整大小 </code>
                                                         <b class="vimtag"> <a name="terminal-resizing">terminal-resizing</a> </b>
-终端大小处于以下三种模式之一:
+终端大小的调整方式分为以下三种:
 
-1. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项为空: 终端大小跟随窗口大小。最小尺寸是 2 行屏幕行，每行
-   10 个单元格。
+1. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项为空串: 终端大小跟随窗口大小。最小尺寸是 2 屏幕行，每行
+   10 单元格列。
 
-2. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项形如 "rows*cols"，其中 "rows" 为屏幕行的最少数目，而
-   "cols" 是单元格的最少数目。
+2. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项格式为 "rows*cols"，其中 "rows" 代表最小屏幕行数，"cols"
+   代表最小单元格列数。
 
-3. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项形如 "rowsXcols" (其中 x 可以大小写)。终端大小固定为指定
-   的屏幕行和单元格数。如果窗口较之为大，会有多出来的不可用的空白空间。
+3. <a href="options.html#'termwinsize'">'termwinsize'</a> 选项格式为 "rowsXcols" (x 大小写均可)。终端大小固定为指定屏幕
+   行和单元格列数。窗口更大时，会留出未使用的空白区域。
 
-如果窗口小于终端大小，终端只有部分可见 (左下部分)。
+如果窗口小于终端所需大小，终端仅部分内容 (左下部分) 可见。
 
- <a href="terminal.html#term_getsize()">term_getsize()</a>  函数可用于获取终端的当前大小。 <a href="terminal.html#term_setsize()">term_setsize()</a>  只可用于前两种
-模式，不能用于 <a href="options.html#'termwinsize'">'termwinsize'</a> 为 "rowsXcols" 的情况。
+ <a href="terminal.html#term_getsize()">term_getsize()</a>  函数可用于获取终端当前大小。 <a href="terminal.html#term_setsize()">term_setsize()</a>  仅可用于前两种方
+式，不能用于 <a href="options.html#'termwinsize'">'termwinsize'</a> 为 "rowsXcols" 的情形。
 
 
 <code class="section">终端作业和终端普通模式 </code>
                                                 <b class="vimtag"> <a name="Terminal-mode">Terminal-mode</a> </b> <b class="vimtag"> <a name="Terminal-Job">Terminal-Job</a> </b>
-作业运行时终端的内容受作业控制。这也包括光标的位置。输入的键发送给作业。终端的
-内容可随时改变。这称为终端作业模式。
+作业运行时，终端内容由作业控制，包括光标位置。输入的按键会发送给作业。终端内容
+可随时更新。这被称为终端作业模式。
 
-<code class="keystroke">CTRL-W</code> N (或 <a href="options.html#'termwinkey'">'termwinkey'</a> N) 切换到终端普通模式。此时，终端窗口内容由 Vim 控
-制，作业的输出被暂停。<code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 的效果相同。
+终端作业模式下，光标位置由终端作业管理，而非 Vim。仅当切换到终端普通模式
+ <a href="terminal.html#Terminal-Normal">Terminal-Normal</a>  时，Vim 才接管并更新窗口光标位置，<a href="options.html#'ruler'">'ruler'</a> 和 <a href="options.html#'statusline'">'statusline'</a> 因
+此会显示过时的光标位置。
 
-终端作业模式适用  <a href="map.html#:tmap">:tmap</a>  映射。tmap 不用于  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  发送的键，但会用
-于来自  <a href="builtin.html#feedkeys()">feedkeys()</a>  的键。
+按下 <code class="keystroke">CTRL-W</code> N (或 <a href="options.html#'termwinkey'">'termwinkey'</a> N) 会切换到终端普通模式。此时，终端窗口内容由
+Vim 管理，作业输出暂停。<code class="keystroke">CTRL-\</code> <code class="keystroke">CTRL-N</code> 效果相同。
 
-从终端作业模式不能进入插入模式。
+终端作业模式会应用  <a href="map.html#:tmap">:tmap</a>  映射。 <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  发送的按键不经过映射，但
+ <a href="builtin.html#feedkeys()">feedkeys()</a>  发送的会应用终端映射。
+
+无法从终端作业模式切换到插入模式。
 
                                                 <b class="vimtag"> <a name="Terminal-Normal">Terminal-Normal</a> </b> <b class="vimtag"> <a name="E946">E946</a> </b>
-终端普通模式里可用通常的 Vim 命令来移动光标、可视标记文本、抽出文本等等。但不
-能修改缓冲区的内容。启动插入模式的命令如 'i' 和 'a' 等会回到终端作业模式。窗口
-会刷新以显示终端的内容。 <a href="insert.html#:startinsert">:startinsert</a>  无效。
+终端普通模式下，可用常规 Vim 命令移动光标、可视标记文本、抽出文本等。但不能修
+改缓冲区内容。  <a href="insert.html#i">i</a>  和  <a href="insert.html#a">a</a>  这类本应启动插入模式的命令会回到终端作业模式。窗口会
+刷新显示终端内容。 <a href="insert.html#:startinsert">:startinsert</a>  命令无效。
 
-终端普通模式下状态行和窗口标题会显示 "(Terminal)"。如果作业已结束且在终端普通
-模式下，则为 "(Terminal-finished)"。
+终端普通模式下，状态行和窗口标题会显示 "[终端]"。终端作业已结束且仍留在此模式
+时，则显示 "[终端-已结束]"。
 
-终端中作业输出的行，包括滚过了屏幕顶部的内容，会被记住且在终端普通模式中可见。
-行数受 <a href="options.html#'termwinscroll'">'termwinscroll'</a> 选项限制。超过此限制时，滚动行的前 10% 被删除且丢失。
+终端作业输出行滚出屏幕顶部时，这些行会被保存，并可在终端普通模式中查看。保存行
+数上限由 <a href="options.html#'termwinscroll'">'termwinscroll'</a> 选项控制。超过上限时，最早 10% 的滚出行会被删除且无法
+恢复。
 
 
 <code class="section">光标风格 </code>
                                                 <b class="vimtag"> <a name="terminal-cursor-style">terminal-cursor-style</a> </b>
-缺省终端窗口使用不闪烁的块状光标。正常的 xterm 转义序列可用于改变闪烁状态和形
-状。一旦焦点离开终端窗口，Vim 会恢复原有的光标。
+终端窗口缺省使用非闪烁块状光标，但可用标准 xterm 转义序列修改光标闪烁状态和形
+状。焦点一旦离开终端窗口，Vim 会恢复原有光标风格。
 
-一个例外是当 xterm 启动时带 "-bc" 参数或通过别的方式使光标闪烁的时候。这实际意
-味着反转闪烁标志位。因为 Vim 没法检测这一点，终端窗口的光标闪烁也被反转。
+带 "-bc" 参数启动的 xterm 终端、或通过其他方式使光标闪烁的情景是例外。此时闪烁
+标志位会被反转。但 Vim 无法检测此状态，导致终端窗口光标闪烁行为也随之反转。
 
 
 <code class="section">会话 </code>
                                                         <b class="vimtag"> <a name="terminal-session">terminal-session</a> </b>
-如有可能且用户需要的话，使用会话文件可以恢复终端窗口。
+条件允许且用户要求时，可通过会话文件恢复终端窗口。
 
-如果 <a href="options.html#'sessionoptions'">'sessionoptions'</a> 删除了 "terminal"，不恢复终端窗口。
+<a href="options.html#'sessionoptions'">'sessionoptions'</a> 排除 "terminal" 时，不恢复终端窗口。
 
-如果终端中运行的作业已经结束，不恢复其窗口。
+保存会话时，如果终端作业已结束，也不恢复终端窗口。
 
-如果终端可以恢复，会再次使用曾经用来打开它的命令。要改变之，使用
- <a href="terminal.html#term_setrestore()">term_setrestore()</a>  函数。把相应的命令设为 "NONE"，也可用这个函数来选择性不恢
-复特定的终端。
+终端支持恢复时，会重新执行当初打开终端所用的命令。但可用  <a href="terminal.html#term_setrestore()">term_setrestore()</a> 
+函数修改恢复行为。也可将相应命令设为 "NONE"，选择性不恢复特定终端。
 
 
 <code class="section">特殊键</code>
                                                 <b class="vimtag"> <a name="terminal-special-keys">terminal-special-keys</a> </b>
-因为终端模拟器模拟的是 xterm 终端，终端窗口只能接收 Vim 和 xterm 都能识别的转
-义序列。要想给终端中运行的作业传递其它转义序列，需要设置转发。示例:
+终端模拟器模拟 xterm 终端，因此终端窗口只仅支持 Vim 和 xterm 双方都能识别的转
+义序列。要向终端中运行的作业传递其他转义序列，需要设置转发。示例:
 <code class="example">        tmap &lt;expr&gt; &lt;Esc&gt;]b SendToTerm("\&lt;Esc&gt;]b")</code>
 <code class="example">        func SendToTerm(what)</code>
 <code class="example">          call term_sendkeys('', a:what)</code>
@@ -405,92 +409,90 @@ GUI 模式或使用 <a href="options.html#'termguicolors'">'termguicolors'</a> �
 <code class="example"></code>
 <code class="section">Unix </code>
                                                         <b class="vimtag"> <a name="terminal-unix">terminal-unix</a> </b>
-Unix 上使用 pty 来运行所有类型的命令。包含在终端上运行 Vim 自身！这可用调试，
-见下。
+Unix 平台使用伪终端运行各类命令。甚至可在终端里运行 Vim 自身！常用于调试，见
+下。
 
-可用环境变量为运行的作业传递信息:
-    TERM                终端名，来自 <a href="options.html#'term'">'term'</a> 选项或 GUI 上的 $TERM；如果不以
-                        "xterm" 开头的话，回退到 "xterm"
+通过环境变量，可为运行中的作业传递信息:
+    TERM                终端名，取自 <a href="options.html#'term'">'term'</a> 选项或 GUI 上的 $TERM；如果不以
+                        "xterm" 开头，回退为 "xterm"
     ROWS                终端初始行数
     LINES               同 ROWS
     COLUMNS             终端初始列数
-    COLORS              颜色数，<a href="term.html#'t_Co'">'t_Co'</a> (GUI 上是 256*256*256)
-    VIM_SERVERNAME      v:servername
-    VIM_TERMINAL        v:version
+    COLORS              可能颜色数目，取自 <a href="term.html#'t_Co'">'t_Co'</a> (GUI 上是 256*256*256)
+    VIM_SERVERNAME       <a href="eval.html#v:servername">v:servername</a> 
+    VIM_TERMINAL         <a href="eval.html#v:version">v:version</a> 
 
 
 <code class="section">MS-Windows </code>
                                                         <b class="vimtag"> <a name="terminal-ms-windows">terminal-ms-windows</a> </b>
-MS-Windows 上使用 winpty 来运行所有类型的命令。显然，必须是终端上运行的命令，
-不能打开它们自己的窗口。
+MS-Windows 平台使用 winpty 运行各类命令。显而易见，命令必须是终端程序，不能弹
+出独立窗口。
 
 需要来自 winpty 的两个文件:
 
     winpty.dll
     winpty-agent.exe
 
-可以从下面页面下载它们:
+可从如下页面下载:
 
     <a href="https://github.com/rprichard/winpty">https://github.com/rprichard/winpty</a>
 
-只有把它们放在你的 PATH 路径某处就行了。有必要的话，设置 <a href="options.html#'winptydll'">'winptydll'</a> 选项指向
-正确的文件。如果同时有 32 位和 64 位版本，把它们分别换名为 winpty32.dll 和
-winpty64.dll 来对应 Vim 编译时的用法。
+将文件放到 PATH 路径下某处即可。必要时可通过 <a href="options.html#'winptydll'">'winptydll'</a> 选项指定文件路径。同
+时有 32 位和 64 位版本时，分别重命名为 winpty32.dll 和 winpty64.dll，匹配 Vim
+编译时的设定。
 
                                                         <b class="vimtag"> <a name="ConPTY">ConPTY</a> </b> <b class="vimtag"> <a name="E982">E982</a> </b>
-在更新的 MS-Windows 10 版本 (从 "2018 年十月更新版" 开始)，不再需要 winpty。在
-这些版本中， <a href="terminal.html#:terminal">:terminal</a>  会使用 Windows 的内建终端应用寄主支持，"ConPTY"。使用
-ConPTY 时，可能有二义性宽度字符渲染的痕迹。如果这方面遇到问题，安装 "winpty"。
-从 Windows 11 初始版本开始，ConPTY 已趋于稳定。
+新版 MS-Windows 10 (自 "2018 年十月更新版" 起) 不再需要 winpty。在这些版本中，
+ <a href="terminal.html#:terminal">:terminal</a>  会使用 Windows 内置的终端应用托管支持，称为 "ConPTY"。使用 ConPTY
+时，二义性宽度字符可能会出现渲染瑕疵。如果遇到此类问题，可重新安装 "winpty"。
+从 Windows 11 首个版本开始，ConPTY 支持已趋于稳定。
 
-可用环境变量为运行的作业传递信息:
-    VIM_SERVERNAME      v:servername
+通过环境变量，可为运行中的作业传递信息:
+    VIM_SERVERNAME       <a href="eval.html#v:servername">v:servername</a> 
 
                                                         <b class="vimtag"> <a name="git-vimdumps">git-vimdumps</a> </b>
-有个 git-difftool 的扩展叫  <a href="terminal.html#git-vimdumps">git-vimdumps</a> ，可用于方便地检查屏幕截图并进行比
-较。创建和使用此 git 扩展的说明请见 Vim 库里  <code class="badlink">src/testdir/commondumps.vim</code>  文
-件。
+有个名为  <a href="terminal.html#git-vimdumps">git-vimdumps</a>  的 git-difftool 扩展，可方便查看屏幕截图并进行比较。创
+建和使用此 git 扩展的方法，请见 Vim 库中  <code class="badlink">src/testdir/commondumps.vim</code>  文件。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 终端函数                                      <b class="vimtag"> <a name="terminal-function-details">terminal-function-details</a> </b></h4>
                                                         <b class="vimtag"> <a name="term_dumpdiff()">term_dumpdiff()</a> </b>
 term_dumpdiff(<code class="special">{filename}</code>, <code class="special">{filename}</code> [, <code class="special">{options}</code>])
-                打开新窗口，显示两个文件间的差异。两个必须都是
-                 <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  创建的文件。
+                新建窗口，显示两个  <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  创建的截图文件间的差异。
                 返回显示差异的缓冲区号，如果比较失败，返回零。
                 另见  <a href="terminal.html#terminal-diff">terminal-diff</a> 。
-                <code class="note">备注</code>: 还未支持双宽度字符。
+                <code class="note">备注</code>: 暂不未持双宽字符。
 
-                缓冲区顶部会包含第一个文件的内容，底部则包含第二个文件的内容。
-                中间部分显示差异。不同部分之间，以等号组成的行进行分隔。
+                缓冲区上半部显示第一个文件内容，下半部显示第二个文件内容。中间
+                区域展示差异。各部分之间以等号行分隔。
 
-                <code class="special">{options}</code> 参数给出时，必须是包含以下元素的字典:
-                   "term_name"       用作缓冲区名，缺省是首个文件名。
-                   "term_rows"       终端用的垂直空间，缺省是 <a href="options.html#'termwinsize'">'termwinsize'</a>，
-                                     但顾及最小尺寸；合法值范围为 0 到 1000
-                   "term_cols"       终端用的水平空间，缺省是 <a href="options.html#'termwinsize'">'termwinsize'</a>，
-                                     但顾及最小尺寸；合法值范围为 0 到 1000
-                   "vertical"        垂直分割窗口
-                   "curwin"          使用当前窗口，不分割窗口；如果不能
-                                      <a href="editing.html#abandon">abandon</a>  当前缓冲区，则报错
-                   "bufnr"           不创建新缓冲区，使用已有缓冲区 "bufnr"。
-                                     此缓冲区必须是之前用 term_dumpdiff() 或
-                                     term_dumpload() 建立的，且在窗口中可见。
-                   "norestore"       不把终端窗口加入会话文件
+                <code class="special">{options}</code> 参数给出时，必须为包含以下条目的字典:
+                   "term_name"       缓冲区名，缺省为第一个文件名
+                   "term_rows"       终端纵向大小，缺省为 <a href="options.html#'termwinsize'">'termwinsize'</a>，但遵
+                                     守最小限制；取值范围为 0 到 1000
+                   "term_cols"       终端横向大小，缺省为 <a href="options.html#'termwinsize'">'termwinsize'</a>，但遵
+                                     守最小限制；取值范围为 0 到 1000
+                   "vertical"        分割窗口时使用垂直分割
+                   "curwin"          使用当前窗口，不分割窗口；如果无法丢弃
+                                      <a href="editing.html#abandon">abandon</a>  当前缓冲区，报错
+                   "bufnr"           不新建缓冲区，复用编号为 "bufnr" 的已有缓
+                                     冲区。该缓冲区必须先前由 term_dumpdiff()
+                                     或 term_dumpload() 创建，且在窗口中可见
+                   "norestore"       该终端窗口不加入会话文件
 
-                中间部分的每个字符指示某个差异。如果有多个差异只使用下面列表的
-                第一个选择:
-                        X       不同字符
-                        w       不同宽度
-                        f       不同前景色
-                        b       不同后景色
-                        a       不同属性
-                        +       第一个文件缺失的位置
-                        -       第二个文件缺失的位置
-                        &gt;       在第一个文件而不在第二个文件的光标位置
-                        &lt;       在第二个文件而不在第一个文件的光标位置
+                中间区域每个字符指示一处差异。存在多个差异时只取列表中最先匹配
+                项:
+                        X       字符不同
+                        w       字符宽度不同
+                        f       前景色不同
+                        b       背景色不同
+                        a       属性不同
+                        +       第一个文件缺失该位置
+                        -       第二个文件缺失该位置
+                        &gt;       第一个文件此处有光标，第二个文件没有
+                        &lt;       第二个文件此处有光标，第一个文件没有
 
-                "s" 键交换顶部和底部，以方便发现不同之处。
+                按 "s" 键可交换上下两部分，方便查看差异。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetFilename()-&gt;term_dumpdiff(otherfile)</code>
@@ -499,8 +501,7 @@ term_dumpdiff(<code class="special">{filename}</code>, <code class="special">{fi
 
 
 term_dumpload(<code class="special">{filename}</code> [, <code class="special">{options}</code>])                 <b class="vimtag"> <a name="term_dumpload()">term_dumpload()</a> </b>
-                打开新窗口显示 <code class="special">{filename}</code> 内容。该文件必须是由
-                 <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  创建的。
+                新建窗口，显示  <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  创建的 <code class="special">{filename}</code> 的内容。
                 返回显示截图的缓冲区号，如果失败，返回零。
                 另见  <a href="terminal.html#terminal-diff">terminal-diff</a> 。
 
@@ -513,25 +514,25 @@ term_dumpload(<code class="special">{filename}</code> [, <code class="special">{
 
                                                         <b class="vimtag"> <a name="term_dumpwrite()">term_dumpwrite()</a> </b>
 term_dumpwrite(<code class="special">{buf}</code>, <code class="special">{filename}</code> [, <code class="special">{options}</code>])
-                把 <code class="special">{buf}</code> 的终端屏幕的内容保存到 <code class="special">{filename}</code> 文件里。该文件格式
-                可用于  <a href="terminal.html#term_dumpload()">term_dumpload()</a>  和  <a href="terminal.html#term_dumpdiff()">term_dumpdiff()</a> 。
-                如果终端中的作业已经结束，报错。 <b class="vimtag"> <a name="E958">E958</a> </b>
+                将缓冲区 <code class="special">{buf}</code> 对应终端的屏幕内容转储写入 <code class="special">{filename}</code> 文件。生
+                成文件可用于  <a href="terminal.html#term_dumpload()">term_dumpload()</a>  和  <a href="terminal.html#term_dumpdiff()">term_dumpdiff()</a> 。
+                如果终端作业已结束，报错。 <b class="vimtag"> <a name="E958">E958</a> </b>
                 如果 <code class="special">{filename}</code> 已存在，报错。 <b class="vimtag"> <a name="E953">E953</a> </b>
                 另见  <a href="terminal.html#terminal-diff">terminal-diff</a> 。
 
-                <code class="special">{options}</code> 是包含以下可选项目的字典:
-                        "rows"          保存的最大行数
-                        "columns"       保存的最大列数
+                <code class="special">{options}</code> 是包含以下可选条目的字典:
+                        "rows"          要转储的最大行数
+                        "columns"       要转储的最大列数
 
-                也可用作  <a href="eval.html#method">method</a> ，基用于文件名:
+                也可用作  <a href="eval.html#method">method</a> ，基是作为文件名参数传递的:
 <code class="example">                        GetFilename()-&gt;term_dumpwrite(bufnr)</code>
 
                 返回类型: 无
 
 
 term_getaltscreen(<code class="special">{buf}</code>)                                <b class="vimtag"> <a name="term_getaltscreen()">term_getaltscreen()</a> </b>
-                <code class="special">{buf}</code> 的终端使用备用屏幕则返回 1。
-                <code class="special">{buf}</code> 的用法同  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
+                缓冲区 <code class="special">{buf}</code> 对应终端正在使用备用屏幕时，则返回 1。
+                <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getaltscreen()</code>
@@ -540,14 +541,14 @@ term_getaltscreen(<code class="special">{buf}</code>)                           
 
 
 term_getansicolors(<code class="special">{buf}</code>)                               <b class="vimtag"> <a name="term_getansicolors()">term_getansicolors()</a> </b>
-                获得终端 <code class="special">{buf}</code> 的 ANSI 色彩调色板。
-                返回 16 个元素组成的列表，每个元素是代表颜色的字符串，使用十六
-                进制 "#rrggbb" 格式。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端使用的 ANSI 颜色调色板。
+                返回 16 个元素组成的列表，每个元素为使用十六进制 "#rrggbb" 格
+                式的颜色字符串。
                 另见  <a href="terminal.html#term_setansicolors()">term_setansicolors()</a>  和  <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a> 。
-                如果没有用这两种方法设置过，返回缺省颜色。
+                未使用过以上两种方法时，返回缺省颜色定义。
 
-                <code class="special">{buf}</code> 的用法同  <a href="terminal.html#term_getsize()">term_getsize()</a> 。如果缓冲区不存在或不是终端窗
-                口，返回空列表。
+                <code class="special">{buf}</code> 的用法同  <a href="terminal.html#term_getsize()">term_getsize()</a> 。如果缓冲区不存在或不对应终端
+                窗口，返回空列表。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getansicolors()</code>
@@ -556,14 +557,15 @@ term_getansicolors(<code class="special">{buf}</code>)                          
 
                 <code class="notvi">{仅当编译时打开 GUI 和/或  <a href="various.html#+termguicolors">+termguicolors</a>  特性时才有效}</code>
 
+
 term_getattr(<code class="special">{attr}</code>, <code class="special">{what}</code>)                            <b class="vimtag"> <a name="term_getattr()">term_getattr()</a> </b>
-                <code class="special">{attr}</code> 是 term_scrape() 在 "attr" 项目返回的值。
-                返回该属性值是否打开了 <code class="special">{what}</code> 标志位。<code class="special">{what}</code> 是以下之一:
+                传入  <a href="terminal.html#term_scrape()">term_scrape()</a>  返回的 "attr" 属性值 <code class="special">{attr}</code>，判别其中
+                <code class="special">{what}</code> 标志位是否开启。<code class="special">{what}</code> 为以下标志位之一:
                         bold (粗体)
                         italic (斜体)
                         underline (带下划线)
                         strike (带删除线)
-                        reverse (反相)
+                        reverse (反显)
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetAttr()-&gt;term_getattr()</code>
@@ -572,20 +574,20 @@ term_getattr(<code class="special">{attr}</code>, <code class="special">{what}</
 
 
 term_getcursor(<code class="special">{buf}</code>)                                   <b class="vimtag"> <a name="term_getcursor()">term_getcursor()</a> </b>
-                获取 <code class="special">{buf}</code> 终端的光标位置。返回两个数值和一个字典组成的列表:
-                [row, col, dict]。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端的当前光标位置。返回两个数值和一个字
+                典组成的列表: [row, col, dict]。
 
-                "row" 和 "col" 从 1 开始，比如，首个屏幕单元格在第一列第一行。
-                这是终端本身所在的光标位置，不是 Vim 窗口的光标位置。
+                "row" 和 "col" 从 1 开始计数，首单元格是第一行第一列。该光标属
+                于终端本身，不是 Vim 窗口光标。
 
-                "dict" 可有以下成员:
-                   "visible"    一如果光标可见，零如果光标隐藏。
-                   "blink"      一如果光标闪烁，零如果光标不闪烁。
-                   "shape"      块状光标为 1，下划线为 2，垂直线为 3。
-                   "color"      光标的颜色，例如 "green"
+                "dict" 包含以下成员:
+                   "visible"    光标可见则为一，光标隐藏则为零
+                   "blink"      光标闪烁则为一，光标不闪烁则为零
+                   "shape"      块状光标为 1，下划线光标为 2，竖线光标为 3
+                   "color"      光标颜色，如 "green"
 
-                <code class="special">{buf}</code> 必须是对应终端窗口的缓冲区号。如果该缓冲区不存在或不是终
-                端窗口，返回空列表。
+                <code class="special">{buf}</code> 必须是终端窗口缓冲区号。如果该缓冲区不存在或不属于终端窗
+                口，返回空列表。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getcursor()</code>
@@ -594,9 +596,9 @@ term_getcursor(<code class="special">{buf}</code>)                              
 
 
 term_getjob(<code class="special">{buf}</code>)                                      <b class="vimtag"> <a name="term_getjob()">term_getjob()</a> </b>
-                获取终端窗口 <code class="special">{buf}</code> 相关联的作业。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端窗口关联的作业对象。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
-                没有相关作业时返回  <a href="eval.html#v:null">v:null</a> 。Vim9 脚本时，如果没有作业返回
+                如果无关联作业，返回  <a href="eval.html#v:null">v:null</a> 。Vim9 脚本中，无关联作业会返回
                  <a href="vim9.html#null_job">null_job</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
@@ -606,13 +608,13 @@ term_getjob(<code class="special">{buf}</code>)                                 
 
 
 term_getline(<code class="special">{buf}</code>, <code class="special">{row}</code>)                              <b class="vimtag"> <a name="term_getline()">term_getline()</a> </b>
-                获取终端窗口 <code class="special">{buf}</code> 里的指定文本行。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端窗口的一行文本。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
-                首行的 <code class="special">{row}</code> 数为一。<code class="special">{row}</code> 为 "." 时会使用光标所在行。如果
-                <code class="special">{row}</code> 非法，返回空串。
+                窗口首行的行号 <code class="special">{row}</code> 为一。<code class="special">{row}</code> 为 "." 代表使用光标所在行。如
+                果 <code class="special">{row}</code> 非法，返回空串。
 
-                要获取每个字符的属性，可用  <a href="terminal.html#term_scrape()">term_scrape()</a> 。
+                要获取其中每个字符的属性，可用  <a href="terminal.html#term_scrape()">term_scrape()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getline(row)</code>
@@ -621,12 +623,12 @@ term_getline(<code class="special">{buf}</code>, <code class="special">{row}</co
 
 
 term_getscrolled(<code class="special">{buf}</code>)                                 <b class="vimtag"> <a name="term_getscrolled()">term_getscrolled()</a> </b>
-                返回终端 <code class="special">{buf}</code> 滚动后翻过顶部的行数。也就是  <a href="terminal.html#term_getline()">term_getline()</a> 
-                和  <a href="builtin.html#getline()">getline()</a>  所用行号的相对偏移，亦就是说:
+                返回缓冲区 <code class="special">{buf}</code> 对应终端滚出窗口顶部的行数。即
+                 <a href="terminal.html#term_getline()">term_getline()</a>  和  <a href="builtin.html#getline()">getline()</a>  所用行号的相对偏移量，满足:
 <code class="example">                        term_getline(buf, N)</code>
                 等价于:
 <code class="example">                        getline(N + term_getscrolled(buf))</code>
-                (只要该行存在)。
+                (条件是该行存在)。
 
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
@@ -637,11 +639,11 @@ term_getscrolled(<code class="special">{buf}</code>)                            
 
 
 term_getsize(<code class="special">{buf}</code>)                                     <b class="vimtag"> <a name="term_getsize()">term_getsize()</a> </b>
-                返回终端 <code class="special">{buf}</code> 的大小，即两个数值组成的列表: [rows, cols]。
-                这是终端大小，而不是包含终端的窗口大小。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端的大小，返回两个数值组成的列表:
+                [行数, 列数]。这是终端本身的大小，不是终端窗口的大小。
 
-                <code class="special">{buf}</code> 必须是对应终端窗口的缓冲区号。空串代表当前缓冲区。如果该
-                缓冲区不存在或不是终端窗口，返回空列表。
+                <code class="special">{buf}</code> 必须是终端窗口的缓冲区编号。空串代表当前缓冲区。如果该缓
+                冲区不存在或不是终端窗口，返回空列表。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getsize()</code>
@@ -650,15 +652,14 @@ term_getsize(<code class="special">{buf}</code>)                                
 
 
 term_getstatus(<code class="special">{buf}</code>)                                   <b class="vimtag"> <a name="term_getstatus()">term_getstatus()</a> </b>
-                获取终端 <code class="special">{buf}</code> 的状态，返回一个字符串，包含以下各项，以逗号分
-                隔:
-                        running         作业在运行中
-                        finished        作业已完成
-                        normal          处于终端普通模式中
-                "running" 或 "finished" 两者必有其一。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端的状态，返回逗号分隔的状态字符串:
+                        running         作业正在运行
+                        finished        作业已结束
+                        normal          处于终端普通模式
+                "running" 或 "finished" 两者必居其一。
 
-                <code class="special">{buf}</code> 必须是对应终端窗口的缓冲区号。如果该缓冲区不存在或不是终
-                端窗口，返回空串。
+                <code class="special">{buf}</code> 必须是终端窗口的缓冲区编号。如果该缓冲区不存在或不是终端
+                窗口，返回空串。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_getstatus()</code>
@@ -667,10 +668,10 @@ term_getstatus(<code class="special">{buf}</code>)                              
 
 
 term_gettitle(<code class="special">{buf}</code>)                                    <b class="vimtag"> <a name="term_gettitle()">term_gettitle()</a> </b>
-                获取终端 <code class="special">{buf}</code> 的标题。这是终端中的作业设置的标题。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端的标题。此标题由终端作业设置。
 
-                <code class="special">{buf}</code> 必须是对应终端窗口的缓冲区号。如果该缓冲区不存在或不是终
-                端窗口，返回空串。
+                <code class="special">{buf}</code> 必须是终端窗口的缓冲区编号。如果该缓冲区不存在或不是终端
+                窗口，返回空串。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_gettitle()</code>
@@ -679,12 +680,12 @@ term_gettitle(<code class="special">{buf}</code>)                               
 
 
 term_gettty(<code class="special">{buf}</code> [, <code class="special">{input}</code>])                          <b class="vimtag"> <a name="term_gettty()">term_gettty()</a> </b>
-                获取终端窗口 <code class="special">{buf}</code> 相关联的控制终端的名字。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端关联的控制终端名称。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
-                <code class="special">{input}</code> 省略或为 0 时，返回用于写入的终端名 (stdout)。<code class="special">{input}</code>
-                为 1 时，返回用于读取的终端名 (stdin)。Unix 上，两者有相同的名
-                字。
+                <code class="special">{input}</code> 省略或为 0 时，返回用于写入的终端名 (标准输出)。
+                <code class="special">{input}</code> 为 1 时，返回用于读取的终端名 (标准输入)。Unix 上，两
+                者返回相同名称。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_gettty()</code>
@@ -693,26 +694,25 @@ term_gettty(<code class="special">{buf}</code> [, <code class="special">{input}<
 
 
 term_list()                                             <b class="vimtag"> <a name="term_list()">term_list()</a> </b>
-                返回所有终端窗口的缓冲区号组成的列表。
+                返回所有终端缓冲区编号组成的列表。
 
                 返回类型: list<code class="special">&lt;number&gt;</code> 或 list<code class="special">&lt;any&gt;</code>
 
 
 term_scrape(<code class="special">{buf}</code>, <code class="special">{row}</code>)                               <b class="vimtag"> <a name="term_scrape()">term_scrape()</a> </b>
-                获取终端 <code class="special">{buf}</code> 里第 <code class="special">{row}</code> 行屏幕的内容。
+                获取缓冲区 <code class="special">{buf}</code> 对应终端窗口第 <code class="special">{row}</code> 行的内容。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
-                首行的 <code class="special">{row}</code> 行为一。<code class="special">{row}</code> 为 "." 时使用光标所在行。<code class="special">{row}</code> 非法
-                时返回空串 (<code class="vim">译者注</code>: 应为空列表)。
+                窗口首行的行号 <code class="special">{row}</code> 为一。<code class="special">{row}</code> 为 "." 代表使用光标所在行。如
+                果 <code class="special">{row}</code> 非法，返回空串 (<code class="vim">译者注</code>: 应为空列表)。
 
-                返回对应每个屏幕单元格的字典的列表:
-                    "chars"     该单元格上的字符 (可有多个)
-                    "fg"        前景色，形如 #rrggbb
-                    "bg"        背景色，形如 #rrggbb
-                    "attr"      单元格的属性，可用  <a href="terminal.html#term_getattr()">term_getattr()</a>  获取个别
-                                标志位
+                返回列表，每个列表项为对应单个屏幕单元格的字典:
+                    "chars"     单元格所在一或多个字符
+                    "fg"        前景色，格式为 #rrggbb
+                    "bg"        背景色，格式为 #rrggbb
+                    "attr"      单元格属性，用  <a href="terminal.html#term_getattr()">term_getattr()</a>  获取单项标志位
                     "width"     单元格宽度: 1 或 2
-                双宽单元格只对应一个项目，这意味着列表长度可能小于终端的宽度。
+                双宽单元格仅占单个列表项，因此列表长度可能小于终端宽度。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_scrape(row)</code>
@@ -721,11 +721,10 @@ term_scrape(<code class="special">{buf}</code>, <code class="special">{row}</cod
 
 
 term_sendkeys(<code class="special">{buf}</code>, <code class="special">{keys}</code>)                            <b class="vimtag"> <a name="term_sendkeys()">term_sendkeys()</a> </b>
-                向终端 <code class="special">{buf}</code> 发送键击序列 <code class="special">{keys}</code>。
+                向缓冲区 <code class="special">{buf}</code> 对应终端发送键击序列 <code class="special">{keys}</code>。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
 
-                <code class="special">{keys}</code> 被作为键击序列进行翻译。例如，"\<code class="special">&lt;c-x&gt;</code>" 代表 <code class="keystroke">CTRL-X</code> 字
-                符。
+                <code class="special">{keys}</code> 会被翻译为键击序列。例如 "\<code class="special">&lt;c-x&gt;</code>" 代表 <code class="keystroke">CTRL-X</code> 字符。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_sendkeys(keys)</code>
@@ -734,32 +733,32 @@ term_sendkeys(<code class="special">{buf}</code>, <code class="special">{keys}</
 
 
 term_setansicolors(<code class="special">{buf}</code>, <code class="special">{colors}</code>)                     <b class="vimtag"> <a name="term_setansicolors()">term_setansicolors()</a> </b>
-                设置终端 <code class="special">{buf}</code> 使用的 ANSI 颜色调色板。
-                <code class="special">{colors}</code> 必须是 16 种合法的色彩名或十六进制色彩代码的列表，其
-                格式和  <a href="syntax.html#highlight-guifg">highlight-guifg</a>  接受的格式相同。
+                设置缓冲区 <code class="special">{buf}</code> 对应终端使用的 ANSI 颜色调色板。
+                <code class="special">{colors}</code> 必须是 16 种合法颜色的名称或十六进制颜色代码组成的列
+                表，可用格式参见  <a href="syntax.html#highlight-guifg">highlight-guifg</a> 。
                 另见  <a href="terminal.html#term_getansicolors()">term_getansicolors()</a>  和  <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a> 。
 
-                这些颜色的正常值是:
-                        0    black
-                        1    dark red
-                        2    dark green
-                        3    brown
-                        4    dark blue
-                        5    dark magenta
-                        6    dark cyan
-                        7    light grey
-                        8    dark grey
-                        9    red
-                        10   green
-                        11   yellow
-                        12   blue
-                        13   magenta
-                        14   cyan
-                        15   white
+                默认颜色调色板为:
+                        0    黑色
+                        1    深红
+                        2    深绿
+                        3    棕色
+                        4    深蓝
+                        5    深品红
+                        6    深青
+                        7    浅灰
+                        8    深灰
+                        9    红色
+                        10   绿色
+                        11   黄色
+                        12   蓝色
+                        13   品红
+                        14   青色
+                        15   白色
 
-                这些颜色用于 GUI，当 <a href="options.html#'termguicolors'">'termguicolors'</a> 置位时也用于终端。如果不
-                使用 GUI 颜色 (无论是 GUI 模式还是 <a href="options.html#'termguicolors'">'termguicolors'</a>)，终端窗口
-                总是使用下层终端的 16 种 ANSI 颜色。
+                GUI 或开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 的终端会使用这些颜色。不使用 GUI 真
+                彩 (GUI 模式或开启 <a href="options.html#'termguicolors'">'termguicolors'</a>) 时，终端窗口总是直接使用底
+                层终端的 16 种 ANSI 颜色。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_setansicolors(colors)</code>
@@ -770,27 +769,28 @@ term_setansicolors(<code class="special">{buf}</code>, <code class="special">{co
 
 
 term_setapi(<code class="special">{buf}</code>, <code class="special">{expr}</code>)                              <b class="vimtag"> <a name="term_setapi()">term_setapi()</a> </b>
-                设置终端 <code class="special">{buf}</code> 中的  <a href="terminal.html#terminal-api">terminal-api</a>  函数使用的函数名前缀。
+                设置缓冲区 <code class="special">{buf}</code> 对应终端用于  <a href="terminal.html#terminal-api">terminal-api</a>  函数的名称前缀。
                 例如:
 <code class="example">                    :call term_setapi(buf, "Myapi_")</code>
 <code class="example">                    :call term_setapi(buf, "")</code>
 
-                缺省是 "Tapi_"。<code class="special">{expr}</code> 为空串时，<code class="special">{buf}</code> 不能使用  <a href="terminal.html#terminal-api">terminal-api</a> 
-                函数。
+                缺省前缀为 "Tapi_"。<code class="special">{expr}</code> 为空串时，此终端禁止使用所有
+                 <a href="terminal.html#terminal-api">terminal-api</a>  函数。
+                此 API 设置仅影响 "call" 调用，"drop" 操作不受影响，总是允许。
 
-                也可用作  <a href="eval.html#method">method</a> ，基用于 <code class="special">{buf}</code>:
+                也可用作  <a href="eval.html#method">method</a> ，基是作为 <code class="special">{buf}</code> 参数传递的:
 <code class="example">                        GetBufnr()-&gt;term_setapi({expr})</code>
 
                 返回类型: 无
 
 
 term_setkill(<code class="special">{buf}</code>, <code class="special">{how}</code>)                              <b class="vimtag"> <a name="term_setkill()">term_setkill()</a> </b>
-                退出 Vim 或用其它方式试图关闭终端窗口时，<code class="special">{how}</code> 定义终端中的作
-                业是否被中止。
-                <code class="special">{how}</code> 为空时 (缺省)，不中止作业。退出的尝试会报错  <a href="terminal.html#E947">E947</a> 。
-                否则，<code class="special">{how}</code> 指定发送给作业的信号。 <a href="channel.html#job_stop()">job_stop()</a>  说明可选的值。
+                退出 Vim 或以其他方式试图关闭终端窗口时，<code class="special">{how}</code> 定义终端作业是
+                否以及如何被终止。
+                <code class="special">{how}</code> 为空时 (缺省)，作业不能被终止。试图退出会报错  <a href="terminal.html#E947">E947</a> 。
+                否则，<code class="special">{how}</code> 指定发送给作业的信号。可用值参见  <a href="channel.html#job_stop()">job_stop()</a> 。
 
-                发送信号后，Vim 等待不多于一秒的时间，来检查作业是否确实中止。
+                发送信号后，Vim 最多等待一秒，检查作业是否真正终止。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_setkill(how)</code>
@@ -799,13 +799,13 @@ term_setkill(<code class="special">{buf}</code>, <code class="special">{how}</co
 
 
 term_setrestore(<code class="special">{buf}</code>, <code class="special">{command}</code>)                       <b class="vimtag"> <a name="term_setrestore()">term_setrestore()</a> </b>
-                设置写在会活文件中以恢复终端中的作业的命令。会话文件中，实际写
-                入的行是:
+                设置写入会话文件、用于恢复缓冲区 <code class="special">{buf}</code> 对应终端作业的命令。实
+                际写入会话文件的行是:
 <code class="example">                        terminal ++curwin ++cols=%d ++rows=%d {command}</code>
-                要确保对命令进行适当地转义。
+                要确保对命令进行适当转义。
 
-                空 <code class="special">{command}</code> 会执行 <a href="options.html#'shell'">'shell'</a>。
-                使用 "NONE" 时，该窗口不会被恢复。
+                <code class="special">{command}</code> 为空时，默认执行 <a href="options.html#'shell'">'shell'</a>。
+                使用 "NONE" 时，不恢复此终端窗口。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_setrestore(command)</code>
@@ -814,11 +814,12 @@ term_setrestore(<code class="special">{buf}</code>, <code class="special">{comma
 
 
 term_setsize(<code class="special">{buf}</code>, <code class="special">{rows}</code>, <code class="special">{cols}</code>)             <b class="vimtag"> <a name="term_setsize()">term_setsize()</a> </b> <b class="vimtag"> <a name="E955">E955</a> </b>
-                设置终端 <code class="special">{buf}</code> 的大小。如果可能，包含终端的窗口尺寸也会跟着调
-                整。如果 <code class="special">{rows}</code> 或 <code class="special">{cols}</code> 为零或负，大小不改变。
+                设置缓冲区 <code class="special">{buf}</code> 对应终端的大小。终端窗口也会在可行时同步调整
+                大小。
+                如果 <code class="special">{rows}</code> 或 <code class="special">{cols}</code> 为零或负值，大小不改变。
 
-                <code class="special">{buf}</code> 必须是对应终端窗口的缓冲区号。空串代表当前缓冲区。如果该
-                缓冲区不存在或不是终端窗口，报错。
+                <code class="special">{buf}</code> 必须是终端窗口的缓冲区编号。空串代表当前缓冲区。如果该缓
+                冲区不存在或不是终端窗口，报错。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_setsize(rows, cols)</code>
@@ -829,84 +830,82 @@ term_setsize(<code class="special">{buf}</code>, <code class="special">{rows}</c
 term_start(<code class="special">{cmd}</code> [, <code class="special">{options}</code>])                 <b class="vimtag"> <a name="term_start()">term_start()</a> </b>
                 打开终端窗口并在其中运行 <code class="special">{cmd}</code>。
 
-                和  <a href="channel.html#job_start()">job_start()</a>  类似，<code class="special">{cmd}</code> 可以是字符串或者列表。字符串
-                "NONE" 可用来打开终端窗口而不启动作业，终端的 pty 可用于 gdb
-                这样的命令。
+                类似  <a href="channel.html#job_start()">job_start()</a> ，<code class="special">{cmd}</code> 可为字符串或列表。字符串 "NONE" 可用
+                于打开终端窗口但不启动作业，其伪终端可供 gdb 这类命令使用。
 
-                返回终端窗口的缓冲区号。如果无法执行 <code class="special">{cmd}</code>，窗口仍然打开，但显
-                示错误信息。
+                返回终端窗口的缓冲区编号。如果 <code class="special">{cmd}</code> 无法执行，窗口仍会打开，
+                但同时显示错误信息。
                 如果窗口打开失败，返回零。
 
-                <code class="special">{options}</code> 和用于  <a href="channel.html#job_start()">job_start()</a>  的选项类似，见  <a href="channel.html#job-options">job-options</a> 。
-                不过，并非所有的选项都可用。支持的选项为:
-                   所有的超时相关选项
+                <code class="special">{options}</code> 与  <a href="channel.html#job_start()">job_start()</a>  的选项类似，见  <a href="channel.html#job-options">job-options</a> 。但并
+                非全部选项都可用。支持的选项如下:
+                   所有超时相关选项
                    "stoponexit"、"cwd"、"env"
                    "callback"、"out_cb"、"err_cb"、"exit_cb"、"close_cb"
                    "in_io"、"in_top"、"in_bot"、"in_name"、"in_buf"
                    "out_io"、"out_name"、"out_buf"、"out_modifiable"、"out_msg"
                    "err_io"、"err_name"、"err_buf"、"err_modifiable"、"err_msg"
                 在 Unix 上:
-                stdin、stdout、stderr 缺省都连接到一个伪终端 (pty)，因为需要与
-                终端进行双向通信。设置 "out_cb" 不会将 stdout 从伪终端切换到管
-                道。只有设置 "err_cb" 才会将 stderr 切换为管道。
-                <code class="note">注意</code>: 设置 "err_cb" 时，由于伪终端使用行缓冲，而管道使用块缓
-                冲，stdout 与 stderr 的输出顺序可能无法保证。反之 ，如果不设置
-                "err_cb"，stderr 会与 stdout 共享同一个 pty，因此输出顺序可以
-                保证，但无法区分 stdout 和 stderr 的内容。
+                标准输入、标准输出、标准错误流缺省连接到同一个伪终端，因为需要
+                与终端双向通信。设置 "out_cb" 不会将标准输出从伪终端切换为管
+                道。只有设置 "err_cb" 才会将标准错误切换为管道。
+                <code class="note">注意</code>: 伪终端使用行缓冲，而管道使用块缓冲，因此标准输出与标准错
+                误的输出顺序可能无法保持。反之，不设置 "err_cb" 时，标准错误与
+                标准输出共用同一个伪终端，因此输出顺序可以保持，但标准输出与标
+                准错误的输出无法区分。
 
                 在 Windows 上使用  <a href="terminal.html#ConPTY">ConPTY</a>  时:
-                无论回调如何设置，stdin、stdout、stderr 始终通过管道连接到伪控
-                制台。由于 stdout 和 stderr 共享同一管道，"err_cb" 无法将它们
-                分开。原因是 CreatePseudoConsole() API 只接受一个输入句柄和一
-                个输出句柄，没有为 stderr 单独提供句柄。
+                无论回调如何设置，标准输入、标准输出、标准错误始终通过管道连接
+                到伪控制台。由于标准输出和标准错误共享同一管道，"err_cb" 无法
+                将它们分开。原因是 CreatePseudoConsole() API 只接受一对输入句
+                柄和输出句柄，没有独立的标准错误句柄。
 
                 <code class="note">注意</code>: 本函数在回调中始终使用 RAW 模式。"out_cb" 和 "err_cb" 接
-                收到的是从操作系统读取的原始数据块。一次回调调用中可能包含多行
-                数据 (以 NL 分隔)，并且 (对于通过 pty 获取的 stdout) 每一行末
-                尾可能带有由行规处理 (ONLCR) 产生的 CR。如果需要按行处理数据，
-                回调函数必须自行按 NL 分割 "msg"，并去除行尾的 CR。示例如下:
+                收从操作系统读取的原始数据块。单次回调可包含多行数据 (以 NL 分
+                隔)，并且 (对经由伪终端的标准输出) 每行末尾可能带有由行规处理
+                (ONLCR) 产生的 CR。如果需要按行处理，回调函数必须自行按 NL 分
+                割 "msg"，并剔除行尾 CR。示例如下:
 <code class="example">                        func Handle(ch, msg)</code>
 <code class="example">                          for line in split(a:msg, "\n")</code>
 <code class="example">                            echom substitute(line, '\r$', '', '')</code>
 <code class="example">                          endfor</code>
 <code class="example">                        endfunc</code>
 
-                以下还有一些额外的选项:
-                   "term_name"       使用的缓冲区名，缺省是命令名。
-                   "term_rows"       终端使用的垂直尺寸，缺省是
-                                     <a href="options.html#'termwinsize'">'termwinsize'</a>；合法值范围为 0 到 1000
-                   "term_cols"       终端使用的水平尺寸，缺省是
-                                     <a href="options.html#'termwinsize'">'termwinsize'</a>；合法值范围为 0 到 1000
-                   "vertical"        使用垂直分割窗口；<code class="note">备注</code> 另一窗口的位置可以
-                                     用命令行修饰符来定义，如  <a href="windows.html#:belowright">:belowright</a> 。
-                   "curwin"          使用当前窗口而不分割窗口；如果不能
-                                      <a href="editing.html#abandon">abandon</a>  当前缓冲区，会报错
+                额外支持选项:
+                   "term_name"       缓冲区名，缺省为命令名
+                   "term_rows"       终端纵向大小，缺省为 <a href="options.html#'termwinsize'">'termwinsize'</a>，但遵
+                                     守最小限制；取值范围为 0 到 1000
+                   "term_cols"       终端横向大小，缺省为 <a href="options.html#'termwinsize'">'termwinsize'</a>，但遵
+                                     守最小限制；取值范围为 0 到 1000
+                   "vertical"        分割窗口时使用垂直分割。<code class="note">备注</code> 可搭配命令修
+                                     饰符 (如  <a href="windows.html#:belowright">:belowright</a> ) 调整分割窗口位置
+                   "curwin"          使用当前窗口，不分割窗口；如果无法丢弃
+                                      <a href="editing.html#abandon">abandon</a>  当前缓冲区，报错
                    "hidden"          不打开窗口
-                   "norestore"       不把终端窗口加入会话文件
-                   "term_kill"       试图关闭终端时应如何操作，见
-                                      <a href="terminal.html#term_setkill()">term_setkill()</a> 
+                   "norestore"       该终端窗口不加入会话文件
+                   "term_kill"       终端窗口的关闭方式，见  <a href="terminal.html#term_setkill()">term_setkill()</a> 
                    "term_finish"     作业结束时的行为:
-                                        "close": 关闭已有窗口
-                                        "noclose": 不关闭已有窗口
-                                        "open": 有必要时打开新窗口
-                                     <code class="note">注意</code> "open" 可能会打断用户的正常操作。
+                                        "close": 关闭所有关联窗口
+                                        "noclose": 不关闭窗口
+                                        "open": 需要时打开新窗口
+                                     <code class="note">注意</code> "open" 可能会打断用户正常操作。
                                      见  <a href="terminal.html#term++close">term++close</a> 、 <a href="terminal.html#term++noclose">term++noclose</a>  和
                                       <a href="terminal.html#term++open">term++open</a> 。
-                   "term_opencmd"    "term_finish" 用 "open" 时打开窗口所用的
-                                     命令；必须包含 "%d"，放在需要缓冲区号的位
-                                     置上，如 "10split|buffer %d"；缺省是
-                                     "botright sbuf %d"
-                   "term_highlight"  代替 "Terminal" 的高亮组名
-                   "eof_chars"       发送完缓冲区的所有行后，写入终端的文本。
-                                     缺省在 MS-Windows 上是 <code class="keystroke">CTRL-D</code>，Python 使
-                                     用 <code class="keystroke">CTRL-Z</code> 或 "exit()"。外壳使用 "exit"。
-                                     末尾总会自动加上 CR。
-                   "ansi_colors"     定义用于 GUI 色彩模式的 ANSI 调色板的十六
-                                     种色彩名或十六进代码的列表。见
-                                      <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a> 。
-                   "tty_type"        (仅用于 MS-Windows): 指定使用的 pty。
-                                     <a href="options.html#'termwintype'">'termwintype'</a> 说明可用的值。
-                   "term_api"         <a href="terminal.html#terminal-api">terminal-api</a>  函数的函数名前缀。见
+                   "term_opencmd"    "term_finish" 设为 "open" 时，用于打开窗
+                                     口的命令；必须包含 "%d"，用于填入缓冲区编
+                                     号，例如 "10split|buffer %d"；省略时的默
+                                     认命令为 "botright sbuf %d"
+                   "term_highlight"  替代 "Terminal" 的高亮组名
+                   "eof_chars"       写入所有缓冲区行后额外发送的文本。省略时
+                                     MS-Windows 默认发送 <code class="keystroke">CTRL-D</code>，Python 可用
+                                     <code class="keystroke">CTRL-Z</code> 或 "exit()"。外壳可用 "exit"。末尾
+                                     总会自动追加 CR。
+                   "ansi_colors"     包含 16 种颜色名称或十六进制颜色代码组成
+                                     的列表，用于 GUI 真彩模式的 ANSI 调色板。
+                                     见  <a href="terminal.html#g:terminal_ansi_colors">g:terminal_ansi_colors</a> 。
+                   "tty_type"        (仅 MS-Windows): 指定伪终端类型。可用值见
+                                     <a href="options.html#'termwintype'">'termwintype'</a>。
+                   "term_api"         <a href="terminal.html#terminal-api">terminal-api</a>  函数的名称前缀。见
                                       <a href="terminal.html#term_setapi()">term_setapi()</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
@@ -916,10 +915,10 @@ term_start(<code class="special">{cmd}</code> [, <code class="special">{options}
 
 
 term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</code>])                                     <b class="vimtag"> <a name="term_wait()">term_wait()</a> </b>
-                等待 <code class="special">{buf}</code> 未处理的更新完成。
+                等待缓冲区 <code class="special">{buf}</code> 对应终端的待处理更新完成。
                 <code class="special">{buf}</code> 的用法见  <a href="terminal.html#term_getsize()">term_getsize()</a> 。
-                <code class="special">{time}</code> 是以毫秒为单位等待更新到达的时间。省略时默认使用 10 毫
-                秒。也会处理正在排队的信息，和  <a href="various.html#:sleep">:sleep</a>  类似。
+                <code class="special">{time}</code> 为等待更新到达的毫秒数。省略时默认 10 毫秒。队列信息也
+                会被处理，类似  <a href="various.html#:sleep">:sleep</a>  命令。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetBufnr()-&gt;term_wait()</code>
@@ -928,65 +927,66 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 终端通信                                      <b class="vimtag"> <a name="terminal-communication">terminal-communication</a> </b></h4>
-有几种和终端中运行的作业通信的办法:
-- 使用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  从 Vim 发送文本和转义序列到作业。
-- 使用 JSON API 从作业发送经编码的命令到 Vim。
-- 使用  <a href="remote.html#client-server">client-server</a>  机制。适用于有 X server 和 MS-Windows 的机器。
+有多种方式和终端中运行的作业通信:
+- 使用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  从 Vim 向作业发送文本以及转义序列。
+- 使用 JSON API，由作业向 Vim 发送经过编码的命令。
+- 使用  <a href="remote.html#client-server">client-server</a>  机制。适用于带有 X 服务器以及 MS-Windows 的系统。
 
 
-<code class="section">Vim 到 job: term_sendkeys() </code>
+<code class="section">Vim 发往作业: term_sendkeys() </code>
                                                         <b class="vimtag"> <a name="terminal-to-job">terminal-to-job</a> </b>
-这允许运程控制在终端中运行的作业。这是单向的机制。但作业可以刷新显示给 Vim 传
-递信号。例如，如果终端中运行的是外壳，可以这样:
+该方式可远程控制终端中运行的作业。属于单向机制。但作业可刷新显示，以此向 Vim
+回传信号。例如在终端中运行外壳时，可执行:
 <code class="example">        call term_sendkeys(buf, "ls *.java\&lt;CR&gt;")</code>
 <code class="example"></code>
-这需要作业处于正确的状态，以便接收键击时，可以作出正确的反应。在上例中，外壳必
-须正在等待命令行的键入。
+这要求作业处于合适状态，收到按键后能够作出正确响应。上例中，外壳必须正在等待输
+入命令。
 
-如果作业支持，可以反方向发送 JSON API 转义序列，如:
+专门开发的作业可支持反方向发送 JSON API 转义序列，如:
 <code class="example">        call term_sendkeys(buf, "\&lt;Esc&gt;]51;["response"]\x07")</code>
 <code class="example"></code>
 <code class="example"></code>
-<code class="section">Job 到 Vim: JSON API </code>
+<code class="section">作业发往 Vim: JSON API </code>
                                                         <b class="vimtag"> <a name="terminal-api">terminal-api</a> </b>
-作业可以使用特殊的转义序列发送 JSON 给 Vi。JSON 编码一个 Vim 能理解的命令。一
-个这样信息的示例:
+作业可以通过特殊转义序列向 Vim 发送 JSON。JSON 内容编码 Vim 可识别的命令。消息
+示例:
 <code class="example">        &lt;Esc&gt;]51;["drop", "README.md"]&lt;07&gt;</code>
 <code class="example"></code>
-本体总是列表，以便寻找结尾处: ]<code class="special">&lt;07&gt;</code>。
-<code class="special">&lt;Esc&gt;</code>]51;msg<code class="special">&lt;07&gt;</code> 序列是 xterm 保留给 "Emacs shell" 的，和我们要做的差不多吧。
+消息本体总是列表，便于定位结束标记: ]<code class="special">&lt;07&gt;</code>。
+<code class="special">&lt;Esc&gt;</code>]51;msg<code class="special">&lt;07&gt;</code> 序列是 xterm 预留给 "Emacs shell" 使用，其功能和这里的做法类
+似。
 
-目前支持的命令:
+目前支持的命令有:
 
         call <code class="special">{funcname}</code> <code class="special">{argument}</code>
 
-                调用用户定义函数并带参数 <code class="special">{argument}</code>。
-                函数调用时有两个参数: 终端缓冲区号和 <code class="special">{argument}</code>，一个解码的
-                JSON 参数。
-                缺省，函数名必须以 "Tapi_" 开始，以免不小心调用了为非终端 API
-                设计的函数。可用  <a href="terminal.html#term_setapi()">term_setapi()</a>  改变。
-                用户函数须检查参数的合法性。
-                函数可以用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  来发送反馈。
+                调用用户自定义函数，<code class="special">{argument}</code> 会作为参数传入。
+                函数调用时接收两个参数: 终端缓冲区编号、以及经过 JSON 解码的
+                <code class="special">{argument}</code>。
+                函数名缺省必须以 "Tapi_" 开头，防止意外调用并非为终端 API 设计
+                的函数。可用  <a href="terminal.html#term_setapi()">term_setapi()</a>  修改该前缀。
+                用户函数须自行负责检查参数的合法性。
+                函数可用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  函数回传应答。
                 JSON 示例:
 <code class="example">                        ["call", "Tapi_Impression", ["play", 14]]</code>
-                会调用以下定义的函数:
+                会调用如下定义的函数:
 <code class="example">                        function Tapi_Impression(bufnum, arglist)</code>
 <code class="example">                          if len(a:arglist) == 2</code>
 <code class="example">                            echomsg "impression " .. a:arglist[0]</code>
 <code class="example">                            echomsg "count " .. a:arglist[1]</code>
 <code class="example">                          endif</code>
 <code class="example">                        endfunc</code>
-                如果用  <a href="eval.html#:echo">:echo</a> ，重画可能被删除其输出，用  <a href="eval.html#:echomsg">:echomsg</a>  就会保证在
-                 <a href="message.html#:messages">:messages</a>  中看到这些消息。
+                 <a href="eval.html#:echo">:echo</a>  的输出可能会被重绘删除，而使用  <a href="eval.html#:echomsg">:echomsg</a>  时，可通过
+                 <a href="message.html#:messages">:messages</a>  查看日志。
 
         drop <code class="special">{filename}</code> <code class="special">[options]</code>
 
-                让 Vim 打开文件，就像  <a href="windows.html#:drop">:drop</a>  命令那样。如果 <code class="special">{filename}</code> 已经在
-                窗口中打开，切换到该窗口。否则打开新窗口，并编辑 <code class="special">{filename}</code>。
-                <code class="note">注意</code> 作业和 Vim 都可能改变当前目录，所以最好使用完整路径。
+                让 Vim 打开文件，类似  <a href="windows.html#:drop">:drop</a>  命令。<code class="special">{filename}</code> 已在某个窗口打
+                开时，则切换到该窗口。否则新建窗口编辑 <code class="special">{filename}</code>。
+                <code class="note">注意</code> 作业和 Vim 都可能切换当前工作目录，因此建议使用绝对路径。
 
-                <code class="special">[options]</code> 只在打开新窗口里有用。如果给出，必须是字典。和
-                 <a href="editing.html#++opt">++opt</a>  类似，识别以下项目:
+                仅在新建窗口时 <code class="special">[options]</code> 有效。给出时必须为字典。类似
+                 <a href="editing.html#++opt">++opt</a> ，识别以下条目:
                   "ff"          文件格式: "dos"、"mac" 或 "unix"
                   "fileformat"  同上
                   "enc"         覆盖 <a href="options.html#'fileencoding'">'fileencoding'</a>
@@ -995,27 +995,27 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
                   "binary"      同上
                   "nobin"       复位 <a href="options.html#'binary'">'binary'</a>
                   "nobinary"    同上
-                  "bad"         指定坏字符的行为，见  <a href="editing.html#++bad">++bad</a> 
+                  "bad"         指定非法字符处理方式，见  <a href="editing.html#++bad">++bad</a> 
 
                 JSON 示例:
 <code class="example">                        ["drop", "path/file.txt", {"ff": "dos"}]</code>
 <code class="example"></code>
-可用  <a href="builtin.html#echoraw()">echoraw()</a>  发送此转义序列:
+可通过  <a href="builtin.html#echoraw()">echoraw()</a>  发送转义序列:
 <code class="example">        call echoraw("\&lt;ESC&gt;]51;[\"call\", \"Tapi_TryThis\", [\"hello\", 123]]\x07")</code>
 <code class="example">        call echoraw("\&lt;Esc&gt;]51;[\"drop\", \"README.md\"]\x07")</code>
-<code class="note">注意</code>: JSON 需要用双引号包围字符串值，所以它们必须要被转义。
+<code class="note">注意</code>: JSON 要求字符串值必须使用双引号包围，所以需要做好转义。
 
-理据: 为什么不允许任何命令或表达式呢？因为可能会造成安全问题。
+理据: 为什么不允许执行任意命令或表达式？因为会引入安全风险。
                                                 <b class="vimtag"> <a name="terminal-autoshelldir">terminal-autoshelldir</a> </b>
-以下代码可用于从外壳把当前目录传递给 Vim。
-在 .vimrc 里:
+以下代码可用于将外壳的当前目录传递给 Vim。
+在 .vimrc 里加入:
 <code class="example">        def g:Tapi_lcd(_, path: string)</code>
 <code class="example">            if isdirectory(path)</code>
 <code class="example">                execute 'silent lcd ' .. fnameescape(path)</code>
 <code class="example">            endif</code>
 <code class="example">        enddef</code>
 
-同时，bash 初始文件里:
+同时在 bash 初始文件里加入:
 <code class="example">        if [[ -n "$VIM_TERMINAL" ]]; then</code>
 <code class="example">            PROMPT_COMMAND='_vim_sync_PWD'</code>
 <code class="example">            function _vim_sync_PWD() {</code>
@@ -1023,7 +1023,7 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
 <code class="example">            }</code>
 <code class="example">        fi</code>
 
-或者，用于 zsh:
+zsh 相应写法是:
 <code class="example">        if [[ -n "$VIM_TERMINAL" ]]; then</code>
 <code class="example">            autoload -Uz add-zsh-hook</code>
 <code class="example">            add-zsh-hook -Uz chpwd _vim_sync_PWD</code>
@@ -1032,7 +1032,7 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
 <code class="example">            }</code>
 <code class="example">        fi</code>
 
-或者，用于 fish:
+fish 相应写法是:
 <code class="example">        if test -n "$VIM_TERMINAL"</code>
 <code class="example">            function _vim_sync_PWD --on-variable=PWD</code>
 <code class="example">                printf '\033]51;["call", "Tapi_lcd", "%s"]\007' "$PWD"</code>
@@ -1042,250 +1042,248 @@ term_wait(<code class="special">{buf}</code> [, <code class="special">{time}</co
 <code class="example"></code>
 <code class="section">使用客户-服务器特性 </code>
                                                 <b class="vimtag"> <a name="terminal-client-server">terminal-client-server</a> </b>
-只在 v:servername 非空时有用。如果需要可以这样在打开终端前设置之:
+仅当  <a href="eval.html#v:servername">v:servername</a>  非空时可用。必要时可在打开终端窗口前执行:
 <code class="example">        call remote_startserver('vim-server')</code>
 <code class="example"></code>
-在终端里，$VIM_SERVERNAME 会设为传递进来的服务器名。
+在终端窗口里，会设置 $VIM_SERVERNAME 传递服务器名。
 
-在作业中可以这样做:
+作业中可执行类似以下的命令:
 <code class="example">        vim --servername $VIM_SERVERNAME --remote +123 some_file.c</code>
-这会打开文件 "some_file.c" 并把光标放在第 123 行上。
+会打开文件 "some_file.c"，并将光标定位到第 123 行。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 远程测试                                             <b class="vimtag"> <a name="terminal-testing">terminal-testing</a> </b></h4>
-多数 Vim 测试在 Vim 内部执行脚本。有些测试这样不行，因为测试的执行和要测试的代
-码有干扰。为了避免这种干扰，可在终端窗口中执行 Vim。测试给它发送键击并检视结果
-的屏幕状态。
+大多数 Vim 测试是在 Vim 内部执行脚本。部分测试场景下，测试脚本会干扰被测代码，
+内部执行方式不适用。为规避此问题，可在终端窗口中运行独立 Vim 实例。测试程序向
+该实例发送按键，然后检视最终屏幕状态。
 
-<code class="section">函数 </code>
+<code class="section">所需函数 </code>
 
- <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>        给终端发送键击 (不应用映射)
- <a href="terminal.html#term_wait()">term_wait()</a>            等待屏幕的刷新
- <a href="terminal.html#term_scrape()">term_scrape()</a>          检视终端屏幕
+ <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>        向终端发送按键 (不应用终端映射  <code class="badlink">tmap</code> )
+ <a href="terminal.html#term_wait()">term_wait()</a>            等待屏幕完成更新
+ <a href="terminal.html#term_scrape()">term_scrape()</a>          检视终端屏幕内容
 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>5. 屏幕截图比较                                         <b class="vimtag"> <a name="terminal-diff">terminal-diff</a> </b></h4>
-有些情况下要测试 Vim 在屏幕上是否显示正确的字符很麻烦，例如带语法高亮的时候。
-现在有一个略简便的方法，为终端进行屏幕截图，并和期待的屏幕截图相比较。
+有些场景下要测试 Vim 屏幕字符渲染结果 (如带语法高亮) 较为麻烦。为简化测试，可
+抓取终端屏幕截图，和预期屏幕截图进行比较。
 
-Vim 使用实际显示窗口的大小、文本、颜色和其它属性。Vim 的屏幕大小、字体和其它属
-性是无关的。这样此机制在系统间可移植。而常规的屏幕截图会反映所有的差异，包括字
-体大小和家族等。
+Vim 比较时会使用实际显示的窗口大小、文本、颜色和其他显示属性。Vim 自身屏幕大
+小、字体等属性不参与比较，确保此机制可跨系统移植。常规屏幕截图会反映所有差异，
+包括字体大小和家族等，不适合此类比较。
 
 
 <code class="section">编写 Vim 屏幕截图测试 </code>
                                                         <b class="vimtag"> <a name="terminal-dumptest">terminal-dumptest</a> </b>
-一个实际的例子可见 src/testdir/test_syntax.vim 中的 Test_syntax_c() 函数。其主
-要步骤是:
-- 写一个待测试的文件。用于测试语法高亮。也可以从空缓冲区启动 Vim。
-- 在指定大小的终端中运行 Vim。缺省是 20 行每行 75 字符。这保证截图有恒定的大
-  小。函数 RunVimInTerminal() 会做到这一点。把 Vim 命令的参数传递给它就可以
-  了。
-- 用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  给 Vim 发送任何命令。例如:
+实际示例可见 src/testdir/test_syntax.vim 中的 Test_syntax_c() 函数。主要步骤
+是:
+- 准备待测试文件。常用于测试语法高亮。也可启动带空缓冲区的 Vim。
+- 在指定大小的终端中运行 Vim。缺省 20 行 75 列。保证截图大小固定。函数
+  RunVimInTerminal() 负责这一步。传入 Vim 启动参数即可。
+- 用  <a href="terminal.html#term_sendkeys()">term_sendkeys()</a>  向 Vim 发送任意命令。例如:
 <code class="example">        call term_sendkeys(buf, ":echo &amp;lines &amp;columns\&lt;CR&gt;")</code>
-- 用 VerifyScreenDump() 检查屏幕现在匹配期待的状态。它假定参考屏幕截图在
-  src/testdir/dumps/ 目录下，名字不需要 ".dump" 部分。建议使用测试函数的名字加
-  一个序列号，以便我们知道什么测试使用此文件。
-- 重复发送命令和检查状态的步骤。
-- 最后调用 StopVimInTerminal() 来停止 Vim。
+- 用 VerifyScreenDump() 检查屏幕是否匹配预期状态。此函数假定基准屏幕截图保存在
+  src/testdir/dumps/ 目录下且不需要提供 ".dump" 文件后缀。建议命名方式为测试函
+  数名加序列号，方便追踪所用测试。
+- 重复发送命令，并检查屏幕状态。
+- 最后调用 StopVimInTerminal()，关闭 Vim 实例。
 
-第一次你还没有屏幕截图。先建立空文件，如:
+首次编写测试时，还没有基准屏幕截图。可先新建空文件，例如:
 <code class="example">        touch src/testdir/dumps/Test_function_name_01.dump</code>
 <code class="example"></code>
-此时测试会失败，并给出比较参考截图和失败截图的命令，如:
+此时测试会失败，并给出比较基准截图和失败截图的命令，例如:
 <code class="example">        call term_dumpdiff("failed/Test_func.dump", "dumps/Test_func.dump")</code>
 <code class="example"></code>
-把当前目录设为 src/testdir，在 Vim 中使用此命令。一旦你对测试满意了，把失败截
-图移动到参考截图的位置:
+在 Vim 中，将当前目录切换为 src/testdir，执行该命令。确认屏幕结果无误后，用失
+败截图替换基准截图:
 <code class="example">        :!mv failed/Test_func.dump dumps/Test_func.dump</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">创建屏幕截图 </code>
                                                         <b class="vimtag"> <a name="terminal-screendump">terminal-screendump</a> </b>
-要创建屏幕截图，在终端中运行 Vim (或其它程序)，并使它显示想要的状态。然后用
- <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  函数来创建屏幕截图文件。例如:
+要创建屏幕截图，在终端中运行 Vim (或其他程序)，调出目标显示状态。然后调用
+ <a href="terminal.html#term_dumpwrite()">term_dumpwrite()</a>  函数生成屏幕截图文件。例如:
 <code class="example">        :call term_dumpwrite(77, "mysyntax.dump")</code>
 <code class="example"></code>
-这里 "77" 是终端缓冲区号。 <code class="badlink">:ls!</code>  可以看到。
+其中 "77" 是终端缓冲区编号。可通过  <code class="badlink">:ls!</code>  查看。
 
-要浏览屏幕截图，可用  <a href="terminal.html#term_dumpload()">term_dumpload()</a> :
+要查看屏幕截图，可用  <a href="terminal.html#term_dumpload()">term_dumpload()</a> :
 <code class="example">        :call term_dumpload("mysyntax.dump")</code>
 <code class="example"></code>
-要验证 Vim 还显示完全相同的屏幕，一模一样地再运行一次 Vim，显示想要的状态。然
-后用另一个文件名再创建一份屏幕截图:
+要验证 Vim 仍然显示完全相同的屏幕，再次以同样方式运行 Vim 并调出目标状态。使用
+另一文件名生成新屏幕截图:
 <code class="example">        :call term_dumpwrite(88, "test.dump")</code>
 <code class="example"></code>
-要断言两份文件完全相同，可用  <a href="testing.html#assert_equalfile()">assert_equalfile()</a> :
+可用  <a href="testing.html#assert_equalfile()">assert_equalfile()</a>  断言两份截图完全一致:
 <code class="example">        call assert_equalfile("mysyntax.dump", "test.dump")</code>
 <code class="example"></code>
-如果有不同，v:errors 会包含错误信息。
+如果存在差异， <a href="eval.html#v:errors">v:errors</a>  会包含错误信息。
 
 
 <code class="section">比较屏幕截图 </code>
                                                 <b class="vimtag"> <a name="terminal-diffscreendump">terminal-diffscreendump</a> </b>
- <a href="testing.html#assert_equalfile()">assert_equalfile()</a>  不能方便地看到差异之处。要发现问题，可用
- <a href="terminal.html#term_dumpdiff()">term_dumpdiff()</a> :
+ <a href="testing.html#assert_equalfile()">assert_equalfile()</a>  不能直观查看差异内容。可用  <a href="terminal.html#term_dumpdiff()">term_dumpdiff()</a>  定位问题:
 <code class="example">        call term_dumpdiff("mysyntax.dump", "test.dump")</code>
 <code class="example"></code>
-这会打开一个窗口，包含三个部分:
-1.  第一份截图的内容
-2.  两份截图的差异
-3.  第二份截图的内容
+该命令会打开窗口，分为三部分:
+1.  第一份截图内容
+2.  两份截图之间的差异
+3.  第二份截图内容
 
-你通常在第二部分看到差异之处。<a href="options.html#'ruler'">'ruler'</a> 可用来把它和第一份或第二份截图的位置联系
-起来。以下字母指示区别的类型:
-        X       不同字符
-        &gt;       光标在第一份但不在第二份
-        &lt;       光标在第二份但不在第一份
-        w       不同字符宽度 (单宽度对双宽度)
-        f       不同前景色
-        b       不同背景色
-        a       不同属性 (粗体、下划线、反显等等)
-        ?       两者都缺少的字符
-        +       第一份缺少的字符
-        -       第二份缺少的字符
+通过可查看第二部分列出的差异。借助 <a href="options.html#'ruler'">'ruler'</a> 定位第一份或第二份截图内的位置。以
+下字母指示差异类型:
+        X       字符不同
+        &gt;       第一份截图此处有光标，第二份截图没有
+        &lt;       第二份截图此处有光标，第一份截图没有
+        w       字符宽度不同 (单宽对双宽)
+        f       前景色不同
+        b       背景色不同
+        a       属性不同 (粗体、下划线、后显等)
+        ?       两处都缺少该字符位置
+        +       第一份截图缺失该字符位置
+        -       第二份截图缺失该字符位置
 
-另外，按 "s" 会交换两份截图。多做几次，在文本的上下文中找到差异会容易一些。
+也可按 "s" 交换两份截图的上下位置。多次切换便于结合上下文定位差异。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>6. 调试                                 <b class="vimtag"> <a name="terminal-debug">terminal-debug</a> </b> <b class="vimtag"> <a name="terminal-debugger">terminal-debugger</a> </b></h4>                                        <b class="vimtag"> <a name="package-termdebug">package-termdebug</a> </b> <b class="vimtag"> <a name="termdebug">termdebug</a> </b>
 
-终端调试插件可用来使用 gdb 来调试程序而同时在 Vim 窗口中查看源代码。因为这完全
-包含在 Vim 内完成，我们通过 ssh 连接也可以远程进行工作。
+终端调试插件可配合 gdb 调试程序，并在 Vim 窗口中查看源代码。因为此功能完全运行
+在 Vim 内部，通过 ssh 远程连接也可使用。
 
-如果没有  <a href="various.html#+terminal">+terminal</a>  特性但可能的话，此插件会使用 "prompt" 缓冲区类型。详见下
-述的  <a href="terminal.html#termdebug-prompt">termdebug-prompt</a> 。
+如果未开启  <a href="various.html#+terminal">+terminal</a>  特性，此插件会在可行时使用 "prompt" 缓冲区类型。详见下
+述  <a href="terminal.html#termdebug-prompt">termdebug-prompt</a> 。
 
 
 <code class="section">启动 </code>
                                                         <b class="vimtag"> <a name="termdebug-starting">termdebug-starting</a> </b>
-此命令载入插件:
+以下命令加载插件:
 <code class="example">        packadd termdebug</code>
-要在  <a href="starting.html#.vimrc">.vimrc</a>  文件里载入此插件，要加上 "!" 属性:
+要在  <a href="starting.html#.vimrc">.vimrc</a>  文件里加载插件，需要加上 "!" 属性:
 <code class="example">        packadd! termdebug</code>
                                                         <b class="vimtag"> <a name=":Termdebug">:Termdebug</a> </b>
-要启动调试，用  <a href="terminal.html#:Termdebug">:Termdebug</a>  或  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  后跟命令名，如:
+使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  或  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  加命令名，启动调试。示例:
 <code class="example">        :Termdebug vim</code>
 <code class="example"></code>
 这会打开两个窗口:
 
-gdb 窗口        终端窗口，其中执行 "gdb vim"。这里你可以直接和 gdb 交互。缓冲
-                区名是 "!gdb"。
+gdb 窗口        执行 "gdb vim" 的终端窗口。可直接和 gdb 交互。缓冲区名为
+                "!gdb"。
 
-program 窗口    用于执行程序的终端窗口，。gdb 里 "run" 时，程序 I/O 会在此窗口
-                中发生，这样不会和控制的 gdb 有干扰。
-                缓冲区名是 "debugged program"。
+程序窗口        执行被调试程序的终端窗口。在 gdb 中执行 "run" 时，程序输入/输
+                出使用此窗口，不会干扰控制 gdb 的显示。缓冲区名为
+                "debugged program"。
 
-当前窗口用于显示源代码。gdb 暂停时，如有可能会显示源代码的位置。标号用来高亮当
-前位置，使用高亮组 debugPC。
+当前窗口用于显示源码。gdb 暂停时，会尽可能显示源码位置。使用标号高亮当前断点位
+置，使用高亮组 debugPC。
 
-如果当前窗口缓冲区被修改，会打开另一个窗口来显示 gdb 的当前位置。用  <a href="terminal.html#:Winbar">:Winbar</a> 
-可以在那里加上窗口工具条。
+如果当前窗口缓冲区已修改，会新开窗口显示 gdb 当前位置。可使用  <a href="terminal.html#:Winbar">:Winbar</a>  为此窗
+口添加工具条。
 
-聚焦执行程序的终端可以和它互动。这和终端窗口运行任何命令的用法一样。
+将焦点切换到待调试程序的终端窗口，可和程序交互。操作方式和在普通终端窗口内运行
+任意命令一致。
 
-通常在 gdb 窗口中输入 "quit" 可以结束调试器。此时，这两个打开的窗口会被关闭。
+通常在 gdb 窗口中输入 "quit" 可结束调试。此时两个调试相关窗口会被关闭。
 
-一次只能激活一个调试器。
+同一时间只能激活一个调试会话。
 
                                                 <b class="vimtag"> <a name="termdebug-timeout">termdebug-timeout</a> </b>
-取决于如何启动 gdb，termdebug 启动时间差别很大。要避免 termdebug 因为 gdb 的启
-动进程花时太长被卡住，给出了可配置的超时。此配置以 10ms 为单位:
+根据 gdb 的启动方式不同，插件启动耗时会有差异。为防止 gdb 启动耗时过久导致插件
+被卡死，可配置超时。超时单位为 10 毫秒:
 <code class="example">    let g:termdebug_config['timeout'] = 500 # 500 * 10ms = 5 秒。</code>
 <code class="example"></code>
-缺省超时是 3000 ms。
+缺省超时为 3000 毫秒。
                                                         <b class="vimtag"> <a name=":TermdebugCommand">:TermdebugCommand</a> </b>
-要指定要调试的命令，可用  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  命令后跟命令名和其它参数。
+要为待调试命令传入自定义参数，可用  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  命令，后跟程序名与额外
+参数。
 <code class="example">        :TermdebugCommand vim --clean -c ':set nu'</code>
 <code class="example"></code>
- <a href="terminal.html#:Termdebug">:Termdebug</a>  和  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  两者都支持可选的 "!" 感叹号参数，它会立即
-启动命令而不在 gdb 窗口中暂停 (光标会留在待调试的窗口)。示例:
+ <a href="terminal.html#:Termdebug">:Termdebug</a>  和  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  都支持可选 "!" 感叹号参数，立即启动程序，
+而不在 gdb 窗口暂停 (光标会留在待调试程序窗口)。示例:
 <code class="example">        :TermdebugCommand! vim --clean</code>
 <code class="example"></code>
-要把 gdb 和已经在运行的可执行程序或 core 文件绑定，传递额外的参数。如:
+要将 gdb 与运行中的进程绑定或使用 core 文件，可传入额外参数。例如:
 <code class="example">        :Termdebug vim core</code>
 <code class="example">        :Termdebug vim 98343</code>
 <code class="example"></code>
-如果不给出参数，会打开 gdb 窗口，那里要通过如 gdb  <code class="badlink">file</code>  命令等方式去执行想要
-的命令。
+省略所有参数时，默认直接进入 gdb 窗口，需要在 gdb 内使用  <code class="badlink">file</code>  等命令指定待调
+试的程序。
 
 
 <code class="section">示例会话 </code>
                                                         <b class="vimtag"> <a name="termdebug-example">termdebug-example</a> </b>
-从 Vim  "src" 目录开始并编译 Vim:
+从 Vim "src" 目录开始，编译 Vim:
 <code class="example">        % make</code>
-确保有调试符号，通常这意味着 $CFLAGS 应包含 "-g"。
+确保编译包含调试符号，通常要求 $CFLAGS 中包含 "-g"。
 
 启动 Vim:
 <code class="example">        % ./vim</code>
-载入 termdebug 插件并开始调试 Vim:
+加载 termdebug 插件并启动 Vim 调试:
 <code class="example">        :packadd termdebug</code>
 <code class="example">        :Termdebug vim</code>
-你现在应有三个窗口:
-    源代码  - 你开始的地方，有带按钮的窗口工具条
-    gdb     - 这里你开始输入 gdb 命令
-    program - 执行中程序会使用本窗口
+此时会打开三个窗口:
+    源码    - 带有窗口工具栏按钮的初始窗口
+    gdb     - 输入 gdb 命令的窗口
+    程序    - 被调试程序使用的窗口
 
-可用 <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-W</code> 或鼠标在窗口间转换焦点。把焦点放在 gdb 窗口上并输入:
+可用 <code class="keystroke">CTRL-W</code> <code class="keystroke">CTRL-W</code> 或鼠标在窗口间切换焦点。将焦点切换到 gdb 窗口，输入:
 <code class="example">        break ex_help</code>
 <code class="example">        run</code>
-Vim 会在 program 窗口上开始运行。把焦点放在那里并输入:
+Vim 会在程序窗口启动程序。将焦点切换到该窗口，输入:
 <code class="example">        :help gui</code>
-Gdb 会在 ex_help 断点处运行。源代码窗口此时会显示 ex_cmds.c 文件。一个红色的
-"1 " 标记会出现在标号列里，指示断点所在的位置。调试器所在的行被高亮。现在你可
-以在程序中步进了。让我们用下鼠标: 在窗口工具条的 "Next" 按钮上点击。你会看到随
-着调试器执行一行源代码，高亮也跟着移动。
+gdb 会在 ex_help 断点处停下。源码窗口此时会打开 ex_cmds.c 文件。标号栏在断点位
+置会出现红色 "1 " 标记。同时高亮断点代码行。此时可通过鼠标步进程序进行调试: 点
+击窗口工具栏的 "Next" 按钮，会看到高亮随代码单步移动。
 
-点击 "Next" 几次直到 for 循环被高亮。把光标放在 "eap-&gt;arg" 的尾部，然后按工具
-条上的 "Eval"。你会看到:
+点击 "Next" 多次，直到 for 循环被高亮为止。将光标放在 "eap-&gt;arg" 末尾，点击工
+具栏 "Eval"，会显示:
 <code class="section">        "eap-&gt;arg": 0x555555e68855 "gui" </code>
-这样你可以检视局部变量的值。也可以聚焦在 gdb 窗口上并使用 "print" 命令，如:
+此方法可检视局部变量值。也可切换到 gdb 窗口并运行 "print" 命令，例如:
 <code class="example">        print *eap</code>
-如果支持鼠标指针移动，Vim 也会在鼠标停留的文本上显示通过 gdb 计算的气泡。
+支持鼠标移动事件时，鼠标悬停在可由 gdb 求值的文本上会弹出提示气泡。
 
-现在回到源代码窗口，把光标放在 for 循环后的第一行，然后输入:
+现在回到源码窗口，将光标停在 for 循环后的第一行，然后输入:
 <code class="example">        :Break</code>
-你会看到 "&gt;&gt;" 标记出现，指示一个新的断点。现在在工具条上点击 "Cont"，这会继续
-执行代码直到断点为止。
+此时会出现代表新增断点的 "&gt;&gt;" 标记。点击工具栏 "Cont"，程序会继续运行至该断点。
 
-gdb 窗口上可以输入更高级的命令。例如，输入:
+在 gdb 窗口中可输入更复杂的命令。例如输入:
 <code class="example">        watch curbuf</code>
-现在在工具条点击 "Cont" (或在 gdb 窗口中输入 "cont")。现在会继续执行直到
-"curbuf" 的值有改变，这应在 do_ecmd() 里。
-要删除此观察点，在 gdb 窗口中再输入:
+然后点击工具栏 "Cont" (或在 gdb 窗口中输入 "cont")，程序会继续执行直到
+"curbuf" 值发生变化为止，这应在 do_ecmd() 函数内发生。
+要删除该观察点，可在 gdb 窗口中输入:
 <code class="example">        delete 3</code>
 <code class="example"></code>
-要看到堆栈，在gdb 窗口中输入:
+要查看堆栈，可在 gdb 窗口中输入:
 <code class="example">        where</code>
-在堆栈框架间移动，比如可用:
+要切换栈帧，例如:
 <code class="example">        frame 3</code>
-源代码窗口会显示在更深层的调用所在的代码。
+源码窗口会显示调用更深层栈帧时程序所在位置的代码。
 
 
-<code class="section">代码中步进 </code>
+<code class="section">代码单步调试 </code>
                                                         <b class="vimtag"> <a name="termdebug-stepping">termdebug-stepping</a> </b>
-把焦点移到 gdb 窗口，在那里输入命令。常用的有:
+可切换焦点到 gdb 窗口并输入相关命令。常用命令有:
 - <code class="keystroke">CTRL-C</code>        中断程序
-- next          执行当前行并停在下一行
-- step          执行当前行并停在下个语句上，进入函数
-- until         执行直到跨过当前光标行或跨过指定位置或当前堆栈框架返回为止
-- finish        执行直到退出当前函数为止
-- where         显示堆栈
-- frame N       转到第 N 堆栈框架
-- continue      继续执行
+- next          执行当前行，停在下一行
+- step          执行当前行，停在下一条语句，必要时会进入函数内部
+- until         继续执行，直到当前光标行之后、指定位置之后、或当前栈帧返回为止
+- finish        继续执行，直到当前函数退出为止
+- where         显示调用栈
+- frame N       切换到第 N 层栈帧
+- continue      继续执行程序
 
                                                 <b class="vimtag"> <a name=":Run">:Run</a> </b> <b class="vimtag"> <a name=":Arguments">:Arguments</a> </b>
-在显示源代码的窗口中以下命令可用于控制 gdb:
-  <a href="terminal.html#:Run">:Run</a>  <code class="special">[args]</code>      执行程序，使用 <code class="special">[args]</code> 或之前的参数
-  <a href="terminal.html#:Arguments">:Arguments</a>  <code class="special">{args}</code>  设置下次  <a href="terminal.html#:Run">:Run</a>  使用的参数
+源码窗口内，可用以下命令控制 gdb:
+  <a href="terminal.html#:Run">:Run</a>  <code class="special">[args]</code>      使用 <code class="special">[args]</code> 或上次使用的参数启动被调试程序
+  <a href="terminal.html#:Arguments">:Arguments</a>  <code class="special">{args}</code>  设置后续  <a href="terminal.html#:Run">:Run</a>  将使用的参数
 
  <b class="vimtag"> <a name=":Break">:Break</a> </b>       在光标位置设置断点
  :Break [<code class="special">{position}</code>] [thread <code class="special">{nr}</code>] [if <code class="special">{expr}</code>]
                 在指定位置设置断点
-                省略 <code class="special">{position}</code> 时，默认使用当前文件和当前行
-                thread <code class="special">{nr}</code> 会将断点限制在指定的单个线程上
-                if <code class="special">{expr}</code> 设置条件断点 (条件成立时才触发)
+                <code class="special">{position}</code> 省略时，默认使用当前文件和当前行
+                给出 "thread <code class="special">{nr}</code>"时，会将断点限制在指定线程
+                给出 "if <code class="special">{expr}</code>" 时，设置条件断点 (仅当 <code class="special">{expr}</code> 成立时才触发)
                 示例:
 <code class="example">                        :Break if argc == 1</code>
 <code class="example">                        :Break 42 thread 3 if x &gt; 10</code>
@@ -1293,247 +1291,233 @@ gdb 窗口上可以输入更高级的命令。例如，输入:
 
  <b class="vimtag"> <a name=":Tbreak">:Tbreak</a> </b>      在光标位置设置临时断点
  :Tbreak [<code class="special">{position}</code>] [thread <code class="special">{nr}</code>] [if <code class="special">{expr}</code>]
-                和  <a href="terminal.html#:Break">:Break</a>  类似，但断点在触发一次后会自动删除
+                类似  <a href="terminal.html#:Break">:Break</a> ，但断点触发一次后自动删除
                 示例:
 <code class="example">                        :Tbreak if argc == 1</code>
 <code class="example">                        :Tbreak 42 thread 3 if x &gt; 10</code>
 <code class="example">                        :Tbreak main</code>
 
- <b class="vimtag"> <a name=":Clear">:Clear</a> </b>       删除光标位置所在的断点
- <b class="vimtag"> <a name=":ToggleBreak">:ToggleBreak</a> </b> 在光标位置设置断点或删除光标位置上的所有断点
+ <b class="vimtag"> <a name=":Clear">:Clear</a> </b>       删除光标位置所在断点
+ <b class="vimtag"> <a name=":ToggleBreak">:ToggleBreak</a> </b> 在光标位置设置断点、但已有断点时则删除光标所在行的所有断点
 
  <b class="vimtag"> <a name=":Step">:Step</a> </b>        执行 gdb "step" 命令
- <b class="vimtag"> <a name=":Over">:Over</a> </b>        执行 gdb "next" 命令 ( <a href="editing.html#:Next">:Next</a>  是 Vim 的命令)
+ <b class="vimtag"> <a name=":Over">:Over</a> </b>        执行 gdb "next" 命令 ( <a href="editing.html#:Next">:Next</a>  是 Vim 原生命令)
  <b class="vimtag"> <a name=":Until">:Until</a> </b>       执行 gdb "until" 命令
  <b class="vimtag"> <a name=":Finish">:Finish</a> </b>      执行 gdb "finish" 命令
  <b class="vimtag"> <a name=":Continue">:Continue</a> </b>    执行 gdb "continue" 命令
- <b class="vimtag"> <a name=":RunOrContinue">:RunOrContinue</a> </b> 如果程序在运行，执行 gdb "continue" 命令，否则运行程序
+ <b class="vimtag"> <a name=":RunOrContinue">:RunOrContinue</a> </b> 程序正在运行时则执行 gdb "continue" 命令，否则启动程序
  <b class="vimtag"> <a name=":Stop">:Stop</a> </b>        中断程序
 
-如果设置了 <a href="options.html#'mouse'">'mouse'</a>，插件加入窗口工具条，带以下项目:
+设置 <a href="options.html#'mouse'">'mouse'</a> 后，插件会加入窗口工具栏，包含以下项目:
   Step           <a href="terminal.html#:Step">:Step</a> 
   Next           <a href="terminal.html#:Over">:Over</a> 
   Finish         <a href="terminal.html#:Finish">:Finish</a> 
   Cont           <a href="terminal.html#:Continue">:Continue</a> 
   Stop           <a href="terminal.html#:Stop">:Stop</a> 
   Eval           <a href="terminal.html#:Evaluate">:Evaluate</a> 
-这样你就可用鼠标完成大部分的常用操作。需要设置 <a href="options.html#'mouse'">'mouse'</a> 选项来支持鼠标点击。
-如何配置此工具条可见  <a href="terminal.html#termdebug_winbar">termdebug_winbar</a> 。
+借此可用鼠标完成多数常用调试操作。需要正确设置 <a href="options.html#'mouse'">'mouse'</a> 选项才能启用鼠标点击。
+工具栏配置可参见  <a href="terminal.html#termdebug_winbar">termdebug_winbar</a> 。
                                                                 <b class="vimtag"> <a name=":Winbar">:Winbar</a> </b>
-你可以这样在其它打开的窗口加入窗口工具条:
+可在其他窗口手动添加窗口工具栏:
 <code class="example">  :Winbar</code>
 <code class="example"></code>
-如果 gdb 停在某个源代码行上而当前没有窗口显示该源代码，会创建新窗口来显示该源
-代码。如果源代码窗口的缓冲区被修改而不能放弃，这也会发生。
+如果 gdb 停在某源码行而当前没有窗口显示该源码，会新建源码窗口。如果源码窗口存
+在但缓冲区已修改且无法放弃，也会新建窗口。
 
-gdb 为每个断点编号。Vim 里在标号列中以红色背景显示该编号。可以使用这些 gdb 命
-令:
-- info break    列出断点
+gdb 会为每个断点编号。Vim 会在标号栏中以红色背景显示编号。可用以下 gdb 命令:
+- info break    列出所有断点
 - delete N      删除断点 N
-如果光标在断点行上，也可用  <a href="terminal.html#:Clear">:Clear</a>  命令，或右键菜单项目中的 "Clear
-breakpoint"。
+光标已在断点行时，也可用  <a href="terminal.html#:Clear">:Clear</a>  命令、或右键菜单中的 "Clear breakpoint"。
 
 
 <code class="section">检视变量 </code>
                                         <b class="vimtag"> <a name="termdebug-variables">termdebug-variables</a> </b> <b class="vimtag"> <a name=":Evaluate">:Evaluate</a> </b>
-  <a href="terminal.html#:Evaluate">:Evaluate</a>         检视光标下的表达式
-  <a href="various.html#K">K</a>                 同上 (要关闭之，见  <a href="terminal.html#termdebug_map_K">termdebug_map_K</a> )
-  <a href="terminal.html#:Evaluate">:Evaluate</a>  <code class="special">{expr}</code>   计算 <code class="special">{expr}</code>
+  <a href="terminal.html#:Evaluate">:Evaluate</a>         求值光标下的表达式
+  <a href="various.html#K">K</a>                 同上 (要关闭此映射，可见  <a href="terminal.html#termdebug_map_K">termdebug_map_K</a> )
+  <a href="terminal.html#:Evaluate">:Evaluate</a>  <code class="special">{expr}</code>   求值 <code class="special">{expr}</code>
   <code class="badlink">:'&lt;,'&gt;Evaluate</code> 
-  <code class="badlink"><code class="special">{Visual}</code>K</code>           计算可视选择的文本
+  <code class="badlink"><code class="special">{Visual}</code>K</code>           求值可视选中文本
 
-类似于在 gdb 窗口用 "print"。
-通常可缩短  <a href="terminal.html#:Evaluate">:Evaluate</a>  为  <code class="badlink">:Ev</code> 。
+效果类似在 gdb 窗口中执行 "print"。
+ <a href="terminal.html#:Evaluate">:Evaluate</a>  一般可简写为  <code class="badlink">:Ev</code> 。
 
 
-<code class="section">浏览堆栈框架 </code>
+<code class="section">浏览栈帧 </code>
                                 <b class="vimtag"> <a name="termdebug-frames">termdebug-frames</a> </b> <b class="vimtag"> <a name=":Frame">:Frame</a> </b> <b class="vimtag"> <a name=":Up">:Up</a> </b> <b class="vimtag"> <a name=":Down">:Down</a> </b>
-  <a href="terminal.html#:Frame">:Frame</a>  <code class="special">[frame]</code>       选择框架 <code class="special">[frame]</code>，这可以是框架编号、地址或函数名
-                        (缺省: 当前框架)
-  <a href="terminal.html#:Up">:Up</a>  <code class="special">[count]</code>          向上 <code class="special">[count]</code> 个框架 (缺省: 1；调用当前框架的那个框架)
-  <a href="motion.html#+">+</a>                     同上 (要关闭之，见  <a href="terminal.html#termdebug_map_plus">termdebug_map_plus</a> )
-  <a href="terminal.html#:Down">:Down</a>  <code class="special">[count]</code>        向下 <code class="special">[count]</code> 个框架 (缺省: 1; 当前框架调用的那个框架)
-  <a href="motion.html#-">-</a>                     同上 (要关闭之，见  <a href="terminal.html#termdebug_map_minus">termdebug_map_minus</a> )
+  <a href="terminal.html#:Frame">:Frame</a>  <code class="special">[frame]</code>       选择栈帧 <code class="special">[frame]</code>，参数可以是栈帧编号、地址或函数名
+                        (缺省: 当前栈帧)
+  <a href="terminal.html#:Up">:Up</a>  <code class="special">[count]</code>          向上 <code class="special">[count]</code> 层栈帧 (缺省: 1；即调用当前栈帧的上一层)
+  <a href="motion.html#+">+</a>                     同上 (要关闭此映射，可见  <a href="terminal.html#termdebug_map_plus">termdebug_map_plus</a> )
+  <a href="terminal.html#:Down">:Down</a>  <code class="special">[count]</code>        向下 <code class="special">[count]</code> 层栈帧 (缺省: 1; 即当前栈帧调用的下一层)
+  <a href="motion.html#-">-</a>                     同上 (要关闭此映射，可见  <a href="terminal.html#termdebug_map_minus">termdebug_map_minus</a> )
 
 
-<code class="section">其它命令 </code>
+<code class="section">其他命令 </code>
                                                         <b class="vimtag"> <a name="termdebug-commands">termdebug-commands</a> </b>
- <b class="vimtag"> <a name=":Gdb">:Gdb</a> </b>      跳转到 gdb 窗口
- <b class="vimtag"> <a name=":Program">:Program</a> </b>    跳转到运行程序的窗口
- <b class="vimtag"> <a name=":Source">:Source</a> </b>     跳转到源代码窗口，如果还没有则创建之
- <b class="vimtag"> <a name=":Asm">:Asm</a> </b>      跳转到反汇编窗口，如果还没有则创建之
- <b class="vimtag"> <a name=":Var">:Var</a> </b>      跳转到局部或参数变量窗口，如果还没有则创建之。程序停止时会更新此
-             窗口
+ <b class="vimtag"> <a name=":Gdb">:Gdb</a> </b>      切换到 gdb 窗口
+ <b class="vimtag"> <a name=":Program">:Program</a> </b>    切换到运行程序的窗口
+ <b class="vimtag"> <a name=":Source">:Source</a> </b>     切换到源码窗口，不存在则新建
+ <b class="vimtag"> <a name=":Asm">:Asm</a> </b>      切换到反汇编窗口，不存在则新建
+ <b class="vimtag"> <a name=":Var">:Var</a> </b>      切换到局部变量与函数参数窗口，不存在则新建。程序暂停时该窗口会自
+             动更新
 
 <code class="section">事件 </code>
                                                         <b class="vimtag"> <a name="termdebug-events">termdebug-events</a> </b>
-可用四个自动命令:
-<code class="example">        au User TermdebugStartPre  echomsg '调试启动中'</code>
-<code class="example">        au User TermdebugStartPost echomsg '调试已开始'</code>
-<code class="example">        au User TermdebugStopPre   echomsg '调试中止中'</code>
-<code class="example">        au User TermdebugStopPost  echomsg '调试已中止'</code>
+有以下四个自动命令可用:
+<code class="example">        au User TermdebugStartPre  echomsg '调试即将启动'</code>
+<code class="example">        au User TermdebugStartPost echomsg '调试已启动'</code>
+<code class="example">        au User TermdebugStopPre   echomsg '调试即将终止'</code>
+<code class="example">        au User TermdebugStopPost  echomsg '调试已终止'</code>
 
                                                 <b class="vimtag"> <a name="TermdebugStartPre">TermdebugStartPre</a> </b>
-TermdebugStartPre               开始调试前。
-                                如果调试器已运行或调试器命令不能执行，不触发。
+TermdebugStartPre               调试启动前。
+                                如果调试器已运行或调试器命令无法执行，不触发。
                                                 <b class="vimtag"> <a name="TermdebugStartPost">TermdebugStartPost</a> </b>
-TermdebugStartPost              调试初始化结束后。
-                                给  <a href="terminal.html#:Termdebug">:Termdebug</a>  或  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  加 "!"
-                                感叹号时，此事件在 gdb 运行提供的命令前触发。
+TermdebugStartPost              调试初始化完成后。
+                                 <a href="terminal.html#:Termdebug">:Termdebug</a>  或  <a href="terminal.html#:TermdebugCommand">:TermdebugCommand</a>  带 "!" 感
+                                叹号时，此事件会在 gdb 执行传入命令前触发。
                                                 <b class="vimtag"> <a name="TermdebugStopPre">TermdebugStopPre</a> </b>
-TermdebugStopPre                调试结束前，此时 gdb 已终止，最有可能在 gdb 窗
+TermdebugStopPre                调试结束前，此时 gdb 进程已终止，通常在 gdb 窗
                                 口里输入 "quit" 命令后发生。
                                                 <b class="vimtag"> <a name="TermdebugStopPost">TermdebugStopPost</a> </b>
-TermdebugStopPost               调试结束后，gdb 相关的窗口已关闭，真正删除了调
-                                试缓冲区，恢复了调试之前的状态。
+TermdebugStopPost               调试结束后，gdb 相关窗口已关闭，调试缓冲区被真
+                                正删除，恢复调试前状态。
 
 
-<code class="section">定制 </code>
+<code class="section">自定义设置 </code>
                                 <b class="vimtag"> <a name="termdebug-customizing">termdebug-customizing</a> </b> <b class="vimtag"> <a name="g:termdebug_config">g:termdebug_config</a> </b>
-过去配置使用若干全局变量。它们已被废弃，建议使用 g:termdebug_config 字典。如果
-g:termdebug_config 存在， <code class="emphasis">不</code> 使用其它的全局变量。
-推荐以赋值空字典开始:
+旧版使用多个全局变量。现已废弃，建议改用  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  字典。该变量存在
+时， <code class="emphasis">忽略</code> 其他旧全局变量。
+推荐初始化为空字典:
 <code class="example">        let g:termdebug_config = {}</code>
 <code class="example"></code>
-然后就可以像下面那样给字典加入项目。为完整起见下面还是会提到废弃的全局变量名。
-要切换到 g:termdebug_config，可以据此找到旧变量名并使用相应的值，然后删除废弃
-变量。
+然后可在字典内添加配置项。为完整起见，以下仍会提及废弃全局变量名。要迁移到
+ <a href="terminal.html#g:termdebug_config">g:termdebug_config</a> ，可搜索旧变量名，将值迁移到对应字典条目，然后删除旧变量。
 
 
-<code class="section">提示模式 </code>
+<code class="section">提示符模式 </code>
                                                 <b class="vimtag"> <a name="termdebug-prompt">termdebug-prompt</a> </b>
-如果不支持  <a href="various.html#+terminal">+terminal</a>  特性且在 MS-Windows 上，gdb 会在 <a href="options.html#'buftype'">'buftype'</a> 设为
-"prompt" 的缓冲区中运行。工作方式略有不同:
-- 键入命令时，gdb 窗口会进入插入模式。<code class="special">&lt;Esc&gt;</code> 会进入普通模式，然后你在缓冲区内可
-  以移动，复制/粘贴，等等。任何开始插入模式的命令，如  <a href="insert.html#a">a</a>  或  <a href="insert.html#i">i</a> ，会回去进行
-  gdb 命令的编辑。
-- 待调试的程序在单独的窗口中运行。MS-Windows 上这是个新的控制台窗口。Unix 上，
-  如果  <a href="various.html#+terminal">+terminal</a>  特性可用，打开终端窗口以运行待调试的程序。
+编译时不支持  <a href="various.html#+terminal">+terminal</a>  特性或在 MS-Windows 平台上时，会在 <a href="options.html#'buftype'">'buftype'</a> 设为
+"prompt" 的缓冲区中运行 gdb。其行为略有不同:
+- 键入命令时，gdb 窗口会进入插入模式。<code class="special">&lt;Esc&gt;</code> 切换到普通模式，可移动光标，复制/
+  粘贴等。启动插入模式的命令 (如  <a href="insert.html#a">a</a>  或  <a href="insert.html#i">i</a> ) 会回到 gdb 命令编辑。
+- 待调试程序在独立窗口中运行。MS-Windows 上是新建控制台窗口。Unix 上
+   <a href="various.html#+terminal">+terminal</a>  特性可用时，会新开终端窗口运行待调试程序。
 
                                                 <b class="vimtag"> <a name="termdebug_use_prompt">termdebug_use_prompt</a> </b>
-即使  <a href="various.html#+terminal">+terminal</a>  特性可用，也可使用提示模式，用:
+即使  <a href="various.html#+terminal">+terminal</a>  特性可用，也可手动开启提示符模式:
 <code class="example">        let g:termdebug_config['use_prompt'] = v:true</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法:
 <code class="example">        let g:termdebug_use_prompt = v:true</code>
 
 
-不过，将来版本会淘汰后一种形式。
-
 <code class="section">映射 </code>
-termdebug 插件打开若干缺省映射。termdebug 会话终止后，所有这些映射复位到其原来
-的值。
+插件缺省启用若干映射。调试会话终止后，所有映射会恢复为原值。
 
                                         <b class="vimtag"> <a name="termdebug_map_K">termdebug_map_K</a> </b> <b class="vimtag"> <a name="termdebug-mappings">termdebug-mappings</a> </b>
-K 键通常映射为  <a href="terminal.html#:Evaluate">:Evaluate</a> ，除非已经定义了 K 的缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> )。
-如果不想如此:
+K 键缺省映射到  <a href="terminal.html#:Evaluate">:Evaluate</a> ，但已定义缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> ) 时除外。要关
+闭此映射:
 <code class="example">        let g:termdebug_config['map_K'] = v:false</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebug_map_K = v:false</code>
 
-不过，将来版本会淘汰后一种形式。
-
                                                 <b class="vimtag"> <a name="termdebug_map_minus">termdebug_map_minus</a> </b>
-- 键通常映射为  <a href="terminal.html#:Down">:Down</a> ，除非已经定义了 - 的缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> )。如
-果不想如此:
+- 键缺省映射到  <a href="terminal.html#:Down">:Down</a> ，但已定义缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> ) 时除外。要关闭此
+映射:
 <code class="example">        let g:termdebug_config['map_minus'] = v:false</code>
 
                                                 <b class="vimtag"> <a name="termdebug_map_plus">termdebug_map_plus</a> </b>
-+ 键通常映射为  <a href="terminal.html#:Up">:Up</a> ，除非已经定义了 + 的缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> )。如果不
-想如此:
++ 键缺省映射到  <a href="terminal.html#:Up">:Up</a> ，但已经定义缓冲区局部映射 ( <a href="map.html#:map-local">:map-local</a> ) 时除外。要关闭此
+映射:
 <code class="example">        let g:termdebug_config['map_plus'] = v:false</code>
 
                                                 <b class="vimtag"> <a name="termdebug_disasm_window">termdebug_disasm_window</a> </b>
-要缺省显示 Asm 窗口，设置 "disasm_window" 标志位为 1。"disarm_window_height"
-项目可用于设置窗口高度:
+要缺省显示反汇编窗口，可将 "disasm_window" 设为 1。"disarm_window_height" 则用
+于设置反汇编窗口高度:
 <code class="example">        let g:termdebug_config['disasm_window'] = v:true</code>
 <code class="example">        let g:termdebug_config['disasm_window_height'] = 15</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebug_disasm_window = 15</code>
 
-不过，将来版本会淘汰后一种形式。
-
-设为任何大于 1 的值时，Asm 窗口会设为此高度。如果当前窗口有足够的横向空间，会
-垂直分割，Asm 窗口和源代码窗口并排显示 (不使用高度选项)。
+大于 1 的值会作为反汇编窗口高度。但当前窗口有足够横向空间时，会垂直分割，反汇
+编窗口和源码窗口并排显示 (此时不使用高度选项)。
 
                                                 <b class="vimtag"> <a name="termdebug_variables_window">termdebug_variables_window</a> </b>
-要缺省显示 Var 窗口，设置本标志位为 1。"variables_window_height" 项目可用于设
-置窗口高度:
+要缺省显示变量窗口，可将 "variables_window" 为 1。"variables_window_height" 则
+可用于设置变量窗口高度:
 <code class="example">        let g:termdebug_config['variables_window'] = v:true</code>
 <code class="example">        let g:termdebug_config['variables_window_height'] = 15</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebug_variables_window = 15</code>
 
-不过，将来版本会淘汰后一种形式。
-
-设为任何大于 1 的值时，Var 窗口会设为此高度。如果当前窗口有足够的横向空间，会
-垂直分割，Var 窗口和源代码窗口并排显示 (不使用高度选项)。
+大于 1 的值会作为变量窗口高度。但当前窗口有足够横向空间时，会垂直分割，变量窗
+口和源码窗口并排显示 (此时不使用高度选项)。
 
 
 <code class="section">通信 </code>
                                                 <b class="vimtag"> <a name="termdebug-communication">termdebug-communication</a> </b>
-还有一个缓冲区，它是隐藏的，用于 Vim 和 gdb 的通信。缓冲区名是 "gdb
-communication"。不要删除此缓冲区，否则会破坏调试器。
+存在一个用于 Vim 和 gdb 通信的隐藏缓冲区。缓冲区名为 "gdb communication"。请勿
+删除该缓冲区，否则调试器会失效。
 
-gdb 有一些奇怪的行为，此插件会尽力而为使其工作。例如，在 gdb 窗口中输入
-"continue" 后 <code class="keystroke">CTRL-C</code> 可用于中断运行中的程序。但用 MI 命令 "-exec-continue" 后
-<code class="keystroke">CTRL-C</code> 并不中断。因此  <a href="terminal.html#:Continue">:Continue</a>  命令用 "continue" 而不是通信通道。
+gdb 有一些特殊行为，插件尽可能做兼容处理。例如，在 gdb 窗口输入 "continue"
+后，可用 <code class="keystroke">CTRL-C</code> 中断正在运行的程序。但使用 MI 命令 "-exec-continue" 后，按
+<code class="keystroke">CTRL-C</code> 不会中断。因此  <a href="terminal.html#:Continue">:Continue</a>  命令会直接用 "continue" 而不走通信通道。
 
 
 <code class="section">远程调试 </code>
                                                         <b class="vimtag"> <a name="termdebug-remote">termdebug-remote</a> </b>
-远程调试的一个主要问题是如何得到被调试程序的源代码。此插件可利用系统和 vim 的
-网络能力来绕过这个问题。
+远程调试的主要难点是访问被调试程序的源码文件。插件可借助系统和 vim 的网络能力
+绕过此问题。
                                                 <b class="vimtag"> <a name="termdebug-remote-example">termdebug-remote-example</a> </b>
-可复制  <a href="terminal.html#termdebug-example">termdebug-example</a>  以在通过  <code class="badlink">ssh</code>  可远程访问的 Linux 机器上用  <a href="debug.html#gdb">gdb</a>  调
-试器来调试 Vim。
+可复制  <a href="terminal.html#termdebug-example">termdebug-example</a>  ，改造为通过  <code class="badlink">ssh</code>  在远程 Linux 机器上用  <a href="debug.html#gdb">gdb</a>  调试
+器调试 Vim。
 
-- 在本地示例中解释过的编译 Vim。
+- 按照本地示例，编译 Vim。
 
-- 如果 "socat" 在远端机器上不可用，<code class="badlink">'terminal'</code> 模式不能正确工作。退回到
+- 如果 "socat" 在远端机器上不可用，<code class="badlink">'terminal'</code> 模式不能正确工作。此时需要退回到
    <a href="terminal.html#termdebug_use_prompt">termdebug_use_prompt</a> :
 <code class="example">    :let g:termdebug_config = {}</code>
 <code class="example">    :let g:termdebug_config['use_prompt'] = v:true</code>
 <code class="example"></code>
-- 指定运行远程  <a href="debug.html#gdb">gdb</a>  实例的命令行:
+- 指定启动远程  <a href="debug.html#gdb">gdb</a>  实例的命令行:
 <code class="example">    :let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']</code>
-   解释如何使用  <code class="badlink">ssh</code>  超出了本例的范围，但<code class="note">注意</code>在  <code class="badlink">$HOME/.ssh/config</code>  文件里指
-   定用户名、密钥和其它选项可以极大地简化此命令行。
+    <code class="badlink">ssh</code>  配置文档超出本例范围，但可在  <code class="badlink">$HOME/.ssh/config</code>  文件中指定用户名、密
+   钥等选项，极大简化命令行。
 
-- 提供把远程路径翻译成  <a href="pi_netrw.html#netrw">netrw</a>  路径的提示:
+- 给出将远程路径翻译成  <a href="pi_netrw.html#netrw">netrw</a>  路径的转换规则:
 <code class="example">    :let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }</code>
 <code class="example"></code>
-- 载入 termdebug 插件并启动 Vim 的调试:
+- 加载插件，启动 Vim 调试:
 <code class="example">    :packadd termdebug</code>
 <code class="example">    :Termdebug vim</code>
 <code class="example"></code>
-你现在拥有了和本地示例中相同的三个窗口，后续步骤也相同。唯一区别是源窗口在
-netrw 缓冲区里而非本地的缓冲区里显示。
+此时窗口布局与本地示例一致 (三个窗口)，操作步骤也相同。唯一区别是源码窗口使用
+netrw 缓冲区，而非本地文件。
 
                                                 <b class="vimtag"> <a name="termdebug-substitute-path">termdebug-substitute-path</a> </b>
-使用  <code class="badlink">g:termdebug_config['substitute_path']</code>  项目来映射远端到本地文件，使用和
-gdb 的  <code class="badlink">substitute-path</code>  命令相同的策略。
-例如:
-- 用  <a href="pi_netrw.html#netrw">netrw</a>  来通过 ssh 远程访问文件:
+ <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的 "substitute_path" 项为字典，用于将远端路径映射为本地路
+径，可参照 gdb 的  <code class="badlink">substitute-path</code>  命令策略。
+示例:
+- 通过  <a href="pi_netrw.html#netrw">netrw</a>  + ssh 远程访问文件:
 <code class="example">    let g:termdebug_config['command'] = ['ssh', 'hostname', 'gdb']</code>
 <code class="example">    let g:termdebug_config['substitute_path'] = { '/': 'scp://hostname//' }</code>
-  <code class="note">注意</code>: 此处的键指定远程机器的根路径，而值为本地路径。
-- 使用 Windows 的  <code class="badlink">UNC</code>  路径来访问  <code class="badlink">WSL2</code>  源:
+  <code class="note">注意</code>: 键指定远程机器根路径，值为对应的本地访问路径。
+- 使用 Windows 的  <code class="badlink">UNC</code>  路径访问  <code class="badlink">WSL2</code>  源码:
 <code class="example">    let g:termdebug_config['command'] = ['wsl', 'gdb']</code>
 <code class="example">    let g:termdebug_config['substitute_path'] = {</code>
 <code class="example">        \ '/': '\\wsl.localhost\Ubuntu-22.04\',</code>
 <code class="example">        \ '/mnt/c/': 'C:/' }</code>
-  <code class="note">注意</code>: 需要多个映射: 每个驱动器一个映射，还有一个对应 linux 文件系统 (可用
-  <code class="badlink">wslpath</code>  查询)。
+  <code class="note">注意</code>: 需要多条映射: 分别对应各个驱动器以及 linux 文件系统 (可用  <code class="badlink">wslpath</code>  查
+  询)。
 
-此模式下，可以检测任何   <code class="badlink">ssh</code>  或  <code class="badlink">wsl</code>  命令，而可用类似的命令来在远程的  <code class="badlink">tty</code> 
-终端会话中启动  <code class="badlink">socat</code>  并连接到  <a href="debug.html#gdb">gdb</a> 。
-如果  <code class="badlink">socat</code>  不可用，备选会使用普通的远程终端。
-下一部分说明如何覆盖上述的缺省行为。
+在此模式下，会自动识别  <code class="badlink">ssh</code>  或  <code class="badlink">wsl</code>  命令，自动在远程  <code class="badlink">tty</code>  终端会话中启动
+ <code class="badlink">socat</code>  并与  <a href="debug.html#gdb">gdb</a>  建立连接。如果  <code class="badlink">socat</code>  不可用，会使用普通远程终端作为后备。
+下一节介绍如何覆盖此缺省行为。
 
                                                 <b class="vimtag"> <a name="termdebug-remote-window">termdebug-remote-window</a> </b>
-要使用其它的终端客户端，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  里的
-"remote_window" 项。例如:
-- 使用 "prompt" 模式，在 docker 容器里调试:
+在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前，可设置  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的 "remote_window" 项更换
+远程终端客户端。示例:
+- 在 docker 容器内调试，并使用 "提示符" 模式:
 <code class="example">    let g:termdebug_config['use_prompt'] = v:true</code>
 <code class="example">    let g:termdebug_config['command'] = ['docker', 'run', '-i',</code>
 <code class="example">        \ '--rm', '--name', 'container-name', 'image-name', 'gdb']</code>
@@ -1541,10 +1525,9 @@ gdb 的  <code class="badlink">substitute-path</code>  命令相同的策略。
 <code class="example">        \ ['docker', 'exec', '-ti', 'container-name'</code>
 <code class="example">        \ ,'socat', '-dd', '-', 'PTY,raw,echo=0']</code>
 <code class="example"></code>
-- 使用一个 "终端缓冲区"，在 docker 容器里调试。
-  此容器应已运行，因为和前例不同，在  <code class="badlink">终端模式</code>  里 "主程序" 和 "通信" pty 在
-  gdb pty 之前先建立:
-<code class="example">    $ docker run -ti --rm --name container-name immage-name</code>
+- 在 docker 容器内调试，并使用 "终端缓冲区" 模式。容器需要预先启动，因为和上个
+  模式不同，终端模式需要在创建 gdb 伪终端前先创建 "主程序" 及 "通信" 伪终端:
+<code class="example">    $ docker run -ti --rm --name container-name image-name</code>
 <code class="example"></code>
    然后，启动调试器:
 <code class="example">    let g:termdebug_config['use_prompt'] = v:false " 缺省</code>
@@ -1554,138 +1537,129 @@ gdb 的  <code class="badlink">substitute-path</code>  命令相同的策略。
 <code class="example">        \ ['docker', 'exec', '-ti', 'container-name'</code>
 <code class="example">        \ ,'socat', '-dd', '-', 'PTY,raw,echo=0']</code>
 <code class="example"></code>
-<code class="note">注意</code>: "command" 在  <a href="terminal.html#termdebug-prompt">termdebug-prompt</a>  模式下不能用  <a href="starting.html#-t">-t</a>  ，因为提示缓冲区不能处
-理  <code class="badlink">tty</code>  连接。
-而 "remote_window" 命令必须使用  <a href="starting.html#-t">-t</a> 。不然的话，它没有 gdb 要连接到的
-`pty 从设备`。
-<code class="note">注意</code>: 使用 "terminal" 模式时，"socat" 必须在远程机器上可用。
-<code class="note">注意</code>: 可通过混合使用  <code class="badlink">数据卷</code>  和映射 (参见  <a href="terminal.html#termdebug-substitute-path">termdebug-substitute-path</a> ) 来访问
-docker 容器源。
+<code class="note">注意</code>:  <a href="terminal.html#termdebug-prompt">termdebug-prompt</a>  模式下，"command" 不能带 "-t" (使用伪终端)，因为提示
+符缓冲区无法处理伪终端连接。
+而 "remote_window" 命令必须带 "-t"。否则无法提供 gdb 连接所需的伪终端从设备。
+<code class="note">注意</code>: 终端模式要求远程机器必须安装 "socat"。
+<code class="note">注意</code>: 可配合数据卷与路径映射 (参见  <a href="terminal.html#termdebug-substitute-path">termdebug-substitute-path</a> )，访问 docker
+容器内的源码。
 
 <code class="section">GDB 命令 </code>
                                                         <b class="vimtag"> <a name="g:termdebugger">g:termdebugger</a> </b>
-要改变 gdb 命令的名字，在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前设置 g:termdebug_config 的
-"debugger" 项目或 "g:termdebugger" 变量:
+在调用  <a href="terminal.html#:Termdebug">:Termdebug</a>  前，可设置  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的 "debugger" (<code class="vim">译者注</code>: 应
+为 "command") 项，自定义 gdb 命令的程序名:
 <code class="example">        let g:termdebug_config['command'] = "mygdb"</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebugger = "mygdb"</code>
 <code class="example"></code>
-不过，将来版本会淘汰后一种形式。
-
-如果命令需要参数，用列表:
+命令需要参数时，可用列表形式:
 <code class="example">        let g:termdebug_config['command'] = ['rr', 'replay', '--']</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebugger = ['rr', 'replay', '--']</code>
 <code class="example"></code>
-会加入若干参数，使 gdb 更适用于调试器功能。要修改这些参数，可提供一个函数以过
-滤参数列表:
+插件会自动追加若干参数，确保 gdb 可正常完成调试功能。如需修改自动追加参数，可
+提供函数，对参数列表进行过滤:
 <code class="example">        let g:termdebug_config['command_filter'] = MyDebugFilter</code>
 <code class="example"></code>
-"command_filter" 场景可以解决通过 "ssh" 远程调试时的转义问题。出于方便考虑，已
-经提供了一个默认过滤器，用于转义参数中的空白字符。该过滤器在 "ssh" 环境下会自
-动启用，也可在其他场景中按如下方式使用:
+"command_filter" 典型应用场景是处理 "ssh" 远程调试时的转义问题。为便利起见，内
+置用于转义参数内空白字符的缺省过滤器。该过滤器在 "ssh" 环境下自动启用，在其他
+场景下，也可手动调用如下:
 <code class="example">        let g:termdebug_config['command_filter'] =</code>
-<code class="example">        /   function('g:Termdebug_escape_whitespace')</code>
+<code class="example">        \   function('g:Termdebug_escape_whitespace')</code>
 <code class="example"></code>
-如果不想加入参数，但需要设置 "pty"，可提供一个函数添加必须的参数:
+要跳过所有的自动追加参数，但仍需设置伪终端，可提供函数自行添加所需参数:
 <code class="example">        let g:termdebug_config['command_add_args'] = MyAddArguments</code>
-调用此函数时，首个参数是目前已知的参数列表，第二个参数是 pty 名。
+此函数调用时，接收两个参数，首个参数为当前已有参数列表，第二个参数为伪终端名。
                                                         <b class="vimtag"> <a name="gdb-version">gdb-version</a> </b>
-只能用和 gdb 完全兼容的调试器。Vim 使用 GDB/MI 接口。"new-ui" 命令需要 gdb
-7.12 或更新的版本。如见此错误:
+仅支持完全兼容 gdb 的调试器。Vim 使用 GDB/MI 接口。"new-ui" 命令更要求 gdb
+7.12 或更高版本。如果出现报错:
 <code class="section">        Undefined command: "new-ui". Try "help".</code>
-你的 gdb 版本太老了。
+说明 gdb 版本过低。
 
 
 <code class="section">颜色 </code>
                                         <b class="vimtag"> <a name="hl-debugPC">hl-debugPC</a> </b> <b class="vimtag"> <a name="hl-debugBreakpoint">hl-debugBreakpoint</a> </b>
-标号的颜色可用以下高亮组调整:
-- debugPC               当前位置
+标号颜色可通过以下高亮组调整:
+- debugPC               当前执行位置
 - debugBreakpoint       断点
 
-<a href="options.html#'background'">'background'</a> 为 "light" 的缺省:
+<a href="options.html#'background'">'background'</a> 为 "light" 时的缺省值:
   hi debugPC term=reverse ctermbg=lightblue guibg=lightblue
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
-<a href="options.html#'background'">'background'</a> 为 "dark" 的缺省:
+<a href="options.html#'background'">'background'</a> 为 "dark" 时的缺省值:
   hi debugPC term=reverse ctermbg=darkblue guibg=darkblue
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
 
 <code class="section">快捷键 </code>
                                                         <b class="vimtag"> <a name="termdebug_shortcuts">termdebug_shortcuts</a> </b>
-可以定义自己的快捷键 (映射) 用 TermDebugSendCommand() 函数来控制 gdb，可在任何
-窗口中使用。例如:
+可自定义全局映射，通过 TermDebugSendCommand() 函数发送 gdb 命令，在任意窗口均
+可生效。例如:
 <code class="example">        map ,w :call TermDebugSendCommand('where')&lt;CR&gt;</code>
-参数是 gdb 命令。
+函数参数是任意 gdb 命令。
 
 
-<code class="section">弹出式菜单 </code>
+<code class="section">弹出菜单 </code>
                                                         <b class="vimtag"> <a name="termdebug_popup">termdebug_popup</a> </b>
-缺省 Termdebug 插件设置 <a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup_setpos"，并在弹出式菜单里加入以
-下项目:
-        Set breakpoint           <a href="terminal.html#:Break">:Break</a> 
-        Clear breakpoint         <a href="terminal.html#:Clear">:Clear</a> 
-        Evaluate                 <a href="terminal.html#:Evaluate">:Evaluate</a> 
-如果不想要，可以这样关闭之:
+插件缺省将 <a href="options.html#'mousemodel'">'mousemodel'</a> 设为 "popup_setpos"，并在弹出菜单中添加以下项目:
+        Set breakpoint           <a href="terminal.html#:Break">:Break</a>         设置断点
+        Clear breakpoint         <a href="terminal.html#:Clear">:Clear</a>         清除断点
+        Run until                <a href="terminal.html#:Until">:Until</a>         运行到指定位置
+        Evaluate                 <a href="terminal.html#:Evaluate">:Evaluate</a>      求值
+如需关闭弹出菜单:
 <code class="example">        let g:termdebug_config['popup'] = 0</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebug_popup = 0</code>
-<code class="example"></code>
-不过，将来版本会淘汰后一种形式。
 
 
 <code class="section">改变缺省标号 </code>
                                                         <b class="vimtag"> <a name="termdebug_signs">termdebug_signs</a> </b>
-标号列上，Termdebug 用断点 ID 的十六进制值来代表断点。如果大于 "0xFF"，显示为
-"F+"，因为标号只有两个屏幕单元的空间。也可用十进制断点标号，此时如果用 ID 大于
-99，会显示为 "9+"。
+插件在标号栏上用断点 ID 的十六进制值标识断点。因为标号仅占两个屏幕单元空间，编
+号大于 "0xFF" 时会显示为 "F+"。也可改用十进制断点标号，此时编号大于 99 时会显
+示为 "9+"。
 
-要定制断点标号以在标号列中显示  <code class="badlink">&gt;&gt;</code> :
+要自定义在标号列中显示的断点标号，例如显示  <code class="badlink">&gt;&gt;</code> :
 <code class="example">        let g:termdebug_config['sign'] = '&gt;&gt;'</code>
-可以为开始几个断点指定不同的标号:
+要为前几个断点单独指定不同的标号:
 <code class="example">        let g:termdebug_config['signs'] = ['&gt;1', '&gt;2', '&gt;3', '&gt;4', '&gt;5',</code>
 <code class="example">         \ '&gt;6', '&gt;7', '&gt;8', '&gt;9']</code>
 <code class="example">        let g:termdebug_config['sign'] = '&gt;&gt;'</code>
-如果要使用十进制 (基底为 10) 断点标号:
+要使用十进制编号的断点标号:
 <code class="example">        let g:termdebug_config['sign_decimal'] = 1</code>
-如果没有 g:termdebug_config，可用:
+尚未设置  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  时，可用:
 <code class="example">        let g:termdebug_config = {'sign': '&gt;&gt;'}</code>
-类似地，要打开十进制标号:
+类似地，要启用十进制编号的标号:
 <code class="example">        let g:termdebug_config = {'sign_decimal': 1}</code>
 <code class="example"></code>
 <code class="example"></code>
-<code class="section">窗口工具条 </code>
+<code class="section">窗口工具栏 </code>
                                                         <b class="vimtag"> <a name="termdebug_winbar">termdebug_winbar</a> </b>
-缺省 Termdebug 插件在打开鼠标时创建窗口工具条 (见  <a href="terminal.html#:Winbar">:Winbar</a> )。如果不想要，可以
-这样关闭之:
+开启鼠标时，插件缺省创建窗口工具栏 (见  <a href="terminal.html#:Winbar">:Winbar</a> )。要关闭工具栏:
 <code class="example">        let g:termdebug_config['winbar'] = 0</code>
 <code class="example"></code>
 <code class="example"></code>
 <code class="section">Vim 窗口宽度 </code>
                                                         <b class="vimtag"> <a name="termdebug_wide">termdebug_wide</a> </b>
-要改变调试开始时的 Vim 窗口宽度并用垂直分割:
+调试启动时，要修改 Vim 窗口宽度并使用垂直分割:
 <code class="example">        let g:termdebug_config['wide'] = 163</code>
-如果没有 g:termdebug_config，可用:
+无  <a href="terminal.html#g:termdebug_config">g:termdebug_config</a>  的旧写法 (后续版本会废弃):
 <code class="example">        let g:termdebug_wide = 163</code>
 <code class="example"></code>
-不过，将来版本会淘汰后一种形式。
+使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时，会将 <a href="options.html#'columns'">'columns'</a> 设为 163。退出调试器后恢复原值。
 
-这会在使用  <a href="terminal.html#:Termdebug">:Termdebug</a>  时设置 <a href="options.html#'columns'">'columns'</a> 为 163。退出调试器后此值复原。
+设置了 "wide" 值但当前 <a href="options.html#'columns'">'columns'</a> 值更大时，使用垂直分割，但不修改 <a href="options.html#'columns'">'columns'</a>。
 
-如果设置了宽度而 <a href="options.html#'columns'">'columns'</a> 已设为一个更大的值，则使用垂直分割且不改变
-<a href="options.html#'columns'">'columns'</a>。
-
-把宽度设为 1 会保证垂直分割且不会改变 <a href="options.html#'columns'">'columns'</a>。这可用于 Vim 不能改变终端大小
-的场合。
+将 "wide" 值设为 1 可确保使用垂直分割但不改动 <a href="options.html#'columns'">'columns'</a>。适合 Vim 无法调整终端
+窗口大小的场景。
 
 
-<code class="section">光标处弹出窗口里计算 </code>
+<code class="section">光标处弹窗求值 </code>
                                                 <b class="vimtag"> <a name="termdebug_evaluate_in_popup">termdebug_evaluate_in_popup</a> </b>
-缺省  <a href="terminal.html#:Evaluate">:Evaluate</a>  简单地显示输出。对大量输出，这很难读甚至会被截断。
-替代方案是，在当前光标位置把计算结果输出到弹出窗口:
+ <a href="terminal.html#:Evaluate">:Evaluate</a>  缺省直接回显输出结果。对较大数据结构，容易造成阅读不便，内容甚至会
+被截断。可改为将求值结果在当前光标位置用弹窗显示:
 <code class="example">        let g:termdebug_config['evaluate_in_popup'] = v:true</code>
-也可以 "一次性" 使用此功能:
+也可以 "一次性" 临时启用此功能:
 <code class="example">        func OnCursorHold()</code>
 <code class="example">          let g:termdebug_config['evaluate_in_popup'] = v:true</code>
 <code class="example">          :Evaluate</code>
@@ -1695,15 +1669,14 @@ docker 容器源。
 
 <code class="section">贡献 </code>
                                                 <b class="vimtag"> <a name="termdebug_contributing">termdebug_contributing</a> </b>
-欢迎贡献对 termdebug 的改进。
-不过，开发过程中，常常要像  <code class="badlink">echo</code>  语句 (或类似) 的机制来帮助开发。
-为此，可以设置:
+欢迎提交 termdebug 改进。
+开发过程中，常会用到  <code class="badlink">echo</code>  这类语句辅助调试。为此可开启调试模式:
 <code class="example">    let g:termdebug_config['debug'] = v:true</code>
 
-这会设置   <code class="badlink">DEBUG</code>  变量为  <a href="vim9.html#true">true</a> ，可在源代码里引用。下面是用法的示例:
+该设置会将  <code class="badlink">DEBUG</code>  变量设为  <a href="vim9.html#true">true</a> ，可在源码中引用。示例如下:
 <code class="example">    if exists('g:termdebug_loaded')</code>
 <code class="example">      if DEBUG</code>
-<code class="example">        Echoerr('Termdebug already loaded.')</code>
+<code class="example">        Echoerr('Termdebug 已经加载。')</code>
 <code class="example">      endif</code>
 <code class="example">      finish</code>
 <code class="example">    endif</code>

@@ -42,105 +42,105 @@
 
 终端信息                                                <b class="vimtag"> <a name="terminal-info">terminal-info</a> </b>
 
-Vim 使用你使用的终端的信息来填充屏幕和识别你输入的键。如果信息不正确，屏幕可能
-会混乱，而一些键也可能识别不了。屏幕上必须执行的动作是通过输出字符串完成的。特
-殊键会产生一系列字符的序列。这些字符串存在终端选项里，见  <a href="term.html#terminal-options">terminal-options</a> 。
+Vim 使用当前终端信息完成屏幕绘制与按键识别。如果信息有误，会出现屏幕乱码以及按
+键无法识别。屏幕操作通过向终端发送字符序列实现。而特殊按键会由终端产生相应字符
+序列。这些字符序列都会用终端选项保存，见  <a href="term.html#terminal-options">terminal-options</a> 。
 
-<code class="note">注意</code>: 运行  <a href="gui.html#GUI">GUI</a>  的时候这里多数都用不到。
+<code class="note">注意</code>:  <a href="gui.html#GUI">GUI</a>  版本运行时，此处多数描述不生效。
 
 1. 启动                          <a href="term.html#startup-terminal">startup-terminal</a> 
 2. 终端选项                      <a href="term.html#terminal-options">terminal-options</a> 
 3. 窗口大小                      <a href="term.html#window-size">window-size</a> 
-4. 慢速和快速终端                <a href="term.html#slow-fast-terminal">slow-fast-terminal</a> 
+4. 低速和快速终端                <a href="term.html#slow-fast-terminal">slow-fast-terminal</a> 
 5. 使用鼠标                      <a href="term.html#mouse-using">mouse-using</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>1. 启动                                                 <b class="vimtag"> <a name="startup-terminal">startup-terminal</a> </b></h4>
-Vim 启动时，假定一个缺省终端类型。Amiga 上，这是一个标准的 CLI 窗口，
-MS-Windows 是 pc 终端，而 Unix 则是 ansi 终端。还有一些终端类型，它们都总是可
-用的，见下  <a href="term.html#builtin-terms">builtin-terms</a> 。
+Vim 启动时，会预设缺省终端类型。Amiga 上是标准 CLI 窗口，MS-Windows 上是 pc 终
+端，而 Unix 上则是 ansi 终端。另有若干总是可用的内置终端类型，见下
+ <a href="term.html#builtin-terms">builtin-terms</a> 。
 
-使用 '-T' Vim 参数，你可以给出终端名。如果没有给出，Vim 会试图从 TERM 环境变量
-里读取名字。
+可用  <a href="starting.html#-T">-T</a>  Vim 参数指定终端名。未指定时，Vim 会试图从 TERM 环境变量读取。
 
                                 <b class="vimtag"> <a name="termcap">termcap</a> </b> <b class="vimtag"> <a name="terminfo">terminfo</a> </b> <b class="vimtag"> <a name="E557">E557</a> </b> <b class="vimtag"> <a name="E558">E558</a> </b> <b class="vimtag"> <a name="E559">E559</a> </b>
-Unix 系统使用 terminfo 数据库或者 termcap 文件。在所有的文档里，这被统称为
-"termcap"。编译时，configure 的运行会自动决定是用 terminfo 还是 termcap。如果
-运行 Vim 时，":version" 的输出显示  <a href="various.html#+terminfo">+terminfo</a>  的话，就意味着使用的是
-terminfo。另见  <a href="tips.html#xterm-screens">xterm-screens</a> 。
+Unix 系统使用 terminfo 数据库或者 termcap 文件。文档中统一称为 "termcap" (终端
+能力库)。编译阶段 configure 脚本会在 terminfo 和 termcap 中自动选择。Vim 运行
+时可查看  <a href="various.html#:version">:version</a>  输出，显示  <a href="various.html#+terminfo">+terminfo</a>  则代表使用 terminfo。另见
+ <a href="tips.html#xterm-screens">xterm-screens</a> 。
 
-在非 Unix 系统中，termcap 只有在 Vim 编译时定义 TERMCAP 才有效。
+非 Unix 系统上，仅当 Vim 编译时定义 TERMCAP 才有效 (<code class="vim">译者注</code>: 现已无需如此，此说
+明已过时)。
 
                                         <b class="vimtag"> <a name="builtin-terms">builtin-terms</a> </b> <b class="vimtag"> <a name="builtin_terms">builtin_terms</a> </b>
-有若干内建的终端可用。从 9.0.0280 补丁开始，不同 Vim 版本间此支持不再有区别。
-用 `:set term=xxx` (在不运行 GUI 的时候)，可以看到可用的内建终端类型列表。另见
+Vim 自带若干内置终端。从 9.0.0280 补丁开始，各 Vim 版本的内置终端已经统一。
+非 GUI 环境下执行 `:set term=xxx` 时，报错信息会列出全部可用内置终端。另见
  <code class="badlink">+builtin_terms</code> 。
 
-如果包含了 termcap 的代码，Vim 会试图从 termcap 文件和内建的 termcap 里得到你
-使用的终端的字符串。如果你使用的终端项目确实存在，两者都会使用。哪个在前面决定
-于 <a href="options.html#'ttybuiltin'">'ttybuiltin'</a> 选项的设置:
+编译包含 termcap 支持时，Vim 会同时从外部 termcap 文件和内置 termcap 读取终端
+序列。所用终端名两者都有对应条目时，两者都会使用。使用顺序取决于 <a href="options.html#'ttybuiltin'">'ttybuiltin'</a>
+选项:
 
-<a href="options.html#'ttybuiltin'">'ttybuiltin'</a> 打开       1: 内建 termcap         2: 外部 termcap
-<a href="options.html#'ttybuiltin'">'ttybuiltin'</a> 关闭       1: 外部 termcap         2: 内建 termcap
+<a href="options.html#'ttybuiltin'">'ttybuiltin'</a> 打开       1: 内置 termcap         2: 外部 termcap
+<a href="options.html#'ttybuiltin'">'ttybuiltin'</a> 关闭       1: 外部 termcap         2: 内置 termcap
 
-如果其中某个选项不存在，就从另外一个那里读取。如果两个都存在，就从排名前面的那
-个读取。
+一处缺失某项终端能力时，会从另一处获取。两者都存在时，则按上述顺序读取。
 
-使用哪个外部 termcap 文件和不同的系统有关，也可能依赖于环境变量 "TERMCAP" 和
-"TERMPATH"。见 "man tgetent"。
+外部 termcap 文件路径随系统变化，也受环境变量 "TERMCAP" 和 "TERMPATH" 控制。见
+"man tgetent"。
 
-依赖于终端的设置                                <b class="vimtag"> <a name="term-dependent-settings">term-dependent-settings</a> </b>
+终端相关设置                                    <b class="vimtag"> <a name="term-dependent-settings">term-dependent-settings</a> </b>
 
-如果你想根据终端名字设置选项或者映射，最好在 .vimrc 里设置。示例:
+要根据终端名设置选项或映射，建议在 .vimrc 中设置。示例:
 <code class="example"></code>
 <code class="example">   if &amp;term == "xterm"</code>
-<code class="example">     ... xterm 映射和设置 ...</code>
+<code class="example">     ... xterm 特定映射和设置 ...</code>
 <code class="example">   elseif &amp;term =~ "vt10."</code>
-<code class="example">     ... vt100、vt102 映射和设置 ...</code>
+<code class="example">     ... vt100、vt102 特定映射和设置 ...</code>
 <code class="example">   endif</code>
 
                                                 <b class="vimtag"> <a name="raw-terminal-mode">raw-terminal-mode</a> </b>
-普通的编辑会把终端设为原始 ("raw") 模式。<a href="term.html#'t_ti'">'t_ti'</a>、<a href="term.html#'t_TI'">'t_TI'</a> 和 <a href="term.html#'t_ks'">'t_ks'</a> 定义的字符串
-会送到终端上。正常情况下，这把终端设为一个状态，该状态下能合法给出 termcap 代
-码，并激活光标和功能键。
-Vim 退出终端时，它会回到 Vim 启动前的模式。<a href="term.html#'t_te'">'t_te'</a>、<a href="term.html#'t_TE'">'t_TE'</a> 和 <a href="term.html#'t_ke'">'t_ke'</a> 定义的字符
-串会发送给终端。在 Amiga 上，执行外部命令的命令 (例如 "!!") 会把终端暂时置回普
-通模式。这意味着你可以按打印键停止到屏幕的输出。输出在按 <code class="special">&lt;BS&gt;</code> 时继续。
+普通编辑时，终端会进入原始 ("raw") 模式。Vim 会依次向终端发送 <a href="term.html#'t_ti'">'t_ti'</a>、<a href="term.html#'t_TI'">'t_TI'</a>
+和 <a href="term.html#'t_ks'">'t_ks'</a> 定义的字符序列。正常情况下，这会使终端进入一种 termcap 代码可用的状
+态，并启用光标和功能键。
+Vim 退出时，终端会恢复为 Vim 启动前的模式。Vim 会依次向终端发送 <a href="term.html#'t_ke'">'t_ke'</a>、<a href="term.html#'t_te'">'t_te'</a>
+和 <a href="term.html#'t_TE'">'t_TE'</a> 定义的字符序列。在 Amiga 上，执行外部命令 (如  <a href="change.html#!!">!!</a> ) 时终端会短暂切回
+普通模式。此时按可显示字符可暂停屏幕输出。按 <code class="special">&lt;BS&gt;</code> 恢复输出。
 
-<code class="note">注意</code>: 如果 <a href="term.html#'t_ti'">'t_ti'</a> 非空，Vim 假定它会切换到轮换屏幕上。执行外壳命令或退出 Vim
-时产生的结果可能会因此稍有不同。如果不想如此，用 <a href="term.html#'t_TI'">'t_TI'</a> 和 <a href="term.html#'t_TE'">'t_TE'</a> (但要附加而
-不是覆盖)。
+<code class="note">注意</code>: <a href="term.html#'t_ti'">'t_ti'</a> 非空时，Vim 假定终端会切换到备用屏幕。执行外壳命令或退出 Vim 的行
+为会因此略有变化。如果不想如此，可改用 <a href="term.html#'t_TI'">'t_TI'</a> 和 <a href="term.html#'t_TE'">'t_TE'</a> 追加相应序列 (务必追加
+内容，而非覆盖)。
 
-Vim 会试图用 <a href="term.html#'t_RK'">'t_RK'</a> termcap 项目来检测终端使用的键盘协议。它会在 <a href="term.html#'t_TI'">'t_TI'</a> 之后发
-送，但只在没有工作的时候才会做 (没有预输入或等待中的命令)。这是为了防止返回的
-响应出现在外壳命令中或 Vim 结束后才到达。
+Vim 通过 <a href="term.html#'t_RK'">'t_RK'</a> 终端能力项检测终端使用的键盘协议。该序列在 <a href="term.html#'t_TI'">'t_TI'</a> 之后发送，但
+仅当不繁忙时 (无预输入或待执行命令) 才会进行。这可以避免应答出现在外壳命令中、
+或在 Vim 结束后才到达。
 
                                                 <b class="vimtag"> <a name="xterm-bracketed-paste">xterm-bracketed-paste</a> </b>
-如果设置了 <a href="term.html#'t_BE'">'t_BE'</a> 选项，进入 "raw" 模式时会发送 <a href="term.html#'t_BE'">'t_BE'</a> 到终端，退出 "raw" 模式
-时则发送 <a href="term.html#'t_BD'">'t_BD'</a>。终端应在粘贴文本之前发送 <a href="term.html#'t_PS'">'t_PS'</a>，而粘贴文本之后发送 <a href="term.html#'t_PE'">'t_PE'</a>。
-这样 Vim 就能区隔粘贴的文本和键入的字符。粘贴文本的处理就像使用了鼠标中键，按
-本义插入而不作命令解释。
+设置 <a href="term.html#'t_BE'">'t_BE'</a> 选项时，进入原始模式后会向终端发送 <a href="term.html#'t_BE'">'t_BE'</a>，退出原始模式前则会发送
+<a href="term.html#'t_BD'">'t_BD'</a>。在此括号粘贴模式下，约定终端在粘贴文本前先发送 <a href="term.html#'t_PS'">'t_PS'</a>，而粘贴文本结束
+后发送 <a href="term.html#'t_PE'">'t_PE'</a>。借此 Vim 可以区分粘贴文本和手动键入字符。粘贴文本的处理逻辑等同
+于鼠标中键粘贴，即按本义插入，不会当作命令解析。
 
-请 <code class="note">注意</code>: 尽量括号内的粘贴试图防止粘贴时讨厌的副作用 (如 <code class="keystroke">CTRL-C</code> 或 <code class="special">&lt;Esc&gt;</code> 键)，
-它不应被视作安全保证，因为不同的终端实现的方式可能略有不同。粘贴到 Vim 时仍应
-小心。
+请 <code class="note">注意</code>: 括号粘贴模式的作用是防止粘贴时带来的副作用 (如 <code class="keystroke">CTRL-C</code> 或 <code class="special">&lt;Esc&gt;</code> 键被解
+析)，但这不应被视作安全保障，因为不同终端实现可能略有不同。粘贴内容仍应谨慎处
+理。
 
-光标在首列时，在光标前插入粘贴文本。否则在光标位置之后附加粘贴文本。这意味着你
-不能在首列之后粘贴。不幸的是 Vim 没有办法知道鼠标指针在哪里。
+光标位于首列时，粘贴文本会在光标前插入。其他情况下粘贴文本会插入在光标后。这意
+味着，无法在首列之后粘贴。不幸的是，Vim 无法提前获知鼠标指针位置，无法在括号粘
+贴时规避此限制。
 
-<code class="note">注意</code> 有些情况下 Vim 不能识别这种括号内的粘贴，而只能得到原始的文本。在其它一些
-情况下，Vim 只能得到首个粘贴的字符而丢失其余的部分，例如在使用 "r" 命令时。如
-果你对此不满意，在 .vimrc 这样关闭带括号的粘贴:
+<code class="note">注意</code> 部分场景下 Vim 无法识别括号粘贴，只能获取原始文本。还有部分场景只能获取粘
+贴的首个字符，其余丢失 (如  <a href="change.html#r">r</a>  命令)。如果出现问题而要关闭括号粘贴模式，可在
+.vimrc 里加入:
 <code class="example">        set t_BE=</code>
-如果这样做，Vim 运行时发送 <a href="term.html#'t_BD'">'t_BD'</a> 给终端以关闭括号内的粘贴。
+设置后，Vim 运行时会向终端发送 <a href="term.html#'t_BD'">'t_BD'</a> 以关闭括号粘贴模式。
 
-如果不设置  <a href="term.html#t_PS">t_PS</a>  或  <a href="term.html#t_PE">t_PE</a> ，不使用  <a href="term.html#t_BE">t_BE</a> 。围绕粘贴文字的转义码如果不能识别，
-这样可以确保括号内的粘贴不打开。
+如果  <a href="term.html#t_PS">t_PS</a>  或  <a href="term.html#t_PE">t_PE</a>  未设置，不会启用  <a href="term.html#t_BE">t_BE</a> 。保证在无法识别粘贴起止转义码
+时，不开启括号粘贴模式。
 
-<code class="note">注意</code>: <a href="options.html#'esckeys'">'esckeys'</a> 选项如没有置位，关闭括号内的粘贴模式 (置位 <a href="options.html#'compatible'">'compatible'</a> 选项时
-也是)。
+<code class="note">注意</code>: <a href="options.html#'esckeys'">'esckeys'</a> 选项未开启时也会关闭括号粘贴模式 (<a href="options.html#'compatible'">'compatible'</a> 选项置位时，隐
+含关闭此选项)。
 
-如果你的终端支持括号内的粘贴但没有自动设置相关选项，可以试试下面:
+确定终端支持括号粘贴模式但相关选项未自动配置时，可进行手动配置:
 <code class="example"></code>
 <code class="example">        if &amp;term =~ "screen"</code>
 <code class="example">          let &amp;t_BE = "\e[?2004h"</code>
@@ -149,15 +149,15 @@ Vim 会试图用 <a href="term.html#'t_RK'">'t_RK'</a> termcap 项目来检测�
 <code class="example">          exec "set t_PE=\e[201~"</code>
 <code class="example">        endif</code>
 <code class="example"></code>
-ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、"BD"、"PS"
-和 "PE"。如果有此版本，你的终端可能不需要手动配置。
+ncurses 6.4 版本 (2023 年初) 为部分终端新增了 "BE"、"BD"、"PS" 和 "PE" 等
+terminfo 项目。已有此版本时，可能无需手动配置。
 
                                                         <b class="vimtag"> <a name="tmux-integration">tmux-integration</a> </b>
-在 tmux 里执行 Vim 时如果有问题，下面有一些提示。可以注释掉对你不适用的部分
-(取决于 tmux 运行所在的终端):
+在 tmux 内执行 Vim 时如果出现问题，下面给出一些提示。可将不适用的部分注释掉
+(效果取决于 tmux 运行所在的终端):
 <code class="example"></code>
 <code class="example">    if !has('gui_running') &amp;&amp; &amp;term =~ '^\%(screen\|tmux\)'</code>
-<code class="example">        " 更好鼠标支持，见 :help 'ttymouse'</code>
+<code class="example">        " 提供更好鼠标支持，见 :help 'ttymouse'</code>
 <code class="example">        set ttymouse=sgr</code>
 <code class="example"></code>
 <code class="example">        " 打开真彩，见 :help xterm-true-color</code>
@@ -165,7 +165,7 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
 <code class="example">        let &amp;t_8f = "\&lt;Esc&gt;[38;2;%lu;%lu;%lum"</code>
 <code class="example">        let &amp;t_8b = "\&lt;Esc&gt;[48;2;%lu;%lu;%lum"</code>
 <code class="example"></code>
-<code class="example">        " 打开括号内的粘贴模式，见 :help xterm-bracketed-paste</code>
+<code class="example">        " 打开括号粘贴模式，见 :help xterm-bracketed-paste</code>
 <code class="example">        let &amp;t_BE = "\&lt;Esc&gt;[?2004h"</code>
 <code class="example">        let &amp;t_BD = "\&lt;Esc&gt;[?2004l"</code>
 <code class="example">        let &amp;t_PS = "\&lt;Esc&gt;[200~"</code>
@@ -177,7 +177,7 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
 <code class="example">        execute "set &lt;FocusGained&gt;=\&lt;Esc&gt;[I"</code>
 <code class="example">        execute "set &lt;FocusLost&gt;=\&lt;Esc&gt;[O"</code>
 <code class="example"></code>
-<code class="example">        " 打开带修饰符的光标键，见 :help arrow_modifiers</code>
+<code class="example">        " 打开带修饰符光标键，见 :help arrow_modifiers</code>
 <code class="example">        execute "silent! set &lt;xUp&gt;=\&lt;Esc&gt;[@;*A"</code>
 <code class="example">        execute "silent! set &lt;xDown&gt;=\&lt;Esc&gt;[@;*B"</code>
 <code class="example">        execute "silent! set &lt;xRight&gt;=\&lt;Esc&gt;[@;*C"</code>
@@ -185,50 +185,52 @@ ncurses 2023年初的 6.4 版本为某些终端新增了 terminfo 项目 "BE"、
 <code class="example">    endif</code>
 
                                                         <b class="vimtag"> <a name="cs7-problem">cs7-problem</a> </b>
-<code class="note">注意</code>: 如果终端设置在运行 Vim 以后改变，你可能会碰到不合法的设置组合。有报告说
-Solaris 2.5 上 "stty cs8 parenb"，使用 "stty cs7 parenb" 恢复就会有这个问题。
-如果你使用 "stty cs8 -parenb -istrip"，就能正确恢复了。
+<code class="note">注意</code>: 如果启动 Vim 之后修改终端设置，可能造成设置组合非法。有报告在 Solaris
+2.5 上，启动 Vim 后使用 "stty cs8 parenb"，Vim 退出时会错误恢复为
+"stty cs7 parenb"。可改用 "stty cs8 -parenb -istrip"，即可正确恢复。
 
-有些 termcap 项目在某种意义上是错误的，因为发送 <a href="term.html#'t_ks'">'t_ks'</a> 后光标键发送的代码和
-termcap 定义的不同。要避免这一点，你需要设置 <a href="term.html#'t_ks'">'t_ks'</a> (和 <a href="term.html#'t_ke'">'t_ke'</a>) 为空值。这必须
-在初始化时进行 (见  <a href="starting.html#initialization">initialization</a> )，不然就太晚了。
+部分终端能力项存在缺陷，发送 <a href="term.html#'t_ks'">'t_ks'</a> 后，光标键输出的序列和终端能力库的定义不一
+致。解决方法是，将 <a href="term.html#'t_ks'">'t_ks'</a> (以及 <a href="term.html#'t_ke'">'t_ke'</a>) 设为空值。这必须在初始阶段设置 (见
+ <a href="starting.html#initialization">initialization</a> )，否则为时太晚。
 
-有些终端项目假设最高位总是被复位的。例如: Amiga 上光标向上项目可以是
-":ku=\E[A:"。但是 Amiga 实际发送 "\233A"。如果最高位被复位，这没有问题，比如在
-串行线使用 Amiga 的时候。如果光标键不工作，尝试一下项目 ":ku=\233A:"。
+有些终端能力项则假设最高位为零。例如: Amiga 上，光标上移条目可能会写为
+":ku=\E[A:"。但 Amiga 实际发送 "\233A"。最高位总为零 (如在串口使用 Amiga) 的
+场景，没有问题。但如果光标键失效，应将该条目改为 ":ku=\233A:"。
 
-有些 termcap 项目使用 ":ku=\E[A:"。但 Amiga 实际发送 "\233A"。输出结果 "\E["
-和 "\233" 经常是等价的，但输入时则不然。要修正这一问题，你需要修改 termcap 项
-目，或者用 :set 命令改变键码 (<code class="vim">译者注</code>: 这段内容有重复，但原文如此)。
+有些终端能力项使用 ":ku=\E[A:"。但 Amiga 实际发送 "\233A"。输出时 "\E[" 和
+"\233" 通常等价，但输入时二者并不等同。要修正，需要修改终端能力项，或用  <a href="options.html#:set">:set</a> 
+命令修正键码 (<code class="vim">译者注</code>: 这段内容略有重复，但原文如此)。
 
-许多光标键以单个 <code class="special">&lt;Esc&gt;</code> 开始。Vim 必须找出是否这确实是 <code class="special">&lt;Esc&gt;</code> 键单击，还是光标键
-序列的开始。它等待下一个字符到达。如果一秒钟不出现，就假设是单个 <code class="special">&lt;Esc&gt;</code>。在很慢
-的系统里，这可能失败，使得有时候光标键不能工作。如果你发现这一问题，复位
-<a href="options.html#'timeout'">'timeout'</a> 选项。Vim 会在 <code class="special">&lt;Esc&gt;</code> 之后等待下一个字符的来临。如果你需要输入单个
-<code class="special">&lt;Esc&gt;</code>，必须输入两次。复位 <a href="options.html#'esckeys'">'esckeys'</a> 选项在插入模式下避免这个问题，但是这样你不
-能在插入模式下使用光标和功能键。
+众多光标键以 <code class="special">&lt;Esc&gt;</code> 开头。Vim 需要判断这是单独按下 <code class="special">&lt;Esc&gt;</code> 键，还是光标键序列的开
+头。为此，Vim 会等待下一个字符到达。一秒后无后续字符，则判定为单独 <code class="special">&lt;Esc&gt;</code>。在很
+慢的系统上此机制可能失效，造成光标键偶发失灵。如果遇到此问题，可复位 <a href="options.html#'timeout'">'timeout'</a>
+选项。此时 Vim 会在接收到 <code class="special">&lt;Esc&gt;</code> 后一直等待后续字符。要输入单独 <code class="special">&lt;Esc&gt;</code>，需要按键
+两次。复位 <a href="options.html#'esckeys'">'esckeys'</a> 选项可在插入模式下避免按键两次的问题，但代价是插入模式下
+无法使用光标和功能键。
 
-Amiga 上窗口调整大小的识别只有在终端名为 "amiga" 或 "builtin_amiga" 才有可能。
+Amiga 上，仅当终端名为 "amiga" 或 "builtin_amiga" 时，才会启用窗口大小变化检
+测。
 
-有些终端的光标键的代码不明确。televideo 925 就是这样的一个终端。光标左键发送的
-是 <code class="keystroke">CTRL-H</code>。这使得退格和光标左键无法区别。要避免这一问题，<code class="keystroke">CTRL-H</code> 永远不会识别为
-光标左键。
+部分终端的光标键编码容易产生歧义。televideo 925 就是一例。左光标键发送
+<code class="keystroke">CTRL-H</code>。这会导致无法区分退格和左光标键。为规避此问题，Vim 禁止将 <code class="keystroke">CTRL-H</code> 识别为
+左光标键。
 
                                 <b class="vimtag"> <a name="vt100-cursor-keys">vt100-cursor-keys</a> </b> <b class="vimtag"> <a name="xterm-cursor-keys">xterm-cursor-keys</a> </b>
-其它终端 (例如，vt100 和 xterm) 的光标键发送 <code class="special">&lt;Esc&gt;</code>OA、<code class="special">&lt;Esc&gt;</code>OB，等等。不幸的
-是，这些是插入模式下合法的命令: 结束插入，在上面打开新行，开始插入 'A'、'B'，
-等等。Vim 不会执行这些命令，相反，它会把该输入键序列识别为光标键的移动。要避免
-这一点而使 Vim 在两种情况下都能工作，你需要以下设置:
-<code class="example">        :set notimeout          " 映射时不检查超时</code>
+其他终端 (如 vt100 和 xterm) 的光标键会发送 <code class="special">&lt;Esc&gt;</code>OA、<code class="special">&lt;Esc&gt;</code>OB 等序列。但这些都
+是插入模式下合法的命令: 停止插入，在上方新开一行，插入字符 'A'、'B' 等。Vim 可
+能误将该键序列识别为光标键动作，而非执行以上命令。要避免这个问题，使两种场景都
+能正常工作，需要以下设置:
+<code class="example">        :set notimeout          " 映射不检查超时</code>
 <code class="example">        :set ttimeout           " 终端键码检查超时</code>
-<code class="example">        :set timeoutlen=100     " 超时为 100 毫秒</code>
-这要求键码在 100 毫秒的间隔内发送，从而能识别其为光标键。正常情况下，你的输入
-不会那么快，所以它们能被识别为单独输入的命令，即使 Vim 收到了相同的字节序列。
+<code class="example">        :set timeoutlen=100     " 100 毫秒超时</code>
+该设置要求键码在 100 毫秒内完整送达，从而能识别其为光标键。手动输入一般达不到
+这种速度，所以即使对应相同的键序列，也会正确识别为独立输入的若干命令。
 
                                 <b class="vimtag"> <a name="vt100-function-keys">vt100-function-keys</a> </b> <b class="vimtag"> <a name="xterm-function-keys">xterm-function-keys</a> </b>
-xterm 可以用两种模式发送功能键 F1 到 F4: vt100 兼容模式或不兼容模式。因为 Vim
-可能不知道 xterm 发送的是哪种，两种都被识别。<code class="special">&lt;Home&gt;</code> 和 <code class="special">&lt;End&gt;</code> 键情况相同。
-<code class="section">                        普通                    vt100 </code>
+xterm 可用两种模式发送功能键 F1 到 F4: vt100 兼容模式或非兼容模式。Vim 未必能
+确定 xterm 具体使用哪种模式发送，因此同时识别两种模式。<code class="special">&lt;Home&gt;</code> 和 <code class="special">&lt;End&gt;</code> 键也有
+类似情况。
+<code class="section">                        普通模式                vt100 模式 </code>
         <code class="special">&lt;F1&gt;</code>    t_k1    <code class="special">&lt;Esc&gt;</code>[11~       <code class="special">&lt;xF1&gt;</code>   <code class="special">&lt;Esc&gt;</code>OP     <b class="vimtag"> <a name="%3CxF1%3E-xterm">&lt;xF1&gt;-xterm</a> </b>
         <code class="special">&lt;F2&gt;</code>    t_k2    <code class="special">&lt;Esc&gt;</code>[12~       <code class="special">&lt;xF2&gt;</code>   <code class="special">&lt;Esc&gt;</code>OQ     <b class="vimtag"> <a name="%3CxF2%3E-xterm">&lt;xF2&gt;-xterm</a> </b>
         <code class="special">&lt;F3&gt;</code>    t_k3    <code class="special">&lt;Esc&gt;</code>[13~       <code class="special">&lt;xF3&gt;</code>   <code class="special">&lt;Esc&gt;</code>OR     <b class="vimtag"> <a name="%3CxF3%3E-xterm">&lt;xF3&gt;-xterm</a> </b>
@@ -236,31 +238,31 @@ xterm 可以用两种模式发送功能键 F1 到 F4: vt100 兼容模式或不�
         <code class="special">&lt;Home&gt;</code>  t_kh    <code class="special">&lt;Esc&gt;</code>[7~        <code class="special">&lt;xHome&gt;</code> <code class="special">&lt;Esc&gt;</code>OH     <b class="vimtag"> <a name="%3CxHome%3E-xterm">&lt;xHome&gt;-xterm</a> </b>
         <code class="special">&lt;End&gt;</code>   t_@7    <code class="special">&lt;Esc&gt;</code>[4~        <code class="special">&lt;xEnd&gt;</code>  <code class="special">&lt;Esc&gt;</code>OF     <b class="vimtag"> <a name="%3CxEnd%3E-xterm">&lt;xEnd&gt;-xterm</a> </b>
 
-Vim 启动时，<code class="special">&lt;xF1&gt;</code> 被映射到 <code class="special">&lt;F1&gt;</code>，<code class="special">&lt;xF2&gt;</code> 到 <code class="special">&lt;F2&gt;</code> 等等。这意味着缺省两种代码做相
-同的事情。如果你为 <code class="special">&lt;xF2&gt;</code> 定义了映射而你的终端支持两种键，那么就覆盖了缺省的映
-射，从而可以用 <code class="special">&lt;F2&gt;</code> 和 <code class="special">&lt;xF2&gt;</code> 键做不同的事情。
+Vim 启动时，<code class="special">&lt;xF1&gt;</code> 映射到 <code class="special">&lt;F1&gt;</code>，<code class="special">&lt;xF2&gt;</code> 映射到 <code class="special">&lt;F2&gt;</code>，依此类推。默认两类编码效果相
+同。对同时支持两种键的终端可单独定义 <code class="special">&lt;xF2&gt;</code> 映射以覆盖缺省映射，可使 <code class="special">&lt;F2&gt;</code> 和
+<code class="special">&lt;xF2&gt;</code> 键绑定不同功能。
 
                                                         <b class="vimtag"> <a name="xterm-shifted-keys">xterm-shifted-keys</a> </b>
-更新的 xterm 版本支持 Shift + 功能键和特殊键。Vim 识别其中的大多数。使用 ":set
-termcap" 来检查哪些是支持的，相应的代码为何。多数情况下这些不在 termcap 里，只
-有 builtin_xterm termcap 才支持。
+新版 xterm 支持带 Shift 的功能键与特殊按键。Vim 可识别其中大部分。可用
+`:set termcap` 来检查支持的按键与对应序列。这类按键大多不存于终端能力库，仅内
+置的 builtin_xterm termcap 支持。
 
                                                         <b class="vimtag"> <a name="xterm-modifier-keys">xterm-modifier-keys</a> </b>
-新版 xterm 对于大多数功能键支持 Alt 和 Ctrl。为避免增加 Alt、Ctrl 和 Shift 对
-每个键的捆绑，在 termcap 项目末尾识别一个特殊序列: ";*X"。"X" 可以是任何字符，
-通常是 '~'。";*" 支持一个可选的修饰符参数。";2" 代表 Shift，";3" 是 Alt，";5"
-是 Ctrl，";9" 是 Meta (当它与 Alt 不同时)。它们可以组合使用。例如:
+新版 xterm 支持带 Alt 和 Ctrl 的多数功能键。为免为每个按键对所有 Alt、Ctrl 和
+Shift 组合分别指定，终端能力项识别特殊序列后缀: ";*X"。"X" 可为任何字符，常用
+'~'。";*" 代表可选修饰符参数。";2" 对应 Shift，";3" 对应 Alt，";5" 对应 Ctrl，
+而 ";9" 对应 Meta (与 Alt 不同时)。可组合使用多个修饰符。示例:
 <code class="example">        :set &lt;F8&gt;=^[[19;*~</code>
 <code class="example">        :set &lt;Home&gt;=^[[1;*H</code>
-关于这些代码的另一个特性是它们不能被另外的代码覆盖。这就避免了被来自 xterm
- <a href="term.html#t_RV">t_RV</a>  所包含的代码直接覆盖掉。
+(<code class="vim">译者注</code>: 例如，<code class="special">&lt;S-M-F8&gt;</code> 键码为 "^[[19;2;9~"，而无修饰符的 <code class="special">&lt;Home&gt;</code> 为 "^[[1H")
+这类键码不会被其他编码覆盖。防止 xterm 通过  <a href="term.html#t_RV">t_RV</a>  获取的编码将其覆盖。
 
-另一个特殊值是以 "@;*X" 结尾的 termcap 项目。这用于光标键，那里可用 "CSI X" 或
-"CSI 1 ; 修饰符 X"。所以 "@" 代表或者后面有跟修饰符的 "1"，或者为空。
+终端能力项的另一特殊序列后缀是 "@;*X"。用于光标键，这类按键编码格式为 "CSI X"
+或 "CSI 1 ; 修饰符 X"。所以 "@" 代表 "1" (必须后跟修饰符) 或空。
                                                         <b class="vimtag"> <a name="arrow_modifiers">arrow_modifiers</a> </b>
-若干终端模拟器 (alacritty、gnome、konsole 等等) 为带修饰符的键发送特殊代码，但
-这些键在 termcap/terminfo 数据库里没有对应项目。可在 vimrc 里添加若干行使其工
-作。例如，要在 gnome terminal 里支持带 Control 修饰符的光标键:
+若干终端模拟器 (alacritty、gnome、konsole 等) 会为带修饰符的光标键发送特殊代
+码，但 termcap/terminfo 数据库中没有对应项目。可在 vimrc 里添加相应配置以作补
+充。例如，要使 gnome terminal 支持带 Control 的光标键:
 <code class="example">        if &amp;term =~ 'gnome'</code>
 <code class="example">           execute "set &lt;xUp&gt;=\&lt;Esc&gt;[@;*A"</code>
 <code class="example">           execute "set &lt;xDown&gt;=\&lt;Esc&gt;[@;*B"</code>
@@ -268,241 +270,224 @@ termcap" 来检查哪些是支持的，相应的代码为何。多数情况下�
 <code class="example">           execute "set &lt;xLeft&gt;=\&lt;Esc&gt;[@;*D"</code>
 <code class="example">        endif</code>
                                                         <b class="vimtag"> <a name="xterm-scroll-region">xterm-scroll-region</a> </b>
-Sun 和其它的平台上的 xterm 缺省的 termcap 项目不包含区域滚动的项目。在
-/etc/termpcap 的 xterm 项目里增加 ":cs=\E[%i%d;%dr:"，那么一切都没有问题了。
+Sun 及其他平台上 xterm 缺省终端能力项不含滚动区域定义。可在 /etc/termpcap 的
+xterm 段添加 ":cs=\E[%i%d;%dr:"，即可正常工作。
 
                                                         <b class="vimtag"> <a name="xterm-end-home-keys">xterm-end-home-keys</a> </b>
-在一些系统上 (至少使用 XFree86 3.1.2 的 FreeBSD)，<code class="special">&lt;End&gt;</code> 和 <code class="special">&lt;Home&gt;</code> 键的代码里包
-含 <code class="special">&lt;Nul&gt;</code> 字符。要使得这些键发送正确的键码，在你的 ~/.Xdefaults 文件里增加:
+部分系统 (如带 XFree86 3.1.2 的 FreeBSD)，<code class="special">&lt;End&gt;</code> 和 <code class="special">&lt;Home&gt;</code> 键发送序列会内含
+<code class="special">&lt;Nul&gt;</code> 字符。可在 ~/.Xdefaults 文件里加入以下设置，使按键输出正确键码:
 
 <code class="example">        *VT100.Translations:            #override \n\</code>
 <code class="example">                        &lt;Key&gt;Home: string("0x1b") string("[7~") \n\</code>
 <code class="example">                        &lt;Key&gt;End: string("0x1b") string("[8~")</code>
 
                                                 <b class="vimtag"> <a name="xterm-8bit">xterm-8bit</a> </b> <b class="vimtag"> <a name="xterm-8-bit">xterm-8-bit</a> </b>
-Xterm 可以在使用 8 位转义序列的模式里运行。这里，CSI 代码代替了 <code class="special">&lt;Esc&gt;</code>[。它的优
-点是，<code class="special">&lt;Esc&gt;</code> 键可以在插入模式下更快的识别，因为不会和特殊键的开始相混淆。
-对于内建的 termcap 项目而言，Vim 检查 <a href="options.html#'term'">'term'</a> 选项是否包含 "8bit"。如果是，就在
-termcap 项目、鼠标和一些其它的项目中使用 8 位字符，通常，你在外壳里设置 $TERM
-为 "xterm-8bit"。Vim 会发现这一点，并自动调整 8 位设置。
-如果 Vim 接收到对  <a href="term.html#t_RV">t_RV</a>  序列的应答 (请求版本) 并且它以 CSI 开始，就假设终端处
-于 8 位模式，并把所有的健序列转换为它们的 8 位版本。
+Xterm 可启用 8 位转义序列模式。使用 CSI 代码替代 <code class="special">&lt;Esc&gt;</code>[。其优点是插入模式下可
+快速识别 <code class="special">&lt;Esc&gt;</code> 键，不会与特殊按键序列的开头部分混淆。
+对于内置终端能力项，<a href="options.html#'term'">'term'</a> 选项值包含 "8bit" 时，会对 termcap 项目、鼠标等自动
+调整为 8 位字符设置，通常可将外壳环境变量 $TERM 设为 "xterm-8bit"。Vim 会作相
+应调整。
+Vim 收到  <a href="term.html#t_RV">t_RV</a>  序列 (查询终端版本) 的应答且其以 CSI 开头时，同样会判定终端处
+于 8 位模式，并把将所有按健序列调整为 8 位版本。
+(<code class="vim">译者注</code>: 具体会将 <code class="special">&lt;Esc&gt;</code>[ 转为 <code class="special">&lt;CSI&gt;</code>、<code class="special">&lt;Esc&gt;</code>] 转为 <code class="special">&lt;OSC&gt;</code>、<code class="special">&lt;Esc&gt;</code>O 转为 \0x8f)
 
                                                 <b class="vimtag"> <a name="xterm-terminfo-entries">xterm-terminfo-entries</a> </b>
-一段时间里，terminfo 项目不足于描述 Vim 使用的所有功能。而内建的 xterm 则有所
-有需要的 termcap 项目，因此，若干和 xterm 足够相似的终端利用了这一点，在 $TERM
-终端名里附加 "xterm-" 前缀。
+曾有一段时间 terminfo 项目不足于描述 Vim 使用的所有功能。而内置 xterm termcap
+则具备全部项目，于是很多 xterm 兼容终端会在 $TERM 指定的终端名前加上 "xterm-"
+前缀以利用此特性。
 
-这会引发问题，因为这些终端常常并非 100% 与 xterm 兼容。2023 年初，terminfo 数
-据库新增了若干项目，这样不需要 "xterm" 变通方法就可以使用这些功能。以下是相关
-项目 (至今为止):
+但这会引发问题，因为此类终端通常并非与 xterm 完全兼容。2023 年初，terminfo 数
+据库新增若干项目，因此不再需要 "xterm" 变通方法就可使用全部功能。相关项目如下
+(至今为止):
 
 <code class="section">        名字    xterm 值        描述 </code>
-        RV      "\033[&gt;c"       请求版本  <a href="term.html#t_RV">t_RV</a> 
+        RV      "\033[&gt;c"       查询版本  <a href="term.html#t_RV">t_RV</a> 
 
-        BE      "\033[?2004h"   打开括号内粘贴模式  <a href="term.html#t_BE">t_BE</a> 
+        BE      "\033[?2004h"   开启括号内粘贴模式  <a href="term.html#t_BE">t_BE</a> 
         BD      "\033[?2004l"   关闭括号内粘贴模式  <a href="term.html#t_BD">t_BD</a> 
         PS      "\033[200~"     粘贴文本开始  <a href="term.html#t_PS">t_PS</a> 
         PE      "\033[201~"     粘贴文本结束  <a href="term.html#t_PE">t_PE</a> 
 
         XM      "\033[?1006;1004;1000%?%p1%<code class="special">{1}</code>%=%th%el%;"
-                                鼠标打开 / 关闭  <a href="term.html#t_XM">t_XM</a> 
-        FE      "\033[?1004h"   打开焦点事件跟踪  <a href="term.html#t_fe">t_fe</a> 
+                                鼠标开启 / 关闭  <a href="term.html#t_XM">t_XM</a> 
+        FE      "\033[?1004h"   开启焦点事件跟踪  <a href="term.html#t_fe">t_fe</a> 
         FD      "\033[?1004l"   关闭焦点事件跟踪  <a href="term.html#t_fd">t_fd</a> 
 
-"XM" 项目包含了 "1006" 以打开 SGR 风格鼠标报告，支持多于 223 的列数。也包含了
-"1004"，打开焦点报告。
-<code class="note">备注</code>: 到 2023 年为止，Vim 自己目前不使用 "1004"，相反地，建议用  <a href="term.html#t_fe">t_fe</a>  和
- <a href="term.html#t_fd">t_fd</a>  项目来设置焦点报告，而不要和鼠标跟踪绑定，因为 ncurses 在最新版本里也开
-始如此 (这些项目最终会在 terminfo/termcap 里出现)。
+"XM" 项目既包含 "1006"，打开 SGR 风格鼠标报告 (支持超过 223 列)，又包含
+"1004"，开启焦点报告。
+<code class="note">备注</code>: 截至 2023 年，Vim 自身暂不使用 "1004"，建议改用  <a href="term.html#t_fe">t_fe</a>  和  <a href="term.html#t_fd">t_fd</a>  项目独
+立开启焦点报告，不与鼠标跟踪绑定，新版 ncurses 也开始使用此做法 (这些项目后续
+会加入 terminfo/termcap)。
 
                                                 <b class="vimtag"> <a name="xterm-kitty">xterm-kitty</a> </b> <b class="vimtag"> <a name="kitty-terminal">kitty-terminal</a> </b>
-Kitty 终端是特例。主要因为是它和绝大多数其它终端不同，也因为它并不试图缺省让自
-己更像其它终端，而是规定了在 Kitty 里应用要如何工作。这使得 Vim 在 Kitty 终端
-里很难工作。有些特例需要特别代码，但为某个特定终端开特例并非理想。
+Kitty 终端是个特例。主要因为其工作方式与绝大多数其他终端不同，设计理念也不试图
+兼容任何终端，而是转而规定应用必须适配 Kitty 的工作方式。这导致 Vim 在 Kitty
+终端里运行难点很多。有些处理甚至需要专门代码，但为单一终端开特例并非理想做法。
 
-其中一个问题是 $TERM 的值设为 "xterm-kitty"。对 Vim 而言，这意味此终端和 xterm
-兼容，可使用内建的 xterm termcap 项目。许多其它终端依赖这一点。但 Kitty 并不完
-全兼容 xterm。作者建议忽略 "xterm-" 前缀并使用对应的在 terminfo 项目。现在就是
-如此，不使用内建的 xterm termcap 项目。但仍设置了 t_RV，不然很多功能不可用，一
-个例子是自动设置 <a href="options.html#'ttymouse'">'ttymouse'</a> 为 "sgr" (直到为此可用  <a href="term.html#t_XM">t_XM</a>  为止)。
+问题之一是其 $TERM 值设为 "xterm-kitty"。Vim 会认为此终端兼容 xterm，可使用内
+置 xterm 终端能力项。大量其他终端依赖这一逻辑。但 Kitty 并不完全兼容 xterm。
+Kitty 作者建议忽略 "xterm-" 前缀，直接使用其自身的 terminfo 项目。Vim 当前就是
+如此处理，不再加载内置 xterm 终端能力项。但仍保留了  <a href="term.html#t_RV">t_RV</a> ，否则部分功能会失
+效，例如自动将 <a href="options.html#'ttymouse'">'ttymouse'</a> 设为 "sgr" (在改用  <a href="term.html#t_XM">t_XM</a>  之前)。
 
-不清楚为什么 kitty 设置 $TERM 为 "xterm-kitty"，此终端并不真得和 xterm 兼容。
-"kitty" 更合适，但该名字的 terminfo 项目并不广泛被接受。
+kitty 为何将 $TERM 设为 "xterm-kitty" 原因不明，该终端并不真正兼容 xterm。使用
+"kitty" 作为终端类型更合适，但使用该名的 terminfo 项目并不被广泛接受。
 
-<code class="note">注意</code> kitty 键盘协议是另一个功能，作  <a href="map.html#kitty-keyboard-protocol">kitty-keyboard-protocol</a> 。
+<code class="note">注意</code> kitty 键盘协议是完全独立的功能，作  <a href="map.html#kitty-keyboard-protocol">kitty-keyboard-protocol</a> 。
 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>2. 终端选项                     <b class="vimtag"> <a name="terminal-options">terminal-options</a> </b> <b class="vimtag"> <a name="termcap-options">termcap-options</a> </b> <b class="vimtag"> <a name="E436">E436</a> </b></h4>
-终端选项可以和普通选项一样设置。但不会在 ":set all" 命令里显示。相反，应该用
-":set termcap"。
+终端选项可像普通选项一样设置。但不会在 `:set all` 中显示。查看需用
+`:set termcap`。
 
-通过设置合适的选项，你总是可以调整个别字符串的值。例如:
-<code class="example">        :set t_ce=^V^[[K        (CTRL-V，&lt;Esc&gt;，[，K)</code>
+可通过设置适当选项单独修改各个控制字符串。示例:
+<code class="example">        :set t_ce=^V^[[K        (CTRL-V、&lt;Esc&gt;、[、K)</code>
 <code class="example"></code>
-这些选项列在下面。相关的 termcap 代码总是等价于选项名字的最后两个字符。只有一
-个 termcap 代码是必须的: 光标移动，<a href="term.html#'t_cm'">'t_cm'</a>。
+以下列出所有终端选项。选项名后两个字符对应终端能力项代码。仅有一项代码是必需:
+光标移动，<a href="term.html#'t_cm'">'t_cm'</a>。
 
-选项 <a href="term.html#'t_da'">'t_da'</a>、<a href="term.html#'t_db'">'t_db'</a>、<a href="term.html#'t_ms'">'t_ms'</a>、<a href="term.html#'t_xs'">'t_xs'</a>、<a href="term.html#'t_xn'">'t_xn'</a>、<a href="term.html#'t_xo'">'t_xo'</a> 代表 termcap 里的标志位。
-termcap 标志位存在时，选项总是设为 "y"。但是任何非空的字符串意味着标志位已经置
-位。而空字符串代表该标志位没有置位。<a href="term.html#'t_CS'">'t_CS'</a> 也是这样的，虽然它不是 termcap 的标
-志位。
+<a href="term.html#'t_da'">'t_da'</a>、<a href="term.html#'t_db'">'t_db'</a>、<a href="term.html#'t_ms'">'t_ms'</a>、<a href="term.html#'t_xs'">'t_xs'</a>、<a href="term.html#'t_xn'">'t_xn'</a>、<a href="term.html#'t_xo'">'t_xo'</a> (<code class="vim">译者注</code>: 还有 <a href="term.html#'t_ut'">'t_ut'</a>) 选项为终
+端能力标志位。存在该标志位时，选项值设为 "y"。但任意非空串值都代表标志位置位。
+而空串代表标志位复位。<a href="term.html#'t_CS'">'t_CS'</a> 不属于终端能力标志位，但其行为也是如此。
 
 输 出 代 码                                     <b class="vimtag"> <a name="terminal-output-codes">terminal-output-codes</a> </b>
 <code class="section">        选项    含义    </code>
 
-        t_AB    设置背景色 (ANSI)                       <b class="vimtag"> <a name="t_AB">t_AB</a> </b> <b class="vimtag"> <a name="'t_AB'">'t_AB'</a> </b>
-        t_AF    设置前景色 (ANSI)                       <b class="vimtag"> <a name="t_AF">t_AF</a> </b> <b class="vimtag"> <a name="'t_AF'">'t_AF'</a> </b>
+        t_AB    设置背景色 (使用 ANSI 序列)             <b class="vimtag"> <a name="t_AB">t_AB</a> </b> <b class="vimtag"> <a name="'t_AB'">'t_AB'</a> </b>
+        t_AF    设置前景色 (使用 ANSI 序列)             <b class="vimtag"> <a name="t_AF">t_AF</a> </b> <b class="vimtag"> <a name="'t_AF'">'t_AF'</a> </b>
         t_AL    增加若干空行                            <b class="vimtag"> <a name="t_AL">t_AL</a> </b> <b class="vimtag"> <a name="'t_AL'">'t_AL'</a> </b>
         t_al    增加一行空行                            <b class="vimtag"> <a name="t_al">t_al</a> </b> <b class="vimtag"> <a name="'t_al'">'t_al'</a> </b>
         t_bc    退格字符                                <b class="vimtag"> <a name="t_bc">t_bc</a> </b> <b class="vimtag"> <a name="'t_bc'">'t_bc'</a> </b>
         t_cd    清除到屏幕尾                            <b class="vimtag"> <a name="t_cd">t_cd</a> </b> <b class="vimtag"> <a name="'t_cd'">'t_cd'</a> </b>
         t_ce    清除到行尾                              <b class="vimtag"> <a name="t_ce">t_ce</a> </b> <b class="vimtag"> <a name="'t_ce'">'t_ce'</a> </b>
-        t_cl    清除屏幕                                <b class="vimtag"> <a name="t_cl">t_cl</a> </b> <b class="vimtag"> <a name="'t_cl'">'t_cl'</a> </b>
-        t_cm    光标移动 (必需！)                       <b class="vimtag"> <a name="E437">E437</a> </b> <b class="vimtag"> <a name="t_cm">t_cm</a> </b> <b class="vimtag"> <a name="'t_cm'">'t_cm'</a> </b>
+        t_cl    清空屏幕                                <b class="vimtag"> <a name="t_cl">t_cl</a> </b> <b class="vimtag"> <a name="'t_cl'">'t_cl'</a> </b>
+        t_cm    光标移动 (必需！)               <b class="vimtag"> <a name="E437">E437</a> </b>  <b class="vimtag"> <a name="t_cm">t_cm</a> </b> <b class="vimtag"> <a name="'t_cm'">'t_cm'</a> </b>
         t_Co    颜色数目                                <b class="vimtag"> <a name="t_Co">t_Co</a> </b> <b class="vimtag"> <a name="'t_Co'">'t_Co'</a> </b>
-        t_CS    如果非空，光标相对于滚动区域            <b class="vimtag"> <a name="t_CS">t_CS</a> </b> <b class="vimtag"> <a name="'t_CS'">'t_CS'</a> </b>
+        t_CS    非空时，光标坐标相对于滚动区域          <b class="vimtag"> <a name="t_CS">t_CS</a> </b> <b class="vimtag"> <a name="'t_CS'">'t_CS'</a> </b>
         t_cs    定义滚动区域                            <b class="vimtag"> <a name="t_cs">t_cs</a> </b> <b class="vimtag"> <a name="'t_cs'">'t_cs'</a> </b>
         t_CV    定义垂直滚动区域                        <b class="vimtag"> <a name="t_CV">t_CV</a> </b> <b class="vimtag"> <a name="'t_CV'">'t_CV'</a> </b>
-        t_da    如果非空，上方的行可以向下滚动          <b class="vimtag"> <a name="t_da">t_da</a> </b> <b class="vimtag"> <a name="'t_da'">'t_da'</a> </b>
-        t_db    如果非空，下方的行可以向上滚动          <b class="vimtag"> <a name="t_db">t_db</a> </b> <b class="vimtag"> <a name="'t_db'">'t_db'</a> </b>
+        t_da    非空时，上方行会向下滚动                <b class="vimtag"> <a name="t_da">t_da</a> </b> <b class="vimtag"> <a name="'t_da'">'t_da'</a> </b>
+        t_db    非空时，下方行会向上滚动                <b class="vimtag"> <a name="t_db">t_db</a> </b> <b class="vimtag"> <a name="'t_db'">'t_db'</a> </b>
         t_DL    删除若干行                              <b class="vimtag"> <a name="t_DL">t_DL</a> </b> <b class="vimtag"> <a name="'t_DL'">'t_DL'</a> </b>
         t_dl    删除一行                                <b class="vimtag"> <a name="t_dl">t_dl</a> </b> <b class="vimtag"> <a name="'t_dl'">'t_dl'</a> </b>
         t_fs    结束设置窗口标题 (退出 termcap 状态行)  <b class="vimtag"> <a name="t_fs">t_fs</a> </b> <b class="vimtag"> <a name="'t_fs'">'t_fs'</a> </b>
-        t_ke    结束 "keypad 传输" 模式                 <b class="vimtag"> <a name="t_ke">t_ke</a> </b> <b class="vimtag"> <a name="'t_ke'">'t_ke'</a> </b>
-        t_ks    进入 "keypad 传输" 模式                 <b class="vimtag"> <a name="t_ks">t_ks</a> </b> <b class="vimtag"> <a name="'t_ks'">'t_ks'</a> </b>
-        t_le    左移光标一个字符                        <b class="vimtag"> <a name="t_le">t_le</a> </b> <b class="vimtag"> <a name="'t_le'">'t_le'</a> </b>
-        t_mb    闪烁模式                                <b class="vimtag"> <a name="t_mb">t_mb</a> </b> <b class="vimtag"> <a name="'t_mb'">'t_mb'</a> </b>
-        t_md    加粗模式                                <b class="vimtag"> <a name="t_md">t_md</a> </b> <b class="vimtag"> <a name="'t_md'">'t_md'</a> </b>
-        t_me    普通模式 (撤销 t_mr、t_mb、t_md 和颜色) <b class="vimtag"> <a name="t_me">t_me</a> </b> <b class="vimtag"> <a name="'t_me'">'t_me'</a> </b>
-        t_mr    反转模式                                <b class="vimtag"> <a name="t_mr">t_mr</a> </b> <b class="vimtag"> <a name="'t_mr'">'t_mr'</a> </b>
-        t_ms    如果非空，光标可以在突出/反转模式下移动 <b class="vimtag"> <a name="t_ms">t_ms</a> </b> <b class="vimtag"> <a name="'t_ms'">'t_ms'</a> </b>
-        t_nd    非破坏性的空格字符                      <b class="vimtag"> <a name="t_nd">t_nd</a> </b> <b class="vimtag"> <a name="'t_nd'">'t_nd'</a> </b>
-        t_op    复位到原先的颜色对                      <b class="vimtag"> <a name="t_op">t_op</a> </b> <b class="vimtag"> <a name="'t_op'">'t_op'</a> </b>
+        t_ke    退出 "小键盘传输" 模式                  <b class="vimtag"> <a name="t_ke">t_ke</a> </b> <b class="vimtag"> <a name="'t_ke'">'t_ke'</a> </b>
+        t_ks    进入 "小键盘传输" 模式                  <b class="vimtag"> <a name="t_ks">t_ks</a> </b> <b class="vimtag"> <a name="'t_ks'">'t_ks'</a> </b>
+        t_le    光标左移一个字符                        <b class="vimtag"> <a name="t_le">t_le</a> </b> <b class="vimtag"> <a name="'t_le'">'t_le'</a> </b>
+        t_mb    进入闪烁模式                            <b class="vimtag"> <a name="t_mb">t_mb</a> </b> <b class="vimtag"> <a name="'t_mb'">'t_mb'</a> </b>
+        t_md    进入粗体模式                            <b class="vimtag"> <a name="t_md">t_md</a> </b> <b class="vimtag"> <a name="'t_md'">'t_md'</a> </b>
+        t_me    普通模式 (撤销 t_mr、t_mb、t_md 及颜色) <b class="vimtag"> <a name="t_me">t_me</a> </b> <b class="vimtag"> <a name="'t_me'">'t_me'</a> </b>
+        t_mr    进入反显 (反转) 模式                    <b class="vimtag"> <a name="t_mr">t_mr</a> </b> <b class="vimtag"> <a name="'t_mr'">'t_mr'</a> </b>
+        t_ms    非空时，可在突出/反转模式下移动光标     <b class="vimtag"> <a name="t_ms">t_ms</a> </b> <b class="vimtag"> <a name="'t_ms'">'t_ms'</a> </b>
+        t_nd    非破坏性空格字符 (光标右移一个字符)     <b class="vimtag"> <a name="t_nd">t_nd</a> </b> <b class="vimtag"> <a name="'t_nd'">'t_nd'</a> </b>
+        t_op    恢复原始颜色对 (前景与背景)             <b class="vimtag"> <a name="t_op">t_op</a> </b> <b class="vimtag"> <a name="'t_op'">'t_op'</a> </b>
         t_RI    光标右移若干字符                        <b class="vimtag"> <a name="t_RI">t_RI</a> </b> <b class="vimtag"> <a name="'t_RI'">'t_RI'</a> </b>
-        t_Sb    设置背景色                              <b class="vimtag"> <a name="t_Sb">t_Sb</a> </b> <b class="vimtag"> <a name="'t_Sb'">'t_Sb'</a> </b>
-        t_Sf    设置前景色                              <b class="vimtag"> <a name="t_Sf">t_Sf</a> </b> <b class="vimtag"> <a name="'t_Sf'">'t_Sf'</a> </b>
-        t_se    结束突出                                <b class="vimtag"> <a name="t_se">t_se</a> </b> <b class="vimtag"> <a name="'t_se'">'t_se'</a> </b>
-        t_so    退出模式                                <b class="vimtag"> <a name="t_so">t_so</a> </b> <b class="vimtag"> <a name="'t_so'">'t_so'</a> </b>
-        t_sr    反向滚动 (往下)                         <b class="vimtag"> <a name="t_sr">t_sr</a> </b> <b class="vimtag"> <a name="'t_sr'">'t_sr'</a> </b>
+        t_Sb    设置背景色 (老式)                       <b class="vimtag"> <a name="t_Sb">t_Sb</a> </b> <b class="vimtag"> <a name="'t_Sb'">'t_Sb'</a> </b>
+        t_Sf    设置前景色 (老式)                       <b class="vimtag"> <a name="t_Sf">t_Sf</a> </b> <b class="vimtag"> <a name="'t_Sf'">'t_Sf'</a> </b>
+        t_se    退出突出模式                            <b class="vimtag"> <a name="t_se">t_se</a> </b> <b class="vimtag"> <a name="'t_se'">'t_se'</a> </b>
+        t_so    进入突出模式                            <b class="vimtag"> <a name="t_so">t_so</a> </b> <b class="vimtag"> <a name="'t_so'">'t_so'</a> </b>
+        t_sr    反向滚动 (文本向下滚动一行)             <b class="vimtag"> <a name="t_sr">t_sr</a> </b> <b class="vimtag"> <a name="'t_sr'">'t_sr'</a> </b>
         t_te    退出 "termcap" 模式                     <b class="vimtag"> <a name="t_te">t_te</a> </b> <b class="vimtag"> <a name="'t_te'">'t_te'</a> </b>
-        t_ti    让终端进入 "termcap" 模式               <b class="vimtag"> <a name="t_ti">t_ti</a> </b> <b class="vimtag"> <a name="'t_ti'">'t_ti'</a> </b>
+        t_ti    进入 "termcap" 模式                     <b class="vimtag"> <a name="t_ti">t_ti</a> </b> <b class="vimtag"> <a name="'t_ti'">'t_ti'</a> </b>
         t_ts    开始设置窗口标题 (进入 termcap 状态行)  <b class="vimtag"> <a name="t_ts">t_ts</a> </b> <b class="vimtag"> <a name="'t_ts'">'t_ts'</a> </b>
-        t_ue    下划结束                                <b class="vimtag"> <a name="t_ue">t_ue</a> </b> <b class="vimtag"> <a name="'t_ue'">'t_ue'</a> </b>
-        t_us    下划模式                                <b class="vimtag"> <a name="t_us">t_us</a> </b> <b class="vimtag"> <a name="'t_us'">'t_us'</a> </b>
-        t_ut    使用当前背景色清除                      <b class="vimtag"> <a name="t_ut">t_ut</a> </b> <b class="vimtag"> <a name="'t_ut'">'t_ut'</a> </b>
-        t_vb    可视铃声                                <b class="vimtag"> <a name="t_vb">t_vb</a> </b> <b class="vimtag"> <a name="'t_vb'">'t_vb'</a> </b>
-        t_ve    光标可见                                <b class="vimtag"> <a name="t_ve">t_ve</a> </b> <b class="vimtag"> <a name="'t_ve'">'t_ve'</a> </b>
-        t_vi    光标不可见                              <b class="vimtag"> <a name="t_vi">t_vi</a> </b> <b class="vimtag"> <a name="'t_vi'">'t_vi'</a> </b>
-        t_vs    光标 "非常" 可见 (闪烁)                 <b class="vimtag"> <a name="t_vs">t_vs</a> </b> <b class="vimtag"> <a name="'t_vs'">'t_vs'</a> </b>
-        t_xs    非空时突出部分不能通过覆盖删除 (hpterm) <b class="vimtag"> <a name="t_xs">t_xs</a> </b> <b class="vimtag"> <a name="'t_xs'">'t_xs'</a> </b>
-        t_xn    非空时在屏幕最后单元写字符不导致滚动    <b class="vimtag"> <a name="t_xn">t_xn</a> </b> <b class="vimtag"> <a name="'t_xn'">'t_xn'</a> </b>
+        t_ue    退出下划模式                            <b class="vimtag"> <a name="t_ue">t_ue</a> </b> <b class="vimtag"> <a name="'t_ue'">'t_ue'</a> </b>
+        t_us    进入下划模式                            <b class="vimtag"> <a name="t_us">t_us</a> </b> <b class="vimtag"> <a name="'t_us'">'t_us'</a> </b>
+        t_ut    非空时，清屏使用当前背景色              <b class="vimtag"> <a name="t_ut">t_ut</a> </b> <b class="vimtag"> <a name="'t_ut'">'t_ut'</a> </b>
+        t_vb    可视响铃                                <b class="vimtag"> <a name="t_vb">t_vb</a> </b> <b class="vimtag"> <a name="'t_vb'">'t_vb'</a> </b>
+        t_ve    使光标可见                              <b class="vimtag"> <a name="t_ve">t_ve</a> </b> <b class="vimtag"> <a name="'t_ve'">'t_ve'</a> </b>
+        t_vi    使光标隐藏                              <b class="vimtag"> <a name="t_vi">t_vi</a> </b> <b class="vimtag"> <a name="'t_vi'">'t_vi'</a> </b>
+        t_vs    使光标 "非常" 可见 (闪烁)               <b class="vimtag"> <a name="t_vs">t_vs</a> </b> <b class="vimtag"> <a name="'t_vs'">'t_vs'</a> </b>
+        t_xs    非空时，覆盖写入不清除突出属性 (hpterm) <b class="vimtag"> <a name="t_xs">t_xs</a> </b> <b class="vimtag"> <a name="'t_xs'">'t_xs'</a> </b>
+        t_xn    非空时，屏幕末单元格写入字符不触发滚动  <b class="vimtag"> <a name="t_xn">t_xn</a> </b> <b class="vimtag"> <a name="'t_xn'">'t_xn'</a> </b>
                                                         <b class="vimtag"> <a name="t_xo">t_xo</a> </b> <b class="vimtag"> <a name="'t_xo'">'t_xo'</a> </b>
-        t_xo    非空时，终端使用 xon/xoff 握手协议，映射
-                <code class="keystroke">CTRL-S</code> 不再可用，因为它被用作流控制 (用于 vt420
-                终端)。此标志位只在启动 Vim 时有作用。
-        t_ZH    斜体模式                                <b class="vimtag"> <a name="t_ZH">t_ZH</a> </b> <b class="vimtag"> <a name="'t_ZH'">'t_ZH'</a> </b>
-        t_ZR    斜体结束                                <b class="vimtag"> <a name="t_ZR">t_ZR</a> </b> <b class="vimtag"> <a name="'t_ZR'">'t_ZR'</a> </b>
+        t_xo    非空时，终端使用 xon/xoff 握手协议，此时 <code class="keystroke">CTRL-S</code> 被流控制占用
+                (如 vt420 终端)，无法用于映射。此标志位仅在 Vim 启动阶段生效
+        t_ZH    进入斜体模式                            <b class="vimtag"> <a name="t_ZH">t_ZH</a> </b> <b class="vimtag"> <a name="'t_ZH'">'t_ZH'</a> </b>
+        t_ZR    退出斜体模式                            <b class="vimtag"> <a name="t_ZR">t_ZR</a> </b> <b class="vimtag"> <a name="'t_ZR'">'t_ZR'</a> </b>
 
-Vim 增加的 (它们没有标准代码):
-        t_AU    设置下划线色 (ANSI)                     <b class="vimtag"> <a name="t_AU">t_AU</a> </b> <b class="vimtag"> <a name="'t_AU'">'t_AU'</a> </b>
-        t_Ce    下曲 (undercurl) 和下划线结束           <b class="vimtag"> <a name="t_Ce">t_Ce</a> </b> <b class="vimtag"> <a name="'t_Ce'">'t_Ce'</a> </b>
-        t_Cs    下曲 (波浪状下划线) 模式                <b class="vimtag"> <a name="t_Cs">t_Cs</a> </b> <b class="vimtag"> <a name="'t_Cs'">'t_Cs'</a> </b>
+Vim 新增 (无对应标准代码):
+        t_AU    设置下划线颜色 (使用 ANSI 序列)         <b class="vimtag"> <a name="t_AU">t_AU</a> </b> <b class="vimtag"> <a name="'t_AU'">'t_AU'</a> </b>
+        t_Ce    退出下曲 (undercurl) 和各种下划线模式   <b class="vimtag"> <a name="t_Ce">t_Ce</a> </b> <b class="vimtag"> <a name="'t_Ce'">'t_Ce'</a> </b>
+        t_Cs    进入下曲 (波浪状下划线) 模式            <b class="vimtag"> <a name="t_Cs">t_Cs</a> </b> <b class="vimtag"> <a name="'t_Cs'">'t_Cs'</a> </b>
         t_CF    设置备选字体 (使用索引 0 - 10)          <b class="vimtag"> <a name="t_CF">t_CF</a> </b> <b class="vimtag"> <a name="'t_CF'">'t_CF'</a> </b>
-        t_Us    双下划线模式                            <b class="vimtag"> <a name="t_Us">t_Us</a> </b> <b class="vimtag"> <a name="'t_Us'">'t_Us'</a> </b>
-        t_ds    点状下划线模式                          <b class="vimtag"> <a name="t_ds">t_ds</a> </b> <b class="vimtag"> <a name="'t_ds'">'t_ds'</a> </b>
-        t_Ds    虚线下划线模式                          <b class="vimtag"> <a name="t_Ds">t_Ds</a> </b> <b class="vimtag"> <a name="'t_Ds'">'t_Ds'</a> </b>
-        t_Te    删除线结束                              <b class="vimtag"> <a name="t_Te">t_Te</a> </b> <b class="vimtag"> <a name="'t_Te'">'t_Te'</a> </b>
-        t_Ts    删除线模式                              <b class="vimtag"> <a name="t_Ts">t_Ts</a> </b> <b class="vimtag"> <a name="'t_Ts'">'t_Ts'</a> </b>
+        t_Us    进入双下划线模式                        <b class="vimtag"> <a name="t_Us">t_Us</a> </b> <b class="vimtag"> <a name="'t_Us'">'t_Us'</a> </b>
+        t_ds    进入点状下划线模式                      <b class="vimtag"> <a name="t_ds">t_ds</a> </b> <b class="vimtag"> <a name="'t_ds'">'t_ds'</a> </b>
+        t_Ds    进入虚线下划线模式                      <b class="vimtag"> <a name="t_Ds">t_Ds</a> </b> <b class="vimtag"> <a name="'t_Ds'">'t_Ds'</a> </b>
+        t_Te    退出删除线模式                          <b class="vimtag"> <a name="t_Te">t_Te</a> </b> <b class="vimtag"> <a name="'t_Te'">'t_Te'</a> </b>
+        t_Ts    进入删除线模式                          <b class="vimtag"> <a name="t_Ts">t_Ts</a> </b> <b class="vimtag"> <a name="'t_Ts'">'t_Ts'</a> </b>
         t_IS    开始设置图标文本                        <b class="vimtag"> <a name="t_IS">t_IS</a> </b> <b class="vimtag"> <a name="'t_IS'">'t_IS'</a> </b>
         t_IE    结束设置图标文本                        <b class="vimtag"> <a name="t_IE">t_IE</a> </b> <b class="vimtag"> <a name="'t_IE'">'t_IE'</a> </b>
-        t_WP    设置窗口位置 (Y，X)，以像素计算         <b class="vimtag"> <a name="t_WP">t_WP</a> </b> <b class="vimtag"> <a name="'t_WP'">'t_WP'</a> </b>
-        t_GP    获取窗口位置 (Y，X)，以像素计算         <b class="vimtag"> <a name="t_GP">t_GP</a> </b> <b class="vimtag"> <a name="'t_GP'">'t_GP'</a> </b>
-        t_WS    设置窗口高度与宽度，以单元格数计算      <b class="vimtag"> <a name="t_WS">t_WS</a> </b> <b class="vimtag"> <a name="'t_WS'">'t_WS'</a> </b>
-        t_VS    光标正常可见 (无闪烁)                   <b class="vimtag"> <a name="t_VS">t_VS</a> </b> <b class="vimtag"> <a name="'t_VS'">'t_VS'</a> </b>
-        t_SI    开始插入模式 (条形光标)                 <b class="vimtag"> <a name="t_SI">t_SI</a> </b> <b class="vimtag"> <a name="'t_SI'">'t_SI'</a> </b>
-        t_SR    开始替换模式 (下划线光标)               <b class="vimtag"> <a name="t_SR">t_SR</a> </b> <b class="vimtag"> <a name="'t_SR'">'t_SR'</a> </b>
-        t_EI    结束插入或替换模式 (块形光标)           <b class="vimtag"> <a name="t_EI">t_EI</a> </b> <b class="vimtag"> <a name="'t_EI'">'t_EI'</a> </b>
-                 <a href="term.html#termcap-cursor-shape">termcap-cursor-shape</a> 
-        t_RV    请求终端版本字符串 (适用于 xterm        <b class="vimtag"> <a name="t_RV">t_RV</a> </b> <b class="vimtag"> <a name="'t_RV'">'t_RV'</a> </b>
-                和其他终端模拟器) 其响应存于  <a href="eval.html#v:termresponse">v:termresponse</a>   <a href="term.html#xterm-8bit">xterm-8bit</a> 
-                <a href="options.html#'ttymouse'">'ttymouse'</a>  <a href="term.html#xterm-codes">xterm-codes</a> 
-        t_XM    打开/关闭鼠标报告。                     <b class="vimtag"> <a name="t_XM">t_XM</a> </b> <b class="vimtag"> <a name="'t_XM'">'t_XM'</a> </b>
-                见下  <a href="term.html#mouse-reporting">mouse-reporting</a> 
-        t_RK    请求终端键盘协议状态；                  <b class="vimtag"> <a name="t_RK">t_RK</a> </b> <b class="vimtag"> <a name="'t_RK'">'t_RK'</a> </b>
-                 <a href="term.html#t_TI">t_TI</a>  之后发送
-        t_u7    请求光标位置 (适用于 xterm)             <b class="vimtag"> <a name="t_u7">t_u7</a> </b> <b class="vimtag"> <a name="'t_u7'">'t_u7'</a> </b>
-                见 <a href="options.html#'ambiwidth'">'ambiwidth'</a>
-                其响应存于  <code class="badlink">v:term7resp</code> 
-        t_RF    请求终端前景色                          <b class="vimtag"> <a name="t_RF">t_RF</a> </b> <b class="vimtag"> <a name="'t_RF'">'t_RF'</a> </b>
-                其响应存于  <code class="badlink">v:termfgresp</code> 
-        t_RB    请求终端背景色                          <b class="vimtag"> <a name="t_RB">t_RB</a> </b> <b class="vimtag"> <a name="'t_RB'">'t_RB'</a> </b>
-                其响应存于  <code class="badlink">v:termbgresp</code> 
-        t_8f    设置终端前景色 (R, G, B)                <b class="vimtag"> <a name="t_8f">t_8f</a> </b> <b class="vimtag"> <a name="'t_8f'">'t_8f'</a> </b>
-                 <a href="term.html#xterm-true-color">xterm-true-color</a> 
-        t_8b    设置终端背景色 (R, G, B)                <b class="vimtag"> <a name="t_8b">t_8b</a> </b> <b class="vimtag"> <a name="'t_8b'">'t_8b'</a> </b>
-                 <a href="term.html#xterm-true-color">xterm-true-color</a> 
-        t_8u    设置下划线色 (R, G, B)                  <b class="vimtag"> <a name="t_8u">t_8u</a> </b> <b class="vimtag"> <a name="'t_8u'">'t_8u'</a> </b>
-        t_BE    打开括号内粘贴模式                      <b class="vimtag"> <a name="t_BE">t_BE</a> </b> <b class="vimtag"> <a name="'t_BE'">'t_BE'</a> </b>
-                 <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a> 
-        t_BD    关闭括号内粘贴模式                      <b class="vimtag"> <a name="t_BD">t_BD</a> </b> <b class="vimtag"> <a name="'t_BD'">'t_BD'</a> </b>
-                 <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a> 
+        t_WP    设置窗口像素坐标 (Y，X)                 <b class="vimtag"> <a name="t_WP">t_WP</a> </b> <b class="vimtag"> <a name="'t_WP'">'t_WP'</a> </b>
+        t_GP    获取窗口像素坐标 (Y，X)                 <b class="vimtag"> <a name="t_GP">t_GP</a> </b> <b class="vimtag"> <a name="'t_GP'">'t_GP'</a> </b>
+        t_WS    设置窗口大小 (单元格高度和宽度)         <b class="vimtag"> <a name="t_WS">t_WS</a> </b> <b class="vimtag"> <a name="'t_WS'">'t_WS'</a> </b>
+        t_VS    使光标常亮 (无闪烁)                     <b class="vimtag"> <a name="t_VS">t_VS</a> </b> <b class="vimtag"> <a name="'t_VS'">'t_VS'</a> </b>
+        t_SI    进入插入模式 (条形光标)                 <b class="vimtag"> <a name="t_SI">t_SI</a> </b> <b class="vimtag"> <a name="'t_SI'">'t_SI'</a> </b>
+        t_SR    进入替换模式 (下划线光标)               <b class="vimtag"> <a name="t_SR">t_SR</a> </b> <b class="vimtag"> <a name="'t_SR'">'t_SR'</a> </b>
+        t_EI    退出插入或替换模式 (块形光标)           <b class="vimtag"> <a name="t_EI">t_EI</a> </b> <b class="vimtag"> <a name="'t_EI'">'t_EI'</a> </b>
+                光标形状总结可见  <a href="term.html#termcap-cursor-shape">termcap-cursor-shape</a> 
+                                                        <b class="vimtag"> <a name="t_RV">t_RV</a> </b> <b class="vimtag"> <a name="'t_RV'">'t_RV'</a> </b>
+        t_RV    查询终端版本字符串 (适用于 xterm 和其他终端模拟器)，应答值存于
+                 <a href="eval.html#v:termresponse">v:termresponse</a> 。参见  <a href="term.html#xterm-8bit">xterm-8bit</a>  <a href="options.html#'ttymouse'">'ttymouse'</a>  <a href="term.html#xterm-codes">xterm-codes</a> 
+        t_XM    打开/关闭鼠标报告。见  <a href="term.html#mouse-reporting">mouse-reporting</a>  <b class="vimtag"> <a name="t_XM">t_XM</a> </b> <b class="vimtag"> <a name="'t_XM'">'t_XM'</a> </b>
+        t_RK    查询终端键盘协议状态；在  <a href="term.html#t_TI">t_TI</a>  后发送  <b class="vimtag"> <a name="t_RK">t_RK</a> </b> <b class="vimtag"> <a name="'t_RK'">'t_RK'</a> </b>
+                                                        <b class="vimtag"> <a name="t_u7">t_u7</a> </b> <b class="vimtag"> <a name="'t_u7'">'t_u7'</a> </b>
+        t_u7    查询光标位置 (用于 xterm)，见 <a href="options.html#'ambiwidth'">'ambiwidth'</a>，值存于  <code class="badlink">v:term7resp</code> 
+        t_RF    查询终端前景色，值存于  <a href="eval.html#v:termrfgresp">v:termrfgresp</a>   <b class="vimtag"> <a name="t_RF">t_RF</a> </b> <b class="vimtag"> <a name="'t_RF'">'t_RF'</a> </b>
+        t_RB    查询终端背景色，值存于  <a href="eval.html#v:termrbgresp">v:termrbgresp</a>   <b class="vimtag"> <a name="t_RB">t_RB</a> </b> <b class="vimtag"> <a name="'t_RB'">'t_RB'</a> </b>
+        t_8f    设置终端前景色 RGB  <a href="term.html#xterm-true-color">xterm-true-color</a>    <b class="vimtag"> <a name="t_8f">t_8f</a> </b> <b class="vimtag"> <a name="'t_8f'">'t_8f'</a> </b>
+        t_8b    设置终端背景色 RGB  <a href="term.html#xterm-true-color">xterm-true-color</a>    <b class="vimtag"> <a name="t_8b">t_8b</a> </b> <b class="vimtag"> <a name="'t_8b'">'t_8b'</a> </b>
+        t_8u    设置下划线颜色 (R, G, B)                <b class="vimtag"> <a name="t_8u">t_8u</a> </b> <b class="vimtag"> <a name="'t_8u'">'t_8u'</a> </b>
+        t_BE    打开括号粘贴  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>     <b class="vimtag"> <a name="t_BE">t_BE</a> </b> <b class="vimtag"> <a name="'t_BE'">'t_BE'</a> </b>
+        t_BD    关闭括号粘贴  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a>     <b class="vimtag"> <a name="t_BD">t_BD</a> </b> <b class="vimtag"> <a name="'t_BD'">'t_BD'</a> </b>
         t_SC    开始设置光标颜色                        <b class="vimtag"> <a name="t_SC">t_SC</a> </b> <b class="vimtag"> <a name="'t_SC'">'t_SC'</a> </b>
         t_EC    结束设置光标颜色                        <b class="vimtag"> <a name="t_EC">t_EC</a> </b> <b class="vimtag"> <a name="'t_EC'">'t_EC'</a> </b>
         t_SH    设置光标形状                            <b class="vimtag"> <a name="t_SH">t_SH</a> </b> <b class="vimtag"> <a name="'t_SH'">'t_SH'</a> </b>
-        t_RC    请求终端光标闪烁                        <b class="vimtag"> <a name="t_RC">t_RC</a> </b> <b class="vimtag"> <a name="'t_RC'">'t_RC'</a> </b>
-                其响应存于  <a href="eval.html#v:termblinkresp">v:termblinkresp</a> 
-        t_RS    请求终端光标风格                        <b class="vimtag"> <a name="t_RS">t_RS</a> </b> <b class="vimtag"> <a name="'t_RS'">'t_RS'</a> </b>
-                其响应存于  <a href="eval.html#v:termstyleresp">v:termstyleresp</a> 
-        t_ST    在栈中保存窗口标题                      <b class="vimtag"> <a name="t_ST">t_ST</a> </b> <b class="vimtag"> <a name="'t_ST'">'t_ST'</a> </b>
-        t_RT    从栈中恢复窗口标题                      <b class="vimtag"> <a name="t_RT">t_RT</a> </b> <b class="vimtag"> <a name="'t_RT'">'t_RT'</a> </b>
-        t_Si    在栈中保存图标文本                      <b class="vimtag"> <a name="t_Si">t_Si</a> </b> <b class="vimtag"> <a name="'t_Si'">'t_Si'</a> </b>
-        t_Ri    从栈中恢复图标文本                      <b class="vimtag"> <a name="t_Ri">t_Ri</a> </b> <b class="vimtag"> <a name="'t_Ri'">'t_Ri'</a> </b>
-        t_TE    结束 "raw" 模式                         <b class="vimtag"> <a name="t_TE">t_TE</a> </b> <b class="vimtag"> <a name="'t_TE'">'t_TE'</a> </b>
-        t_TI    让终端进入 "raw" 模式                   <b class="vimtag"> <a name="t_TI">t_TI</a> </b> <b class="vimtag"> <a name="'t_TI'">'t_TI'</a> </b>
-        t_fe    打开焦点事件跟踪                        <b class="vimtag"> <a name="t_fe">t_fe</a> </b> <b class="vimtag"> <a name="'t_fe'">'t_fe'</a> </b>
-                 <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
-        t_fd    关闭焦点事件跟踪                        <b class="vimtag"> <a name="t_fd">t_fd</a> </b> <b class="vimtag"> <a name="'t_fd'">'t_fd'</a> </b>
-                 <a href="term.html#xterm-focus-event">xterm-focus-event</a> 
-        t_BS    打开同步更新模式                        <b class="vimtag"> <a name="t_BS">t_BS</a> </b> <b class="vimtag"> <a name="'t_BS'">'t_BS'</a> </b>
-                见 <a href="options.html#'termsync'">'termsync'</a>
-        t_ES    关闭同步更新模式                        <b class="vimtag"> <a name="t_ES">t_ES</a> </b> <b class="vimtag"> <a name="'t_ES'">'t_ES'</a> </b>
-                见 <a href="options.html#'termsync'">'termsync'</a>
+        t_RC    查询光标闪烁状态，值存于  <a href="eval.html#v:termblinkresp">v:termblinkresp</a>  <b class="vimtag"> <a name="t_RC">t_RC</a> </b> <b class="vimtag"> <a name="'t_RC'">'t_RC'</a> </b>
+        t_RS    查询光标样式，值存于  <a href="eval.html#v:termstyleresp">v:termstyleresp</a>   <b class="vimtag"> <a name="t_RS">t_RS</a> </b> <b class="vimtag"> <a name="'t_RS'">'t_RS'</a> </b>
+        t_ST    将窗口标题压入栈                        <b class="vimtag"> <a name="t_ST">t_ST</a> </b> <b class="vimtag"> <a name="'t_ST'">'t_ST'</a> </b>
+        t_RT    从栈弹出窗口标题                        <b class="vimtag"> <a name="t_RT">t_RT</a> </b> <b class="vimtag"> <a name="'t_RT'">'t_RT'</a> </b>
+        t_Si    将图标文本压入栈                        <b class="vimtag"> <a name="t_Si">t_Si</a> </b> <b class="vimtag"> <a name="'t_Si'">'t_Si'</a> </b>
+        t_Ri    从栈弹出图标文本                        <b class="vimtag"> <a name="t_Ri">t_Ri</a> </b> <b class="vimtag"> <a name="'t_Ri'">'t_Ri'</a> </b>
+        t_TE    退出原始 ("raw") 模式                   <b class="vimtag"> <a name="t_TE">t_TE</a> </b> <b class="vimtag"> <a name="'t_TE'">'t_TE'</a> </b>
+        t_TI    进入原始 ("raw") 模式                   <b class="vimtag"> <a name="t_TI">t_TI</a> </b> <b class="vimtag"> <a name="'t_TI'">'t_TI'</a> </b>
+        t_fe    打开焦点事件跟踪 ( <a href="term.html#xterm-focus-event">xterm-focus-event</a> )  <b class="vimtag"> <a name="t_fe">t_fe</a> </b> <b class="vimtag"> <a name="'t_fe'">'t_fe'</a> </b>
+        t_fd    关闭焦点事件跟踪 ( <a href="term.html#xterm-focus-event">xterm-focus-event</a> )  <b class="vimtag"> <a name="t_fd">t_fd</a> </b> <b class="vimtag"> <a name="'t_fd'">'t_fd'</a> </b>
+        t_BS    打开同步更新模式，见 <a href="options.html#'termsync'">'termsync'</a>         <b class="vimtag"> <a name="t_BS">t_BS</a> </b> <b class="vimtag"> <a name="'t_BS'">'t_BS'</a> </b>
+        t_ES    关闭同步更新模式，见 <a href="options.html#'termsync'">'termsync'</a>         <b class="vimtag"> <a name="t_ES">t_ES</a> </b> <b class="vimtag"> <a name="'t_ES'">'t_ES'</a> </b>
 
-有些代码有开始、中间和结束部分。开始和结束由 termcap 选项定义，中间部分是文
-本。
-        设置标题文本:     t_ts {title text} t_fs
-        设置图标文本:     t_IS {icon text} t_IE
-        设置光标颜色:     t_SC  {color name}  t_EC
+部分控制码分为起始、中间、结束三段。起始和结束由终端能力项定义，中间为文本内
+容。
+        设置标题文本:     t_ts <code class="special">{标题文本}</code> t_fs
+        设置图标文本:     t_IS <code class="special">{图标文本}</code> t_IE
+        设置光标颜色:     t_SC  <code class="special">{颜色名}</code>  t_EC
 
-t_SH 必须提供一个参数:
-        0、1 或无       闪烁块状光标
+t_SH  (DECSCUSR 序列) 必须提供一个参数，分别对应:
+        0、1 或省略     闪烁块状光标
         2               块状光标
-        3               闪烁下划光标
-        4               下划光标
-        5               产供垂直条光标
-        6               垂直条光标
+        3               闪烁下划线光标
+        4               下划线光标
+        5               闪烁竖线光标
+        6               竖线光标
 
-仅当接收到 t_RV 的反馈时才会发送 t_RS。Mac OS 上如果 termresponse 不能识别到
-Terminal.app 也不会用它。
+仅当收到 t_RV 应答后才会发送 t_RS。Mac OS 上，通过 termresponse 识别出
+Terminal.app 时，则不使用 t_RS。
 
-t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接设置为以下缺省
-值:
+t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接设置为以下缺省值:
         t_BS            "\033[?2026h"
         t_ES            "\033[?2026l"
 
                                                         <b class="vimtag"> <a name="mouse-reporting">mouse-reporting</a> </b>
-许多终端报告会鼠标点击事件，有些还能报告鼠标移动和拖动。Vim 需要知道应使用哪些
-键码来处理这些情况。
+许多终端可报告鼠标点击事件，部分还支持鼠标移动和拖曳。Vim 需要获知对应的控制
+码。
 
-为此，使用 "XM" terminfo/termcap 项目。Vim 也有 <a href="options.html#'ttymouse'">'ttymouse'</a> 选项来指定使用的鼠
-标协议。可用值见该选项。
+这由 "XM" terminfo/termcap 项目负责。Vim 另有 <a href="options.html#'ttymouse'">'ttymouse'</a> 选项指定鼠标协议。可
+用值参见该选项。
 
-如果 Vim 可以读取 "XM" terminfo/termcap 项目，会用之打开和关闭鼠标报告。如果该
-项目不存在，则使用 <a href="options.html#'ttymouse'">'ttymouse'</a> 的值来决定。
+"XM" 终端能力项可用时，Vim 用该项来开关鼠标报告。否则，会依赖 <a href="options.html#'ttymouse'">'ttymouse'</a> 值决
+定。
 
-如果 "XM" 项目存在且首项为 "1006"，设置 <a href="options.html#'ttymouse'">'ttymouse'</a> 为 "sgr"，除非它已有赋值。
+"XM" 项存在且首个数值为 "1006" 时，<a href="options.html#'ttymouse'">'ttymouse'</a> 在尚未设置时会被自动设为 "sgr"。
 
 
 键 代 码                                                <b class="vimtag"> <a name="terminal-key-codes">terminal-key-codes</a> </b>
@@ -510,241 +495,239 @@ t_BS 和 t_ES 不存储在 termcap 数据库中，而是在 Vim 启动时直接�
 
 <code class="section">        选项    名字            含义    </code>
 
-        t_ku    <code class="special">&lt;Up&gt;</code>            光标上移                <b class="vimtag"> <a name="t_ku">t_ku</a> </b> <b class="vimtag"> <a name="'t_ku'">'t_ku'</a> </b>
-        t_kd    <code class="special">&lt;Down&gt;</code>          光标下移                <b class="vimtag"> <a name="t_kd">t_kd</a> </b> <b class="vimtag"> <a name="'t_kd'">'t_kd'</a> </b>
-        t_kr    <code class="special">&lt;Right&gt;</code>         光标右移                <b class="vimtag"> <a name="t_kr">t_kr</a> </b> <b class="vimtag"> <a name="'t_kr'">'t_kr'</a> </b>
-        t_kl    <code class="special">&lt;Left&gt;</code>          光标左移                <b class="vimtag"> <a name="t_kl">t_kl</a> </b> <b class="vimtag"> <a name="'t_kl'">'t_kl'</a> </b>
-                <code class="special">&lt;xUp&gt;</code>           替代的光标上移          <b class="vimtag"> <a name="%3CxUp%3E">&lt;xUp&gt;</a> </b>
-                <code class="special">&lt;xDown&gt;</code>         替代的光标下移          <b class="vimtag"> <a name="%3CxDown%3E">&lt;xDown&gt;</a> </b>
-                <code class="special">&lt;xRight&gt;</code>        替代的光标右移          <b class="vimtag"> <a name="%3CxRight%3E">&lt;xRight&gt;</a> </b>
-                <code class="special">&lt;xLeft&gt;</code>         替代的光标左移          <b class="vimtag"> <a name="%3CxLeft%3E">&lt;xLeft&gt;</a> </b>
-                <code class="special">&lt;S-Up&gt;</code>          shift 光标上移
-                <code class="special">&lt;S-Down&gt;</code>        shift 光标下移
-        t_%i    <code class="special">&lt;S-Right&gt;</code>       shift 光标右移          <b class="vimtag"> <a name="t_%i">t_%i</a> </b> <b class="vimtag"> <a name="'t_%i'">'t_%i'</a> </b>
-        t_#4    <code class="special">&lt;S-Left&gt;</code>        shift 光标左移          <b class="vimtag"> <a name="t_%234">t_#4</a> </b> <b class="vimtag"> <a name="'t_%234'">'t_#4'</a> </b>
-        t_k1    <code class="special">&lt;F1&gt;</code>            功能键 1                <b class="vimtag"> <a name="t_k1">t_k1</a> </b> <b class="vimtag"> <a name="'t_k1'">'t_k1'</a> </b>
-                <code class="special">&lt;xF1&gt;</code>           替代的 F1               <b class="vimtag"> <a name="%3CxF1%3E">&lt;xF1&gt;</a> </b>
-        t_k2    <code class="special">&lt;F2&gt;</code>            功能键 2                <b class="vimtag"> <a name="%3CF2%3E">&lt;F2&gt;</a> </b>  <b class="vimtag"> <a name="t_k2">t_k2</a> </b> <b class="vimtag"> <a name="'t_k2'">'t_k2'</a> </b>
-                <code class="special">&lt;xF2&gt;</code>           替代的 F2               <b class="vimtag"> <a name="%3CxF2%3E">&lt;xF2&gt;</a> </b>
-        t_k3    <code class="special">&lt;F3&gt;</code>            功能键 3                <b class="vimtag"> <a name="%3CF3%3E">&lt;F3&gt;</a> </b>  <b class="vimtag"> <a name="t_k3">t_k3</a> </b> <b class="vimtag"> <a name="'t_k3'">'t_k3'</a> </b>
-                <code class="special">&lt;xF3&gt;</code>           替代的 F3               <b class="vimtag"> <a name="%3CxF3%3E">&lt;xF3&gt;</a> </b>
-        t_k4    <code class="special">&lt;F4&gt;</code>            功能键 4                <b class="vimtag"> <a name="%3CF4%3E">&lt;F4&gt;</a> </b>  <b class="vimtag"> <a name="t_k4">t_k4</a> </b> <b class="vimtag"> <a name="'t_k4'">'t_k4'</a> </b>
-                <code class="special">&lt;xF4&gt;</code>           替代的 F4               <b class="vimtag"> <a name="%3CxF4%3E">&lt;xF4&gt;</a> </b>
-        t_k5    <code class="special">&lt;F5&gt;</code>            功能键 5                <b class="vimtag"> <a name="%3CF5%3E">&lt;F5&gt;</a> </b>  <b class="vimtag"> <a name="t_k5">t_k5</a> </b> <b class="vimtag"> <a name="'t_k5'">'t_k5'</a> </b>
-        t_k6    <code class="special">&lt;F6&gt;</code>            功能键 6                <b class="vimtag"> <a name="%3CF6%3E">&lt;F6&gt;</a> </b>  <b class="vimtag"> <a name="t_k6">t_k6</a> </b> <b class="vimtag"> <a name="'t_k6'">'t_k6'</a> </b>
-        t_k7    <code class="special">&lt;F7&gt;</code>            功能键 7                <b class="vimtag"> <a name="%3CF7%3E">&lt;F7&gt;</a> </b>  <b class="vimtag"> <a name="t_k7">t_k7</a> </b> <b class="vimtag"> <a name="'t_k7'">'t_k7'</a> </b>
-        t_k8    <code class="special">&lt;F8&gt;</code>            功能键 8                <b class="vimtag"> <a name="%3CF8%3E">&lt;F8&gt;</a> </b>  <b class="vimtag"> <a name="t_k8">t_k8</a> </b> <b class="vimtag"> <a name="'t_k8'">'t_k8'</a> </b>
-        t_k9    <code class="special">&lt;F9&gt;</code>            功能键 9                <b class="vimtag"> <a name="%3CF9%3E">&lt;F9&gt;</a> </b>  <b class="vimtag"> <a name="t_k9">t_k9</a> </b> <b class="vimtag"> <a name="'t_k9'">'t_k9'</a> </b>
-        t_k;    <code class="special">&lt;F10&gt;</code>           功能键 10               <b class="vimtag"> <a name="%3CF10%3E">&lt;F10&gt;</a> </b> <b class="vimtag"> <a name="t_k;">t_k;</a> </b> <b class="vimtag"> <a name="'t_k;'">'t_k;'</a> </b>
-        t_F1    <code class="special">&lt;F11&gt;</code>           功能键 11               <b class="vimtag"> <a name="%3CF11%3E">&lt;F11&gt;</a> </b> <b class="vimtag"> <a name="t_F1">t_F1</a> </b> <b class="vimtag"> <a name="'t_F1'">'t_F1'</a> </b>
-        t_F2    <code class="special">&lt;F12&gt;</code>           功能键 12               <b class="vimtag"> <a name="%3CF12%3E">&lt;F12&gt;</a> </b> <b class="vimtag"> <a name="t_F2">t_F2</a> </b> <b class="vimtag"> <a name="'t_F2'">'t_F2'</a> </b>
-        t_F3    <code class="special">&lt;F13&gt;</code>           功能键 13               <b class="vimtag"> <a name="%3CF13%3E">&lt;F13&gt;</a> </b> <b class="vimtag"> <a name="t_F3">t_F3</a> </b> <b class="vimtag"> <a name="'t_F3'">'t_F3'</a> </b>
-        t_F4    <code class="special">&lt;F14&gt;</code>           功能键 14               <b class="vimtag"> <a name="%3CF14%3E">&lt;F14&gt;</a> </b> <b class="vimtag"> <a name="t_F4">t_F4</a> </b> <b class="vimtag"> <a name="'t_F4'">'t_F4'</a> </b>
-        t_F5    <code class="special">&lt;F15&gt;</code>           功能键 15               <b class="vimtag"> <a name="%3CF15%3E">&lt;F15&gt;</a> </b> <b class="vimtag"> <a name="t_F5">t_F5</a> </b> <b class="vimtag"> <a name="'t_F5'">'t_F5'</a> </b>
-        t_F6    <code class="special">&lt;F16&gt;</code>           功能键 16               <b class="vimtag"> <a name="%3CF16%3E">&lt;F16&gt;</a> </b> <b class="vimtag"> <a name="t_F6">t_F6</a> </b> <b class="vimtag"> <a name="'t_F6'">'t_F6'</a> </b>
-        t_F7    <code class="special">&lt;F17&gt;</code>           功能键 17               <b class="vimtag"> <a name="%3CF17%3E">&lt;F17&gt;</a> </b> <b class="vimtag"> <a name="t_F7">t_F7</a> </b> <b class="vimtag"> <a name="'t_F7'">'t_F7'</a> </b>
-        t_F8    <code class="special">&lt;F18&gt;</code>           功能键 18               <b class="vimtag"> <a name="%3CF18%3E">&lt;F18&gt;</a> </b> <b class="vimtag"> <a name="t_F8">t_F8</a> </b> <b class="vimtag"> <a name="'t_F8'">'t_F8'</a> </b>
-        t_F9    <code class="special">&lt;F19&gt;</code>           功能键 19               <b class="vimtag"> <a name="%3CF19%3E">&lt;F19&gt;</a> </b> <b class="vimtag"> <a name="t_F9">t_F9</a> </b> <b class="vimtag"> <a name="'t_F9'">'t_F9'</a> </b>
-                <code class="special">&lt;S-F1&gt;</code>          shift 功能键 1
-                <code class="special">&lt;S-xF1&gt;</code>         替代的 <code class="special">&lt;S-F1&gt;</code>           <b class="vimtag"> <a name="%3CS-xF1%3E">&lt;S-xF1&gt;</a> </b>
-                <code class="special">&lt;S-F2&gt;</code>          shift 功能键 2          <b class="vimtag"> <a name="%3CS-F2%3E">&lt;S-F2&gt;</a> </b>
-                <code class="special">&lt;S-xF2&gt;</code>         替代的 <code class="special">&lt;S-F2&gt;</code>           <b class="vimtag"> <a name="%3CS-xF2%3E">&lt;S-xF2&gt;</a> </b>
-                <code class="special">&lt;S-F3&gt;</code>          shift 功能键 3          <b class="vimtag"> <a name="%3CS-F3%3E">&lt;S-F3&gt;</a> </b>
-                <code class="special">&lt;S-xF3&gt;</code>         替代的 <code class="special">&lt;S-F3&gt;</code>           <b class="vimtag"> <a name="%3CS-xF3%3E">&lt;S-xF3&gt;</a> </b>
-                <code class="special">&lt;S-F4&gt;</code>          shift 功能键 4          <b class="vimtag"> <a name="%3CS-F4%3E">&lt;S-F4&gt;</a> </b>
-                <code class="special">&lt;S-xF4&gt;</code>         替代的 <code class="special">&lt;S-F4&gt;</code>           <b class="vimtag"> <a name="%3CS-xF4%3E">&lt;S-xF4&gt;</a> </b>
-                <code class="special">&lt;S-F5&gt;</code>          shift 功能键 5          <b class="vimtag"> <a name="%3CS-F5%3E">&lt;S-F5&gt;</a> </b>
-                <code class="special">&lt;S-F6&gt;</code>          shift 功能键 6          <b class="vimtag"> <a name="%3CS-F6%3E">&lt;S-F6&gt;</a> </b>
-                <code class="special">&lt;S-F7&gt;</code>          shift 功能键 7          <b class="vimtag"> <a name="%3CS-F7%3E">&lt;S-F7&gt;</a> </b>
-                <code class="special">&lt;S-F8&gt;</code>          shift 功能键 8          <b class="vimtag"> <a name="%3CS-F8%3E">&lt;S-F8&gt;</a> </b>
-                <code class="special">&lt;S-F9&gt;</code>          shift 功能键 9          <b class="vimtag"> <a name="%3CS-F9%3E">&lt;S-F9&gt;</a> </b>
-                <code class="special">&lt;S-F10&gt;</code>         shift 功能键 10         <b class="vimtag"> <a name="%3CS-F10%3E">&lt;S-F10&gt;</a> </b>
-                <code class="special">&lt;S-F11&gt;</code>         shift 功能键 11         <b class="vimtag"> <a name="%3CS-F11%3E">&lt;S-F11&gt;</a> </b>
-                <code class="special">&lt;S-F12&gt;</code>         shift 功能键 12         <b class="vimtag"> <a name="%3CS-F12%3E">&lt;S-F12&gt;</a> </b>
-        t_%1    <code class="special">&lt;Help&gt;</code>          帮助键                  <b class="vimtag"> <a name="t_%1">t_%1</a> </b> <b class="vimtag"> <a name="'t_%1'">'t_%1'</a> </b>
-        t_&amp;8    <code class="special">&lt;Undo&gt;</code>          撤销键                  <b class="vimtag"> <a name="t_&8">t_&amp;8</a> </b> <b class="vimtag"> <a name="'t_&8'">'t_&amp;8'</a> </b>
-        t_kI    <code class="special">&lt;Insert&gt;</code>        插入键                  <b class="vimtag"> <a name="t_kI">t_kI</a> </b> <b class="vimtag"> <a name="'t_kI'">'t_kI'</a> </b>
-                <code class="special">&lt;kInsert&gt;</code>       keypad 插入键
-        t_kD    <code class="special">&lt;Del&gt;</code>           删除键                  <b class="vimtag"> <a name="t_kD">t_kD</a> </b> <b class="vimtag"> <a name="'t_kD'">'t_kD'</a> </b>
+        t_ku    <code class="special">&lt;Up&gt;</code>            上箭头键                <b class="vimtag"> <a name="t_ku">t_ku</a> </b> <b class="vimtag"> <a name="'t_ku'">'t_ku'</a> </b>
+        t_kd    <code class="special">&lt;Down&gt;</code>          下箭头键                <b class="vimtag"> <a name="t_kd">t_kd</a> </b> <b class="vimtag"> <a name="'t_kd'">'t_kd'</a> </b>
+        t_kr    <code class="special">&lt;Right&gt;</code>         右箭头键                <b class="vimtag"> <a name="t_kr">t_kr</a> </b> <b class="vimtag"> <a name="'t_kr'">'t_kr'</a> </b>
+        t_kl    <code class="special">&lt;Left&gt;</code>          左箭头键                <b class="vimtag"> <a name="t_kl">t_kl</a> </b> <b class="vimtag"> <a name="'t_kl'">'t_kl'</a> </b>
+                <code class="special">&lt;xUp&gt;</code>           备用上箭头键            <b class="vimtag"> <a name="%3CxUp%3E">&lt;xUp&gt;</a> </b>
+                <code class="special">&lt;xDown&gt;</code>         备用下箭头键            <b class="vimtag"> <a name="%3CxDown%3E">&lt;xDown&gt;</a> </b>
+                <code class="special">&lt;xRight&gt;</code>        备用右箭头键            <b class="vimtag"> <a name="%3CxRight%3E">&lt;xRight&gt;</a> </b>
+                <code class="special">&lt;xLeft&gt;</code>         备用左箭头键            <b class="vimtag"> <a name="%3CxLeft%3E">&lt;xLeft&gt;</a> </b>
+                <code class="special">&lt;S-Up&gt;</code>          Shift+上箭头键
+                <code class="special">&lt;S-Down&gt;</code>        Shift+下箭头键
+        t_%i    <code class="special">&lt;S-Right&gt;</code>       Shift+右箭头键          <b class="vimtag"> <a name="t_%i">t_%i</a> </b> <b class="vimtag"> <a name="'t_%i'">'t_%i'</a> </b>
+        t_#4    <code class="special">&lt;S-Left&gt;</code>        Shift+左箭头键          <b class="vimtag"> <a name="t_%234">t_#4</a> </b> <b class="vimtag"> <a name="'t_%234'">'t_#4'</a> </b>
+        t_k1    <code class="special">&lt;F1&gt;</code>            F1 功能键               <b class="vimtag"> <a name="t_k1">t_k1</a> </b> <b class="vimtag"> <a name="'t_k1'">'t_k1'</a> </b>
+                <code class="special">&lt;xF1&gt;</code>           备用 F1                 <b class="vimtag"> <a name="%3CxF1%3E">&lt;xF1&gt;</a> </b>
+        t_k2    <code class="special">&lt;F2&gt;</code>            F2 功能键       <b class="vimtag"> <a name="%3CF2%3E">&lt;F2&gt;</a> </b>  <b class="vimtag"> <a name="t_k2">t_k2</a> </b> <b class="vimtag"> <a name="'t_k2'">'t_k2'</a> </b>
+                <code class="special">&lt;xF2&gt;</code>           备用 F2                 <b class="vimtag"> <a name="%3CxF2%3E">&lt;xF2&gt;</a> </b>
+        t_k3    <code class="special">&lt;F3&gt;</code>            F3 功能键       <b class="vimtag"> <a name="%3CF3%3E">&lt;F3&gt;</a> </b>  <b class="vimtag"> <a name="t_k3">t_k3</a> </b> <b class="vimtag"> <a name="'t_k3'">'t_k3'</a> </b>
+                <code class="special">&lt;xF3&gt;</code>           备用 F3                 <b class="vimtag"> <a name="%3CxF3%3E">&lt;xF3&gt;</a> </b>
+        t_k4    <code class="special">&lt;F4&gt;</code>            F4 功能键       <b class="vimtag"> <a name="%3CF4%3E">&lt;F4&gt;</a> </b>  <b class="vimtag"> <a name="t_k4">t_k4</a> </b> <b class="vimtag"> <a name="'t_k4'">'t_k4'</a> </b>
+                <code class="special">&lt;xF4&gt;</code>           备用 F4                 <b class="vimtag"> <a name="%3CxF4%3E">&lt;xF4&gt;</a> </b>
+        t_k5    <code class="special">&lt;F5&gt;</code>            F5 功能键       <b class="vimtag"> <a name="%3CF5%3E">&lt;F5&gt;</a> </b>  <b class="vimtag"> <a name="t_k5">t_k5</a> </b> <b class="vimtag"> <a name="'t_k5'">'t_k5'</a> </b>
+        t_k6    <code class="special">&lt;F6&gt;</code>            F6 功能键       <b class="vimtag"> <a name="%3CF6%3E">&lt;F6&gt;</a> </b>  <b class="vimtag"> <a name="t_k6">t_k6</a> </b> <b class="vimtag"> <a name="'t_k6'">'t_k6'</a> </b>
+        t_k7    <code class="special">&lt;F7&gt;</code>            F7 功能键       <b class="vimtag"> <a name="%3CF7%3E">&lt;F7&gt;</a> </b>  <b class="vimtag"> <a name="t_k7">t_k7</a> </b> <b class="vimtag"> <a name="'t_k7'">'t_k7'</a> </b>
+        t_k8    <code class="special">&lt;F8&gt;</code>            F8 功能键       <b class="vimtag"> <a name="%3CF8%3E">&lt;F8&gt;</a> </b>  <b class="vimtag"> <a name="t_k8">t_k8</a> </b> <b class="vimtag"> <a name="'t_k8'">'t_k8'</a> </b>
+        t_k9    <code class="special">&lt;F9&gt;</code>            F9 功能键       <b class="vimtag"> <a name="%3CF9%3E">&lt;F9&gt;</a> </b>  <b class="vimtag"> <a name="t_k9">t_k9</a> </b> <b class="vimtag"> <a name="'t_k9'">'t_k9'</a> </b>
+        t_k;    <code class="special">&lt;F10&gt;</code>           F10 功能键      <b class="vimtag"> <a name="%3CF10%3E">&lt;F10&gt;</a> </b> <b class="vimtag"> <a name="t_k;">t_k;</a> </b> <b class="vimtag"> <a name="'t_k;'">'t_k;'</a> </b>
+        t_F1    <code class="special">&lt;F11&gt;</code>           F11 功能键      <b class="vimtag"> <a name="%3CF11%3E">&lt;F11&gt;</a> </b> <b class="vimtag"> <a name="t_F1">t_F1</a> </b> <b class="vimtag"> <a name="'t_F1'">'t_F1'</a> </b>
+        t_F2    <code class="special">&lt;F12&gt;</code>           F12 功能键      <b class="vimtag"> <a name="%3CF12%3E">&lt;F12&gt;</a> </b> <b class="vimtag"> <a name="t_F2">t_F2</a> </b> <b class="vimtag"> <a name="'t_F2'">'t_F2'</a> </b>
+        t_F3    <code class="special">&lt;F13&gt;</code>           F13 功能键      <b class="vimtag"> <a name="%3CF13%3E">&lt;F13&gt;</a> </b> <b class="vimtag"> <a name="t_F3">t_F3</a> </b> <b class="vimtag"> <a name="'t_F3'">'t_F3'</a> </b>
+        t_F4    <code class="special">&lt;F14&gt;</code>           F14 功能键      <b class="vimtag"> <a name="%3CF14%3E">&lt;F14&gt;</a> </b> <b class="vimtag"> <a name="t_F4">t_F4</a> </b> <b class="vimtag"> <a name="'t_F4'">'t_F4'</a> </b>
+        t_F5    <code class="special">&lt;F15&gt;</code>           F15 功能键      <b class="vimtag"> <a name="%3CF15%3E">&lt;F15&gt;</a> </b> <b class="vimtag"> <a name="t_F5">t_F5</a> </b> <b class="vimtag"> <a name="'t_F5'">'t_F5'</a> </b>
+        t_F6    <code class="special">&lt;F16&gt;</code>           F16 功能键      <b class="vimtag"> <a name="%3CF16%3E">&lt;F16&gt;</a> </b> <b class="vimtag"> <a name="t_F6">t_F6</a> </b> <b class="vimtag"> <a name="'t_F6'">'t_F6'</a> </b>
+        t_F7    <code class="special">&lt;F17&gt;</code>           F17 功能键      <b class="vimtag"> <a name="%3CF17%3E">&lt;F17&gt;</a> </b> <b class="vimtag"> <a name="t_F7">t_F7</a> </b> <b class="vimtag"> <a name="'t_F7'">'t_F7'</a> </b>
+        t_F8    <code class="special">&lt;F18&gt;</code>           F18 功能键      <b class="vimtag"> <a name="%3CF18%3E">&lt;F18&gt;</a> </b> <b class="vimtag"> <a name="t_F8">t_F8</a> </b> <b class="vimtag"> <a name="'t_F8'">'t_F8'</a> </b>
+        t_F9    <code class="special">&lt;F19&gt;</code>           F19 功能键      <b class="vimtag"> <a name="%3CF19%3E">&lt;F19&gt;</a> </b> <b class="vimtag"> <a name="t_F9">t_F9</a> </b> <b class="vimtag"> <a name="'t_F9'">'t_F9'</a> </b>
+                <code class="special">&lt;S-F1&gt;</code>          Shift+F1
+                <code class="special">&lt;S-xF1&gt;</code>         备用 <code class="special">&lt;S-F1&gt;</code>             <b class="vimtag"> <a name="%3CS-xF1%3E">&lt;S-xF1&gt;</a> </b>
+                <code class="special">&lt;S-F2&gt;</code>          Shift+F2                <b class="vimtag"> <a name="%3CS-F2%3E">&lt;S-F2&gt;</a> </b>
+                <code class="special">&lt;S-xF2&gt;</code>         备用 <code class="special">&lt;S-F2&gt;</code>             <b class="vimtag"> <a name="%3CS-xF2%3E">&lt;S-xF2&gt;</a> </b>
+                <code class="special">&lt;S-F3&gt;</code>          Shift+F3                <b class="vimtag"> <a name="%3CS-F3%3E">&lt;S-F3&gt;</a> </b>
+                <code class="special">&lt;S-xF3&gt;</code>         备用 <code class="special">&lt;S-F3&gt;</code>             <b class="vimtag"> <a name="%3CS-xF3%3E">&lt;S-xF3&gt;</a> </b>
+                <code class="special">&lt;S-F4&gt;</code>          Shift+F4                <b class="vimtag"> <a name="%3CS-F4%3E">&lt;S-F4&gt;</a> </b>
+                <code class="special">&lt;S-xF4&gt;</code>         备用 <code class="special">&lt;S-F4&gt;</code>             <b class="vimtag"> <a name="%3CS-xF4%3E">&lt;S-xF4&gt;</a> </b>
+                <code class="special">&lt;S-F5&gt;</code>          Shift+F5                <b class="vimtag"> <a name="%3CS-F5%3E">&lt;S-F5&gt;</a> </b>
+                <code class="special">&lt;S-F6&gt;</code>          Shift+F6                <b class="vimtag"> <a name="%3CS-F6%3E">&lt;S-F6&gt;</a> </b>
+                <code class="special">&lt;S-F7&gt;</code>          Shift+F7                <b class="vimtag"> <a name="%3CS-F7%3E">&lt;S-F7&gt;</a> </b>
+                <code class="special">&lt;S-F8&gt;</code>          Shift+F8                <b class="vimtag"> <a name="%3CS-F8%3E">&lt;S-F8&gt;</a> </b>
+                <code class="special">&lt;S-F9&gt;</code>          Shift+F9                <b class="vimtag"> <a name="%3CS-F9%3E">&lt;S-F9&gt;</a> </b>
+                <code class="special">&lt;S-F10&gt;</code>         Shift+F10               <b class="vimtag"> <a name="%3CS-F10%3E">&lt;S-F10&gt;</a> </b>
+                <code class="special">&lt;S-F11&gt;</code>         Shift+F11               <b class="vimtag"> <a name="%3CS-F11%3E">&lt;S-F11&gt;</a> </b>
+                <code class="special">&lt;S-F12&gt;</code>         Shift+F12               <b class="vimtag"> <a name="%3CS-F12%3E">&lt;S-F12&gt;</a> </b>
+        t_%1    <code class="special">&lt;Help&gt;</code>          Help 键                 <b class="vimtag"> <a name="t_%1">t_%1</a> </b> <b class="vimtag"> <a name="'t_%1'">'t_%1'</a> </b>
+        t_&amp;8    <code class="special">&lt;Undo&gt;</code>          Undo 键                 <b class="vimtag"> <a name="t_&8">t_&amp;8</a> </b> <b class="vimtag"> <a name="'t_&8'">'t_&amp;8'</a> </b>
+        t_kI    <code class="special">&lt;Insert&gt;</code>        Ins 键                  <b class="vimtag"> <a name="t_kI">t_kI</a> </b> <b class="vimtag"> <a name="'t_kI'">'t_kI'</a> </b>
+                <code class="special">&lt;kInsert&gt;</code>       小键盘 Ins 键
+        t_kD    <code class="special">&lt;Del&gt;</code>           Del 键                  <b class="vimtag"> <a name="t_kD">t_kD</a> </b> <b class="vimtag"> <a name="'t_kD'">'t_kD'</a> </b>
         t_kb    <code class="special">&lt;BS&gt;</code>            退格键                  <b class="vimtag"> <a name="t_kb">t_kb</a> </b> <b class="vimtag"> <a name="'t_kb'">'t_kb'</a> </b>
-        t_kB    <code class="special">&lt;S-Tab&gt;</code>         反制表 (shift-tab)    <b class="vimtag"> <a name="%3CS-Tab%3E">&lt;S-Tab&gt;</a> </b> <b class="vimtag"> <a name="t_kB">t_kB</a> </b> <b class="vimtag"> <a name="'t_kB'">'t_kB'</a> </b>
-        t_kh    <code class="special">&lt;Home&gt;</code>          home 键                 <b class="vimtag"> <a name="t_kh">t_kh</a> </b> <b class="vimtag"> <a name="'t_kh'">'t_kh'</a> </b>
-        t_#2    <code class="special">&lt;S-Home&gt;</code>        shift home 键        <b class="vimtag"> <a name="%3CS-Home%3E">&lt;S-Home&gt;</a> </b> <b class="vimtag"> <a name="t_%232">t_#2</a> </b> <b class="vimtag"> <a name="'t_%232'">'t_#2'</a> </b>
-                <code class="special">&lt;xHome&gt;</code>         替代的 home 键          <b class="vimtag"> <a name="%3CxHome%3E">&lt;xHome&gt;</a> </b>
-        t_@7    <code class="special">&lt;End&gt;</code>           end 键                  <b class="vimtag"> <a name="t_@7">t_@7</a> </b> <b class="vimtag"> <a name="'t_@7'">'t_@7'</a> </b>
-        t_*7    <code class="special">&lt;S-End&gt;</code>         shift end 键    <b class="vimtag"> <a name="%3CS-End%3E">&lt;S-End&gt;</a> </b> <b class="vimtag"> <a name="t_star7">t_star7</a> </b> <b class="vimtag"> <a name="'t_star7'">'t_star7'</a> </b>
-                <code class="special">&lt;xEnd&gt;</code>          替代的 end 键           <b class="vimtag"> <a name="%3CxEnd%3E">&lt;xEnd&gt;</a> </b>
-        t_kP    <code class="special">&lt;PageUp&gt;</code>        page-up 键              <b class="vimtag"> <a name="t_kP">t_kP</a> </b> <b class="vimtag"> <a name="'t_kP'">'t_kP'</a> </b>
-        t_kN    <code class="special">&lt;PageDown&gt;</code>      page-down 键            <b class="vimtag"> <a name="t_kN">t_kN</a> </b> <b class="vimtag"> <a name="'t_kN'">'t_kN'</a> </b>
-        t_K1    <code class="special">&lt;kHome&gt;</code>         keypad home 键          <b class="vimtag"> <a name="t_K1">t_K1</a> </b> <b class="vimtag"> <a name="'t_K1'">'t_K1'</a> </b>
-        t_K4    <code class="special">&lt;kEnd&gt;</code>          keypad end 键           <b class="vimtag"> <a name="t_K4">t_K4</a> </b> <b class="vimtag"> <a name="'t_K4'">'t_K4'</a> </b>
-        t_K3    <code class="special">&lt;kPageUp&gt;</code>       keypad page-up 键       <b class="vimtag"> <a name="t_K3">t_K3</a> </b> <b class="vimtag"> <a name="'t_K3'">'t_K3'</a> </b>
-        t_K5    <code class="special">&lt;kPageDown&gt;</code>     keypad page-down 键     <b class="vimtag"> <a name="t_K5">t_K5</a> </b> <b class="vimtag"> <a name="'t_K5'">'t_K5'</a> </b>
-        t_K6    <code class="special">&lt;kPlus&gt;</code>         keypad 加号键         <b class="vimtag"> <a name="%3CkPlus%3E">&lt;kPlus&gt;</a> </b> <b class="vimtag"> <a name="t_K6">t_K6</a> </b> <b class="vimtag"> <a name="'t_K6'">'t_K6'</a> </b>
-        t_K7    <code class="special">&lt;kMinus&gt;</code>        keypad 减号键     <b class="vimtag"> <a name="%3CkMinus%3E">&lt;kMinus&gt;</a> </b>    <b class="vimtag"> <a name="t_K7">t_K7</a> </b> <b class="vimtag"> <a name="'t_K7'">'t_K7'</a> </b>
-        t_K8    <code class="special">&lt;kDivide&gt;</code>       keypad 除号         <b class="vimtag"> <a name="%3CkDivide%3E">&lt;kDivide&gt;</a> </b> <b class="vimtag"> <a name="t_K8">t_K8</a> </b> <b class="vimtag"> <a name="'t_K8'">'t_K8'</a> </b>
-        t_K9    <code class="special">&lt;kMultiply&gt;</code>     keypad 乘号       <b class="vimtag"> <a name="%3CkMultiply%3E">&lt;kMultiply&gt;</a> </b> <b class="vimtag"> <a name="t_K9">t_K9</a> </b> <b class="vimtag"> <a name="'t_K9'">'t_K9'</a> </b>
-        t_KA    <code class="special">&lt;kEnter&gt;</code>        keypad 回车键     <b class="vimtag"> <a name="%3CkEnter%3E">&lt;kEnter&gt;</a> </b>    <b class="vimtag"> <a name="t_KA">t_KA</a> </b> <b class="vimtag"> <a name="'t_KA'">'t_KA'</a> </b>
-        t_KB    <code class="special">&lt;kPoint&gt;</code>        keypad 小数点     <b class="vimtag"> <a name="%3CkPoint%3E">&lt;kPoint&gt;</a> </b>    <b class="vimtag"> <a name="t_KB">t_KB</a> </b> <b class="vimtag"> <a name="'t_KB'">'t_KB'</a> </b>
-        t_KC    <code class="special">&lt;k0&gt;</code>            keypad 0                 <b class="vimtag"> <a name="%3Ck0%3E">&lt;k0&gt;</a> </b> <b class="vimtag"> <a name="t_KC">t_KC</a> </b> <b class="vimtag"> <a name="'t_KC'">'t_KC'</a> </b>
-        t_KD    <code class="special">&lt;k1&gt;</code>            keypad 1                 <b class="vimtag"> <a name="%3Ck1%3E">&lt;k1&gt;</a> </b> <b class="vimtag"> <a name="t_KD">t_KD</a> </b> <b class="vimtag"> <a name="'t_KD'">'t_KD'</a> </b>
-        t_KE    <code class="special">&lt;k2&gt;</code>            keypad 2                 <b class="vimtag"> <a name="%3Ck2%3E">&lt;k2&gt;</a> </b> <b class="vimtag"> <a name="t_KE">t_KE</a> </b> <b class="vimtag"> <a name="'t_KE'">'t_KE'</a> </b>
-        t_KF    <code class="special">&lt;k3&gt;</code>            keypad 3                 <b class="vimtag"> <a name="%3Ck3%3E">&lt;k3&gt;</a> </b> <b class="vimtag"> <a name="t_KF">t_KF</a> </b> <b class="vimtag"> <a name="'t_KF'">'t_KF'</a> </b>
-        t_KG    <code class="special">&lt;k4&gt;</code>            keypad 4                 <b class="vimtag"> <a name="%3Ck4%3E">&lt;k4&gt;</a> </b> <b class="vimtag"> <a name="t_KG">t_KG</a> </b> <b class="vimtag"> <a name="'t_KG'">'t_KG'</a> </b>
-        t_KH    <code class="special">&lt;k5&gt;</code>            keypad 5                 <b class="vimtag"> <a name="%3Ck5%3E">&lt;k5&gt;</a> </b> <b class="vimtag"> <a name="t_KH">t_KH</a> </b> <b class="vimtag"> <a name="'t_KH'">'t_KH'</a> </b>
-        t_KI    <code class="special">&lt;k6&gt;</code>            keypad 6                 <b class="vimtag"> <a name="%3Ck6%3E">&lt;k6&gt;</a> </b> <b class="vimtag"> <a name="t_KI">t_KI</a> </b> <b class="vimtag"> <a name="'t_KI'">'t_KI'</a> </b>
-        t_KJ    <code class="special">&lt;k7&gt;</code>            keypad 7                 <b class="vimtag"> <a name="%3Ck7%3E">&lt;k7&gt;</a> </b> <b class="vimtag"> <a name="t_KJ">t_KJ</a> </b> <b class="vimtag"> <a name="'t_KJ'">'t_KJ'</a> </b>
-        t_KK    <code class="special">&lt;k8&gt;</code>            keypad 8                 <b class="vimtag"> <a name="%3Ck8%3E">&lt;k8&gt;</a> </b> <b class="vimtag"> <a name="t_KK">t_KK</a> </b> <b class="vimtag"> <a name="'t_KK'">'t_KK'</a> </b>
-        t_KL    <code class="special">&lt;k9&gt;</code>            keypad 9                 <b class="vimtag"> <a name="%3Ck9%3E">&lt;k9&gt;</a> </b> <b class="vimtag"> <a name="t_KL">t_KL</a> </b> <b class="vimtag"> <a name="'t_KL'">'t_KL'</a> </b>
-                <code class="special">&lt;Mouse&gt;</code>         鼠标代码的引导键        <b class="vimtag"> <a name="%3CMouse%3E">&lt;Mouse&gt;</a> </b>
+        t_kB    <code class="special">&lt;S-Tab&gt;</code>         Shift+Tab   <b class="vimtag"> <a name="%3CS-Tab%3E">&lt;S-Tab&gt;</a> </b>   <b class="vimtag"> <a name="t_kB">t_kB</a> </b> <b class="vimtag"> <a name="'t_kB'">'t_kB'</a> </b>
+        t_kh    <code class="special">&lt;Home&gt;</code>          Home 键                 <b class="vimtag"> <a name="t_kh">t_kh</a> </b> <b class="vimtag"> <a name="'t_kh'">'t_kh'</a> </b>
+        t_#2    <code class="special">&lt;S-Home&gt;</code>        Shift+Home <b class="vimtag"> <a name="%3CS-Home%3E">&lt;S-Home&gt;</a> </b>   <b class="vimtag"> <a name="t_%232">t_#2</a> </b> <b class="vimtag"> <a name="'t_%232'">'t_#2'</a> </b>
+                <code class="special">&lt;xHome&gt;</code>         备用 Home 键            <b class="vimtag"> <a name="%3CxHome%3E">&lt;xHome&gt;</a> </b>
+        t_@7    <code class="special">&lt;End&gt;</code>           End 键                  <b class="vimtag"> <a name="t_@7">t_@7</a> </b> <b class="vimtag"> <a name="'t_@7'">'t_@7'</a> </b>
+        t_*7    <code class="special">&lt;S-End&gt;</code>         Shift+End   <b class="vimtag"> <a name="%3CS-End%3E">&lt;S-End&gt;</a> </b>   <b class="vimtag"> <a name="t_star7">t_star7</a> </b> <b class="vimtag"> <a name="'t_star7'">'t_star7'</a> </b>
+                <code class="special">&lt;xEnd&gt;</code>          备用 end 键             <b class="vimtag"> <a name="%3CxEnd%3E">&lt;xEnd&gt;</a> </b>
+        t_kP    <code class="special">&lt;PageUp&gt;</code>        PgUp 键                 <b class="vimtag"> <a name="t_kP">t_kP</a> </b> <b class="vimtag"> <a name="'t_kP'">'t_kP'</a> </b>
+        t_kN    <code class="special">&lt;PageDown&gt;</code>      PgDn 键                 <b class="vimtag"> <a name="t_kN">t_kN</a> </b> <b class="vimtag"> <a name="'t_kN'">'t_kN'</a> </b>
+        t_K1    <code class="special">&lt;kHome&gt;</code>         小键盘 Home 键          <b class="vimtag"> <a name="t_K1">t_K1</a> </b> <b class="vimtag"> <a name="'t_K1'">'t_K1'</a> </b>
+        t_K4    <code class="special">&lt;kEnd&gt;</code>          小键盘 End 键           <b class="vimtag"> <a name="t_K4">t_K4</a> </b> <b class="vimtag"> <a name="'t_K4'">'t_K4'</a> </b>
+        t_K3    <code class="special">&lt;kPageUp&gt;</code>       小键盘 PgUp 键          <b class="vimtag"> <a name="t_K3">t_K3</a> </b> <b class="vimtag"> <a name="'t_K3'">'t_K3'</a> </b>
+        t_K5    <code class="special">&lt;kPageDown&gt;</code>     小键盘 PgDn 键          <b class="vimtag"> <a name="t_K5">t_K5</a> </b> <b class="vimtag"> <a name="'t_K5'">'t_K5'</a> </b>
+        t_K6    <code class="special">&lt;kPlus&gt;</code>         小键盘加号 <b class="vimtag"> <a name="%3CkPlus%3E">&lt;kPlus&gt;</a> </b>    <b class="vimtag"> <a name="t_K6">t_K6</a> </b> <b class="vimtag"> <a name="'t_K6'">'t_K6'</a> </b>
+        t_K7    <code class="special">&lt;kMinus&gt;</code>        小键盘减号 <b class="vimtag"> <a name="%3CkMinus%3E">&lt;kMinus&gt;</a> </b>   <b class="vimtag"> <a name="t_K7">t_K7</a> </b> <b class="vimtag"> <a name="'t_K7'">'t_K7'</a> </b>
+        t_K8    <code class="special">&lt;kDivide&gt;</code>       小键盘除号 <b class="vimtag"> <a name="%3CkDivide%3E">&lt;kDivide&gt;</a> </b>  <b class="vimtag"> <a name="t_K8">t_K8</a> </b> <b class="vimtag"> <a name="'t_K8'">'t_K8'</a> </b>
+        t_K9    <code class="special">&lt;kMultiply&gt;</code>     小键盘乘号 <b class="vimtag"> <a name="%3CkMultiply%3E">&lt;kMultiply&gt;</a> </b> <b class="vimtag"> <a name="t_K9">t_K9</a> </b> <b class="vimtag"> <a name="'t_K9'">'t_K9'</a> </b>
+        t_KA    <code class="special">&lt;kEnter&gt;</code>        小键盘回车键 <b class="vimtag"> <a name="%3CkEnter%3E">&lt;kEnter&gt;</a> </b> <b class="vimtag"> <a name="t_KA">t_KA</a> </b> <b class="vimtag"> <a name="'t_KA'">'t_KA'</a> </b>
+        t_KB    <code class="special">&lt;kPoint&gt;</code>        小键盘小数点 <b class="vimtag"> <a name="%3CkPoint%3E">&lt;kPoint&gt;</a> </b> <b class="vimtag"> <a name="t_KB">t_KB</a> </b> <b class="vimtag"> <a name="'t_KB'">'t_KB'</a> </b>
+        t_KC    <code class="special">&lt;k0&gt;</code>            小键盘 0         <b class="vimtag"> <a name="%3Ck0%3E">&lt;k0&gt;</a> </b> <b class="vimtag"> <a name="t_KC">t_KC</a> </b> <b class="vimtag"> <a name="'t_KC'">'t_KC'</a> </b>
+        t_KD    <code class="special">&lt;k1&gt;</code>            小键盘 1         <b class="vimtag"> <a name="%3Ck1%3E">&lt;k1&gt;</a> </b> <b class="vimtag"> <a name="t_KD">t_KD</a> </b> <b class="vimtag"> <a name="'t_KD'">'t_KD'</a> </b>
+        t_KE    <code class="special">&lt;k2&gt;</code>            小键盘 2         <b class="vimtag"> <a name="%3Ck2%3E">&lt;k2&gt;</a> </b> <b class="vimtag"> <a name="t_KE">t_KE</a> </b> <b class="vimtag"> <a name="'t_KE'">'t_KE'</a> </b>
+        t_KF    <code class="special">&lt;k3&gt;</code>            小键盘 3         <b class="vimtag"> <a name="%3Ck3%3E">&lt;k3&gt;</a> </b> <b class="vimtag"> <a name="t_KF">t_KF</a> </b> <b class="vimtag"> <a name="'t_KF'">'t_KF'</a> </b>
+        t_KG    <code class="special">&lt;k4&gt;</code>            小键盘 4         <b class="vimtag"> <a name="%3Ck4%3E">&lt;k4&gt;</a> </b> <b class="vimtag"> <a name="t_KG">t_KG</a> </b> <b class="vimtag"> <a name="'t_KG'">'t_KG'</a> </b>
+        t_KH    <code class="special">&lt;k5&gt;</code>            小键盘 5         <b class="vimtag"> <a name="%3Ck5%3E">&lt;k5&gt;</a> </b> <b class="vimtag"> <a name="t_KH">t_KH</a> </b> <b class="vimtag"> <a name="'t_KH'">'t_KH'</a> </b>
+        t_KI    <code class="special">&lt;k6&gt;</code>            小键盘 6         <b class="vimtag"> <a name="%3Ck6%3E">&lt;k6&gt;</a> </b> <b class="vimtag"> <a name="t_KI">t_KI</a> </b> <b class="vimtag"> <a name="'t_KI'">'t_KI'</a> </b>
+        t_KJ    <code class="special">&lt;k7&gt;</code>            小键盘 7         <b class="vimtag"> <a name="%3Ck7%3E">&lt;k7&gt;</a> </b> <b class="vimtag"> <a name="t_KJ">t_KJ</a> </b> <b class="vimtag"> <a name="'t_KJ'">'t_KJ'</a> </b>
+        t_KK    <code class="special">&lt;k8&gt;</code>            小键盘 8         <b class="vimtag"> <a name="%3Ck8%3E">&lt;k8&gt;</a> </b> <b class="vimtag"> <a name="t_KK">t_KK</a> </b> <b class="vimtag"> <a name="'t_KK'">'t_KK'</a> </b>
+        t_KL    <code class="special">&lt;k9&gt;</code>            小键盘 9         <b class="vimtag"> <a name="%3Ck9%3E">&lt;k9&gt;</a> </b> <b class="vimtag"> <a name="t_KL">t_KL</a> </b> <b class="vimtag"> <a name="'t_KL'">'t_KL'</a> </b>
+                <code class="special">&lt;Mouse&gt;</code>         鼠标控制码引导标记      <b class="vimtag"> <a name="%3CMouse%3E">&lt;Mouse&gt;</a> </b>
 
-        t_PS    <code class="special">&lt;PasteStart&gt;</code>    括号内粘贴的开始        <b class="vimtag"> <a name="t_PS">t_PS</a> </b> <b class="vimtag"> <a name="'t_PS'">'t_PS'</a> </b>
+        t_PS    <code class="special">&lt;PasteStart&gt;</code>    开始括号粘贴            <b class="vimtag"> <a name="t_PS">t_PS</a> </b> <b class="vimtag"> <a name="'t_PS'">'t_PS'</a> </b>
                                  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a> 
-        t_PE    <code class="special">&lt;PasteEnd&gt;</code>      括号内粘贴的结束        <b class="vimtag"> <a name="t_PE">t_PE</a> </b> <b class="vimtag"> <a name="'t_PE'">'t_PE'</a> </b>
+        t_PE    <code class="special">&lt;PasteEnd&gt;</code>      结束括号粘贴            <b class="vimtag"> <a name="t_PE">t_PE</a> </b> <b class="vimtag"> <a name="'t_PE'">'t_PE'</a> </b>
                                  <a href="term.html#xterm-bracketed-paste">xterm-bracketed-paste</a> 
                 <code class="special">&lt;FocusGained&gt;</code>   Vim 窗口获得焦点 (仅限内部使用)
                 <code class="special">&lt;FocusLost&gt;</code>     Vim 窗口失去焦点 (仅限内部使用)
 
-关于 t_so 和 t_mr 的 <code class="note">注意</code> 事项: 如果 termcap 项目 "so" 不存在，则使用 "mr" 的
-项目。反之亦然。"se" 和 "me" 也是一样。如果你的终端同时支持反转和突出模式，你
-可以看到两种不同的模式。如果只支持其中一种，则两者看起来一样。
+ <a href="term.html#t_so">t_so</a>  和  <a href="term.html#t_mr">t_mr</a>  <code class="note">备注</code>: 如果终端能力项 "so" 不存在，会用 "mr" 条目代替，反之亦
+然。退出相关模式的 "se" 和 "me" 同理。终端同时支持反转和突出模式时，二者显示效
+果会有区别。如果终端只支持其中一种，则两种模式效果相同。
 
                                                         <b class="vimtag"> <a name="keypad-comma">keypad-comma</a> </b>
-keypad 键在没有映射时和等价的普通键等价。但有一个特例: 如果你的 keypad 有逗号
-而不是小数点，Vim 仍然认为那是小数点。下面的映射可以修正这个问题:
+小键盘键未被映射时等同于对应的普通键。但有一处例外: 如果小键盘上是逗号而非小数
+点，Vim 默认仍使用小数点。可用以下映射修正:
 <code class="example">        :noremap &lt;kPoint&gt; ,</code>
 <code class="example">        :noremap! &lt;kPoint&gt; ,</code>
                                                         <b class="vimtag"> <a name="xterm-codes">xterm-codes</a> </b>
-有一个现在只适用于 xterm 的获取键码特殊技巧。 <a href="term.html#t_RV">t_RV</a>  有定义且从 xterm 对该请求
-得到的响应指示了 xterm 使用的补丁版本不低于 141 时，Vim 会使用特殊的转义序列来
-从 xterm 里直接获取键码。响应的内容会用于调整各种 t_ 代码。这样就可以避免
-xterm 因为处在不同模式 (8-位、VT102、VT220，等等) 而产生不同代码的问题。这样，
-就不需要 <code class="special">&lt;xF1&gt;</code> 这样的替代键码了。
+有一种获取键码的特殊技巧，目前仅适用于 xterm。当  <a href="term.html#t_RV">t_RV</a>  已定义且其应答指示
+xterm 补丁版本不低于 141 时，Vim 会通过专用转义序列直接从 xterm 查询键码。并用
+返回结果调整各种 t_ 代码。这解决了 xterm 在不同模式 (8-位、VT102、VT220 等) 下
+生成不同编码的问题。<code class="special">&lt;xF1&gt;</code> 这类备用键码此时不再必要。
 
-其中一个可能因此被调整的代码是 <a href="term.html#'t_Co'">'t_Co'</a>，色彩总数。这会触发重画。如果这会引起问
-题，请尽早复位 <a href="options.html#'xtermcodes'">'xtermcodes'</a> 选项:
+<a href="term.html#'t_Co'">'t_Co'</a>，颜色数目，也是可能被调整的代码之一，从而触发重绘。如果这会引起问题，请
+尽早复位 <a href="options.html#'xtermcodes'">'xtermcodes'</a> 选项:
 <code class="example">        set noxtermcodes</code>
 <code class="example"></code>
-<code class="note">注意</code>: 只在启动时进行键码请求。如果 Vim 启动后更改了 xterm 选项，这些转义序列将
-不再被识别。
+<code class="note">注意</code>: 键码查询仅在启动阶段进行。如果 Vim 启动后再更改 xterm 设置，可能导致转义
+序列无法识别。
 
                                                         <b class="vimtag"> <a name="xterm-true-color">xterm-true-color</a> </b>
-终端支持时，Vim 会支持在终端使用真彩 (使用  <a href="syntax.html#highlight-guifg">highlight-guifg</a>  和
- <a href="syntax.html#highlight-guibg">highlight-guibg</a> )。为此，必须置位 <a href="options.html#'termguicolors'">'termguicolors'</a> 选项。
-<a href="https://gist.github.com/XVilka/8346728">https://gist.github.com/XVilka/8346728</a> 有支持真彩的终端列表。
+终端支持真彩时，Vim 可在终端内提供相应支持 (通过  <a href="syntax.html#highlight-guifg">highlight-guifg</a>  和
+ <a href="syntax.html#highlight-guibg">highlight-guibg</a> )。为此需要开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 选项。支持真彩的终端列表可见
+<a href="https://gist.github.com/XVilka/8346728">https://gist.github.com/XVilka/8346728</a>。
 
- <a href="term.html#t_8f">t_8f</a>  和  <a href="term.html#t_8b">t_8b</a>  termcap 项目告知终端使用何种 RGB 色。这些选项的缺省值应适用于
-大多数终端。不合适的话可手动设置。它们的缺省值是:
+通过  <a href="term.html#t_8f">t_8f</a> 、 <a href="term.html#t_8b">t_8b</a>  和  <a href="term.html#t_8u">t_8u</a>  终端能力项指定终端使用的 RGB 色。其缺省值应适用
+于大多数终端。如果不合适，可手动设置。缺省值分别是:
 <code class="example">         let &amp;t_8f = "\&lt;Esc&gt;[38;2;%lu;%lu;%lum"</code>
 <code class="example">         let &amp;t_8b = "\&lt;Esc&gt;[48;2;%lu;%lu;%lum"</code>
+<code class="example">         let &amp;t_8u = "\&lt;Esc&gt;[58;2;%lu;%lu;%lum"</code>
 <code class="example"></code>
-有些终端也接受类似的序列，但把所有的分号替换为冒号，并在数值 2 之后加上额外的
-冒号 (这样符合 ISO 8613-6 标准，但支持不是那么广泛):
+部分终端接受另一种相似格式: 分号被替换为冒号，数值 2 后需要额外加上冒号 (该格
+式符合 ISO 8613-6 标准，但支持不广泛):
 <code class="example">         let &amp;t_8f = "\&lt;Esc&gt;[38:2::%lu:%lu:%lum"</code>
 <code class="example">         let &amp;t_8b = "\&lt;Esc&gt;[48:2::%lu:%lu:%lum"</code>
 <code class="example"></code>
-这些选项包含 printf 字符串，调用  <a href="builtin.html#printf()">printf()</a>  (实际上，它的 C 等价函数，因此带有
- <a href="motion.html#l">l</a>  修饰符) 时带上 t_ 选项值和三个无符号长整数，分别代表红、绿和蓝色的 0 到
-255 (包含) 之间的任意值。
+这些选项是 printf 格式字符串，会调用  <a href="builtin.html#printf()">printf()</a>  (实际使用底层 C 同名函数，因此
+使用  <a href="motion.html#l">l</a>  修饰符)，传入相应 t_ 选项字符串与三个取值范围在 0 到 255 (含) 的无符
+号长整数，分别代表红、绿和蓝色分量。
 
                                                         <b class="vimtag"> <a name="xterm-resize">xterm-resize</a> </b>
-xterm 改变窗口大小的功能只用在 allowWindowOps 资源打开时才可用。有些系统或有些
-版本的 xterm 缺省该值是关闭的，因为有安全上的考虑。我们不肯定是否真有此必要。
+xterm 的窗口缩放功能，仅当开启 allowWindowOps 资源后才生效。部分系统与部分
+xterm 版本缺省关闭该资源，因为被认为存在安全隐患。但其实际风险尚无定论。
 
-要覆盖缺省值，在 ~/.Xdefaults 或 ~/.Xresources 中放入:
+要覆盖该缺省值，可在 ~/.Xdefaults 或 ~/.Xresources 中放入:
 
 <code class="example">        XTerm*allowWindowOps:           true</code>
 <code class="example"></code>
-然后运行 "xrdb -merge .Xresources" 以激活之。用上下文菜单可以检查该值 (按住
-CTRL 键的同时按鼠标右键)，在 allow-window-ops 边上应该打了勾。
+执行 "xrdb -merge .Xresources" 使之生效。可通过上下文菜单检查 (按住 CTRL 键并
+点击鼠标右键)，在 allow-window-ops 项应当带有勾选标记。
 
                                                         <b class="vimtag"> <a name="xterm-focus-event">xterm-focus-event</a> </b>
-有些包含 xterm 支持的终端支持焦点事件跟踪特性。用 <a href="term.html#'t_fe'">'t_fe'</a> 序列打开此功能后，每
-次终端获得或丧失焦点时，终端都会给 Vim 发送特殊的键序列。Vim 对此进行处理，并
-触发焦点事件 ( <a href="autocmd.html#FocusGained">FocusGained</a> / <a href="autocmd.html#FocusLost">FocusLost</a> )。退出 "raw" 模式时，<a href="term.html#'t_fd'">'t_fd'</a> 序列会用来
-关闭焦点事件跟踪。如果要关闭此特性，在 .vimrc 里加入:
+包含 xterm 在内的部分终端支持焦点事件跟踪。通过 <a href="term.html#'t_fe'">'t_fe'</a> 序列开启此功能后，终端
+每次获得或丧失焦点时，都会向 Vim 发送专用转义序列。Vim 解析后触发焦点事件
+( <a href="autocmd.html#FocusGained">FocusGained</a> / <a href="autocmd.html#FocusLost">FocusLost</a> )。退出原始 ("raw") 模式时，会通过 <a href="term.html#'t_fd'">'t_fd'</a> 序列关闭焦
+点事件跟踪。要禁用此功能，可在 .vimrc 里加入:
 <code class="example">        set t_fd=</code>
 <code class="example">        set t_fe=</code>
-如果终端支持但 Vim 不识别此终端，需要你自己设置这些选项:
+如果终端支持但 Vim 无法识别终端类型时，需要手动设置:
 <code class="example">        let &amp;t_fe = "\&lt;Esc&gt;[?1004h"</code>
 <code class="example">        let &amp;t_fd = "\&lt;Esc&gt;[?1004l"</code>
 <code class="example">        execute "set &lt;FocusGained&gt;=\&lt;Esc&gt;[I"</code>
 <code class="example">        execute "set &lt;FocusLost&gt;=\&lt;Esc&gt;[O"</code>
-Vim 启动时如果显示出现乱码，那么这些设置有问题。
+如果 Vim 启动时出现乱码，则代表该设置不兼容。
 
                                                         <b class="vimtag"> <a name="termcap-colors">termcap-colors</a> </b>
-关于颜色的 <code class="note">注意</code> 事项: <a href="term.html#'t_Co'">'t_Co'</a> 选项告诉 Vim 可用的颜色数。如果非零，<a href="term.html#'t_AB'">'t_AB'</a> 和
-<a href="term.html#'t_AF'">'t_AF'</a> 选项可以用来设置颜色。如果这些都不可用，就使用 <a href="term.html#'t_Sb'">'t_Sb'</a> 和 <a href="term.html#'t_Sf'">'t_Sf'</a>。<a href="term.html#'t_me'">'t_me'</a>
-用来复位到缺省的颜色设置。另见 <a href="options.html#'termguicolors'">'termguicolors'</a>。
-GUI 运行时，<a href="term.html#'t_Co'">'t_Co'</a> 设为 16777216。
+颜色<code class="note">备注</code>: <a href="term.html#'t_Co'">'t_Co'</a> 选项告知 Vim 可用颜色数目。非零时，使用 <a href="term.html#'t_AB'">'t_AB'</a> 和 <a href="term.html#'t_AF'">'t_AF'</a> 选项
+设置颜色。如果其中之一不可用，则改用 <a href="term.html#'t_Sb'">'t_Sb'</a> 和 <a href="term.html#'t_Sf'">'t_Sf'</a>。<a href="term.html#'t_me'">'t_me'</a> 用于恢复缺省颜色
+设置。另见 <a href="options.html#'termguicolors'">'termguicolors'</a>。
+GUI 运行时，<a href="term.html#'t_Co'">'t_Co'</a> 固定设为 16777216。
 
                                 <b class="vimtag"> <a name="termcap-cursor-shape">termcap-cursor-shape</a> </b> <b class="vimtag"> <a name="termcap-cursor-color">termcap-cursor-color</a> </b>
-Vim 进入插入模式时，发送 <a href="term.html#'t_SI'">'t_SI'</a> 转义序列。Vim 进入替换模式而 <a href="term.html#'t_SR'">'t_SR'</a> 已设置时，
-发送 <a href="term.html#'t_SR'">'t_SR'</a> 转义序列，否则发送 <a href="term.html#'t_SI'">'t_SI'</a>。当离开插入或替换模式时，发送 <a href="term.html#'t_EI'">'t_EI'</a>。
-<code class="note">备注</code>: 没设置 <a href="term.html#'t_EI'">'t_EI'</a> 时，不会发送 <a href="term.html#'t_SI'">'t_SI'</a> 和 <a href="term.html#'t_SR'">'t_SR'</a>。而没设置 <a href="term.html#'t_SI'">'t_SI'</a> 或 <a href="term.html#'t_SR'">'t_SR'</a>
-时，<a href="term.html#'t_EI'">'t_EI'</a> 只会发送一次。
+Vim 进入插入模式时会发送 <a href="term.html#'t_SI'">'t_SI'</a> 转义序列。进入替换模式而 <a href="term.html#'t_SR'">'t_SR'</a> 可用时，发送
+<a href="term.html#'t_SR'">'t_SR'</a> 转义序列，否则发送 <a href="term.html#'t_SI'">'t_SI'</a>。退出插入或替换模式时，发送 <a href="term.html#'t_EI'">'t_EI'</a>。
+<code class="note">备注</code>: 如果未设置 <a href="term.html#'t_EI'">'t_EI'</a>，<a href="term.html#'t_SI'">'t_SI'</a> 和 <a href="term.html#'t_SR'">'t_SR'</a> 都不会发送。而如果未设置 <a href="term.html#'t_SI'">'t_SI'</a> 或
+<a href="term.html#'t_SR'">'t_SR'</a>，会仅发送 <a href="term.html#'t_EI'">'t_EI'</a> 一次。
 
-这可以用来改变插入模式下光标的形状或颜色。它们不是标准的 termcap/terminfo 项
-目，你需要自己设定。
-一个 xterm 的例子，改变光标颜色:
+借助这组选项，可在插入或替换模式下切换光标形状或颜色。它们不属于标准
+termcap/terminfo 项目，需要手动设置。
+xterm 修改光标颜色的示例:
 <code class="example">    if &amp;term =~ "xterm"</code>
 <code class="example">        let &amp;t_SI = "\&lt;Esc&gt;]12;purple\x7"</code>
 <code class="example">        let &amp;t_SR = "\&lt;Esc&gt;]12;red\x7"</code>
 <code class="example">        let &amp;t_EI = "\&lt;Esc&gt;]12;blue\x7"</code>
 <code class="example">    endif</code>
 
-<code class="note">注意</code>: 当 Vim 退出时，将保留普通模式的光标形状，而不会恢复 Vim 启动之前的形状。
+<code class="note">注意</code>: Vim 退出后，光标将保留普通模式下的形状，而不会恢复 Vim 启动前的状态。
 
-Windows 终端可用以下代码:
-<code class="example">    " 注意: 应在 `set termguicolors` 或 `set t_Co=256` 之后设置。</code>
+Windows 终端可用以下设置:
+<code class="example">    " 注意: 应在 `set termguicolors` 或 `set t_Co=256` 后设置。</code>
 <code class="example">    if &amp;term =~ 'xterm' || &amp;term == 'win32'</code>
 <code class="example">        " 使用 DECSCUSR 转义序列</code>
-<code class="example">        let &amp;t_SI = "\e[5 q"    " 闪烁竖线</code>
-<code class="example">        let &amp;t_SR = "\e[3 q"    " 闪烁下划线</code>
-<code class="example">        let &amp;t_EI = "\e[1 q"    " 闪烁块状</code>
-<code class="example">        let &amp;t_ti ..= "\e[1 q"  " 闪烁块状</code>
-<code class="example">        let &amp;t_te ..= "\e[0 q"  " 缺省 (取决于终端，通常是闪烁块状)</code>
+<code class="example">        let &amp;t_SI = "\e[5 q"    " 闪烁竖线光标</code>
+<code class="example">        let &amp;t_SR = "\e[3 q"    " 闪烁下划线光标</code>
+<code class="example">        let &amp;t_EI = "\e[1 q"    " 闪烁块状光标</code>
+<code class="example">        let &amp;t_ti ..= "\e[1 q"  " 闪烁块状光标</code>
+<code class="example">        let &amp;t_te ..= "\e[0 q"  " 缺省光标 (取决于终端，通常是闪烁块状光标)</code>
 <code class="example">    endif</code>
 <code class="example"></code>
 <code class="notvi">{仅当编译时加入  <a href="various.html#+cursorshape">+cursorshape</a>  特性才支持}</code>
 
                                                         <b class="vimtag"> <a name="termcap-title">termcap-title</a> </b>
-如果终端允许通过发送字符串设置标题的话，<a href="term.html#'t_ts'">'t_ts'</a> 和 <a href="term.html#'t_fs'">'t_fs'</a> 选项用来设置窗口的标
-题。在发送标题字符串之前和之后分别发送两者。类似的，<a href="term.html#'t_IS'">'t_IS'</a> 和 <a href="term.html#'t_IE'">'t_IE'</a>  用来设置
-图标文本。这些是 Vim 内部对 Unix termcap 的扩展，所以它们的值不能从外部
-termcap 获取。不过，内建的 termcap 包含 xterm 和 iris-ansi 的合适的项目，所以
-你不需要在这里设置。
+终端支持发送字符串设置标题时，可用 <a href="term.html#'t_ts'">'t_ts'</a> 和 <a href="term.html#'t_fs'">'t_fs'</a> 选项设置窗口标题。二者分别
+在发送标题字符串的前后发送。与之类似，<a href="term.html#'t_IS'">'t_IS'</a> 和 <a href="term.html#'t_IE'">'t_IE'</a>  用于设置图标文本。这几
+项属于 Vim 内部对 Unix 终端能力库的扩展，无法不能从外部终端能力库获取。不过，
+内置终端能力库已为 xterm 和 iris-ansi 配置好对应项目，无需手动设置。
                                                         <b class="vimtag"> <a name="hpterm">hpterm</a> </b>
-如果反转和其他高亮方式不工作，尝试设置 <a href="term.html#'t_xs'">'t_xs'</a> 选项为非空字符串。这使得 <a href="term.html#'t_ce'">'t_ce'</a>
-代码可以用于从行里撤销高亮。对 "hpterm" 这是必需的。置位 <a href="options.html#'weirdinvert'">'weirdinvert'</a> 选项和
-设置 <a href="term.html#'t_xs'">'t_xs'</a> 非空的相同的效果，反之亦然。
+如果反显或其他高亮方式不能正常工作，可尝试将 <a href="term.html#'t_xs'">'t_xs'</a> 选项设为非空字符串。通过
+<a href="term.html#'t_ce'">'t_ce'</a> 代码清除一行上的高亮。"hpterm" 终端需要此设置。置位 <a href="options.html#'weirdinvert'">'weirdinvert'</a> 选项
+等价于将 <a href="term.html#'t_xs'">'t_xs'</a> 设为非空串，反之亦然。
 
                                                         <b class="vimtag"> <a name="scroll-region">scroll-region</a> </b>
-有些 termcap 不包括 "cs" (滚动区域) 的项目，尽管有些终端支持这一特性。比如，
-Sun 上的 xterm。你可以使用内建的 builtin_xterm 或者自己定义 t_cs。例如:
+部分终端能力库不提供 "cs" (滚动区域) 条目，但终端本身支持该功能。例如 Sun 平台
+上的 xterm。可用内置 builtin_xterm 条目，或者自行定义  <a href="term.html#t_cs">t_cs</a> 。例如:
 <code class="example">        :set t_cs=^V^[[%i%d;%dr</code>
-其中 ^V 是 <code class="keystroke">CTRL-V</code>，而 ^[ 是 <code class="special">&lt;Esc&gt;</code>。
+其中 ^V 代表 <code class="keystroke">CTRL-V</code>，而 ^[ 代表 <code class="special">&lt;Esc&gt;</code>。
 
-垂直滚动区域 t_CV 不是标准的 termcap 代码。Vim 在 GUI 上内部使用之。但是如果你
-能找到支持这一特性的终端，也可以在终端里定义，两个参数分别是限制滚动的区域的左
-边列和右边列。就像 t_cs 定义顶部行和底部行那样。定义 t_CV 会使得在垂直分割的窗
-口里滚动窗口快很多。如果 t_da 或者 t_db 设置了，不要设置 t_CV (文本在滚动时不
-会清除)。
+垂直滚动区域  <a href="term.html#t_CV">t_CV</a>  并非标准终端能力项。Vim 在 GUI 内部使用该项。终端支持时，
+也可手动定义，接受两个参数，分别代表滚动区域限制范围的左右边界列。和  <a href="term.html#t_cs">t_cs</a>  定
+义顶部和底部边界行类似。定义  <a href="term.html#t_CV">t_CV</a>  能大幅提升垂直分割窗口里的滚动速度。如果已
+定义  <a href="term.html#t_da">t_da</a>  或  <a href="term.html#t_db">t_db</a> ，则不要设置 t_CV (否则滚动时文本不会被清除)。
 
-不幸的是无法从 termcap 里推断光标定位应不应该使用滚动区域: 是相对于屏幕的开始
-处，还是相对于滚动区域的开始处。大多数终端使用第一种方法。在光标定位相对于滚动
-区域的情况下，<a href="term.html#'t_CS'">'t_CS'</a> 选项应该设置为任何非空字符串。反之，则设为空字符串。
+不幸的是，无法通过终端能力项自动推断，在使用滚动区域时，光标坐标应是相对于屏幕
+起点，还是滚动区域起点。大多数终端采用第一种方式。在光标坐标基准是滚动区域起点
+时，应将 <a href="term.html#'t_CS'">'t_CS'</a> 选项设为任意非空串。否则设为空串。
 
-xterm 用户 <code class="note">注意</code>: shift + 光标键一般不工作。要使用 xmodmap 命令和 Vim 里的一些
-        设置才可以。
+xterm 用户需<code class="note">注意</code>: Shift + 光标键默认无法正常工作。可以借助 xmodmap 命令和 Vim
+        里的映射解决。
 
-        在 xterm 里给出如下命令:
+        在 xterm 中，执行如下命令:
 <code class="example">                xmodmap -e "keysym Up = Up F13"</code>
 <code class="example">                xmodmap -e "keysym Down = Down F16"</code>
 <code class="example">                xmodmap -e "keysym Left = Left F18"</code>
 <code class="example">                xmodmap -e "keysym Right = Right F19"</code>
 
-        然后在 Vim 里使用这些映射:
+        然后在 Vim 内添加映射:
 <code class="example">                :map &lt;t_F3&gt; &lt;S-Up&gt;</code>
 <code class="example">                :map! &lt;t_F3&gt; &lt;S-Up&gt;</code>
 <code class="example">                :map &lt;t_F6&gt; &lt;S-Down&gt;</code>
@@ -754,306 +737,301 @@ xterm 用户 <code class="note">注意</code>: shift + 光标键一般不工作�
 <code class="example">                :map &lt;t_F9&gt; &lt;S-Right&gt;</code>
 <code class="example">                :map! &lt;t_F9&gt; &lt;S-Right&gt;</code>
 <code class="example"></code>
-与其使用，比如说，<code class="special">&lt;S-Up&gt;</code>，你可以使用任何其它的命令来做你希望 shift + 光标上移
-做的事情。(<code class="note">注意</code>: 为了帮助使用有左侧键的 Sun 键盘的人，不要使用 F14，因为它和撤
-销键有冲突；不要用 F15，因为它执行把窗口转到前台的操作；也不要用 F17，因为它关
-闭窗口。其他系统上，你也许可以用这些键。)
+可将 <code class="special">&lt;S-Up&gt;</code> 替换为其他想要绑定给 Shift + 上箭头键的命令 (<code class="note">注意</code>: 对使用左侧功能
+键 Sun 键盘的用户，请勿使用与 Undo 键有冲突的 F14；触发窗口前置的 F15；会最小
+化窗口的 F17。其他系统上这些键一般都可正常使用)。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 窗口大小                                             <b class="vimtag"> <a name="window-size">window-size</a> </b></h4>
-[这是关于 Vim 使用的整个窗口，不是用 ":split" 命令创建的那种窗口。(<code class="vim">译者注</code>: Vim
-里的术语或者用屏幕更合适些。)]
+[本节讨论 Vim 使用的整体窗口，而非  <a href="windows.html#:split">:split</a>  命令创建的那种窗口 (<code class="vim">译者注</code>: Vim
+里的术语或者用屏幕更合适些)。]
 
-如果你在 Amiga 上运行 Vim，而终端名是 "amiga" 或 "builtin_amiga"，打开 amiga
-专用的窗口大小调整技术。Unix 系统上，有三个方法可以得到窗口的大小:
+在 Amiga 上运行 Vim 且终端名是 "amiga" 或 "builtin_amiga" 时，会开启 Amiga 专
+属窗口缩放逻辑。Unix 系统上，获取窗口大小有三种方法:
 
-- ioctl 调用 (TIOCGSIZE 或者 TIOCGWINSZ，视乎你的系统而定)
+- ioctl 系统调用 (视乎具体系统，使用 TIOCGSIZE 或 TIOCGWINSZ 命令)
 - 环境变量 "LINES" 和 "COLUMNS"
-- termcap 项目 "li" 和 "co"
+- 终端能力项 "li" 和 "co" (<code class="vim">译者注</code>: 没有对应 Vim 终端选项)
 
-如果所有这些都不行，假设缺省大小为 24 行和 80 列。如果收到改变窗口大小的信号，
-大小会重新设置。如果窗口大小不正确，你可以用 <a href="options.html#'lines'">'lines'</a> 和 <a href="options.html#'columns'">'columns'</a> 选项来设置正
-确的值。
+如果以上方法都失败，默认窗口大小为 24 行和 80 列。收到窗口缩放信号时，会重新设
+置大小。如果窗口大小有误，可用 <a href="options.html#'lines'">'lines'</a> 和 <a href="options.html#'columns'">'columns'</a> 选项手动修正。
 
-这个命令可以设置屏幕大小:
+也可用以下命令设置屏幕大小:
 
                                                 <b class="vimtag"> <a name=":mod">:mod</a> </b> <b class="vimtag"> <a name=":mode">:mode</a> </b> <b class="vimtag"> <a name="E359">E359</a> </b>
 :mod[e] <code class="special">[mode]</code>
 
-如果不带参数，该命令检测屏幕大小并重画屏幕。
-[mode] 过去用于 MS-DOS，现在已经不能用了。 <a href="vim9.html#Vim9">Vim9</a>  不支持此命令。
+省略参数时，检测屏幕大小并重绘屏幕。参数 <code class="special">[mode]</code> 曾用于 MS-DOS 系统，现已废弃。
+ <a href="vim9.html#Vim9">Vim9</a>  不支持本命令。
 
 </section><hr class="doubleline" /><section class=inner>
-<h4>4. 慢速和快速终端                               <b class="vimtag"> <a name="slow-fast-terminal">slow-fast-terminal</a> </b></h4>                                                <b class="vimtag"> <a name="slow-terminal">slow-terminal</a> </b>
+<h4>4. 低速和快速终端                               <b class="vimtag"> <a name="slow-fast-terminal">slow-fast-terminal</a> </b></h4>                                                <b class="vimtag"> <a name="slow-terminal">slow-terminal</a> </b>
 
-如果你有一个快速终端，你可能愿意置位 <a href="options.html#'ruler'">'ruler'</a> 选项。光标位置将显示在状态行上。
-如果你使用水平滚动 (关闭 <a href="options.html#'wrap'">'wrap'</a> 选项)，考虑把 <a href="options.html#'sidescroll'">'sidescroll'</a> 设小一点。
+使用快速终端时，可置位 <a href="options.html#'ruler'">'ruler'</a> 选项。在状态行显示光标位置。使用水平滚动模式
+(<a href="options.html#'wrap'">'wrap'</a> 选项关闭) 时，可将 <a href="options.html#'sidescroll'">'sidescroll'</a> 适当调小。
 
-如果你有一个慢速终端，你也许希望复位 <a href="options.html#'showcmd'">'showcmd'</a> 选项。这样，命令字符就不会显示
-在状态行上。如果终端滚动很慢，把 <a href="options.html#'scrolljump'">'scrolljump'</a> 设为 5 左右。如果光标离开屏幕
-(例如，用 "j")，Vim 会一次滚动 5 行。另外一个可能性是减少 Vim 使用的行数，通过
-"z<code class="special">{height}</code><code class="special">&lt;CR&gt;</code>" 命令。
+使用低速终端时，建议复位 <a href="options.html#'showcmd'">'showcmd'</a> 选项。状态行不再显示命令字符。终端滚动极慢
+时，可将 <a href="options.html#'scrolljump'">'scrolljump'</a> 设为 5 左右。光标移出屏幕 (如用  <a href="motion.html#j">j</a> )，Vim 会一次滚动 5
+行。也可用 "z<code class="special">{height}</code><code class="special">&lt;CR&gt;</code>" 命令 ( <a href="scroll.html#zN%3CCR%3E">zN&lt;CR&gt;</a> ) 减少 Vim 使用的行数。
 
-如果终端的字符到达时间相距超过 1 秒，你也许希望设置 <a href="options.html#'timeout'">'timeout'</a> 和/或 <a href="options.html#'ttimeout'">'ttimeout'</a>
-选项。见 "Options" 一章  <a href="options.html#options">options</a> 。
+如果终端字符的接收间隔超过 1 秒，可调整 <a href="options.html#'timeout'">'timeout'</a> 和/或 <a href="options.html#'ttimeout'">'ttimeout'</a> 选项。见
+"选项" 一章  <a href="options.html#options">options</a> 。
 
-如果你的终端不支持滚动区域，但是支持插入/删除行命令，多个窗口的滚动也许会使得
-行跳上跳下。复位了 <a href="options.html#'ttyfast'">'ttyfast'</a> 选项就会如此。为此，可以这样检查一下:
+如果终端不支持滚动区域、但支持行增删相关命令，在多窗口滚动时，行可能会出现上下
+跳动。原因可能是复位了 <a href="options.html#'ttyfast'">'ttyfast'</a> 选项。可用以下命令检查:
 <code class="example">        verbose set ttyfast?</code>
 <code class="example"></code>
-如果你的终端滚动很慢，但是重画却不慢，把 <a href="options.html#'ttyscroll'">'ttyscroll'</a> 设小一点，比如 3。这使得
-Vim 在超过 3 行需要滚动时，重画屏幕而不是滚动。
+如果终端滚动很慢，但重绘速度尚可，可将 <a href="options.html#'ttyscroll'">'ttyscroll'</a> 调小。如设为 3。需要滚动超
+过 3 行时，Vim 会重绘屏幕而非滚动。
 
-如果你使用一个慢速的彩色终端，使用命令:
+使用低速彩色终端时，可用以下命令:
 <code class="example">        hi NonText cterm=NONE ctermfg=NONE</code>
-这避免了空格在改变属性时被重复发送。大多数终端上，你反正也不会看到任何区别。
+可避免发送带有不同属性的空格。大多数终端上肉眼看不出差别。
 
-如果你在慢速的串行线上使用 Vim，你也许想要尝试在 "screen" 程序里运行 Vim。
-screen 优化终端 I/O 挺不错的。
+通过低速串行线路使用 Vim 时，可考虑在 "screen" 程序中运行 Vim。screen 会大幅优
+化终端 I/O。
 
-如果你在测试 termcap 选项，但是你看不到发生了什么，你也许希望设置 <a href="options.html#'writedelay'">'writedelay'</a>
-选项。如果非零，每次给终端只发一个字符。这使得屏幕刷新变慢很多，从而能看清楚发
-生了什么。
+测试终端能力项时如果看不清执行过程，可设置 <a href="options.html#'writedelay'">'writedelay'</a> 选项。非零时，每次只向
+终端发送一个字符。屏幕刷新会显著变慢，方便观察执行细节。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>5. 使用鼠标                                             <b class="vimtag"> <a name="mouse-using">mouse-using</a> </b></h4>
-本节说明在终端或者终端窗口里如何使用鼠标。GUI 窗口里如何使用鼠标在  <a href="gui.html#gui-mouse">gui-mouse</a> 
-里解释。关于使用鼠标滚轮进行滚动的部分见  <a href="scroll.html#scroll-mouse-wheel">scroll-mouse-wheel</a> 。
+本节说明在终端或终端窗口里鼠标的使用方式。GUI 窗口的鼠标用法见  <a href="gui.html#gui-mouse">gui-mouse</a> 。鼠
+标滚轮滚动相关见  <a href="scroll.html#scroll-mouse-wheel">scroll-mouse-wheel</a> 。
 
-不要忘记用以下命令打开鼠标:
+请使用以下命令开启鼠标支持:
 <code class="example">        :set mouse=a</code>
 否则 Vim 不会在所有模式下识别鼠标 (见 <a href="options.html#'mouse'">'mouse'</a>)。
 
-目前，鼠标只有在 Unix 的 xterm 窗口、带  <a href="term.html#sysmouse">sysmouse</a>  的 *BSD 控制台、Linux 终端
-(带 GPM  <a href="term.html#gpm-mouse">gpm-mouse</a> )、Windows 终端上才支持。鼠标键击可以用来定位光标，设置区域
-并粘贴。
+目前，鼠标支持包括 Unix 环境下的 xterm 窗口、带  <a href="term.html#sysmouse">sysmouse</a>  的 *BSD 控制台、带
+GPM  <a href="term.html#gpm-mouse">gpm-mouse</a> 的 Linux 终端，以及 Windows 控制台。
+鼠标点击可用于定位光标、选择区域、以及粘贴。
 
-<a href="options.html#'mouse'">'mouse'</a> 选项的字符决定 Vim 在什么场合下会使用鼠标:
+<a href="options.html#'mouse'">'mouse'</a> 选项字符用于指定 Vim 使用鼠标的场景:
                 n       普通模式
                 v       可视模式
                 i       插入模式
                 c       命令行模式
-                h       在帮助文件里，以上所有的模式
-                a       以上所有的模式
-                r       跳过  <a href="message.html#hit-enter">hit-enter</a>  提示
+                h       编辑帮助文档时使用前面列出的所有模式
+                a       前面列出的所有模式
+                r        <a href="message.html#hit-enter">hit-enter</a>  和  <a href="message.html#more-prompt">more-prompt</a>  提示
 
-<a href="options.html#'mouse'">'mouse'</a> 的缺省值为空，即不使用鼠标。通常你会用:
+<a href="options.html#'mouse'">'mouse'</a> 缺省值为空，代表不启用鼠标。一般使用:
 <code class="example">        :set mouse=a</code>
-来开始使用鼠标 (这等价于设置 <a href="options.html#'mouse'">'mouse'</a> 为 "nvich")。如果你只想在若干模式下或者在
-某两个任务上使用鼠标，你需要专注于那些模式对应的字母。例如:
+开启鼠标 (等价于将 <a href="options.html#'mouse'">'mouse'</a> 设为 "nvich")。
+如果只需在部分模式或两个提示界面下使用鼠标，将所需模式对应字母进行拼接即可。例
+如:
 <code class="example">        :set mouse=nv</code>
-会使得鼠标在普通模式和可视模式下工作。
+仅在普通模式和可视模式下启用鼠标。
 <code class="example">        :set mouse=h</code>
-会使得鼠标只有在帮助文件里工作 (这样，可以用 "g<code class="special">&lt;LeftMouse&gt;</code>" 来进行标签跳转)。
+仅在帮助文档里启用鼠标 (可用 "g<code class="special">&lt;LeftMouse&gt;</code>" 跳转标签)。
 
-鼠标能否在可视模式或者选择模式下开始选择，决定于 "selectmode" 选项包不包括
+用鼠标开始选区时，进入可视模式还是选择模式，取决于 <a href="options.html#'selectmode'">'selectmode'</a> 选项是否包含
 "mouse"。
 
                                                         <b class="vimtag"> <a name="terminal-mouse">terminal-mouse</a> </b>
-在 xterm 终端里，在 <a href="options.html#'mouse'">'mouse'</a> 选项包含当前激活的模式的前提下，普通的鼠标键击归
-Vim 使用，而带 shift 或者 ctrl 键的鼠标键击由 xterm 控制。如果 <a href="options.html#'mouse'">'mouse'</a> 不包括
-当前激活的模式，则所有的鼠标键击由 xterm 控制。
+在 xterm 终端里，<a href="options.html#'mouse'">'mouse'</a> 选项包含当前模式时，普通鼠标点击交由 Vim 处理，按住
+Shift 或 Ctrl 键的鼠标点击则交由 xterm 处理。<a href="options.html#'mouse'">'mouse'</a> 不含当前模式时，所有鼠标
+事件都交由 xterm 处理。
 
-对于自身不能通过修饰符来使用鼠标事件的终端，一个权宜之计是在 Vim 的命令模式中
-不使用鼠标事件:
+如果终端自身无法处理带修饰符的鼠标事件，一个权宜之计是在 Vim 的命令模式下关闭
+鼠标:
 <code class="example">        :set mouse=nvi</code>
-然后在终端中选择文本，用 ":" 进入命令行模式，选择并复制文本到系统中，然后按
-Esc。
+之后如果要在终端自身选中文本，可通过  <a href="cmdline.html#:">:</a>  进入命令行模式，选中并复制文本到系
+统，再按 Esc 退出。
 
-另一个办法是临时地用 ":sh" 来运行外壳，复制文本，然后退出外壳。此时 <a href="options.html#'mouse'">'mouse'</a> 仍
-应设为 "a"。
+另一种方案是临时执行  <a href="various.html#:sh">:sh</a>  进入外壳、复制文本、然后退出。此时 <a href="options.html#'mouse'">'mouse'</a> 仍可保持
+为 "a"。
                                                         <b class="vimtag"> <a name="xterm-clipboard">xterm-clipboard</a> </b>
-Motif GUI 版本上，如果在终端运行但是可以访问 X-server (设置了 DISPLAY)，那么复
-制和粘贴和 GUI 上的行为相似。如果不是，那么鼠标中键会插入无名寄存器。这种情况
-下，这里是如何复制和粘贴一段文本的方法:
+Motif GUI 版本上，运行在终端且 X-server (已设置 DISPLAY 环境变量) 可访问时，复
+制和粘贴行为和 GUI 一致。否则，鼠标中键会粘贴到无名寄存器。这种情景下，要复制
+和粘贴一段文本，可用以下步骤:
 
-用鼠标和可视模式复制/粘贴 (<a href="options.html#'mouse'">'mouse'</a> 选项必须设置，见上):
-1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放左
-   键。这会启动可视模式并高亮选择区域。
-2. 按 "y" 抽出可视文本到无名寄存器里。
-3. 在要插入的位置上按鼠标左键。
-4. 按鼠标中键。
+通过鼠标和可视模式进行复制/粘贴 (必须已设置 <a href="options.html#'mouse'">'mouse'</a> 选项，见上):
+1. 在文本首字符上按鼠标左键、拖动鼠标到文本末字符、释放左键。此时启动可视模
+   式，高亮选区。
+2. 按  <a href="change.html#y">y</a>  将可视选中文本抽出到无名寄存器。
+3. 移动到目标位置，点击鼠标左键。
+4. 点击鼠标中键完成粘贴。
 
-快捷方式: 如果插入位置和可视文本同时出现在屏幕上，你可以一次做 2、3 和 4: 在要
-插入的位置直接按鼠标中键。
+快捷方式: 目标位置和可视选中文本同在屏幕上出现时，可一步完成 2、3 和 4: 在目标
+位置直接点击鼠标中键即可。
 
-<code class="note">注意</code>: 如果使用  <a href="starting.html#-X">-X</a>  命令行参数，Vim 不会连接到 X 服务器，所以复制/粘贴到 X 剪
-贴板 (选择区) 不会工作。使用带 shift 键的鼠标键来让 xterm 完成选择。
+<code class="note">注意</code>: 使用  <a href="starting.html#-X">-X</a>  命令行参数时，Vim 不会连接 X 服务器，因而无法通过 X 剪贴板 (选
+择区) 进行复制/粘贴。此时可按 Shift 键配合鼠标操作，由 xterm 完成文本选取。
 
                                                         <b class="vimtag"> <a name="xterm-command-server">xterm-command-server</a> </b>
-如果 X-服务器的剪贴板可用， <a href="remote.html#x11-clientserver">x11-clientserver</a>  的命令服务器可以在命令行用
---servername 打开。
+X 服务器剪贴板可用时，可通过  <a href="remote.html#--servername">--servername</a>  命令行参数打开 <a href="remote.html#x11-clientserver">x11-clientserver</a> 
+中介绍的命令服务器。
 
                                                         <b class="vimtag"> <a name="xterm-copy-paste">xterm-copy-paste</a> </b>
-<code class="note">注意</code>: 在有些 (较老的) xterm 版本里，光标不能移动超过第 95 或 223 列。这是
-xterm 的问题，不是 Vim 的。用新一点的 xterm 吧  <a href="syntax.html#color-xterm">color-xterm</a> 。另见
-<a href="options.html#'ttymouse'">'ttymouse'</a>。
+<code class="note">注意</code>: 部分 (旧版) xterm 里，光标无法移动到第 95 或 223 列之后。这是 xterm 自身
+限制，不是 Vim 的问题。更换新版 xterm 即可  <a href="syntax.html#color-xterm">color-xterm</a> 。另见 <a href="options.html#'ttymouse'">'ttymouse'</a>。
 
-使用 xterm 粘贴/复制 (当前模式 <code class="emphasis">不</code> 包括在 <a href="options.html#'mouse'">'mouse'</a> 里):
-1. 在文本的第一个字符上按鼠标左键，移动鼠标到文本的最后一个字母，然后释放。
-2. 使用普通的 Vim 命令把光标移动到待插入的位置。
-3. 按 "a" 开始插入模式。
-4. 按鼠标中键。
+当前模式 <code class="emphasis">不</code> 在 <a href="options.html#'mouse'">'mouse'</a> 内时，可通过 xterm 进行粘贴/复制，步骤如下:
+1. 在文本首字符上按鼠标左键，拖动鼠标到文本末字符，释放左键。
+2. 使用普通 Vim 命令，移动光标到目标位置。
+3. 按  <a href="insert.html#a">a</a> ，进入插入模式。
+4. 点击鼠标中键完成粘贴。
 5. 按 ESC 退出插入模式。
-(对包含在 <a href="options.html#'mouse'">'mouse'</a> 里的模式，这里的操作同样可以完成，只要你在使用鼠标的时候按住
-shift 键就行了。)
+(即使当前模式已加入 <a href="options.html#'mouse'">'mouse'</a>，也可使用这套流程，操作鼠标时按住 Shift 键即可。)
 
-<code class="note">注意</code>: 如果你在粘贴的时候丢失了第 8 位 (特殊字符被翻译成其他字符)，你需要在启动
-Vim 之前在外壳上执行 "stty cs8 -istrip -parenb"。
+<code class="note">备注</code>: 粘贴时如果第 8 位丢失 (特殊字符被错误译成其他字符)，可在启动 Vim 前在外
+壳上执行 "stty cs8 -istrip -parenb"。
 
-这样，在 xterm 上 shift 和 ctrl 键不能和鼠标一起使用。需要 CTRL 修饰符的鼠标命
-令可以在使用鼠标前按 "g" 键模拟:
-        "g<code class="special">&lt;LeftMouse&gt;</code>"  是 "<code class="special">&lt;C-LeftMouse&gt;</code>       (跳转到鼠标点击的标签上)
-        "g<code class="special">&lt;RightMouse&gt;</code>" 是 "<code class="special">&lt;C-RightMouse&gt;</code>      ("<code class="keystroke">CTRL-T</code>")
+因此，在 xterm 中，Shift 与 Ctrl 键不能与鼠标组合用于 Vim。需要 CTRL 修饰符的
+鼠标命令，可在使用鼠标前先按 "g" 键来模拟:
+        "g<code class="special">&lt;LeftMouse&gt;</code>"  等同于 "<code class="special">&lt;C-LeftMouse&gt;</code>   (跳转到鼠标点击所在的标签)
+        "g<code class="special">&lt;RightMouse&gt;</code>" 等同于 "<code class="special">&lt;C-RightMouse&gt;</code>  (等价 "<code class="keystroke">CTRL-T</code>")
 
                                         <b class="vimtag"> <a name="mouse-mode-table">mouse-mode-table</a> </b> <b class="vimtag"> <a name="mouse-overview">mouse-overview</a> </b>
-如果 <a href="options.html#'mousemodel'">'mousemodel'</a> 是 "extend"，鼠标按钮的功能的概述在此:
+<a href="options.html#'mousemodel'">'mousemodel'</a> 设为 "extend" 时，鼠标按键行为简要说明如下:
 
 普通模式:
-<code class="section">事件          移动光标     选择         改变窗口   行动 </code>
+<code class="section">事件          移动光标     选区         窗口变更   动作 </code>
 <code class="special">&lt;LeftMouse&gt;</code>     是         结束           是
 <code class="special">&lt;C-LeftMouse&gt;</code>   是         结束           是       "<code class="keystroke">CTRL-]</code>" (2)
 <code class="special">&lt;S-LeftMouse&gt;</code>   是        不改变          是       "*" (2)    <b class="vimtag"> <a name="%3CS-LeftMouse%3E">&lt;S-LeftMouse&gt;</a> </b>
-<code class="special">&lt;LeftDrag&gt;</code>      是      开始或者扩展 (1)  否                  <b class="vimtag"> <a name="%3CLeftDrag%3E">&lt;LeftDrag&gt;</a> </b>
-<code class="special">&lt;LeftRelease&gt;</code>   是      开始或者扩展 (1)  否
-<code class="special">&lt;MiddleMouse&gt;</code>   是      如果没有激活      否       放置
-<code class="special">&lt;MiddleMouse&gt;</code>   是       如果激活         否       抽出和放置
-<code class="special">&lt;RightMouse&gt;</code>    是      开始或者扩展      是
-<code class="special">&lt;A-RightMouse&gt;</code>  是      开始或者扩展列块  是                  <b class="vimtag"> <a name="%3CA-RightMouse%3E">&lt;A-RightMouse&gt;</a> </b>
+<code class="special">&lt;LeftDrag&gt;</code>      是      开始或扩展 (1)    否                  <b class="vimtag"> <a name="%3CLeftDrag%3E">&lt;LeftDrag&gt;</a> </b>
+<code class="special">&lt;LeftRelease&gt;</code>   是      开始或扩展 (1)    否
+<code class="special">&lt;MiddleMouse&gt;</code>   是        未激活时        否       放置
+<code class="special">&lt;MiddleMouse&gt;</code>   是        已激活时        否       抽出并放置
+<code class="special">&lt;RightMouse&gt;</code>    是      开始或扩展        是
+<code class="special">&lt;A-RightMouse&gt;</code>  是   开始或扩展列块模式   是                  <b class="vimtag"> <a name="%3CA-RightMouse%3E">&lt;A-RightMouse&gt;</a> </b>
 <code class="special">&lt;S-RightMouse&gt;</code>  是        不改变          是       "#" (2)    <b class="vimtag"> <a name="%3CS-RightMouse%3E">&lt;S-RightMouse&gt;</a> </b>
 <code class="special">&lt;C-RightMouse&gt;</code>  否        不改变          否       "<code class="keystroke">CTRL-T</code>"
 <code class="special">&lt;RightDrag&gt;</code>     是         扩展           否                  <b class="vimtag"> <a name="%3CRightDrag%3E">&lt;RightDrag&gt;</a> </b>
 <code class="special">&lt;RightRelease&gt;</code>  是         扩展           否                  <b class="vimtag"> <a name="%3CRightRelease%3E">&lt;RightRelease&gt;</a> </b>
 
 插入或替换模式:
-<code class="section">事件          移动光标     选择           改变窗口 行动 </code>
-<code class="special">&lt;LeftMouse&gt;</code>     是      (不能激活)          是
-<code class="special">&lt;C-LeftMouse&gt;</code>   是      (不能激活)          是     "<code class="keystroke">CTRL-O</code>^]" (2)
-<code class="special">&lt;S-LeftMouse&gt;</code>   是      (不能激活)          是     "<code class="keystroke">CTRL-O</code>*" (2)
-<code class="special">&lt;LeftDrag&gt;</code>      是     开始或者扩展 (1)     否     类似于 <code class="keystroke">CTRL-O</code> (1)
-<code class="special">&lt;LeftRelease&gt;</code>   是     开始或者扩展 (1)     否     类似于 <code class="keystroke">CTRL-O</code> (1)
-<code class="special">&lt;MiddleMouse&gt;</code>   否      (不能激活)          否     放置寄存器内容
-<code class="special">&lt;RightMouse&gt;</code>    是     开始或者扩展         是     类似于 <code class="keystroke">CTRL-O</code>
-<code class="special">&lt;A-RightMouse&gt;</code>  是     开始或者扩展列块     是
-<code class="special">&lt;S-RightMouse&gt;</code>  是      (不能激活)          是     "<code class="keystroke">CTRL-O</code>#" (2)
-<code class="special">&lt;C-RightMouse&gt;</code>  否      (不能激活)          否     "<code class="keystroke">CTRL-O</code> <code class="keystroke">CTRL-T</code>"
+<code class="section">事件          移动光标     选区         窗口变更   动作 </code>
+<code class="special">&lt;LeftMouse&gt;</code>     是      (不能激活)        是
+<code class="special">&lt;C-LeftMouse&gt;</code>   是      (不能激活)        是       "<code class="keystroke">CTRL-O</code>^]" (2)
+<code class="special">&lt;S-LeftMouse&gt;</code>   是      (不能激活)        是       "<code class="keystroke">CTRL-O</code>*" (2)
+<code class="special">&lt;LeftDrag&gt;</code>      是     开始或扩展 (1)     否       类似 <code class="keystroke">CTRL-O</code> (1)
+<code class="special">&lt;LeftRelease&gt;</code>   是     开始或扩展 (1)     否       类似 <code class="keystroke">CTRL-O</code> (1)
+<code class="special">&lt;MiddleMouse&gt;</code>   否      (不能激活)        否       放置寄存器内容
+<code class="special">&lt;RightMouse&gt;</code>    是     开始或扩展         是       类似 <code class="keystroke">CTRL-O</code>
+<code class="special">&lt;A-RightMouse&gt;</code>  是   开始或扩展列块模式   是
+<code class="special">&lt;S-RightMouse&gt;</code>  是      (不能激活)        是       "<code class="keystroke">CTRL-O</code>#" (2)
+<code class="special">&lt;C-RightMouse&gt;</code>  否      (不能激活)        否       "<code class="keystroke">CTRL-O</code> <code class="keystroke">CTRL-T</code>"
 
-在帮助窗口里:
-<code class="section">事件          移动光标     选择           改变窗口 行动 </code>
-<code class="special">&lt;2-LeftMouse&gt;</code>   是     (不能激活)           否     "^]" (帮助标签跳转)
+在帮助窗口中:
+<code class="section">事件          移动光标     选区         窗口变更   动作 </code>
+<code class="special">&lt;2-LeftMouse&gt;</code>   是     (不能激活)         否       "^]" (跳转到帮助标签)
 
-当 <a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup" 时，下面这些有所差异:
+<a href="options.html#'mousemodel'">'mousemodel'</a> 设为 "popup" 时，以下按键行为有所差异:
 
 普通模式:
-<code class="section">事件          移动光标     选择           改变窗口 行动 </code>
-<code class="special">&lt;S-LeftMouse&gt;</code>   是      开始或者扩展 (1)    否
-<code class="special">&lt;A-LeftMouse&gt;</code>   是      开始或者扩展列块    否                <b class="vimtag"> <a name="%3CA-LeftMouse%3E">&lt;A-LeftMouse&gt;</a> </b>
-<code class="special">&lt;RightMouse&gt;</code>    否       弹出菜单           否
+<code class="section">事件          移动光标     选区         窗口变更   动作 </code>
+<code class="special">&lt;S-LeftMouse&gt;</code>   是      开始或扩展 (1)    否
+<code class="special">&lt;A-LeftMouse&gt;</code>   是   开始或扩展列块模式   否                  <b class="vimtag"> <a name="%3CA-LeftMouse%3E">&lt;A-LeftMouse&gt;</a> </b>
+<code class="special">&lt;RightMouse&gt;</code>    否       弹出菜单         否
 
 插入或替换模式:
-<code class="section">事件          移动光标     选择           改变窗口 行动 </code>
-<code class="special">&lt;S-LeftMouse&gt;</code>   是      开始或者扩展 (1)    否     类似于 <code class="keystroke">CTRL-O</code> (1)
-<code class="special">&lt;A-LeftMouse&gt;</code>   是      开始或者扩展列块    否
-<code class="special">&lt;RightMouse&gt;</code>    否       弹出菜单           否
+<code class="section">事件          移动光标     选区         窗口变更   动作 </code>
+<code class="special">&lt;S-LeftMouse&gt;</code>   是      开始或扩展 (1)    否       类似 <code class="keystroke">CTRL-O</code> (1)
+<code class="special">&lt;A-LeftMouse&gt;</code>   是   开始或扩展列块模式   否
+<code class="special">&lt;RightMouse&gt;</code>    否       弹出菜单         否
 
-(1) 只有当鼠标在按键后发生移动
-(2) 只有当点击发生在同一缓冲区时
+(1) 仅当按下鼠标后移动过指针才生效
+(2) 仅当点击发生在同一缓冲区时才生效
 
-点击鼠标左键改变光标的位置。如果点击发生在另一个窗口，那么那个窗口成为活动窗
-口。在编辑命令行时，光标只能定位在命令行上。在插入模式下，Vim 仍然保持在插入模
-式。如果设置了 <a href="options.html#'scrolloff'">'scrolloff'</a>，而光标定位在窗口边界 <a href="options.html#'scrolloff'">'scrolloff'</a> 行范围内，则文本
-被滚动。
+点击鼠标左键会定位光标。在另一个窗口点击时，该窗口会成为活动窗口。在命令行编辑
+状态下，光标只能定位在命令行内。在插入模式下，任意鼠标操作后 Vim 仍会保持在插
+入模式。设置 <a href="options.html#'scrolloff'">'scrolloff'</a> 且新光标位置距离窗口边界小于 <a href="options.html#'scrolloff'">'scrolloff'</a> 指定行数时，
+文本会自动滚动。
 
-在第一个字符上按鼠标左键，移动鼠标到最后一个字符，然后释放，可以进行选择。直到
-你释放鼠标键，你不一定总能看到选择的区域。只有一些版本能够 (GUI、WIN32) 使得拖
-动立即显示。<code class="note">注意</code> 如果 <a href="options.html#'scrolloff'">'scrolloff'</a> 非零，你可以在窗口的首/末行移动鼠标至少一个
-字符位置使文本滚动。
+要创建选区，可在选区首个字符上按鼠标左键、拖动到末字符再放开。在释放鼠标键前，
+并非所有版本都会实时显示拖动选区。仅部分版本 (GUI、WIN32) 可以。<code class="note">注意</code>
+<a href="options.html#'scrolloff'">'scrolloff'</a> 非零时，拖动到窗口首/末行后需再移动鼠标至少一个字符位置，才能使文
+本滚动。
 
-在普通、可视和选择模式下，单击鼠标右键使得可视区域被扩展。如果 <a href="options.html#'mousemodel'">'mousemodel'</a> 为
-"popup"，必须使用按住 shift 键的鼠标左键。如果在编辑另外一个缓冲区时点击一个窗
-口，可视和选择模式被终止。
+在普通、可视和选择模式下，点击鼠标右键会扩展可视选区。<a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup"
+时，须改用鼠标左键且同时需按住 Shift 键。点击编辑其他缓冲区的窗口时，会退出可
+视和选择模式。
 
-在普通、可视和选择模式下，按下 Alt 键同时单击鼠标右键，可使选择区域成为面向列
-块。当 <a href="options.html#'mousemodel'">'mousemodel'</a> 被设置为 "popup"，鼠标左键必须和 Alt 键一起使用。<code class="note">注意</code>在某
-些系统中失效，那些系统中的窗口管理器在按下 Alt 键时会吃掉鼠标事件 (可能会移动
-窗口)。
+在普通、可视和选择模式下，按住 Alt 键的同时点击鼠标右键，可视选区会使用列块模
+式。<a href="options.html#'mousemodel'">'mousemodel'</a> 为 "popup" 时，按住 Alt 键的同时需改用鼠标左键。<code class="note">注意</code>在部分系
+统上，窗口管理器在按下 Alt 键时会拦截鼠标事件 (可能触发窗口移动)，此时本功能无
+法使用。
 
                                                         <b class="vimtag"> <a name="double-click">double-click</a> </b>
-双击、三击和四击在 GUI 激活时、Win32 以及 xterm (如果有 gettimeofday() 函数)
-上得到支持。对于文本选择，附加的点击会扩展选择区:
-<code class="section">        点击            选择 </code>
-        两次            单词或者 % 匹配         <b class="vimtag"> <a name="%3C2-LeftMouse%3E">&lt;2-LeftMouse&gt;</a> </b>
-        三次            行                      <b class="vimtag"> <a name="%3C3-LeftMouse%3E">&lt;3-LeftMouse&gt;</a> </b>
-        四次            矩形区域                <b class="vimtag"> <a name="%3C4-LeftMouse%3E">&lt;4-LeftMouse&gt;</a> </b>
-特例: 在帮助窗口上，双击跳到点击的单词对应的帮助。
-双击单词选择该单词。<a href="options.html#'iskeyword'">'iskeyword'</a> 用来指定单词可以包括哪些字符。双击一个有匹配的
-字符选择直到该匹配的区域 (类似于 "v%")。如果匹配是 #if/#else/#endif 块，选择变
-为面向行。
-MS-Windows 和 xterm 上，双击相隔的时间可以通过 <a href="options.html#'mousetime'">'mousetime'</a> 选项设置。其他系统
-上，该值只能在 Vim 之外定义。
-一个使用双击跳转到光标所在的标签的例子:
+支持双击、三击和四击的环境包括 GUI、Win32 以及 xterm (需 gettimeofday() 函数可
+用)。用于文本选择时，多次点击可扩展选区范围:
+<code class="section">        点击次数        选中范围 </code>
+        两次            单词或者 % 配对范围     <b class="vimtag"> <a name="%3C2-LeftMouse%3E">&lt;2-LeftMouse&gt;</a> </b>
+        三次            整行                    <b class="vimtag"> <a name="%3C3-LeftMouse%3E">&lt;3-LeftMouse&gt;</a> </b>
+        四次            列块区域                <b class="vimtag"> <a name="%3C4-LeftMouse%3E">&lt;4-LeftMouse&gt;</a> </b>
+特例: 在帮助窗口中双击，会跳到点击单词对应的帮助。
+双击单词会选中该单词。单词组成字符由 <a href="options.html#'iskeyword'">'iskeyword'</a> 决定。双击带配对标记的字符会
+选中两个配对字符之间的区域 (效果类似  <code class="badlink">v%</code> )。匹配项目是 #if/#else/#endif 块时，
+进入行选择模式。
+MS-Windows 和 xterm 环境 (<code class="vim">译者注</code>: 还有 GUI) 可通过 <a href="options.html#'mousetime'">'mousetime'</a> 选项设置双击间
+隔时长。其他系统的双击时长在 Vim 之外定义。
+使用双击跳转到光标所在标签的示例:
 <code class="example">        :map &lt;2-LeftMouse&gt; :exe "tag " .. expand("&lt;cword&gt;")&lt;CR&gt;</code>
 <code class="example"></code>
-使用双击拖动鼠标 (按下按钮、抬起按钮、按下按钮、然后拖动) 会导致完整的多个单词
-被选择，直到按钮被释放为止。这时选择重新以字符为单位。
+双击后拖动鼠标 (即按下、松开、再按下然后拖动) 会按单词扩展选区。直到按钮释放
+后，才恢复为按字符选区。
 
-鼠标滚动可见  <a href="scroll.html#scroll-mouse-wheel">scroll-mouse-wheel</a> 。
+鼠标滚动相关可见  <a href="scroll.html#scroll-mouse-wheel">scroll-mouse-wheel</a> 。
 
                                                         <b class="vimtag"> <a name="gpm-mouse">gpm-mouse</a> </b>
-GPM 鼠标只有在编译时打开  <a href="various.html#+mouse_gpm">+mouse_gpm</a>  特性才有效。GPM 鼠标驱动 (Linux 终端) 不
+<code class="notvi">{仅当编译时打开  <a href="various.html#+mouse_gpm">+mouse_gpm</a>  特性才支持 GPM 鼠标}</code> GPM 鼠标驱动 (Linux 终端) 不
 支持四击。
 
-插入模式下，但选择开始时，Vim 暂时回到普通模式。在可视或者选择模式结束时，又回
-到插入模式。这类似于在插入模式下使用 <code class="keystroke">CTRL-O</code> 的情形。选择模式在 <a href="options.html#'selectmode'">'selectmode'</a> 选
-项包含 "mouse" 时被使用。
+插入模式下启动选区时，Vim 会暂时回到普通模式。退出可视或选择模式后回到插入模
+式。行为类似插入模式下按 <code class="keystroke">CTRL-O</code>。<a href="options.html#'selectmode'">'selectmode'</a> 选项包含 "mouse" 时，使用选择模
+式。
                                                         <b class="vimtag"> <a name="sysmouse">sysmouse</a> </b>
-只有编译时加入  <a href="various.html#+mouse_sysmouse">+mouse_sysmouse</a>  特性才会支持 sysmouse。sysmouse 驱动 (*BSD 控
+<code class="notvi">{仅当编译时加入  <a href="various.html#+mouse_sysmouse">+mouse_sysmouse</a>  特性才支持 sysmouse}</code> sysmouse 驱动 (*BSD 控
 制台) 不支持键盘修饰符。
 
                                                         <b class="vimtag"> <a name="drag-status-line">drag-status-line</a> </b>
-如果有多个窗口一起工作，窗口的大小可以用通过鼠标拖动状态行来改变。把鼠标点在状
-态行上，按左键，移动鼠标把状态行带到新的位置，再释放左键。只是用鼠标点击状态行
-而不移动鼠标使得那个窗口成为当前窗口。如果选择了一个窗口会改变状态行的位置或大
-小，状态行的拖动看起来很奇怪，但还是会工作的 (试试吧)。
+多窗口布局时，可通过鼠标拖动状态行调整窗口大小。具体步骤是，鼠标移到状态行，按
+住左键，拖动到目标位置后松开。直接点击状态行而不移动鼠标，只会将该窗口切换为当
+前窗口。如果选中窗口会使其位置或大小发生变化，拖动状态行时看来会有些混乱，但仍
+可正常工作 (不妨尝试一下)。
 
                                         <b class="vimtag"> <a name="%3CMiddleRelease%3E">&lt;MiddleRelease&gt;</a> </b> <b class="vimtag"> <a name="%3CMiddleDrag%3E">&lt;MiddleDrag&gt;</a> </b>
-鼠标点击可以映射。鼠标点击的代码是:
-<code class="section">     代码           鼠标按钮    一般的行动      </code>
- <code class="special">&lt;LeftMouse&gt;</code>     按住左键       设置光标位置
- <code class="special">&lt;LeftDrag&gt;</code>      按住并移动左键 扩展选择区
- <code class="special">&lt;LeftRelease&gt;</code>   释放左键       结束选择区
- <code class="special">&lt;MiddleMouse&gt;</code>   按住中键       在光标所在的位置上粘贴
- <code class="special">&lt;MiddleDrag&gt;</code>    按住并移动中键 -
- <code class="special">&lt;MiddleRelease&gt;</code> 释放中键       -
- <code class="special">&lt;RightMouse&gt;</code>    按住右键       扩展选择区
- <code class="special">&lt;RightDrag&gt;</code>     按住并移动右键 扩展选择区
- <code class="special">&lt;RightRelease&gt;</code>  释放右键       结束选择区
- <code class="special">&lt;X1Mouse&gt;</code>       按住 X1 键         -                   <b class="vimtag"> <a name="X1Mouse">X1Mouse</a> </b>
- <code class="special">&lt;X1Drag&gt;</code>        按住并移动 X1      -                   <b class="vimtag"> <a name="X1Drag">X1Drag</a> </b>
- <code class="special">&lt;X1Release&gt;</code>     释放 X1 键         -                   <b class="vimtag"> <a name="X1Release">X1Release</a> </b>
- <code class="special">&lt;X2Mouse&gt;</code>       按住 X2 键         -                   <b class="vimtag"> <a name="X2Mouse">X2Mouse</a> </b>
- <code class="special">&lt;X2Drag&gt;</code>        按住并移动 X2      -                   <b class="vimtag"> <a name="X2Drag">X2Drag</a> </b>
- <code class="special">&lt;X2Release&gt;</code>     释放 X2 键         -                   <b class="vimtag"> <a name="X2Release">X2Release</a> </b>
+鼠标点击事件可被映射。鼠标点击编码如下:
+<code class="section"> 编码            对应鼠标按键           缺省动作        </code>
+ <code class="special">&lt;LeftMouse&gt;</code>     按住左键               设置光标位置
+ <code class="special">&lt;LeftDrag&gt;</code>      按住并移动左键         扩展选区
+ <code class="special">&lt;LeftRelease&gt;</code>   释放左键               结束选区
+ <code class="special">&lt;MiddleMouse&gt;</code>   按住中键               在光标处粘贴
+ <code class="special">&lt;MiddleDrag&gt;</code>    按住并移动中键         -
+ <code class="special">&lt;MiddleRelease&gt;</code> 释放中键               -
+ <code class="special">&lt;RightMouse&gt;</code>    按住右键               扩展选区
+ <code class="special">&lt;RightDrag&gt;</code>     按住并移动右键         扩展选区
+ <code class="special">&lt;RightRelease&gt;</code>  释放右键               结束选区
+ <code class="special">&lt;X1Mouse&gt;</code>       按住 X1 键             -               <b class="vimtag"> <a name="X1Mouse">X1Mouse</a> </b>
+ <code class="special">&lt;X1Drag&gt;</code>        按住并移动 X1 键       -               <b class="vimtag"> <a name="X1Drag">X1Drag</a> </b>
+ <code class="special">&lt;X1Release&gt;</code>     释放 X1 键             -               <b class="vimtag"> <a name="X1Release">X1Release</a> </b>
+ <code class="special">&lt;X2Mouse&gt;</code>       按住 X2 键             -               <b class="vimtag"> <a name="X2Mouse">X2Mouse</a> </b>
+ <code class="special">&lt;X2Drag&gt;</code>        按住并移动 X2 键       -               <b class="vimtag"> <a name="X2Drag">X2Drag</a> </b>
+ <code class="special">&lt;X2Release&gt;</code>     释放 X2 键             -               <b class="vimtag"> <a name="X2Release">X2Release</a> </b>
 
-X1 和 X2 按钮指一些鼠标上的附加按钮。'Microsoft Explorer' 鼠标在右拇指位置有这
-些键。目前 X1 和 X2 只能用于 Win32 和 X11 环境，还有支持 xterm-兼容鼠标功能的
-终端。
+X1 和 X2 按键是部分鼠标提供的额外按键。例如 'Microsoft Explorer' 鼠标在右拇指
+位置有这些按键。目前 X1 和 X2 仅在 Win32、X11，以及支持 xterm-兼容鼠标协议的终
+端中可用。
 
 示例:
 <code class="example">        :noremap &lt;MiddleMouse&gt; &lt;LeftMouse&gt;&lt;MiddleMouse&gt;</code>
-在鼠标中键点击的位置粘贴 (不然，粘贴在光标所在的位置进行)。
+在鼠标中键点击位置粘贴文本 (缺省会在光标位置粘贴)。
 
 <code class="example">        :noremap &lt;LeftRelease&gt; &lt;LeftRelease&gt;y</code>
-在可视模式下立即抽出选择区。
+在可视模式下，释放左键会立即抽出选区文本。
 
-<code class="note">注意</code>使用了 ":noremap" 而不是 "map"，以免发生递归映射。
+<code class="note">注意</code>使用了  <a href="map.html#:noremap">:noremap</a>  而非  <a href="map.html#:map">:map</a> ，防止映射递归。
 
 <code class="example">        :map &lt;X1Mouse&gt; &lt;C-O&gt;</code>
 <code class="example">        :map &lt;X2Mouse&gt; &lt;C-I&gt;</code>
-把 X1 和 X2 键定义为跳跃表的前进和后退，见  <a href="motion.html#CTRL-O">CTRL-O</a>  和  <a href="motion.html#CTRL-I">CTRL-I</a> 。
+将 X1 和 X2 键映射为跳跃表的后退与前进，见  <a href="motion.html#CTRL-O">CTRL-O</a>  和  <a href="motion.html#CTRL-I">CTRL-I</a> 。
 
                                                 <b class="vimtag"> <a name="mouse-swap-buttons">mouse-swap-buttons</a> </b>
-要交换鼠标左键和右键的含义:
+要交换鼠标左键和右键功能:
 <code class="example">        :noremap        &lt;LeftMouse&gt;     &lt;RightMouse&gt;</code>
 <code class="example">        :noremap        &lt;LeftDrag&gt;      &lt;RightDrag&gt;</code>
 <code class="example">        :noremap        &lt;LeftRelease&gt;   &lt;RightRelease&gt;</code>
