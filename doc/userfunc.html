@@ -40,163 +40,163 @@
                                 <code class="vim">译者</code>: Willis
 
 
-定义和使用函数。
+定义与使用函数。
 
-用户手册的  <a href="usr_41.html#41.7">41.7</a>  一节有相关介绍。
+相关介绍请参考用户手册  <a href="usr_41.html#41.7">41.7</a>  一节。
 
 1. 定义函数                              <a href="userfunc.html#define-function">define-function</a> 
 2. 调用函数                              <a href="userfunc.html#:call">:call</a> 
-3. 函数清理                              <a href="userfunc.html#:defer">:defer</a> 
-4. 自动载入函数                          <a href="userfunc.html#autoload-functions">autoload-functions</a> 
+3. 函数内清理操作                        <a href="userfunc.html#:defer">:defer</a> 
+4. 自动加载函数                          <a href="userfunc.html#autoload-functions">autoload-functions</a> 
 
 </section><hr class="doubleline" /><section class=inner>
 <h4></h4><code class="section">1. 定义函数 </code>
                                                 <b class="vimtag"> <a name="define-function">define-function</a> </b>
-可以定义新的函数。调用的方式就像内建函数一样。函数执行一系列 Ex 命令。普通模式
-下的命令可以用  <a href="various.html#:normal">:normal</a>  命令执行。
+可以自定义新函数。调用方式与内置函数一致。函数执行一系列 Ex 命令。包括通过
+ <a href="various.html#:normal">:normal</a>  命令执行普通模式命令。
 
-函数名须以大写字母开始，以免和内建函数引起混淆。要避免在不同脚本使用相同的名
-字，请使其局部于脚本。如果必须使用全局函数，避免显见的或者过短的名字。一个好习
-惯是使用脚本名字作为函数名字的开头，比如 "HTMLcolor()"。
+函数名首字母必须大写，以免和内置函数混淆。为防止不同脚本间出现同名冲突，可定义
+脚本局部函数。如果必须使用全局函数，不要使用过于简短通用的名称。推荐使用脚本名
+作为函数名前缀，例如 "HTMLcolor()"。
 
-老式 Vim 脚本里也可以使用花括号，见  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
+老式 Vim 脚本也支持函数名使用花括号形式，见  <a href="eval.html#curly-braces-names">curly-braces-names</a> 。
 
- <a href="userfunc.html#autoload">autoload</a>  机制可用于在调用时才提供函数的定义。
+ <a href="userfunc.html#autoload">autoload</a>  机制可实现函数仅在被调用时才定义。
 
                                                         <b class="vimtag"> <a name="local-function">local-function</a> </b>
-局部于老式 Vim 脚本的函数必须以 "s:" 开始。局部于脚本的函数只能在同一脚本和脚
-本中定义的函数、用户命令和自动命令里调用。也可以在脚本定义的映射里调用该函数，
-但必须使用  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  而不是 "s:"，如果映射会在脚本之外被扩展的话。
-只有局部于脚本的函数，没有局部于缓冲区或局部于窗口的函数。
+老式 Vim 脚本中，局部函数必须以 "s:" 开头。脚本局部函数仅能在同一脚本内直接调
+用，或在该脚本定义的函数、用户命令和自动命令中调用。也可在该脚本定义的映射中调
+用，但如果该映射会在脚本外部展开，则必须使用  <a href="map.html#%3CSID%3E">&lt;SID&gt;</a>  而非 "s:" 形式。
+只有脚本局部函数，不存在缓冲区或窗口局部函数。
 
- <a href="vim9.html#Vim9">Vim9</a>  的脚本函数缺省局部于脚本，要定义全局函数需要 "g:" 前缀。
+ <a href="vim9.html#Vim9">Vim9</a>  脚本中，函数缺省局部于脚本，要定义全局函数，需要显式添加 "g:" 前缀。
 
                                 <b class="vimtag"> <a name=":fu">:fu</a> </b> <b class="vimtag"> <a name=":function">:function</a> </b> <b class="vimtag"> <a name="E128">E128</a> </b> <b class="vimtag"> <a name="E129">E129</a> </b> <b class="vimtag"> <a name="E123">E123</a> </b> <b class="vimtag"> <a name="E454">E454</a> </b>
-:fu[nction]             列出所有函数和它们的参数。
+:fu[nction]             列出所有函数及其参数。
 
-:fu[nction] <code class="special">{name}</code>      列出 <code class="special">{name}</code> 命名的函数。
-                        <code class="special">{name}</code> 也可以是  <a href="eval.html#Funcref">Funcref</a>  类型的  <a href="eval.html#Dictionary">Dictionary</a>  项目:
+:fu[nction] <code class="special">{name}</code>      列出名为 <code class="special">{name}</code> 的函数定义。
+                        <code class="special">{name}</code> 也可以是保存在字典内的函数引用  <a href="eval.html#Funcref">Funcref</a> :
 <code class="example">                                :function dict.init</code>
-                        <code class="note">注意</code> <code class="special">{name}</code> 不是表达式，不可用函数引用变量。可用下面的
-                        小花招来列出变量 "Funcref" 引用的函数:
+                        <code class="note">注意</code> <code class="special">{name}</code> 不是表达式，不能直接传入保存函数引用的变
+                        量。可用以下小技巧查看变量 "Funcref" 指向的函数:
 <code class="example">                                let g:MyFuncref = Funcref</code>
 <code class="example">                                func g:MyFuncref</code>
 <code class="example">                                unlet g:MyFuncref</code>
 <code class="example"></code>
-:fu[nction] /<code class="special">{pattern}</code>  列出名字匹配 <code class="special">{pattern}</code> 的函数。
-                        列出所有以 "File" 结束的函数的例子:
+:fu[nction] /<code class="special">{pattern}</code>  列出所有名称匹配 <code class="special">{pattern}</code> 的函数。
+                        列出所有以 "File" 结尾的函数的示例:
 <code class="example">                                :function /File$</code>
 
                                                         <b class="vimtag"> <a name=":function-verbose">:function-verbose</a> </b>
-如果 <a href="options.html#'verbose'">'verbose'</a> 非零，列出函数的同时也显示它上次定义的位置。例如:
+<a href="options.html#'verbose'">'verbose'</a> 非零时，在列出函数的同时也显示其最后一次定义的位置。例如:
 <code class="example"></code>
 <code class="example">    :verbose function SetFileTypeSH</code>
 <code class="example">        function SetFileTypeSH(name)</code>
 <code class="example">            Last set from /usr/share/vim/vim-7.0/filetype.vim</code>
 
- <a href="various.html#:verbose-cmd">:verbose-cmd</a>  有更多信息。
+详见  <a href="various.html#:verbose-cmd">:verbose-cmd</a> 。
 
                                                 <b class="vimtag"> <a name="E124">E124</a> </b> <b class="vimtag"> <a name="E125">E125</a> </b> <b class="vimtag"> <a name="E853">E853</a> </b> <b class="vimtag"> <a name="E884">E884</a> </b>
 :fu[nction][!] <code class="special">{name}</code>(<code class="special">[arguments]</code>) <code class="special">[range]</code> <code class="special">[abort]</code> <code class="special">[dict]</code> <code class="special">[closure]</code>
-                        定义 <code class="special">{name}</code> 命名的新函数。函数体在之后的行给出，直到匹
-                        配的  <a href="userfunc.html#:endfunction">:endfunction</a>  为止。
+                        定义名为 <code class="special">{name}</code> 的新函数。函数体在其后续行定义，直到出
+                        现匹配  <a href="userfunc.html#:endfunction">:endfunction</a>  为止。
 
                                                                 <b class="vimtag"> <a name="E1267">E1267</a> </b>
-                        名字必须由字母数字和 '_' 字符组成，而且必须以大写字母
-                        或者 "s:" 开头 (见上)。<code class="note">注意</code> "b:" 或 "l:" 等是不允许的
-                        (从 7.4.260 补丁版本开始，如果函数名中有冒号，如
-                        "foo:bar()"，会给出 E884)，不过，"g:" 前缀会被忽略，且
-                        仍然需要后跟大写字母。
+                        函数名必须由字母数位和 '_' 字符组成，首字母必须大写，
+                        除非使用 "s:" 前缀 (见上)。<code class="note">注意</code>不接受 "b:" 或 "l:" 等
+                        前缀 (从 7.4.260 补丁版本开始，如果函数名带冒号，如
+                        "foo:bar()"，会报错 E884)，接受且忽略 "g:" 前缀，其后
+                        仍然需要首字母大写。
 
-                        <code class="special">{name}</code> 也可以是  <a href="eval.html#Funcref">Funcref</a>  类型的  <a href="eval.html#Dictionary">Dictionary</a>  项目:
+                        <code class="special">{name}</code> 也可以是保存在字典内的函数引用  <a href="eval.html#Funcref">Funcref</a> :
 <code class="example">                                :function dict.init(arg)</code>
-                        "dict" 必须是一个已经存在的字典。如果还不存在，项目
-                        "init" 被加入此字典。否则必须提供 [!] 以覆盖已经存在的
-                        函数。返回指向一个编号函数的  <a href="eval.html#Funcref">Funcref</a> 。该函数只能通过
-                         <a href="eval.html#Funcref">Funcref</a>  引用，没有引用指向它时，该函数会被删除。
+                        "dict" 必须为已定义的字典。"init" 项尚不存在时会新增。
+                        如果已存在，则必须加 [!] 才能覆盖原有函数。字典项保存
+                        的值为一个指向编号函数的函数引用  <a href="eval.html#Funcref">Funcref</a> 。该函数只能
+                        通过  <a href="eval.html#Funcref">Funcref</a>  引用，不再有引用时，该函数会被回收。
                                                                 <b class="vimtag"> <a name="E127">E127</a> </b> <b class="vimtag"> <a name="E122">E122</a> </b>
-                        如果同名的函数已经存在而且没有使用 [!]，给出错误信息。
-                        有一个例外: 再次执行脚本时，该脚本中之前定义过的函数会
-                        被悄然替代。
-                        如果给出 [!]，已有的函数被悄然替代。如果该函数正在执行
-                        期间除外。此时，这是一个错误。
-                        <code class="note">备注</code>: 小心使用 !。如果不小心，可能会意外地替代已有的函
-                        数。这很难调试。
-                        <code class="note">备注</code>: Vim9 脚本里局部于脚本的函数不能被删除或重定义。
+                        如果同名函数已存在且未加 [!]，会报错。但有一个例外: 重
+                        新加载脚本时，该脚本先前定义的同名函数会被静默替换。
+                        给出 [!] 时，已有同名函数会被静默覆盖。该函数仍在执行
+                        期间除外，此时会报错。
+                        <code class="note">备注</code>: 谨慎使用 !。滥用会意外覆盖已有函数。难以调试。
+                        <code class="note">备注</code>: Vim9 脚本里，脚本局部函数不能删除或重定义。
 
                         <code class="special">{arguments}</code> 参见  <a href="userfunc.html#function-argument">function-argument</a> 。
 
                                 <b class="vimtag"> <a name=":func-range">:func-range</a> </b> <b class="vimtag"> <a name="a:firstline">a:firstline</a> </b> <b class="vimtag"> <a name="a:lastline">a:lastline</a> </b>
-                        如果给出 <code class="special">[range]</code> 参数，则该函数自己能理解并处理行范
-                        围。该范围通过 "a:firstline" 和 "a:lastline" 定义。如
-                        果没有 <code class="special">[range]</code>，":<code class="special">{range}</code>call" 会在该范围的每一行分别
-                        执行该函数，每次光标都定位在处理行的行首。见
-                         <a href="userfunc.html#function-range-example">function-range-example</a> 。
-                        就像所有的 Ex 命令一样，光标仍然会被移动到范围的首行。
+                        给出 <code class="special">[range]</code> 参数时，函数应自行处理该范围内的文本。该
+                        范围通过 "a:firstline" 和 "a:lastline" 参数传入函数。
+                        未给出 <code class="special">[range]</code> 参数时，执行 ":<code class="special">{range}</code>call" 会对该范围
+                        内每一行单独调用该函数，调用时，光标定位在每行的行首。
+                        见  <a href="userfunc.html#function-range-example">function-range-example</a> 。
+                        和所有 Ex 命令一样，光标仍会移动到范围首行。
                                                                 <b class="vimtag"> <a name=":func-abort">:func-abort</a> </b>
-                        如果给出 <code class="special">[abort]</code> 参数，该函数在遇到错误时立即中止。
+                        给出 <code class="special">[abort]</code> 参数时，一旦检测到错误，函数立即中止。
                                                                 <b class="vimtag"> <a name=":func-dict">:func-dict</a> </b>
-                        如果给出 <code class="special">[dict]</code> 参数，该函数必须通过  <a href="eval.html#Dictionary">Dictionary</a>  的项
-                        目才能调用。局部变量 "self" 这时设为该字典。见
-                         <a href="eval.html#Dictionary-function">Dictionary-function</a> 。
+                        给出 <code class="special">[dict]</code> 参数时，函数必须通过字典项方式调用。局部变
+                        量 "self" 会被绑定为该字典。见  <a href="eval.html#Dictionary-function">Dictionary-function</a> 。
                                                 <b class="vimtag"> <a name=":func-closure">:func-closure</a> </b> <b class="vimtag"> <a name="E932">E932</a> </b>
-                        加入 <code class="special">[closure]</code> 参数时，函数可以访问外部作用域的变量和
-                        参数。通常这被称为闭包。此例中 Bar() 使用 Foo() 作用
-                        域的 "x"。即使 Foo() 返回后仍被引用:
-<code class="example">                                :function! Foo()</code>
-<code class="example">                                :  let x = 0</code>
-<code class="example">                                :  function! Bar() closure</code>
-<code class="example">                                :    let x += 1</code>
-<code class="example">                                :    return x</code>
-<code class="example">                                :  endfunction</code>
-<code class="example">                                :  return funcref('Bar')</code>
-<code class="example">                                :endfunction</code>
-<code class="example"></code>
-<code class="example">                                :let F = Foo()</code>
-<code class="example">                                :echo F()</code>
-                                1
-<code class="example">                                :echo F()</code>
-                                2
-<code class="example">                                :echo F()</code>
-                                3
+                        给出 <code class="special">[closure]</code> 参数时，函数可访问外层作用域的变量和参
+                        数。此类函数通称为闭包。此例中，Bar() 可访问 Foo() 作
+                        用域内的 "x"。即使 Foo() 返回后，变量仍保持被引用状
+                        态: &gt;vim
+                                :function! Foo()
+                                :  let x = 0
+                                :  function! Bar() closure
+                                :    let x += 1
+                                :    return x
+                                :  endfunction
+                                :  return funcref('Bar')
+                                :endfunction
+
+                                :let F = Foo()
+                                :echo F()
+&lt;                               1 &gt;vim
+                                :echo F()
+&lt;                               2 &gt;vim
+                                :echo F()
+&lt;                               3
 
 
                                                 <b class="vimtag"> <a name="function-search-undo">function-search-undo</a> </b>
-                        最近使用的搜索模式和重做命令 "." 不会受到函数的影响。
-                        这也意味着  <a href="pattern.html#:nohlsearch">:nohlsearch</a>  的效果在函数返回时会被撤销。
+                        函数不会修改最近使用的搜索模式和重复命令 "." 记住的更
+                        改。这也意味着函数退出时，会撤销  <a href="pattern.html#:nohlsearch">:nohlsearch</a>  的效果。
 
                         <b class="vimtag"> <a name=":endf">:endf</a> </b> <b class="vimtag"> <a name=":endfunction">:endfunction</a> </b> <b class="vimtag"> <a name="E126">E126</a> </b> <b class="vimtag"> <a name="E193">E193</a> </b> <b class="vimtag"> <a name="W22">W22</a> </b> <b class="vimtag"> <a name="E1151">E1151</a> </b>
-:endf[unction]          结束函数定义。最好单起一行，没有 <code class="special">[argument]</code>。
+:endf[unction] <code class="special">[argument]</code>
+                        结束函数定义。建议单起一行，不带 <code class="special">[argument]</code>。
 
-                        <code class="special">[argument]</code> 可以是:
-                                | 命令          下面执行的命令
-                                \n 命令         下面执行的命令
-                                " 注释          总是忽略
-                                其它            忽略，如果 <a href="options.html#'verbose'">'verbose'</a> 非零给出
+                        <code class="special">[argument]</code> 可选值为:
+                                | 命令          后续执行的命令
+                                \n 命令         后续执行的命令
+                                " 注释          注释，忽略
+                                其他内容        忽略，<a href="options.html#'verbose'">'verbose'</a> 非零时会给出
                                                 <code class="note">警告</code>
-                        对后续命令的支持是 Vim 8.0.0654 加入的，之前任何参数都
-                        被悄悄地忽略。
+                        Vim 8.0.0654 才加入对后续命令的支持，在此之前的版本会
+                        静默忽略所有参数。
 
-                        要在  <a href="eval.html#:execute">:execute</a>  命令里定义函数，用换行符而不是
+                        要在  <a href="eval.html#:execute">:execute</a>  命令内定义函数，应使用换行符，而不是
                          <a href="cmdline.html#:bar">:bar</a> :
 <code class="example">                                :exe "func Foo()\necho 'foo'\nendfunc"</code>
 
                                 <b class="vimtag"> <a name=":delf">:delf</a> </b> <b class="vimtag"> <a name=":delfunction">:delfunction</a> </b> <b class="vimtag"> <a name="E131">E131</a> </b> <b class="vimtag"> <a name="E933">E933</a> </b> <b class="vimtag"> <a name="E1084">E1084</a> </b>
 :delf[unction][!] <code class="special">{name}</code>
-                        删除 <code class="special">{name}</code> 命名的函数。
-                        <code class="special">{name}</code> 也可以是  <a href="eval.html#Funcref">Funcref</a>  类型的  <a href="eval.html#Dictionary">Dictionary</a>  项目:
+                        删除名为 <code class="special">{name}</code> 的函数。
+                        <code class="special">{name}</code> 也可以是保存在字典内的函数引用  <a href="eval.html#Funcref">Funcref</a> :
 <code class="example">                                :delfunc dict.init</code>
-                        会删除 "dict" 的 "init" 项目。如果没有更多指向它的引
-                        用，该函数被删除。
-                        用了 ! 后，即使函数不存在也不报错。
+                        会从字典 "dict" 中删除 "init" 项。如果没有更多引用，该
+                        函数会被删除。
+                        给出 ! 后，即使函数不存在也不报错。
                                                 <b class="vimtag"> <a name=":retu">:retu</a> </b> <b class="vimtag"> <a name=":return">:return</a> </b> <b class="vimtag"> <a name="E133">E133</a> </b>
-:retu[rn] <code class="special">[expr]</code>        从函数返回。给出 <code class="special">[expr]</code> 时，计算该表达式的结果成为函数
-                        的返回值。没有给出 <code class="special">[expr]</code> 时，返回 0。
-                        如果函数退出时没有显式的调用 ":return"，返回 0。
+:retu[rn] <code class="special">[expr]</code>        从函数中返回。给出 <code class="special">[expr]</code> 时，会对其求值并作为函数返回
+                        值。省略 <code class="special">[expr]</code> 时，默认返回 0。
+                        函数退出时，如果未显式调用过 ":return"，默认返回 0。
 
                          在  <a href="vim9.html#Vim9">Vim9</a>  脚本中:
-                        -  <a href="userfunc.html#:return">:return</a>  关键字不可被缩短，
-                        - 如果  <a href="userfunc.html#:return">:return</a>  后有无法抵达的代码，报错 <b class="vimtag"> <a name="E1095">E1095</a> </b> 。
+                        -  <a href="userfunc.html#:return">:return</a>  关键字不可被简写，
+                        - <b class="vimtag"> <a name="E1095">E1095</a> </b> 如果在  <a href="userfunc.html#:return">:return</a>  之后还有无法执行的代码，会
+                          报错。
                         示例:
 
 <code class="example">                          vim9script</code>
@@ -206,112 +206,109 @@
 <code class="example">                                       # 代码</code>
 <code class="example">                          }</code>
 <code class="example">                          echo L()</code>
-<code class="example"></code>
-<code class="example">                        老式脚本里没有不可到达行的检查，因而，如果有命令在</code>
-<code class="example">                        ":return" 之后，不会给出警告。也不检查后续行是否包含合</code>
-                        法的命令。这样可能会察觉不到忘记了续行的反斜杠:
+
+                        老式脚本中，不检查不可达代码，即使 ":return" 之后还有
+                        命令，既不会<code class="note">警告</code>，也不会检查这些后续行是否为合法命令。
+                        如果遗漏了反斜杠续行符，问题可能不会被发现:
 <code class="example">                                return 'some text'</code>
 <code class="example">                                       .. ' some more text'</code>
-                        会高兴地返回 "some text" 而不报错。这本来应该是:
+                        会直接返回 "some text" 而不报错。正确写法应该是:
 <code class="example">                                return 'some text'</code>
 <code class="example">                                       \ .. ' some more text'</code>
 
-                        如果 ":return" 在  <a href="eval.html#:try">:try</a>  之后使用但在匹配的  <a href="eval.html#:finally">:finally</a> 
-                        (如果有的话) 之前的话，":finally" 之后直到匹配的
-                         <a href="eval.html#:endtry">:endtry</a>  的命令会先执行。该过程反复应用于所有函数内的
-                        嵌套 ":try" 块。在最外层 ":endtry" 结束之后才真正返
-                        回。
+                        ":return" 位于  <a href="eval.html#:try">:try</a>  块内，对应的  <a href="eval.html#:finally">:finally</a>  子句 (如
+                        有) 之前时，会先执行 ":finally" 到匹配的  <a href="eval.html#:endtry">:endtry</a>  之
+                        间的所有命令。函数内所有嵌套的 ":try" 块会反复应用此逻
+                        辑，在最外层 ":endtry" 结束后，函数才真正返回。
 
 
                                                 <b class="vimtag"> <a name="function-argument">function-argument</a> </b> <b class="vimtag"> <a name="a:var">a:var</a> </b>
-参数的定义只要给出它的名字。在函数里，可以使用 "a:name" 来访问 ("a:" 代表参数
-(argument)) ( <a href="vim9.html#:def">:def</a>  函数里不使用 "a:")。
+参数可通过名称定义。在函数内部以 "a:name" 访问 ("a:" 代表参数 (argument))
+( <a href="vim9.html#:def">:def</a>  定义的函数内无需 "a:" 前缀)。
                                         <b class="vimtag"> <a name="a:0">a:0</a> </b> <b class="vimtag"> <a name="a:1">a:1</a> </b> <b class="vimtag"> <a name="a:000">a:000</a> </b> <b class="vimtag"> <a name="E740">E740</a> </b> <b class="vimtag"> <a name="...">...</a> </b>
-可以给出不超过 20 个参数，以逗号分隔。最后，可以给出参数 "..."，意味着可以有更
-多的参数。在函数里，可以通过 "a:1"、"a:2" 等等访问它们。"a:0" 设为这些附加参数
-的数目 (可以为 0)。"a:000" 设为包含这些参数的  <a href="eval.html#List">List</a> 。<code class="note">注意</code> "a:1" 等同于
-"a:000[0]"。
+可给出不超过 20 个参数，以逗号分隔。命名参数后可给出特殊参数 "..."，表示支持额
+外可变参数。函数内可通过 "a:1"、"a:2" 等访问额外参数。"a:0" 为额外参数总数 (可
+为 0)。"a:000" 为包含所有额外参数的列表。<code class="note">注意</code> "a:1" 等同于 "a:000[0]"。
                                                         <b class="vimtag"> <a name="E742">E742</a> </b> <b class="vimtag"> <a name="E1090">E1090</a> </b>
-a: 作用域和其中的变量不能修改，它们是固定的。不过，如果使用了复合类型，例如
- <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> ，可以改变它们的内容。这样就可以传递给函数一个  <a href="eval.html#List">List</a> ，
-让该函数在里面增加项目。如果要确保函数不能修改  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> ，用
- <a href="eval.html#:lockvar">:lockvar</a> 。
+a: 作用域及其中的变量本身都是固定的，不可修改。但如果参数为复合类型，例如
+ <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a> ，可修改其内部内容。这样可传入  <a href="eval.html#List">List</a> ，让函数向列表追加
+项目。要禁止函数对  <a href="eval.html#List">List</a>  或  <a href="eval.html#Dictionary">Dictionary</a>  进行修改，可用  <a href="eval.html#:lockvar">:lockvar</a> 。
 
-可以定义没有参数的函数。但你这时仍然需要提供 ()。
+也可定义无参函数。但空括号 () 仍需保留。
 
-可以在函数体里定义别的函数。
+函数体内，可定义另一个函数。
 
                                                 <b class="vimtag"> <a name="optional-function-argument">optional-function-argument</a> </b>
-可以提供位置命名参数的缺省值。这使得函数调用时它们成为可选参数。位置参数如果在
-调用时不指定，则使用缺省表达式来初始化。
-只用于  <a href="userfunc.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  声明的函数，而不适用于匿名表达式  <a href="eval.html#expr-lambda">expr-lambda</a> 。
+位置命名参数可提供缺省值。调用时此类参数可选。不显式传入参数值时，通过求值缺省
+表达式初始化相应参数。只适用于通过  <a href="userfunc.html#:function">:function</a>  或  <a href="vim9.html#:def">:def</a>  声明的函数，不适用于
+匿名表达式  <a href="eval.html#expr-lambda">expr-lambda</a> 。
 
-示例:
-<code class="example">  function Something(key, value = 10)</code>
-<code class="example">     echo a:key .. ": " .. a:value</code>
-<code class="example">  endfunction</code>
-<code class="example">  call Something('empty')       "empty: 10"</code>
-<code class="example">  call Something('key', 20)     "key: 20"</code>
-<code class="example"></code>
-参数的缺省表达式在函数调用时而非定义时进行计算。这样就可用函数定义时非法的表达
-式。该表达式也只在调用中未指定参数时才进行计算。
+示例: &gt;vim
+  function Something(key, value = 10)
+     echo a:key .. ": " .. a:value
+  endfunction
+  call Something(<code class="badlink">'empty'</code>)       "empty: 10"
+  call Something(<a href="options.html#'key'">'key'</a>, 20)     "key: 20"
+
+参数缺省表达式在函数调用时求值，而不在定义时进行。因此可使用定义阶段尚不合法的
+表达式。仅当调用时省略该参数，才会对缺省表达式求值。
 
                                                 <b class="vimtag"> <a name="none-function_argument">none-function_argument</a> </b>
- <a href="eval.html#v:none">v:none</a>  可用来指示参数使用缺省表达式。<code class="note">注意</code> 这意味着如果有缺省表达式，参数不接
-受 v:none 作为其正常值传递。
+可传入  <a href="eval.html#v:none">v:none</a>  强制参数使用缺省表达式。<code class="note">注意</code> 此逻辑意味着提供缺省表达式时，参
+数不接受 v:none 作为普通值传入。
 
-示例:
-<code class="example">  function Something(a = 10, b = 20, c = 30)</code>
-<code class="example">  endfunction</code>
-<code class="example">  call Something(1, v:none, 3)      " b = 20</code>
-
+示例: &gt;vim
+  function Something(a = 10, b = 20, c = 30)
+  endfunction
+  call Something(1, v:none, 3)      " b = 20
+&lt;
                                                                 <b class="vimtag"> <a name="E989">E989</a> </b>
-带缺省表达式的可选参数必须在任何必选参数之后出现。"..." 可在所有可选命名参数之
-后使用。
+带缺省表达式的可选参数，必须在所有必选参数之后出现。所有可选命名参数之后，可用
+"..."。
 
-出现在后面的参数的缺省可引用在它之前的参数，反之不可以。就像所有参数一样，必须
-使用 "a:" 前缀。
+后面参数的缺省表达式可引用前面的参数，反之不可。引用时就像所有参数一样，必须使
+用 "a:" 前缀。
 
-合法的例子:
-<code class="example">  :function Okay(mandatory, optional = a:mandatory)</code>
-<code class="example">  :endfunction</code>
- <code class="emphasis">不</code> 合法的例子:
+可行示例: &gt;vim
+  :function Okay(mandatory, optional = a:mandatory)
+  :endfunction
+ <code class="emphasis">不</code> 可行示例:
 <code class="example">  :function NoGood(first = a:second, second = 10)</code>
 <code class="example">  :endfunction</code>
 
-如果不使用 "..."，实际给出的参数数目必须至少等于必选参数的数目。如果使用
-"..."，参数的数目可以多于必选和可选参数的总数。
+不使用 "..." 参数时，实际参数的数量必须大于等于必选命名参数的数量。使用 "..."
+时，参数的数量甚至可以超过必选与可选参数的总数。
 
                                                         <b class="vimtag"> <a name="local-variables">local-variables</a> </b>
-在函数里，可以使用局部变量。它们在函数返回时就会消失。全局变量的访问需要通过
-"g:"。
-函数内可以不用前缀进行访问局部变量。但如果想要，也可用 "l:" 前缀。对某些保留名
-字而言，这是必须的。
+函数内部可用局部变量。函数返回后，局部变量会自动销毁。访问全局变量需要加上
+"g:" 前缀。
+函数内访问局部变量无需前缀。但用 "l:" 前缀也可。对部分保留名 (如 "count")，必
+须使用前缀形式。
 
-例如:
-<code class="example">  :function Table(title, ...)</code>
-<code class="example">  :  echohl Title</code>
-<code class="example">  :  echo a:title</code>
-<code class="example">  :  echohl None</code>
-<code class="example">  :  echo a:0 .. " items:"</code>
-<code class="example">  :  for s in a:000</code>
-<code class="example">  :    echon ' ' .. s</code>
-<code class="example">  :  endfor</code>
-<code class="example">  :endfunction</code>
-<code class="example"></code>
-该函数这时可以这样调用:
+示例: &gt;vim
+  :function Table(title, ...)
+  :  echohl Title
+  :  echo a:title
+  :  echohl None
+  :  echo a:0 .. " items:"
+  :  for s in a:000
+  :    echon ' ' .. s
+  :  endfor
+  :endfunction
+
+然后，可用以下形式调用函数:
 <code class="example">  call Table("Table", "line1", "line2")</code>
 <code class="example">  call Table("Empty Table")</code>
 <code class="example"></code>
-要返回多于一个值，返回一个  <a href="eval.html#List">List</a> :
-<code class="example">  :function Compute(n1, n2)</code>
-<code class="example">  :  if a:n2 == 0</code>
-<code class="example">  :    return ["fail", 0]</code>
-<code class="example">  :  endif</code>
-<code class="example">  :  return ["ok", a:n1 / a:n2]</code>
-<code class="example">  :endfunction</code>
-<code class="example"></code>
-该函数这时可以这样调用:
+要返回多个值，可返回列表: &gt;vim
+  :function Compute(n1, n2)
+  :  if a:n2 == 0
+  :    return ["fail", 0]
+  :  endif
+  :  return ["ok", a:n1 / a:n2]
+  :endfunction
+
+然后，可用以下形式调用函数:
 <code class="example">  :let [success, div] = Compute(102, 6)</code>
 <code class="example">  :if success == "ok"</code>
 <code class="example">  :  echo div</code>
@@ -321,106 +318,107 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 <h4></h4><code class="section">2. 调用函数 </code>
                                                 <b class="vimtag"> <a name=":cal">:cal</a> </b> <b class="vimtag"> <a name=":call">:call</a> </b> <b class="vimtag"> <a name="E107">E107</a> </b>
 :<code class="special">[range]</code>cal[l] <code class="special">{name}</code>(<code class="special">[arguments]</code>)
-                调用函数。函数名和参数通过  <a href="userfunc.html#:function">:function</a>  指定。可以使用不超过 20
-                个参数。忽略返回值。
-                 <a href="vim9.html#Vim9">Vim9</a>  脚本的  <a href="userfunc.html#:call">:call</a>  的使用是可选的，因此以下两行是等价的:
+                调用函数。函数名和参数与  <a href="userfunc.html#:function">:function</a>  定义时一致。最多可传入不
+                超过 20 个参数。忽略返回值。
+                 <a href="vim9.html#Vim9">Vim9</a>  脚本中， <a href="userfunc.html#:call">:call</a>  部分可选，以下两行等价:
 <code class="example">                        call SomeFunc(arg)</code>
 <code class="example">                        SomeFunc(arg)</code>
-                如果没有给出范围而函数又接受范围，该函数被调用一次。如果给出范
-                围，光标在执行函数前定位在该范围的第一行的开始。
-                如果给出范围但函数自己不能处理之，该函数在范围里的每一行分别执
-                行。光标定位在每个处理行的第一列。光标留在最后一行 (但可能被最
-                后一个函数调用移动)。每一行上，参数被重新计算。所以这是可以的:
-                                                <b class="vimtag"> <a name="function-range-example">function-range-example</a> </b> 
-<code class="example">        :function Mynumber(arg)</code>
-<code class="example">        :  echo line(".") .. " " .. a:arg</code>
-<code class="example">        :endfunction</code>
-<code class="example">        :1,5call Mynumber(getline("."))</code>
+                函数支持范围时，函数仅执行一次。给出范围时，函数执行前，先将光
+                标定位在范围首行的开头 (<code class="vim">译者注</code>: 范围省略时默认范围为当前行)。
+                函数不支持范围但给出范围时，会对范围内的每一行分别执行函数。光
+                标在调用前先定位在该行第一列。执行完毕后光标留在最后一行 (但可
+                能被最后一次函数调用改动)。参数会对每行重新求值。下例因此可以
+                正常工作:
+                                                <b class="vimtag"> <a name="function-range-example">function-range-example</a> </b>  &gt;vim
+        :function Mynumber(arg)
+        :  echo line(".") .. " " .. a:arg
+        :endfunction
+        :1,5call Mynumber(getline("."))
+&lt;
+                无论函数本身是否支持范围，"a:firstline" 和 "a:lastline" 总有定
+                义。这可用于对范围的始末行进行一些不同的处理。
 
-                "a:firstline" 和 "a:lastline" 总是有定义的。它们可以用来在范围
-                的开始或结束处进行一些不同的处理。
+                本身支持范围的函数示例: &gt;vim
 
-                能处理范围本身的函数示例:
-<code class="example"></code>
-<code class="example">        :function Cont() range</code>
-<code class="example">        :  execute (a:firstline + 1) .. "," .. a:lastline .. 's/^/\t\\ '</code>
-<code class="example">        :endfunction</code>
-<code class="example">        :4,8call Cont()</code>
+        :function Cont() range
+        :  execute (a:firstline + 1) .. "," .. a:lastline .. 's/^/\t\\ '
+        :endfunction
+        :4,8call Cont()
+&lt;
+                该函数在范围内除首行外的所有行开头插入续行符 "\"。
 
-                该函数在范围里的每行开头插入续行符 "\"，第一行除外。
-
-                如果函数返回复合值，该值可被进一步解除参照 (<code class="vim">译者注</code>: 调用其上的
-                方法)，但该范围不能被继续使用。例如:
+                函数返回复合值时，可以继续对其进行解引用 (<code class="vim">译者注</code>: 即调用其上的
+                方法)，但后续调用不会再使用范围。示例:
 <code class="example">        :4,8call GetDict().method()</code>
-                这里 GetDict() 得到范围值，method() 不会。
+                此处，GetDict() 接收范围，但 method() 不接收。
 
                                                                 <b class="vimtag"> <a name="E117">E117</a> </b>
-找不到函数时，会给出 "E117: 未知的函数" 错误。如果函数使用了自动载入路径或自动
-载入导入语句并且脚本为  <a href="vim9.html#Vim9">Vim9</a>  脚本，此错误也可能由函数未能导出引起。
+如果找不到函数，会报错 "E117: 未知的函数"。如果函数使用自动加载路径或自动加载
+导入、且位于  <a href="vim9.html#Vim9">Vim9</a>  脚本内，此错误也可能是由函数未导出引起。
 
                                                                 <b class="vimtag"> <a name="E132">E132</a> </b>
-用户函数的递归调用受到 <a href="options.html#'maxfuncdepth'">'maxfuncdepth'</a> 选项的限制。
+用户函数的递归深度受 <a href="options.html#'maxfuncdepth'">'maxfuncdepth'</a> 选项限制。
 
-也可以使用  <a href="eval.html#:eval">:eval</a> 。不支持范围，但支持方法的链式调用，例如:
+也可使用  <a href="eval.html#:eval">:eval</a> 。不支持范围，但支持方法链式调用，例如:
 <code class="example">        eval GetList()-&gt;Filter()-&gt;append('$')</code>
 <code class="example"></code>
-函数也可以在表达式计算的一部分或作为方法调用:
+函数也可作为表达式求值的一部分，或以方法形式调用:
 <code class="example">        let x = GetList()</code>
 <code class="example">        let y = GetList()-&gt;Filter()</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
-<h4></h4><code class="section">3. 函数清理 </code>
+<h4></h4><code class="section">3. 函数内清理操作 </code>
                                                         <b class="vimtag"> <a name=":defe">:defe</a> </b> <b class="vimtag"> <a name=":defer">:defer</a> </b>
-:defe[r] <code class="special">{func}</code>(<code class="special">{args}</code>) 当前函数结束时调用 <code class="special">{func}</code>。<code class="special">{args}</code> 的计算在这里进行。
+:defe[r] <code class="special">{func}</code>(<code class="special">{args}</code>) 当前函数结束时调用 <code class="special">{func}</code>。<code class="special">{args}</code> 在本命令定义时求值。
 
-一个常见的情况是函数内某个命令有全局效果，而函数结束时应撤销其效果。要在各种环
-境下处理好这种情况是很不容易的。尤其是出现了突发情况的时候。用 try/finally 块
-可以对付，但如果有多次类似的情形，处理就显得很复杂。
+函数内的一条命令常会产生全局影响，函数退出时必须撤销。要在各种场景下都能正确清
+理，是非常麻烦的操作。尤其是出现意外错误时，虽然用 try/finally 代码块处理，但
+需要多个清理动作时会变得复杂。
 
-一个更简便的方法是  <code class="badlink">defer</code> 。它调度函数返回时，执行函数调用，不管是否有出错情
-形。例如:
-<code class="example">        func Filter(text) abort</code>
-<code class="example">          call writefile(a:text, 'Tempfile')</code>
-<code class="example">          call system('filter &lt; Tempfile &gt; Outfile')</code>
-<code class="example">          call Handle('Outfile')</code>
-<code class="example">          call delete('Tempfile')</code>
-<code class="example">          call delete('Outfile')</code>
-<code class="example">        endfunc</code>
-<code class="example"></code>
-这里，如果有某些情况使函数中途中止，'Tempfile' 和 'Outfile' 不会被删除。
- <a href="userfunc.html#:defer">:defer</a>  可用于避免之:
-<code class="example">        func Filter(text) abort</code>
-<code class="example">          call writefile(a:text, 'Tempfile')</code>
-<code class="example">          defer delete('Tempfile')</code>
-<code class="example">          defer delete('Outfile')</code>
-<code class="example">          call system('filter &lt; Tempfile &gt; Outfile')</code>
-<code class="example">          call Handle('Outfile')</code>
-<code class="example">        endfunc</code>
-<code class="example"></code>
-<code class="note">注意</code> 删除 "Outfile" 的调度发生在  <a href="builtin.html#system()">system()</a>  之前，因为  <a href="builtin.html#system()">system()</a>  失败时此文件
-可能已经创建。
+本命令是一种更简便的方案。它会在当前函数返回时调度对另一函数的一次调用，无论执
+行过程是否出错，都会执行该调用。示例: &gt;vim
+        func Filter(text) abort
+          call writefile(a:text, 'Tempfile')
+          call system('filter &lt; Tempfile &gt; Outfile')
+          call Handle('Outfile')
+          call delete('Tempfile')
+          call delete('Outfile')
+        endfunc
 
-延迟函数以相反顺序调用，最后加入的最先执行。一个无用的例子:
-<code class="example">        func Useless() abort</code>
-<code class="example">          for s in range(3)</code>
-<code class="example">            defer execute('echomsg "number ' .. s .. '"')</code>
-<code class="example">          endfor</code>
-<code class="example">        endfunc</code>
-<code class="example"></code>
+如果执行过程中发生中断，临时文件 'Tempfile' 和 'Outfile' 不会被删除。本命令可
+避免这个问题: &gt;vim
+        func Filter(text) abort
+          call writefile(a:text, 'Tempfile')
+          defer delete('Tempfile')
+          defer delete('Outfile')
+          call system('filter &lt; Tempfile &gt; Outfile')
+          call Handle('Outfile')
+        endfunc
+
+<code class="note">注意</code> "Outfile" 的清理调度放在  <a href="builtin.html#system()">system()</a>  之前，因为即使  <a href="builtin.html#system()">system()</a>  失败，该文
+件也有可能被创建。
+
+延迟函数按逆序调用，后添加的先执行。一个无用的例子: &gt;vim
+        func Useless() abort
+          for s in range(3)
+            defer execute('echomsg "number ' .. s .. '"')
+          endfor
+        endfunc
+
 现在  <a href="message.html#:messages">:messages</a>  会显示:
         number 2
         number 1
         number 0
 
-丢弃延迟函数的任何返回值。函数后面不能跟其它部分，如 "-&gt;func" 和 ".member"。目
-前不支持 `:defer GetArg()-&gt;TheFunc()`，但将来可能会。
+延迟函数的返回值会被丢弃。函数后不支持链式调用，如 "-&gt;func" 和 ".member"。当前
+不支持 `:defer GetArg()-&gt;TheFunc()` 通过方法形式调用函数，后续版本可能会。
 
-延迟函数的执行过程中，有错误会报告但不中止延迟函数的执行或改变延迟函数之外的执
-行。
+延迟函数内部出错会报告，但不会中止其他延迟函数的执行，也不会影响延迟函数之外的
+执行。
 
-不接受范围。函数可以是带额外参数的偏函数，但不支持字典函数。 <b class="vimtag"> <a name="E1300">E1300</a> </b>
+本命令不接受范围。函数可为携带额外参数的偏函数，但不支持字典函数。 <b class="vimtag"> <a name="E1300">E1300</a> </b>
 
- <a href="vim9.html#:def">:def</a>  函数里，匿名函数可和  <a href="userfunc.html#:defer">:defer</a>  配合使用。示例:
+ <a href="vim9.html#:def">:def</a>  函数内， <a href="userfunc.html#:defer">:defer</a>  可以搭配匿名函数使用。示例:
 <code class="example"></code>
 <code class="example">    def Fn()</code>
 <code class="example">      set lazyredraw</code>
@@ -430,92 +428,87 @@ a: 作用域和其中的变量不能修改，它们是固定的。不过，如�
 <code class="example">    enddef</code>
 
 </section><hr class="doubleline" /><section class=inner>
-<h4></h4>4. 自动载入函数
+<h4></h4><code class="section">4. 自动加载函数 </code>
                                                         <b class="vimtag"> <a name="autoload-functions">autoload-functions</a> </b>
-如果使用很多或者很大的函数，可以在需要使用它们的时候才自动提供其定义。有两个方
-法: 用自动命令，还有用 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的 "autoload" 目录。
+当使用数量众多或体积庞大的函数时，可仅在函数被调用时才自动提供其定义。有两种实
+现方法: 通过自动命令，或通过 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的 "autoload" 目录。
 
- <a href="vim9.html#Vim9">Vim9</a>  脚本也有导入脚本的自动载入机制，见  <a href="vim9.html#import-autoload">import-autoload</a> 。
+ <a href="vim9.html#Vim9">Vim9</a>  脚本还有针对导入脚本的自动加载机制，见  <a href="vim9.html#import-autoload">import-autoload</a> 。
 
 
-<code class="section">使用自动命令 </code>
+<code class="section">通过自动命令 </code>
 
-用户手册  <code class="badlink">41.14</code>  一节有介绍。
+相关介绍请参考用户手册  <code class="badlink">41.14</code>  一节。
 
-自动命令可用于很长的 Vim 脚本的插件。你可以定义自动命令然后用  <a href="repeat.html#:finish">:finish</a>  快速退
-出脚本。这使得 Vim 启动快得多。这时，自动命令应该再次载入相同的文件，并设置变
-量使得  <a href="repeat.html#:finish">:finish</a>  命令被跳过。
+自动命令适用于长 Vim 脚本文件插件。可定义自动命令，然后用  <a href="repeat.html#:finish">:finish</a>  快速结束脚
+本。这会加快 Vim 启动速度。之后由自动命令再次加载同一脚本文件，通过设置变量跳
+过  <a href="repeat.html#:finish">:finish</a>  命令。
 
-使用 FuncUndefined 自动命令事件，它需要一个能匹配等待定义的函数的模式。例如:
+具体来说，使用 FuncUndefined 自动命令事件，模式匹配等待定义函数。例如:
 <code class="example"></code>
 <code class="example">        :au FuncUndefined BufNet* source ~/vim/bufnetfuncs.vim</code>
 <code class="example"></code>
-文件 "~/vim/bufnetfuncs.vim" 这时应该定义 "BufNet" 开始的函数。另见
- <a href="autocmd.html#FuncUndefined">FuncUndefined</a> 。
+"~/vim/bufnetfuncs.vim" 中需要定义 "BufNet" 开头的函数。另见  <a href="autocmd.html#FuncUndefined">FuncUndefined</a> 。
 
 
-<code class="section">使用 autoload 脚本 </code>
+<code class="section">通过 autoload 脚本 </code>
                                                         <b class="vimtag"> <a name="autoload">autoload</a> </b> <b class="vimtag"> <a name="E746">E746</a> </b>
-用户手册  <a href="usr_52.html#52.2">52.2</a>  一节有介绍。
+相关介绍请参考用户手册  <a href="usr_52.html#52.2">52.2</a>  一节。
 
-在 "autoload" 目录里定义脚本更简单，但需要使用准确的文件名。能够自动载入的函数
-的名字形如:
+在 "autoload" 目录里定义脚本是一种更简单的方式，但文件名必须严格符合规范。可自
+动加载的函数名形如:
 <code class="example"></code>
 <code class="example">        :call filename#funcname()</code>
 <code class="example"></code>
-这些函数总是全局的，在 Vim9 脚本中要用 "g:":
+这类函数总是全局函数，因此在 Vim9 脚本中，需要加上 "g:":
 <code class="example">        :call g:filename#funcname()</code>
 <code class="example"></code>
-这样的函数如果调用时还没有定义，Vim 在 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的 "autoload" 目录搜索
-脚本文件 "filename.vim"。例如 "~/.vim/autoload/filename.vim"。该文件这时应该这
-样定义函数:
+调用这类函数时，如果尚未定义，Vim 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 下的 "autoload" 目录里搜
+索对应脚本文件 "filename.vim"。例如 "~/.vim/autoload/filename.vim"。该脚本文件
+内应定义函数如下:
 <code class="example"></code>
 <code class="example">        function filename#funcname()</code>
 <code class="example">           echo "Done!"</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
-如果文件不存在，Vim 也会在 <a href="options.html#'packpath'">'packpath'</a> (在 "start" 之下) 里搜索文件，以便在
-.vimrc 里，这些包还没加到 <a href="options.html#'runtimepath'">'runtimepath'</a> 前 (见  <a href="repeat.html#packages">packages</a> )，就可以调用包里的函
-数。
+如果文件不存在，Vim 还会在 <a href="options.html#'packpath'">'packpath'</a> 的 "start" 子目录中搜索，即使这些包尚未
+加入 <a href="options.html#'runtimepath'">'runtimepath'</a>，也可以在 .vimrc 中调用其中的函数 (见  <a href="repeat.html#packages">packages</a> )。
 
-文件名和函数的 # 之前的名字必须完全匹配，而定义的函数名也必须和调用时使用的形
-式完全一致。在 Vim9 脚本中必须要用 "g:" 前缀:
+文件名必须与函数中 # 之前的部分必须完全一致，而定义的函数名必须和调用时所用名
+称完全相同。在 Vim9 脚本中，需要加上 "g:" 前缀:
 <code class="example">        function g:filename#funcname()</code>
 <code class="example"></code>
-或对已编译函数而言:
+编译型函数的定义格式:
 <code class="example">        def g:filename#funcname()</code>
 <code class="example"></code>
-可以使用子目录。函数名每个 # 相当于路径分隔符。这样，调用函数:
+支持子目录。函数名里每一个 # 相当于路径分隔符。例如，调用:
 <code class="example"></code>
 <code class="example">        :call foo#bar#func()</code>
 <code class="example"></code>
-的时候，Vim 寻找 <a href="options.html#'runtimepath'">'runtimepath'</a> 里的文件 "autoload/foo/bar.vim"。
+时，Vim 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 里查找文件 "autoload/foo/bar.vim"。
 
-也适用于读取还没有设置的变量:
+读取尚未赋值的此类变量同样触发自动加载:
 <code class="example"></code>
 <code class="example">        :let l = foo#bar#lvar</code>
 <code class="example"></code>
-不过，如果 autoload 脚本已经载入，不会为未知的变量再次载入该脚本。
+但如果该 autoload 脚本已加载，访问不存在的变量不会再次加载脚本。
 
-给这样的变量赋值并没有什么特别。这可以用于在载入 autoload 脚本之前给它传递一些
-设置:
+给此类变量赋值不会触发特殊逻辑。可用于在加载 autoload 脚本前传递设置:
 <code class="example"></code>
 <code class="example">        :let foo#bar#toggle = 1</code>
 <code class="example">        :call foo#bar#func()</code>
 
-<code class="note">注意</code> 如果你不小心调用了应该在 autoload 脚本里定义，但该脚本实际没有定义的函数
-时，会得到函数消失的错误信息。修正 autoload 脚本后它不会自动重新载入。需要重启
-Vim 或手动载入该脚本。
+<code class="note">注意</code> 如果调用应由 autoload 脚本提供、但实际未定义的函数，会报函数缺失错误。即
+使修正 autoload 脚本后，也不会自动重新加载，而需要重启 Vim 或手动加载该脚本。
 
-还有，<code class="note">注意</code> 如果你有两个脚本文件，不能在使用的函数定义之前同时从一个文件里调用
-另一个文件里的函数并且从那个文件里调用这个文件的函数。
-避免在顶层使用自动载入功能。
+另外<code class="note">注意</code> 两个脚本文件互相调用对方尚未定义的函数无效。避免在顶层作用域使用自动
+载入功能。
 
- <a href="vim9.html#Vim9">Vim9</a>  脚本里如果定义函数用的名字里有 "#" 字符，会报错 <b class="vimtag"> <a name="E1263">E1263</a> </b> 。必须选用不带
-"#" 的名字，然后使用  <a href="vim9.html#:export">:export</a>  来导出这些函数。
+ <a href="vim9.html#Vim9">Vim9</a>  脚本中，如果函数定义时采用的名称包含 "#" 字符，会报错 <b class="vimtag"> <a name="E1263">E1263</a> </b> 。应当使
+用不带 "#" 的名称，并配合  <a href="vim9.html#:export">:export</a>  导出函数。
 
-提示: 如果你发布很多脚本，可以用  <a href="pi_vimball.html#vimball">vimball</a>  工具把它们捆绑在一起。另请阅读用户
-手册  <a href="usr_51.html#distribute-script">distribute-script</a> 。
+提示: 分发一组脚本时，可用  <a href="pi_vimball.html#vimball">vimball</a>  工具打包。另见用户手册
+ <a href="usr_51.html#distribute-script">distribute-script</a>  一节。
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:
