@@ -7,85 +7,82 @@
 
 Wayland 协议支持					*wayland*
 
-1. 有用的 Wayland 信息		|wayland-useful|
-2. Wayland 选择区		|wayland-selections|
+1. Wayland 相关有用信息		|wayland-useful|
+2. Wayland 选区			|wayland-selections|
 
 ==============================================================================
-1. 有用的 Wayland 信息					*wayland-useful*
+1. Wayland 相关有用信息					*wayland-useful*
 
 							*wayland-seat*
-诸如剪贴板之类的 Wayland 功能需要使用座位 (seat)。Wayland 座位由键盘、指针和触
-摸板等组成。使用的座位由 'wlseat' 选项设置。只有在同一 Wayland 会话中使用多个
-Wayland 座位才有用。如果你并不理解这段话的含义，那它大概也不会对你产生任何影
-响。
+Wayland 的剪贴板这类功能需要指定一个座位 (seat)。一个 Wayland 座位包含键盘、指
+针和触摸板等元素。可通过 'wlseat' 选项指定所用座位。仅当在单个 Wayland 会话中
+使用多个 Wayland 座位时才需要显式设置。如果不理解此概念，则一般也无需关心。
 
 							*wayland-gui*
-见 |gui-wayland|。请 注意 使用 GUI 时，Vim 使用 GTK 之类的工具箱来访问剪贴板，
-而不是通过 Wayland 来访问剪贴板。这可以通过 |v:clipmethod| 变量来检查，在 GUI
-里运行时应该等于 "none"。
+参见 |gui-wayland|。请 注意 GUI 版 Vim 使用 GTK 这类工具包访问剪贴板，而不会直
+接通过 Wayland 访问剪贴板。可通过 |v:clipmethod| 变量检查，GUI 里运行时该值应
+为 "none"。
 
 Wayland 命令:
 							*:wlrestore* *:wl*
-:wl[restore] [display]	重新初始化到 Wayland 合成器的连接。可用于在
-			screen/tmux 会话里运行 Vim，在 Wayland 合成器重启后要
-			继续运行。
+:wl[restore] [display]	重新初始化到 Wayland 合成器的连接。适用于 Vim 在
+			screen/tmux 会话中长期运行，且在 Wayland 合成器重启后
+			仍需继续运行的情况。
 
 			[display] 应使用 $WAYLAND_DISPLAY 环境变量的格式 (如
-			"wayland-0")。[display] 省略时，使用上次执行此命令时使
-			用的相同值来重新初始化连接。如果此值从未提供过，使用
-			$WAYLAND_DISPLAY 环境变量的值。这也同时更新
-			|v:clipmethod|。
+			"wayland-0")。省略 [display] 时，默认使用上次本命令所
+			用值。从未指定过则使用环境变量 $WAYLAND_DISPLAY 值。
+			同时也会更新 |v:clipmethod|。
 			{仅当编译时加入 |+wayland| 特性才有效}
 
 Wayland 错误:
 							*E1548*
-Vim 试图和 Wayland 合成器连接时失败。很有可能是因为 Wayland 合成器进程被终止。
-试试 `:wlrestore` 命令重新尝试连接。
+Vim 试图与 Wayland 合成器连接时失败。常见原因是 Wayland 合成器进程被终止。可尝
+试执行 |:wlrestore| 命令重新连接。
 
 ==============================================================================
-2. Wayland 选择区					*wayland-selections*
+2. Wayland 选区						*wayland-selections*
 
-Vim 支持 wlr-data-control-unstable-v1 和 ext-data-control-v1 协议来访问当前
-Wayland 选择区。这里选择区基本上就是代表 "剪贴板"。可以通过运行 wayland-info
-命令来检查你的 Wayland 合成器是否支持这些协议，该命令应该是你系统的 libwayland
-的一部分: >
+Vim 支持 wlr-data-control-unstable-v1 和 ext-data-control-v1 协议，用于访问当
+前 Wayland 选区。此处选择区本质上就是 "剪贴板"。可通过运行 wayland-info 命令检
+测当前 Wayland 合成器是否支持这些协议，该命令应随系统 libwayland 库分发: >
 	wayland-info | grep -E '(ext_data_control|zwlr_data_control)'
-<如果 grep 找到匹配，你的系统可能支持两者之一或两种协议都支持。
+<grep 匹配成功时，表示系统支持其中一个或两个协议。
 
-已知的支持一种或两种协议的合成器有:
+已知支持至少一种协议的合成器有:
     1. KWin (KDE)
-    2. 基于 wlroots 的 (Sway、Labwc)
+    2. 基于 wlroots (Sway、Labwc)
     3. Niri
     4. Hyprland
     5. Wayfire
 
-如果你来自 X11 世界，常规的 Wayland 选择区等价于 X11 的 CLIPBOARD 选择区，而主
-Wayland 选择区相当于 X11 PRIMARY 选择区。在 Vim 里访问这些选择区的方法和 X11
-相同，+ 寄存器是常规选择区，而 * 寄存器是主选择区，注意 你的合成器可能不支持主
-选择区，详见 |wayland-primary-selection|。
+如果熟悉 X11，Wayland 的常规选区等价于 X11 的 CLIPBOARD 选区，而 Wayland 主选
+区等价于 X11 PRIMARY 选区。在 Vim 中的访问方式和 X11 一致，+ 寄存器对应常规选
+区，而 * 寄存器对应主选区，注意 部分合成器可能不支持主选区，详见
+|wayland-primary-selection|。
 
 							*wayland-persist*
-如果你用过 X11 剪切缓冲区，Wayland 没有对应的机制。与其模拟此功能，不如使用单
-独的剪贴板管理程序以在 Wayland 客户端退出时永续选择区数据。
+X11 有剪切缓冲区，但 Wayland 不存在对应机制。要模拟此功能，可使用独立的剪贴板
+管理器，才能在 Wayland 客户端退出后保留选区数据。
 
 							*wayland-and-x11*
-如果你的 Vim 版本编译时同时加入了 X11 和 Wayland 支持，Vim 会用 'clipmethod'
-选项来决定用哪种方法来访问剪贴板。
+Vim 版本编译时同时加入 X11 和 Wayland 支持时，Vim 会通过 'clipmethod' 选项选择
+访问剪贴板的后端。
 
 						*wayland-primary-selection*
-如果觉得 X11 风格的主选择区 (primary selection) 很实用，Wayland 也通过 Vim 支
-持的协议实现了该功能。但如果使用的是 wlr-data-control 协议版本 1 (与协议名称
-中的 'v1' 不是同一个概念)，则不支持主选择区。可通过以下命令检查协议版本: >
+如果需要 X11 风格的主选区 (primary selection)，Wayland 通过 Vim 支持的协议也实
+现了该功能。但 wlr-data-control 协议第 1 版 (与协议名称中的 'v1' 不是同一概念)
+不支持主选区。可通过以下命令检测协议版本: >
 	wayland-info | grep -E '(ext_data_control|zwlr_data_control)'
-如果其中的 "zwlr_data_control_manager_v1" 的 "version:" 项为 2 及以上，则支持
-主选择区。如果同时检测到 "ext_data_control_manager_v1"，Vim 会优先使用该协议，
-因为该协议原生支持主选择区。
+其中 "zwlr_data_control_manager_v1" 的 "version:" 字段为 2 或更高时，则所用协
+议版本支持主选区。同时存在 "ext_data_control_manager_v1" 时，Vim 优先使用后
+者，因为该协议原生支持主选区。
 
 如果 Wayland 合成器不支持 wlr-data-control-v1 或 ext-data-control-v1 协议，Vim
 无法直接通过 Wayland 协议访问剪贴板。此时可通过自定义 |clipboard-providers|，
 搭配 wl-clipboard 等外部工具实现。
 
-示例: 定义调用 `wl-copy` 和 `wl-paste` 的剪贴板提供者: >vim9
+示例: 定义调用外壳命令 `wl-copy` 和 `wl-paste` 的剪贴板提供者: >vim9
 
     vim9script
 
