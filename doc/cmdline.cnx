@@ -1,4 +1,4 @@
-*cmdline.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年7月
+*cmdline.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -103,8 +103,8 @@ CTRL-E 或 <End>					*c_CTRL-E* *c_<End>* *c_End*
 <LeftMouse>	将光标定位到鼠标点击位置。
 
 							*c_<MiddleMouse>*
-<MiddleMouse>	粘贴剪贴板内容 (X11 而言是主选择区内容)。和 CTRL-R * 类似，但
-		行与行间不会插入 CR 字符。
+<MiddleMouse>	粘贴剪贴板内容 (X11 而言是主选区内容)。和 CTRL-R * 类似，但行
+		与行间不会插入 CR 字符。
 
 CTRL-H						*c_<BS>* *c_CTRL-H* *c_BS*
 <BS>		删除光标前一个字符 (如果 <BS> 键无法正常工作，见 |:fixdel|)。
@@ -138,7 +138,7 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 			'"'	无名寄存器，保存最近一次删除或复制的文本
 			'%'	当前文件名
 			'#'	轮换文件名
-			'*'	剪贴板内容 (对于 X11: 主选择区内容)
+			'*'	剪贴板内容 (对于 X11: 主选区内容)
 			'+'	剪贴板内容
 			'/'	最近一次搜索模式
 			':'	最近一次命令行
@@ -523,11 +523,13 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
 在前面加上 '\' 转义。
 
 以下这些命令总是把 '|' 视为自身参数的一部分，所以其后不能用 '|' 再接其他命令:
+    :append
     :argdo
     :autocmd
     :bufdo
     :cdo
     :cfdo
+    :change
     :command
     :cscope
     :debug
@@ -539,6 +541,7 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
     :help
     :helpfind
     :helpgrep
+    :insert
     :lcscope
     :ldo
     :lfdo
@@ -1072,6 +1075,15 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
 口，无法用常规方式退出。
 {仅当编译时加入 |+cmdwin| 特性才可用}
 
+如果经常出现本想输入 ":q" 却误敲成 "q:" 的情况，可映射 "q"，使其在命令行填入
+":q" 而非打开命令行窗口，同时在宏录制进行时仍可结束录制: >
+
+	nnoremap <expr><script> q reg_recording() != '' ? 'q' : '<SID>*qmode*'
+	nnoremap <SID>*qmode*: :<C-U>q
+	nnoremap <SID>*qmode*  q
+<
+注意现在使用 "qa" 开始宏录制时会等待 'timeoutlen'，因为 "q" 变成了更长映射序列
+的起始。
 
 开 启						*c_CTRL-F* *q:* *q/* *q?*
 
@@ -1212,16 +1224,15 @@ CTRL-C		回到命令行模式继续编辑。光标所在行的内容会被用作
 例如，可将原生的 |:find| 命令改造为一个提供模糊匹配的交互式文件选择器: >
 
 	set findfunc=Find
+	let s:filescache = []
 	func Find(arg, _)
 	  if empty(s:filescache)
-	    let s:filescache = globpath('.', '**', 1, 1)
+	    autocmd CmdlineLeave : ++once let s:filescache = []
+	    let s:filescache = expand('**', 1, 1)
 	    call filter(s:filescache, '!isdirectory(v:val)')
-	    call map(s:filescache, "fnamemodify(v:val, ':.')")
 	  endif
-	  return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)
+	  return empty(a:arg) ? s:filescache : matchfuzzy(s:filescache, a:arg)
 	endfunc
-	let s:filescache = []
-	autocmd CmdlineEnter : let s:filescache = []
 
 `:Grep` 命令用于搜索匹配指定模式的文本行，并在用户键入时动态更新搜索结果 (输入
 两个字符后触发；注意: 需要下一小节里提供的 `CmdlineLeavePre` 自动命令支持): >

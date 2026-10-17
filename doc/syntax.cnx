@@ -1,4 +1,4 @@
-*syntax.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年7月
+*syntax.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
 		  VIM 参考手册    by Bram Moolenaar
@@ -198,12 +198,13 @@ Vim 仅加载首个找到的语法脚本，前提是该脚本设置了 `b:curren
 
 	*Comment	v 任意注释
 
-	*Constant	v 任意常数
-	 String		v 字符串常数: "这是字符串"
-	 Character	v 字符常数: 'c'、'\n'
-	 Number		v 数值常数: 234、0xff
-	 Boolean	v 布尔型常数: TRUE、false
-	 Float		v 浮点常数: 2.3e10
+	*Constant	v 任意常量
+	 String		v 字符串常量: "这是字符串"
+	 Character	v 字符常量: 'c'、'\n'
+	 Number		v 数值常量: 234、0xff
+	 Boolean	v 布尔型常量: TRUE、false
+	 Regexp		v 正则表达式常量: /ab*c/
+	 Float		v 浮点常量: 2.3e10
 
 	*Identifier	v 任意变量名
 	 Function	v 函数名 (也包括: 类方法名)
@@ -929,6 +930,7 @@ C							*c.vim* *ft-c-syntax*
 *c_no_c99*		不高亮 C99 标准项目
 *c_no_c11*		不高亮 C11 标准项目
 *c_no_c23*		不高亮 C23 标准项目
+*c_no_c29*		不高亮 C29 标准项目
 *c_no_bsd*		不高亮 BSD 专用类型
 *c_functions*		高亮函数调用和函数定义
 *c_function_pointers*	高亮函数指针定义
@@ -1220,9 +1222,11 @@ DocBook 文件分为 SGML 和 XML 两类。可通过设置 `b:docbk_type` 变量
 或: >
 	:set filetype=docbkxml
 
-要指定 DocBook 版本 (也提供 `b:` 变量): >
+要为当前缓冲区指定 DocBook 版本: >
+	:let b:docbk_ver = 3
+未提供 `b:docbk_ver` 时，`g:docbk_ver` 用作全局后备值: >
 	:let g:docbk_ver = 3
-未设置时默认版本号为 4。
+两者都未设置时，默认版本号为 4。
 
 
 DOSBATCH				*dosbatch.vim* *ft-dosbatch-syntax*
@@ -1696,8 +1700,10 @@ https://web.archive.org/web/20241129015117/https://www.fleiner.com/vim/download.
 要完全关闭风格标签渲染效果，可在 vimrc 文件里加入: >
 	:let g:html_no_rendering=1
 
-缺省从首个显示行回溯 250 行开始语法同步。要调整配置: >
+缺省从首个显示行回溯，解析 1.5 倍 `g:html_minlines` 数量的行，并继续向前查找
+`g:html_maxlines` 行以寻找同步点。要调整这些配置: >
 	:let g:html_minlines = 500
+	:let g:html_maxlines = 750
 <
 HTML 注释语法特殊 (详见 HTML 参考文档)，本色彩方案会高亮所有语法错误。要兼容非
 标准注释写法 (以 <!-- 开始、--> 结束)，可定义 >
@@ -1749,6 +1755,16 @@ IA64				*ia64.vim* *intel-itanium* *ft-ia64-syntax*
 
 要将 *.inc 文件识别为 IA64，可在 .vimrc 文件里加入: >
 	:let g:filetype_inc = "ia64"
+
+
+ICALENDAR				*icalendar.vim* *ft-icalendar-syntax*
+
+iCalendar 文件 (RFC 5545) 语法高亮适用于后缀为 ".ics" 的日历应用文件。
+
+组件边界 (BEGIN: 与 END:)、属性名、属性参数、重复规则片段会分别高亮。内容行可
+通过换行后加空格或制表符拆分为多行；这类折行在高亮时视作单条逻辑行。
+
+组件折叠由文件类型插件提供，默认关闭；参见 |ft-icalendar-plugin|。
 
 
 INFORM					*inform.vim* *ft-inform-syntax*
@@ -1931,11 +1947,11 @@ Java 平台的重大变更会逐步以 JDK 增强提案 (JDK Enhancement Proposa
 和几个版本周期，最终才会被正式纳入平台，或被撤回。为满足早期试用者的要求，Vim
 提供了已实现的语法相关预览特性的可选支持。可通过指定预览特性编号列表，开启相应
 支持: >
-	:let g:java_syntax_previews = [530]
+	:let g:java_syntax_previews = [532]
 
 下表列出当前支持的 JEP 号:
 	`430`: 字符串模板 [JDK 21]
-	`530`: 模式、instanceof 和 switch 里的原始类型
+	`532`: 模式、instanceof 和 switch 里的原始类型
 
 注意 预览特性一旦正式纳入 Java 平台后，对应编号会从此表中删除，对应开关失效。
 						*java-package-info-url*
@@ -3133,10 +3149,14 @@ Windows+cygwin) 或 "ksh" (POSIX)，增加了推断难度。
 <
 缺省为 `g:sh_minlines` 的两倍。调小可加快显示速度，但代价是增大高亮出错概率。
 
-若干问题缺省会高亮为错误；包括常见的未配对 ']'、'done'、'fi' 等情况。如果错误
-处理不正常，可在 .vimrc 里屏蔽错误高亮: >
+未配对的 ']'、'done'、'fi' 等符号缺省会高亮为错误。如果此类错误处理不正常，可
+在 .vimrc 里屏蔽错误高亮: >
 
-	let g:sh_no_error= 1
+	let g:sh_no_error = 1
+<
+更精细的做法是，查找对应的语法规则名，只屏蔽特定类型的错误: >
+
+	let g:sh_no_error_rules = ["shCurlyError", "shParenError"]
 <
 
 						*sh-embed*  *sh-awk*
@@ -3511,6 +3531,7 @@ VIM			*vim.vim*		*ft-vim-syntax*
    g:vimsyn_folding =~# 'P' : 折叠 Python   嵌入文档
    g:vimsyn_folding =~# 'r' : 折叠 Ruby     嵌入文档
    g:vimsyn_folding =~# 't' : 折叠 Tcl      嵌入文档
+   g:vimsyn_folding =~# 'T' : 折叠 :append、:change 和 :insert
 <
 
 该变量缺省未设置。可拼接相应字符，同时支持多种语法构造的折叠 (例如，
@@ -4927,15 +4948,14 @@ font={font-name}					*highlight-font*
 	可指定 "NONE" 恢复缺省字体。
 	为 "Normal" 组设置的字体成为缺省字体 (后续修改 'guifont' 选项会覆盖，
 	以最后生效的为准)。
-
-	以下说明仅适用 Motif，不适用其他 GUI 版本:
-	设置 "Menu" 组字体时，会相应修改菜单字体。设置 "Tooltip" 组字体时，会
-	相应修改工具提示字体。除 Menu 和 Tooltip 外，其余字体的字符大小必须和
-	缺省字体相同，否则会出现重绘异常。
+	GTK GUI 中，仅可为 "Normal" 组设置字体；其他组接受本参数但无效果。
+	仅适用 Motif，不适用其他 GUI 版本: 设置 "Menu" 组字体时，会相应修改菜
+	单字体。设置 "Tooltip" 组字体时，会相应修改工具提示字体。除 Menu 和
+	Tooltip 外，其余字体的字符大小必须和缺省字体相同，否则会出现重绘异常。
 
 	字体名包含内嵌空格或其他特殊字符时，可用单引号包围。字体名因而不能使用
 	单引号本身。示例: >vim
-	    :hi comment font='Monospace 10'
+	    :hi Normal font='Monospace 10'
 
 guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
@@ -5184,7 +5204,7 @@ TitleBarNC	GUI 非激活窗口的标题栏。{仅 MS-Windows GUI 支持}
 							*hl-Visual*
 Visual		可视模式下的选中区域。
 							*hl-VisualNOS*
-VisualNOS	Vim 是 "选择区的非拥有者" 时，可视模式下的选中区域。
+VisualNOS	Vim 是 "选区非拥有者" 时，可视模式下的选中区域。
 		{仅 X11 GUI 上的 |gui-x11|、|xterm-clipboard| 和
 		|wayland-selections| 支持}
 							*hl-WarningMsg*

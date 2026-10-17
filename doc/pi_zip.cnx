@@ -1,4 +1,4 @@
-*pi_zip.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年4月
+*pi_zip.txt*	适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 				+====================+
 				|    Zip 文件接口    |
@@ -46,32 +46,46 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell *zip-copyright*
    如果本变量存在且为真，打开文件窗口时不会自动最大化。
 
 							*g:zip_unzipcmd*
-   本变量指定在浏览归档时，用于执行 "unzip" 任务的程序。缺省值为: >
+   以下变量指定用于执行 "unzip" 任务的程序及其所需参数开关。
+   在浏览归档时使用。缺省值为: >
 	let g:zip_unzipcmd= "unzip"
+	let g:zip_unzipcmd_browseopt= "-Z1"
+	let g:zip_unzipcmd_readopt= "-p"
 <
+- 注意: 在 `g:zip_unzipcmd_browseopt` 与 `g:zip_unzipcmd_readopt` 配置项末尾会
+  自动追加 `--`，用于标记选项结束。
+
 							*g:zip_zipcmd*
-   本变量指定在写入 (或更新) 已在 zip 归档里的文件时，用于执行 "zip" 任务的程
-   序；缺省值为: >
+   以下变量指定用于执行 "zip" 任务的程序及其所需参数开关。
+   在写入 (或更新) 已在 zip 归档里的文件时使用。缺省值为: >
 	let g:zip_zipcmd= "zip"
+	let g:zip_zipcmd_deleteopt= "-d"
+	let g:zip_zipcmd_updateopt= "-u"
 <
 							*g:zip_extractcmd*
-   本变量指定用于从 zip 归档中提取文件的程序 (及所需选项)。缺省值为: >
+   以下变量指定用于从 zip 归档中提取文件的程序 (及所需选项)。缺省值为: >
 	let g:zip_extractcmd= g:zip_unzipcmd
+	let g:zip_extractcmd_extractopt= "-o"
 <
 							*g:zip_exec*
    出于安全考虑，用户可能不希望 Vim 在打开缓冲区时自动执行外部程序。本选项 (缺
    省值: "1") 在设置为 "0" 时，可禁止执行 "unzip" 命令: >
 	:let g:zip_exec = 0
 <
-   POWERSHELL CORE 作为备用 ~
+   POWERSHELL 作为备用 ~
 
+							*g:zip_pwsh*
    插件会优先尝试使用 (功能更强大的) GNU zip/unzip 命令。如果该套命令不可用或
-   失效，且用户使用的是 PowerShell Core (即 'shell' 选项包含 "pwsh") 时，插件
-   会自动回退使用 PowerShell Core 内置命令 (cmdlet) 作为替代。PowerShell Core
-   内置命令版本有其局限性: 无法写回或提取 zip 归档中子目录下的文件。但其优势是
-   无需额外安装独立的解压工具。
-
-   禁 止 载 入~
+   失效，且用户使用的是 PowerShell，插件会自动回退使用 PowerShell 内置命令
+   (cmdlet) 作为替代。PowerShell 内置命令版本有其局限性: 无法在压缩包内的子目
+   录写入或提取文件。但好处是无需额外安装独立的 unzip 可执行程序。插件会检查
+   'shell' 选项来选择 "pwsh" 或 "powershell"，也可设置 `g:zip_pwsh`。两者都可
+   用时，插件优先选用 pwsh。"g:zip_pwsh" 缺省为空串，此时不覆盖基于 'shell' 选
+   项的检测。该功能在 MS-Windows 上缺省不启用，因为缺省 'shell' 为 "cmd.exe"。
+   示例: >
+	let g:zip_pwsh='powershell'
+<
+   禁 止 加 载 ~
 
    如果出于某种原因，不希望 vim 检查 zip 文件，可在 <.vimrc> 中定义以下两个变
    量: >
@@ -103,6 +117,7 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell *zip-copyright*
 ==============================================================================
 4. 历史 (英文)						*zip-history* {{{1
    unreleased:
+       Jul 25, 2026 * support both Windows PowerShell 5 and pwsh 7+
        Sep 19, 2025 * support PowerShell Core
        Jul 12, 2025 * drop ../ on write to prevent path traversal attacks
        Mar 11, 2025 * handle filenames with leading '-' correctly

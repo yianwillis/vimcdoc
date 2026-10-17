@@ -1,4 +1,4 @@
-*print.txt*	适用于 Vim 9.2 版本。  最近更新: 2025年9月
+*print.txt*	适用于 Vim 9.2 版本。  最近更新: 2025年10月
 
 
 		  VIM 参考手册	by Bram Moolenaar
@@ -14,7 +14,8 @@
 5. PostScript 中日韩打印		|postscript-cjk-printing|
 6. PostScript 打印疑难解答		|postscript-print-trouble|
 7. PostScript 工具			|postscript-print-util|
-8. 换页符				|printing-formfeed|
+8. Pango 打印				|pango-printing|
+9. 换页符				|printing-formfeed|
 
 {仅当编译时加入 |+printer| 特性才有效}
 
@@ -32,25 +33,28 @@
 :[range]ha[rdcopy][!] [arguments]
 			打印 [range] 范围内的所有行 (缺省是整个文件)。
 
-			在 MS-Windows 上，会显示打印对话框，用来选择打印机和
-			纸张尺寸等。[!] 版本跳过对话框。这里，打印机由
-			'printdevice' 指定。如果 'printdevice' 为空，就使用
-			系统缺省打印机。
+			在 MS-Windows 或 GTK4 GUI 上，会显示打印对话框，用来选
+			择打印机和纸张尺寸等。[!] 版本跳过对话框。这里，打印机
+			由 'printdevice' 指定。如果 'printdevice' 为空，就使用
+			系统缺省打印机。注意 GTK4 GUI 打印对话框需要 GTK
+			4.14 版本或更高。
 
-			对于非 MS-Windows 的系统，先写入 Postscript 临时文件，
-			然后通过 'printexpr' 设置的命令打印。'printexpr' 里可
-			通过 |v:cmdarg| 获取 [arguments] 参数。如果未设置
-			'printexpr'，忽略 [arguments]。'printoptions' 可用于设
-			置纸张尺寸，是否双面打印等。
+			对于非 MS-Windows 且非 Pango 的系统，先写入 Postscript
+			临时文件，然后通过 'printexpr' 设置的命令打印。
+			'printexpr' 里可通过 |v:cmdarg| 获取 [arguments] 参数。
+			如果未设置 'printexpr'，忽略 [arguments]。
+			'printoptions' 可用于设置纸张尺寸，是否双面打印等。
 			备注: 需要打印到 pdf 时，可通过 "ps2pdf" 等外部工具将
-			PostScript 转换为 PDF。
+			PostScript 转换为 PDF。加入 |+pango| 特性时，可在
+			'printoptions' 中将 "format" 设为 "pdf"，直接生成 PDF
+			格式。
 
 :[range]ha[rdcopy][!] >{filename}
 			功能同上，但不直接打印，而是保存 Postscript 文件
 			{filename}。
 			文件名支持展开 "%" 等特殊字符 |cmdline-special|。
 			注意同名文件会被静默覆盖。
-			{仅当编译时加入 |+postscript| 特性才有效}
+			{仅当编译时加入 |+postscript| 或 |+pango| 特性才有效}
 			在 MS-Windows 上应改用打印机驱动程序的 "输出到文件" 功
 			能。
 
@@ -109,9 +113,7 @@ latin1 打印编码的转换}。如果完全无法转换，打印失败。无法
 							*pexpr-option*
 'printexpr' 'pexpr'	字符串	(缺省: 见下)
 			全局
-			{仅当编译时加入 |+printer| 和 |+postscript| 特性时才有
-			效}
-表达式，用于执行 |:hardcopy| 生成的 PostScript 文件的打印。
+表达式，用于执行 |:hardcopy| 生成的 PostScript 或 PDF 文件的打印。
 要打印的临时 PostScript 文件名保存在 |v:fname_in|。
 |:hardcopy| 命令参数保存在 |v:cmdarg|。
 该表达式在打印后，必须负责删除临时文件。如果有错误，必须返回非零值。成功时则返
@@ -164,7 +166,8 @@ latin1 打印编码的转换}。如果完全无法转换，打印失败。无法
 指定 |:hardcopy| 命令输出所用字体。格式和 'guifont' 选项相同，但只允许单个字
 体，而且不支持 "guifont=*" 特殊语法。
 
-在 Win32 GUI 版本上，除了字体名外，还可指定附加属性，和 'guifont' 选项类似。
+在 Win32 GUI 版本上，除了字体名外，还可指定附加属性，和 'guifont' 选项类似。启
+用 |+pango| 时，使用与 GTK GUI 中 'guifont' 相同的格式 (如 "Courier 10")。
 
 在其他系统上，只识别 ":h11"，其中 "11" 是字体点数 (point) 大小。忽略时默认使用
 10 点字。
@@ -340,6 +343,13 @@ latin1 打印编码的转换}。如果完全无法转换，打印失败。无法
 
   formfeed:n (缺省)	换页符 (0x0c) 当作普通字符打印。
   formfeed:y		换页符使当前行在新页首行继续打印。
+  format:postscript (缺省)
+			输出格式: Postscript
+  format:{name}		输出格式见下表:
+			{仅当编译时加入 |+pango| 特性才有效}
+			{name}		含义 ~
+			postscript	生成 Postscript
+			pdf		生成 Adobe PDF
 
 某项省略时使用其缺省值。使用弹出对话框选择打印机及选项时，可覆盖本选项部分参
 数。示例: >
@@ -367,6 +377,8 @@ PostScript 打印有若干限制:
 - 多字节支持 - Vim 目前会试图将多字节字符转换为 'printencoding' 指定的 8 位编
   码 (为空时默认使用 latin1)。无法转换的个别字符会显示为未知字符。如果 Vim 完
   全无法完成编码转换，整个打印过程会失败。
+
+使用 Pango 打印后端时，上述限制均可解决。详见 |pango-printing|。
 
 ==============================================================================
 4. 自定义 8 位打印字符编码			*postscript-print-encoding*
@@ -592,7 +604,22 @@ psselect 工具可手动实现双面打印任务。该工具提供 -e 和 -o 选
 
 
 ==============================================================================
-8. 换页符						*printing-formfeed*
+8. Pango 打印						*pango-printing*
+
+Vim 编译时启用 |+pango| 后，页面将由 Pango (文本处理库) 与 Cairo (图形库) 渲
+染。优势是完整支持 Unicode。Postscript 文件仍由 Cairo 生成。同时还可以输出 PDF
+文件，参见 |popt-option| 里的 "format" 项。
+
+使用 GTK GUI 时，|+pango| 缺省启用并生效。终端版 Vim 编译时，configure 阶段必
+须传入 "--enable-hardcopy-pango" 参数。所链接的 Cairo 库必须启用 Postscript 和
+PDF 后端。
+
+							*gtk4-print*
+使用 GTK4 GUI 时，|:hardcopy| 会弹出原生图形打印对话框，效果类似 MS-Windows。
+详见 |:hardcopy|。
+
+==============================================================================
+9. 换页符						*printing-formfeed*
 
 Vim 缺省对换页控制符 formfeed 不作任何特殊处理。设置 'printoptions' 的
 "formfeed" 项可使 Vim 识别换页符，读到换页符立即换页，该行剩余内容在新页里继续
