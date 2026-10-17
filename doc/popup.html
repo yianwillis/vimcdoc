@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="popup.txt">popup.txt</a> </b>     适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="popup.txt">popup.txt</a> </b>     适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -104,8 +104,9 @@
 弹窗高度默认等于缓冲区回绕后的行数。可由 "maxheight" 属性限制最大高度。可用插
 入空行或 "minheight" 属性增加高度。
 
-弹窗宽度默认等于缓冲区最长可见行长度。可由 "maxwidth" 属性限制最大宽度。可用补
-空格或 "minwidth" 属性增加宽度。
+弹窗宽度默认等于缓冲区里最长行 (即便该行未显示) 的长度。这样，在弹窗内滚动时宽
+度保持不变。可由 "maxwidth" 属性限制最大宽度，当缓冲区可能包含长文本行时推荐此
+设置。可用补空格或 "minwidth" 属性增加宽度。
 
 缺省置位 <a href="options.html#'wrap'">'wrap'</a> 选项，保证文本信息不会丢失。否则，如果空间不足，窗口会自动左移
 以显示更多内容。右对齐窗口则会自动右移以显示更多内容。可设置 "fixed" 属性关闭
@@ -409,6 +410,9 @@ popup_getoptions(<code class="special">{id}</code>)                             
                 "textprop"、"textpropid" 和 "textpropwin" 仅当弹窗选项里设置
                 "textprop" 时才存在。
 
+                "image" 条目为字典，字段与  <a href="builtin.html#image_info()">image_info()</a>  的返回值相同。<code class="note">注意</code>图
+                像由弹窗直接创建时，不会包含 "id" 字段，参见  <a href="popup.html#popup-image">popup-image</a> 。
+
                 如果找不到弹出窗口 <code class="special">{id}</code>，返回空字典。
 
                 也可用作  <a href="eval.html#method">method</a> :
@@ -581,6 +585,7 @@ popup_setoptions(<code class="special">{id}</code>, <code class="special">{optio
                         firstline
                         flip
                         highlight
+                        image
                         mapping
                         mask
                         moved
@@ -724,16 +729,8 @@ POPUP_CREATE() 参 数                             <b class="vimtag"> <a name="p
                         中间值会将弹窗背景与下方文字混合，实现半透明。
                         需要开启 <a href="options.html#'termguicolors'">'termguicolors'</a> 才能生效。
                         详见  <a href="popup.html#popup-opacity">popup-opacity</a> 。
-        image           字典，描述要在弹窗中渲染的原始 RGB 或 RGBA 像素缓冲
-                        区。设置后，弹窗会根据像素尺寸自动调整其字符单元框大
-                        小，无需手动设置 "minwidth"、"minheight"、"maxwidth"
-                        或 "maxheight"。字典包含以下键:
-                            data    字节  <a href="eval.html#Blob">Blob</a> ；长度必须为 width*height*3
-                                    (RGB) 或 width*height*4 (RGBA)。
-                            width   以像素为单位的图像宽度。
-                            height  以像素为单位的图像高度。
-                        设为空字典可移除之前设置的图像。
-                        参见  <a href="popup.html#popup-image">popup-image</a> 。
+        image           用于显示图像的字典。所需字段参见  <a href="builtin.html#image_add()">image_add()</a> ，也可以
+                        仅提供 "id" 字段，参见  <a href="popup.html#popup-image">popup-image</a> 。
         padding         数值列表，定义弹窗上/右/下/左内边距 (和 CSS 类似)。
                         空列表等价于四周内边距均为 1。内边距区域包围文本，而在
                         边框之内。内边距使用 <a href="options.html#'wincolor'">'wincolor'</a> 高亮。
@@ -1029,47 +1026,54 @@ Vim 内置标准过滤器  <a href="popup.html#popup_filter_menu()">popup_filter
 要使四个角透明:
         [[1, 1, 1, 1], [-1, -1, 1, 1], [1, 1, -1, -1], [-1, -1, -1, -1]]
 
-弹 窗 图 像                                             <b class="vimtag"> <a name="popup-image">popup-image</a> </b>
+弹 窗 图 像                                             <b class="vimtag"> <a name="image">image</a> </b> <b class="vimtag"> <a name="popup-image">popup-image</a> </b>
 
-弹窗可通过向  <a href="popup.html#popup_create()">popup_create()</a>  或  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  传递 "image" 字典来渲染
-图像，以替代文本或叠加在文本之上。调用方应提供已解码的原始像素缓冲区，Vim 则根
-据运行时可用的后端渲染相应图像:
+Vim 可在终端与 GUI 中显示图像。该功能需要链接 pixman 库，Unix 系统可通过包管理
+器安装，MS-Windows 可通过 vcpkg 安装。可通过检查  <a href="various.html#+image">+image</a>  与  <a href="various.html#+image_popup">+image_popup</a>  判
+断是否支持图像功能。
 
-    sixel   在支持 sixel 的终端上输出 DEC sixel DCS 序列。 <a href="various.html#+image_sixel">+image_sixel</a> 。自动
-            检测；另外还会在屏幕顶端上方裁去一行字符高度，以避免 sixel 导致终
-            端滚屏。
-    kitty   在支持 kitty 图形协议的终端 (kitty、ghostty、WezTerm、Konsole 等)
-            上输出 kitty 图形协议 APC 序列。 <a href="various.html#+image_kitty">+image_kitty</a> 。通过主动查询终端自
-            动检测。
-    GDI     在 MS-Windows GUI 上使用 StretchDIBits 绘制到 GUI 画布。
-             <a href="various.html#+image_gdi">+image_gdi</a> 。
-    Cairo   在 GTK GUI (GTK 2 和 GTK 3) 上合成到 cairo_image_surface_t。
-             <a href="various.html#+image_cairo">+image_cairo</a> 。
-    GDK     使用 GdkTexture，将图像上传到 GPU 以加快渲染 (仅 GTK 4)。
-             <a href="various.html#+image_gdk">+image_gdk</a> 
+弹窗可额外渲染图像。实现方式是向  <a href="popup.html#popup_create()">popup_create()</a>  或  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  传入
+名为 "image" 的字典字段。字典可以使用与  <a href="builtin.html#image_add()">image_add()</a>  相同的字段，也可以通过
+"id" 字段引用已有图像。"id" 字段优先级最高，参见  <a href="builtin.html#image_add()">image_add()</a> 、
+ <a href="builtin.html#image_discard()">image_discard()</a>  和  <a href="builtin.html#image_info()">image_info()</a> 。
 
-Vim 本身不会链接 libpng、libjpeg、libwebp 或其他图像解码库。图像格式的解码完全
-由调用方负责；调用方可借助任意外部工具 (GraphicsMagick、ImageMagick、ffmpeg、
-自定义转换器等) 对图像进行转换，将生成的字节数据作为  <a href="eval.html#Blob">Blob</a>  传给 Vim。
+图像由弹窗直接创建时 (即不使用 "id")，该图像属于内部资源，无法在其他地方引用。
 
-"image" 字典包含以下键:
-    data        字节  <a href="eval.html#Blob">Blob</a> 。长度必须为 width*height*3 (RGB) 或 width*height*4
-                (RGBA)。RGBA 缓冲区会与弹窗背景色进行 Alpha 合成。
-    width       以像素为单位的图像宽度。
-    height      以像素为单位的图像高度。
+要清除弹窗已设置的图像，可传入空字典:
+<code class="example">        call popup_setoptions(winid, #{image: {}})</code>
 
-弹窗会根据像素尺寸和终端/GUI 的字符单元尺寸自动计算其字符单元框大小，因此通常
-无需手动设置 "minwidth"、"minheight"、"maxwidth"、"maxheight"。
+                                                        <b class="vimtag"> <a name="image-backends">image-backends</a> </b>
+所有平台支持两种终端图像协议。通过 <a href="options.html#'imageprotocol'">'imageprotocol'</a> 选项选择使用的协议:
 
-如果 RGBA 缓冲区需要与编辑器实际背景色平滑融合，脚本可调用  <a href="builtin.html#getbgcolor()">getbgcolor()</a>  获取
-当前背景色 [r, g, b]，与该背景色进行抗锯齿边缘预合成。
+    sixel   使用 sixel 协议显示图像。
+    kitty   使用 kitty 图形协议。终端环境下可用时推荐选用，性能远优于 sixel。
 
-最小化 RGB 示例 - 在光标处弹出一个 4x4 的红色方块: &gt;vim
-        let pixels = repeat([0xff, 0x00, 0x00], 4 * 4)-&gt;list2blob()
-        call popup_create('', #{
-              \ image: #{ data: pixels, width: 4, height: 4 },
-              \ line: 'cursor+1', col: <code class="badlink">'cursor'</code>,
-              \ })
+支持 GTK4、GTK3 以及 Win32 版本的 GUI Vim。
+
+要查看当前使用中的图像后端，可查询变量  <a href="eval.html#v:imagebackend">v:imagebackend</a> 。
+
+                                                        <b class="vimtag"> <a name="image-options">image-options</a> </b>
+传入 RGBA 缓冲区时，Vim 要求数据不受字节序影响，且非预乘 Alpha。RGB 图像的每个
+像素固定占 3 字节，Vim 不支持填充字节。
+
+包含图像的弹窗尺寸会依据图像尺寸与终端 / GUI 单元格大小自动计算。也可通过
+"minwidth"、"minheight"、"maxwidth"、"maxheight" 字段手动覆盖。
+
+图像不会自动缩放，如果弹窗小于图像尺寸，图像会被裁剪。
+
+                                                        <b class="vimtag"> <a name="image-animation">image-animation</a> </b>
+弹窗图像可在运行时通过  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  更换。新图像的格式、宽度、高度与原
+有图像一致时，会在原位修改图像。配合  <a href="builtin.html#timer">timer</a> ，该机制的性能足够实现逐帧动画。
+
+RGBA 缓冲区需要和编辑器背景平滑混合时，脚本可调用  <a href="builtin.html#getbgcolor()">getbgcolor()</a>  获取当前背景
+色 [r,g,b]，预先对抗锯齿边缘做合成处理。
+
+最简 RGB 示例 - 在光标处弹出 4x4 红色方块:
+<code class="example">        let pixels = repeat([0xff, 0x00, 0x00], 4 * 4)-&gt;list2blob()</code>
+<code class="example">        call popup_create('', #{</code>
+<code class="example">              \ image: #{ data: pixels, width: 4, height: 4 },</code>
+<code class="example">              \ line: 'cursor+1', col: 'cursor',</code>
+<code class="example">              \ })</code>
 
 实际示例 - 借助 GraphicsMagick 将 PNG 转换为原始 RGB 数据，弹出显示图像: &gt;vim
         let png = 'cat.png'
@@ -1084,14 +1088,6 @@ Vim 本身不会链接 libpng、libjpeg、libwebp 或其他图像解码库。图
               \ line: 1, col: 1, border: [], padding: [0, 0, 0, 0],
               \ })
 
-图像可通过  <a href="popup.html#popup_setoptions()">popup_setoptions()</a>  在运行时替换。新图像缓冲区与当前图像宽高相同
-时，仅会原位替换像素数据，其性能足以配合  <a href="builtin.html#timer">timer</a>  实现逐帧动画。
- <a href="popup.html#popup_getoptions()">popup_getoptions()</a>  返回相同的 "image" 字典；其中 "data" 项为新建 blob 副本，
-与弹窗内部缓冲区相互独立。
-
-要移除之前设置的图像，可传入空字典:
-<code class="example">        call popup_setoptions(winid, #{image: {}})</code>
-<code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
 <h4>4. 示例                                                 <b class="vimtag"> <a name="popup-examples">popup-examples</a> </b></h4>
 以下例子使用  <a href="vim9.html#Vim9">Vim9</a>  脚本语法。

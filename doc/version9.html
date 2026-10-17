@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="version9.txt">version9.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="version9.txt">version9.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -41525,7 +41525,7 @@ Patch 9.0.2190
 
 <code class="section">Vim9 脚本 </code>
 </section><hr class="singleline" /><section class=inner>
-新增用于 vim9 对象的内建函数支持，见  <a href="vim9class.html#builtin-object-methods">builtin-object-methods</a> 
+新增用于 vim9 对象的内置函数支持，见  <a href="vim9class.html#builtin-object-methods">builtin-object-methods</a> 
 
 Vim9 脚本的枚举支持  <a href="vim9class.html#:enum">:enum</a> 
 
@@ -52497,9 +52497,10 @@ Patch 9.1.2148
 
 <code class="section">GUI </code>
 </section><hr class="singleline" /><section class=inner>
-- 新增 GTK 4 GUI 支持 (通过补丁 9.2.0501)。可在编译时通过  <code class="badlink">--enable-gui=gtk4</code> 
-  configure 开关打开。
-- 新增 GTK UI 的全屏模式支持  <a href="options.html#'go-s'">'go-s'</a> 。
+- 新增 GTK4 GUI 实验性支持 (补丁 9.2.0501 及后续大量补丁)，编译阶段通过
+   <code class="badlink">--enable-gui=gtk4</code>  启用。
+- GTK 界面新增全屏模式支持，参见  <a href="options.html#'go-s'">'go-s'</a> 。
+- GTK4 图形界面使用 Pango 库，支持原生打印对话框，参见  <a href="print.html#pango-printing">pango-printing</a> 。
 
 <code class="section">弹出窗口 </code>
 </section><hr class="singleline" /><section class=inner>
@@ -52559,12 +52560,15 @@ Vim 在  <a href="starting.html#restricted-mode">restricted-mode</a>  受限模�
 - 会话和视图生成脚本现在使用 Vim9 脚本编写，见  <a href="starting.html#:mksession">:mksession</a> 、 <a href="starting.html#:mkview">:mkview</a>  和
    <a href="starting.html#:mkvimrc">:mkvimrc</a> 。
 -  <a href="terminal.html#term_start()">term_start()</a>  的 "term_finish" 选项支持新 "noclose" 值。
+- 可通过标准输入输出通道控制 Vim，参见  <a href="channel.html#channel-stdio">channel-stdio</a> 。
+- 为  <a href="repeat.html#:source">:source</a>  新增 "++dryrun" 参数，读取脚本但不执行，仅用于检查错误，参见
+   <a href="repeat.html#:source-dryrun">:source-dryrun</a> 。
+-  <a href="tagsrch.html#:tag">:tag</a>  命令现也借助 <a href="options.html#'tagfunc'">'tagfunc'</a> 进行补全。
 
 <code class="section">平台特定 </code>
 </section><hr class="singleline" /><section class=inner>
 - Win32 平台使用 DirectWrite 时，在 <a href="options.html#'guifont'">'guifont'</a> 中支持指定 OpenType 字体特性
 - 为 MS-Windows 系统补充 strptime() 兼容实现
-- 支持 GTK4 GUI 通过  <code class="badlink">gtk-hwaccel</code>  机制实现硬件加速渲染。
 - 重写 NSIS 安装程序 (Win32):
   - 支持单用户和单主机安装方式。
   - 改变了安装目录结构。
@@ -52593,6 +52597,21 @@ Vim 在  <a href="starting.html#restricted-mode">restricted-mode</a>  受限模�
 - 在  <a href="builtin.html#complete()">complete()</a>  触发的补全里，<code class="keystroke">CTRL-N</code> 和 <code class="keystroke">CTRL-P</code> 现支持插入模式映射。
 - 轮换文件寄存器  <a href="change.html#quote%23">quote#</a>  可被清空。
 -  <a href="builtin.html#serverlist()">serverlist()</a>  可列出所有可用服务器名。
+- 改善终端不支持色彩时的显示效果。
+- 优化 256 色及更低色深终端的比较高亮。
+-  <a href="builtin.html#listener_add()">listener_add()</a>  支持传入选项字典，可包含变更后的文本，见  <a href="builtin.html#listener-text">listener-text</a> 。
+-  <a href="builtin.html#extend()">extend()</a>  与  <a href="builtin.html#extendnew()">extendnew()</a>  现在支持 Blob 类型。
+- 被 <a href="options.html#'eventignore'">'eventignore'</a> 忽略期间产生的事件 (如  <a href="autocmd.html#CursorMoved">CursorMoved</a> ) 不再触发。
+- "lsp" 模式下，当无需等待响应时， <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  的 "id" 字段允许传入非数值类
+  型，用于应答服务端发来的请求。
+-  <a href="builtin.html#complete_info()">complete_info()</a>  可通过 "auto" 字段区分补全是手动触发还是自动触发。
+- 折叠函数新增可选参数 <code class="special">{winid}</code>。
+- 在  <a href="autocmd.html#DiffUpdated">DiffUpdated</a>  自动命令内禁止修改窗口布局。
+- 开启 <a href="options.html#'cursorline'">'cursorline'</a> 时，会始终使用高亮组  <a href="syntax.html#hl-CursorLineFold">hl-CursorLineFold</a>  与
+   <a href="syntax.html#hl-CursorLineSign">hl-CursorLineSign</a> 。
+- 行上方的虚拟文本现在会被  <a href="builtin.html#screenpos()">screenpos()</a>  和  <a href="builtin.html#virtcol()">virtcol()</a>  计入位置计算。
+- 老式脚本中的  <a href="vim9.html#:def">:def</a>  函数不再接受通过赋值新建脚本局部变量，该操作会报错
+   <a href="eval.html#E1089">E1089</a> 。
 
 
                                                         <b class="vimtag"> <a name="added-9.3">added-9.3</a> </b>
@@ -52604,6 +52623,10 @@ Vim 在  <a href="starting.html#restricted-mode">restricted-mode</a>  受限模�
 
  <a href="channel.html#ch_listen()">ch_listen()</a>            在 <code class="special">{address}</code> 上监听
  <a href="builtin.html#getbgcolor()">getbgcolor()</a>           以 RGB 值形式返回背景色
+ <a href="builtin.html#getinfo()">getinfo()</a>              获取参数对应的定义信息
+ <a href="builtin.html#image_add()">image_add()</a>            添加图像并返回图像句柄
+ <a href="builtin.html#image_discard()">image_discard()</a>        丢弃图像句柄
+ <a href="builtin.html#image_info()">image_info()</a>           获取图像信息
  <a href="builtin.html#tabpanel_getinfo()">tabpanel_getinfo()</a>     获取  <a href="tabpage.html#tabpanel">tabpanel</a>  的当前状态
  <a href="builtin.html#tabpanel_scroll()">tabpanel_scroll()</a>      滚动  <a href="tabpage.html#tabpanel">tabpanel</a> 
 
@@ -52615,6 +52638,7 @@ Vim 在  <a href="starting.html#restricted-mode">restricted-mode</a>  受限模�
 
 <code class="section">选项: </code>
 
+<a href="options.html#'imageprotocol'">'imageprotocol'</a>         不同终端使用的图像后端
 <a href="options.html#'modelinestrict'">'modelinestrict'</a>        仅允许从模式行设置安全选项。
 <a href="options.html#'pumopt'">'pumopt'</a>                弹出菜单的附加选项。
 <a href="options.html#'scrolloffpad'">'scrolloffpad'</a>          允许光标在文件末尾时保持垂直居中。
@@ -52632,6 +52656,19 @@ Vim 在  <a href="starting.html#restricted-mode">restricted-mode</a>  受限模�
  <a href="syntax.html#hl-Popup">hl-Popup</a>               弹窗主体。
  <a href="syntax.html#hl-PopupBorder">hl-PopupBorder</a>         弹窗边框。
  <a href="syntax.html#hl-PopupTitle">hl-PopupTitle</a>          弹窗标题。
+
+<code class="section">Vim 变量: </code>
+
+ <a href="eval.html#v:imagebackend">v:imagebackend</a>         当前 <a href="options.html#'imageprotocol'">'imageprotocol'</a> 值
+
+<code class="section">Vim 参数: </code>
+
+ <a href="starting.html#--stdio-channel">--stdio-channel</a>        通过标准输入输出通道控制 Vim  <a href="channel.html#channel-stdio">channel-stdio</a> 
+
+<code class="section">配置开关: </code>
+
+--enable-hardcopy-pango 启用 Pango 的  <a href="print.html#:hardcopy">:hardcopy</a>  后端  <a href="print.html#pango-printing">pango-printing</a> 
+--enable-pixman         启用 Pixman 库以支持图像功能
 
 </section><hr class="doubleline" /><section class=inner>
 <h4>补 丁                                           <b class="vimtag"> <a name="patches-9.3">patches-9.3</a> </b> <b class="vimtag"> <a name="bug-fixes-9.3">bug-fixes-9.3</a> </b></h4>                                                <b class="vimtag"> <a name="patches-after-9.2">patches-after-9.2</a> </b>

@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="userfunc.txt">userfunc.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="userfunc.txt">userfunc.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -180,7 +180,7 @@
                          <a href="cmdline.html#:bar">:bar</a> :
 <code class="example">                                :exe "func Foo()\necho 'foo'\nendfunc"</code>
 
-                                <b class="vimtag"> <a name=":delf">:delf</a> </b> <b class="vimtag"> <a name=":delfunction">:delfunction</a> </b> <b class="vimtag"> <a name="E131">E131</a> </b> <b class="vimtag"> <a name="E933">E933</a> </b> <b class="vimtag"> <a name="E1084">E1084</a> </b>
+                                <b class="vimtag"> <a name=":delf">:delf</a> </b> <b class="vimtag"> <a name=":delfunction">:delfunction</a> </b> <b class="vimtag"> <a name="E131">E131</a> </b> <b class="vimtag"> <a name="E933">E933</a> </b>
 :delf[unction][!] <code class="special">{name}</code>
                         删除名为 <code class="special">{name}</code> 的函数。
                         <code class="special">{name}</code> 也可以是保存在字典内的函数引用  <a href="eval.html#Funcref">Funcref</a> :
@@ -188,6 +188,8 @@
                         会从字典 "dict" 中删除 "init" 项。如果没有更多引用，该
                         函数会被删除。
                         带 [!] 时，即使函数不存在也不报错。
+                        Vim9 脚本中，试图删除脚本局部函数会报错  <a href="vim9.html#E1084">E1084</a> 。
+
                                                 <b class="vimtag"> <a name=":retu">:retu</a> </b> <b class="vimtag"> <a name=":return">:return</a> </b> <b class="vimtag"> <a name="E133">E133</a> </b>
 :retu[rn] <code class="special">[expr]</code>        从函数中返回。给出 <code class="special">[expr]</code> 时，会对其求值并作为函数返回
                         值。省略 <code class="special">[expr]</code> 时，默认返回 0。
@@ -195,9 +197,11 @@
 
                          在  <a href="vim9.html#Vim9">Vim9</a>  脚本中:
                         -  <a href="userfunc.html#:return">:return</a>  关键字不可被简写，
-                        - <b class="vimtag"> <a name="E1095">E1095</a> </b> 如果在  <a href="userfunc.html#:return">:return</a>  之后还有无法执行的代码，会
-                          报错。
-                        示例:
+                        - <b class="vimtag"> <a name="E1095">E1095</a> </b> 命令出现在无条件  <a href="userfunc.html#:return">:return</a>  或  <a href="eval.html#:throw">:throw</a>  语句
+                          之后触发。完整的  <a href="eval.html#:if">:if</a> / <a href="eval.html#:elseif">:elseif</a> / <a href="eval.html#:else">:else</a>  语句块，如
+                          果所有分支都以 `: return` 或  <a href="eval.html#:throw">:throw</a>  收尾时，也被视
+                          为函数终止。不带  <a href="eval.html#:else">:else</a>  的  <a href="eval.html#:if">:if</a> ，或是存在能够正常
+                          继续执行的分支，则不会判定后续代码不可达。示例:
 
 <code class="example">                          vim9script</code>
 <code class="example">                          var L: func = (): bool =&gt; {</code>
@@ -206,6 +210,24 @@
 <code class="example">                                       # 代码</code>
 <code class="example">                          }</code>
 <code class="example">                          echo L()</code>
+
+                        该检查同样适用于  <a href="eval.html#:try">:try</a> :  <code class="badlink">try</code>  主体与所有  <code class="badlink">catch</code>  块都
+                        必须正常终止，除非  <code class="badlink">finally</code>  块内的终止语句覆盖此行
+                        为。循环里， <a href="eval.html#:break">:break</a>  与  <a href="eval.html#:continue">:continue</a>  仅会让循环体内后续
+                        代码不可达，但不会让循环外部的代码不可达。例如，
+                         <a href="eval.html#:if">:if</a> / <a href="eval.html#:else">:else</a>  所有分支均返回时， <a href="eval.html#:endif">:endif</a> 之后的代码属
+                        于不可达代码:
+
+<code class="example">                          vim9script</code>
+<code class="example">                          def AllBranchesReturn(n: number): number</code>
+<code class="example">                            if n &gt; 0</code>
+<code class="example">                              return 1</code>
+<code class="example">                            else</code>
+<code class="example">                              return 0</code>
+<code class="example">                            endif</code>
+<code class="example">                            echo 'no'  # E1095: :return 语句之后存在无法执行的</code>
+<code class="example">                                       # 代码</code>
+<code class="example">                          enddef</code>
 
                         老式脚本中，不检查不可达代码，即使 ":return" 之后还有
                         命令，既不会<code class="note">警告</code>，也不会检查这些后续行是否为合法命令。
@@ -220,7 +242,6 @@
                         有) 之前时，会先执行 ":finally" 到匹配的  <a href="eval.html#:endtry">:endtry</a>  之
                         间的所有命令。函数内所有嵌套的 ":try" 块会反复应用此逻
                         辑，在最外层 ":endtry" 结束后，函数才真正返回。
-
 
                                                 <b class="vimtag"> <a name="function-argument">function-argument</a> </b> <b class="vimtag"> <a name="a:var">a:var</a> </b>
 参数可通过名称定义。在函数内部以 "a:name" 访问 ("a:" 代表参数 (argument))

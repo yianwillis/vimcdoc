@@ -44,8 +44,8 @@
 入，和如何把大文件分割成小部分。
 
  <a href="usr_52.html#52.1">52.1</a>   导出和导入
- <a href="usr_52.html#52.2">52.2</a>   自动载入
- <a href="usr_52.html#52.3">52.3</a>   不经导入/导出的自动载入
+ <a href="usr_52.html#52.2">52.2</a>   自动加载
+ <a href="usr_52.html#52.3">52.3</a>   不经导入/导出的自动加载
  <a href="usr_52.html#52.4">52.4</a>   可用的其它机制
  <a href="usr_52.html#52.5">52.5</a>   在老式脚本中使用 Vim9 脚本
  <a href="usr_52.html#52.6">52.6</a>   Vim9 例子: 注释和高亮抽出插件
@@ -153,38 +153,66 @@ GetMessage() 函数:
 <code class="example">        g:mytags_style = 'fast'</code>
 <code class="example"></code>
 </section><hr class="doubleline" /><section class=inner>
-<h4><b class="vimtag"> <a name="52.2">52.2</a> </b>  自动载入</h4>
-在把大脚本分割为若干部分后，使用脚本时所有行仍然被载入和执行。每个  <code class="badlink">import</code>  都
-会载入被导入的脚本以找到其中定义的项目。虽然这样容易早点发现错误，但颇耗时。如
-果提供的功能不常用，这很浪费。
+<h4><b class="vimtag"> <a name="52.2">52.2</a> </b>  自动加载</h4>
+将大型脚本拆分为多个文件后，被导入的脚本会在执行导入脚本时立即加载并执行。每次
+ <a href="vim9.html#:import">:import</a>  都会加载目标脚本，用于读取其中定义的成员。但如果被导入脚本体积较大，
+启动耗时会明显增加；好处是错误可在导入阶段提前捕获。
 
- <code class="badlink">import</code>  除了立即载入脚本之外，也可以延迟载入。使用上面的例子，只要在
-plugin/theplugin.vim 里改一处就可以了:
+想要缩短启动时间，可延迟加载被导入脚本，直到真正使用时才加载，这是通过
+ <a href="userfunc.html#autoload">autoload</a>  关键字实现的。沿用上面示例，仅需修改  <code class="badlink">plugin/theplugin.vim</code>  一处:
+
 <code class="example">        import autoload "../lib/getmessage.vim"</code>
+
+脚本其余部分无需改动。但此时不会做类型检查， <code class="badlink">../lib/getmessage.vim</code>  也不会在导
+入阶段加载；Vim 仅校验文件是否存在且可读。就连 GetMessage() 函数是否存在，也只
+会在调用时才检查。因此， <code class="badlink">getmessage.vim</code>  里的错误只会在运行期才暴露。
+
+需要自行权衡脚本的需求: 优先快速启动，还是尽早捕获错误。
+
+一个实用策略是开发调试阶段不写  <a href="userfunc.html#autoload">autoload</a> ，可以立刻看到报错；插件发布前加上
+ <a href="userfunc.html#autoload">autoload</a>  提升启动速度。
+
+
+自 动 加 载 目 录
+
+另一种延迟加载方式是在 `import autoload`导入脚本时，不指明相对或绝对路径，示
+例:
 <code class="example"></code>
-脚本其余部分无须改动。不过，不会检查类型。甚至 GetMessage() 函数存在与否，也是
-在实际使用时才会检查。需要你自己决定是快速启动还是早点发现错误更加重要。也可以
-在检查完一切都正常之后再加上 "autoload" 参数。
-
-
-自 动 载 入 目 录
-
-另一种使用自动载入的形式，脚本名既不是绝对也不是相对路径:
 <code class="example">        import autoload "monthlib.vim"</code>
-<code class="example"></code>
-会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 的 autoload 目录下搜索脚本 "monthlib.vim"。Unix 一个常见目
-录是 "~/.vim/autoload"。也会在 <a href="options.html#'packpath'">'packpath'</a> 里 "start" 之下搜索脚本。
 
-这种形式的主要好处是容易和其它脚本共享。但要确保脚本名唯一，因为 Vim 会在
-<a href="options.html#'runtimepath'">'runtimepath'</a> 下搜索所有的 "autoload" 目录，如果使用插件管理器管理多个插件，它
-会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 下新增目录，每个目录都可能有 "autoload" 目录。
+Vim 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 下的 autoload 目录里检索脚本，也就是说，脚本必须放在
+"autoload" 目录内。Unix 系统常见路径为  <code class="badlink">~/.vim/autoload</code> 。同时也会检索
+<a href="options.html#'packpath'">'packpath'</a> 下 "start" 目录。
 
-没有自动载入的话:
+以该方式导入脚本时，其导出符号会通过全局自动加载命名空间访问，而不是局限于导入
+脚本的局部作用域。
+
+因为 Vim 会遍历 <a href="options.html#'runtimepath'">'runtimepath'</a> 内全部 "autoload" 目录，脚本名称务必唯一。插件管
+理器通常会向 <a href="options.html#'runtimepath'">'runtimepath'</a> 添加多个目录，每个目录都可带有 "autoload" 子目录。
+
+两种 `import autoload` 用法总结:
+
+- `import autoload "foo.vim"`
+  Vim 在 <a href="options.html#'runtimepath'">'runtimepath'</a> 检索脚本。这类脚本必须放在 "autoload" 目录下，其导出符
+  号通过全局自动加载命名空间访问。
+
+- `import autoload "/some/path/foo.vim"`
+  解析后的路径位于 "autoload" 目录下时，导出符号同样归入全局自动加载命名空间；
+  否则符号仅属于导入脚本的局部作用域。
+
+通过全局自动加载命名空间访问符号的主要优势是，其他脚本可方便导入，符号开箱即
+用。但脚本重载时存在一些缺陷，详见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
+
+符号属于脚本局部作用域时，跨脚本共享符号会更加繁琐，没有通用方案，实现方式取决
+于插件目录结构。
+
+最后，不带  <a href="userfunc.html#autoload">autoload</a>  且不指定路径的脚本非自动加载导入写法，示例:
 <code class="example">        import "monthlib.vim"</code>
-<code class="example"></code>
-Vim 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 的 import 目录下搜索脚本 "monthlib.vim"。<code class="note">注意</code> 这种形式
-里，加上或去掉 "autoload" 关键字会影响脚本寻找的位置。而使用相对或绝对路径的形
-式时位置是不会改变的。
+
+Vim 会在 <a href="options.html#'runtimepath'">'runtimepath'</a> 的导入目录查找 "monthlib.vim"。
+
+这种形式下，添加或移除  <a href="userfunc.html#autoload">autoload</a>  关键字会改变 Vim 查找脚本的位置。而使用相对
+路径或绝对路径时，查找位置不受影响。
 
 </section><hr class="doubleline" /><section class=inner>
 <h4><b class="vimtag"> <a name="52.3">52.3</a> </b>  不经导入/导出的自动载入</h4>

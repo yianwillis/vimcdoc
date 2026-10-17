@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="repeat.txt">repeat.txt</a> </b>    适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -92,9 +92,12 @@
  <a href="change.html#:d">:d</a>  之后使用下划线寄存器 ( <a href="change.html#quote_">quote_</a> ) 避免覆盖寄存器或剪贴板。速度也更快。
 
 可用 '/' 之外的其他单字节字符作为 <code class="special">{pattern}</code> 的定界符，但不可用字母、'\'、'"'、
-'|' 或 '!'。这对包含 '/' 的搜索模式或替代字符串很有用。
+'|' 或 '!'。这对包含 '/' 的搜索模式或替代字符串很有用。<code class="special">[cmd]</code> 省略时，结束定界
+符可选。默认在 <code class="special">&lt;EOL&gt;</code> 处终止。
 
 模式语法见  <a href="pattern.html#pattern">pattern</a> 。
+
+缺省 <code class="special">[cmd]</code> 为  <a href="various.html#:print">:print</a> 。
 
 <code class="note">注意</code> <code class="special">[cmd]</code> 可自带范围；示例见  <a href="tips.html#collapse">collapse</a>  和  <a href="usr_25.html#edit-paragraph-join">edit-paragraph-join</a> 。
 
@@ -218,6 +221,39 @@ q                       停止宏录制 (实现细节<code class="note">备注</
 <code class="example"></code>
                         实现细节: <code class="special">[range]</code> 行范围完全落在折叠块内部且该范围使用
                         双限定符时，会自动扩充至整个折叠块。
+
+                                                <b class="vimtag"> <a name=":source-dryrun">:source-dryrun</a> </b>
+:so[urce] ++dryrun <code class="special">{file}</code>
+:<code class="special">[range]</code>so[urce] ++dryrun
+                        读取脚本但不执行实际逻辑: 仅执行定义类语句，脚本内所有
+                         <a href="vim9.html#:def">:def</a>  函数会完成编译，并照常上报错误。
+
+                        会执行的语句有:  <a href="vim9.html#vim9script">vim9script</a> 、 <code class="badlink">import</code> 、 <code class="badlink">def</code> 、
+                         <code class="badlink">function</code> 、 <a href="vim9class.html#class">class</a> 、 <a href="vim9class.html#interface">interface</a> 、 <a href="vim9class.html#enum">enum</a> 、 <code class="badlink">type</code>  以及
+                        带  <code class="badlink">var</code> 、 <code class="badlink">const</code> 、 <code class="badlink">final</code> 　的声明语句。声明变量会获取
+                        声明指定的类型，无类型标注则为 "any"，并赋予零值；变量
+                        右侧表达式不会求值。静态类变量处理规则相同，枚举值不会
+                        生成实例。
+
+                        其余所有语句都会跳过，包括  <code class="badlink">finish</code> ，以及  <code class="badlink">if</code> 、
+                         <code class="badlink">while</code> 、 <code class="badlink">for</code>  的条件判断；但这类代码块内部的定义语句
+                        无论条件真假都会执行。因此函数可能被重复定义，以最后一
+                        次定义为准。
+
+                        老式脚本中， <code class="badlink">let</code>  不会执行，所以通过它创建的脚本变量不
+                        存在。 <a href="vim9.html#:def">:def</a>  函数内可用  <code class="badlink">s:</code>  前缀访问脚本变量，但不带
+                         <code class="badlink">s:</code>  读取或调用会报错。在字典中定义函数，例如
+                        `function s:obj.Method()`，同样会失败。
+
+                        被导入的脚本也以同样方式读取，但不会加载自动加载脚本。
+                        不会触发  <a href="autocmd.html#SourceCmd">SourceCmd</a> 、 <a href="autocmd.html#SourcePre">SourcePre</a> 、 <a href="autocmd.html#SourcePost">SourcePost</a>  自动事
+                        件。自动加载脚本中的类或枚举会在试运行时重新定义，并在
+                        之后正常加载时再次定义，因为此前并未基于它创建实例；参
+                        见  <a href="vim9.html#vim9-reload">vim9-reload</a> 。
+
+                        <code class="note">注意</code>: 定义语句发生错误不会终止读取，脚本剩余内容依旧会
+                        读取。函数内某一行出错不会中断编译，所有出错行都会上
+                        报。
 
                                                         <b class="vimtag"> <a name=":source!">:source!</a> </b>
 :so[urce]! <code class="special">{file}</code>       从 <code class="special">{file}</code> 里读取普通模式下执行的 Vim 命令并执行。

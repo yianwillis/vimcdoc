@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="cmdline.txt">cmdline.txt</a> </b>   适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -137,8 +137,8 @@
 <code class="special">&lt;LeftMouse&gt;</code>     将光标定位到鼠标点击位置。
 
                                                         <b class="vimtag"> <a name="c_%3CMiddleMouse%3E">c_&lt;MiddleMouse&gt;</a> </b>
-<code class="special">&lt;MiddleMouse&gt;</code>   粘贴剪贴板内容 (X11 而言是主选择区内容)。和 <code class="keystroke">CTRL-R</code> * 类似，但
-                行与行间不会插入 CR 字符。
+<code class="special">&lt;MiddleMouse&gt;</code>   粘贴剪贴板内容 (X11 而言是主选区内容)。和 <code class="keystroke">CTRL-R</code> * 类似，但行
+                与行间不会插入 CR 字符。
 
 <code class="keystroke">CTRL-H</code>                                          <b class="vimtag"> <a name="c_%3CBS%3E">c_&lt;BS&gt;</a> </b> <b class="vimtag"> <a name="c_CTRL-H">c_CTRL-H</a> </b> <b class="vimtag"> <a name="c_BS">c_BS</a> </b>
 <code class="special">&lt;BS&gt;</code>            删除光标前一个字符 (如果 <code class="special">&lt;BS&gt;</code> 键无法正常工作，见  <a href="options.html#:fixdel">:fixdel</a> )。
@@ -172,7 +172,7 @@
                         '"'     无名寄存器，保存最近一次删除或复制的文本
                         '%'     当前文件名
                         '#'     轮换文件名
-                        '*'     剪贴板内容 (对于 X11: 主选择区内容)
+                        '*'     剪贴板内容 (对于 X11: 主选区内容)
                         '+'     剪贴板内容
                         '/'     最近一次搜索模式
                         ':'     最近一次命令行
@@ -555,11 +555,13 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
 在前面加上 '\' 转义。
 
 以下这些命令总是把 '|' 视为自身参数的一部分，所以其后不能用 '|' 再接其他命令:
+    :append
     :argdo
     :autocmd
     :bufdo
     :cdo
     :cfdo
+    :change
     :command
     :cscope
     :debug
@@ -571,6 +573,7 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
     :help
     :helpfind
     :helpgrep
+    :insert
     :lcscope
     :ldo
     :lfdo
@@ -1100,6 +1103,15 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
 口，无法用常规方式退出。
 <code class="notvi">{仅当编译时加入  <a href="various.html#+cmdwin">+cmdwin</a>  特性才可用}</code>
 
+如果经常出现本想输入 ":q" 却误敲成 "q:" 的情况，可映射 "q"，使其在命令行填入
+":q" 而非打开命令行窗口，同时在宏录制进行时仍可结束录制:
+<code class="example"></code>
+<code class="example">        nnoremap &lt;expr&gt;&lt;script&gt; q reg_recording() != '' ? 'q' : '&lt;SID&gt;*qmode*'</code>
+<code class="example">        nnoremap &lt;SID&gt;*qmode*: :&lt;C-U&gt;q</code>
+<code class="example">        nnoremap &lt;SID&gt;*qmode*  q</code>
+
+<code class="note">注意</code>现在使用 "qa" 开始宏录制时会等待 <a href="options.html#'timeoutlen'">'timeoutlen'</a>，因为 "q" 变成了更长映射序列
+的起始。
 
 开 启                                           <b class="vimtag"> <a name="c_CTRL-F">c_CTRL-F</a> </b> <b class="vimtag"> <a name="q:">q:</a> </b> <b class="vimtag"> <a name="q%2F">q/</a> </b> <b class="vimtag"> <a name="q?">q?</a> </b>
 
@@ -1239,16 +1251,15 @@ Ex 命令支持以 '"' 开头的注释。'"' 出现在行首时，忽略整行�
 例如，可将原生的  <a href="editing.html#:find">:find</a>  命令改造为一个提供模糊匹配的交互式文件选择器:
 <code class="example"></code>
 <code class="example">        set findfunc=Find</code>
+<code class="example">        let s:filescache = []</code>
 <code class="example">        func Find(arg, _)</code>
 <code class="example">          if empty(s:filescache)</code>
-<code class="example">            let s:filescache = globpath('.', '**', 1, 1)</code>
+<code class="example">            autocmd CmdlineLeave : ++once let s:filescache = []</code>
+<code class="example">            let s:filescache = expand('**', 1, 1)</code>
 <code class="example">            call filter(s:filescache, '!isdirectory(v:val)')</code>
-<code class="example">            call map(s:filescache, "fnamemodify(v:val, ':.')")</code>
 <code class="example">          endif</code>
-<code class="example">          return a:arg == '' ? s:filescache : matchfuzzy(s:filescache, a:arg)</code>
+<code class="example">          return empty(a:arg) ? s:filescache : matchfuzzy(s:filescache, a:arg)</code>
 <code class="example">        endfunc</code>
-<code class="example">        let s:filescache = []</code>
-<code class="example">        autocmd CmdlineEnter : let s:filescache = []</code>
 <code class="example"></code>
  <code class="badlink">:Grep</code>  命令用于搜索匹配指定模式的文本行，并在用户键入时动态更新搜索结果 (输入
 两个字符后触发；<code class="note">注意</code>: 需要下一小节里提供的  <a href="autocmd.html#CmdlineLeavePre">CmdlineLeavePre</a>  自动命令支持):

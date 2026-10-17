@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="syntax.txt">syntax.txt</a> </b>    适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册    by Bram Moolenaar</code>
@@ -231,12 +231,13 @@ Vim 仅加载首个找到的语法脚本，前提是该脚本设置了  <code cl
 
         *Comment        v 任意注释
 
-        *Constant       v 任意常数
-         String         v 字符串常数: "这是字符串"
-         Character      v 字符常数: 'c'、'\n'
-         Number         v 数值常数: 234、0xff
-         Boolean        v 布尔型常数: TRUE、false
-         Float          v 浮点常数: 2.3e10
+        *Constant       v 任意常量
+         String         v 字符串常量: "这是字符串"
+         Character      v 字符常量: 'c'、'\n'
+         Number         v 数值常量: 234、0xff
+         Boolean        v 布尔型常量: TRUE、false
+         Regexp         v 正则表达式常量: /ab*c/
+         Float          v 浮点常量: 2.3e10
 
         *Identifier     v 任意变量名
          Function       v 函数名 (也包括: 类方法名)
@@ -959,6 +960,7 @@ C                                                       <b class="vimtag"> <a na
 <b class="vimtag"> <a name="c_no_c99">c_no_c99</a> </b>              不高亮 C99 标准项目
 <b class="vimtag"> <a name="c_no_c11">c_no_c11</a> </b>              不高亮 C11 标准项目
 <b class="vimtag"> <a name="c_no_c23">c_no_c23</a> </b>              不高亮 C23 标准项目
+<b class="vimtag"> <a name="c_no_c29">c_no_c29</a> </b>              不高亮 C29 标准项目
 <b class="vimtag"> <a name="c_no_bsd">c_no_bsd</a> </b>              不高亮 BSD 专用类型
 <b class="vimtag"> <a name="c_functions">c_functions</a> </b>           高亮函数调用和函数定义
 <b class="vimtag"> <a name="c_function_pointers">c_function_pointers</a> </b>   高亮函数指针定义
@@ -1250,9 +1252,11 @@ DocBook 文件分为 SGML 和 XML 两类。可通过设置  <code class="badlink
 或:
 <code class="example">        :set filetype=docbkxml</code>
 <code class="example"></code>
-要指定 DocBook 版本 (也提供  <a href="eval.html#b:">b:</a>  变量):
+要为当前缓冲区指定 DocBook 版本:
+<code class="example">        :let b:docbk_ver = 3</code>
+未提供  <code class="badlink">b:docbk_ver</code>  时， <code class="badlink">g:docbk_ver</code>  用作全局后备值:
 <code class="example">        :let g:docbk_ver = 3</code>
-未设置时默认版本号为 4。
+两者都未设置时，默认版本号为 4。
 
 
 DOSBATCH                                <b class="vimtag"> <a name="dosbatch.vim">dosbatch.vim</a> </b> <b class="vimtag"> <a name="ft-dosbatch-syntax">ft-dosbatch-syntax</a> </b>
@@ -1726,8 +1730,10 @@ HTML 文件内，使用以下标签色彩方案。
 要完全关闭风格标签渲染效果，可在 vimrc 文件里加入:
 <code class="example">        :let g:html_no_rendering=1</code>
 <code class="example"></code>
-缺省从首个显示行回溯 250 行开始语法同步。要调整配置:
+缺省从首个显示行回溯，解析 1.5 倍  <code class="badlink">g:html_minlines</code>  数量的行，并继续向前查找
+ <code class="badlink">g:html_maxlines</code>  行以寻找同步点。要调整这些配置:
 <code class="example">        :let g:html_minlines = 500</code>
+<code class="example">        :let g:html_maxlines = 750</code>
 
 HTML 注释语法特殊 (详见 HTML 参考文档)，本色彩方案会高亮所有语法错误。要兼容非
 标准注释写法 (以 &lt;!-- 开始、--&gt; 结束)，可定义
@@ -1781,6 +1787,16 @@ IA64                            <b class="vimtag"> <a name="ia64.vim">ia64.vim</
 <code class="example">        :let g:filetype_inc = "ia64"</code>
 <code class="example"></code>
 <code class="example"></code>
+ICALENDAR                               <b class="vimtag"> <a name="icalendar.vim">icalendar.vim</a> </b> <b class="vimtag"> <a name="ft-icalendar-syntax">ft-icalendar-syntax</a> </b>
+
+iCalendar 文件 (RFC 5545) 语法高亮适用于后缀为 ".ics" 的日历应用文件。
+
+组件边界 (BEGIN: 与 END:)、属性名、属性参数、重复规则片段会分别高亮。内容行可
+通过换行后加空格或制表符拆分为多行；这类折行在高亮时视作单条逻辑行。
+
+组件折叠由文件类型插件提供，默认关闭；参见  <a href="filetype.html#ft-icalendar-plugin">ft-icalendar-plugin</a> 。
+
+
 INFORM                                  <b class="vimtag"> <a name="inform.vim">inform.vim</a> </b> <b class="vimtag"> <a name="ft-inform-syntax">ft-inform-syntax</a> </b>
 
 因为被多数程序大量使用，缺省高亮 Inform 库提供的符号。要关闭库符号高亮，可在
@@ -1961,11 +1977,11 @@ Java 平台的重大变更会逐步以 JDK 增强提案 (JDK Enhancement Proposa
 和几个版本周期，最终才会被正式纳入平台，或被撤回。为满足早期试用者的要求，Vim
 提供了已实现的语法相关预览特性的可选支持。可通过指定预览特性编号列表，开启相应
 支持:
-<code class="example">        :let g:java_syntax_previews = [530]</code>
+<code class="example">        :let g:java_syntax_previews = [532]</code>
 <code class="example"></code>
 下表列出当前支持的 JEP 号:
          <code class="badlink">430</code> : 字符串模板 [JDK 21]
-         <code class="badlink">530</code> : 模式、instanceof 和 switch 里的原始类型
+         <code class="badlink">532</code> : 模式、instanceof 和 switch 里的原始类型
 
 <code class="note">注意</code> 预览特性一旦正式纳入 Java 平台后，对应编号会从此表中删除，对应开关失效。
                                                 <b class="vimtag"> <a name="java-package-info-url">java-package-info-url</a> </b>
@@ -3163,10 +3179,14 @@ Windows+cygwin) 或 "ksh" (POSIX)，增加了推断难度。
 
 缺省为  <code class="badlink">g:sh_minlines</code>  的两倍。调小可加快显示速度，但代价是增大高亮出错概率。
 
-若干问题缺省会高亮为错误；包括常见的未配对 ']'、<code class="badlink">'done'</code>、<code class="badlink">'fi'</code> 等情况。如果错误
-处理不正常，可在 .vimrc 里屏蔽错误高亮:
+未配对的 ']'、<code class="badlink">'done'</code>、<code class="badlink">'fi'</code> 等符号缺省会高亮为错误。如果此类错误处理不正常，可
+在 .vimrc 里屏蔽错误高亮:
 <code class="example"></code>
-<code class="example">        let g:sh_no_error= 1</code>
+<code class="example">        let g:sh_no_error = 1</code>
+
+更精细的做法是，查找对应的语法规则名，只屏蔽特定类型的错误:
+<code class="example"></code>
+<code class="example">        let g:sh_no_error_rules = ["shCurlyError", "shParenError"]</code>
 
 
                                                 <b class="vimtag"> <a name="sh-embed">sh-embed</a> </b>  <b class="vimtag"> <a name="sh-awk">sh-awk</a> </b>
@@ -3541,6 +3561,7 @@ VIM                     <b class="vimtag"> <a name="vim.vim">vim.vim</a> </b>   
 <code class="example">   g:vimsyn_folding =~# 'P' : 折叠 Python   嵌入文档</code>
 <code class="example">   g:vimsyn_folding =~# 'r' : 折叠 Ruby     嵌入文档</code>
 <code class="example">   g:vimsyn_folding =~# 't' : 折叠 Tcl      嵌入文档</code>
+<code class="example">   g:vimsyn_folding =~# 'T' : 折叠 :append、:change 和 :insert</code>
 
 
 该变量缺省未设置。可拼接相应字符，同时支持多种语法构造的折叠 (例如，
@@ -4948,15 +4969,14 @@ font=<code class="special">{font-name}</code>                                   
         可指定 "NONE" 恢复缺省字体。
         为 "Normal" 组设置的字体成为缺省字体 (后续修改 <a href="options.html#'guifont'">'guifont'</a> 选项会覆盖，
         以最后生效的为准)。
-
-        以下说明仅适用 Motif，不适用其他 GUI 版本:
-        设置 "Menu" 组字体时，会相应修改菜单字体。设置 "Tooltip" 组字体时，会
-        相应修改工具提示字体。除 Menu 和 Tooltip 外，其余字体的字符大小必须和
-        缺省字体相同，否则会出现重绘异常。
+        GTK GUI 中，仅可为 "Normal" 组设置字体；其他组接受本参数但无效果。
+        仅适用 Motif，不适用其他 GUI 版本: 设置 "Menu" 组字体时，会相应修改菜
+        单字体。设置 "Tooltip" 组字体时，会相应修改工具提示字体。除 Menu 和
+        Tooltip 外，其余字体的字符大小必须和缺省字体相同，否则会出现重绘异常。
 
         字体名包含内嵌空格或其他特殊字符时，可用单引号包围。字体名因而不能使用
         单引号本身。示例: &gt;vim
-            :hi comment font='Monospace 10'
+            :hi Normal font='Monospace 10'
 
 guifg=<code class="special">{color-name}</code>                                      <b class="vimtag"> <a name="highlight-guifg">highlight-guifg</a> </b>
 guibg=<code class="special">{color-name}</code>                                      <b class="vimtag"> <a name="highlight-guibg">highlight-guibg</a> </b>
@@ -5205,7 +5225,7 @@ TitleBarNC      GUI 非激活窗口的标题栏。<code class="notvi">{仅 MS-Wi
                                                         <b class="vimtag"> <a name="hl-Visual">hl-Visual</a> </b>
 Visual          可视模式下的选中区域。
                                                         <b class="vimtag"> <a name="hl-VisualNOS">hl-VisualNOS</a> </b>
-VisualNOS       Vim 是 "选择区的非拥有者" 时，可视模式下的选中区域。
+VisualNOS       Vim 是 "选区非拥有者" 时，可视模式下的选中区域。
                 {仅 X11 GUI 上的  <a href="gui_x11.html#gui-x11">gui-x11</a> 、 <a href="term.html#xterm-clipboard">xterm-clipboard</a>  和
                  <a href="wayland.html#wayland-selections">wayland-selections</a>  支持}
                                                         <b class="vimtag"> <a name="hl-WarningMsg">hl-WarningMsg</a> </b>

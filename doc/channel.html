@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   适用于 Vim 9.2 版本。  最近更新: 2026年5月
+<b class="vimtag"> <a name="channel.txt">channel.txt</a> </b>   适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -164,7 +164,22 @@ Vim 不会等待响应。服务器稍后发送响应时，MyHandler 会自动被
 <code class="example"></code>
 使用完毕后，关闭服务器通道:
 <code class="example">        call ch_close(server)</code>
-<code class="example"></code>
+
+                                                        <b class="vimtag"> <a name="channel-stdio">channel-stdio</a> </b>
+Vim 也可以作为通道的另一端，使用自身标准输入与标准输出，类似编辑器启动的语言服
+务器。使用  <a href="starting.html#--stdio-channel">--stdio-channel</a>  参数启动 Vim 并加载打开通道的脚本:
+<code class="example">        vim --stdio-channel -S server.vim</code>
+在 server.vim 中:
+<code class="example">        func OnMessage(ch, msg)</code>
+<code class="example">          ...</code>
+<code class="example">        endfunc</code>
+<code class="example">        let ch = ch_open('stdio', #{mode: 'lsp', callback: 'OnMessage'})</code>
+
+                                                        <b class="vimtag"> <a name="E1582">E1582</a> </b> <b class="vimtag"> <a name="E1583">E1583</a> </b>
+地址 "stdio" 仅在 Vim 通过  <a href="starting.html#--stdio-channel">--stdio-channel</a>  启动时可用，且只能使用一次。此时
+Vim 的标准输入与标准输出会重定向至空设备，确保 Vim 及其启动命令产生的信息不会
+混入通道内容。标准错误保持原样，可用于输出错误信息。
+
 </section><hr class="doubleline" /><section class=inner>
 <h4>3. 打开通道                                             <b class="vimtag"> <a name="channel-open">channel-open</a> </b></h4>
 要打开通道:
@@ -175,12 +190,13 @@ Vim 不会等待响应。服务器稍后发送响应时，MyHandler 会自动被
 要检查通道是否已成功打开，可用  <a href="channel.html#ch_status()">ch_status()</a> 。
 
                                         <b class="vimtag"> <a name="channel-address">channel-address</a> </b>
-<code class="special">{address}</code> 可以是域名或 IP 地址后跟端口号，也可以是带 "unix:" 前缀的 Unix-域套
-接字路径。例如
+<code class="special">{address}</code> 可以是域名或 IP 地址后跟端口号，或是带 "unix:" 前缀的 Unix-域套接字
+路径，也可以是 "stdio"。例如
 <code class="example">    www.example.com:80   " 域名 + 端口</code>
 <code class="example">    127.0.0.1:1234       " IPv4 + 端口</code>
 <code class="example">    [2001:db8::1]:8765   " IPv6 + 端口</code>
 <code class="example">    unix:/tmp/my-socket  " Unix-域套接字路径</code>
+<code class="example">    stdio                " Vim 的标准输入与标准输出，见 |channel-stdio|</code>
 <code class="example"></code>
 当域名能解析到多个地址时 (如同时包含 IPv6 和 IPv4)，Vim 会按顺序依次尝试每个地
 址。如果某个连接缓慢或不可用，会迅速切换到下一个地址。这在网络中某种 IP 协议
@@ -751,6 +767,11 @@ ch_sendexpr(<code class="special">{handle}</code>, <code class="special">{expr}<
 
                 如果 <code class="special">{expr}</code> 无需响应消息，<code class="special">{options}</code> 里不要指定 "callback" 项
                 目。
+
+                在 "lsp" 模式下，如果不需要响应，<code class="special">{expr}</code> 中的 "id" 项会按原样发
+                送，这就是回复来自服务端请求的方式；它可以是服务端使用的任意类
+                型。当需要响应时 (使用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  或配置 "callback" 项)，
+                Vim 会自行分配 ID，该项必须是  <a href="eval.html#Number">Number</a> 。
 
                 也可用作  <a href="eval.html#method">method</a> :
 <code class="example">                        GetChannel()-&gt;ch_sendexpr(expr)</code>
@@ -1398,7 +1419,7 @@ JSON-RPC 格式的响应/通告消息，并解码为 Vim  <a href="eval.html#Dic
 JSON-RPC 负载解码为 Vim  <a href="eval.html#Dict">Dict</a>  类型。然后触发  <a href="channel.html#channel-callback">channel-callback</a>  回调或指定
 的  <a href="channel.html#channel-onetime-callback">channel-onetime-callback</a>  一次性回调。使用  <a href="channel.html#ch_evalexpr()">ch_evalexpr()</a>  或
  <a href="channel.html#ch_sendexpr()">ch_sendexpr()</a>  函数向通道发送消息时，Vim 会自动附加 HTTP 头部，并把 Vim 表达
-式编码为 JSON。关于 Vim 内建类型与 JSON 间的编码与解码，详见  <a href="builtin.html#json_encode()">json_encode()</a> 
+式编码为 JSON。关于 Vim 内置类型与 JSON 间的编码与解码，详见  <a href="builtin.html#json_encode()">json_encode()</a> 
 和  <a href="builtin.html#json_decode()">json_decode()</a> 。
 
 要用 "lsp" 模式打开通道，在调用  <a href="channel.html#ch_open()">ch_open()</a>  时，将 <code class="special">{options}</code> 参数的 "mode" 项

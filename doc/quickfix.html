@@ -33,7 +33,7 @@
 </header>
 <article id=outer>
 <section class=inner>
-<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年7月
+<b class="vimtag"> <a name="quickfix.txt">quickfix.txt</a> </b>  适用于 Vim 9.2 版本。  最近更新: 2026年10月
 
 
                   <code class="vim">VIM 参考手册  by Bram Moolenaar</code>
@@ -72,20 +72,23 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
 在 Vim 内部，执行外部命令并处理错误输出的简易方式是通过  <a href="quickfix.html#:make">:make</a>  命令 (见下)。
 
 需要事先设定 <a href="options.html#'errorformat'">'errorformat'</a>，匹配当前编译器生成的错误消息格式 (见下
- <a href="quickfix.html#errorformat">errorformat</a> )。
+ <a href="quickfix.html#errorformat">errorformat</a> )。Vim 用于从编译器输出的每一行提取文件名、行号、消息等信息。不匹
+配的行会保留为无效条目， <a href="quickfix.html#:cnext">:cnext</a>  这类命令会跳过。使用  <code class="badlink">:clist!</code>  可以一并显示这
+类条目。
 
                                         <b class="vimtag"> <a name="quickfix-stack">quickfix-stack</a> </b> <b class="vimtag"> <a name="quickfix-ID">quickfix-ID</a> </b> <b class="vimtag"> <a name="E1545">E1545</a> </b>
 每个快修列表都拥有全局唯一标识符，称为快修 ID，在整个 Vim 会话中保持不变。
  <a href="builtin.html#getqflist()">getqflist()</a>  函数可用于获取列表 ID。列表同时还有一个列表编号，指示该列表位于
-快修栈中的序号。当快修栈中的列表数量超过 <a href="options.html#'chistory'">'chistory'</a> 时，序号会重新变化。
+快修栈中的序号。新增或移除列表、快修栈中的列表数量超过 <a href="options.html#'chistory'">'chistory'</a> 时，该编号可
+能会发生变化。脚本需要稳定引用同一个列表时应使用 ID；仅引用其在栈中的当前位置
+时，则使用列表编号。
 
                                                 <b class="vimtag"> <a name="location-list">location-list</a> </b> <b class="vimtag"> <a name="E776">E776</a> </b>
-位置列表是窗口局部的快修列表。由  <a href="quickfix.html#:lvimgrep">:lvimgrep</a> 、 <a href="quickfix.html#:lgrep">:lgrep</a> 、 <a href="helphelp.html#:lhelpgrep">:lhelpgrep</a> 、 <a href="quickfix.html#:lmake">:lmake</a> 
-等命令生成，对应的  <a href="quickfix.html#:vimgrep">:vimgrep</a> 、 <a href="quickfix.html#:grep">:grep</a> 、 <a href="helphelp.html#:helpgrep">:helpgrep</a> 、 <a href="quickfix.html#:make">:make</a>  则生成全局快修列
-表。
+位置列表是与单个窗口绑定的快修列表。每个窗口可有自己独立的位置列表，
+ <a href="quickfix.html#:lvimgrep">:lvimgrep</a> 、 <a href="quickfix.html#:lgrep">:lgrep</a> 、 <a href="helphelp.html#:lhelpgrep">:lhelpgrep</a> 、 <a href="quickfix.html#:lmake">:lmake</a>  等命令使用位置列表而非全局快修列
+表。没有 "l" 前缀的相应命令则使用快修列表。
                                                 <b class="vimtag"> <a name="location-list-file-window">location-list-file-window</a> </b>
-位置列表和窗口相关联，而每个窗口可用独立的位置列表。每个位置列表只能绑定一个窗
-口。位置列表和快修列表相互独立。
+位置列表和快修列表相互独立。每个位置列表只能绑定一个窗口。
 
 包含位置列表的窗口被分割时，新窗口会创建该位置列表的新备份。没有被任何窗口引用
 的位置列表会被自动删除。
@@ -123,18 +126,19 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
 :[nr]ll[!]
 
                                                 <b class="vimtag"> <a name=":cn">:cn</a> </b> <b class="vimtag"> <a name=":cne">:cne</a> </b> <b class="vimtag"> <a name=":cnext">:cnext</a> </b> <b class="vimtag"> <a name="E553">E553</a> </b>
-:<code class="special">[count]</code>cn[ext][!]      向下跳转 <code class="special">[count]</code> 条带有文件名的错误条目。如果向下没有
-                        带文件名的条目，则向下跳转 <code class="special">[count]</code> 条错误条目。
+:<code class="special">[count]</code>cn[ext][!]      向下跳转 <code class="special">[count]</code> 条带有文件名的错误条目。跳过不带文件
+                        名的条目，因为 Vim 无法用于文件跳转。如果向下没有带文
+                        件名的条目，则向下跳转 <code class="special">[count]</code> 条错误条目。
+                        [!] 强制跳转和 <a href="options.html#'switchbuf'">'switchbuf'</a> 设置规则同  <a href="quickfix.html#:cc">:cc</a> 。
+
+:<code class="special">[count]</code>cN[ext][!]              <b class="vimtag"> <a name=":cp">:cp</a> </b> <b class="vimtag"> <a name=":cprevious">:cprevious</a> </b>  <b class="vimtag"> <a name=":cprev">:cprev</a> </b> <b class="vimtag"> <a name=":cN">:cN</a> </b> <b class="vimtag"> <a name=":cNext">:cNext</a> </b>
+:<code class="special">[count]</code>cp[revious][!]  向上跳转 <code class="special">[count]</code> 条带有文件名的错误条目。跳过不带文件
+                        名的条目，因为 Vim 无法用于文件跳转。如果向上没有
+                        带文件名的条目，则向上跳转 <code class="special">[count]</code> 条错误条目。
                         [!] 强制跳转和 <a href="options.html#'switchbuf'">'switchbuf'</a> 设置规则同  <a href="quickfix.html#:cc">:cc</a> 。
 
                                                         <b class="vimtag"> <a name=":lne">:lne</a> </b> <b class="vimtag"> <a name=":lnext">:lnext</a> </b>
 :<code class="special">[count]</code>lne[xt][!]      类似  <a href="quickfix.html#:cnext">:cnext</a> ，但使用当前窗口位置列表而非快修列表。
-
-:<code class="special">[count]</code>cN[ext][!]              <b class="vimtag"> <a name=":cp">:cp</a> </b> <b class="vimtag"> <a name=":cprevious">:cprevious</a> </b>  <b class="vimtag"> <a name=":cprev">:cprev</a> </b> <b class="vimtag"> <a name=":cN">:cN</a> </b> <b class="vimtag"> <a name=":cNext">:cNext</a> </b>
-:<code class="special">[count]</code>cp[revious][!]  向上跳转 <code class="special">[count]</code> 条带有文件名的错误条目。如果向上没有
-                        带文件名的条目，则向上跳转 <code class="special">[count]</code> 条错误条目。
-                        [!] 强制跳转和 <a href="options.html#'switchbuf'">'switchbuf'</a> 设置规则同  <a href="quickfix.html#:cc">:cc</a> 。
-
 
 :<code class="special">[count]</code>lN[ext][!]              <b class="vimtag"> <a name=":lp">:lp</a> </b> <b class="vimtag"> <a name=":lprevious">:lprevious</a> </b> <b class="vimtag"> <a name=":lprev">:lprev</a> </b> <b class="vimtag"> <a name=":lN">:lN</a> </b> <b class="vimtag"> <a name=":lNext">:lNext</a> </b>
 :<code class="special">[count]</code>lp[revious][!]  类似  <a href="quickfix.html#:cNext">:cNext</a>  或  <a href="quickfix.html#:cprevious">:cprevious</a> ，但使用当前窗口位置列表
@@ -227,11 +231,12 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
 :cq[uit][!] <code class="special">{N}</code>         携带错误码 <code class="special">{N}</code> 退出 Vim。<code class="special">{N}</code> 缺省为一。
                         适用场景是 Vim 被外部程序调用时返回错误码。例如，编译
                         器可用于跳过同一文件的再次编译、`git commit` 用于中断
-                        提交过程， <code class="badlink">fc</code>  (bash 和 zsh 系列外壳的内建命令) 用于放
+                        提交过程， <code class="badlink">fc</code>  (bash 和 zsh 系列外壳的内置命令) 用于放
                         弃执行等。
                         <code class="special">{N}</code> 也可为零，此时 Vim 正常退出。
-                        _<code class="note">警告</code>_: 无论是否给出 [!]，对文件的所有改动都会丢失！效
-                        果相当于  <code class="badlink">:qall!</code>   <a href="editing.html#:qall">:qall</a> ，区别仅在于返回非零退出码。
+                        _<code class="note">警告</code>_: 类似  <a href="editing.html#:qall">:qall</a> !，对文件的所有改动都会丢失。
+                        给出 [!] 与否不影响命令行为。除非 <code class="special">{N}</code> 为零，否则 Vim
+                        会返回非零退出码。
 
                                                         <b class="vimtag"> <a name=":cf">:cf</a> </b> <b class="vimtag"> <a name=":cfi">:cfi</a> </b> <b class="vimtag"> <a name=":cfile">:cfile</a> </b>
 :cf[ile][!] <code class="special">[errorfile]</code> 加载错误文件 <code class="special">[errorfile]</code>，并跳转到首条错误。以  <a href="starting.html#-q">-q</a>  选
@@ -264,11 +269,17 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
                                                         <b class="vimtag"> <a name=":laddf">:laddf</a> </b> <b class="vimtag"> <a name=":laddfile">:laddfile</a> </b>
 :laddf[ile] <code class="special">[errorfile]</code> 类似  <a href="quickfix.html#:caddfile">:caddfile</a> ，但使用当前窗口位置列表而非快修列表。
 
+以下命令可从缓冲区读取错误信息:
+ <a href="quickfix.html#:cbuffer">:cbuffer</a>  创建列表并跳转到首个错误， <a href="quickfix.html#:cgetbuffer">:cgetbuffer</a>  创建列表但不跳转，
+ <a href="quickfix.html#:caddbuffer">:caddbuffer</a>  向当前列表追加条目，不改动光标位置。带前缀 "l" 的对应命令用于位
+置列表。
+
                                                 <b class="vimtag"> <a name=":cb">:cb</a> </b> <b class="vimtag"> <a name=":cbuffer">:cbuffer</a> </b> <b class="vimtag"> <a name="E681">E681</a> </b>
 :<code class="special">[range]</code>cb[uffer][!] <code class="special">[bufnr]</code>
                         解析缓冲区里的错误行，生成快修列表。给出 <code class="special">{bufnr}</code> 时，
                         读取指定的已加载缓冲区，否则使用当前缓冲区。
-                        使用 <code class="special">[range]</code> 范围内的所有行，缺省使用缓冲区全部行。
+                        使用 <code class="special">[range]</code> 范围内的所有行，例如  <code class="badlink">:10,20cbuffer</code> 。缺
+                        省使用缓冲区全部行。
                         [!] 跳转规则同  <a href="quickfix.html#:cc">:cc</a> 。
 
                                                 <b class="vimtag"> <a name=":lb">:lb</a> </b> <b class="vimtag"> <a name=":lbuffer">:lbuffer</a> </b>
@@ -294,6 +305,10 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
 :<code class="special">[range]</code>laddb[uffer] <code class="special">[bufnr]</code>
                         类似  <a href="quickfix.html#:caddbuffer">:caddbuffer</a> ，但使用当前窗口位置列表而非快修列
                         表。
+
+以下命令可通过表达式创建或更新快速修复列表:
+ <a href="quickfix.html#:cexpr">:cexpr</a>  创建列表并跳转到首个错误， <a href="quickfix.html#:cgetexpr">:cgetexpr</a>  创建列表但不跳转， <a href="quickfix.html#:caddexpr">:caddexpr</a> 
+向当前列表追加条目，不改动光标位置。带前缀 "l" 的对应命令用于位置列表。
 
                                                         <b class="vimtag"> <a name=":cex">:cex</a> </b> <b class="vimtag"> <a name=":cexpr">:cexpr</a> </b> <b class="vimtag"> <a name="E777">E777</a> </b>
 :cex[pr][!] <code class="special">{expr}</code>      执行表达式 <code class="special">{expr}</code>，用返回结果创建快修列表，并跳转到首
@@ -335,6 +350,8 @@ Vim 中快速修复 (以下简称快修) 命令的用途更加广泛，可用于
                         尾倒数，-1 代表最后一条错误。
                         可搭配  <a href="various.html#:filter">:filter</a>  命令过滤错误条目。模式匹配文件名、模
                         块名、搜索模式或错误文本。
+                        示例: `:filter /\.c:/clist` 仅列出显示文本包含  <code class="badlink">.c:</code> 的
+                        条目。参见  <a href="various.html#:filter">:filter</a> 。
 
 :cl[ist] +<code class="special">{count}</code>       列出当前条目及往下 <code class="special">{count}</code> 条有效错误。相当于
                         `:clist 当前序号 当前序号+count`。
@@ -376,7 +393,7 @@ Vim 提供两组自动命令，可在执行快修命令 ( <a href="quickfix.html
 <code class="example">           call setqflist(qflist)</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
-<code class="example">        au QuickfixCmdPost make call QfMakeConv()</code>
+<code class="example">        au QuickFixCmdPost make call QfMakeConv()</code>
 直接设置 <a href="options.html#'makeencoding'">'makeencoding'</a> 更简便。
 
                                                         <b class="vimtag"> <a name="quickfix-title">quickfix-title</a> </b>
@@ -431,6 +448,18 @@ Vim 提供两组自动命令，可在执行快修命令 ( <a href="quickfix.html
 误格式解析 lines，无须修改 <a href="options.html#'errorformat'">'errorformat'</a> 选项:
 <code class="example">        echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})</code>
 
+
+对列表中的条目或文件执行命令，使用:
+
+                                快速修复列表    位置列表
+        每个条目                :cdo            :ldo
+        每个文件                :cfdo           :lfdo
+
+命令需要作用于每一条有效条目时使用  <a href="quickfix.html#:cdo">:cdo</a> ，例如 `:cdo s/old/new/g` 修改所有匹
+配行。需要每个文件仅执行一次命令时使用  <a href="quickfix.html#:cfdo">:cfdo</a> ，例如 `:cfdo update` 一次性保存
+所有受影响文件。添加前缀 "l" 即可操作位置列表。
+
+下文会更详细说明这些差异。
 
 在 所 有 快 速 修 复 或 位 置 列 表 缓 冲 区 中 批 量 执 行 命 令 :
                                                         <b class="vimtag"> <a name=":cdo">:cdo</a> </b>
@@ -573,7 +602,8 @@ Vim 正则模式  <a href="pattern.html#regular-expression">regular-expression</
 改缓冲区，而错误条目属于其他文件，则跳转失败。因此，跳转前请先确保目标窗口可安
 全放弃所属缓冲区。
 
-从快修窗口选中一个文件时，按照以下步骤，查找该文件的编辑窗口:
+从快修窗口选中一个文件时，Vim 优先重用已显示该文件的窗口。否则，在当前标签页查
+找合适窗口，必要时新建窗口。具体查找规则为:
 
 1. 搜索并使用当前标签页中打开该文件的窗口 (搜索从快修窗口之前的窗口开始)。
 2. 否则，当 <a href="options.html#'switchbuf'">'switchbuf'</a> 包含 "usetab" 时，搜索并使用其他标签页 (搜索从首个标签
@@ -583,6 +613,12 @@ Vim 正则模式  <a href="pattern.html#regular-expression">regular-expression</
 4. 否则，当 <a href="options.html#'switchbuf'">'switchbuf'</a> 包含 "uselast" 时，使用上次访问过的窗口。
 5. 否则，使用快修窗口之前的窗口。如果没有上一个窗口，则使用下一个窗口。
 6. 否则，在快修窗口上方，横向分割新窗口并使用该窗口。
+
+                                                <b class="vimtag"> <a name="quickfix-winfixbuf">quickfix-winfixbuf</a> </b>
+如果用于展示错误的窗口开启了 <a href="options.html#'winfixbuf'">'winfixbuf'</a>，则无法在该窗口跳转到其他缓冲区里的错
+误。对于快修列表，Vim 会另行寻找合适窗口，优先选用最近访问且未置位 <a href="options.html#'winfixbuf'">'winfixbuf'</a>
+的窗口；找不到则新建分割窗口。对于位置列表，此操作会报错  <a href="message.html#E1513">E1513</a> ，因为位置列表
+绑定所属窗口，不能转移或新建窗口。加 [!] 会跳过以上检查。
 
                                         <b class="vimtag"> <a name="CTRL-W_%3CEnter%3E">CTRL-W_&lt;Enter&gt;</a> </b> <b class="vimtag"> <a name="CTRL-W_%3CCR%3E">CTRL-W_&lt;CR&gt;</a> </b>
 按下 <code class="keystroke">CTRL-W</code> <code class="special">&lt;Enter&gt;</code> 会新建窗口，并在该窗口跳转到光标所在的错误位置。
@@ -608,7 +644,8 @@ Vim 正则模式  <a href="pattern.html#regular-expression">regular-expression</
 在当前窗口下方新建。位置列表窗口与快修窗口类似，但多个位置列表窗口可同时打开。
 在位置列表窗口中执行位置列表命令时，操作的是本窗口展示的位置列表。
 
-从位置列表窗口选中一个文件时，按照以下步骤，查找该文件的编辑窗口:
+在位置列表窗口选中一个文件时，Vim 优先重用该位置列表所绑定的窗口 (如果可行)。
+否则查找合适窗口，必要时新建窗口。具体查找规则如下:
 
 1. 搜索并使用当前标签页中绑定该位置列表的普通窗口 (非快修窗口)。
 2. 否则，搜索并使用当前标签页中打开该文件的窗口。
@@ -812,6 +849,11 @@ Vim 正则模式  <a href="pattern.html#regular-expression">regular-expression</
 :lmak[e][!] <code class="special">[arguments]</code>
                         类似  <a href="quickfix.html#:make">:make</a> ，但使用当前窗口位置列表而非快修列表。
 
+简言之， <a href="quickfix.html#:make">:make</a>  会运行 <a href="options.html#'makeprg'">'makeprg'</a> 指定的程序，使用 <a href="options.html#'errorformat'">'errorformat'</a> 解析其输出，可
+选地跳转到首个识别出的错误，最后删除常规  <a href="quickfix.html#:make">:make</a>  流程中使用的临时错误文件。如
+果 <a href="options.html#'shellpipe'">'shellpipe'</a> 为空，或程序自行管理输出文件，则不删除该程序使用的文件。
+ <a href="quickfix.html#:cnext">:cnext</a>  等命令可逐项查看生成的错误列表。
+
  <a href="quickfix.html#:make">:make</a>  命令执行 <a href="options.html#'makeprg'">'makeprg'</a> 选项指定的命令。该命令会传递给 <a href="options.html#'shell'">'shell'</a> 指定的外壳。
 基本相当于输入以下命令:
 
@@ -856,7 +898,7 @@ Vim 正则模式  <a href="pattern.html#regular-expression">regular-expression</
 <code class="example">           call setqflist(qflist)</code>
 <code class="example">        endfunction</code>
 <code class="example"></code>
-<code class="example">        au QuickfixCmdPost make call QfMakeConv()</code>
+<code class="example">        au QuickFixCmdPost make call QfMakeConv()</code>
 <code class="example"></code>
 (Faque Cheng 提供示例)
 直接设置 <a href="options.html#'makeencoding'">'makeencoding'</a> 更简便。
@@ -867,7 +909,8 @@ Vim 提供两种跨文件模式检索工具: 内置检索和外部检索。内�
 用，支持完整 Vim 模式搜索功能。外部 grep 程序可提供内置 grep 无法满足的其他需
 求。
 
-内置方法速度稍慢，因为要先将文件读入内存。优点是:
+内置方法速度稍慢，因为要先将文件读入内存。对于大型项目，建议使用  <a href="quickfix.html#:grep">:grep</a>  搭配
+外部搜索工具。内置方法的优点是:
 - 自动识别不同文件换行符和不同编码，与打开文件编辑行为一致。
 - 使用 Vim 原生搜索模式。支持多行匹配。
 - 可通过插件 ( <a href="pi_gzip.html#gzip">gzip</a>   <a href="pi_netrw.html#netrw">netrw</a> ): 搜索压缩和远程文件。
@@ -908,9 +951,10 @@ Vim 提供两种跨文件模式检索工具: 内置检索和外部检索。内�
                              快修列表。带 [!] 时，跳转时会丢弃当前缓冲区的任何
                              修改。
 
-                        'f'  给出时开启模糊字符串匹配。此时 <code class="special">{pattern}</code> 视作按本
-                             义出现的字符串而非正则模式。关于模糊字符串匹配，
-                             详见  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a> 。
+                        'f'  给出时开启模糊字符串匹配。<code class="special">{pattern}</code> 内的字符必须
+                             按顺序出现，但不必连续相邻。此时 <code class="special">{pattern}</code> 视作按
+                             本义出现的字符串而非正则模式。关于模糊字符串匹
+                             配，详见  <a href="pattern.html#fuzzy-matching">fuzzy-matching</a> 。
 
                         触发  <a href="autocmd.html#QuickFixCmdPre">QuickFixCmdPre</a>  和  <a href="autocmd.html#QuickFixCmdPost">QuickFixCmdPost</a>  自动事件。
                         搜索过程打开文件时会临时需要缓冲区号，但尽可能重用避免
@@ -1070,6 +1114,14 @@ c)      需要自动传递其他参数 (如忽略大小写的 -i 参数)。
 
 可在 "compiler" 目录中定义对应特定编译器的编译器插件。该插件会自动为
  <a href="quickfix.html#:compiler">:compiler</a>  命令设置局部选项，而为  <code class="badlink">:compiler!</code>  设置全局选项。
+
+常规用法是，使用 `:compiler <code class="special">{name}</code>` 选择编译器，然后执行  <a href="quickfix.html#:make">:make</a> 。编译器插件一
+般会设置 <a href="options.html#'makeprg'">'makeprg'</a> 与 <a href="options.html#'errorformat'">'errorformat'</a>，让 Vim 可以调用编译器并解析输出信息。下文
+记录各类编译器插件对应的选项。
+
+编译器插件设置的值后续可通过  <a href="options.html#:set">:set</a>  或  <a href="options.html#:setlocal">:setlocal</a>  修改。`:compiler <code class="special">{name}</code>` 仅
+为当前缓冲区设置选项，而 `:compiler! <code class="special">{name}</code>` 设置全局选项；缓冲区局部选项优先
+级高于全局选项。
 
                                                         <b class="vimtag"> <a name="current_compiler">current_compiler</a> </b>
 为兼容老版 Vim，此类插件总使用  <code class="badlink">g:current_compiler</code>  全局变量而非
@@ -1530,12 +1582,17 @@ Typst 编译器的命令名缺省为 "typst"，但可用  <a href="quickfix.html
 <h4>7. 错误格式                                             <b class="vimtag"> <a name="error-file-format">error-file-format</a> </b></h4>
                                         <b class="vimtag"> <a name="errorformat">errorformat</a> </b> <b class="vimtag"> <a name="E372">E372</a> </b> <b class="vimtag"> <a name="E373">E373</a> </b> <b class="vimtag"> <a name="E374">E374</a> </b>
                                                 <b class="vimtag"> <a name="E375">E375</a> </b> <b class="vimtag"> <a name="E376">E376</a> </b> <b class="vimtag"> <a name="E377">E377</a> </b> <b class="vimtag"> <a name="E378">E378</a> </b>
-<a href="options.html#'errorformat'">'errorformat'</a> 选项指定一组解析模板。按顺序匹配错误消息，使用首条解析成功的模
-板。可为编译器产生的不同消息格式添加不同模板，甚至可为多个编译器的输出格式添加
-不同项目。参见  <a href="quickfix.html#efm-entries">efm-entries</a> 。
+<a href="options.html#'errorformat'">'errorformat'</a> 选项指定一组解析模板，用于读取编译器输出。模板可从错误行中提取文
+件名、行号、列号以及具体消息。对每一错误行，按顺序匹配模板，使用首条解析成功的
+模板。可为编译器产生的不同消息格式添加不同模板，甚至可为多个编译器的输出格式添
+加不同项目。参见  <a href="quickfix.html#efm-entries">efm-entries</a> 。
 
 <a href="options.html#'errorformat'">'errorformat'</a> 里每条模板是类 scanf 格式的字符串。使用前需要了解 scanf 的工作方
 式。请查看 C 编译器文档。下文仅列出 Vim 支持的 % 条目。不支持其他条目。
+
+快速上手: Vim 内置大量常用编译器的解析格式。编写自定义规则前先查阅
+ <a href="quickfix.html#errorformats">errorformats</a>  中的示例。如果没有匹配示例，可从下面基础单元入手，按需修改已有
+示例。
 
 <a href="options.html#'errorformat'">'errorformat'</a> 中逗号和反斜杠是特殊字符，处理方式参见  <a href="quickfix.html#efm-entries">efm-entries</a> 。<code class="note">注意</code>按本义
 出现的字符 "%" 需用 "%%" 来匹配，不能用反斜杠转义。
@@ -1562,6 +1619,7 @@ Vim 可读取任何长度错误行，但只使用前 4095 字节，忽略其余�
                             w - <code class="note">警告</code>消息
                             i - 信息消息
                             n - <code class="note">备注</code>消息
+                        也识别大写字母 E、W、I 和 N，与对应小写字母含义相同。
         %n              错误号 (数值)
         %m              错误消息 (字符串)
         %r              匹配单行文件消息的 "其余" 文本 %O/P/Q
@@ -1824,6 +1882,10 @@ Amiga 上的 Aztec 编译器输出文件的格式是:
 目录管理非常简单，因为不管是通过 makefile 中的 <a href="options.html#'cd'">'cd'</a> 命令还是用 "-C dir" 参数
 (读入 makefile 前进入指定目录)，每次进出目录都会输出绝对路径。推荐使用 '-w' 选
 项，强制 GNU-make 在处理目录前后都输出当前目录。
+
+仅当编译器输出包含来自多个目录的相对文件名时，该机制才会生效。如果输出没有明确
+记录目录变更，Vim 只能进行猜测，文件可能选错。要绝对避免此类问题，应输出绝对目
+录名，并附带目录进出信息。
 
 非 GNU-make 则需要更复杂的目录维护逻辑。例如 AIX-make 从不输出当前目录的任何信
 息。需要手动改造 makefile。Lesstif 的 makefile 提供命令，显示 "Making <code class="special">{target}</code>
