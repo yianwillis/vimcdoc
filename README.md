@@ -27,7 +27,7 @@ https://github.com/yianwillis/vimcdoc/releases 提供发布版本的下载。
 ```shell
 $ mkdir -p ~/.vim/pack/foo/start
 $ cd ~/.vim/pack/foo/start
-$ git clone git://github.com/yianwillis/vimcdoc.git
+$ git clone https://github.com/yianwillis/vimcdoc
 ```
 
 重启 Vim。
@@ -70,7 +70,7 @@ NeoBundle 'yianwillis/vimcdoc'
 
 ```shell
 $ cd ~/.vim/bundle
-$ git clone git://github.com/yianwillis/vimcdoc.git
+$ git clone https://github.com/yianwillis/vimcdoc
 ```
 
 重启 Vim。
